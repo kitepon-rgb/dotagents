@@ -1,0 +1,7 @@
+interface:
+  display_name: "Polish GitHub"
+  short_description: "Improve README, releases, metadata, and visuals"
+  default_prompt: "Use $polish-github to audit this repository's GitHub presentation and propose the highest-impact polish steps before making changes."
+
+policy:
+  allow_implicit_invocation: true
