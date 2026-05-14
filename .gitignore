@@ -2,3 +2,8 @@
 *.swp
 *.swo
 *~
+
+# per-machine state (Claude Code project-scoped settings, VSCode tasks with
+# absolute paths baked in by Throughline). See README "含めないもの".
+.claude/
+.vscode/

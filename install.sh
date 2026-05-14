@@ -37,4 +37,11 @@ for f in "$HERE/codex/rules"/*; do
   link_one "$f" "$HOME/.codex/rules/$(basename "$f")"
 done
 
+# bin scripts (extension dropped at the destination, e.g. agents-update.sh -> agents-update)
+mkdir -p "$HOME/.local/bin"
+for f in "$HERE/bin"/*.sh; do
+  [ -e "$f" ] || continue
+  link_one "$f" "$HOME/.local/bin/$(basename "$f" .sh)"
+done
+
 echo "done."

@@ -24,9 +24,45 @@ cd ~/projects/dotagents
 ./install.sh
 ```
 
-`install.sh` は `~/.claude/{skills,commands}` と `~/.codex/{skills,rules}` 配下に
-本リポジトリの各エントリを **symlink** で配置する。ファイル単位の symlink なので、
-端末ローカルにしか無いスキル (例: `~/.claude/skills/learned/`) は触らない。
+`install.sh` は `~/.claude/{skills,commands}`、`~/.codex/{skills,rules}`、
+そして `~/.local/bin/` (bin/ 配下の実行スクリプト) に本リポジトリの各エントリを
+**symlink** で配置する。ファイル単位の symlink なので、端末ローカルにしか無い
+スキル (例: `~/.claude/skills/learned/`) は触らない。
+
+## 自動アップデート (任意)
+
+`install.sh` 後、`~/.local/bin/agents-update` で curated CLI / SDK 群
+(Claude Code / Codex CLI / Throughline / Caveat / Codegraph / Codex Sidecar MCP /
+claude-spotter / Anthropic SDK) を `@latest` に揃えられる。週 1 cron で自動化推奨。
+
+### 1. cron を起動
+
+- Linux 一般: 既に動いている (`service cron status`)
+- WSL2: default 停止。`sudo service cron start` で起動。再起動時にも立ち上げるには `/etc/wsl.conf` の `[boot]` セクションに `command = "service cron start"` を追加
+
+### 2. crontab に 1 行追加
+
+```bash
+crontab -e
+```
+
+例 (毎週月曜 12:00):
+
+```cron
+0 12 * * 1 $HOME/.local/bin/agents-update
+```
+
+時刻は **その端末が起動している時間帯** に合わせる (cron は停止時間を catch up しない)。
+
+### 3. ログ
+
+```bash
+tail -f ~/.local/state/agents-update/agents-update.log
+```
+
+### 4. 対象 package の編集
+
+`bin/agents-update.sh` 先頭の `PACKAGES=( ... )` を直接編集。`npm link` で開発中の package はリストから外す (registry 版で上書きされるため)。
 
 ## 編集ワークフロー
 
