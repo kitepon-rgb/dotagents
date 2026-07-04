@@ -75,7 +75,7 @@ sprite-forge-mcp / codex-sidecar / ServerManager（master→main も）/ MMOAuct
 - git identity は設定済みを確認、`init.defaultBranch main` を新規設定。
 - **週次自動更新 agents-update を常設**（タスクスケジューラ・毎週月曜12:00・未起動時は起動後追い掛け）。実走行で 12 パッケージ全 latest 化を確認（codex-sidecar 3点・SDK・pnpm はこの実行で新規導入）。旧 `SmartClaude-UpdateTools` タスクは **npm 更新ではなく RTK 本体＋Claude プラグインの更新専用**（PCManager/update-tools.ps1）で agents-update と重複しないため**残置**（XML は ~/Archives へバックアップ済み。将来 agents-update へ統合するかは裁定待ち）。
 - **codex-sidecar MCP をユーザースコープ登録**（node 絶対パス起動・Connected 確認）。対話=aiterm／非対話=codex-sidecar の委譲両輪がこの端末で有効。
-- メモリ整理 P4: 25プロジェクト・216ファイルへ bulk-curation 実行（tar バックアップ→sonnet 並列委譲）。孤児メモリ3件（OpenClaw・SmartCompact・ImageCollector＝プロジェクト実体消滅）を検出。
+- メモリ整理 P4: 25プロジェクト・216ファイルへ bulk-curation 完了（tar バックアップ→sonnet 並列委譲・25/25 エラー0）。機械修復6件適用。**flags は [P4_FLAGS_FOX.md](P4_FLAGS_FOX.md) に集約（🔴機密2件を含む・オーナー裁定待ち）**。
 
 ### 18リポ該当分（触らない・状態記録のみ）
 
