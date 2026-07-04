@@ -43,4 +43,20 @@
 - rag/ 欠・CI 欠・docs 連番化・adr 新設は、**各リポが次にドキュメント整理/機能追加で触る機会にまとめて**。稼働に支障がなく、今 Fable 期に一律移行する価値はない（採点者も大半 skip）。CI だけは「大きな作業を始めるリポ」で最初に張る（PLAN 作法）＝トリガーは作業発生時
 - `ServerManager` の master→main 正規化は、そのリポに次に触る時に同時実施（単独では churn）
 
-**実作業の委譲方針**: 波A・波B は仕様が固まった機械作業＝**Codex CLI（レート非依存）へ委譲**（MODELS.md の第一選択）。ベルは仕様・罠リスト・検証コマンドの作成と diff レビュー・コミットのみ。
+**実作業の委譲方針**: 仕様が固まった機械作業＝**Codex CLI（レート非依存）へ委譲**（MODELS.md の第一選択）。ベルは仕様・罠リスト・検証コマンドの作成と diff レビュー・コミットのみ。
+
+## 標準化ミッション（2026-07-04 方針転換・オーナー指示「動くからやらないは Fable 性能の浪費」）
+
+見送り裁定を撤回。Fable 期は churn を恐れず付属物（rag/・CI・docs 連番・adr/・.claude/settings.json）を積極的に足す。見送るのは破壊的リスク時のみ（PROJECT_LAYOUT 標準化方針）。
+
+**標準化対象（16リポ・この端末で触ってよい稼働リポ）**:
+- worth 6: sprite-forge-mcp・codex-sidecar・ServerManager（master→main も）・MMOAuction・OpenCClaw・codex-link
+- skip だった稼働 10: aiterm-mcp・Caveat・Throughline・rpgdev・WebAICoding・dobojo・nextflic・Chime・Spotter・videomarketing
+
+**除外（触らない・理由つき）**:
+- **Kikoeru** — オーナーが別セッションでやると明言（2026-07-04）
+- **Novel/forklore** — 別セッションが作業中でロック
+- **codex-rc・x-article-mcp** — この端末では休眠（behind のみ・作業は主端末。二重作業で競合回避）
+- **dotagents** — 自身＝標準の見本・既に整備済み
+
+進め方: 1リポずつ Codex 委譲（PROJECT_LAYOUT を読ませ欠落付属物を足す・git mv で履歴保存・commit しない）→ ベルが diff 検証・ゲート→ 独立コミット・push。CLAUDE.md も標準思想（rag/CI 参照）を反映。

@@ -68,7 +68,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 - [x] `docs/PROJECT_LAYOUT.md` 定義（2026-07-04・必須要件・知識基盤スタック節・型別レイアウト・見送り基準）
 - [x] ギャップ台帳（2026-07-04・21リポ sonnet 並列採点→ベル裁定。docs/P3_GAP_LEDGER.md）
-- [ ] 適用は P5 の波で（1リポ=1PR・git mv 履歴保存）＝波A/B 実施済、残りは churn>益で見送り裁定
+- [ ] **標準化ミッション（2026-07-04 方針転換）**: 見送り撤回。対象16リポに付属物（rag/CI/docs連番/adr/settings）を Codex 委譲で足す。対象/除外は docs/P3_GAP_LEDGER.md。パイロット sprite-forge-mcp から
 
 ## P4. メモリの恒常整理と知識の昇格【A+F】
 
@@ -88,7 +88,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] 波B（CLAUDE.md 欠落）: tools-manager・browser-to-api に CLAUDE.md 新規（2026-07-04・Codex 委譲→ベル検証・Fable 窓消費ゼロ）
 - [x] 委譲ツール bin/delegate.sh 新設（2026-07-04・timeout 内蔵・CLAUDE.md 前置・git status 表示。~/.local/bin/delegate）
 - [~] P6-1: L4 実測。**Codex は delegate で実証済**（波A/B 稼働）。**Grok は要 `grok login`（H・この端末未認証）**——ログイン後に `grok agent {stdio\|headless}` の非対話形を実測し delegate grok を有効化（現状は明示エラーで停止＝動くフリ回避）。**smux 実物評価済＝不採用**（tmux-bridge が aiterm-mcp と機能重複・tmux 競合リスク）。能力は `delegate review`＋aiterm で吸収・実証済（rag/orchestration/smux）
-- [ ] 波C（見送り・トリガー時）: rag/CI/docs連番は各リポの次の整理機会に。ServerManager master→main は次に触る時
+- [ ] ~~波C（見送り）~~ **撤回→標準化ミッションで積極実施**（rag/CI/docs連番を対象16リポへ。ServerManager master→main も標準化時に同時）
 - 注（2026-07-04 P5 絞り込み後）: tier2-5 の「標準化」は実質完了状態＝同期✅（P2 collect 済）・CLAUDE.md ✅（欠落2件は波B で補完・他は present）・フォルダ構成移動は churn>益で見送り裁定（各リポの次の整理機会に）。**残る個別対応は下記のみ**:
   - [ ] ServerManager master→main（稼働影響確認後・H。PENDING_OWNER）
   - [ ] Novel(forklore) 統合済みブランチ削除（ロック解除後・A）
