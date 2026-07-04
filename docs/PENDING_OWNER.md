@@ -29,11 +29,12 @@
 - [ ] dotagents clone パスの裁定: 現 `~/Documents/Program/dotagents` vs 標準 `~/Developer/dotagents`（移設なら install.sh 再実行で symlink 貼り直し。憲法の新規則により移設はオーナー明示承認必須）。
 - [x] ~~FOX(Windows) のトリアージ承認~~ 2026-07-04 オーナー裁定済み・実施済み（端末依存の処理につき詳細は端末ローカル記録のみ）。
 - [ ] **FOX(Windows) の GitHub private リポ作成 2件（安全装置がリポ新設を人間操作に限定）**: ローカルは main コミット済み・push だけ待ち。オーナーがどちらかで実施→ ①下記 CLI を自分の端末で実行 or ②web UI で空リポ作成後にベルへ「push して」:
-  ```bash
-  cd ~/Documents/Program/PCManager && gh repo create kitepon-rgb/PCManager --private --source . --remote origin --push
-  cd ~/Documents/Program/VoiceTransrator && gh repo create kitepon-rgb/VoiceTransrator --private --source . --remote origin --push
+  ```powershell
+  # PowerShell 5.1 は && 非対応につき ; 区切り（Git Bash なら && でも可）
+  cd ~/Documents/Program/PCManager; gh repo create kitepon-rgb/PCManager --private --source . --remote origin --push
+  cd ~/Documents/Program/VoiceTransrator; gh repo create kitepon-rgb/VoiceTransrator --private --source . --remote origin --push
   ```
-- [ ] **LiveTR のリモート旧枝 `origin/master` 削除（main へ統合済み・安全装置がリモート枝削除を止めた）**: `cd ~/Documents/Program/LiveTR && git push origin --delete master`
+- [ ] **LiveTR のリモート旧枝 `origin/master` 削除（main へ統合済み・安全装置がリモート枝削除を止めた）**: `cd ~/Documents/Program/LiveTR; git push origin --delete master`
 
 ## 他端末展開（各端末で実施＝Fable 不要）
 
