@@ -61,14 +61,14 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - **⚠ Novel(forklore) は作業中ロック（オーナー宣言 2026-07-04）**: 別セッション稼働中。P5 の Novel 残骸削除・監査等は着手前に必ずオーナーへ申告
 - [ ] ServerManager master→main 正規化（P5 tier1 時）
 - [x] `docs/SYNC_LEDGER.md` 起票（2026-07-04）
-- [ ] orchestrate 憲法に「プロジェクト作業は sync-sweep green から」を1行追記
+- [x] orchestrate 憲法に「同期先行（sync-sweep で fetch→照合してから触る）」を第1条として追記（2026-07-04・8カ条化）
 - [ ] 他端末でも掃引→トリアージ→収容（削除承認は端末ごと）
 
 ## P3. フォルダ構成標準化【F+A】
 
-- [ ] `docs/PROJECT_LAYOUT.md` 定義（必須要件・知識基盤スタック節〔原則10・codegraph・caveat・vault-friendly 規約〕・型別レイアウト・見送り基準）
-- [ ] ギャップ台帳（23リポ×標準の採点・A 並列委譲）→ 統括が移行順裁定
-- [ ] 適用は P5 の波で（1リポ=1PR・git mv 履歴保存）
+- [x] `docs/PROJECT_LAYOUT.md` 定義（2026-07-04・必須要件・知識基盤スタック節・型別レイアウト・見送り基準）
+- [x] ギャップ台帳（2026-07-04・21リポ sonnet 並列採点→ベル裁定。docs/P3_GAP_LEDGER.md）
+- [ ] 適用は P5 の波で（1リポ=1PR・git mv 履歴保存）＝波A/B 実施済、残りは churn>益で見送り裁定
 
 ## P4. メモリの恒常整理と知識の昇格【A+F】
 
@@ -89,16 +89,15 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] 委譲ツール bin/delegate.sh 新設（2026-07-04・timeout 内蔵・CLAUDE.md 前置・git status 表示。~/.local/bin/delegate）
 - [~] P6-1: L4 実測。**Codex は delegate で実証済**（波A/B 稼働）。**Grok は要 `grok login`（H・この端末未認証）**——ログイン後に `grok agent {stdio\|headless}` の非対話形を実測し delegate grok を有効化（現状は明示エラーで停止＝動くフリ回避）。smux（対話連携）は実物評価が別途候補
 - [ ] 波C（見送り・トリガー時）: rag/CI/docs連番は各リポの次の整理機会に。ServerManager master→main は次に触る時
-- [ ] tier2: rpgdev + sprite-forge-mcp
-- [ ] tier3: aiterm-mcp + Caveat + Throughline + tools-manager
-- [ ] tier4: WebAICoding + browser-to-api + dobojo + nextflic
-- [ ] tier5（同期と CLAUDE.md のみ先行）: Chime / MMOAuction / Spotter / OpenCClaw / codex-link 系 / codex-rc / x-article-mcp / videomarketing
-- [ ] Novel 統合済みブランチ削除（refactor/phase0・feat/landing-discovery 等）
+- 注（2026-07-04 P5 絞り込み後）: tier2-5 の「標準化」は実質完了状態＝同期✅（P2 collect 済）・CLAUDE.md ✅（欠落2件は波B で補完・他は present）・フォルダ構成移動は churn>益で見送り裁定（各リポの次の整理機会に）。**残る個別対応は下記のみ**:
+  - [ ] ServerManager master→main（稼働影響確認後・H。PENDING_OWNER）
+  - [ ] Novel(forklore) 統合済みブランチ削除（ロック解除後・A）
+  - [ ] 監査はオーナー個別依頼時のみ（Kikoeru 実施済。横展開しない）
 
 ## P6. この端末の未了ユーティリティ【F/A】
 
-- [ ] L4（Codex/Grok）レシピ実戦検証 → 雛形と罠を orchestrate references＋caveat へ
-- [ ] permission allowlist 横展開（fewer-permission-prompts を主要リポへ）
+- [~] L4 レシピ実戦検証: Codex は delegate で実証済（波A/B）・雛形は delegate.sh に結晶化。Grok は grok login(H) 後に実測（P6-1・PENDING_OWNER）
+- [ ] permission allowlist 横展開（fewer-permission-prompts を主要リポへ）＝要クオ君確認（settings いじりは自律回避・PENDING_OWNER）
 - [~] caveat 棚卸し（2026-07-04 ベル裁定済。45件=public38/private7。private→public 化提案3件は PENDING_OWNER.md＝承認待ち。残り4件は repo/インフラ固有で private 妥当）
 - [x] `~/.claude` 残骸掃除（2026-07-04。backup×2 は `~/Archives/claude-leftovers-20260704.tar.gz` へ収容後に削除、fable-era-plan.md は聖典への redirect 1行に置換）
 
