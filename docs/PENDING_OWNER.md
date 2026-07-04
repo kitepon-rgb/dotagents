@@ -25,7 +25,8 @@
 
 - [ ] 各端末で README ランブック §0〜§4（前提導入→clone→退避→install→検証→メモリ整理）。**削除承認は端末ごとに取る**。**MacBook が作業する18リポには触らせない**（docs/OTHER_TERMINAL_KICKOFF.md）。
 
-## 将来課題（実証後に検討・急がない）
+## delegate を MCP ツール化（2026-07-04 完了・オーナー指示で方針転換）
 
-- [ ] **delegate の MCP 化**: 現状は `~/.local/bin/delegate` のシェルコマンド＋CLAUDE.md 習慣で配布。実プロジェクトで委譲が回り「構造化返り値（変更ファイル/レビュー結果の JSON）」が本当に要ると判明したら専用 MCP を検討する。**aiterm-mcp には入れない**（公開済み汎用 PTF・責務汚染）。
-- 記録: aiterm-mcp は 2026-07 の smux 評価で**コード無変更**（今日のコミット0・最新4週間前）。smux 機能は元から aiterm-mcp にあり、新規実装は dotagents/bin/delegate.sh。aiterm-mcp は18リポの標準化対象ではあるが「smux 機能追加」ではない。
+- **完了**: aiterm-mcp に `delegate` ツールを追加（**v0.5.0**・`core.delegate`＋index.ts 登録）。プロンプトで「使え」は発動が運任せ＝ツールとして渡せば AI のツール一覧に常在し確実に手に取れる、というオーナー判断。当初「aiterm-mcp には入れない（責務汚染）」としたが撤回——**自分の道具であり、codex 未導入時は明示 no-op で他利用者を壊さない**設計で解決。
+- **デプロイ状態**: GitHub push 済み・**この Mac の npm-global へ `npm install -g .` で反映済み**（v0.5.0）。ただし**この端末で `mcp__aiterm__delegate` が見えるには Claude Code 再起動 or aiterm MCP 再接続が必要**（現接続は旧プロセス）。
+- [ ] **他端末に効かせるには npm publish（公開）**: `aiterm-mcp@0.5.0` を npm へ publish → 各端末で `npm install -g aiterm-mcp@latest`（agents-update 経由でも）。**publish は公開操作なのでオーナーの OK 待ち**。publish しない場合、他端末はリポを clone して `npm run build` → `npm install -g .`。
