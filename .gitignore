@@ -7,3 +7,7 @@
 # absolute paths baked in by Throughline). See README "含めないもの".
 .claude/
 .vscode/
+
+# Obsidian vault config is per-machine (view state, workspace). The brain is
+# the markdown itself; the viewer's settings stay local. See PLAN.md 原則7.
+.obsidian/
