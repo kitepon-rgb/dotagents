@@ -33,16 +33,16 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] P0-6 caveat 移管（2026-07-04。`~/.caveat/own` 実体→ `caveat/`、install.sh が symlink。MCP の symlink 越し動作を caveat_search で実測確認。`*.private.md` は caveat 自前 gitignore で端末ローカル維持＝PLAN P0 の境界。他端末は既存ローカルエントリを**リポへマージしてから** symlink＝PLAN P1 参照）
 - [x] P0-7 docs/MODELS.md 新設（2026-07-04。役割→解決規則→解決例の三層。世代交代は解決例列の更新1枚で全端末追従）
 - [x] P0-8 docs/settings.fragments.md（2026-07-04。読み取り系 allowlist・fewer-permission-prompts 正規手順・hooks 方針）
-- [ ] P0-9 ツール標準化: 候補を現行ドキュメントで検証 → 根拠つき一覧をオーナーに提案 → 導入 → install.sh/README 焼き込み（候補: Obsidian=窓／NotebookLM=任意の一方通行窓・低優先／長期記憶系ツール=要調査／その他は検証時に追加）
+- [x] P0-9 ツール標準化（2026-07-04。オーナーの「確認なしで進めろ」指示により検証→導入→焼き込みまで実施）: **Obsidian 導入済み**（brew cask 1.12.7・この Mac。README 前提に標準として記載）／**長期記憶ツールは全て見送り**（mem0・Hindsight・claude-mem 等＝保存層のサイロ化が原則7違反。根拠と再訪条件は rag/second-brain/longterm-memory-tools-survey.md）／NotebookLM は任意の一方通行窓・低優先のまま／**README を全面刷新**: P1 ランブック（git identity・MCP 登録実測コマンド・退避手順・検証バッテリー）焼き込み・旧 clone パス廃止・資産表更新
 - [x] P0-10 `.gitignore` に `.obsidian/` 追加（2026-07-04）
 - [ ] P0-11 `./install.sh` 再実行 → 検証バッテリー。**2026-07-04 進捗: 再実行済み・全 link が本リポ向きを ls/readlink で確認済み（旧パス `~/projects` 宙ぶらりん3本も解消）**。Claude 側はセッションのスキル一覧に新生 audit-gauntlet・orchestrate が反映されたのを実測確認（2026-07-04）。残: Codex セッションでの確認のみ
 
 ## P1. 他端末セットアップ・ランブック【H+A】
 
-- [ ] README.md にランブック収録（前提・clone→install・MCP 登録コマンド確定記載・検証バッテリー）— P0 の標準化成果に従う
-- [ ] ランブック前提に git identity 設定を含める（PLAN P1 参照。この Mac は 2026-07-04 にリポローカルで設定済み、他端末は未確認）
-- [ ] 検証バッテリーに「極小タスクを implementer に委譲して契約どおりの報告が返る」を含める
-- [ ] 各端末: メモリ整理（P4 手順）
+- [x] README.md にランブック収録（2026-07-04。前提・退避手順・clone→install・MCP 登録の実測コマンド・検証バッテリー）
+- [x] ランブック前提に git identity 設定を含める（README §0。この Mac は 2026-07-04 リポローカル設定済み）
+- [x] 検証バッテリーに implementer 極小委譲を含める（README §3）
+- [ ] 各端末: ランブック実走（退避→install→検証→メモリ整理）。この Mac 以外は未実施
 
 ## P2. Git 同期監査＋終活トリアージ【A+F+H】
 

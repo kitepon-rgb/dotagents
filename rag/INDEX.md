@@ -7,3 +7,4 @@
 - [second-brain/raw/obsidian-pricing-20260704.md](second-brain/raw/obsidian-pricing-20260704.md) — Obsidian 公式 pricing verbatim（2026-07-04）
 - [second-brain/raw/obsidian-commercial-license-20260704.md](second-brain/raw/obsidian-commercial-license-20260704.md) — 商用ライセンス条件（WebFetch 要約経由・markitdown は JS ページで空出力の罠あり）
 - [second-brain/notebooklm-second-brain-critique.md](second-brain/notebooklm-second-brain-critique.md) — NotebookLM「第二の脳」論の批評: 主脳不適（サイロ・API Enterprise 限定）／窓なら可／還流思想は Karpathy と収束（2026-07-04・確度は claim 別）
+- [second-brain/longterm-memory-tools-survey.md](second-brain/longterm-memory-tools-survey.md) — 長期記憶ツール調査（mem0/Hindsight/claude-mem 等）: 全て見送り＝保存層サイロ化が原則7違反、既存5層で充足。再訪条件つき（2026-07-04）
