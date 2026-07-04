@@ -19,15 +19,16 @@
 
 | リポ | 残課題 | 提案する処置 |
 |---|---|---|
-| Novel（=NoveLore。GitHub 名 **forklore**） | main +1 未 push（完成 feature コミット） | **push（承認待ち）** |
-| codex-sidecar | main +2 未 push（内容は origin/feat/generate として push 済み＝main の公開のみ） | **push（承認待ち）** |
-| Kikoeru | feat/listen-background が upstream 無し | **branch push（承認待ち）**・.env は gitignore 内に実在（削除系操作時は要目視） |
-| browser-to-api | main が分岐 +1/-1 | fetch 済み。両コミットの内容を見て merge/rebase を裁定（F・未実施） |
-| Throughline | behind 3 ＋ dirty 1 | dirty の意図確認→収容してから pull（F・未実施） |
-| WebAICoding / tools-manager | dirty 1（tools-manager は behind 1 も） | dirty の意図確認→収容（F・未実施） |
-| videomarketing | dirty 2 ＋ remote が外部フォーク（digitalsamba/claude-code-video-toolkit） | 自リポへ切り替えるか**オーナー判断（H）** |
-| codex-link | 迷いブランチ codex/mvp-host-pairing-flow に滞在（main と差なし） | main へ戻すか継続作業ブランチとして明示（F） |
-| OpenCClaw | stash@{0} に CLAUDE.md 類の未収容編集（2026-05） | `git stash branch` でブランチ化→収容（承認待ち） |
+| Novel（=NoveLore。GitHub 名 **forklore**） | ~~main +1 未 push~~ | **push 済み（2026-07-04）** |
+| codex-sidecar | ~~main +2 未 push~~ | **push 済み（2026-07-04）** |
+| Kikoeru | ~~feat/listen-background upstream 無し~~ | **branch push 済み（2026-07-04）**。.env は gitignore 内に実在（削除系操作時は要目視） |
+| browser-to-api | 分岐 +1/-1 → **rebase で線形化済み**（feat コミットを docs コミットの上へ。2026-07-04） | ahead 1 の **push が承認待ち** |
+| Throughline | ~~behind 3~~ pull 済み。`.agents/`（Throughline 端末状態）は未追跡のまま残置 | P5 再生時に .gitignore へ |
+| WebAICoding | `.playwright-mcp/`（MCP 生成物）未追跡 | 無害・P5 再生時に .gitignore へ |
+| tools-manager | ~~behind 1~~ 同期対象外の .DS_Store のみ→グローバル excludesfile で恒久抑止（2026-07-04） | 解消 |
+| videomarketing | **rag/（TTS/音声の調査）と tools-studio/（実スクリプト群）の価値物が未収容**＋remote が外部フォーク | フォーク問題の**オーナー判断（H）が先**（外部フォークには push できない） |
+| codex-link | codex/mvp-host-pairing-flow は main より 5+ コミット先行・push 済み | **裁定: 迷いではなく現役の作業ブランチ**（main への統合はプロジェクト側の判断） |
+| OpenCClaw | stash@{0}（CLAUDE.md 類・2026-05） | **オーナー裁定: 放置（2026-07-04）** |
 | ServerManager | 既定ブランチ master | main 正規化（P5 tier1 の再生時に同時実施） |
 
 ### 非 git ディレクトリ（トリアージ対象）
