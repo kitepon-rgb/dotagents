@@ -6,14 +6,16 @@
 
 ## 役割表
 
+**委譲先の優先順位（レート予算の分散が最優先）**: 物量は **①Claude レート非依存の外部枠（Codex＝OpenAI・Grok Build/Composer＝xAI）を第一選択** → ②外部の性能が足りない時だけ Claude 内 `sonnet`/`haiku`（同じ Anthropic 枠を食う点に注意）。統括・裁定・契約クリティカルのみ上位 Claude。理由: 統括 Fable のレート窓は有限資源で、Claude 内モデルへの委譲はその枠を分け合ってしまう。
+
 | 役割 | 使い所 | 解決規則（latest 型） | 2026-07-04 時点の解決例 |
 |---|---|---|---|
 | **統括** | 裁定・契約クリティカル・最終レビュー・コミット | その時点で使える最強推論＝Claude Code セッションの主モデル | Fable 5（2026-07-07 まで）。以後は Claude 最上位 latest |
-| **実装** | 仕様が固まった実装・テスト作成・逐語移設・一括置換 | 安価高速枠。floating alias `sonnet`（claude/agents/implementer.md が使用） | Sonnet 5 |
-| **軽作業** | 機械的分類・抽出・定型変換 | 最安枠。floating alias `haiku` | Haiku 4.5 |
-| **反証・検証** | 監査指摘の敵対的検証（refuter）・ultracode 監査の verify | 強推論枠＝原則、統括モデルを継承（model 指定省略） | 統括と同じ |
-| **外部併走①** | 第三者視点レビュー・仕様確定済みの機械的一括 | Codex CLI（`codex exec` / `codex review`）。モデル解決は CLI 既定に委ねる | `/Users/kite/.local/bin/codex` |
-| **外部併走②** | best-of-N 生成・自己検証つき実装 | Grok Build（`grok --check` / `--best-of-n N`）。Grok / Composer の選択も CLI 既定 | `~/.grok/bin/grok` |
+| **実装（第一選択・レート非依存）** | 仕様が固まった実装・一括置換・機械的リファクタ | **Codex CLI（OpenAI 枠）** `codex exec` ／ **Grok Build/Composer（xAI 枠）** `grok --best-of-n`。Claude レートを食わない | `/Users/kite/.local/bin/codex`・`~/.grok/bin/grok` |
+| **実装（次善・Claude 枠）** | 外部の性能が絶望的な時のみ | floating alias `sonnet`（claude/agents/implementer.md）。Anthropic 枠を消費 | Sonnet 5 |
+| **軽作業** | 機械的分類・抽出・定型変換 | 外部が無ければ最安枠 `haiku` | Haiku 4.5 |
+| **反証・検証** | 監査指摘の敵対的検証（refuter）・ultracode の verify | 強推論枠＝原則、統括モデルを継承（model 指定省略） | 統括と同じ |
+| **第三者視点レビュー** | 仕様確定済みの独立レビュー | Codex `codex review`（Claude と別視点＋別枠の二重利得） | `/Users/kite/.local/bin/codex` |
 
 ## 指定の作法
 

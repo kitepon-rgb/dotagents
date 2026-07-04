@@ -81,7 +81,10 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] Kikoeru 監査（例外運用の実績。商用サブスクゆえオーナー価値確認済み。ダイジェスト Kikoeru@a15efa3。C1 GPL は環境 PLAN 完了後にオーナー対応）
 - [x] codex-sidecar 監査は**中止**（2026-07-04・走りすぎ是正で TaskStop。標準化のみ実施へ）
 - [ ] **標準化パイプライン**を工場ライン順で適用（監査しない。実物量は implementer/Workflow へ委譲＝原則1の自己適用）: ①開発基盤（aiterm-mcp・Caveat・Throughline・tools-manager）②稼働資産（Kikoeru・rpgdev・sprite-forge-mcp・WebAICoding・browser-to-api・dobojo・nextflic・codex-sidecar・ServerManager〔master→main も〕）③残り
-- [ ] P3 ギャップ台帳を Workflow 並列委譲で作成（各リポ×PROJECT_LAYOUT 採点）→ ベルが移行順裁定
+- [x] P3 ギャップ台帳を Workflow 並列委譲で作成（2026-07-04・21リポ・sonnet 採点・Fable 窓消費ゼロ）→ ベル裁定済み（docs/P3_GAP_LEDGER.md）
+- [ ] 波A（実害・機械的）: tools-manager の .gitignore 新設＋.DS_Store git rm（→ Codex 委譲）
+- [ ] 波B（CLAUDE.md 欠落）: tools-manager・browser-to-api に CLAUDE.md 新規（ベルが仕様→ Codex 起草）
+- [ ] 波C（見送り・トリガー時）: rag/CI/docs連番は各リポの次の整理機会に。ServerManager master→main は次に触る時
 - [ ] tier2: rpgdev + sprite-forge-mcp
 - [ ] tier3: aiterm-mcp + Caveat + Throughline + tools-manager
 - [ ] tier4: WebAICoding + browser-to-api + dobojo + nextflic
