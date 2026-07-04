@@ -21,8 +21,8 @@
 
 ## 委譲の実行ツール
 
-- **`mcp__aiterm__delegate`（aiterm-mcp v0.6.0・MCP ツール）**: 外部知能へ委譲する第一の道具。`delegate(mode="exec"|"review", backend="codex"|"grok", prompt, cwd, timeout_sec)`。**ツール一覧に常在＝プロンプトの言い付けより確実に AI が手に取れる**。exec=実装(workspace-write)／review=read-only レビュー。出力は codex の最終メッセージのみに整形（生 stdout の肥大を回避）。**backend=codex は稼働、backend=grok は要 `grok login`＋実測で有効化（現状は明示「未確定」を返す）**。codex 未導入は明示 no-op。
-- **`delegate`（`bin/delegate.sh` → `~/.local/bin/delegate`）**: 同機能のシェル版（等価）。`delegate codex/review "<プロンプト>" [repo]`。timeout 内蔵・CLAUDE.md 前置・git status 表示。grok backend は要 login・未実測。
+- **非対話の一括委譲・独立レビュー → codex-sidecar の MCP ツール**（成熟した codex 委譲面）: `codex_work`（allowWork＋隔離 worktree で実装）・`codex_review`（差分/ブランチ/パッチのレビュー）・`codex_explore`・`codex_opinion`・`codex_risk_check`・`codex_auditor`・`codex_generate`。ツール名でモデルが分かる（codex_*）。
+- **対話で外部エージェントを駆動 → aiterm の対話起動ツール（v0.7.0）**: `codex_agent`（Codex/gpt-5.5）・`grok_agent`（Grok Build の grok-build）・`composer_agent`（Grok Build の grok-composer-2.5-fast）。各モデルの対話 TUI を永続端末に起動→ `pty_read`/`pty_send` で操作。`reasoning_effort`・`cwd`・`prompt`・`session_name` を引数で受ける。**モデルごとに1ツール＝名前と説明でどのモデルか一目瞭然**。
 - **対話連携の候補（未評価）**: smux（Claude⇄Codex のターミナル双方向ループ）。単発委譲＋統括裁定を超えるか実測してから採否（rag/orchestration/smux-terminal-agent-mesh.md）。
 
 ## 指定の作法

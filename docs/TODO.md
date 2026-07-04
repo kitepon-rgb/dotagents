@@ -68,7 +68,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 - [x] `docs/PROJECT_LAYOUT.md` 定義（2026-07-04・必須要件・知識基盤スタック節・型別レイアウト・見送り基準）
 - [x] ギャップ台帳（2026-07-04・21リポ sonnet 並列採点→ベル裁定。docs/P3_GAP_LEDGER.md）
-- [ ] **標準化ミッション（2026-07-04 方針転換・対象確定）**: 見送り撤回。**対象18リポ**（オーナー確定・Novel 含む）に付属物（rag/CI/docs連番/adr/settings）を Codex 委譲で足す。対象/除外は docs/P3_GAP_LEDGER.md（除外: Kikoeru・codex-link・codex-rc・x-article-mcp）。**実行順序③＝他端末展開②の後に着手**。delegate 使い方・ガードレール常時ON・aiterm-mcp 訂正は CLAUDE.md/orchestrate/PENDING に反映済み
+- [ ] **標準化ミッション（2026-07-04 方針転換・対象確定）**: 見送り撤回。**対象18リポ**（オーナー確定・Novel 含む）に付属物（rag/CI/docs連番/adr/settings）を Codex 委譲で足す。対象/除外は docs/P3_GAP_LEDGER.md（除外: Kikoeru・codex-link・codex-rc・x-article-mcp）。**実行順序③＝他端末展開②の後に着手**。外部委譲（対話=aiterm agent ツール／非対話=codex-sidecar）・ガードレール常時ON は CLAUDE.md/MODELS.md/orchestrate に反映済み
 
 ## P4. メモリの恒常整理と知識の昇格【A+F】
 
@@ -86,7 +86,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] P3 ギャップ台帳を Workflow 並列委譲で作成（2026-07-04・21リポ・sonnet 採点・Fable 窓消費ゼロ）→ ベル裁定済み（docs/P3_GAP_LEDGER.md）
 - [x] 波A（実害・機械的）: tools-manager .gitignore 新設（2026-07-04・**Codex 委譲＝Claude レート消費ゼロで実証**。.DS_Store は追跡外と検証判明。tools-manager@37af853）
 - [x] 波B（CLAUDE.md 欠落）: tools-manager・browser-to-api に CLAUDE.md 新規（2026-07-04・Codex 委譲→ベル検証・Fable 窓消費ゼロ）
-- [x] 委譲ツール bin/delegate.sh 新設（2026-07-04・timeout 内蔵・CLAUDE.md 前置・git status 表示。~/.local/bin/delegate）
+- [x] ~~委譲ツール bin/delegate.sh 新設~~ → **撤去済み（2026-07-04）**。外部委譲は「対話=aiterm の codex_agent/grok_agent/composer_agent（v0.7.0）／非対話=codex-sidecar の codex_work/review 等」に確定（オーナー設計。delegate は paradigm 不整合で廃止）
 - [~] P6-1: L4 実測。**Codex は delegate で実証済**（波A/B 稼働）。**Grok は要 `grok login`（H・この端末未認証）**——ログイン後に `grok agent {stdio\|headless}` の非対話形を実測し delegate grok を有効化（現状は明示エラーで停止＝動くフリ回避）。**smux 実物評価済＝不採用**（tmux-bridge が aiterm-mcp と機能重複・tmux 競合リスク）。能力は `delegate review`＋aiterm で吸収・実証済（rag/orchestration/smux）
 - [ ] ~~波C（見送り）~~ **撤回→標準化ミッションで積極実施**（rag/CI/docs連番を対象16リポへ。ServerManager master→main も標準化時に同時）
 - 注（2026-07-04 P5 絞り込み後）: tier2-5 の「標準化」は実質完了状態＝同期✅（P2 collect 済）・CLAUDE.md ✅（欠落2件は波B で補完・他は present）・フォルダ構成移動は churn>益で見送り裁定（各リポの次の整理機会に）。**残る個別対応は下記のみ**:

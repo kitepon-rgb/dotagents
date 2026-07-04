@@ -4,7 +4,7 @@
 
 ## ログイン・認証
 
-- [ ] **`grok login`**: Grok Build が未認証（"You are not authenticated"）。ログインすれば delegate の grok backend を実測→有効化でき、委譲先が Codex＋Grok の二枠になる（Claude レート非依存が倍に）。手順: `~/.grok/bin/grok login`。済んだらベルに言えば `grok agent {stdio\|headless}` の非対話形を実測して delegate grok を確定する。
+- [x] **`grok login`**: 2026-07-04 ログイン済み（"logged in with grok.com"）。aiterm の `grok_agent`/`composer_agent`（対話）で Grok/Composer を駆動可能。非対話ワンショットは `grok -p "<prompt>" --output-format plain` が実測で動作（将来 codex-sidecar 側に grok 委譲を足す余地あり）。
 
 ## 承認待ち（ベルが提案済み・実行は承認後）
 
@@ -25,9 +25,10 @@
 
 - [ ] 各端末で README ランブック §0〜§4（前提導入→clone→退避→install→検証→メモリ整理）。**削除承認は端末ごとに取る**。**MacBook が作業する18リポには触らせない**（docs/OTHER_TERMINAL_KICKOFF.md）。
 
-## delegate を MCP ツール化（2026-07-04 完了・オーナー指示で方針転換）
+## 外部エージェント委譲の最終形（2026-07-04 確定・オーナー設計）
 
-- **完了**: aiterm-mcp に `delegate` ツールを追加（**v0.5.0**・`core.delegate`＋index.ts 登録）。プロンプトで「使え」は発動が運任せ＝ツールとして渡せば AI のツール一覧に常在し確実に手に取れる、というオーナー判断。当初「aiterm-mcp には入れない（責務汚染）」としたが撤回——**自分の道具であり、codex 未導入時は明示 no-op で他利用者を壊さない**設計で解決。
-- **デプロイ状態**: GitHub push 済み・**この Mac の npm-global へ `npm install -g .` で反映済み**（v0.5.0）。ただし**この端末で `mcp__aiterm__delegate` が見えるには Claude Code 再起動 or aiterm MCP 再接続が必要**（現接続は旧プロセス）。
-- [ ] **他端末に効かせるには npm publish（公開）**: `aiterm-mcp@0.6.0` を npm へ publish → 各端末で `npm install -g aiterm-mcp@latest`（agents-update 経由でも）。**publish は公開操作なのでオーナーの OK 待ち**。publish しない場合、他端末はリポを clone して `npm run build` → `npm install -g .`。
-- [ ] **delegate の grok backend を有効化**: `grok login`（H・オーナーのみ）後、ベルが grok の非対話ワンショット形を実測して core.delegate の grok 分岐を実装（現状は明示「未確定」を返す）。これで委譲先が Codex＋Grok/Composer の二枠になる（MODELS.md の第一選択が揃う）。
+- **対話型 → aiterm v0.7.0 の `codex_agent`/`grok_agent`/`composer_agent`**（モデルごとに1ツール・名前で分かる・`reasoning_effort` 引数）。GitHub push＋この Mac の global 反映済み。実測: grok_agent 起動を確認済み。
+- **非対話 → codex-sidecar の `codex_work`/`codex_review` 等**（既存の成熟した委譲面）。
+- 経緯: 一時 aiterm に非対話 `delegate` を入れた（v0.5-0.6）が、aiterm は対話型・delegate は非対話でパラダイム不整合＝撤去（v0.7.0）。dotagents の `bin/delegate.sh` も削除。
+- [ ] **他端末に効かせるには aiterm-mcp を npm publish（公開・OK 待ち）**: `aiterm-mcp@0.7.0` を publish → 各端末 `npm install -g aiterm-mcp@latest`。しない場合は各端末で clone→build→`npm install -g .`。
+- [ ] （余地）codex-sidecar に grok/composer の非対話委譲ツールを足す（grok は `-p ... --output-format plain` で動作確認済）。codex-sidecar は tier1 なので慎重に。

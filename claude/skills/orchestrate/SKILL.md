@@ -27,8 +27,8 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 | L0 統括 | 裁定・契約クリティカル（認可/tx/公開API互換/依存方向/本番操作）・履歴修復・コミット・最終責任 | 本人 | セッション主モデル |
 | L1 監査・検証 | 発見→重複統合→**指摘ごとの反証**→網羅性Critic（盲点→第2ラウンド） | Workflow（`references/workflow-templates.md`） | 省略=主モデル継承（検証の精度優先）。数で押す finder は sonnet 可 |
 | L2 設計 | 2〜4視点の並列設計（実行順序/配置/取捨 等）→**割れは統括が根拠で裁定**（多数決禁止） | Agent (Plan) | 主モデル継承 |
-| L3 実装 | 仕様が固まった実装・テスト作成・逐語移設・整理 | **まず外部枠 `delegate codex`（Claude レート非依存）**、次善で Agent/Workflow `model: sonnet`（機械的なら haiku） | 外部枠優先→sonnet |
-| L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | `delegate codex`（＝codex exec ラッパ・timeout/CLAUDE.md 前置つき）・`codex review`・grok（要 login・xAI 枠） | レート非依存＝第一選択（MODELS.md） |
+| L3 実装 | 仕様が固まった実装・テスト作成・逐語移設・整理 | **まず外部枠 codex-sidecar の `codex_work`（隔離 worktree・Claude レート非依存）**、次善で Agent/Workflow `model: sonnet`（機械的なら haiku） | 外部枠優先→sonnet |
+| L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | 非対話＝codex-sidecar の `codex_review`/`codex_work`/`codex_generate` 等／対話＝aiterm の `codex_agent`・`grok_agent`・`composer_agent` | レート非依存＝第一選択（MODELS.md） |
 
 **波の設計**: 並列は非交差ディレクトリで割る。同一ファイルを触る作業は直列化（wave 分け）。エージェントに branch 切替・commit をさせない。
 **レート予算**: L0 統括（Claude）の窓は有限資源。物量は L4 外部枠（Codex/Grok＝Claude レート非依存）を第一選択にし、Claude 内 sonnet/haiku は外部の性能が足りない時の次善（同じ Anthropic 枠を食う）。委譲物は必ず統括が検証し、納得しなければ上位へエスカレーション（安さは品質の人質でない）。詳細 docs/MODELS.md。
@@ -58,8 +58,8 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 
 「設計→レビュー→再設計」を外部AI（Codex/Grok）と往復させる型。基盤は aiterm 永続PTY（`mcp__aiterm__pty_*`）＝tmux ペインの read/type/keys で、smux 等の外部ツールは不要（機能重複・rag/orchestration/smux-terminal-agent-mesh.md）。
 
-- **片方向レビュー**: `delegate review "<対象>" [repo]` → Codex が read-only でレビュー → **統括が指摘を敵対的裁定**（生き残りだけ採用）→ 統括が修正・コミット。実証: 2026-07-04 ランブックレビューで Codex が verify-install の実バグを発見。
-- **往復**: 修正後に再度 `delegate review` で確認。**1往復ごとに統括が裁定**する（全自動対話にしない＝品質 > 自動化）。第三者視点（別モデル・別レート枠）と敵対的検証を同時に得る。
+- **片方向レビュー**: codex-sidecar の `codex_review`（非対話）で Codex にレビューさせる → **統括が指摘を敵対的裁定**（生き残りだけ採用）→ 統括が修正・コミット。実証: 2026-07-04 ランブックレビューで Codex が verify-install の実バグを発見。
+- **往復**: 修正後に再度 `codex_review` で確認。**1往復ごとに統括が裁定**する（全自動対話にしない＝品質 > 自動化）。第三者視点（別モデル・別レート枠）と敵対的検証を同時に得る。対話で詰めたい時は aiterm の `codex_agent`/`grok_agent`/`composer_agent`。
 
 ## 標準エージェント（~/.claude/agents に定義済み）
 
