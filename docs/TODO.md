@@ -46,11 +46,13 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 ## P2. Git 同期監査＋終活トリアージ【A+F+H】
 
-- [ ] `bin/sync-sweep.sh` 作成（fetch --all → ahead/behind・dirty・unpushed・**stash 数**・迷いブランチ・既定ブランチ・NO_REMOTE・gitignore 貴重物・**開発ルート直下の非 git ディレクトリ**を台帳出力。走査ルートは端末ごとに SYNC_LEDGER に記録）
-- [ ] 掃引 → **git リポ＋非 git 実プロジェクト**を継続/休眠/削除候補に仮分類 → **一覧でオーナー承認(H)**
-- [ ] 承認済み削除を安全手順で実行（PLAN P2 の条件・退避手順に従う。GitHub 側は archive）
-- [ ] 残すリポを1リポずつ収容（dirty 裁定=F／unpushed push／迷いブランチ裁定／master→main 正規化〔ServerManager〕／videomarketing フォーク問題=H）
-- [ ] `docs/SYNC_LEDGER.md` 起票（端末×リポの最終確認日・処遇）
+- [x] `bin/sync-sweep.sh` 作成（2026-07-04。stash・非git・走査ルート・エラー行内報告つき。install.sh で全端末配布）
+- [x] この端末の掃引実施（2026-07-04。27ディレクトリ=git23+非git4。結果と仮分類は docs/SYNC_LEDGER.md）
+- [ ] 終活トリアージの**オーナー承認(H)**: 継続16／休眠候補7／非git4（git化2・削除候補2）＝SYNC_LEDGER の提案一覧を提示済み（2026-07-04）
+- [ ] 承認後の実行: push 3件（Novel main・codex-sidecar main・Kikoeru branch。**権限分類器により明示承認が必要**）／ChromeDev・grok 削除／ad-studio・blog-figmaker git 化／OpenCClaw stash ブランチ化
+- [x] 安全収容（2026-07-04）: クリーン behind 5リポを ff-only pull で同期（aiterm-mcp・codex-rc・dobojo・rpgdev・x-article-mcp）
+- [ ] 個別収容（F・未実施）: browser-to-api 分岐裁定／Throughline・WebAICoding・tools-manager の dirty 意図確認／codex-link 迷いブランチ／videomarketing フォーク問題(H)／ServerManager master→main（P5 tier1 時）
+- [x] `docs/SYNC_LEDGER.md` 起票（2026-07-04）
 - [ ] orchestrate 憲法に「プロジェクト作業は sync-sweep green から」を1行追記
 - [ ] 他端末でも掃引→トリアージ→収容（削除承認は端末ごと）
 
@@ -90,7 +92,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 ## 実測台帳（この端末 `~/Developer`・2026-07-04 スナップショット）
 
-鮮度注記: 2026-07-04 の即値（一部は同日の ultracode 監査エージェントによる実測で補正済み）。**以後の正は P2 の docs/SYNC_LEDGER.md**（作成後はそちらを見る）。
+鮮度注記: 2026-07-04 の即値（一部は同日の ultracode 監査エージェントによる実測で補正済み）。**→ 同日 docs/SYNC_LEDGER.md を起票済み＝以後はそちらが正**（下表は歴史記録として残置）。
 
 `~/Developer` 直下 27 ディレクトリ＝ git リポ 23 ＋ 非 git 実プロジェクト 2（下表）＋ その他。特記事項のみ:
 
