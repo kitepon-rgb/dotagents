@@ -15,7 +15,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 ※時間見積は判断材料にしない（PLAN「期限と前提」参照）
 ```
 
-**次の一手: P0-1 資産棚卸し（オーナー承認 H）**
+**人手・承認待ちの全件は [PENDING_OWNER.md](PENDING_OWNER.md) に集約**（grok login・caveat 棚卸し承認・ServerManager 正規化・Kikoeru GPL・他端末展開）。
 
 ## P0. dotagents 最適化【F・最優先】
 
@@ -97,7 +97,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 - [ ] L4（Codex/Grok）レシピ実戦検証 → 雛形と罠を orchestrate references＋caveat へ
 - [ ] permission allowlist 横展開（fewer-permission-prompts を主要リポへ）
-- [ ] caveat 棚卸し（own entries の public/private 一括提案）
+- [~] caveat 棚卸し（2026-07-04 ベル裁定済。45件=public38/private7。private→public 化提案3件は PENDING_OWNER.md＝承認待ち。残り4件は repo/インフラ固有で private 妥当）
 - [x] `~/.claude` 残骸掃除（2026-07-04。backup×2 は `~/Archives/claude-leftovers-20260704.tar.gz` へ収容後に削除、fable-era-plan.md は聖典への redirect 1行に置換）
 
 ## P7. Fable 不在後の運用規定【F】
