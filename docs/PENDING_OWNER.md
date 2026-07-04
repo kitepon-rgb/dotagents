@@ -15,7 +15,7 @@
   - private 妥当（変更不要）: bughub・codex-link-p2p・codex-link×2（repo/インフラ固有）
   - 承認くれれば `caveat_update` で visibility を public に変える。
 - [x] ~~**ServerManager の master→main 正規化**~~ 2026-07-04 完了（オーナー承認「サーバーもやっていい」）: 影響実測（server crontab の毎分 pull・常駐エージェント指示文の push 先・ci.yml・正本 URL）→ 4ファイル修正を master 最終コミットで push → server 自動 pull 確認 → GitHub rename → server clone/crontab/Mac clone を main へ追従。検証: cron の75秒窓でエラー行増加ゼロ＝毎分 pull が main で無音成功。
-- [ ] **Caveat の Windows CI が5月末から赤（既存不良・FOX 端末向き）**: 全 dependabot PR と main push で windows-2022/2025 ジョブが失敗。原因の芯: `'C:\Program' is not recognized`＝空白入りパス（process.execPath）を CAVEAT_CODEX_SIDECAR_COMMAND 経由でコマンド文字列としてシェル実行する連鎖（apps/cli/src/commands/hookCmd.ts:480 → codex-sidecar CLI 側の shell 実行）の未クオート。**修正検証に Windows 実機が必要＝FOX 端末が最適**（macOS からの盲目修正は CI ガチャになるので見送り裁定 2026-07-04）。ubuntu/macos ジョブは green。
+- [ ] **Caveat の Windows CI 赤 → 修正済み・PR #23 全緑・マージ待ち（オーナーのワンクリック）**: FOX 実機で修正（2026-07-04 GO）。真因は当初見立て（hookCmd.ts:480＝こちらは配列渡しでシロ）でなく **scripts/pnpm.mjs の shell:true 無クオート × corepack enable が setup-node より先＝pnpm シムが `C:\Program Files\nodejs` に生成される**合わせ技。トークン毎クオートで修正し、実機で赤→緑の因果確認・release-smoke exit 0・36テスト green・**PR #23 の CI で windows-2022/2025×Node22/24 全ジョブ pass**（5月末以来初の全緑）。自己承認は安全装置が禁止のため https://github.com/kitepon-rgb/Caveat/pull/23 をオーナーがマージ（squash 推奨・ブランチ削除可）。罠は `ci/github-actions-windows-corepack-enable-setup-node-pnpm-shell-...` に収容済み。
 - [ ] **codex-sidecar-cli/core の運用形態**: npm link 前提とされていたが、実際は旧 tools-manager cron が 2026-06-29 に link を registry 版で置換済み＝以後 registry 運用で無症状だった。agents-update に正式収載して現状追認済み（2026-07-04）。**link 開発（ローカル最新を即時反映）へ戻したいなら**、リストから外して `npm link` し直す——判断求む。戻さないなら現状のままで完。
 
 ## 別枠・後日（環境 PLAN 完了後）
