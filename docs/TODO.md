@@ -82,7 +82,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - **方針転換（オーナー是正 2026-07-04）: P5 を「一律の敵対的監査」から「標準化（同期＋フォルダ構成＋CLAUDE.md）」へ絞る。** 監査はオーナー個別依頼時のみの例外運用。工場整備の本旨に回帰。
 - [x] Kikoeru 監査（例外運用の実績。商用サブスクゆえオーナー価値確認済み。ダイジェスト Kikoeru@a15efa3。C1 GPL は環境 PLAN 完了後にオーナー対応）
 - [x] codex-sidecar 監査は**中止**（2026-07-04・走りすぎ是正で TaskStop。標準化のみ実施へ）
-- [x] **標準化パイプライン適用完了（2026-07-04）**: 18リポ全消化（P3 の標準化ミッション欄参照）。残る個別対応は ServerManager master→main（H・PENDING_OWNER）と OpenCClaw テスト赤7件の green 化＋CI のみ
+- [x] **標準化パイプライン適用完了（2026-07-04）**: 18リポ全消化（P3 の標準化ミッション欄参照）。個別対応も同日中に完遂: **ServerManager master→main ✅**（server crontab/clone 追従・cron 無音成功まで実測）／**OpenCClaw テスト赤7件 green 化 ✅**（テスト/治具のみ・672/672・根拠は縮小コミット cdf5f6d 等）＋**CI 新設 ✅**（node:24 Linux コンテナ実測後に搭載・初回実行 green）。Caveat Windows CI は FOX が実機根治（PR #23 全緑・オーナーのマージ待ち＝PENDING_OWNER）
 - [x] P3 ギャップ台帳を Workflow 並列委譲で作成（2026-07-04・21リポ・sonnet 採点・Fable 窓消費ゼロ）→ ベル裁定済み（docs/P3_GAP_LEDGER.md）
 - [x] 波A（実害・機械的）: tools-manager .gitignore 新設（2026-07-04・**Codex 委譲＝Claude レート消費ゼロで実証**。.DS_Store は追跡外と検証判明。tools-manager@37af853）
 - [x] 波B（CLAUDE.md 欠落）: tools-manager・browser-to-api に CLAUDE.md 新規（2026-07-04・Codex 委譲→ベル検証・Fable 窓消費ゼロ）
