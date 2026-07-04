@@ -130,15 +130,20 @@ aiterm-mcp(-19)・ServerManager(-17)・Spotter(-59)・Throughline(-55)・Caveat(
 
 Caveat(-4・dirty3)・Chime(-5)・Spotter(-2)・sprite-forge-mcp(-3)・codex-sidecar(-2)・browser-to-api(-2)・WebAICoding(-22・dirty1)・MMOAuction(dirty1)・ServerManager(-1・dirty1・master)・OpenCClaw(-1)・dotagents(本作業)・dobojo/rpgdev/Throughline(同期)。behind は MacBook 主作業のため放置。
 
-### 処遇提案（オーナー承認待ち）
+### 処遇（オーナー裁定・実施済み 2026-07-04。1件ずつ AskUserQuestion で個別承認）
 
-| 対象 | 実測 | 提案 |
-|---|---|---|
-| dirty 残り9リポ（18リポ外） | DDNSer(1)・FlaUI-MCP(1)・IP-MCP(1)・License-DB(2)・LiveTR(1)・Trader(1)・ai-group(1)・claude-image-tools(1)・personaplex(1) | 各1〜2ファイル＝収容 or 破棄の目視裁定（次セッションで中身一覧を出す） |
-| 迷いブランチ | codex-rc `rollback-backup/pre-24h-20260509`（upstream無）・terminal `feat/node-impl-tests-publish`（upstream無） | push して upstream 化 or 削除の裁定 |
-| 外部 clone・大幅 behind | llama.cpp(-872)・ComfyUI(-420)・claude-usage(-98)・zenn-content(-34)・OLTranslator(-16)・Nextcloud(-2) | 同期維持 or 削除（必要時再clone）の裁定 |
-| caveats-quo | **リモート消滅**（fetch 失敗の正体。Windows 側で全35件収容済み確認済み） | **削除候補**（Windows 側提案と同一） |
-| 非git 17件 | 実体系: Lisence(25)・ImageCollector(18)・StableDiffusion(17)・VoiceTransrator(13)・sfc2win(10)・git-manager(10)・AlwaysToGo(7)・BosTimerBot(7)・_playwright(5)・ai-companion(5)・nasne(4)・Translator(3)・GroupChat(2)／小物: Claude(1)・FileCopy(1)・YomiAGE(1)・test(1) | git化(private)/tar退避/削除の裁定（Windows 側と同名多数＝同系の重複面。横断で一括裁定推奨） |
+| 対象 | 裁定と結果 |
+|---|---|
+| 大物削除 | **WSL2Manager(14G 丸ごと)・ComfyUI(7.5G 外部clone)・OLTranslator(2.9G ローカルのみ・GitHub 健在)・llama.cpp(347M 外部clone)** 削除済み |
+| 唯一実体の削除（復元不能を明示のうえオーナー選択） | **ImageCollector(315M)・StableDiffusion(228M 設計文書含む)・ai-companion(57M 記憶DB含む)・AlwaysToGo(96K)** 削除済み |
+| 非git 小物 | YomiAGE・test・nasne・_playwright・BosTimerBot・Translator・FileCopy・GroupChat・Claude・Lisence・git-manager 削除済み／**sfc2win は残置（オーナー非選択）** |
+| caveats-quo | 削除済み（リモート消滅・全35件収容確認済みだった） |
+| zenn-content | ローカル削除済み（GitHub archive に全履歴） |
+| dirty ノイズ | 内容差分ゼロの5件（.env.example×4・personaplex .env.local）＋Throughline 自動生成の Trader tasks.json を checkout で破棄→ 6リポ dirty 0 に。**ai-group の記憶DB(chroma.sqlite3) と未追跡（FlaUI-MCP publish/・License-DB .vscode/）は意図的に残置** |
+| 迷いブランチ | terminal `feat/node-impl-tests-publish`（main 取込済・7299ddf）・codex-rc `rollback-backup/pre-24h-20260509`（2c70663）削除済み（reflog 期間内は復元可） |
+| 残置（休眠・同期維持） | License-DB-Backup(-7)・Nextcloud(-2)・SessionHub・SmartClaude・CosyVoice(-1)・Live2DPet は削除済みにつき対象外、その他 behind クリーンの自リポ群 |
+
+掃引後の最終形: **55 ディレクトリ**（77→55。約 26GB 回収。VHDX の実回収は Windows 側 sparse 化が別途必要）。
 | Windows アプリ専用プロジェクト | オーナー指示 2026-07-04「WSL2 環境では完全に Windows アプリのものは不要＝削除可」（**この端末限定の裁定**）。全77件を標識走査＋実見で分類→該当4件 | **削除実施済み（2026-07-04・個別リスト提示→オーナー再承認後）**: **VoiceTransrator**（496M・トレイ音声翻訳・Windows 側に571Mの実体）・**LiveTR**（2.0G・翻訳アプリ・自GitHub同期済・Windows側にも実体）・**LiveTR-rubberband**（LiveTR専用fork・同期済クリーン）・**Live2DPet**（外部repo無改変clone）＝計約2.5GB。保険 tar（VoiceTransrator 全体＋LiveTR未追跡 installer）も同日オーナー実行で削除済み。**FlaUI-MCP・Mcp.ComputerUse は Windows 製だが現役 MCP 実体のため保全**。注: WSL 内の削除は VHDX を自動で縮めない＝Windows 側の容量逼迫には sparse 化/compact が別途必要 |
 
 ## 他端末（未掃引）
