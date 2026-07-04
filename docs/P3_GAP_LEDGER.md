@@ -60,3 +60,11 @@ sprite-forge-mcp / codex-sidecar / ServerManager（master→main も同時）/ M
 対象判断のルール（これだけ）: **この端末が主作業（掃引時に同期 or ahead）だった稼働リポが対象**。GitHub より古い（behind）＝主作業は別端末＝対象外。worth/skip の旧基準は無効。
 
 進め方: 1リポずつ Codex 委譲（PROJECT_LAYOUT を読ませ欠落付属物を足す・git mv で履歴保存・commit しない）→ ベルが diff 検証・ゲート→ 独立コミット・push。CLAUDE.md も標準思想（rag/CI 参照）を反映。**この実標準化は実行順序③＝他端末展開②の後に着手**。
+
+## 完遂記録（2026-07-04）
+
+**18/18 全リポ標準化・push 済み。** 消化状況の詳細は docs/TODO.md（P3/P5）が正。実施形: codex exec 並列委譲（gpt-5.5 high・最大11並列・Claude レート消費ゼロ）→統括が全件 diff レビュー＋ゲート再実行→pathspec コミット。裁定メモ:
+- 双方向の誤り訂正が機能: 委譲先が台帳の誤り5件（CI 既存等）を正し、統括が委譲先の誤り2件（.github テンプレ参照漏れ・上流ショーケースの誤追跡解除）を検収で捕捉
+- Novel＝変更ゼロ（標準の母体・適合済み。CLAUDE.md の意図的 ignore は forklore セッションの裁定として尊重）
+- dotagents＝連番リネーム意図的見送り（docs/adr/0002・生きた参照）
+- OpenCClaw＝CI 見送り（既存テスト赤7件。「通らない CI を張らない」原則。green 化後に新設）
