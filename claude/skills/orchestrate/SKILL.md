@@ -54,6 +54,13 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 - 1体に巨大タスク（→ 分解して波状に。1体=1責務=1レビュー単位）
 - エージェントの「できました」を鵜呑み（→ ゲートは統括が回す）
 
+## 協業ループ（Claude⇄外部AI・aiterm PTY で回す）
+
+「設計→レビュー→再設計」を外部AI（Codex/Grok）と往復させる型。基盤は aiterm 永続PTY（`mcp__aiterm__pty_*`）＝tmux ペインの read/type/keys で、smux 等の外部ツールは不要（機能重複・rag/orchestration/smux-terminal-agent-mesh.md）。
+
+- **片方向レビュー**: `delegate review "<対象>" [repo]` → Codex が read-only でレビュー → **統括が指摘を敵対的裁定**（生き残りだけ採用）→ 統括が修正・コミット。実証: 2026-07-04 ランブックレビューで Codex が verify-install の実バグを発見。
+- **往復**: 修正後に再度 `delegate review` で確認。**1往復ごとに統括が裁定**する（全自動対話にしない＝品質 > 自動化）。第三者視点（別モデル・別レート枠）と敵対的検証を同時に得る。
+
 ## 標準エージェント（~/.claude/agents に定義済み）
 
 - **implementer**（sonnet）: 委譲契約を焼き込んだ標準実装者。契約の共通部を毎回書かなくてよい。

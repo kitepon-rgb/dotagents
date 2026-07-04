@@ -87,7 +87,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] 波A（実害・機械的）: tools-manager .gitignore 新設（2026-07-04・**Codex 委譲＝Claude レート消費ゼロで実証**。.DS_Store は追跡外と検証判明。tools-manager@37af853）
 - [x] 波B（CLAUDE.md 欠落）: tools-manager・browser-to-api に CLAUDE.md 新規（2026-07-04・Codex 委譲→ベル検証・Fable 窓消費ゼロ）
 - [x] 委譲ツール bin/delegate.sh 新設（2026-07-04・timeout 内蔵・CLAUDE.md 前置・git status 表示。~/.local/bin/delegate）
-- [~] P6-1: L4 実測。**Codex は delegate で実証済**（波A/B 稼働）。**Grok は要 `grok login`（H・この端末未認証）**——ログイン後に `grok agent {stdio\|headless}` の非対話形を実測し delegate grok を有効化（現状は明示エラーで停止＝動くフリ回避）。smux（対話連携）は実物評価が別途候補
+- [~] P6-1: L4 実測。**Codex は delegate で実証済**（波A/B 稼働）。**Grok は要 `grok login`（H・この端末未認証）**——ログイン後に `grok agent {stdio\|headless}` の非対話形を実測し delegate grok を有効化（現状は明示エラーで停止＝動くフリ回避）。**smux 実物評価済＝不採用**（tmux-bridge が aiterm-mcp と機能重複・tmux 競合リスク）。能力は `delegate review`＋aiterm で吸収・実証済（rag/orchestration/smux）
 - [ ] 波C（見送り・トリガー時）: rag/CI/docs連番は各リポの次の整理機会に。ServerManager master→main は次に触る時
 - 注（2026-07-04 P5 絞り込み後）: tier2-5 の「標準化」は実質完了状態＝同期✅（P2 collect 済）・CLAUDE.md ✅（欠落2件は波B で補完・他は present）・フォルダ構成移動は churn>益で見送り裁定（各リポの次の整理機会に）。**残る個別対応は下記のみ**:
   - [ ] ServerManager master→main（稼働影響確認後・H。PENDING_OWNER）
