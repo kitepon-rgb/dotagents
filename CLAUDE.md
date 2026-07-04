@@ -19,7 +19,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 
 1. **作業前に必ず `git fetch` → origin/main と照合**してから触る。このリポは複数端末から編集される。作業後は必ず push で真実を返す（GitHub が真実の源）。
 2. **dirty を見つけたら差分から意図を確認**してから収容（コミット）か破棄を判断する。symlink 運用ゆえ、`~/.claude` / `~/.codex` 側での編集がこのリポの dirty として現れる。勝手に checkout で消さない。
-3. 環境整備の**方針と理由は [PLAN.md](PLAN.md)（聖典）が正、消化状況（チェックボックス・波・台帳）は [docs/TODO.md](docs/TODO.md) が正**。環境まわりの作業はまず docs/TODO.md で現在地を拾い、判断に迷ったら PLAN.md の原則に立ち返る。調査の前に [rag/INDEX.md](rag/INDEX.md) と caveat を検索する（同じ調査を繰り返さない）。
+3. **趣旨・原則・残件は [PLAN.md](PLAN.md)（憲章＝聖典 v4）が正**。文書は3分類で管理する——①趣旨 ②プラン（docs/ に作り **TODO を兼ねる**） ③役目を終えたら [docs/archive/](docs/archive/) へ退避。環境まわりの作業はまず PLAN.md の残件と docs/ の進行中プランで現在地を拾い、判断に迷ったら原則に立ち返る。調査の前に [rag/INDEX.md](rag/INDEX.md) と caveat を検索する（同じ調査を繰り返さない）。
 
 ## 配置規約
 
