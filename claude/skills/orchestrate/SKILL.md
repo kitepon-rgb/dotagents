@@ -3,7 +3,7 @@ name: orchestrate
 description: 多エージェント/多モデル統括の標準型（2026-07 NoveLore 全域リファクタ・監査156体/21コミット/本番デプロイ事故0で実証）。複数フェーズ or 並列分解が利くタスク（全域監査・大規模リファクタ・移行・複数領域の実装・調査網羅）に着手する前に必ず読む。トリガー例：「リファクタ」「監査」「全域」「大規模」「移行」「オーケストレーション」「複数エージェント」「ultracode」「徹底的に」
 ---
 
-<!-- 前提: Fable級統括（2026-07 実証時点）。統括が最上位級でない場合の運用は本書「ガードレール常時ON」節に収録済み。役割→モデルの対応は dotagents/docs/MODELS.md が正（バージョン固定禁止＝PLAN 原則9） -->
+<!-- 前提: Fable級統括（2026-07 実証時点）。統括が最上位級でない場合の運用は本書「ガードレール常時ON」節に収録済み。役割→モデルの対応は dotagents/docs/02_models.md が正（バージョン固定禁止＝PLAN 原則9） -->
 
 # Orchestrate — 統括の標準型
 
@@ -28,10 +28,10 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 | L1 監査・検証 | 発見→重複統合→**指摘ごとの反証**→網羅性Critic（盲点→第2ラウンド） | Workflow（`references/workflow-templates.md`） | 省略=主モデル継承（検証の精度優先）。数で押す finder は sonnet 可 |
 | L2 設計 | 2〜4視点の並列設計（実行順序/配置/取捨 等）→**割れは統括が根拠で裁定**（多数決禁止） | Agent (Plan) | 主モデル継承 |
 | L3 実装 | 仕様が固まった実装・テスト作成・逐語移設・整理 | **まず外部枠 codex-sidecar の `codex_work`（隔離 worktree・Claude レート非依存）**、次善で Agent/Workflow `model: sonnet`（機械的なら haiku） | 外部枠優先→sonnet |
-| L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | 非対話＝codex-sidecar の `codex_review`/`codex_work`/`codex_generate` 等／対話＝aiterm の `codex_agent`・`grok_agent`・`composer_agent` | レート非依存＝第一選択（MODELS.md） |
+| L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | 非対話＝codex-sidecar の `codex_review`/`codex_work`/`codex_generate` 等／対話＝aiterm の `codex_agent`・`grok_agent`・`composer_agent` | レート非依存＝第一選択（02_models.md） |
 
 **波の設計**: 並列は非交差ディレクトリで割る。同一ファイルを触る作業は直列化（wave 分け）。エージェントに branch 切替・commit をさせない。
-**レート予算**: L0 統括（Claude）の窓は有限資源。物量は L4 外部枠（Codex/Grok＝Claude レート非依存）を第一選択にし、Claude 内 sonnet/haiku は外部の性能が足りない時の次善（同じ Anthropic 枠を食う）。委譲物は必ず統括が検証し、納得しなければ上位へエスカレーション（安さは品質の人質でない）。詳細 docs/MODELS.md。
+**レート予算**: L0 統括（Claude）の窓は有限資源。物量は L4 外部枠（Codex/Grok＝Claude レート非依存）を第一選択にし、Claude 内 sonnet/haiku は外部の性能が足りない時の次善（同じ Anthropic 枠を食う）。委譲物は必ず統括が検証し、納得しなければ上位へエスカレーション（安さは品質の人質でない）。詳細 docs/02_models.md。
 
 ## フェーズ・パイプライン
 
@@ -79,5 +79,5 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 
 - 委譲プロンプトの雛形: `references/delegation-contract.md`
 - Workflow スクリプト雛形（敵対的監査・一括整理）: `references/workflow-templates.md`
-- 役割→現行モデルの対応: `dotagents/docs/MODELS.md`（バージョン固定禁止・外部枠優先・エスカレーション裁量）
+- 役割→現行モデルの対応: `dotagents/docs/02_models.md`（バージョン固定禁止・外部枠優先・エスカレーション裁量）
 - 出自と実測: NoveLore 全域リファクタ（Novel プロジェクトの記憶 `forklore-refactor-2026-07`）

@@ -4,7 +4,7 @@
 > 18/18 リポ標準化・push 済みで完遂。
 
 - 採点: Workflow で21リポを並列委譲（sonnet・低 effort・読み取り専用）＝統括 Fable 窓の消費ゼロ。裁定はベル。
-- 標準: [PROJECT_LAYOUT.md](../PROJECT_LAYOUT.md)。**見送り基準（churn>益なら触らない）を先に適用**。
+- 標準: [PROJECT_LAYOUT.md](../01_project-layout.md)。**見送り基準（churn>益なら触らない）を先に適用**。
 
 ## 採点結果（21リポ）
 

@@ -4,7 +4,7 @@ description: 敵対的検証者（orchestrate スキル標準）。監査指摘�
 tools: Read, Grep, Glob, Bash, ToolSearch
 ---
 
-<!-- 前提: 強推論枠（2026-07 時点は統括と同格モデルを想定）。役割→モデルの対応は dotagents/docs/MODELS.md が正 -->
+<!-- 前提: 強推論枠（2026-07 時点は統括と同格モデルを想定）。役割→モデルの対応は dotagents/docs/02_models.md が正 -->
 
 あなたは懐疑的な検証者。渡された指摘・主張・計画を**反証すること**が任務。擁護や補強はしない。
 

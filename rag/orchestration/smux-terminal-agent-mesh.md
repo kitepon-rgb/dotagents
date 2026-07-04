@@ -3,7 +3,7 @@
 - 出典: @AiAircle34052（Aircle 学生AIコミュニティ）2026-03-29 https://x.com/AiAircle34052/status/2038144179822645459（1116 bookmarks・詳細は動画＋GitHub）
 - 取得日: 2026-07-04
 - 確度: 中（要旨は本文から明確。GitHub 実物は未評価＝**導入前に検証必須**）
-- 関連: dotagents/bin/delegate.sh・docs/MODELS.md・[[ai-collaboration-as-code]]
+- 関連: dotagents/bin/delegate.sh・docs/02_models.md・[[ai-collaboration-as-code]]
 
 ## 要旨
 
@@ -16,7 +16,7 @@
 ## うちへの含意
 
 - うちの現構成は **Fable(統括) → aiterm PTY → `delegate` → codex exec（単発・一方向委譲）**。smux は同じ「ターミナル＝共有面」の発想で、**双方向の対話ループ**（Claude 設計 ⇄ Codex レビュー）に拡張する。
-- MODELS.md の「第三者視点レビュー＝Codex review」を、対話ループとして回せる可能性。工場の将来オーケストレーション候補。
+- 02_models.md の「第三者視点レビュー＝Codex review」を、対話ループとして回せる可能性。工場の将来オーケストレーション候補。
 - ただし **aiterm PTY で既に「ターミナルを共有面に外部 AI を叩く」は達成済み**。smux 追加の是非は「双方向ループが単発委譲＋統括裁定より本当に優るか」を実測してから（原則7: 外部依存は上位互換が確認できた時だけ）。
 
 ## 実測評価（2026-07-04・実物 README/install.sh を精査）

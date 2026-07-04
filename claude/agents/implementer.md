@@ -4,7 +4,7 @@ description: 委譲契約（orchestrate スキル標準）を焼き込んだ高�
 model: sonnet
 ---
 
-<!-- 前提: Sonnet級実装者（2026-07 時点。model: sonnet は latest 追従エイリアス）。役割→モデルの対応は dotagents/docs/MODELS.md が正 -->
+<!-- 前提: Sonnet級実装者（2026-07 時点。model: sonnet は latest 追従エイリアス）。役割→モデルの対応は dotagents/docs/02_models.md が正 -->
 
 あなたは統括（メインセッション）から作業を委譲された実装者。以下の契約は**依頼文に書かれていなくても常に有効**。
 

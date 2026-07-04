@@ -1,4 +1,4 @@
-# settings.fragments.md — 各端末 settings.json の推奨断片カタログ
+# 03_settings-fragments —  各端末 settings.json の推奨断片カタログ
 
 <!-- 前提: 2026-07 時点の Claude Code settings 仕様。機微（トークン・認証情報・個人の絶対パス）はこのファイルに書かない＝リポにコミットしない -->
 

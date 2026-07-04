@@ -1,7 +1,7 @@
 # ADR 0002: docs/ のファイル名は連番化しない（生きた参照）
 
 日付: 2026-07-04
-状態: **2026-07-05 に [0003](0003-campaign-close-plan-todo-merge.md) が部分 supersede** — キャンペーン終了で名前参照が失効した消化文書は docs/archive/ へ移動済み。本 ADR の原則（生きた参照はリネームしない）は PLAN.md 等の現役参照に対して引き続き有効。
+状態: **2026-07-05 に [0003](0003-campaign-close-plan-todo-merge.md) が部分 supersede、[0004](0004-docs-naming-convention.md) が命名の決定を置換** — キャンペーン終了で名前参照が失効した消化文書は docs/archive/ へ移動・改名済み。本 ADR の原則（生きた参照はリネームしない＝リネーム前に参照を実測する）は PLAN.md 名の維持として存続。
 
 ## Context
 

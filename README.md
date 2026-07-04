@@ -12,7 +12,7 @@ dotagents/
 ├── PLAN.md              … 開発工場の憲章（趣旨・原則・定常運用・残件）
 ├── CLAUDE.md            … このリポで働く AI への指示
 ├── install.sh           … symlink 配置（冪等・実ファイルは SKIP・失敗は停止）
-├── docs/                … 00_overview.md（地図）・MODELS.md（役割→モデル対応表）・PROJECT_LAYOUT.md・進行中プラン／archive/（役目を終えた文書）
+├── docs/                … 00_overview.md（地図）・02_models.md（役割→モデル対応表）・01_project-layout.md・進行中プラン／archive/（役目を終えた文書）
 ├── rag/                 … 調査・研究の再利用棚（INDEX.md＋topic/raw/ 一次ソース）
 ├── caveat/              … 罠DB（→ ~/.caveat/own。*.private.md は端末ローカル維持）
 ├── claude/
@@ -62,10 +62,10 @@ flowchart LR
 
 | 種類 | 名前 | 用途 |
 |---|---|---|
-| Claude skill | `orchestrate` | 多エージェント/多モデル統括の標準型（憲法7カ条・委譲契約・Workflow 雛形） |
+| Claude skill | `orchestrate` | 多エージェント/多モデル統括の標準型（憲法8カ条・委譲契約・Workflow 雛形） |
 | Claude skill | `audit-gauntlet` | 文書を ultracode 型監査（並列多視点→敵対的反証→Critic）で磨き込む |
 | Claude skill | `auto-deploy-on-push` | push 契機の SSH + docker compose 自動デプロイ構築 |
-| Claude agent | `implementer` | 委譲契約焼き込み済みの実装者（安価枠。対応表は docs/MODELS.md） |
+| Claude agent | `implementer` | 委譲契約焼き込み済みの実装者（安価枠。対応表は docs/02_models.md） |
 | Claude agent | `refuter` | 敵対的検証者（読み取り専用） |
 | Claude command | `audit-gauntlet` / `auto-deploy-on-push` / `polish-github` | 各スキルの入口（audit-gauntlet は skill への相対 symlink） |
 | Codex skill | `polish-github` | GitHub presentation 整備（正本は Claude 版・Codex 版は薄いポインタ＝一本化済み） |
@@ -184,7 +184,7 @@ tail -5 ~/.local/state/agents-update/agents-update.log # "agents-update end" 行
 ## 含めないもの
 
 - `~/.claude/skills/learned/` — 自動学習で増減するため端末ローカル
-- `~/.claude/{settings.json,plugins,projects,sessions}` — 端末固有 / 認証情報（端末メモリ含む。設定の推奨断片は docs/settings.fragments.md）
+- `~/.claude/{settings.json,plugins,projects,sessions}` — 端末固有 / 認証情報（端末メモリ含む。設定の推奨断片は docs/03_settings-fragments.md）
 - `~/.codex/{config.toml,auth.json,sessions,*.sqlite}` — 同上
 - `~/.codex/skills/.system/` — Codex CLI バンドルのシステム skill
 - `~/.codex/AGENTS.md` — グローバル指示（端末別管理の選択肢を残す）
