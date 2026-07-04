@@ -2,13 +2,15 @@
 # Auto-update curated NPM-installed CLIs and tools used across this user's
 # development machines. Idempotent; safe to re-run.
 #
-# Excluded on purpose:
-#   - codex-sidecar-cli  (npm-linked to local repo)
-#   - codex-sidecar-core (npm-linked to local repo)
-# If you later `npm link` any package below, remove it from this list first
-# or this script will clobber the link with a registry copy.
+# 注意: `npm link` や `npm install -g .`（ローカル版のグローバル導入）中の package を
+# このリストに残すと registry 版で上書きされる。ローカル開発に切り替える時は先にリストから外すこと。
+# codex-sidecar-cli/core は旧 tools-manager cron が 2026-06-29 に link を registry 版へ置換済み
+# ＝registry 運用を追認して収載（link 開発へ戻す判断は docs/PENDING_OWNER.md 参照）。
 
 set -u
+
+# launchd / cron は最小 PATH で起動する（npm が /opt/homebrew 等にあると見つからず静かに失敗する）。
+PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
 
 LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/agents-update"
 mkdir -p "$LOG_DIR"
@@ -22,7 +24,10 @@ PACKAGES=(
   'aiterm-mcp'
   'caveat-cli'
   'claude-spotter'
+  'codex-sidecar-cli'
+  'codex-sidecar-core'
   'codex-sidecar-mcp'
+  'pnpm'
   'throughline'
 )
 

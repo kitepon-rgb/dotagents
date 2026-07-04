@@ -32,6 +32,10 @@ sprite-forge-mcp / codex-sidecar / ServerManager / MMOAuction / OpenCClaw / Cave
 
 4. この端末のメモリ整理（P4・bulk-curation。各端末のメモリはその端末でしか整理できない）
 
+5. 週次自動更新の常設（README「自動アップデート」節・必須）: まず旧 npm 自動更新
+   （crontab の npm 行・LaunchAgent の update-npm-globals 等）を掃引して撤去 →
+   agents-update を launchd(macOS)/cron(Linux・WSL) に常設 → 一回実走行してログで検証
+
 まず fetch と verify-install まで走らせて、状況を報告して。監査には走らないこと（工場整備が本旨）。18リポには触らないこと。
 ```
 
@@ -40,7 +44,9 @@ sprite-forge-mcp / codex-sidecar / ServerManager / MMOAuction / OpenCClaw / Cave
 ```
 ベル、dotagents を最新化して環境整備の続きを進めて。
 cd ~/Developer/dotagents && git fetch → 照合して pull → docs/PENDING_OWNER.md と docs/TODO.md で現在地確認 →
-この端末で sync-sweep → SYNC_LEDGER に追記 → トリアージ提案。まず状況を報告して。
+この端末で sync-sweep → SYNC_LEDGER に追記 → トリアージ提案 →
+週次自動更新の常設（README「自動アップデート」節。旧 npm 自動更新の撤去→agents-update 常設→実走行検証）。
+まず状況を報告して。
 ```
 
 ## 補足

@@ -132,14 +132,50 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 
 `orchestrate` references の bulk-curation 手順で（各端末のメモリはその端末でしか整理できない。リポ操作でないため P2 掃引より先で OK）。
 
-## 自動アップデート (任意)
+## 自動アップデート（常設・全端末必須）
 
-`install.sh` 後、`~/.local/bin/agents-update` で curated CLI / SDK 群 (Claude Code / Codex CLI / Throughline / Caveat / Codegraph / Codex Sidecar MCP / claude-spotter / Anthropic SDK) を `@latest` に揃えられる。週 1 cron 推奨。
+`~/.local/bin/agents-update` が curated CLI / SDK / MCP 群 (Claude Code / Codex CLI / aiterm-mcp / Codex Sidecar / Throughline / Caveat / Codegraph / claude-spotter / Anthropic SDK / pnpm) を `@latest` に揃える。**「推奨」ではなく常設が必須**（2026-07-04 実測: この一手を省いた端末では旧世代の自動更新が別リストで回り続け、真実が二重化していた）。
 
-1. cron 起動（Linux: 稼働確認 `service cron status`／WSL2: `sudo service cron start`＋`/etc/wsl.conf` の `[boot]` に `command = "service cron start"`）
-2. `crontab -e` に例: `0 12 * * 1 $HOME/.local/bin/agents-update`（端末が起動している時間帯に合わせる）
-3. ログ: `tail -f ~/.local/state/agents-update/agents-update.log`
-4. 対象 package は `bin/agents-update.sh` 先頭の `PACKAGES=( ... )` を直接編集（`npm link` 中の package は外す）
+**Step 0 — 旧自動更新の撲滅（一つの真実）**: 先に古い npm 自動更新が居ないか掃引し、居たら停止・撤去する。
+
+```bash
+crontab -l 2>/dev/null | grep -i npm                    # 旧 cron 行
+ls ~/Library/LaunchAgents/ 2>/dev/null | grep -i -E "npm|update"  # 旧 LaunchAgent（例: com.kite.update-npm-globals = tools-manager 製）
+# 居たら: plist を tar でバックアップ → launchctl bootout gui/$UID/<label> → plist 削除／crontab 行削除
+```
+
+**Step 1 — 常設**:
+
+- **macOS（launchd）**:
+
+```bash
+cat > ~/Library/LaunchAgents/com.kite.agents-update.plist <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.kite.agents-update</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/sh</string><string>-c</string><string>"$HOME"/.local/bin/agents-update</string>
+  </array>
+  <key>StartCalendarInterval</key><dict>
+    <key>Weekday</key><integer>1</integer><key>Hour</key><integer>4</integer><key>Minute</key><integer>0</integer>
+  </dict>
+  <key>RunAtLoad</key><false/>
+</dict></plist>
+EOF
+launchctl bootstrap gui/$UID ~/Library/LaunchAgents/com.kite.agents-update.plist
+```
+
+- **Linux / WSL2（cron）**: cron 稼働確認（WSL2: `sudo service cron start`＋`/etc/wsl.conf` の `[boot]` に `command = "service cron start"`）→ `crontab -e` に `0 4 * * 1 $HOME/.local/bin/agents-update`（端末が起動している時間帯に合わせる）
+
+**Step 2 — 実走行で検証**（配線したつもりで一度も走らない、を防ぐ）:
+
+```bash
+launchctl kickstart gui/$UID/com.kite.agents-update   # macOS。Linux は $HOME/.local/bin/agents-update を直接一回
+tail -5 ~/.local/state/agents-update/agents-update.log # "Finished" 行が出ること
+```
+
+対象 package は `bin/agents-update.sh` 先頭の `PACKAGES=( ... )` を直接編集（**`npm link` / `npm install -g .` 中の package は先に外す**——registry 版で上書きされる）。
 
 ## 編集ワークフロー
 

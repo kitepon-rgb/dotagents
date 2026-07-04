@@ -15,6 +15,7 @@
   - private 妥当（変更不要）: bughub・codex-link-p2p・codex-link×2（repo/インフラ固有）
   - 承認くれれば `caveat_update` で visibility を public に変える。
 - [ ] **ServerManager の master→main 正規化**: 稼働資産のためデプロイフック・他端末 clone が master 前提かの影響確認をしてから（自律ではリスク操作を避けた）。確認 OK なら ad-studio と同手順で正規化する。
+- [ ] **codex-sidecar-cli/core の運用形態**: npm link 前提とされていたが、実際は旧 tools-manager cron が 2026-06-29 に link を registry 版で置換済み＝以後 registry 運用で無症状だった。agents-update に正式収載して現状追認済み（2026-07-04）。**link 開発（ローカル最新を即時反映）へ戻したいなら**、リストから外して `npm link` し直す——判断求む。戻さないなら現状のままで完。
 
 ## 別枠・後日（環境 PLAN 完了後）
 

@@ -85,7 +85,7 @@ cd ~/Developer/dotagents
 
 ## 自動アップデート
 
-`bin/agents-update.sh` が curated な NPM ツール群 (Claude Code / Codex CLI / 自前ツール 6 個) を `npm install -g <pkg>@latest` で順次更新する。`install.sh` で `~/.local/bin/agents-update` に symlink される。週 1 cron 推奨。詳細手順は `README.md` 参照。**対象パッケージ一覧はスクリプト先頭の `PACKAGES=` を直接編集**。`npm link` 中の package をリストに残したまま走らせると registry 版で上書きされる点だけ注意。
+`bin/agents-update.sh` が curated な NPM ツール群 (Claude Code / Codex CLI / aiterm-mcp / Codex Sidecar / pnpm ほか) を `npm install -g <pkg>@latest` で順次更新する。`install.sh` で `~/.local/bin/agents-update` に symlink される。**週次の常設は必須**（macOS=launchd／Linux・WSL=cron。手順と「旧自動更新の撲滅」は `README.md`「自動アップデート」節——2026-07-04 実測で旧 tools-manager 製の週次更新が別リストで並走していた）。**対象パッケージ一覧はスクリプト先頭の `PACKAGES=` を直接編集**。`npm link` / `npm install -g .` 中の package をリストに残したまま走らせると registry 版で上書きされる点だけ注意。
 
 ## 既知の罠
 
