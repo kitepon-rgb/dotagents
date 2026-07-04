@@ -77,7 +77,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 ## P5. 全プロジェクト再生プログラム【F+A】
 
-- [ ] tier1: Kikoeru + codex-sidecar + ServerManager 内 telemetry/bughub（商用サブスク）
+- [~] tier1: **Kikoeru 監査+裁定 完了**（2026-07-04・9エージェント/反証済み。確定 critical 4〔C1 GPL・C2 保存型DoS・C3 TTS沈黙・C4 データ消失〕＋minor 主要9＋審査コンプラ3。ダイジェスト固定 Kikoeru@a15efa3）。**C1 GPL は環境 PLAN 完了後にオーナー対応**（別途調査）。実装消化は後日安価モデル可。残: codex-sidecar・ServerManager の監査
 - [ ] tier2: rpgdev + sprite-forge-mcp
 - [ ] tier3: aiterm-mcp + Caveat + Throughline + tools-manager
 - [ ] tier4: WebAICoding + browser-to-api + dobojo + nextflic
