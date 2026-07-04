@@ -8,15 +8,10 @@
 
 ## 承認待ち（ベルが提案済み・実行は承認後）
 
-- [ ] **caveat 棚卸し: private→public 化 3件**（第三者再現可能な外部仕様罠。private のままだと他者が同じ罠で困っても検索で見つからない）:
-  1. `ci/pnpm-action-setup-v4-packagemanager-version`（pnpm/action-setup@v4 の罠）
-  2. `cloudflare/cloudflare-buffers-idle-sse...`（Cloudflare の SSE バッファリング）
-  3. `claude-code/claude-code-auto-mode-classifier...`（Claude Code の分類器挙動）
-  - private 妥当（変更不要）: bughub・codex-link-p2p・codex-link×2（repo/インフラ固有）
-  - 承認くれれば `caveat_update` で visibility を public に変える。
+- [x] ~~**caveat 棚卸し: private→public 化 3件**~~ 2026-07-04 オーナー承認→実施済み（pnpm/action-setup・Cloudflare SSE・Claude 分類器の3件＋同日承認の macos ソケットパス104バイト罠＝計4件を public 化）。private 妥当分（bughub・codex-link 系）は変更なし。
 - [x] ~~**ServerManager の master→main 正規化**~~ 2026-07-04 完了（オーナー承認「サーバーもやっていい」）: 影響実測（server crontab の毎分 pull・常駐エージェント指示文の push 先・ci.yml・正本 URL）→ 4ファイル修正を master 最終コミットで push → server 自動 pull 確認 → GitHub rename → server clone/crontab/Mac clone を main へ追従。検証: cron の75秒窓でエラー行増加ゼロ＝毎分 pull が main で無音成功。
 - [x] ~~**Caveat の Windows CI 赤**~~ 2026-07-04 完結: FOX 実機で根治（2026-07-04 GO）。真因は当初見立て（hookCmd.ts:480＝こちらは配列渡しでシロ）でなく **scripts/pnpm.mjs の shell:true 無クオート × corepack enable が setup-node より先＝pnpm シムが `C:\Program Files\nodejs` に生成される**合わせ技。トークン毎クオートで修正し、実機で赤→緑の因果確認・release-smoke exit 0・36テスト green → **オーナーが PR #23 をマージ（13:24）→ MacBook 側で main の CI 全ジョブ success を確認＝5月末以来初の完全緑**。罠は caveat `ci/github-actions-windows-corepack-enable-setup-node-pnpm-shell-...` に収容済み。
-- [ ] **codex-sidecar-cli/core の運用形態**: npm link 前提とされていたが、実際は旧 tools-manager cron が 2026-06-29 に link を registry 版で置換済み＝以後 registry 運用で無症状だった。agents-update に正式収載して現状追認済み（2026-07-04）。**link 開発（ローカル最新を即時反映）へ戻したいなら**、リストから外して `npm link` し直す——判断求む。戻さないなら現状のままで完。
+- [x] ~~**codex-sidecar-cli/core の運用形態**~~ 2026-07-04 オーナー裁定「そのままで」＝**registry 運用で確定**（agents-update 収載のまま。link 開発へ戻す場合はリストから外して npm link——将来の任意事項）。
 
 ## 別枠・後日（環境 PLAN 完了後）
 

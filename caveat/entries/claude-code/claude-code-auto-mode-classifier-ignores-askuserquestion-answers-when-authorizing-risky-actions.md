@@ -1,7 +1,7 @@
 ---
 id: claude-code-auto-mode-classifier-ignores-askuserquestion-answers-when-authorizing-risky-actions
 title: Claude Code auto-mode classifier ignores AskUserQuestion answers when authorizing risky actions
-visibility: private
+visibility: public
 confidence: reproduced
 outcome: resolved
 tags:
@@ -24,8 +24,8 @@ environment:
 source_project: null
 source_session: 2026-05-13T14:35:52.359Z/43ccfc1fd5c4
 created_at: 2026-05-13
-updated_at: 2026-05-31
-last_verified: 2026-05-31
+updated_at: 2026-07-04
+last_verified: 2026-07-04
 ---
 
 ## Context

@@ -1,7 +1,7 @@
 ---
 id: macos-tmux-s-unix-104-file-name-too-long
 title: macOS の tmux -S ソケットは UNIX ソケットパス 104 バイト上限で "File name too long" になる
-visibility: private
+visibility: public
 confidence: reproduced
 outcome: resolved
 tags:

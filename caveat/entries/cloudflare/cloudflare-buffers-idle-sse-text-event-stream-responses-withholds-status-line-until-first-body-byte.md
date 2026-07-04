@@ -1,7 +1,7 @@
 ---
 id: cloudflare-buffers-idle-sse-text-event-stream-responses-withholds-status-line-until-first-body-byte
 title: Cloudflare buffers idle SSE (text/event-stream) responses — withholds status line until first body byte
-visibility: private
+visibility: public
 confidence: reproduced
 outcome: resolved
 tags:
@@ -26,8 +26,8 @@ environment:
 source_project: null
 source_session: 2026-06-26T21:38:49.670Z/ef3ccf09dff1
 created_at: 2026-06-26
-updated_at: 2026-06-26
-last_verified: 2026-06-26
+updated_at: 2026-07-04
+last_verified: 2026-07-04
 ---
 
 ## Context

@@ -1,7 +1,7 @@
 ---
 id: pnpm-action-setup-v4-packagemanager-version
 title: pnpm/action-setup@v4 は packageManager フィールドと version 入力の併記で即失敗する
-visibility: private
+visibility: public
 confidence: confirmed
 outcome: resolved
 tags:
@@ -16,8 +16,8 @@ environment:
 source_project: null
 source_session: 2026-07-03T23:10:24.564Z/73be05319442
 created_at: 2026-07-03
-updated_at: 2026-07-03
-last_verified: 2026-07-03
+updated_at: 2026-07-04
+last_verified: 2026-07-04
 ---
 
 ## Context
