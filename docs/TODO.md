@@ -77,7 +77,11 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 ## P5. 全プロジェクト再生プログラム【F+A】
 
-- [~] tier1: **Kikoeru 監査+裁定 完了**（2026-07-04・9エージェント/反証済み。確定 critical 4〔C1 GPL・C2 保存型DoS・C3 TTS沈黙・C4 データ消失〕＋minor 主要9＋審査コンプラ3。ダイジェスト固定 Kikoeru@a15efa3）。**C1 GPL は環境 PLAN 完了後にオーナー対応**（別途調査）。実装消化は後日安価モデル可。残: codex-sidecar・ServerManager の監査
+- **方針転換（オーナー是正 2026-07-04）: P5 を「一律の敵対的監査」から「標準化（同期＋フォルダ構成＋CLAUDE.md）」へ絞る。** 監査はオーナー個別依頼時のみの例外運用。工場整備の本旨に回帰。
+- [x] Kikoeru 監査（例外運用の実績。商用サブスクゆえオーナー価値確認済み。ダイジェスト Kikoeru@a15efa3。C1 GPL は環境 PLAN 完了後にオーナー対応）
+- [x] codex-sidecar 監査は**中止**（2026-07-04・走りすぎ是正で TaskStop。標準化のみ実施へ）
+- [ ] **標準化パイプライン**を工場ライン順で適用（監査しない。実物量は implementer/Workflow へ委譲＝原則1の自己適用）: ①開発基盤（aiterm-mcp・Caveat・Throughline・tools-manager）②稼働資産（Kikoeru・rpgdev・sprite-forge-mcp・WebAICoding・browser-to-api・dobojo・nextflic・codex-sidecar・ServerManager〔master→main も〕）③残り
+- [ ] P3 ギャップ台帳を Workflow 並列委譲で作成（各リポ×PROJECT_LAYOUT 採点）→ ベルが移行順裁定
 - [ ] tier2: rpgdev + sprite-forge-mcp
 - [ ] tier3: aiterm-mcp + Caveat + Throughline + tools-manager
 - [ ] tier4: WebAICoding + browser-to-api + dobojo + nextflic
