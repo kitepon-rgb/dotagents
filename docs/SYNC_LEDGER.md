@@ -143,7 +143,7 @@ Caveat(-4・dirty3)・Chime(-5)・Spotter(-2)・sprite-forge-mcp(-3)・codex-sid
 | 迷いブランチ | terminal `feat/node-impl-tests-publish`（main 取込済・7299ddf）・codex-rc `rollback-backup/pre-24h-20260509`（2c70663）削除済み（reflog 期間内は復元可） |
 | 残置（休眠・同期維持） | License-DB-Backup(-7)・Nextcloud(-2)・SessionHub・SmartClaude・CosyVoice(-1)・Live2DPet は削除済みにつき対象外、その他 behind クリーンの自リポ群 |
 
-掃引後の最終形: **55 ディレクトリ**（77→55。約 26GB 回収。VHDX の実回収は Windows 側 sparse 化が別途必要）。
+掃引後の最終形: **55 ディレクトリ**（77→55）。プロジェクト削除の du 実測は約26GB だが**実効解放は約6GB に留まった（venv 群が uv キャッシュへのハードリンクだったため）**→ 追加でキャッシュ4群（uv 28G・ace-step 7.8G・npm/pip 約10G・HF 1.6G）をオーナー承認のうえ削除し、**df 実測で計約38GB 解放（使用 125G→87G）**。VHDX の Windows 側実回収は sparse 化/compact が別途必要。
 | Windows アプリ専用プロジェクト | オーナー指示 2026-07-04「WSL2 環境では完全に Windows アプリのものは不要＝削除可」（**この端末限定の裁定**）。全77件を標識走査＋実見で分類→該当4件 | **削除実施済み（2026-07-04・個別リスト提示→オーナー再承認後）**: **VoiceTransrator**（496M・トレイ音声翻訳・Windows 側に571Mの実体）・**LiveTR**（2.0G・翻訳アプリ・自GitHub同期済・Windows側にも実体）・**LiveTR-rubberband**（LiveTR専用fork・同期済クリーン）・**Live2DPet**（外部repo無改変clone）＝計約2.5GB。保険 tar（VoiceTransrator 全体＋LiveTR未追跡 installer）も同日オーナー実行で削除済み。**FlaUI-MCP・Mcp.ComputerUse は Windows 製だが現役 MCP 実体のため保全**。注: WSL 内の削除は VHDX を自動で縮めない＝Windows 側の容量逼迫には sparse 化/compact が別途必要 |
 
 ## 他端末（未掃引）
