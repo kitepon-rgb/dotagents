@@ -65,7 +65,7 @@ sprite-forge-mcp / codex-sidecar / ServerManager（master→main も）/ MMOAuct
 
 ### 特記事項（この端末の構造ブロッカーと修正提案）
 
-- **symlink 不可＝install.sh 未実施**: Windows 開発者モード OFF のため native symlink が `Operation not permitted`（Git Bash の `ln -s` は黙ってコピーになる）。開発者モード ON（オーナー操作・PENDING_OWNER 参照）後に §2退避→install→verify を実施する。
+- ~~**symlink 不可＝install.sh 未実施**~~ **解消（2026-07-04 同日）**: オーナーが開発者モードを ON → §2 退避（~/Archives/pre-dotagents-20260704/ へ移動）→ `MSYS=winsymlinks:nativestrict ./install.sh` → **verify-install OK**。この端末の工場展開完了（罠は caveat/entries/windows/ に収容済み）。
 - dotagents の clone パスが `~/Documents/Program/dotagents`（標準 `~/Developer/dotagents` と不一致）。移設か Windows 例外かはオーナー裁定待ち。
 - **sync-sweep.sh 修正提案（MacBook 向け）**: Windows では `hostname -s` が失敗し台帳タイトルのホスト名が空になる（GNU 非互換）。`hostname -s 2>/dev/null || hostname` へ。**install.sh 修正提案**: MSYS 環境では冒頭で `export MSYS=winsymlinks:nativestrict`（無指定だと ln -s がコピーになり正本化が静かに不成立）。README の自動アップデート検証も実ログは `Finished` でなく `agents-update end` 行。
 

@@ -24,7 +24,7 @@
 
 ## FOX(Windows native) 端末のブロッカー（2026-07-04 掃引・詳細は SYNC_LEDGER の FOX セクション）
 
-- [ ] **Windows 開発者モードを ON（最優先・これが無いと install.sh が実行不能）**: 設定 > システム > 開発者向け > 開発者モード。symlink 作成権限が無い限り、Git Bash の `ln -s` は黙ってコピー・native symlink は Operation not permitted（実測）。ON 後に Claude へ「install 続行」と言えば §2 退避（~/.claude/CLAUDE.md 実ファイル除去・~/.caveat/own 差し替え。バックアップは ~/Archives に取得済み）→ `MSYS=winsymlinks:nativestrict ./install.sh` → verify-install まで進める。
+- [x] ~~**Windows 開発者モードを ON**~~ 2026-07-04 完了: オーナーが ON → §2 退避（実ファイルは削除でなく `~/Archives/pre-dotagents-20260704/` へ移動＝可逆）→ `MSYS=winsymlinks:nativestrict ./install.sh` → **verify-install OK（全エントリ本リポ向き symlink）**。caveat own も symlink 化し検索の動作確認済み。~/.codex/rules/default.rules の端末版は死んだ許可3行のみ＝退避して正本に差し替え。
 - [ ] dotagents clone パスの裁定: 現 `~/Documents/Program/dotagents` vs 標準 `~/Developer/dotagents`（移設なら install.sh 再実行で symlink 貼り直し）。
 - [ ] FOX(Windows) のトリアージ承認（SYNC_LEDGER FOX セクション。削除候補: GrokCLI・YomiAGE・_playwright・everything-claude-code・caveats-quo／要意図確認: HIT Auction System の dirty 118＋stash）。
 
