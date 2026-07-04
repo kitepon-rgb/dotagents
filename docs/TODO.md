@@ -68,7 +68,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 - [x] `docs/PROJECT_LAYOUT.md` 定義（2026-07-04・必須要件・知識基盤スタック節・型別レイアウト・見送り基準）
 - [x] ギャップ台帳（2026-07-04・21リポ sonnet 並列採点→ベル裁定。docs/P3_GAP_LEDGER.md）
-- [ ] **標準化ミッション（2026-07-04 方針転換）**: 見送り撤回。対象16リポに付属物（rag/CI/docs連番/adr/settings）を Codex 委譲で足す。対象/除外は docs/P3_GAP_LEDGER.md。パイロット sprite-forge-mcp から
+- [ ] **標準化ミッション（2026-07-04 方針転換・対象確定）**: 見送り撤回。**対象18リポ**（オーナー確定・Novel 含む）に付属物（rag/CI/docs連番/adr/settings）を Codex 委譲で足す。対象/除外は docs/P3_GAP_LEDGER.md（除外: Kikoeru・codex-link・codex-rc・x-article-mcp）。**実行順序③＝他端末展開②の後に着手**。delegate 使い方・ガードレール常時ON・aiterm-mcp 訂正は CLAUDE.md/orchestrate/PENDING に反映済み
 
 ## P4. メモリの恒常整理と知識の昇格【A+F】
 

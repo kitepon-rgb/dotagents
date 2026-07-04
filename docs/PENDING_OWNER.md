@@ -23,4 +23,9 @@
 
 ## 他端末展開（各端末で実施＝Fable 不要）
 
-- [ ] 各端末で README ランブック §0〜§4（前提導入→clone→退避→install→検証→メモリ整理）。**削除承認は端末ごとに取る**。
+- [ ] 各端末で README ランブック §0〜§4（前提導入→clone→退避→install→検証→メモリ整理）。**削除承認は端末ごとに取る**。**MacBook が作業する18リポには触らせない**（docs/OTHER_TERMINAL_KICKOFF.md）。
+
+## 将来課題（実証後に検討・急がない）
+
+- [ ] **delegate の MCP 化**: 現状は `~/.local/bin/delegate` のシェルコマンド＋CLAUDE.md 習慣で配布。実プロジェクトで委譲が回り「構造化返り値（変更ファイル/レビュー結果の JSON）」が本当に要ると判明したら専用 MCP を検討する。**aiterm-mcp には入れない**（公開済み汎用 PTF・責務汚染）。
+- 記録: aiterm-mcp は 2026-07 の smux 評価で**コード無変更**（今日のコミット0・最新4週間前）。smux 機能は元から aiterm-mcp にあり、新規実装は dotagents/bin/delegate.sh。aiterm-mcp は18リポの標準化対象ではあるが「smux 機能追加」ではない。

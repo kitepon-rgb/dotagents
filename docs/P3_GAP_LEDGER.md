@@ -49,14 +49,14 @@
 
 見送り裁定を撤回。Fable 期は churn を恐れず付属物（rag/・CI・docs 連番・adr/・.claude/settings.json）を積極的に足す。見送るのは破壊的リスク時のみ（PROJECT_LAYOUT 標準化方針）。
 
-**標準化対象（16リポ・この端末で触ってよい稼働リポ）**:
-- worth 6: sprite-forge-mcp・codex-sidecar・ServerManager（master→main も）・MMOAuction・OpenCClaw・codex-link
-- skip だった稼働 10: aiterm-mcp・Caveat・Throughline・rpgdev・WebAICoding・dobojo・nextflic・Chime・Spotter・videomarketing
+**標準化対象18リポ（オーナー確定 2026-07-04・これが正。worth/skip 分類は撤回済み＝対象は等しく標準化）**:
+sprite-forge-mcp / codex-sidecar / ServerManager（master→main も同時）/ MMOAuction / OpenCClaw / Caveat / WebAICoding / browser-to-api / videomarketing / nextflic / Chime / Spotter / aiterm-mcp / rpgdev / dotagents / dobojo / Throughline / **Novel(forklore)**〔2026-07-04 作業完了→ロック解除で追加。着手時は掟どおり fetch→照合してから〕
 
 **除外（触らない・理由つき）**:
-- **Kikoeru** — オーナーが別セッションでやると明言（2026-07-04）
-- **Novel/forklore** — 別セッションが作業中でロック
-- **codex-rc・x-article-mcp** — この端末では休眠（behind のみ・作業は主端末。二重作業で競合回避）
-- **dotagents** — 自身＝標準の見本・既に整備済み
+- **Kikoeru** — オーナーが別セッションでやると明言
+- **codex-link** — 現役の作業ブランチ・オーナーが「問答無用で対象外」と明示
+- **codex-rc・x-article-mcp** — この端末では休眠（behind・作業は主端末。二重作業で競合回避）
 
-進め方: 1リポずつ Codex 委譲（PROJECT_LAYOUT を読ませ欠落付属物を足す・git mv で履歴保存・commit しない）→ ベルが diff 検証・ゲート→ 独立コミット・push。CLAUDE.md も標準思想（rag/CI 参照）を反映。
+対象判断のルール（これだけ）: **この端末が主作業（掃引時に同期 or ahead）だった稼働リポが対象**。GitHub より古い（behind）＝主作業は別端末＝対象外。worth/skip の旧基準は無効。
+
+進め方: 1リポずつ Codex 委譲（PROJECT_LAYOUT を読ませ欠落付属物を足す・git mv で履歴保存・commit しない）→ ベルが diff 検証・ゲート→ 独立コミット・push。CLAUDE.md も標準思想（rag/CI 参照）を反映。**この実標準化は実行順序③＝他端末展開②の後に着手**。

@@ -58,7 +58,9 @@
   5. characterization 系は「テストが落ちたらテスト側が間違い＝実挙動に合わせる」を明記。
 - **委譲物は必ず自分で検証**（diff レビュー＋ゲート自分で再実行）してから採用。鵜呑みも盲目的却下もしない。
 - **品質エスカレーションは統括の裁量**: 安価/外部枠は既定であって強制ではない。委譲物を検証して納得しない時、統括の判断で上位（Sonnet 5 → Opus → Fable 自身）へ引き上げて再実行してよい。「安く済ませる」より「正しく仕上げる」が上位。エスカレーションの事実と理由は残す（docs/MODELS.md 参照）。
-- 外部 CLI: **Codex**（`/Users/kite/.local/bin/codex`・`codex exec`/`codex review`）、**Grok Build**（`~/.grok/bin/grok`・`--check` 自己検証／`--best-of-n N`）。仕様が完全に固まった機械的一括作業・第三者視点レビューの選択肢。対話 TUI は永続PTY 経由で駆動。
+- 外部 CLI: **Codex**（`/Users/kite/.local/bin/codex`・`codex exec`/`codex review`）、**Grok Build**（`~/.grok/bin/grok`・要 `grok login`）。仕様が完全に固まった機械的一括作業・第三者視点レビューの選択肢。対話 TUI は永続PTY 経由で駆動。
+- **外部委譲は習慣にする（工場の性能はここで出る）**: ①**実装の物量が出たら**`codex exec`（or `delegate codex "<file:line 仕様>" <repo>`）で外部委譲する——Claude レートを温存し、`delegate` は cwd の CLAUDE.md を自動で文脈前置する。②**自分の設計・成果・計画を独立検証したい時は**`delegate review "<対象>" <repo>`で Codex に read-only レビューさせ、指摘を敵対的に裁定してから採る（第三者視点＋別レート枠の二重利得。実績: verify-install の実バグを Codex レビューが発見）。`delegate` は `~/.local/bin/delegate`。委譲物は必ず自分で検証してから採用。
+- **モデル格下げは AI 自身では検知できない**（実行中の実モデル ID は env に無い）。フォールバックの検知・リセットはオーナーに委ねる（VSCode 拡張の通知＋`/model`）。AI 側は検知機構を作らない。だから**契約クリティカル・監査確定・不可逆操作の前は、自分が最上位モデルか確証を持てない前提で、検証2票・refuter 一回・迷ったら棄却側を常時効かせる**（P7 ガードレールを条件付きでなく常時ON＝品質を統括モデルの当たり外れに依存させない）。
 
 ## 大規模変更の進め方（安全網先行・実証済み）
 

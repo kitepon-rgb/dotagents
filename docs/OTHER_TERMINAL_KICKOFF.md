@@ -2,6 +2,16 @@
 
 他端末で新しい Claude Code セッションを開き、下の「コピペ本文」をそのまま貼る。ベル（グローバル CLAUDE.md 昇格済み）が README ランブックに沿って環境を立て、その端末の掃引・トリアージ・メモリ整理まで進める。
 
+## 全体順序（この端末＝他端末が読むべき位置）
+
+**①MacBook で dotagents＋ツール完成（済）→ ②各端末で本キックオフ（＝今あなたがやる所）→ ③MacBook で18リポのブラッシュアップ**。あなた（他端末）は②。③は MacBook が担うので**下記18リポには触らない**。
+
+## MacBook が作業する18リポ（他端末は触るな）
+
+sprite-forge-mcp / codex-sidecar / ServerManager / MMOAuction / OpenCClaw / Caveat / WebAICoding / browser-to-api / videomarketing / nextflic / Chime / Spotter / aiterm-mcp / rpgdev / dotagents / dobojo / Throughline / Novel(forklore)
+
+他端末がやるのは、**自端末の掃引・トリアージ・メモリ整理**と、**自端末が主作業（GitHub と同期 or ahead）のリポで、かつ上記18に無いもの**だけ。上記18リポは behind でも同期でも触らない（MacBook が主作業＝二重作業で競合する）。
+
 ---
 
 ## コピペ本文（新規端末・初回セットアップ）
@@ -15,14 +25,14 @@
    ./install.sh → ./bin/verify-install.sh が OK を返すまで
    既にあれば cd ~/Developer/dotagents && git fetch → origin/main と照合して pull（分岐したら止めて報告）
 
-2. docs/PENDING_OWNER.md と docs/TODO.md と PLAN.md(聖典) で現在地を把握
+2. docs/PENDING_OWNER.md と docs/TODO.md と PLAN.md(聖典) で現在地を把握。**docs/OTHER_TERMINAL_KICKOFF.md の「MacBook が作業する18リポ」には触らない**
 
 3. この端末で bin/sync-sweep.sh を実行 → docs/SYNC_LEDGER.md にこの端末セクションを追記 →
-   git リポ＋非git を継続/この端末では休眠/削除候補に仮分類して一覧で俺に提案（削除承認は俺・端末ごと）
+   git リポ＋非git を継続/この端末では休眠/削除候補に仮分類して一覧で俺に提案（削除承認は俺・端末ごと）。**上記18リポは掃引には出すが、標準化・ブラッシュアップは MacBook が担うので触らない**
 
 4. この端末のメモリ整理（P4・bulk-curation。各端末のメモリはその端末でしか整理できない）
 
-まず fetch と verify-install まで走らせて、状況を報告して。監査には走らないこと（工場整備が本旨）。
+まず fetch と verify-install まで走らせて、状況を報告して。監査には走らないこと（工場整備が本旨）。18リポには触らないこと。
 ```
 
 ## コピペ本文（既存端末・更新のみ）

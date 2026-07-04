@@ -53,6 +53,12 @@
 
 `gh repo list` 上位で確認できた範囲: forklore(=Novel)・License-DB(+Backup)・OLTranslator・LiveTR・zenn-content（**archived 済み**）・Nextcloud・awesome-mcp-servers・ide-dashboard・entry・SelfLLMCreator・SessionHub・HomeAssistant・codex-link-p2p・stock-mcp・MotherMCP・patent-search-api・CursorHub・StableDiffusion・ai-group・Trader・ConnectC2X ほか。多くは他端末/サーバ運用 or 旧作。**GitHub 側の archive 提案は全端末の掃引が揃ってから**（この端末に無い＝不要、とは限らない）。
 
+## ブラッシュアップ対象18リポ（この端末が主作業・オーナー確定 2026-07-04）
+
+実行順序③でこの端末が標準化する。他端末は触らない（docs/OTHER_TERMINAL_KICKOFF.md）。
+sprite-forge-mcp / codex-sidecar / ServerManager（master→main も）/ MMOAuction / OpenCClaw / Caveat / WebAICoding / browser-to-api / videomarketing / nextflic / Chime / Spotter / aiterm-mcp / rpgdev / dotagents / dobojo / Throughline / Novel(forklore)
+除外: Kikoeru（別セッション）・codex-link（現役ブランチ・問答無用で対象外）・codex-rc/x-article-mcp（この端末では休眠）。
+
 ## 他端末（未掃引）
 
 - 端末追加時: README ランブック → `sync-sweep` → 本ファイルにセクション追記 → トリアージ承認（端末ごとに取る）
