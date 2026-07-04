@@ -17,7 +17,7 @@ set -uo pipefail
 BACKEND="${1:?usage: delegate <codex|review|grok> \"<prompt>\" [repo_path]}"
 PROMPT="${2:?prompt required}"
 REPO="${3:-$PWD}"
-TIMEOUT="${DELEGATE_TIMEOUT:-300}"
+TIMEOUT="${DELEGATE_TIMEOUT:-600}"   # review/実装は実測で数分かかる（2026-07-04）。ハング救済の最後の砦として 600s
 CODEX_BIN="${CODEX_BIN:-$HOME/.local/bin/codex}"
 GROK_BIN="${GROK_BIN:-$HOME/.grok/bin/grok}"
 
