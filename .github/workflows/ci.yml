@@ -9,14 +9,16 @@ permissions:
   contents: read
 
 jobs:
-  syntax:
+  lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      # install.sh と bin/ 配下の全スクリプトの構文検査（ローカルで green 確認済みの同一コマンド）
-      - name: bash syntax check
+      # shellcheck / node は ubuntu-latest ランナー同梱。欠けたら version 表示で
+      # fail-loud（黙って skip しない）。ローカルは `make lint`（正典 docs/04_ci.md）。
+      - name: tool versions
         run: |
-          set -euo pipefail
-          bash -n install.sh
-          for f in bin/*.sh; do bash -n "$f"; done
+          shellcheck --version
+          node --version
+      - name: make lint (shellcheck + markdownlint)
+        run: make lint

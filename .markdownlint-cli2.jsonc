@@ -1,0 +1,28 @@
+// dotagents Markdown lint 設定（緩い安全網）。正典: docs/04_ci.md
+//
+// 方針: 「正しく描画される既存の知識ドキュメントと戦わない」。
+// 純スタイル系で密なバイリンガル知識文書に不適な4ルールだけを無効化し、
+// 構造系（見出し階層・見出し前後の空行・末尾改行・ハードタブ・空リンク 等
+// ~40ルール）は既定のまま有効に保つ＝将来の編集の破綻は捕まえる。
+// 無効化した各ルールの根拠は docs/04_ci.md に記録（勝手に「直さない」ため）。
+{
+  "config": {
+    "default": true,
+    "MD013": false, // line-length: 日本語散文＋広い表に80桁は不適
+    "MD031": false, // blanks-around-fences: リスト内フェンス（GitHubで正常描画）に発火
+    "MD040": false, // fenced-code-language: ASCIIツリー/テキスト図に言語指定は無意味
+    "MD060": false  // table-column-style: 表パイプ整列の見た目のみ
+  },
+  // 対象＝生きた正典のみ（archive は凍結＝除外）。docs/ 直下・adr/・将来の
+  // サブディレクトリ（audit-YYYY-MM 等）を **/*.md で先取りしつつ archive を外す。
+  "globs": [
+    "CLAUDE.md",
+    "README.md",
+    "claude/CLAUDE.md",
+    "docs/**/*.md"
+  ],
+  "ignores": [
+    "docs/archive/**",
+    "node_modules/**"
+  ]
+}
