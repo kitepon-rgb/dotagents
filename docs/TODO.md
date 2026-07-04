@@ -25,7 +25,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] rag/ 新設・還流開始（第1号: second-brain = Karpathy/Obsidian/NotebookLM 調査、2026-07-04）
 - [x] メモリ非収録方針の明文化（CLAUDE.md 収録済み）
 - [x] P0-1 収録済み資産の要否棚卸し（原則6・オーナー裁定 2026-07-04）: audit-gauntlet=**作り直し済**（ultracode 型 Workflow を起動する薄い入口へ全面書換・ECC 依存排除）／auto-deploy-on-push=**ブラッシュアップ済**（前提行・concurrency をテンプレ組込み・macOS の shred 代替）／polish-github=**ブラッシュアップ済**（前提行・分岐注記）／codex/skills/throughline(repo版)=**廃止**（全端末で shadow され未使用）
-- [ ] P0-12 polish-github の Claude 版と Codex 版の本文一本化（棚卸しで「残す」判定・分岐は継続課題）
+- [x] P0-12 polish-github の一本化（2026-07-04。正本=claude/commands/polish-github.md、Codex 版は正本を読む薄いポインタに書換＝フォールバック禁止つき）
 - [x] P0-2 orchestrate skill 収録（2026-07-04。references/ 込み。前提行つき）
 - [x] P0-3 claude/agents 収録（implementer.md・refuter.md）＋ install.sh に agents グループ追加（2026-07-04）
 - [x] P0-4 各資産に前提行（2026-07-04: orchestrate・implementer・refuter・audit-gauntlet・auto-deploy-on-push・polish-github 両版に付与）
@@ -35,7 +35,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] P0-8 docs/settings.fragments.md（2026-07-04。読み取り系 allowlist・fewer-permission-prompts 正規手順・hooks 方針）
 - [x] P0-9 ツール標準化（2026-07-04。オーナーの「確認なしで進めろ」指示により検証→導入→焼き込みまで実施）: **Obsidian 導入済み**（brew cask 1.12.7・この Mac。README 前提に標準として記載）／**長期記憶ツールは全て見送り**（mem0・Hindsight・claude-mem 等＝保存層のサイロ化が原則7違反。根拠と再訪条件は rag/second-brain/longterm-memory-tools-survey.md）／NotebookLM は任意の一方通行窓・低優先のまま／**README を全面刷新**: P1 ランブック（git identity・MCP 登録実測コマンド・退避手順・検証バッテリー）焼き込み・旧 clone パス廃止・資産表更新
 - [x] P0-10 `.gitignore` に `.obsidian/` 追加（2026-07-04）
-- [ ] P0-11 `./install.sh` 再実行 → 検証バッテリー。**2026-07-04 進捗: 再実行済み・全 link が本リポ向きを ls/readlink で確認済み（旧パス `~/projects` 宙ぶらりん3本も解消）**。Claude 側はセッションのスキル一覧に新生 audit-gauntlet・orchestrate が反映されたのを実測確認（2026-07-04）。残: Codex セッションでの確認のみ
+- [ ] P0-11 `./install.sh` 再実行 → 検証バッテリー。**2026-07-04 進捗: 再実行済み・全 link が本リポ向きを ls/readlink で確認済み（旧パス `~/projects` 宙ぶらりん3本も解消）**。Claude 側はセッションのスキル一覧に新生 audit-gauntlet・orchestrate が反映されたのを実測確認（2026-07-04）。冪等再実行も確認済み。**残: Codex セッションでのスキル一覧確認のみ**（2026-07-04 に `codex exec` で試行したが8分無応答→中断。原因未調査。symlink はファイルシステムレベルで検証済みなので、次回 Codex 対話セッションで目視確認すれば足りる）
 
 ## P1. 他端末セットアップ・ランブック【H+A】
 
@@ -81,7 +81,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [ ] L4（Codex/Grok）レシピ実戦検証 → 雛形と罠を orchestrate references＋caveat へ
 - [ ] permission allowlist 横展開（fewer-permission-prompts を主要リポへ）
 - [ ] caveat 棚卸し（own entries の public/private 一括提案）
-- [ ] `~/.claude` 残骸掃除（settings.json.caveat-backup×2・旧版計画 fable-era-plan.md の削除 or redirect 化。P0-5 と同時）
+- [x] `~/.claude` 残骸掃除（2026-07-04。backup×2 は `~/Archives/claude-leftovers-20260704.tar.gz` へ収容後に削除、fable-era-plan.md は聖典への redirect 1行に置換）
 
 ## P7. Fable 不在後の運用規定【F】
 
