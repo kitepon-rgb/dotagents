@@ -3,6 +3,10 @@
 # Idempotent: re-running overwrites existing symlinks but never removes unrelated files.
 set -euo pipefail
 
+# MSYS/Git Bash（Windows native）: 無指定だと ln -s が実コピーになり正本化が静かに不成立する。
+# 開発者モード ON 前提で本物の symlink を強制（非対応なら ln が失敗して止まる＝静かなコピーへ逃げない）。
+case "$(uname -s)" in MINGW*|MSYS*) export MSYS=winsymlinks:nativestrict ;; esac
+
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 link_one() {

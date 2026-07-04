@@ -7,7 +7,7 @@
 set -uo pipefail
 
 ROOT="${1:-$HOME/Developer}"
-HOSTLABEL="$(hostname -s)"
+HOSTLABEL="$(hostname -s 2>/dev/null || hostname)"   # Windows(Git Bash) は hostname -s 非対応
 TODAY="$(date +%F)"
 
 echo "# sync-sweep 台帳 — ${HOSTLABEL}:${ROOT}（${TODAY}）"
