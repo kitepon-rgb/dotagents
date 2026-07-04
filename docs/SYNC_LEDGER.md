@@ -138,7 +138,7 @@ Caveat(-4・dirty3)・Chime(-5)・Spotter(-2)・sprite-forge-mcp(-3)・codex-sid
 | 外部 clone・大幅 behind | llama.cpp(-872)・ComfyUI(-420)・claude-usage(-98)・zenn-content(-34)・OLTranslator(-16)・Nextcloud(-2) | 同期維持 or 削除（必要時再clone）の裁定 |
 | caveats-quo | **リモート消滅**（fetch 失敗の正体。Windows 側で全35件収容済み確認済み） | **削除候補**（Windows 側提案と同一） |
 | 非git 17件 | 実体系: Lisence(25)・ImageCollector(18)・StableDiffusion(17)・VoiceTransrator(13)・sfc2win(10)・git-manager(10)・AlwaysToGo(7)・BosTimerBot(7)・_playwright(5)・ai-companion(5)・nasne(4)・Translator(3)・GroupChat(2)／小物: Claude(1)・FileCopy(1)・YomiAGE(1)・test(1) | git化(private)/tar退避/削除の裁定（Windows 側と同名多数＝同系の重複面。横断で一括裁定推奨） |
-| Windows アプリ専用プロジェクト | オーナー指示 2026-07-04「WSL2 環境では完全に Windows アプリのものは不要＝削除可」（**この端末限定の裁定**） | 証拠付きで分類し WSL 側から削除（現役 MCP 実体の FlaUI-MCP・Mcp.ComputerUse は保全。実施結果は本節へ追記） |
+| Windows アプリ専用プロジェクト | オーナー指示 2026-07-04「WSL2 環境では完全に Windows アプリのものは不要＝削除可」（**この端末限定の裁定**）。全77件を標識走査＋実見で分類→該当4件 | **削除実施済み（2026-07-04・個別リスト提示→オーナー再承認後）**: **VoiceTransrator**（496M・トレイ音声翻訳・Windows 側に571Mの実体）・**LiveTR**（2.0G・翻訳アプリ・自GitHub同期済・Windows側にも実体）・**LiveTR-rubberband**（LiveTR専用fork・同期済クリーン）・**Live2DPet**（外部repo無改変clone）＝計約2.5GB。保険 tar: VoiceTransrator 全体＋LiveTR未追跡 installer を `~/Archives/wsl-cleanup-20260704/`（計1.2GB・不要になったら削除可）。**FlaUI-MCP・Mcp.ComputerUse は Windows 製だが現役 MCP 実体のため保全**。注: WSL 内の削除は VHDX を自動で縮めない＝Windows 側の容量逼迫には sparse 化/compact が別途必要 |
 
 ## 他端末（未掃引）
 
