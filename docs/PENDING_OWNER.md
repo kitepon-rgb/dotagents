@@ -17,6 +17,8 @@
 
 - [ ] **Kikoeru GPL 対応**（出荷停止級・法務）: espeak-ng(GPLv3) の商用バイナリ静的リンク。方針判断＝(a)espeak 非依存 G2P へ置換 (b)XPC 分離 (c)ライセンス整理。着手時に専用調査を立てて rag へ。ダイジェスト: Kikoeru@a15efa3 の docs/audit-2026-07。
 - [ ] **GitHub 側のみのリポ 20+件の終活**（forklore 以外の License-DB/OLTranslator/LiveTR/SessionHub/Trader 等）: 全端末の掃引が揃ってから archive/継続を裁定（この端末に無い＝不要とは限らない）。
+  - 判断材料（旧 OSS ブラッシュアップ作戦のオーナー裁定 2026-06-03。FOX(WSL) の git-manager 端末メモリより転記 2026-07-04）: **LiveTR-rubberband・QuoLabo・SmartClaude・codex-link は死亡宣言→非公開化済み・磨かない**。**非公開リポ約30件は非公開のまま**（中身は整えても公開操作はしない）。
+  - ※codex-link のみ 2026-07-04 の SYNC_LEDGER で「現役ブランチ・問答無用で対象外」へ裁定更新済み＝新しい裁定が優先。
 
 ## FOX(Windows native) 端末のブロッカー（2026-07-04 掃引・詳細は SYNC_LEDGER の FOX セクション）
 
