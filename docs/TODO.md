@@ -102,7 +102,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 ## P7. Fable 不在後の運用規定【F】
 
-- [ ] orchestrate SKILL.md に「統括が Opus/Sonnet の場合」節（P0-2 の収録と同時に実施可）
+- [x] orchestrate SKILL.md に「統括が Fable 級でない場合」節（2026-07-04・検証2票制/棄却側裁定/契約クリティカル前の refuter/エスカレーション裁量）＋知能配置表を外部枠優先・delegate に整合
 - [ ] 最終日: 消化棚卸し（本 TODO の総ざらい＋積み残しの委譲契約化）
 
 ## 実測台帳（この端末 `~/Developer`・2026-07-04 スナップショット）

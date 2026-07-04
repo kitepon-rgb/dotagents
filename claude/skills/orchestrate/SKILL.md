@@ -26,10 +26,11 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 | L0 統括 | 裁定・契約クリティカル（認可/tx/公開API互換/依存方向/本番操作）・履歴修復・コミット・最終責任 | 本人 | セッション主モデル |
 | L1 監査・検証 | 発見→重複統合→**指摘ごとの反証**→網羅性Critic（盲点→第2ラウンド） | Workflow（`references/workflow-templates.md`） | 省略=主モデル継承（検証の精度優先）。数で押す finder は sonnet 可 |
 | L2 設計 | 2〜4視点の並列設計（実行順序/配置/取捨 等）→**割れは統括が根拠で裁定**（多数決禁止） | Agent (Plan) | 主モデル継承 |
-| L3 実装 | 仕様が固まった実装・テスト作成・逐語移設・整理 | Agent/Workflow `model: sonnet`（機械的なら haiku） | sonnet 既定 |
-| L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | `codex exec/review`・`grok --check/--best-of-n`（永続PTY駆動） | — |
+| L3 実装 | 仕様が固まった実装・テスト作成・逐語移設・整理 | **まず外部枠 `delegate codex`（Claude レート非依存）**、次善で Agent/Workflow `model: sonnet`（機械的なら haiku） | 外部枠優先→sonnet |
+| L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | `delegate codex`（＝codex exec ラッパ・timeout/CLAUDE.md 前置つき）・`codex review`・grok（要 login・xAI 枠） | レート非依存＝第一選択（MODELS.md） |
 
 **波の設計**: 並列は非交差ディレクトリで割る。同一ファイルを触る作業は直列化（wave 分け）。エージェントに branch 切替・commit をさせない。
+**レート予算**: L0 統括（Claude）の窓は有限資源。物量は L4 外部枠（Codex/Grok＝Claude レート非依存）を第一選択にし、Claude 内 sonnet/haiku は外部の性能が足りない時の次善（同じ Anthropic 枠を食う）。委譲物は必ず統括が検証し、納得しなければ上位へエスカレーション（安さは品質の人質でない）。詳細 docs/MODELS.md。
 
 ## フェーズ・パイプライン
 
@@ -57,8 +58,18 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 - **implementer**（sonnet）: 委譲契約を焼き込んだ標準実装者。契約の共通部を毎回書かなくてよい。
 - **refuter**（主モデル継承・読み取り専用）: 敵対的検証者。指摘/計画/主張を実ファイルを読んで殺しにかかる。
 
+## 統括が Fable 級でない場合（Fable 不在後の運用規定・PLAN P7）
+
+統括が Opus/Sonnet 5 等（Fable より推論が弱い世代）の時に品質を保つ追加ガードレール:
+
+- **検証2票制**: 監査指摘・重要判断は refuter 1票でなく独立2票（existence＝事実か／value＝直す価値があるか）を必須化。両方生き残ったものだけ採用。
+- **裁定は棄却側へ倒す**: 確信が持てない指摘・提案は棄却する（もっともらしいだけの大改造を通さない。迷ったら殺す）。
+- **契約クリティカルは自己実装前に refuter を1回通す**: 認可・tx・公開API互換・依存方向・本番操作は、着手前に「この設計は安全か」を refuter に殺させてから。
+- **エスカレーション裁量**: 委譲物に納得しなければ上位（Opus → 最上位 latest）へ引き上げてよい。安さは品質の人質ではない。
+
 ## 参照
 
 - 委譲プロンプトの雛形: `references/delegation-contract.md`
 - Workflow スクリプト雛形（敵対的監査・一括整理）: `references/workflow-templates.md`
+- 役割→現行モデルの対応: `dotagents/docs/MODELS.md`（バージョン固定禁止・外部枠優先・エスカレーション裁量）
 - 出自と実測: NoveLore 全域リファクタ（Novel プロジェクトの記憶 `forklore-refactor-2026-07`）
