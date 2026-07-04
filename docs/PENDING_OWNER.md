@@ -22,6 +22,12 @@
 - [ ] **Kikoeru GPL 対応**（出荷停止級・法務）: espeak-ng(GPLv3) の商用バイナリ静的リンク。方針判断＝(a)espeak 非依存 G2P へ置換 (b)XPC 分離 (c)ライセンス整理。着手時に専用調査を立てて rag へ。ダイジェスト: Kikoeru@a15efa3 の docs/audit-2026-07。
 - [ ] **GitHub 側のみのリポ 20+件の終活**（forklore 以外の License-DB/OLTranslator/LiveTR/SessionHub/Trader 等）: 全端末の掃引が揃ってから archive/継続を裁定（この端末に無い＝不要とは限らない）。
 
+## FOX(Windows native) 端末のブロッカー（2026-07-04 掃引・詳細は SYNC_LEDGER の FOX セクション）
+
+- [ ] **Windows 開発者モードを ON（最優先・これが無いと install.sh が実行不能）**: 設定 > システム > 開発者向け > 開発者モード。symlink 作成権限が無い限り、Git Bash の `ln -s` は黙ってコピー・native symlink は Operation not permitted（実測）。ON 後に Claude へ「install 続行」と言えば §2 退避（~/.claude/CLAUDE.md 実ファイル除去・~/.caveat/own 差し替え。バックアップは ~/Archives に取得済み）→ `MSYS=winsymlinks:nativestrict ./install.sh` → verify-install まで進める。
+- [ ] dotagents clone パスの裁定: 現 `~/Documents/Program/dotagents` vs 標準 `~/Developer/dotagents`（移設なら install.sh 再実行で symlink 貼り直し）。
+- [ ] FOX(Windows) のトリアージ承認（SYNC_LEDGER FOX セクション。削除候補: GrokCLI・YomiAGE・_playwright・everything-claude-code・caveats-quo／要意図確認: HIT Auction System の dirty 118＋stash）。
+
 ## 他端末展開（各端末で実施＝Fable 不要）
 
 - [ ] 各端末で README ランブック §0〜§4（前提導入→clone→退避→install→検証→メモリ整理）。**削除承認は端末ごとに取る**。**MacBook が作業する18リポには触らせない**（docs/OTHER_TERMINAL_KICKOFF.md）。

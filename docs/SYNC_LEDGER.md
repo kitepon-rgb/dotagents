@@ -59,6 +59,55 @@
 sprite-forge-mcp / codex-sidecar / ServerManager（master→main も）/ MMOAuction / OpenCClaw / Caveat / WebAICoding / browser-to-api / videomarketing / nextflic / Chime / Spotter / aiterm-mcp / rpgdev / dotagents / dobojo / Throughline / Novel(forklore)
 除外: Kikoeru（別セッション）・codex-link（現役ブランチ・問答無用で対象外）・codex-rc/x-article-mcp（この端末では休眠）。
 
+## FOX — Windows 11 native（走査ルート `~/Documents/Program`・掃引 2026-07-04）
+
+42 ディレクトリ＝ git 29 ＋ 非git 13。同一筐体の WSL2 側とは別環境（WSL 側は同日 own 125件を収容済み）。
+
+### 特記事項（この端末の構造ブロッカーと修正提案）
+
+- **symlink 不可＝install.sh 未実施**: Windows 開発者モード OFF のため native symlink が `Operation not permitted`（Git Bash の `ln -s` は黙ってコピーになる）。開発者モード ON（オーナー操作・PENDING_OWNER 参照）後に §2退避→install→verify を実施する。
+- dotagents の clone パスが `~/Documents/Program/dotagents`（標準 `~/Developer/dotagents` と不一致）。移設か Windows 例外かはオーナー裁定待ち。
+- **sync-sweep.sh 修正提案（MacBook 向け）**: Windows では `hostname -s` が失敗し台帳タイトルのホスト名が空になる（GNU 非互換）。`hostname -s 2>/dev/null || hostname` へ。**install.sh 修正提案**: MSYS 環境では冒頭で `export MSYS=winsymlinks:nativestrict`（無指定だと ln -s がコピーになり正本化が静かに不成立）。README の自動アップデート検証も実ログは `Finished` でなく `agents-update end` 行。
+
+### 同日実施済みの収容
+
+- **罠DB**: own 86件のうち FOX(Windows) 固有 1件（aiterm grok_agent の Windows/WSL2 罠）を caveat/ へ push。残り85件は WSL 側収容分と内容同一（mode 差のみ）＝重複回避。旧同期リポ **caveats-quo は GitHub 側消滅済み・全35件が dotagents 収容済みであることを照合確認**。
+- git identity は設定済みを確認、`init.defaultBranch main` を新規設定。
+- **週次自動更新 agents-update を常設**（タスクスケジューラ・毎週月曜12:00・未起動時は起動後追い掛け）。実走行で 12 パッケージ全 latest 化を確認（codex-sidecar 3点・SDK・pnpm はこの実行で新規導入）。旧 `SmartClaude-UpdateTools` タスクは **npm 更新ではなく RTK 本体＋Claude プラグインの更新専用**（PCManager/update-tools.ps1）で agents-update と重複しないため**残置**（XML は ~/Archives へバックアップ済み。将来 agents-update へ統合するかは裁定待ち）。
+- **codex-sidecar MCP をユーザースコープ登録**（node 絶対パス起動・Connected 確認）。対話=aiterm／非対話=codex-sidecar の委譲両輪がこの端末で有効。
+- メモリ整理 P4: 25プロジェクト・216ファイルへ bulk-curation 実行（tar バックアップ→sonnet 並列委譲）。孤児メモリ3件（OpenClaw・SmartCompact・ImageCollector＝プロジェクト実体消滅）を検出。
+
+### 18リポ該当分（触らない・状態記録のみ）
+
+aiterm-mcp(-19)・ServerManager(-17)・Spotter(-59)・Throughline(-55)・Caveat(-39・dirty1=excalidraw.log)・rpgdev(-7・dirty1=package-lock.json)・dotagents(本作業)。いずれも behind はあるが MacBook 主作業のため放置。
+
+### git リポの処遇提案（オーナー承認待ち）
+
+| リポ | 実測 | 提案 |
+|---|---|---|
+| HIT Auction System | **dirty 118（実変更M多数）＋stash 1**・最終コミット 2026-05-02 | **要意図確認**（未収容の実作業が眠っている可能性大。収容 or 破棄の裁定を） |
+| SelfLLMCreator | 未追跡18（CLAUDE.md・playbook 群） | 収容 or 破棄の裁定待ち |
+| Trader | 未追跡 tmp diff 群＋`master` ブランチ upstream 無 | 収容 or 破棄＋迷いブランチ裁定 |
+| LiveTR | **master 上で作業（既定は main）**＋再現スクリプト2件未追跡（2026-06-24） | ブランチ正規化＋収容の裁定 |
+| OLTranslator | `feat/telemetry-bughub-4level` upstream 無 | push して upstream 化の承認待ち |
+| IP | 既定 master・未追跡1（比較レポート） | main 正規化は P5 時。ドキュメント収容裁定 |
+| DDNSer / LicenseServer / ai-group | dirty は全てノイズ（.claude/ .vscode/ excalidraw.log） | P5 標準化時に gitignore へ（この端末では触らず） |
+| everything-claude-code | 外部OSS参照clone・-935 behind・改変なし | **削除候補**（必要時に再clone） |
+| caveats-quo | 旧罠DB同期リポ・**リモート消滅・全35件収容済み確認** | **削除候補** |
+| 休眠（behind/同期・クリーン） | ConnectC2X(-6)・HomeAssitant(-3)・IP-MCP(-5)・Relay(-12)・Web(-65)・SmartClaude(枝 smartclaude・同期)・Nextcloud・QuoLabo・Zenn・personaplex・claude-image-tools(-1) | 同期維持・作業は主端末で |
+
+### 非 git ディレクトリ（トリアージ対象・承認待ち）
+
+| ディレクトリ | 実測 | 提案 |
+|---|---|---|
+| GrokCLI・YomiAGE | 空 | **削除候補** |
+| _playwright | 生成物26件（スクショ・モック） | **削除候補** |
+| BosTimerBot(8)・Translator(3) | 小型bot実体。**BosTimerBot に credentials.json＝機微** | git化(private) or tar退避 |
+| VoiceTransrator(14)・ai-companion(6) | 実プロジェクト（エンジン・DB 含む） | git化 or tar退避 |
+| Lisence(25) | 手順書群（License-DB 系？） | 関連リポへ収容 or tar退避 |
+| PCManager(8) | 端末管理スクリプト（update-tools.ps1 は現役タスクが参照） | git化候補（現役のため削除不可） |
+| GroupChat(2)・Claude(1)・FileCopy(1) | 小物 | 目視裁定待ち |
+
 ## 他端末（未掃引）
 
 - 端末追加時: README ランブック → `sync-sweep` → 本ファイルにセクション追記 → トリアージ承認（端末ごとに取る）
