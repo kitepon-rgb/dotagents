@@ -26,16 +26,16 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] メモリ非収録方針の明文化（CLAUDE.md 収録済み）
 - [x] P0-1 収録済み資産の要否棚卸し（原則6・オーナー裁定 2026-07-04）: audit-gauntlet=**作り直し済**（ultracode 型 Workflow を起動する薄い入口へ全面書換・ECC 依存排除）／auto-deploy-on-push=**ブラッシュアップ済**（前提行・concurrency をテンプレ組込み・macOS の shred 代替）／polish-github=**ブラッシュアップ済**（前提行・分岐注記）／codex/skills/throughline(repo版)=**廃止**（全端末で shadow され未使用）
 - [ ] P0-12 polish-github の Claude 版と Codex 版の本文一本化（棚卸しで「残す」判定・分岐は継続課題）
-- [ ] P0-2 orchestrate skill 収録（実体 `~/.claude/skills/orchestrate/` → `claude/skills/orchestrate/`）
-- [ ] P0-3 claude/agents 収録（implementer.md・refuter.md、実体 `~/.claude/agents/`）＋ install.sh に agents グループ追加
-- [ ] P0-4 各資産に前提行を仕込む（原則6。例: `前提: Fable級統括／Sonnet級実装者（2026-07 時点）`）
+- [x] P0-2 orchestrate skill 収録（2026-07-04。references/ 込み。前提行つき）
+- [x] P0-3 claude/agents 収録（implementer.md・refuter.md）＋ install.sh に agents グループ追加（2026-07-04）
+- [x] P0-4 各資産に前提行（2026-07-04: orchestrate・implementer・refuter・audit-gauntlet・auto-deploy-on-push・polish-github 両版に付与）
 - [ ] P0-5 グローバル CLAUDE.md 正本化（`~/.claude` を tar バックアップ → `claude/CLAUDE.md` 収録 → install.sh symlink 対応。応対規範〔まず会話〕を収録＝PLAN P0 参照）
 - [ ] P0-6 caveat 移管（`~/.caveat/own` → `caveat/` symlink。他端末は既存ローカルエントリを**リポへマージしてから** symlink＝PLAN P1 参照）
 - [ ] P0-7 docs/MODELS.md 新設（役割→現行最強対応表・latest 型・Codex/Grok Build 含む）
 - [ ] P0-8 docs/settings.fragments.md（permissions/hooks 推奨断片。機微はコミットしない）
 - [ ] P0-9 ツール標準化: 候補を現行ドキュメントで検証 → 根拠つき一覧をオーナーに提案 → 導入 → install.sh/README 焼き込み（候補: Obsidian=窓／NotebookLM=任意の一方通行窓・低優先／長期記憶系ツール=要調査／その他は検証時に追加）
 - [x] P0-10 `.gitignore` に `.obsidian/` 追加（2026-07-04）
-- [ ] P0-11 `./install.sh` 再実行 → 検証バッテリー（`linked:`/`SKIP` 期待どおり・`ls -la` で link 先が本リポ・新セッションで skill/agents/commands 一覧に出る）。2026-07-04 実測: この Mac の `~/.claude/skills` にリポ skill 未リンク
+- [ ] P0-11 `./install.sh` 再実行 → 検証バッテリー。**2026-07-04 進捗: 再実行済み・全 link が本リポ向きを ls/readlink で確認済み（旧パス `~/projects` 宙ぶらりん3本も解消）**。Claude 側はセッションのスキル一覧に新生 audit-gauntlet・orchestrate が反映されたのを実測確認（2026-07-04）。残: Codex セッションでの確認のみ
 
 ## P1. 他端末セットアップ・ランブック【H+A】
 

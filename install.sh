@@ -16,7 +16,7 @@ link_one() {
 }
 
 # Claude
-mkdir -p "$HOME/.claude/skills" "$HOME/.claude/commands"
+mkdir -p "$HOME/.claude/skills" "$HOME/.claude/commands" "$HOME/.claude/agents"
 for d in "$HERE/claude/skills"/*/; do
   [ -d "$d" ] || continue
   link_one "${d%/}" "$HOME/.claude/skills/$(basename "$d")"
@@ -24,6 +24,10 @@ done
 for f in "$HERE/claude/commands"/*.md; do
   [ -e "$f" ] || continue
   link_one "$f" "$HOME/.claude/commands/$(basename "$f")"
+done
+for f in "$HERE/claude/agents"/*.md; do
+  [ -e "$f" ] || continue
+  link_one "$f" "$HOME/.claude/agents/$(basename "$f")"
 done
 
 # Codex
