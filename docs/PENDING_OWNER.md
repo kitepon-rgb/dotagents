@@ -14,7 +14,8 @@
   3. `claude-code/claude-code-auto-mode-classifier...`（Claude Code の分類器挙動）
   - private 妥当（変更不要）: bughub・codex-link-p2p・codex-link×2（repo/インフラ固有）
   - 承認くれれば `caveat_update` で visibility を public に変える。
-- [ ] **ServerManager の master→main 正規化**: 稼働資産のためデプロイフック・他端末 clone が master 前提かの影響確認をしてから（自律ではリスク操作を避けた）。確認 OK なら ad-studio と同手順で正規化する。
+- [x] ~~**ServerManager の master→main 正規化**~~ 2026-07-04 完了（オーナー承認「サーバーもやっていい」）: 影響実測（server crontab の毎分 pull・常駐エージェント指示文の push 先・ci.yml・正本 URL）→ 4ファイル修正を master 最終コミットで push → server 自動 pull 確認 → GitHub rename → server clone/crontab/Mac clone を main へ追従。検証: cron の75秒窓でエラー行増加ゼロ＝毎分 pull が main で無音成功。
+- [ ] **Caveat の Windows CI が5月末から赤（既存不良・FOX 端末向き）**: 全 dependabot PR と main push で windows-2022/2025 ジョブが失敗。原因の芯: `'C:\Program' is not recognized`＝空白入りパス（process.execPath）を CAVEAT_CODEX_SIDECAR_COMMAND 経由でコマンド文字列としてシェル実行する連鎖（apps/cli/src/commands/hookCmd.ts:480 → codex-sidecar CLI 側の shell 実行）の未クオート。**修正検証に Windows 実機が必要＝FOX 端末が最適**（macOS からの盲目修正は CI ガチャになるので見送り裁定 2026-07-04）。ubuntu/macos ジョブは green。
 - [ ] **codex-sidecar-cli/core の運用形態**: npm link 前提とされていたが、実際は旧 tools-manager cron が 2026-06-29 に link を registry 版で置換済み＝以後 registry 運用で無症状だった。agents-update に正式収載して現状追認済み（2026-07-04）。**link 開発（ローカル最新を即時反映）へ戻したいなら**、リストから外して `npm link` し直す——判断求む。戻さないなら現状のままで完。
 
 ## 別枠・後日（環境 PLAN 完了後）
