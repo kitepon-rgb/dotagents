@@ -83,7 +83,9 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [ ] **標準化パイプライン**を工場ライン順で適用（監査しない。実物量は implementer/Workflow へ委譲＝原則1の自己適用）: ①開発基盤（aiterm-mcp・Caveat・Throughline・tools-manager）②稼働資産（Kikoeru・rpgdev・sprite-forge-mcp・WebAICoding・browser-to-api・dobojo・nextflic・codex-sidecar・ServerManager〔master→main も〕）③残り
 - [x] P3 ギャップ台帳を Workflow 並列委譲で作成（2026-07-04・21リポ・sonnet 採点・Fable 窓消費ゼロ）→ ベル裁定済み（docs/P3_GAP_LEDGER.md）
 - [x] 波A（実害・機械的）: tools-manager .gitignore 新設（2026-07-04・**Codex 委譲＝Claude レート消費ゼロで実証**。.DS_Store は追跡外と検証判明。tools-manager@37af853）
-- [ ] 波B（CLAUDE.md 欠落）: tools-manager・browser-to-api に CLAUDE.md 新規（ベルが仕様→ Codex 起草）
+- [x] 波B（CLAUDE.md 欠落）: tools-manager・browser-to-api に CLAUDE.md 新規（2026-07-04・Codex 委譲→ベル検証・Fable 窓消費ゼロ）
+- [x] 委譲ツール bin/delegate.sh 新設（2026-07-04・timeout 内蔵・CLAUDE.md 前置・git status 表示。~/.local/bin/delegate）
+- [ ] P6-1 拡張: delegate の grok backend 呼び出し仕様を実測確定／smux（対話連携）を実物評価（rag/orchestration に候補固定済み）
 - [ ] 波C（見送り・トリガー時）: rag/CI/docs連番は各リポの次の整理機会に。ServerManager master→main は次に触る時
 - [ ] tier2: rpgdev + sprite-forge-mcp
 - [ ] tier3: aiterm-mcp + Caveat + Throughline + tools-manager

@@ -19,6 +19,11 @@
 | **反証・検証** | 監査指摘の敵対的検証（refuter）・ultracode の verify | 強推論枠＝原則、統括モデルを継承（model 指定省略） | 統括と同じ |
 | **第三者視点レビュー** | 仕様確定済みの独立レビュー | Codex `codex review`（Claude と別視点＋別枠の二重利得） | `/Users/kite/.local/bin/codex` |
 
+## 委譲の実行ツール
+
+- **`delegate`（`bin/delegate.sh` → `~/.local/bin/delegate`）**: 外部知能へ物量委譲する統一ラッパ。`delegate codex "<プロンプト>" [repo]`。timeout 内蔵（macOS の timeout(1) 不在を回避）・リポの CLAUDE.md を自動前置・実行後 git status 表示で統括の diff レビューを楽にする。grok backend は呼び出し仕様が未実測（P6-1 で確定）。
+- **対話連携の候補（未評価）**: smux（Claude⇄Codex のターミナル双方向ループ）。単発委譲＋統括裁定を超えるか実測してから採否（rag/orchestration/smux-terminal-agent-mesh.md）。
+
 ## 指定の作法
 
 - Claude Code 内では **floating alias（`sonnet` / `haiku` / `opus`）のみ使用**。日付付き model ID（`*-2025xxxx` 形式）を書いた時点で規約違反（バージョン固定＝腐る）。
