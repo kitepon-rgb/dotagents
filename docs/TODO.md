@@ -24,7 +24,8 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] PLAN.md 聖典 v3 化＋docs/TODO.md 分離＋ultracode 監査済み（2026-07-04。監査: critical 3件採用・minor 14件採用）
 - [x] rag/ 新設・還流開始（第1号: second-brain = Karpathy/Obsidian/NotebookLM 調査、2026-07-04）
 - [x] メモリ非収録方針の明文化（CLAUDE.md 収録済み）
-- [ ] P0-1 収録済み資産の要否棚卸し（原則6）: audit-gauntlet／auto-deploy-on-push／polish-github／codex/skills/throughline(repo版) を突合 → 残す/作り直す/廃止の提案一覧 → **オーナー承認(H)** → 実行
+- [x] P0-1 収録済み資産の要否棚卸し（原則6・オーナー裁定 2026-07-04）: audit-gauntlet=**作り直し済**（ultracode 型 Workflow を起動する薄い入口へ全面書換・ECC 依存排除）／auto-deploy-on-push=**ブラッシュアップ済**（前提行・concurrency をテンプレ組込み・macOS の shred 代替）／polish-github=**ブラッシュアップ済**（前提行・分岐注記）／codex/skills/throughline(repo版)=**廃止**（全端末で shadow され未使用）
+- [ ] P0-12 polish-github の Claude 版と Codex 版の本文一本化（棚卸しで「残す」判定・分岐は継続課題）
 - [ ] P0-2 orchestrate skill 収録（実体 `~/.claude/skills/orchestrate/` → `claude/skills/orchestrate/`）
 - [ ] P0-3 claude/agents 収録（implementer.md・refuter.md、実体 `~/.claude/agents/`）＋ install.sh に agents グループ追加
 - [ ] P0-4 各資産に前提行を仕込む（原則6。例: `前提: Fable級統括／Sonnet級実装者（2026-07 時点）`）

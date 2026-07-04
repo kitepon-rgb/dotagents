@@ -3,6 +3,8 @@ name: auto-deploy-on-push
 description: GitHub への push を契機に、自宅サーバ等の SSH 到達可能なホストへ自動 docker compose デプロイするワークフローを構築する。「自動デプロイにして」「GitHub から hook で」「push したら反映されるように」と頼まれた時に使う。
 ---
 
+<!-- 前提: 2026-07 検証。依存は外部仕様（GitHub Actions・gh CLI・docker compose v2）が主でモデル能力依存は低い＝モデル世代交代の影響小。外部仕様の変更時に見直す -->
+
 # auto-deploy-on-push
 
 GitHub Actions の runner（クラウド）から SSH でデプロイ先サーバに入り、`git pull && docker compose up -d --build` を走らせる仕組みを最小手数で構築するスキル。
@@ -70,7 +72,8 @@ GH CLI 必須（`gh auth status` で認証確認）。
 
 登録後は **ローカルの秘密鍵を即削除**:
 ```bash
-shred -u /tmp/gh_deploy_<project> /tmp/gh_deploy_<project>.pub
+shred -u /tmp/gh_deploy_<project> /tmp/gh_deploy_<project>.pub   # Linux (GNU coreutils)
+rm -P  /tmp/gh_deploy_<project> /tmp/gh_deploy_<project>.pub     # macOS (shred は無い)
 ```
 
 ### 4. ワークフロー YAML を追加
@@ -87,6 +90,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
     steps:
       - name: SSH and run deploy command
         env:
@@ -123,7 +129,7 @@ gh run watch --repo <owner>/<repo>
 - **ssh-keyscan の出力**: stderr に warning が出るので `2>/dev/null` で握り潰さないと workflow log が散らかる
 - **deploy 中の race**: `docker compose up -d --build` は短時間ダウンを伴う。ゼロダウンタイム必要なら blue/green か rolling restart に拡張する
 - **本番 DB マイグレ**: アプリ起動時に migration が走る設計なら問題なし。手動 migration が必要なケースはこの SSH 方式では非対応 → CI 側に migration step を追加するか、手動運用に戻す
-- **GitHub Actions の同時実行**: push が連続すると 2 つの workflow が並行で動き、`docker compose up` が衝突する。`concurrency: { group: deploy, cancel-in-progress: false }` を job 直下に追加すると直列化できる
+- **GitHub Actions の同時実行**: push が連続すると 2 つの workflow が並行で動き、`docker compose up` が衝突する。上のテンプレには `concurrency`（group: deploy・cancel-in-progress: false）を組込み済み——**削らない**
 - **secrets リークログ**: ワークフロー内で `echo $DEPLOY_SSH_KEY` のような出力をすると GitHub が自動で `***` にマスクするが、Base64 経由で漏らすと素通り。デバッグでも秘密値を加工してログ出力しない
 
 ## 変種（事前条件 NG 時のフォールバック）

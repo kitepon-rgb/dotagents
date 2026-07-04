@@ -90,4 +90,4 @@ cd ~/Developer/dotagents
 ## 既知の罠
 
 - **旧 clone パスは `~/projects/dotagents`（消滅）**。2026-05 設置の symlink が旧パス向きで宙ぶらりんの端末がある（この Mac で実測）。`./install.sh` 再実行で貼り直す。
-- **Throughline 管理物と衝突しない**: `sc-detail` / `tl` / `tl-trim` コマンドは Throughline が端末側で実ファイル生成するためリポから除去済み (3cdff89)。再収録しない。`~/.codex/skills/throughline` も端末側実ディレクトリが repo 版を shadow している（install.sh は SKIP するので壊れないが、repo 版の要否は棚卸し対象）。
+- **Throughline 管理物と衝突しない**: `sc-detail` / `tl` / `tl-trim` コマンドは Throughline が端末側で実ファイル生成するためリポから除去済み (3cdff89)。再収録しない。`~/.codex/skills/throughline` も同様に端末側実ディレクトリが管理する——repo 版は 2026-07-04 の資産棚卸しで**廃止済み**（どの端末でも shadow され未使用の死荷重だった）。こちらも再収録しない。

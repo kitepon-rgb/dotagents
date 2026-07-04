@@ -3,6 +3,8 @@ name: polish-github
 description: Use when the user asks to polish a GitHub repository's public OSS presentation, README, metadata, releases, topics, CI badges, social preview, OG or hero images, diagrams, or launch-ready GitHub appearance. First audit only, present prioritized options, and wait for GO before changing files or GitHub settings unless the user already explicitly says to do everything.
 ---
 
+<!-- 前提: 2026-07 検証。gh CLI・GitHub 仕様依存。Claude 版 claude/commands/polish-github.md と本文が分岐中＝一本化は継続課題（docs/TODO.md P0 参照） -->
+
 # Polish GitHub
 
 Make a GitHub repository easier to understand at first visit: what it is, why it matters, how to try it, and whether it looks maintained.
