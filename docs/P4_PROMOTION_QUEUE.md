@@ -40,6 +40,11 @@
 
 - [ ] CLAUDE.md 71行・214行の `/home/kite/projects/QuoLabo` → `/home/kite/Developer/QuoLabo` へ更新（HANDOVER.md も同種残存が無いか確認）。端末メモリ側は 2026-07-04 に修正済み（出典: bulk-curation MMOAuction 報告）
 
+## Caveat（FOX(WSL) の 2026-05-09 未収容 WIP からの救出。オーナー裁定 2026-07-04）
+
+- [ ] README.md / README.ja.md の競合比較表に **「Cline memory-bank」列を追加**（当時の WIP にのみ存在・origin 未収容。最新 main の表へ乗せ直す）。列の中身: 自動 surface=❌ 各タスクで bank 全体を読む／罠粒度の取り出し=❌ フォルダ全体を一括ロード／真実の源=workspace の markdown フォルダ／セッションから記録=⚠️ "update memory bank" コマンド（手動トリガ）／自覚しないもがき検出=❌／public・private 分離=⚠️ 分離なし。原文 verbatim は `~/Archives/caveat-wip-20260509-salvaged-20260704.tar.gz`（FOX(WSL)）
+- 参考: 同 WIP の告知文ドラフト（v0.14.8 用・版落ち）は同 tar と `~/Archives/p4-stale-memory-20260704/caveat-announcements-v0.14.8.md` に退避済み。次の告知を書くならトーン見本として再利用可
+
 ## グローバル憲法・caveat（消化済み）
 
 - [x] 「コミットの挙動説明は diff を読んでから言う」→ グローバル CLAUDE.md git 作法節へ収録（2026-07-04。出典: stock-mcp memory/feedback_verify_diff_not_commit_title.md）
