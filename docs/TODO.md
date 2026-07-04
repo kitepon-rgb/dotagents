@@ -29,7 +29,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] P0-2 orchestrate skill 収録（2026-07-04。references/ 込み。前提行つき）
 - [x] P0-3 claude/agents 収録（implementer.md・refuter.md）＋ install.sh に agents グループ追加（2026-07-04）
 - [x] P0-4 各資産に前提行（2026-07-04: orchestrate・implementer・refuter・audit-gauntlet・auto-deploy-on-push・polish-github 両版に付与）
-- [ ] P0-5 グローバル CLAUDE.md 正本化（`~/.claude` を tar バックアップ → `claude/CLAUDE.md` 収録 → install.sh symlink 対応。応対規範〔まず会話〕を収録＝PLAN P0 参照）
+- [x] P0-5 グローバル CLAUDE.md 正本化（2026-07-04。tar バックアップ `~/Archives/claude-pre-p0-20260704.tar.gz` → `claude/CLAUDE.md` 収録 → install.sh 対応 → readlink 検証済み。応対規範〔まず会話〕を収録。**他端末は既存実ファイルの退避が必要**＝PLAN P1 手順）
 - [ ] P0-6 caveat 移管（`~/.caveat/own` → `caveat/` symlink。他端末は既存ローカルエントリを**リポへマージしてから** symlink＝PLAN P1 参照）
 - [ ] P0-7 docs/MODELS.md 新設（役割→現行最強対応表・latest 型・Codex/Grok Build 含む）
 - [ ] P0-8 docs/settings.fragments.md（permissions/hooks 推奨断片。機微はコミットしない）

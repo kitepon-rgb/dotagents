@@ -17,6 +17,11 @@ link_one() {
 
 # Claude
 mkdir -p "$HOME/.claude/skills" "$HOME/.claude/commands" "$HOME/.claude/agents"
+# global CLAUDE.md (canonical copy lives in this repo; terminals must remove any
+# pre-existing real file first — link_one SKIPs real files by design)
+if [ -e "$HERE/claude/CLAUDE.md" ]; then
+  link_one "$HERE/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+fi
 for d in "$HERE/claude/skills"/*/; do
   [ -d "$d" ] || continue
   link_one "${d%/}" "$HOME/.claude/skills/$(basename "$d")"
