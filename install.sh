@@ -46,6 +46,14 @@ for f in "$HERE/codex/rules"/*; do
   link_one "$f" "$HOME/.codex/rules/$(basename "$f")"
 done
 
+# caveat own entries (trap DB shared across terminals; this repo is PRIVATE.
+# caveat's own .gitignore keeps *.private.md out of git — private-tier entries
+# stay terminal-local by design)
+if [ -d "$HERE/caveat" ]; then
+  mkdir -p "$HOME/.caveat"
+  link_one "$HERE/caveat" "$HOME/.caveat/own"
+fi
+
 # bin scripts (extension dropped at the destination, e.g. agents-update.sh -> agents-update)
 mkdir -p "$HOME/.local/bin"
 for f in "$HERE/bin"/*.sh; do

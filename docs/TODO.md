@@ -30,7 +30,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] P0-3 claude/agents 収録（implementer.md・refuter.md）＋ install.sh に agents グループ追加（2026-07-04）
 - [x] P0-4 各資産に前提行（2026-07-04: orchestrate・implementer・refuter・audit-gauntlet・auto-deploy-on-push・polish-github 両版に付与）
 - [x] P0-5 グローバル CLAUDE.md 正本化（2026-07-04。tar バックアップ `~/Archives/claude-pre-p0-20260704.tar.gz` → `claude/CLAUDE.md` 収録 → install.sh 対応 → readlink 検証済み。応対規範〔まず会話〕を収録。**他端末は既存実ファイルの退避が必要**＝PLAN P1 手順）
-- [ ] P0-6 caveat 移管（`~/.caveat/own` → `caveat/` symlink。他端末は既存ローカルエントリを**リポへマージしてから** symlink＝PLAN P1 参照）
+- [x] P0-6 caveat 移管（2026-07-04。`~/.caveat/own` 実体→ `caveat/`、install.sh が symlink。MCP の symlink 越し動作を caveat_search で実測確認。`*.private.md` は caveat 自前 gitignore で端末ローカル維持＝PLAN P0 の境界。他端末は既存ローカルエントリを**リポへマージしてから** symlink＝PLAN P1 参照）
 - [ ] P0-7 docs/MODELS.md 新設（役割→現行最強対応表・latest 型・Codex/Grok Build 含む）
 - [ ] P0-8 docs/settings.fragments.md（permissions/hooks 推奨断片。機微はコミットしない）
 - [ ] P0-9 ツール標準化: 候補を現行ドキュメントで検証 → 根拠つき一覧をオーナーに提案 → 導入 → install.sh/README 焼き込み（候補: Obsidian=窓／NotebookLM=任意の一方通行窓・低優先／長期記憶系ツール=要調査／その他は検証時に追加）

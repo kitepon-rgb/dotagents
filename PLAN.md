@@ -54,6 +54,8 @@ dotagents/
 └── caveat/    … ~/.caveat/own の移管先（罠DBの端末横断資産化）
 ```
 
+caveat 移管の境界: caveat 自前の安全装置（`*.private.md` は own/.gitignore でコミット不可）を維持する——**リポで端末横断同期されるのは public 級の罠のみ、private 級は端末ローカルに留まる**（リポ自体は private だが、罠DBの共有可否判定は caveat の可視性判定に一元化する＝二重基準を作らない）。
+
 主な作業（消化は docs/TODO.md の P0 節）: 収録済み資産の要否棚卸し（原則6・承認 H）／orchestrate・agents の収録と install.sh の agents グループ対応／グローバル CLAUDE.md 正本化（`~/.claude` を tar バックアップしてから。**install.sh は実ファイル存在時 SKIP するため、既存の実ファイル `~/.claude/CLAUDE.md` は退避・削除してから symlink を張る**——さもないと正本化が静かに不成立になる〔P1 の退避手順と同じ〕。正本化の際、オーナーへの応対規範を収録する——**質問・方針提示にはまず会話で応じ、オーナーの反応を待ってから手を動かす。承認ダイアログやツール連発を会話の代わりにしない**〔2026-07-04 オーナー指摘×3回。全端末の応対品質に関わる方針〕）／caveat 移管／MODELS.md・settings.fragments.md 新設／ツール標準化（原則7 で選定し、**現行ドキュメントで検証してから**、install.sh／README ランブックに焼き込む。**入れる＝標準に載せる**、ad-hoc インストール禁止）／install.sh 再実行と検証バッテリー。
 
 メモリは repo に**入れない**（端末×プロジェクト固有。バックアップは tar 運用）。

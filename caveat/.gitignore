@@ -1,0 +1,6 @@
+# Never commit entries flagged private (visibility: private is enforced by the
+# pre-commit gate, but this is a filename-level backup guard).
+*.private.md
+
+# Obsidian per-user config: workspace layout, theme, plugin state, cache.
+.obsidian/
