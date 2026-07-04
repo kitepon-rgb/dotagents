@@ -29,4 +29,5 @@
 
 - **完了**: aiterm-mcp に `delegate` ツールを追加（**v0.5.0**・`core.delegate`＋index.ts 登録）。プロンプトで「使え」は発動が運任せ＝ツールとして渡せば AI のツール一覧に常在し確実に手に取れる、というオーナー判断。当初「aiterm-mcp には入れない（責務汚染）」としたが撤回——**自分の道具であり、codex 未導入時は明示 no-op で他利用者を壊さない**設計で解決。
 - **デプロイ状態**: GitHub push 済み・**この Mac の npm-global へ `npm install -g .` で反映済み**（v0.5.0）。ただし**この端末で `mcp__aiterm__delegate` が見えるには Claude Code 再起動 or aiterm MCP 再接続が必要**（現接続は旧プロセス）。
-- [ ] **他端末に効かせるには npm publish（公開）**: `aiterm-mcp@0.5.0` を npm へ publish → 各端末で `npm install -g aiterm-mcp@latest`（agents-update 経由でも）。**publish は公開操作なのでオーナーの OK 待ち**。publish しない場合、他端末はリポを clone して `npm run build` → `npm install -g .`。
+- [ ] **他端末に効かせるには npm publish（公開）**: `aiterm-mcp@0.6.0` を npm へ publish → 各端末で `npm install -g aiterm-mcp@latest`（agents-update 経由でも）。**publish は公開操作なのでオーナーの OK 待ち**。publish しない場合、他端末はリポを clone して `npm run build` → `npm install -g .`。
+- [ ] **delegate の grok backend を有効化**: `grok login`（H・オーナーのみ）後、ベルが grok の非対話ワンショット形を実測して core.delegate の grok 分岐を実装（現状は明示「未確定」を返す）。これで委譲先が Codex＋Grok/Composer の二枠になる（MODELS.md の第一選択が揃う）。

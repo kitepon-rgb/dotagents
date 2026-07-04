@@ -21,7 +21,7 @@
 
 ## 委譲の実行ツール
 
-- **`mcp__aiterm__delegate`（aiterm-mcp v0.5.0・MCP ツール）**: 外部知能(Codex)へ委譲する第一の道具。`delegate(mode="exec"|"review", prompt, cwd, timeout_sec)`。**ツール一覧に常在＝プロンプトの言い付けより確実に AI が手に取れる**。exec=実装(workspace-write)／review=read-only レビュー。codex 未導入は明示 no-op。
+- **`mcp__aiterm__delegate`（aiterm-mcp v0.6.0・MCP ツール）**: 外部知能へ委譲する第一の道具。`delegate(mode="exec"|"review", backend="codex"|"grok", prompt, cwd, timeout_sec)`。**ツール一覧に常在＝プロンプトの言い付けより確実に AI が手に取れる**。exec=実装(workspace-write)／review=read-only レビュー。出力は codex の最終メッセージのみに整形（生 stdout の肥大を回避）。**backend=codex は稼働、backend=grok は要 `grok login`＋実測で有効化（現状は明示「未確定」を返す）**。codex 未導入は明示 no-op。
 - **`delegate`（`bin/delegate.sh` → `~/.local/bin/delegate`）**: 同機能のシェル版（等価）。`delegate codex/review "<プロンプト>" [repo]`。timeout 内蔵・CLAUDE.md 前置・git status 表示。grok backend は要 login・未実測。
 - **対話連携の候補（未評価）**: smux（Claude⇄Codex のターミナル双方向ループ）。単発委譲＋統括裁定を超えるか実測してから採否（rag/orchestration/smux-terminal-agent-mesh.md）。
 
