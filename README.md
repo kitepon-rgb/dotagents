@@ -85,9 +85,12 @@ flowchart LR
   git config --global init.defaultBranch main   # 新規リポが master で生まれるのを防ぐ（2026-07-04 実被弾）
   printf '.DS_Store\n' > ~/.gitignore_global && git config --global core.excludesfile ~/.gitignore_global  # macOS ノイズを全リポで抑止
   ```
-- **ランタイム**: node>=22＋corepack・docker・python3
-- **CLI**: Claude Code・Codex CLI・Grok Build（**`grok login` が別途必要＝H**。未認証だと `grok agent` が使えない）・markitdown（JS ページは空を吐く罠あり→caveat 参照）
-- **MCP（ユーザースコープ登録。コマンドは実測値）**:
+- **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境。install.sh は実行した環境の `$HOME` に symlink を張る）。cron の起動は下の「自動アップデート」節参照
+- **ランタイム**: node>=22＋corepack・docker・python3（`command -v node docker python3` で存在確認、`node --version` が v22+、`docker info` が通ること）
+- **CLI（必須）**: Claude Code・Codex CLI・markitdown（JS ページは空を吐く罠あり→caveat 参照）。`command -v claude codex markitdown` で確認
+- **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する（委譲は当面 Codex 主で回る＝必須ではない）
+- **MCP 用 CLI を先に入れる**（下の登録が参照する。`agents-update` が入れる `caveat-cli`・codegraph も同源）: `aiterm-mcp`・`caveat`・`codegraph` が PATH にあること（`command -v aiterm-mcp caveat codegraph`）
+- **MCP（ユーザースコープ登録。上の CLI 導入後）**:
   ```bash
   claude mcp add --scope user aiterm -- aiterm-mcp
   claude mcp add --scope user caveat -- caveat mcp-server
@@ -99,31 +102,31 @@ flowchart LR
 ### 1. clone（パスは全端末で `~/Developer/dotagents` に統一。旧 `~/projects` は廃止）
 
 ```bash
-git clone git@github.com:kitepon-rgb/dotagents.git ~/Developer/dotagents
+gh repo clone kitepon-rgb/dotagents ~/Developer/dotagents   # gh 認証を使う（SSH 鍵の有無に依存しない）
 cd ~/Developer/dotagents
 ```
 
 ### 2. 既存実ファイルの退避（重要——install.sh は実ファイルを SKIP する）
 
+`mkdir -p ~/Archives` してから:
+
 ```bash
 tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claude/CLAUDE.md .claude/skills .claude/agents .claude/commands 2>/dev/null || true
 # グローバル CLAUDE.md の実ファイルが残っていると正本化が静かに不成立になる
 [ -f ~/.claude/CLAUDE.md ] && [ ! -L ~/.claude/CLAUDE.md ] && rm ~/.claude/CLAUDE.md
-# caveat: 端末ローカルの own エントリは、リポの caveat/entries へ手動マージしてから
-[ -d ~/.caveat/own ] && [ ! -L ~/.caveat/own ] && echo "要マージ: ~/.caveat/own の中身を caveat/entries へ移してから ~/.caveat/own を退避・削除"
 ```
+
+**caveat の own は自動化しない**（既存の端末ローカル罠を失うため手作業）: `~/.caveat/own` が実ディレクトリなら、中身を `caveat/entries/<category>/` へマージ（同名衝突は中身を見て統合）→ `~/.caveat/own` を tar 退避して削除 → `install.sh` が symlink を張る。この手順を飛ばすと install.sh が SKIP し §3 の `verify-install` が FAIL で教える。
 
 ### 3. install → 検証バッテリー
 
 ```bash
 ./install.sh
-verify-install     # 全エントリが本リポ向き symlink かを自動判定（FAIL は退避漏れ）
+./bin/verify-install.sh     # 全エントリが本リポ向き symlink かを自動判定（PATH 非依存で直接実行）
 ```
 
-- **`verify-install` が OK を返すこと（省略不可**——stale 実ファイルが残ると正本化が静かに失敗する。FAIL 行が退避すべき実ファイルを名指しする）
-- 新しい Claude Code セッションで: グローバル CLAUDE.md がロードされる／`orchestrate`・`audit-gauntlet` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る
-- pty（aiterm）と caveat の疎通確認
-- 極小タスクを implementer に委譲して、委譲契約どおりの報告が返ること
+- **`./bin/verify-install.sh` が OK を返すこと（省略不可**——stale 実ファイルが残ると正本化が静かに失敗する。FAIL 行が退避すべき実ファイルを名指しする）。`~/.local/bin` を PATH に通していれば以後は `verify-install` でも可
+- 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate`・`audit-gauntlet` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／極小タスクを implementer に委譲して契約どおりの報告が返る
 
 ### 4. その端末のメモリ整理
 

@@ -20,10 +20,10 @@ check() { # check <dst> <expect_src>
     echo "FAIL: $dst は実ファイル（退避して install.sh 再実行しないと正本が使われない）"; fail=1; return
   fi
   local tgt; tgt="$(readlink "$dst")"
-  case "$tgt" in
-    "$REPO"/*) : ;;  # OK
-    *) echo "FAIL: $dst → $tgt（本リポ $REPO を向いていない）"; fail=1 ;;
-  esac
+  # 期待 src と完全一致で比較（末尾スラッシュ差を正規化）。$REPO 配下でも別ファイル向きは FAIL。
+  if [ "${tgt%/}" != "${exp%/}" ]; then
+    echo "FAIL: $dst → $tgt（期待 ${exp%/} と不一致）"; fail=1
+  fi
 }
 
 # install.sh の6グループと対称に検証
