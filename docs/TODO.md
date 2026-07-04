@@ -31,8 +31,8 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] P0-4 各資産に前提行（2026-07-04: orchestrate・implementer・refuter・audit-gauntlet・auto-deploy-on-push・polish-github 両版に付与）
 - [x] P0-5 グローバル CLAUDE.md 正本化（2026-07-04。tar バックアップ `~/Archives/claude-pre-p0-20260704.tar.gz` → `claude/CLAUDE.md` 収録 → install.sh 対応 → readlink 検証済み。応対規範〔まず会話〕を収録。**他端末は既存実ファイルの退避が必要**＝PLAN P1 手順）
 - [x] P0-6 caveat 移管（2026-07-04。`~/.caveat/own` 実体→ `caveat/`、install.sh が symlink。MCP の symlink 越し動作を caveat_search で実測確認。`*.private.md` は caveat 自前 gitignore で端末ローカル維持＝PLAN P0 の境界。他端末は既存ローカルエントリを**リポへマージしてから** symlink＝PLAN P1 参照）
-- [ ] P0-7 docs/MODELS.md 新設（役割→現行最強対応表・latest 型・Codex/Grok Build 含む）
-- [ ] P0-8 docs/settings.fragments.md（permissions/hooks 推奨断片。機微はコミットしない）
+- [x] P0-7 docs/MODELS.md 新設（2026-07-04。役割→解決規則→解決例の三層。世代交代は解決例列の更新1枚で全端末追従）
+- [x] P0-8 docs/settings.fragments.md（2026-07-04。読み取り系 allowlist・fewer-permission-prompts 正規手順・hooks 方針）
 - [ ] P0-9 ツール標準化: 候補を現行ドキュメントで検証 → 根拠つき一覧をオーナーに提案 → 導入 → install.sh/README 焼き込み（候補: Obsidian=窓／NotebookLM=任意の一方通行窓・低優先／長期記憶系ツール=要調査／その他は検証時に追加）
 - [x] P0-10 `.gitignore` に `.obsidian/` 追加（2026-07-04）
 - [ ] P0-11 `./install.sh` 再実行 → 検証バッテリー。**2026-07-04 進捗: 再実行済み・全 link が本リポ向きを ls/readlink で確認済み（旧パス `~/projects` 宙ぶらりん3本も解消）**。Claude 側はセッションのスキル一覧に新生 audit-gauntlet・orchestrate が反映されたのを実測確認（2026-07-04）。残: Codex セッションでの確認のみ
