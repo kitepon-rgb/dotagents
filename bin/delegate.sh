@@ -44,11 +44,12 @@ case "$BACKEND" in
     rc=$?
     ;;
   grok)
-    [ -x "$GROK_BIN" ] || { echo "delegate: grok not found at $GROK_BIN" >&2; exit 1; }
-    # 呼び出し仕様は未実測（P6-1 で確定させる）。暫定で prompt を第1引数に渡す。
-    echo "delegate: grok backend は未実測（暫定呼び出し）。結果は統括が要精査。" >&2
-    run_guarded "$GROK_BIN" "${CTX}${PROMPT}"
-    rc=$?
+    # Grok Build の非対話委譲は `grok agent {stdio|headless|serve}` 配下（2026-07-04 実測）。
+    # ただしこの端末は未認証（"You are not authenticated"）＝要 `grok login`（H）。
+    # 認証と正確な非対話呼び出しの実測（P6-1）が済むまで、推測で動かさず明示エラーで止める
+    # （「動くフリ」を避ける＝グローバル鉄則。フォールバック禁止）。
+    echo "delegate: grok backend は未確定。要 'grok login'（H）＋非対話呼び出しの実測（P6-1）。現状は codex を使え。" >&2
+    exit 3
     ;;
   *)
     echo "delegate: unknown backend '$BACKEND' (codex|grok)" >&2; exit 2 ;;

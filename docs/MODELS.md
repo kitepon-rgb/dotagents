@@ -13,7 +13,7 @@
 | 役割 | 使い所 | 解決規則（latest 型） | 2026-07-04 時点の解決例 |
 |---|---|---|---|
 | **統括** | 裁定・契約クリティカル・最終レビュー・コミット | その時点で使える最強推論＝Claude Code セッションの主モデル | Fable 5（2026-07-07 まで）。以後は Claude 最上位 latest |
-| **実装（第一選択・レート非依存）** | 仕様が固まった実装・一括置換・機械的リファクタ | **Codex CLI（OpenAI 枠）** `codex exec` ／ **Grok Build/Composer（xAI 枠）** `grok --best-of-n`。Claude レートを食わない | `/Users/kite/.local/bin/codex`・`~/.grok/bin/grok` |
+| **実装（第一選択・レート非依存）** | 仕様が固まった実装・一括置換・機械的リファクタ | **Codex CLI（OpenAI 枠）** `codex exec`〔実証済〕／ **Grok Build/Composer（xAI 枠）** 非対話は `grok agent {stdio\|headless}`・**要 `grok login`（H）**、モデルは grok-build/grok-composer-2.5-fast〔2026-07-04 時点この端末は未認証＝delegate grok は未確定〕 | `/Users/kite/.local/bin/codex`・`~/.grok/bin/grok` |
 | **実装（次善・Claude 枠）** | 外部の性能が絶望的な時のみ | floating alias `sonnet`（claude/agents/implementer.md）。Anthropic 枠を消費 | Sonnet 5 |
 | **軽作業** | 機械的分類・抽出・定型変換 | 外部が無ければ最安枠 `haiku` | Haiku 4.5 |
 | **反証・検証** | 監査指摘の敵対的検証（refuter）・ultracode の verify | 強推論枠＝原則、統括モデルを継承（model 指定省略） | 統括と同じ |

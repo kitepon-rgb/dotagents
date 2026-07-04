@@ -85,7 +85,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] 波A（実害・機械的）: tools-manager .gitignore 新設（2026-07-04・**Codex 委譲＝Claude レート消費ゼロで実証**。.DS_Store は追跡外と検証判明。tools-manager@37af853）
 - [x] 波B（CLAUDE.md 欠落）: tools-manager・browser-to-api に CLAUDE.md 新規（2026-07-04・Codex 委譲→ベル検証・Fable 窓消費ゼロ）
 - [x] 委譲ツール bin/delegate.sh 新設（2026-07-04・timeout 内蔵・CLAUDE.md 前置・git status 表示。~/.local/bin/delegate）
-- [ ] P6-1 拡張: delegate の grok backend 呼び出し仕様を実測確定／smux（対話連携）を実物評価（rag/orchestration に候補固定済み）
+- [~] P6-1: L4 実測。**Codex は delegate で実証済**（波A/B 稼働）。**Grok は要 `grok login`（H・この端末未認証）**——ログイン後に `grok agent {stdio\|headless}` の非対話形を実測し delegate grok を有効化（現状は明示エラーで停止＝動くフリ回避）。smux（対話連携）は実物評価が別途候補
 - [ ] 波C（見送り・トリガー時）: rag/CI/docs連番は各リポの次の整理機会に。ServerManager master→main は次に触る時
 - [ ] tier2: rpgdev + sprite-forge-mcp
 - [ ] tier3: aiterm-mcp + Caveat + Throughline + tools-manager

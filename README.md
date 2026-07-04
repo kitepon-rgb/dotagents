@@ -86,7 +86,7 @@ flowchart LR
   printf '.DS_Store\n' > ~/.gitignore_global && git config --global core.excludesfile ~/.gitignore_global  # macOS ノイズを全リポで抑止
   ```
 - **ランタイム**: node>=22＋corepack・docker・python3
-- **CLI**: Claude Code・Codex CLI・Grok Build・markitdown（JS ページは空を吐く罠あり→caveat 参照）
+- **CLI**: Claude Code・Codex CLI・Grok Build（**`grok login` が別途必要＝H**。未認証だと `grok agent` が使えない）・markitdown（JS ページは空を吐く罠あり→caveat 参照）
 - **MCP（ユーザースコープ登録。コマンドは実測値）**:
   ```bash
   claude mcp add --scope user aiterm -- aiterm-mcp
