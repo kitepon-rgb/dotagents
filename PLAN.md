@@ -96,7 +96,9 @@ dotagents/README.md に収録する。前提ツール・MCP 登録・検証バ�
 
 2026-07 の NoveLore（`~/Developer/Novel`）で実証した再生パイプラインを全リポへ。**Fable のうちに済ませるのは監査と裁定。実装ダイジェストは永続資産なので、消化は Fable 後でも安価モデル＋委譲契約で可能。**
 
-1リポの再生パイプライン: `P2同期 → ベースライン確認 → CI敷設 → 敵対的監査(Find→Dedup→Verify→Critic) → 統括裁定(確定/棄却/やらない表) → docs/audit-YYYY-MM/ へダイジェストをコミット → P3標準化 → P4知識昇格 → (随時)実装消化 → 全ゲート＋push`
+1リポの再生パイプライン: `P2同期 → ベースライン確認 → CI敷設 → 敵対的監査(Find→Dedup→Verify→Critic) → 統括裁定(確定/棄却/やらない表) → docs/audit-YYYY-MM/ へダイジェストをコミット → P3標準化 → **CLAUDE.md ブラッシュアップ（オーナー指示 2026-07-04: 統括の観点で全面磨き込み——正典参照・検証コマンド・掟・罠の質。無いリポは新規作成）** → P4知識昇格 → (随時)実装消化 → 全ゲート＋push`
+
+グローバル CLAUDE.md（dotagents/claude/CLAUDE.md 正本）のブラッシュアップも同指示の対象＝P0 の追加項目（TODO P0-13）。
 
 優先順（稼働・商用・依存の多さで）:
 1. **Kikoeru 系**（Kikoeru + codex-sidecar + ServerManager 内 telemetry/bughub）— 商用サブスク

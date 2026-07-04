@@ -26,6 +26,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] メモリ非収録方針の明文化（CLAUDE.md 収録済み）
 - [x] P0-1 収録済み資産の要否棚卸し（原則6・オーナー裁定 2026-07-04）: audit-gauntlet=**作り直し済**（ultracode 型 Workflow を起動する薄い入口へ全面書換・ECC 依存排除）／auto-deploy-on-push=**ブラッシュアップ済**（前提行・concurrency をテンプレ組込み・macOS の shred 代替）／polish-github=**ブラッシュアップ済**（前提行・分岐注記）／codex/skills/throughline(repo版)=**廃止**（全端末で shadow され未使用）
 - [x] P0-12 polish-github の一本化（2026-07-04。正本=claude/commands/polish-github.md、Codex 版は正本を読む薄いポインタに書換＝フォールバック禁止つき）
+- [x] P0-13 グローバル CLAUDE.md ブラッシュアップ（2026-07-04。外科的4箇所: 調査節に「調べる前に caveat/rag 検索」「raw/分離・バイト数判定」「還流」「方針は正典へ」／統括節にバージョン固定禁止・MODELS.md 参照・前提行規約／git 作法に stash・shallow・identity の実被弾3行。フォールバック禁止等のオーナーの声の節は不変更。各プロジェクト分は P5 工程で実施）
 - [x] P0-2 orchestrate skill 収録（2026-07-04。references/ 込み。前提行つき）
 - [x] P0-3 claude/agents 収録（implementer.md・refuter.md）＋ install.sh に agents グループ追加（2026-07-04）
 - [x] P0-4 各資産に前提行（2026-07-04: orchestrate・implementer・refuter・audit-gauntlet・auto-deploy-on-push・polish-github 両版に付与）
