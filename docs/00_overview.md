@@ -11,7 +11,6 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | [MODELS.md](MODELS.md) | 役割→現行モデル対応の唯一の参照点 |
 | [settings.fragments.md](settings.fragments.md) | .claude/settings.json の生成手順・断片 |
 | [P4_PROMOTION_QUEUE.md](P4_PROMOTION_QUEUE.md) | 端末メモリ→リポ正典への昇格待ち行列（全行消化で削除） |
-| [PLAN_DOCS_REORG.md](PLAN_DOCS_REORG.md) | 進行中プラン: 文書再編（完遂後 archive へ） |
 | [adr/](adr/) | このリポ自身の構造決定の記録 |
 | [archive/](archive/) | 役目を終えた文書（Fable 期キャンペーンの計画 v3・消化台帳一式） |
 
