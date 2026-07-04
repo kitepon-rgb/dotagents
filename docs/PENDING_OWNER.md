@@ -30,5 +30,6 @@
 - **対話型 → aiterm v0.7.0 の `codex_agent`/`grok_agent`/`composer_agent`**（モデルごとに1ツール・名前で分かる・`reasoning_effort` 引数）。GitHub push＋この Mac の global 反映済み。実測: grok_agent 起動を確認済み。
 - **非対話 → codex-sidecar の `codex_work`/`codex_review` 等**（既存の成熟した委譲面）。
 - 経緯: 一時 aiterm に非対話 `delegate` を入れた（v0.5-0.6）が、aiterm は対話型・delegate は非対話でパラダイム不整合＝撤去（v0.7.0）。dotagents の `bin/delegate.sh` も削除。
-- [ ] **他端末に効かせるには aiterm-mcp を npm publish（公開・OK 待ち）**: `aiterm-mcp@0.7.0` を publish → 各端末 `npm install -g aiterm-mcp@latest`。しない場合は各端末で clone→build→`npm install -g .`。
+- [x] ~~**他端末に効かせるには aiterm-mcp を npm publish（公開・OK 待ち）**~~ 2026-07-04 完了: `aiterm-mcp@0.7.1` を **Trusted Publishing（OIDC）＋provenance 付き**で publish（NPM_TOKEN 失効が原因の CI E404 を機に、トークン全廃の根本修正へ移行。以後は tag push だけで出荷）。MCP Registry も 0.7.1 で再登録済み。各端末は `npm install -g aiterm-mcp@latest`（または週次 `agents-update`——対象リストに追加済み）→ Claude Code 再起動。
+  - [ ] （任意・推奨）npmjs.com の Publishing access を「Require two-factor authentication and disallow tokens」に締める（OIDC 動作確認済みの今が締め時。オーナーの画面操作）。
 - [ ] （余地）codex-sidecar に grok/composer の非対話委譲ツールを足す（grok は `-p ... --output-format plain` で動作確認済）。codex-sidecar は tier1 なので慎重に。

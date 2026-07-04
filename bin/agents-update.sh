@@ -19,6 +19,7 @@ PACKAGES=(
   '@openai/codex'
   '@anthropic-ai/sdk'
   '@colbymchenry/codegraph'
+  'aiterm-mcp'
   'caveat-cli'
   'claude-spotter'
   'codex-sidecar-mcp'
