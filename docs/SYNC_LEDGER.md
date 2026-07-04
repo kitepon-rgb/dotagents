@@ -39,11 +39,14 @@
 | ChromeDev | 直下1エントリ（実質空。ls 可視ファイル無し） | 目視確認のうえ**削除候補（承認待ち）** |
 | grok | 空ディレクトリ（0エントリ） | **削除候補（承認待ち）** |
 
-### 終活トリアージ仮分類（ローカル 23 git リポ・オーナー承認待ち）
+### 終活トリアージ（ローカル 23 git リポ・**オーナー承認済み 2026-07-04**）
 
-- **継続（16）**: dotagents・Novel(forklore)・Kikoeru・codex-sidecar・ServerManager・rpgdev・sprite-forge-mcp・aiterm-mcp・Caveat・Throughline・tools-manager・WebAICoding・browser-to-api・dobojo・nextflic・codex-link — PLAN P5 tier1〜4＋開発基盤＋ハブ
-- **休眠候補（7）**: Chime・MMOAuction・Spotter・OpenCClaw・codex-rc・x-article-mcp・videomarketing — PLAN P5 tier5（同期と CLAUDE.md だけ先行、監査は必要時）。ローカル削除はせず GitHub と同期状態を維持
-- **削除候補（ローカル 0）**: git リポには無し（全て remote あり・上記収容で同期見込み）
+分類基準は PLAN P2（休眠＝端末単位の状態。ローカルが GitHub より古ければ「この端末では休眠」。プロジェクトの生死はオーナー宣言のみ）。
+
+- **継続（21）**: dotagents・Novel(forklore)・Kikoeru・codex-sidecar・ServerManager・rpgdev・sprite-forge-mcp・aiterm-mcp・Caveat・Throughline・tools-manager・WebAICoding・browser-to-api・dobojo・nextflic・codex-link・**Chime・MMOAuction・Spotter・OpenCClaw・videomarketing**（後5つはオーナー明示: 休眠ではない。2026-07-04 修正指示）
+- **この端末では休眠（2）**: codex-rc・x-article-mcp — 掃引時 behind のみ（-2/-2）でローカル作業痕なし。同期は維持、作業は主端末で
+- **削除候補（ローカル 0）**: git リポには無し
+- 注: P5 の監査優先順（tier1〜5）はこの分類と独立（tier5＝監査は必要時、であって休眠ではない）
 
 ### GitHub 側のみのリポ（ローカルに clone 無し・別途棚卸し対象）
 

@@ -48,7 +48,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 - [x] `bin/sync-sweep.sh` 作成（2026-07-04。stash・非git・走査ルート・エラー行内報告つき。install.sh で全端末配布）
 - [x] この端末の掃引実施（2026-07-04。27ディレクトリ=git23+非git4。結果と仮分類は docs/SYNC_LEDGER.md）
-- [ ] 終活トリアージの**オーナー承認(H)**: 継続16／休眠候補7／非git4（git化2・削除候補2）＝SYNC_LEDGER の提案一覧を提示済み（2026-07-04）
+- [x] 終活トリアージの**オーナー承認(H)**（2026-07-04 修正つき承認）: 継続21／この端末では休眠2（codex-rc・x-article-mcp）／非git4 処遇済み。**分類基準「休眠は端末単位・生死はオーナー宣言のみ」を聖典 P2 に追記**
 - [x] 承認後の実行（2026-07-04 実施済み）: push 3件（Novel→forklore・codex-sidecar・Kikoeru branch）／ChromeDev・grok 目視→削除／ad-studio git 化→private push（main 正規化込み）／blog-figmaker git 化（ローカルまで。**remote 作成は保留提案中**）／OpenCClaw stash はオーナー裁定で放置
 - [x] 安全収容（2026-07-04）: クリーン behind 5リポを ff-only pull で同期（aiterm-mcp・codex-rc・dobojo・rpgdev・x-article-mcp）
 - [ ] 個別収容（F・未実施）: browser-to-api 分岐裁定／Throughline・WebAICoding・tools-manager の dirty 意図確認／codex-link 迷いブランチ／videomarketing フォーク問題(H)／ServerManager master→main（P5 tier1 時）
