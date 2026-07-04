@@ -46,7 +46,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] README.md にランブック収録（2026-07-04。前提・退避手順・clone→install・MCP 登録の実測コマンド・検証バッテリー）
 - [x] ランブック前提に git identity 設定を含める（README §0。この Mac は 2026-07-04 リポローカル設定済み）
 - [x] 検証バッテリーに implementer 極小委譲を含める（README §3）
-- [ ] 各端末: ランブック実走（退避→install→検証→メモリ整理）。この Mac 以外は未実施
+- [ ] 各端末: ランブック実走（退避→install→検証→メモリ整理）。この Mac のほか **FOX(Windows)=install/検証まで済・FOX(WSL)=メモリ整理まで全完（2026-07-04）**。他に端末が現れたら実走
 
 ## P2. Git 同期監査＋終活トリアージ【A+F+H】
 
@@ -62,7 +62,7 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [ ] ServerManager master→main 正規化（P5 tier1 時）
 - [x] `docs/SYNC_LEDGER.md` 起票（2026-07-04）
 - [x] orchestrate 憲法に「同期先行（sync-sweep で fetch→照合してから触る）」を第1条として追記（2026-07-04・8カ条化）
-- [ ] 他端末でも掃引→トリアージ→収容（削除承認は端末ごと）
+- [~] 他端末でも掃引→トリアージ→収容（削除承認は端末ごと）: **FOX(Windows)・FOX(WSL) 済（2026-07-04・SYNC_LEDGER 起票済み）**。未掃引の端末が現れたら実施
 
 ## P3. フォルダ構成標準化【F+A】
 
@@ -73,8 +73,8 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 ## P4. メモリの恒常整理と知識の昇格【A+F】
 
 - [x] この端末13プロジェクト分の整理（2026-07-04・bulk-curation。テンプレは orchestrate references 収録済み）
-- [ ] 他端末で同整理（tar バックアップ→bulk-curation→flags 裁定）
-- [ ] 昇格原則の適用（P5 の各リポ再生時に同時実施）
+- [~] 他端末で同整理（tar バックアップ→bulk-curation→flags 裁定）: **FOX(WSL) 完了（2026-07-04・20プロジェクト sonnet 並列 bulk-curation・全修正を tar diff で機械検証・flags 35件オーナー裁定済み・孤児3件退避）**。FOX(Windows) ほかは未実施
+- [ ] 昇格原則の適用（P5 の各リポ再生時に同時実施）。**FOX(WSL) 分の昇格候補は [P4_PROMOTION_QUEUE.md](P4_PROMOTION_QUEUE.md) に起票済み（2026-07-04）＝各リポの次の作業セッションが消化**
 - [ ] 恒常化: 月次でメモリ棚卸し＋rag/ Lint
 
 ## P5. 全プロジェクト再生プログラム【F+A】
