@@ -27,14 +27,15 @@
 
 - [x] ~~**Windows 開発者モードを ON**~~ 2026-07-04 完了: オーナーが ON → §2 退避（実ファイルは削除でなく `~/Archives/pre-dotagents-20260704/` へ移動＝可逆）→ `MSYS=winsymlinks:nativestrict ./install.sh` → **verify-install OK（全エントリ本リポ向き symlink）**。caveat own も symlink 化し検索の動作確認済み。~/.codex/rules/default.rules の端末版は死んだ許可3行のみ＝退避して正本に差し替え。
 - [ ] dotagents clone パスの裁定: 現 `~/Documents/Program/dotagents` vs 標準 `~/Developer/dotagents`（移設なら install.sh 再実行で symlink 貼り直し。憲法の新規則により移設はオーナー明示承認必須）。
+- [ ] **python3 のストア偽エイリアス無効化（画面操作）**: 設定 > アプリ > 詳細設定 > アプリ実行エイリアス で `python3.exe` を OFF。現状 `python3` はスクリプトを**黙って握りつぶして exit 0** を返す（実測・罠DB `windows-python3-store-exit-0` 収容済み）。ランブック §0 の前提チェックも「存在確認でなく `python3 -c "print(1)"` の出力判定へ」を MacBook へ修正提案（SYNC_LEDGER FOX 特記事項）。
 - [x] ~~FOX(Windows) のトリアージ承認~~ 2026-07-04 オーナー裁定済み・実施済み（端末依存の処理につき詳細は端末ローカル記録のみ）。
-- [ ] **FOX(Windows) の GitHub private リポ作成 2件（安全装置がリポ新設を人間操作に限定）**: ローカルは main コミット済み・push だけ待ち。オーナーがどちらかで実施→ ①下記 CLI を自分の端末で実行 or ②web UI で空リポ作成後にベルへ「push して」:
+- [x] ~~**FOX(Windows) の GitHub private リポ作成 2件**~~ 2026-07-04 完了（オーナー実行・private/既定main/同期をベル検証済み）:
   ```powershell
   # PowerShell 5.1 は && 非対応につき ; 区切り（Git Bash なら && でも可）
   cd ~/Documents/Program/PCManager; gh repo create kitepon-rgb/PCManager --private --source . --remote origin --push
   cd ~/Documents/Program/VoiceTransrator; gh repo create kitepon-rgb/VoiceTransrator --private --source . --remote origin --push
   ```
-- [ ] **LiveTR のリモート旧枝 `origin/master` 削除（main へ統合済み・安全装置がリモート枝削除を止めた）**: `cd ~/Documents/Program/LiveTR; git push origin --delete master`
+- [x] ~~**LiveTR のリモート旧枝 `origin/master` 削除**~~ 2026-07-04 完了（オーナー実行・`fetch --prune` で消滅確認済み。残枝は main のみ）。
 
 ## 他端末展開（各端末で実施＝Fable 不要）
 

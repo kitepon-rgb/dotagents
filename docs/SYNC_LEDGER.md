@@ -67,7 +67,7 @@ sprite-forge-mcp / codex-sidecar / ServerManager（master→main も）/ MMOAuct
 
 - ~~**symlink 不可＝install.sh 未実施**~~ **解消（2026-07-04 同日）**: オーナーが開発者モードを ON → §2 退避（~/Archives/pre-dotagents-20260704/ へ移動）→ `MSYS=winsymlinks:nativestrict ./install.sh` → **verify-install OK**。この端末の工場展開完了（罠は caveat/entries/windows/ に収容済み）。
 - dotagents の clone パスが `~/Documents/Program/dotagents`（標準 `~/Developer/dotagents` と不一致）。移設か Windows 例外かはオーナー裁定待ち。
-- **sync-sweep.sh 修正提案（MacBook 向け）**: Windows では `hostname -s` が失敗し台帳タイトルのホスト名が空になる（GNU 非互換）。`hostname -s 2>/dev/null || hostname` へ。**install.sh 修正提案**: MSYS 環境では冒頭で `export MSYS=winsymlinks:nativestrict`（無指定だと ln -s がコピーになり正本化が静かに不成立）。README の自動アップデート検証も実ログは `Finished` でなく `agents-update end` 行。
+- **sync-sweep.sh 修正提案（MacBook 向け）**: Windows では `hostname -s` が失敗し台帳タイトルのホスト名が空になる（GNU 非互換）。`hostname -s 2>/dev/null || hostname` へ。**install.sh 修正提案**: MSYS 環境では冒頭で `export MSYS=winsymlinks:nativestrict`（無指定だと ln -s がコピーになり正本化が静かに不成立）。README の自動アップデート検証も実ログは `Finished` でなく `agents-update end` 行。**ランブック §0 修正提案**: python3 の前提チェックは `command -v` でなく `python3 -c "print(1)"` の出力判定に（Windows のストア偽エイリアスは存在チェックを通り、スクリプトを黙って握りつぶして exit 0 を返す——罠DB `windows-python3-store-exit-0`）。
 
 ### 同日実施済みの収容
 
@@ -88,7 +88,7 @@ aiterm-mcp(-19)・ServerManager(-17)・Spotter(-59)・Throughline(-55)・Caveat(
 | HIT Auction System | **dirty 118（実変更M多数）＋stash 1**・最終コミット 2026-05-02 | **要意図確認**（未収容の実作業が眠っている可能性大。収容 or 破棄の裁定を） |
 | SelfLLMCreator | 未追跡18（CLAUDE.md・playbook 群） | 収容 or 破棄の裁定待ち |
 | Trader | 未追跡 tmp diff 群＋`master` ブランチ upstream 無 | 収容 or 破棄＋迷いブランチ裁定 |
-| LiveTR | ~~master 上で作業＋再現スクリプト2件未追跡~~ | **標準化済み（2026-07-04 GO）**: master(先行8)⇔main(先行2) を merge で統合→main へ push・ローカル master 削除（origin/master の削除のみオーナー操作待ち）。一時検証スクリプトは退避。CLAUDE.md 陳腐化2箇所修正＋ヘッドレスビルド罠を昇格・pytest CI 新設（新規venv実測 20 passed）・rag/ 骨子 |
+| LiveTR | ~~master 上で作業＋再現スクリプト2件未追跡~~ | **標準化済み（2026-07-04 GO）**: master(先行8)⇔main(先行2) を merge で統合→main へ push・ローカル master 削除（origin/master も 2026-07-04 削除完了）。一時検証スクリプトは退避。CLAUDE.md 陳腐化2箇所修正＋ヘッドレスビルド罠を昇格・pytest CI 新設（新規venv実測 20 passed）・rag/ 骨子 |
 | OLTranslator | ~~`feat/telemetry-bughub-4level` upstream 無~~ | **標準化済み（2026-07-04 GO）**: 当該枝は実は main へ統合済み（中身0）＝push でなく削除が正。ルート散在文書5本を docs/ へ git mv（参照12ファイル追従・**encoding-guard CI の固定パスリストも追従**＝放置するとサイレント検査漏れ）・BugHub curl 文字化け罠を昇格・rag/ 骨子・push 済み |
 | IP | 既定 master・未追跡1（比較レポート） | main 正規化は P5 時。ドキュメント収容裁定 |
 | DDNSer / LicenseServer / ai-group | dirty は全てノイズ（.claude/ .vscode/ excalidraw.log） | P5 標準化時に gitignore へ（この端末では触らず） |
@@ -103,10 +103,10 @@ aiterm-mcp(-19)・ServerManager(-17)・Spotter(-59)・Throughline(-55)・Caveat(
 | GrokCLI・YomiAGE | 空 | **削除候補** |
 | _playwright | 生成物26件（スクショ・モック） | **削除候補** |
 | BosTimerBot(8)・Translator(3) | 小型bot実体。**BosTimerBot に credentials.json＝機微** | git化(private) or tar退避 |
-| VoiceTransrator(14) | ~~git化 or tar退避~~ **git 化済み（2026-07-04 GO）**: 機微スキャン緑・.gitignore（venv/ログ/音声データ/実行時状態を除外）・CLAUDE.md/README 新規・main でローカルコミット済み。**GitHub private リポ作成待ち（オーナー操作・PENDING 参照）** |
+| VoiceTransrator(14) | ~~git化 or tar退避~~ **git 化済み（2026-07-04 GO）**: 機微スキャン緑・.gitignore（venv/ログ/音声データ/実行時状態を除外）・CLAUDE.md/README 新規・main でローカルコミット済み。**GitHub private リポ作成・push 完了（2026-07-04 オーナー実行・ベル検証済み）** |
 | ai-companion(6) | 実プロジェクト（DB 含む） | （オーナー裁定済み・端末ローカル処理） |
 | Lisence(25) | 手順書群（License-DB 系？） | 関連リポへ収容 or tar退避 |
-| PCManager(8) | ~~git化候補~~ **git 化済み（2026-07-04 GO）**: CLAUDE.md 磨き（スケジュールタスク2本の実態・OpenClaw 撤去履歴の昇格・プラグイン名の実装不一致修正）・README/gitignore 新規・main でローカルコミット済み。**GitHub private リポ作成待ち（オーナー操作・PENDING 参照）** |
+| PCManager(8) | ~~git化候補~~ **git 化済み（2026-07-04 GO）**: CLAUDE.md 磨き（スケジュールタスク2本の実態・OpenClaw 撤去履歴の昇格・プラグイン名の実装不一致修正）・README/gitignore 新規・main でローカルコミット済み。**GitHub private リポ作成・push 完了（2026-07-04 オーナー実行・ベル検証済み）** |
 | GroupChat(2)・Claude(1)・FileCopy(1) | 小物 | 目視裁定待ち |
 
 ## FOX — WSL2 Ubuntu-26.04（走査ルート `~/Developer`・掃引 2026-07-04）
