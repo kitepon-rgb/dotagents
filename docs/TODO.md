@@ -21,6 +21,8 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 
 - [x] リポ再生（install.sh 冪等化・bin/agents-update・README・CLAUDE.md 掟/罠/検証）＝ commits 79c1bb7〜83a4035 ＋ 2026-07-04 収容分
 - [x] P0-0 聖典一式（PLAN.md・docs/・rag/・.gitignore）の初回コミット＆push（2026-07-04。**完了条件は origin 反映**＝原則2。以後の更新も都度 push）
+- [x] P0-14 他端末展開の信頼性: `bin/verify-install.sh` 新設（install 後の symlink 自動検証・退避漏れ検出）＋install.sh の SKIP 警告を明示化＋ランブック §3 を verify-install に更新（2026-07-04）
+- [x] rag/ 健全性 Lint 合格（2026-07-04・INDEX 整合・リンク切れ無し・出典/取得日/確度 欠落無し）
 - [x] PLAN.md 聖典 v3 化＋docs/TODO.md 分離＋ultracode 監査済み（2026-07-04。監査: critical 3件採用・minor 14件採用）
 - [x] rag/ 新設・還流開始（第1号: second-brain = Karpathy/Obsidian/NotebookLM 調査、2026-07-04）
 - [x] メモリ非収録方針の明文化（CLAUDE.md 収録済み）

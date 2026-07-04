@@ -8,7 +8,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 link_one() {
   local src="$1" dst="$2"
   if [ -e "$dst" ] && [ ! -L "$dst" ]; then
-    echo "SKIP (real file exists, not a symlink): $dst" >&2
+    echo "SKIP (real file exists — 退避しないと本リポ版が使われない): $dst" >&2
     return 0
   fi
   ln -sfn "$src" "$dst"

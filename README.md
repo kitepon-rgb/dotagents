@@ -117,10 +117,10 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 
 ```bash
 ./install.sh
-ls -la ~/.claude/skills ~/.claude/commands ~/.claude/agents ~/.claude/CLAUDE.md ~/.codex/skills ~/.codex/rules ~/.caveat/own
+verify-install     # 全エントリが本リポ向き symlink かを自動判定（FAIL は退避漏れ）
 ```
 
-- **`ls -la` の link 先が全て本リポを向いていること（省略不可**——stale 実ファイルが残っていても他の検証は合格してしまう）
+- **`verify-install` が OK を返すこと（省略不可**——stale 実ファイルが残ると正本化が静かに失敗する。FAIL 行が退避すべき実ファイルを名指しする）
 - 新しい Claude Code セッションで: グローバル CLAUDE.md がロードされる／`orchestrate`・`audit-gauntlet` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る
 - pty（aiterm）と caveat の疎通確認
 - 極小タスクを implementer に委譲して、委譲契約どおりの報告が返ること
