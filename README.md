@@ -2,17 +2,17 @@
 
 Claude Code / Codex の環境そのもの（skill・command・agents・rule・グローバル CLAUDE.md・罠DB・調査資産・環境整備の聖典）を**複数端末で同期する個人 dotfiles**。GitHub が真実の源。
 
-- **方針と理由**: [PLAN.md](PLAN.md)（聖典）／ **消化状況**: [docs/TODO.md](docs/TODO.md)
+- **趣旨・原則・残件**: [PLAN.md](PLAN.md)（憲章＝聖典 v4。プランは docs/ で TODO を兼ねる）
 - **AI 向けの掟**: [CLAUDE.md](CLAUDE.md)
 
 ## 構成
 
 ```
 dotagents/
-├── PLAN.md              … 環境整備の聖典（方針・原則・理由）
+├── PLAN.md              … 開発工場の憲章（趣旨・原則・定常運用・残件）
 ├── CLAUDE.md            … このリポで働く AI への指示
 ├── install.sh           … symlink 配置（冪等・実ファイルは SKIP・失敗は停止）
-├── docs/                … TODO.md（消化管理）・MODELS.md（役割→モデル対応表）・settings.fragments.md
+├── docs/                … 00_overview.md（地図）・MODELS.md（役割→モデル対応表）・PROJECT_LAYOUT.md・進行中プラン／archive/（役目を終えた文書）
 ├── rag/                 … 調査・研究の再利用棚（INDEX.md＋topic/raw/ 一次ソース）
 ├── caveat/              … 罠DB（→ ~/.caveat/own。*.private.md は端末ローカル維持）
 ├── claude/
@@ -68,7 +68,7 @@ flowchart LR
 | Claude agent | `implementer` | 委譲契約焼き込み済みの実装者（安価枠。対応表は docs/MODELS.md） |
 | Claude agent | `refuter` | 敵対的検証者（読み取り専用） |
 | Claude command | `audit-gauntlet` / `auto-deploy-on-push` / `polish-github` | 各スキルの入口（audit-gauntlet は skill への相対 symlink） |
-| Codex skill | `polish-github` | GitHub presentation 整備（Claude 版と一本化予定＝TODO P0-12） |
+| Codex skill | `polish-github` | GitHub presentation 整備（正本は Claude 版・Codex 版は薄いポインタ＝一本化済み） |
 | Codex rule | `default.rules` | Codex 常時適用ルール |
 | bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
 | データ | `caveat/` | 外部仕様の罠DB（caveat MCP が参照。public 級のみ同期） |

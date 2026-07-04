@@ -2,7 +2,7 @@
 description: GitHub OSS の見栄え（メタデータ / README / Release / 画像 / 図 / CI バッジ）を整える。最初に監査だけして選択肢を提示し、ユーザーの GO 後に着手。
 ---
 
-<!-- 前提: 2026-07 検証。依存は gh CLI・GitHub 仕様が主。画像生成は実行時の MCP/Skill 検出ベース（固定名依存なし）。Codex 版 codex/skills/polish-github と本文が分岐中＝一本化は継続課題（docs/TODO.md P0 参照） -->
+<!-- 前提: 2026-07 検証。依存は gh CLI・GitHub 仕様が主。画像生成は実行時の MCP/Skill 検出ベース（固定名依存なし）。Codex 版 codex/skills/polish-github は本ファイル（正本）を読む薄いポインタ＝一本化済み（2026-07-04） -->
 
 このリポジトリの GitHub 上の見栄えを整え、最初の訪問者が「何で何が嬉しいか」を 5 秒で掴めるようにする。
 

@@ -4,8 +4,8 @@
 #
 # 注意: `npm link` や `npm install -g .`（ローカル版のグローバル導入）中の package を
 # このリストに残すと registry 版で上書きされる。ローカル開発に切り替える時は先にリストから外すこと。
-# codex-sidecar-cli/core は旧 tools-manager cron が 2026-06-29 に link を registry 版へ置換済み
-# ＝registry 運用を追認して収載（link 開発へ戻す判断は docs/PENDING_OWNER.md 参照）。
+# codex-sidecar-cli/core は registry 運用で確定（2026-07-04 オーナー裁定「そのままで」）。
+# link 開発へ戻す場合は先にこのリストから外して npm link する（将来の任意事項）。
 
 set -u
 

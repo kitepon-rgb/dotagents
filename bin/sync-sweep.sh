@@ -2,7 +2,7 @@
 # sync-sweep: 開発ルート直下の全 git リポ＋非 git ディレクトリの同期状態台帳を Markdown で出力する。
 # 使い方: sync-sweep [dev-root]   （既定 ~/Developer）
 # 方針: 1 リポの失敗で全体を止めない。ただし失敗は行内に ERROR/注記で必ず残す（黙って飛ばさない）。
-# 検査項目は dotagents/PLAN.md P2 が正: ahead/behind・dirty・unpushed・stash・迷いブランチ・
+# 検査項目は dotagents/PLAN.md「定常運用」節が正: ahead/behind・dirty・unpushed・stash・迷いブランチ・
 # 既定ブランチ・NO_REMOTE・gitignore 貴重物候補・非 git ディレクトリ。
 set -uo pipefail
 
@@ -62,5 +62,5 @@ done
 
 echo
 echo "凡例: ahead/behind は現在ブランチの upstream 比（+ローカル先行/-リモート先行）。ignored 貴重物候補は"
-echo "ヒューリスティック（.env/鍵/CLAUDE.md/docs 等のパターン上位3件）＝**最終判定は必ず目視**（PLAN P2）。"
-echo "stash は push で運ばれない。非 git ディレクトリはトリアージ対象（PLAN P2）。"
+echo "ヒューリスティック（.env/鍵/CLAUDE.md/docs 等のパターン上位3件）＝**最終判定は必ず目視**（PLAN 定常運用）。"
+echo "stash は push で運ばれない。非 git ディレクトリはトリアージ対象（PLAN 定常運用）。"

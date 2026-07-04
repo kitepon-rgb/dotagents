@@ -5,7 +5,7 @@
 ## 開発ルート（オーナー裁定 2026-07-04）
 
 - 開発ルートの標準は **`~/Developer`**（macOS・Linux・WSL2。ランブックの clone 先・sync-sweep の既定と同一）。
-- ただし**既存端末の移設や例外はオーナーが端末ごとに裁定**する（Windows native は `~/Documents/Program` のまま裁定待ち＝SYNC_LEDGER 参照）。端末限定の裁定を本ファイルへ一般化して書かない。
+- ただし**既存端末の移設や例外はオーナーが端末ごとに裁定**する（FOX Windows native は `~/Documents/Program` のまま容認＝2026-07-04 オーナー裁定）。端末限定の裁定を本ファイルへ一般化して書かない。
 - **基準パスの変更（プロジェクトの移動・改名・削除）はオーナーの明示承認必須**。実行前に目的・影響・戻し方を申告し、実行後に移動一覧を報告する（2026-07-04 の無申告移設事案より）。
 
 ## 標準化の方針（最初に読む）
@@ -21,11 +21,11 @@
 |---|---|
 | `CLAUDE.md` | 正典（docs/00 等）への参照・検証コマンド・そのリポの掟。AI の入口 |
 | `README.md` | 人間の入口（何ができるか・起動方法） |
-| `docs/` | **00_ 番号順の正典**（00=overview から連番）＋ `adr/`（決定記録）＋ 監査ダイジェスト `audit-YYYY-MM/` |
+| `docs/` | **00_ 番号順の正典**（00=overview から連番）＋ `adr/`（決定記録）＋ 監査ダイジェスト `audit-YYYY-MM/` ＋ **進行中プラン（docs/ に作り TODO を兼ねる。役目を終えた文書は `archive/` へ）** |
 | `rag/` | 調査・研究の再利用棚。`INDEX.md`（1行台帳）＋ `<topic>/raw/`（一次ソース）＋コンパイル記事。運用は dotagents/PLAN.md 原則10（還流・Lint・選球眼） |
 | `.claude/settings.json` | 読み取り系 allowlist（fewer-permission-prompts で生成）。端末固有につき gitignore 対象なら生成手順を CLAUDE.md に書く |
-| テスト＋CI | required チェックとして張る（無いリポで大きな作業を始めるなら最初に CI＝PLAN の作法） |
-| `.gitignore` 衛生 | `.env`・鍵・`.obsidian/`・`.venv/`・ビルド生成物。**gitignore された貴重物は push で保護されない**ことを常に意識（P2 の実証事故） |
+| テスト＋CI | required チェックとして張る（無いリポで大きな作業を始めるなら最初に CI＝作業自体の安全網） |
+| `.gitignore` 衛生 | `.env`・鍵・`.obsidian/`・`.venv/`・ビルド生成物。**gitignore された貴重物は push で保護されない**ことを常に意識（2026-07-04 実証事故: ローカル CLAUDE.md 消失） |
 
 ## 知識基盤スタック（このリポ群の長期記憶の型）
 
@@ -33,7 +33,7 @@
 2. **外部仕様・研究** → `rag/`（markitdown 変換は**バイト数で成功判定**。JS ページは WebFetch/ブラウザ系）
 3. **設計判断** → `docs/adr/`・監査ダイジェスト
 4. **作法・手順** → CLAUDE.md（グローバル正本＋リポ別）
-5. **進捗・状態** → リポの TODO/issue（dotagents は docs/TODO.md）
+5. **進捗・状態** → プラン文書が TODO を兼ねる（docs/ 内。規約は dotagents/PLAN.md「文書の作法」）＋ issue
 
 - 検索・理解の道具: **codegraph**（コード構造。MCP 登録は dotagents README ランブック）・caveat MCP・grep。
 - 記法: `[[wikilink]]`＋YAML frontmatter（出典・取得日・確度）で **vault-friendly** に保つ。人間用の窓は Obsidian（真実は git+md のまま＝dotagents/PLAN.md 原則7）。
@@ -66,8 +66,8 @@ src/  tests/  package.json（or pyproject 等）
 
 - `<App>.xcodeproj|xcworkspace`・`<App>/`（ソース）・`<App>Tests/`・`fastlane/` 等は Xcode 慣習を優先し、**共通必須要件（CLAUDE.md/docs/rag/CI）だけを足す**。Xcode 標準と戦わない。
 
-## ギャップ検査の手順（P3 適用時）
+## ギャップ検査の手順（標準適用時）
 
-1. リポごとに必須要件7点＋型判定を突き合わせ「欠落・過剰・移動候補・リスク」を採点（A 委譲可）。
+1. リポごとに必須要件7点＋型判定を突き合わせ「欠落・過剰・移動候補・リスク」を採点（安価枠へ委譲可）。
 2. 統括が移行順を裁定（見送り基準を先に適用）。
-3. 適用は P5 再生と同じ波で（同期→標準化→監査→リファクタを1リポで連続処理）。
+3. 適用は同期→標準化→CLAUDE.md 磨きを1リポで連続処理し、1リポ=独立コミット。
