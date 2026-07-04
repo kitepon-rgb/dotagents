@@ -52,7 +52,8 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] 承認後の実行（2026-07-04 実施済み）: push 3件（Novel→forklore・codex-sidecar・Kikoeru branch）／ChromeDev・grok 目視→削除／ad-studio git 化→private push（main 正規化込み）／blog-figmaker git 化（ローカルまで。**remote 作成は保留提案中**）／OpenCClaw stash はオーナー裁定で放置
 - [x] 安全収容（2026-07-04）: クリーン behind 5リポを ff-only pull で同期（aiterm-mcp・codex-rc・dobojo・rpgdev・x-article-mcp）
 - [x] 個別収容（2026-07-04 裁定・実施。詳細 SYNC_LEDGER）: browser-to-api rebase 線形化（push 承認待ち）／Throughline pull＋.agents/ 残置裁定／WebAICoding .playwright-mcp/ 無害裁定／.DS_Store をグローバル excludesfile で恒久対処／codex-link は現役作業ブランチと裁定
-- [ ] 残る承認待ち(H): browser-to-api の push／blog-figmaker の private remote 作成／videomarketing フォーク問題（rag/・tools-studio/ の価値物が収容待ち）
+- [x] browser-to-api push・blog-figmaker private remote 作成＋push（2026-07-04 承認・実施済み）
+- [ ] 残る承認待ち(H): videomarketing フォーク問題のみ（rag/・tools-studio/ の価値物が収容待ち。オーナーへ説明中）
 - [ ] ServerManager master→main 正規化（P5 tier1 時）
 - [x] `docs/SYNC_LEDGER.md` 起票（2026-07-04）
 - [ ] orchestrate 憲法に「プロジェクト作業は sync-sweep green から」を1行追記

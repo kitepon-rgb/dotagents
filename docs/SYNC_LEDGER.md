@@ -10,7 +10,7 @@
 
 - fast-forward pull（クリーンな behind のみ）: aiterm-mcp(-6)・codex-rc(-2)・dobojo(-1)・rpgdev(-2)・x-article-mcp(-2) → 全て origin と同期
 - **push 3件（承認済み・実施済み）**: Novel main(+1)→forklore／codex-sidecar main(+2)／Kikoeru feat/listen-background を upstream 化
-- **非git 処遇（承認済み・実施済み）**: ChromeDev（.vscode のみ）・grok（空）を目視確認のうえ削除／**ad-studio を git 化→ private repo 作成→ push 済み**（機微スキャン緑・main 正規化済み）／blog-figmaker を git 化（ローカル commit まで。remote 作成は未=承認文言の範囲外につき保留提案）
+- **非git 処遇（承認済み・実施済み）**: ChromeDev（.vscode のみ）・grok（空）を目視確認のうえ削除／**ad-studio を git 化→ private repo 作成→ push 済み**（機微スキャン緑・main 正規化済み）／**blog-figmaker も git 化→ private repo 作成→ push 済み（2026-07-04 承認済。main で作成）**
 - **OpenCClaw stash: オーナー裁定「放置」**（2026-07-04。削除はしない）
 - git identity（noreply）と `init.defaultBranch main` をこの端末のグローバルに設定（ad-studio が master で生まれた実被弾を受けてランブックにも追記）
 - dotagents は P0 最適化で終日収容済み（本台帳含む）
@@ -22,7 +22,7 @@
 | Novel（=NoveLore。GitHub 名 **forklore**） | ~~main +1 未 push~~ | **push 済み（2026-07-04）** |
 | codex-sidecar | ~~main +2 未 push~~ | **push 済み（2026-07-04）** |
 | Kikoeru | ~~feat/listen-background upstream 無し~~ | **branch push 済み（2026-07-04）**。.env は gitignore 内に実在（削除系操作時は要目視） |
-| browser-to-api | 分岐 +1/-1 → **rebase で線形化済み**（feat コミットを docs コミットの上へ。2026-07-04） | ahead 1 の **push が承認待ち** |
+| browser-to-api | ~~分岐 +1/-1~~ rebase 線形化→**push 済み（2026-07-04 承認済）** | 解消 |
 | Throughline | ~~behind 3~~ pull 済み。`.agents/`（Throughline 端末状態）は未追跡のまま残置 | P5 再生時に .gitignore へ |
 | WebAICoding | `.playwright-mcp/`（MCP 生成物）未追跡 | 無害・P5 再生時に .gitignore へ |
 | tools-manager | ~~behind 1~~ 同期対象外の .DS_Store のみ→グローバル excludesfile で恒久抑止（2026-07-04） | 解消 |
