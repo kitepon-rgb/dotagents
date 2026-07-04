@@ -82,6 +82,7 @@ flowchart LR
   ```bash
   git config --global user.name "kitepon-rgb"
   git config --global user.email "kitepon-rgb@users.noreply.github.com"
+  git config --global init.defaultBranch main   # 新規リポが master で生まれるのを防ぐ（2026-07-04 実被弾）
   ```
 - **ランタイム**: node>=22＋corepack・docker・python3
 - **CLI**: Claude Code・Codex CLI・Grok Build・markitdown（JS ページは空を吐く罠あり→caveat 参照）

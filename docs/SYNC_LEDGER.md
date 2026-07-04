@@ -6,9 +6,13 @@
 
 27 ディレクトリ＝ git 23 ＋ 非git 4。
 
-### 同日実施済みの収容（安全操作のみ）
+### 同日実施済みの収容（2026-07-04・オーナー承認済み分）
 
 - fast-forward pull（クリーンな behind のみ）: aiterm-mcp(-6)・codex-rc(-2)・dobojo(-1)・rpgdev(-2)・x-article-mcp(-2) → 全て origin と同期
+- **push 3件（承認済み・実施済み）**: Novel main(+1)→forklore／codex-sidecar main(+2)／Kikoeru feat/listen-background を upstream 化
+- **非git 処遇（承認済み・実施済み）**: ChromeDev（.vscode のみ）・grok（空）を目視確認のうえ削除／**ad-studio を git 化→ private repo 作成→ push 済み**（機微スキャン緑・main 正規化済み）／blog-figmaker を git 化（ローカル commit まで。remote 作成は未=承認文言の範囲外につき保留提案）
+- **OpenCClaw stash: オーナー裁定「放置」**（2026-07-04。削除はしない）
+- git identity（noreply）と `init.defaultBranch main` をこの端末のグローバルに設定（ad-studio が master で生まれた実被弾を受けてランブックにも追記）
 - dotagents は P0 最適化で終日収容済み（本台帳含む）
 
 ### 掃引結果（収容後の残課題のみ抜粋。全リポの生データは `sync-sweep` を再実行）
