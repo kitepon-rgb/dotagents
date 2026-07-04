@@ -108,6 +108,38 @@ aiterm-mcp(-19)・ServerManager(-17)・Spotter(-59)・Throughline(-55)・Caveat(
 | PCManager(8) | 端末管理スクリプト（update-tools.ps1 は現役タスクが参照） | git化候補（現役のため削除不可） |
 | GroupChat(2)・Claude(1)・FileCopy(1) | 小物 | 目視裁定待ち |
 
+## FOX — WSL2 Ubuntu-26.04（走査ルート `~/Developer`・掃引 2026-07-04）
+
+77 ディレクトリ＝ git 60 ＋ 非git 17。同一筐体の Windows native 側とは別環境（上記セクション参照）。
+
+### 開発ルート統一（同日実施・オーナー承認済み）
+
+- **`~/projects` → `~/Developer` へ全 76 エントリを mv で移設**（同一 ext4 内 rename＝損失ゼロ。移設前後の sync-sweep が dirty 数・branch・stash まで完全一致することを照合済み）。
+- 経緯: 先行セッションが README ランブック準拠で dotagents のみ無申告で移設→オーナー激怒→「全量統一なら可」の裁定を受け残り 75 を移設。**基準パス変更の無断実施は再発防止対象（PROJECT_LAYOUT.md 開発ルート節）**。
+- 旧 `~/projects` は空＋`MOVED.md` のみ残置（**削除はオーナー承認待ち**。Windows 側 `\\wsl.localhost\...\projects` 参照の付け替え猶予）。バックアップ一式は `~/migration-backup-20260704/`。
+- 参照張り替え済み: `.claude.json`・`.codex/config.toml`（パス焼き込み全置換・JSON 検証済）／端末メモリ 24 キー改名（旧 dotagents 分はセッションログ統合）／npm link `b2a-cli` を新パスへ／`~/.local/bin/delegate` 残骸 symlink 除去（機能自体 v0.7.0 で撤去済み）。壊れ symlink 走査ゼロ・verify-install OK。
+
+### 同日実施済みの収容（WSL 側）
+
+- **週次自動更新**: crontab に `agents-update` 常設済みを確認（毎週月曜 12:00・旧 npm 行なし）。実走行 12/12 パッケージ latest 化・FAILED 0（ログ末尾 `agents-update end` 確認）。
+- **codex-sidecar-cli/core の npm link は registry 版へ置換**（agents-update 実走行による。正典の registry 運用追認どおり。link 開発へ戻す判断は PENDING_OWNER 既存項目）。
+- 罠DB: own 125 件収容済み（先行セッション・eeee3cd 以前）。
+
+### 18リポ該当分（WSL 側・触らない・状態記録のみ）
+
+Caveat(-4・dirty3)・Chime(-5)・Spotter(-2)・sprite-forge-mcp(-3)・codex-sidecar(-2)・browser-to-api(-2)・WebAICoding(-22・dirty1)・MMOAuction(dirty1)・ServerManager(-1・dirty1・master)・OpenCClaw(-1)・dotagents(本作業)・dobojo/rpgdev/Throughline(同期)。behind は MacBook 主作業のため放置。
+
+### 処遇提案（オーナー承認待ち）
+
+| 対象 | 実測 | 提案 |
+|---|---|---|
+| dirty 残り9リポ（18リポ外） | DDNSer(1)・FlaUI-MCP(1)・IP-MCP(1)・License-DB(2)・LiveTR(1)・Trader(1)・ai-group(1)・claude-image-tools(1)・personaplex(1) | 各1〜2ファイル＝収容 or 破棄の目視裁定（次セッションで中身一覧を出す） |
+| 迷いブランチ | codex-rc `rollback-backup/pre-24h-20260509`（upstream無）・terminal `feat/node-impl-tests-publish`（upstream無） | push して upstream 化 or 削除の裁定 |
+| 外部 clone・大幅 behind | llama.cpp(-872)・ComfyUI(-420)・claude-usage(-98)・zenn-content(-34)・OLTranslator(-16)・Nextcloud(-2) | 同期維持 or 削除（必要時再clone）の裁定 |
+| caveats-quo | **リモート消滅**（fetch 失敗の正体。Windows 側で全35件収容済み確認済み） | **削除候補**（Windows 側提案と同一） |
+| 非git 17件 | 実体系: Lisence(25)・ImageCollector(18)・StableDiffusion(17)・VoiceTransrator(13)・sfc2win(10)・git-manager(10)・AlwaysToGo(7)・BosTimerBot(7)・_playwright(5)・ai-companion(5)・nasne(4)・Translator(3)・GroupChat(2)／小物: Claude(1)・FileCopy(1)・YomiAGE(1)・test(1) | git化(private)/tar退避/削除の裁定（Windows 側と同名多数＝同系の重複面。横断で一括裁定推奨） |
+| Windows アプリ専用プロジェクト | オーナー指示 2026-07-04「WSL2 環境では完全に Windows アプリのものは不要＝削除可」（**この端末限定の裁定**） | 証拠付きで分類し WSL 側から削除（現役 MCP 実体の FlaUI-MCP・Mcp.ComputerUse は保全。実施結果は本節へ追記） |
+
 ## 他端末（未掃引）
 
 - 端末追加時: README ランブック → `sync-sweep` → 本ファイルにセクション追記 → トリアージ承認（端末ごとに取る）
