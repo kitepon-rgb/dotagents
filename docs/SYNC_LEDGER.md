@@ -19,14 +19,14 @@
 
 | リポ | 残課題 | 提案する処置 |
 |---|---|---|
-| Novel（=NoveLore。GitHub 名 **forklore**） | ~~main +1 未 push~~ | **push 済み（2026-07-04）** |
+| Novel（=NoveLore。GitHub 名 **forklore**） | ~~main +1 未 push~~ push 済み（2026-07-04） | **⚠ 作業中ロック（オーナー宣言 2026-07-04）: 別セッションで稼働中。本作戦からは触らない。P5 等で着手する際は必ず事前にオーナーへ申告** |
 | codex-sidecar | ~~main +2 未 push~~ | **push 済み（2026-07-04）** |
 | Kikoeru | ~~feat/listen-background upstream 無し~~ | **branch push 済み（2026-07-04）**。.env は gitignore 内に実在（削除系操作時は要目視） |
 | browser-to-api | ~~分岐 +1/-1~~ rebase 線形化→**push 済み（2026-07-04 承認済）** | 解消 |
 | Throughline | ~~behind 3~~ pull 済み。`.agents/`（Throughline 端末状態）は未追跡のまま残置 | P5 再生時に .gitignore へ |
 | WebAICoding | `.playwright-mcp/`（MCP 生成物）未追跡 | 無害・P5 再生時に .gitignore へ |
 | tools-manager | ~~behind 1~~ 同期対象外の .DS_Store のみ→グローバル excludesfile で恒久抑止（2026-07-04） | 解消 |
-| videomarketing | **rag/（TTS/音声の調査）と tools-studio/（実スクリプト群）の価値物が未収容**＋remote が外部フォーク | フォーク問題の**オーナー判断（H）が先**（外部フォークには push できない） |
+| videomarketing | ~~価値物未収容＋外部フォーク~~ **解決（2026-07-04 オーナー裁定①）**: origin を kitepon-rgb/videomarketing（private・新設）へ切替、旧フォークは upstream として維持。rag/・tools-studio/ を収容し push 済み（機微スキャン緑・.venv 除外）。**罠踏破: shallow clone は新リモートへ push 不可**（remote unpack failed になる）→ `git fetch upstream --unshallow` で解決 | 解消 |
 | codex-link | codex/mvp-host-pairing-flow は main より 5+ コミット先行・push 済み | **裁定: 迷いではなく現役の作業ブランチ**（main への統合はプロジェクト側の判断） |
 | OpenCClaw | stash@{0}（CLAUDE.md 類・2026-05） | **オーナー裁定: 放置（2026-07-04）** |
 | ServerManager | 既定ブランチ master | main 正規化（P5 tier1 の再生時に同時実施） |

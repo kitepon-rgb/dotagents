@@ -53,7 +53,8 @@ Fable 後: P5 実装消化（ダイジェスト＋implementer 契約で安価モ
 - [x] 安全収容（2026-07-04）: クリーン behind 5リポを ff-only pull で同期（aiterm-mcp・codex-rc・dobojo・rpgdev・x-article-mcp）
 - [x] 個別収容（2026-07-04 裁定・実施。詳細 SYNC_LEDGER）: browser-to-api rebase 線形化（push 承認待ち）／Throughline pull＋.agents/ 残置裁定／WebAICoding .playwright-mcp/ 無害裁定／.DS_Store をグローバル excludesfile で恒久対処／codex-link は現役作業ブランチと裁定
 - [x] browser-to-api push・blog-figmaker private remote 作成＋push（2026-07-04 承認・実施済み）
-- [ ] 残る承認待ち(H): videomarketing フォーク問題のみ（rag/・tools-studio/ の価値物が収容待ち。オーナーへ説明中）
+- [x] videomarketing フォーク問題解決（2026-07-04 オーナー裁定①: 自 private へ origin 切替・価値物収容・push 済み。shallow 罠は unshallow で踏破）
+- **⚠ Novel(forklore) は作業中ロック（オーナー宣言 2026-07-04）**: 別セッション稼働中。P5 の Novel 残骸削除・監査等は着手前に必ずオーナーへ申告
 - [ ] ServerManager master→main 正規化（P5 tier1 時）
 - [x] `docs/SYNC_LEDGER.md` 起票（2026-07-04）
 - [ ] orchestrate 憲法に「プロジェクト作業は sync-sweep green から」を1行追記
