@@ -33,7 +33,7 @@
 - [x] `make lint` green（shellcheck ＋ markdownlint）
 - [x] JSON 契約テスト（`echo '{}' | ~/.local/bin/plan-gate-hook | jq .` が valid・shape 一致）
 - [x] この端末の `~/.claude/settings.json` へ配線（活性化。update-config skill 経由・JSON 妥当性と追加分だけの diff を検証）
-- [ ] 実火テスト（次のプラン承認で `additionalContext` 注入を観測）← **この端末に残る唯一の未消化**
+- [x] 実火テスト（プラン承認で `additionalContext` 注入を逐語観測＝成功。2026-07-05）
 - [x] commit（pathspec 明示）→ オーナー GO → push（main。`b6f5416..30b21c9`）
 
 ## 各端末の適用手順
