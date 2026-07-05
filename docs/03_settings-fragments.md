@@ -30,6 +30,29 @@
 
 - 自動化（「毎回 X したら Y」）は memory や指示ではなく hooks でしか成立しない——必要になったら update-config skill で settings.json に組む。
 - この Mac の実例: caveat の UserPromptSubmit / Stop hook（罠シグナルの提示・セッション状態の退避）。他端末へは caveat MCP 導入（P1 ランブック）とセットで。
+- **正本化ゲート hook（全端末推奨・下記）**: プラン承認直後に「計画文書の作法」を注入し、承認プランの docs/ 正本化を機械発火させる。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）、配線だけを各端末の `~/.claude/settings.json` に手挿し（同期ペイロード＋手挿しコネクタ＝settings.json 非同期の型）。設計と TODO は [plan_plan-gate-hook.md](plan_plan-gate-hook.md)。
+
+### 正本化ゲート hook の配線断片
+
+前提: `./install.sh` 済み（`~/.local/bin/plan-gate-hook` が存在）。`~/.claude/settings.json` にマージ（既存 `hooks.PostToolUse` があればその配列へ足す）。ライブ反映＝次のプラン承認から発火:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          { "type": "command", "command": "~/.local/bin/plan-gate-hook", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+- matcher は `ExitPlanMode` 完全一致（プラン承認専用イベントは無く PostToolUse で受ける）。
+- TodoWrite には貼らない（些末用途が多く毎回発火は alarm fatigue）。TodoWrite 経路は散文の正本化ゲートがカバー。
 
 ## 適用チェック
 
