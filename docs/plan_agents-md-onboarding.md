@@ -31,7 +31,7 @@ AGENTS 化するのは**リポ直下 `dotagents/CLAUDE.md`（プロジェクト�
 - [x] `rag/agent-config/agents-md-vs-claude-md-2026.md` に調査還流＋`INDEX.md` 追記
 - [x] `make lint` green（AGENTS.md を glob に追加・16ファイル 0 error）
 - [x] 検証（憲法/PLAN 無変更を git diff で確認・重複ゼロ）
-- [ ] commit（pathspec 明示）→ push（main・CI green 確認）
+- [x] commit（pathspec 明示）→ push（main `7dd1d34..0614867`・CI green 26s）＝**全消化**
 
 ## 検証
 
