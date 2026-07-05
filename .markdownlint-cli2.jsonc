@@ -16,6 +16,7 @@
   // 対象＝生きた正典のみ（archive は凍結＝除外）。docs/ 直下・adr/・将来の
   // サブディレクトリ（audit-YYYY-MM 等）を **/*.md で先取りしつつ archive を外す。
   "globs": [
+    "AGENTS.md",
     "CLAUDE.md",
     "README.md",
     "claude/CLAUDE.md",

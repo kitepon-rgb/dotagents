@@ -11,3 +11,4 @@
 - [orchestration/ai-collaboration-as-code.md](orchestration/ai-collaboration-as-code.md) — AI協業のコード化（@UT_Codex: GPT計画×Codex実行 Skill）。うちの MODELS 委譲構造の外部実証・delegate 設計の参考（2026-07-04）
 - [orchestration/smux-terminal-agent-mesh.md](orchestration/smux-terminal-agent-mesh.md) — smux（Claude Code⇄Codex のターミナル双方向対話）。単発委譲の対話ループ拡張候補・導入前に実測必須（2026-07-04）
 - [model-steering/fable-behavior-porting-audit.md](model-steering/fable-behavior-porting-audit.md) — connect24h「型は移植できる」検分: output style での型移植は Fable に逆行（公式 L174/L9-13）＝棄却。記事の「Opus 4.8 は 200K」は誤り（1M 既定）。うちの会話規範は Fable の型と整合／憲法の選択的スリム化が宿題（2026-07-05・確度高・refuter 通過）
+- [agent-config/agents-md-vs-claude-md-2026.md](agent-config/agents-md-vs-claude-md-2026.md) — AGENTS.md vs CLAUDE.md の 2026 規約: Claude Code は CLAUDE.md を読み AGENTS.md は `@import` 推奨／AGENTS.md は横断標準だがリポ単位のみ（グローバル等価物なし）。dotagents に適用（2026-07-05・確度高・一次ソース）

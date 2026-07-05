@@ -3,14 +3,15 @@
 Claude Code / Codex の環境そのもの（skill・command・agents・rule・グローバル CLAUDE.md・罠DB・調査資産・環境整備の聖典）を**複数端末で同期する個人 dotfiles**。GitHub が真実の源。
 
 - **趣旨・原則・残件**: [PLAN.md](PLAN.md)（憲章＝聖典 v4。プランは docs/ で TODO を兼ねる）
-- **AI 向けの掟**: [CLAUDE.md](CLAUDE.md)
+- **AI 向けの掟（全エージェント共通）**: [AGENTS.md](AGENTS.md)（Claude は [CLAUDE.md](CLAUDE.md) が `@AGENTS.md` で取り込む）。**URL を渡された AI のオンボーディング入口も AGENTS.md**（「AI オンボーディング」節）
 
 ## 構成
 
 ```
 dotagents/
 ├── PLAN.md              … 開発工場の憲章（趣旨・原則・定常運用・残件）
-├── CLAUDE.md            … このリポで働く AI への指示
+├── AGENTS.md            … 全 AI 共通のプロジェクト正典＋AI オンボーディング入口
+├── CLAUDE.md            … Claude 用の薄いラッパ（@AGENTS.md ＋ ベル固有）
 ├── install.sh           … symlink 配置（冪等・実ファイルは SKIP・失敗は停止）
 ├── docs/                … 00_overview.md（地図）・02_models.md（役割→モデル対応表）・01_project-layout.md・進行中プラン／archive/（役目を終えた文書）
 ├── rag/                 … 調査・研究の再利用棚（INDEX.md＋topic/raw/ 一次ソース）
