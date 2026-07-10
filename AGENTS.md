@@ -22,7 +22,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 
 1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・`claude`/`codex`/`markitdown`・MCP 用 CLI（`aiterm-mcp`/`caveat`/`codegraph`）を導入し `claude mcp add --scope user` で登録。
 2. **clone**（README §1）: `gh repo clone kitepon-rgb/dotagents ~/Developer/dotagents && cd ~/Developer/dotagents`。
-3. **既存実ファイルの退避**（README §2・重要）: install.sh は実ファイルを SKIP するので、先に tar 退避し stale な `~/.claude/CLAUDE.md` 実体を削除。飛ばすと正本化が静かに失敗する。
+3. **既存実ファイルの退避**（README §2・重要）: install.sh は実ファイルを SKIP するので、先に tar 退避し stale な `~/.claude/CLAUDE.md` 実体を削除。飛ばすと正本化が静かに失敗する。`~/.codex/AGENTS.md` が実ファイルなら同様——中身を確認し、価値ある行は `codex/AGENTS.md` へ PR してから tar 退避・削除する（黙って上書き・破棄しない）。
 4. **install → 検証**（README §3）: `./install.sh && ./bin/verify-install.sh`。verify が OK を返すまで直す（FAIL 行が退避すべき実ファイルを名指す）。
 5. **`settings.json` 断片の適用**（install.sh は `settings.json` を触らない＝ここが手挿しの代替。AI は jq で冪等・安全にマージせよ）: 正典は [docs/03_settings-fragments.md](docs/03_settings-fragments.md)。手順＝既存確認→バックアップ→追加分のみ→JSON 妥当性確認。**正本化ゲート hook は全端末必須**。実例（hook を PostToolUse に冪等追記）:
 
@@ -37,7 +37,8 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
    ```
 
    他の推奨断片（読み取り系 `permissions.allow` 等）も [docs/03_settings-fragments.md](docs/03_settings-fragments.md) 参照。ライブ反映＝次の発火から有効。
-6. **メモリ整理・自動アップデート常設**（README §4・「自動アップデート」節）: 各端末のメモリ整理と週次 `agents-update`（macOS=launchd／Linux・WSL=cron）を必須で設置。
+6. **Codex 断片の適用**: 正典は [docs/05_codex-fragments.md](docs/05_codex-fragments.md)。要旨のみ——`~/.codex/config.toml` の `[agents]` は設定不要（委譲モードは effort から自動導出: ultra→proactive／それ以外→明示要求時のみ。`max_threads` を書くのは地雷）、親モデル×effort の既定はオーナー領分（AI は変更しない）。
+7. **メモリ整理・自動アップデート常設**（README §4・「自動アップデート」節）: 各端末のメモリ整理と週次 `agents-update`（macOS=launchd／Linux・WSL=cron）を必須で設置。
 
 ## 掟（複数端末リポの作法）
 
@@ -53,9 +54,11 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 | Claude command | `claude/commands/<name>.md` | `~/.claude/commands/<name>.md` | 単一 `.md` |
 | Codex skill | `codex/skills/<name>/` | `~/.codex/skills/<name>` | `SKILL.md` を含むディレクトリ (`agents/openai.yaml` 等を併設可) |
 | Codex rule | `codex/rules/<file>` | `~/.codex/rules/<file>` | 任意ファイル (例: `default.rules`) |
+| Codex グローバル規範 | `codex/AGENTS.md` | `~/.codex/AGENTS.md` | 単一 `.md`（2026-07 リポ正本化。詳細は「含めないもの」節） |
+| Codex サブエージェント | `codex/agents/<name>.toml` | `~/.codex/agents/<name>.toml` | 単一 `.toml`（`name`/`description`/`developer_instructions` の3必須キー） |
 | 実行スクリプト | `bin/<name>.sh` | `~/.local/bin/<name>` | 単一 bash (`.sh` は配置時に外れる、`chmod +x` 必須) |
 
-`install.sh` は上記 5 グループのそれぞれを 1 階層だけ走査し symlink を張る。**新規エントリ追加後は `./install.sh` を再実行が必要** (既存エントリの編集だけなら不要)。
+`install.sh` は上記 7 グループのそれぞれを 1 階層だけ走査し symlink を張る。**新規エントリ追加後は `./install.sh` を再実行が必要** (既存エントリの編集だけなら不要)。
 
 ### Skill の frontmatter (Anthropic 規約)
 
@@ -86,7 +89,7 @@ claude/commands/audit-gauntlet.md -> ../skills/audit-gauntlet/SKILL.md
 - `~/.claude/{settings.json,plugins,projects,sessions}` — 端末固有 / 認証情報（端末メモリ `projects/*/memory` を含む。設定の推奨断片は [docs/03_settings-fragments.md](docs/03_settings-fragments.md)）
 - `~/.codex/{config.toml,auth.json,sessions,*.sqlite}` — 同上
 - `~/.codex/skills/.system/` — Codex CLI バンドルのシステム skill
-- `~/.codex/AGENTS.md` — **Codex の"グローバル"指示（端末別管理）。本ファイル（リポ直下 AGENTS.md＝プロジェクト単位）とは別物**。混同しない
+- ~~`~/.codex/AGENTS.md`~~ — 2026-07 にリポ正本化（[codex/AGENTS.md](codex/AGENTS.md) → symlink 配布。本ファイル＝リポ直下 AGENTS.md＝プロジェクト単位の正典とは別物・混同しない）。端末ローカルの緊急上書きは `~/.codex/AGENTS.override.md`（非コミット。存在すれば Codex が配布憲法より優先して読むため、`bin/verify-install.sh` が非空を FAIL 名指しする）
 - リポ直下の `.claude/` `.vscode/` — 端末固有状態 (Throughline が端末の絶対パスを焼き込む)。gitignore 済み
 
 ## ビルド / テスト / 検証

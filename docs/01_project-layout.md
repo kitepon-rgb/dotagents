@@ -26,6 +26,7 @@
 | `.claude/settings.json` | 読み取り系 allowlist（fewer-permission-prompts で生成）。端末固有につき gitignore 対象なら生成手順を CLAUDE.md に書く |
 | テスト＋CI | required チェックとして張る（無いリポで大きな作業を始めるなら最初に CI＝作業自体の安全網） |
 | `.gitignore` 衛生 | `.env`・鍵・`.obsidian/`・`.venv/`・ビルド生成物。**gitignore された貴重物は push で保護されない**ことを常に意識（2026-07-04 実証事故: ローカル CLAUDE.md 消失） |
+| `.codex-sidecar.yml` | sidecar 委譲を受けるリポはルートに置く（テンプレ: dotagents/docs/05_codex-fragments.md） |
 
 ## 知識基盤スタック（このリポ群の長期記憶の型）
 

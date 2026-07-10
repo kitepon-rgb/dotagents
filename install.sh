@@ -40,7 +40,10 @@ for f in "$HERE/claude/agents"/*.md; do
 done
 
 # Codex
-mkdir -p "$HOME/.codex/skills" "$HOME/.codex/rules"
+mkdir -p "$HOME/.codex/skills" "$HOME/.codex/rules" "$HOME/.codex/agents"
+if [ -e "$HERE/codex/AGENTS.md" ]; then
+  link_one "$HERE/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+fi
 for d in "$HERE/codex/skills"/*/; do
   [ -d "$d" ] || continue
   link_one "${d%/}" "$HOME/.codex/skills/$(basename "$d")"
@@ -48,6 +51,10 @@ done
 for f in "$HERE/codex/rules"/*; do
   [ -e "$f" ] || continue
   link_one "$f" "$HOME/.codex/rules/$(basename "$f")"
+done
+for f in "$HERE/codex/agents"/*.toml; do
+  [ -e "$f" ] || continue
+  link_one "$f" "$HOME/.codex/agents/$(basename "$f")"
 done
 
 # caveat own entries (trap DB shared across terminals; this repo is PRIVATE.

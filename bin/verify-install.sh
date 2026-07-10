@@ -26,15 +26,26 @@ check() { # check <dst> <expect_src>
   fi
 }
 
-# install.sh の6グループと対称に検証
+# install.sh の10グループと対称に検証
 [ -f "$REPO/claude/CLAUDE.md" ] && check "$HOME/.claude/CLAUDE.md" "$REPO/claude/CLAUDE.md"
 for d in "$REPO/claude/skills"/*/;   do [ -d "$d" ] && check "$HOME/.claude/skills/$(basename "$d")" "$d"; done
 for f in "$REPO/claude/commands"/*.md; do [ -e "$f" ] && check "$HOME/.claude/commands/$(basename "$f")" "$f"; done
 for f in "$REPO/claude/agents"/*.md;   do [ -e "$f" ] && check "$HOME/.claude/agents/$(basename "$f")" "$f"; done
+[ -f "$REPO/codex/AGENTS.md" ] && check "$HOME/.codex/AGENTS.md" "$REPO/codex/AGENTS.md"
 for d in "$REPO/codex/skills"/*/;    do [ -d "$d" ] && check "$HOME/.codex/skills/$(basename "$d")" "$d"; done
 for f in "$REPO/codex/rules"/*;      do [ -e "$f" ] && check "$HOME/.codex/rules/$(basename "$f")" "$f"; done
+for f in "$REPO/codex/agents"/*.toml; do [ -e "$f" ] && check "$HOME/.codex/agents/$(basename "$f")" "$f"; done
 [ -d "$REPO/caveat" ] && check "$HOME/.caveat/own" "$REPO/caveat"
 for f in "$REPO/bin"/*.sh;           do [ -e "$f" ] && check "$HOME/.local/bin/$(basename "$f" .sh)" "$f"; done
+
+# ~/.codex/AGENTS.override.md シャドー検出: Codex は override が存在すれば AGENTS.md より
+# 優先して読むため、非空の override は配布憲法（codex/AGENTS.md）を無言で無効化する。
+# 空ファイルはシャドーしない（Codex 側が空なら読み飛ばす想定）ので FAIL にしない。
+override_file="$HOME/.codex/AGENTS.override.md"
+if [ -s "$override_file" ]; then
+  echo "FAIL: ${override_file} が非空で存在（AGENTS.md より優先され配布憲法が読まれない。意図的でなければ退避）"
+  fail=1
+fi
 
 echo
 if [ "$fail" -eq 0 ]; then

@@ -22,6 +22,8 @@ dotagents/
 │   ├── commands/        … → ~/.claude/commands/<name>.md
 │   └── agents/          … → ~/.claude/agents/<name>.md
 ├── codex/
+│   ├── AGENTS.md        … Codex グローバル規範の正本（→ ~/.codex/AGENTS.md）
+│   ├── agents/          … → ~/.codex/agents/<name>.toml
 │   ├── skills/          … → ~/.codex/skills/<name>
 │   └── rules/           … → ~/.codex/rules/<file>
 └── bin/                 … → ~/.local/bin/<name>（.sh は外れる）
@@ -34,6 +36,8 @@ flowchart LR
     cs["claude/skills/&lt;name&gt;/"]
     cc["claude/commands/&lt;name&gt;.md"]
     ca["claude/agents/&lt;name&gt;.md"]
+    xam["codex/AGENTS.md"]
+    xca["codex/agents/&lt;name&gt;.toml"]
     xs["codex/skills/&lt;name&gt;/"]
     xr["codex/rules/&lt;file&gt;"]
     cv["caveat/"]
@@ -44,6 +48,8 @@ flowchart LR
     hcs["~/.claude/skills/&lt;name&gt;"]
     hcc["~/.claude/commands/&lt;name&gt;.md"]
     hca["~/.claude/agents/&lt;name&gt;.md"]
+    hxam["~/.codex/AGENTS.md"]
+    hxca["~/.codex/agents/&lt;name&gt;.toml"]
     hxs["~/.codex/skills/&lt;name&gt;"]
     hxr["~/.codex/rules/&lt;file&gt;"]
     hcv["~/.caveat/own"]
@@ -53,6 +59,8 @@ flowchart LR
   cs -. symlink .-> hcs
   cc -. symlink .-> hcc
   ca -. symlink .-> hca
+  xam -. symlink .-> hxam
+  xca -. symlink .-> hxca
   xs -. symlink .-> hxs
   xr -. symlink .-> hxr
   cv -. symlink .-> hcv
@@ -71,9 +79,12 @@ flowchart LR
 | Claude command | `audit-gauntlet` / `auto-deploy-on-push` / `polish-github` | 各スキルの入口（audit-gauntlet は skill への相対 symlink） |
 | Codex skill | `polish-github` | GitHub presentation 整備（正本は Claude 版・Codex 版は薄いポインタ＝一本化済み） |
 | Codex rule | `default.rules` | Codex 常時適用ルール |
+| Codex グローバル規範 | `codex/AGENTS.md` | Codex 親の鉄則・モデル配置・git 作法（2026-07 リポ正本化。対応表は docs/02_models.md） |
+| Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲定義（terra×medium / sol×high×read-only / luna×low） |
 | bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
 | データ | `caveat/` | 外部仕様の罠DB（caveat MCP が参照。public 級のみ同期） |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
+| 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
 
 ## 他端末セットアップ・ランブック
 
@@ -112,9 +123,11 @@ cd ~/Developer/dotagents
 `mkdir -p ~/Archives` してから:
 
 ```bash
-tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claude/CLAUDE.md .claude/skills .claude/agents .claude/commands 2>/dev/null || true
-# グローバル CLAUDE.md の実ファイルが残っていると正本化が静かに不成立になる
+tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claude/CLAUDE.md .claude/skills .claude/agents .claude/commands .codex/AGENTS.md 2>/dev/null || true
+# グローバル CLAUDE.md / Codex AGENTS.md の実ファイルが残っていると正本化が静かに不成立になる
 [ -f ~/.claude/CLAUDE.md ] && [ ! -L ~/.claude/CLAUDE.md ] && rm ~/.claude/CLAUDE.md
+# ~/.codex/AGENTS.md が実ファイルなら先に中身を確認——価値ある行は codex/AGENTS.md へ PR してから退避・削除する
+[ -f ~/.codex/AGENTS.md ] && [ ! -L ~/.codex/AGENTS.md ] && rm ~/.codex/AGENTS.md
 ```
 
 **caveat の own は自動化しない**（既存の端末ローカル罠を失うため手作業）: `~/.caveat/own` が実ディレクトリなら、中身を `caveat/entries/<category>/` へマージ（同名衝突は中身を見て統合）→ `~/.caveat/own` を tar 退避して削除 → `install.sh` が symlink を張る。この手順を飛ばすと install.sh が SKIP し §3 の `verify-install` が FAIL で教える。
@@ -188,6 +201,6 @@ tail -5 ~/.local/state/agents-update/agents-update.log # "agents-update end" 行
 - `~/.claude/{settings.json,plugins,projects,sessions}` — 端末固有 / 認証情報（端末メモリ含む。設定の推奨断片は docs/03_settings-fragments.md）
 - `~/.codex/{config.toml,auth.json,sessions,*.sqlite}` — 同上
 - `~/.codex/skills/.system/` — Codex CLI バンドルのシステム skill
-- `~/.codex/AGENTS.md` — グローバル指示（端末別管理の選択肢を残す）
+- ~~`~/.codex/AGENTS.md`~~ — 2026-07 にリポ正本化（`codex/AGENTS.md` → symlink 配布）。端末ローカルの緊急上書きは `~/.codex/AGENTS.override.md`（非コミット・`bin/verify-install.sh` が非空を FAIL 名指し）
 - `caveat/**/*.private.md` — private 級の罠は端末ローカル（caveat 自前の gitignore で強制）
 - リポ直下の `.claude/` `.vscode/` `.obsidian/` — 端末固有状態（gitignore 済み）

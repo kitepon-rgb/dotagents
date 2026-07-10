@@ -12,3 +12,5 @@
 - [orchestration/smux-terminal-agent-mesh.md](orchestration/smux-terminal-agent-mesh.md) — smux（Claude Code⇄Codex のターミナル双方向対話）。単発委譲の対話ループ拡張候補・導入前に実測必須（2026-07-04）
 - [model-steering/fable-behavior-porting-audit.md](model-steering/fable-behavior-porting-audit.md) — connect24h「型は移植できる」検分: output style での型移植は Fable に逆行（公式 L174/L9-13）＝棄却。記事の「Opus 4.8 は 200K」は誤り（1M 既定）。うちの会話規範は Fable の型と整合／憲法の選択的スリム化が宿題（2026-07-05・確度高・refuter 通過）
 - [agent-config/agents-md-vs-claude-md-2026.md](agent-config/agents-md-vs-claude-md-2026.md) — AGENTS.md vs CLAUDE.md の 2026 規約: Claude Code は CLAUDE.md を読み AGENTS.md は `@import` 推奨／AGENTS.md は横断標準だがリポ単位のみ（グローバル等価物なし）。dotagents に適用（2026-07-05・確度高・一次ソース）
+- [models/gpt-5.6-family.md](models/gpt-5.6-family.md) — GPT-5.6 世代（Sol/Terra/Luna）: 価格・effort 段階（Luna は ultra 非対応の5段階＝新発見）・ネイティブ agent role TOML の3必須キー・ultra=max+proactive委譲・sidecar 連携（2026-07-11・確度は claim 別。端末実測とバイナリ strings 実読で裏取り済み）
+- [models/xai-grok45-composer25.md](models/xai-grok45-composer25.md) — Grok 4.5（実務判断首位・難関SWE弱い）/Composer 2.5（effort非対応・物量特化）: 価格・context window・aiterm 隔離設計・改修依頼3件（2026-07-11・確度は claim 別。端末 models_cache.json 実測で価格以外は裏取り済み）

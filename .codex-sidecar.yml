@@ -1,0 +1,39 @@
+# 前提: GPT-5.6 世代（2026-07 時点）。defaults の正は docs/02_models.md
+#
+# スキーマは codex-sidecar-core/dist/{config.js,presets.js,types.js,profiles.js} を実読して確認
+# （2026-07-11・/opt/homebrew/lib/node_modules/codex-sidecar-core）。USAGE.md 等の文書は端末に
+# 見当たらず、実装コードが一次ソース。project は codex-sidecar-core/dist/config.js のバリデーションが
+# 要求する必須キー（非空文字列。依頼時の想定仕様には無かったが実装に合わせて追加）。
+
+project: dotagents
+
+# defaults: 端末 config.toml の model/effort ピン（現状 Sol×ultra 相当）が sidecar 委譲へ
+# 継承される事故を遮断する構造的バックストップ。model_reasoning_effort は
+# codex-sidecar-core が受理する low/medium/high/xhigh のみ（ultra/max はスキーマ外）。
+defaults:
+  model: gpt-5.6-terra
+  model_reasoning_effort: medium
+
+# safety_profile: SAFETY_PROFILE_DENY_PATTERNS（profiles.js）に無い専用プロファイルは
+# 発明しない。dotagents は markdown/shell/toml の配布物のみ（.env・鍵・DB 等の機密資産を
+# 持たない）ため generic を使う。.env 系（.env, .env.*, **/*.key 等）は safety_profile に
+# 関わらず DEFAULT_DENY_PATTERNS に常時含まれるため、ここで deny_paths に重複定義しない。
+safety_profile: generic
+
+allowed_paths:
+  - claude/
+  - codex/
+  - docs/
+  - bin/
+  - rag/
+
+presets:
+  explore:
+    workflow: explore
+    readonly: true
+  review:
+    workflow: review
+    readonly: true
+  work:
+    workflow: work
+    readonly: false

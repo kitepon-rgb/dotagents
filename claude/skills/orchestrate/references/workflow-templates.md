@@ -1,6 +1,6 @@
 # Workflow スクリプト雛形
 
-実証済みの2型。コピーして DIMENSIONS/CTX/検証観点をタスクに合わせて書き換える。`agent()` の `model` は方針どおり（検証=省略で主モデル継承・物量=sonnet）。
+実証済みの2型。コピーして DIMENSIONS/CTX/検証観点をタスクに合わせて書き換える。`agent()` の `model`・`effort` は方針どおり明示する（検証=省略で主モデル継承＋effort high／物量=sonnet＋effort low）。省略で親任せにしない——親が最上位のとき全子が張り付く（docs/02_models.md「継承の罠」）。
 
 ## 型1: 敵対的監査（Find→Dedup→Verify→Critic）
 
