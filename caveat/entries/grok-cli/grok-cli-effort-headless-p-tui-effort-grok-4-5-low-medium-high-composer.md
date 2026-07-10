@@ -20,7 +20,7 @@ source_project: null
 source_session: 2026-07-10T15:32:37.472Z/8716acc06f66
 created_at: 2026-07-10
 updated_at: 2026-07-10
-last_verified: 2026-07-10
+last_verified: 2026-07-11
 ---
 
 ## Symptom
@@ -33,7 +33,7 @@ grok CLI の --effort フラグは headless（-p）専用で、対話 TUI では
 
 ## Resolution
 
-effort を効かせたい非対話委譲は grok -p（headless）で --effort low|medium|high を使う。対話 TUI では /model 等セッション内操作に頼る。ラッパーツールの enum は実カタログに合わせる。
+aiterm-mcp 38a33f3（2026-07-11）で対応済み: `grok_agent`/`composer_agent` は `reasoning_effort` 指定を session 作成前に明示エラーで拒否し、`--effort` を対話 TUI へ渡さない（headless 制御は通常 PTY の `grok -p --effort low|medium|high`）。models_cache.json 実測（grok-4.5=high/medium/low・composer=supports_reasoning_effort:false）も同日再確認。
 
 ## Evidence
 
