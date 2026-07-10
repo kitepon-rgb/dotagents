@@ -46,6 +46,8 @@
 
 **入口の既知の事実（2026-07-11）**:
 
+- **Codex ネイティブ子（GPT-5.6 Sol/Terra の MultiAgent V2）**: 0.144.1 は既定で `agent_type/model/effort` を `spawn_agent` schema から隠すため、`~/.codex/config.toml` の `[features.multi_agent_v2]` に `hide_spawn_agent_metadata=false`＋`tool_namespace="agents"` が全端末必須。`task_name` は role でなくタスクパス。custom role は `agent_type=<role>`＋`fork_turns="none"` で handshake-only spawn し、`verify-codex-agent-routing` green 後にだけ本作業を follow-up する。現行 spawn 応答は実効設定を返さない。
+- **ネイティブ子 sandbox の別論点**: role の `sandbox_mode` 適用後、親 turn の permission profile が再適用されて上書きされる（0.144.1 source と V1 implementer rollout で実測）。routing verifier は実効sandboxを常に表示するが、role/model/effort誤配線の判定とは分離する。sandbox一致まで要求する検証では `CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` を使う。
 - **codex-sidecar は端末 config.toml の model/effort 行を隔離 home に正確に継承する**。`model` / `modelReasoningEffort`（low〜xhigh のみ。ultra/max 無し）を**毎回明示**するか、対象リポの `.codex-sidecar.yml` defaults に落とす（dotagents は defaults=中位×medium 設定済み）。隔離 home に AGENTS.md はコピーされない＝sidecar 子は委譲契約プロンプトで統制する。
 - **aiterm `codex_agent` は `model`/`reasoning_effort` 引数対応（2026-07-11 改修・v0.11.0 として npm 公開済み。端末反映は `npm i -g aiterm-mcp`）**: 引数は CLI 引数＋managed config ピン上書きで端末ピンより優先。省略時は端末 config 継承のままで、**起動応答が実効 model/effort と出所（引数/端末config継承/CLI既定）を明示**する（effort=ultra は警告付き）＝決定表どおり毎回 model×effort を明示して呼ぶ。
 - **aiterm の grok/composer は隔離設計（OAuth のみ共有）**＝ピン継承問題なし。`grok_agent` の既定は `grok-4.5`（`model` 引数で上書き可・stale な `grok-build` は 2026-07-11 廃止）。**grok の `--effort` は headless（`grok -p`）専用で対話 TUI では無視される**＝grok/composer への `reasoning_effort` 指定は aiterm が起動前に明示エラーで拒否する。

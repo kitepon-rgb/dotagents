@@ -79,9 +79,10 @@ flowchart LR
 | Claude command | `audit-gauntlet` / `auto-deploy-on-push` / `polish-github` | 各スキルの入口（audit-gauntlet は skill への相対 symlink） |
 | Codex skill | `polish-github` | GitHub presentation 整備（正本は Claude 版・Codex 版は薄いポインタ＝一本化済み） |
 | Codex rule | `default.rules` | Codex 常時適用ルール |
-| Codex グローバル規範 | `codex/AGENTS.md` | Codex 親の鉄則・モデル配置・git 作法（2026-07 リポ正本化。対応表は docs/02_models.md） |
+| Codex グローバル規範 | `codex/AGENTS.md` | ベルの共通憲法＋Codex 固有のモデル配置・ネイティブ委譲・shell 入口（2026-07 リポ正本化。対応表は docs/02_models.md） |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲定義（terra×medium / sol×high×read-only / luna×low） |
 | bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
+| bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
 | データ | `caveat/` | 外部仕様の罠DB（caveat MCP が参照。public 級のみ同期） |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
@@ -136,11 +137,25 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 
 ```bash
 ./install.sh
+```
+
+`~/.codex/config.toml` に以下を既存 `[features]` と衝突しない形で追加する（詳細と冪等適用手順は [docs/05_codex-fragments.md](docs/05_codex-fragments.md) §3・§7）。この設定がないと GPT-5.6 Sol/Terra の `spawn_agent` から `agent_type` が消え、custom agent TOML を選べない。
+
+```toml
+[features.multi_agent_v2]
+hide_spawn_agent_metadata = false
+tool_namespace = "agents"
+```
+
+その後に検証する。
+
+```bash
 ./bin/verify-install.sh     # 全エントリが本リポ向き symlink かを自動判定（PATH 非依存で直接実行）
 ```
 
 - **`./bin/verify-install.sh` が OK を返すこと（省略不可**——stale 実ファイルが残ると正本化が静かに失敗する。FAIL 行が退避すべき実ファイルを名指しする）。`~/.local/bin` を PATH に通していれば以後は `verify-install` でも可
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate`・`audit-gauntlet` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／極小タスクを implementer に委譲して契約どおりの報告が返る
+- 新しい Codex セッションで（対話確認）: `spawn_agent` schema に `agent_type` がある／`agent_type=<role>` と `fork_turns="none"` で routing smoke だけを起動／`verify-codex-agent-routing <role> <agent-path>` が green の時だけ follow-up task を渡す
 
 ### 4. その端末のメモリ整理
 

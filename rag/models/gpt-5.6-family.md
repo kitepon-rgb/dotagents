@@ -61,6 +61,11 @@ GA: 2026-07-09。コンテキストは API ≈1.05M（Sol/Terra）と Codex CLI 
 - つまり **`name`・`description`・`developer_instructions` の3つが必須**（`name` と `developer_instructions` は非空必須、`description` は非空チェック文言は確認できず存在必須のみ確度中）。欠落・綴りミスは「Ignoring malformed agent role definition:」という warning ログのみで無言無効化（実装文字列に完全一致するログ文言を確認）。
 - キー: `name` / `description` / `model` / `model_reasoning_effort` / `sandbox_mode` / `developer_instructions`。加えて構造体 `AgentRoleToml` には `config_file` と `nickname_candidates` という追加フィールドが実在（`nickname_candidates` は「ASCII 文字・数字・空白・ハイフン・アンダースコアのみ」「重複禁止」という制約バリデーション文言あり。任意フィールドと推定・本カタログの3ファイルでは未使用）。
 - `sandbox_mode` の有効値は実装文字列で `read-only` / `workspace-write` / `danger-full-access` の3種を確認。
+- 公式 Subagents 文書は `~/.codex/agents/*.toml` の自動探索を明記する。個別 `[agents.<name>]` 登録はこのリポの3 role には不要。
+- **MultiAgent V2 の入口事故（2026-07-11 実測）**: 0.144.1 の `MultiAgentV2Config` は `hide_spawn_agent_metadata = true` が既定で、`spawn_agent` schema から `agent_type / model / reasoning_effort / service_tier` を削除する。`task_name` はタスクパス生成専用で role 解決しない。3子で `agent_role = null`、親 Sol×xhigh 継承を確認。必須対処は `[features.multi_agent_v2] hide_spawn_agent_metadata=false`＋`tool_namespace="agents"`、新規セッション、`agent_type=<role>` 明示。
+- V2 の `fork_turns` 既定は `all` → full-history fork。role/model/effort override と併用すると `reject_full_fork_spawn_overrides` が拒否するため、custom role は `fork_turns="none"` が必須。
+- **sandbox の別バグ（source＋rollout 実測、確度: 高）**: `apply_role_to_config` の後に `apply_spawn_agent_runtime_overrides` が親 turn の permission profile を再適用する。このため role の `sandbox_mode` は親 sandbox で上書きされる。V1 の implementer 成功対照でも role/model/effort/developer instructions は適用された一方、sandbox は親の `danger-full-access` のままだった。公式文書の agent 別 sandbox override と不一致。
+- 現行 spawn 応答は実効 role/model/effort/sandbox を返さない。`verify-codex-agent-routing` が rollout の `session_meta` / `turn_context` / developer message を照合し、role/model/effort/developer instructions の不一致なら本作業を渡さない。sandbox は別表示し、明示的な厳格モードでだけ必須化する。
 - `[agents]` の委譲モードキーは config.toml 側に不在（effort から自動導出。詳細は [[../../docs/05_codex-fragments.md]] §3）。`max_threads`=6・`max_depth`=1 が既定値。`multi_agent_v2` 有効時に `agents.max_threads` を明示すると起動エラー化するという事故メカニズムは前セッションの refuter 反証由来（本セッションでは `agents.max_threads must be at least 1` という下限バリデーション文言のみ実装文字列で確認でき、事故そのものの再現は未実施＝**確度: 中**）。
 
 ## Codex CLI 呼び出し
@@ -83,5 +88,5 @@ codex-sidecar は端末 config の `model`/`model_provider`/`model_reasoning_eff
 ## 関連
 
 - [[../../docs/02_models.md]] — 役割→ティア×effort 決定表（この記事の要点を反映済み）
-- [[../../docs/05_codex-fragments.md]] — Codex 端末設定断片（`[agents]` 地雷・再ピン問題・AGENTS.override.md シャドー）
+- [[../../docs/05_codex-fragments.md]] — Codex 端末設定断片（V2 role routing・実効値ゲート・再ピン問題・AGENTS.override.md シャドー）
 - [[../../docs/plan_gpt56-rewiring.md]] — 本記事の元になった設計プラン（正本）

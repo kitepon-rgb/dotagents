@@ -23,7 +23,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・`claude`/`codex`/`markitdown`・MCP 用 CLI（`aiterm-mcp`/`caveat`/`codegraph`）を導入し `claude mcp add --scope user` で登録。
 2. **clone**（README §1）: `gh repo clone kitepon-rgb/dotagents ~/Developer/dotagents && cd ~/Developer/dotagents`。
 3. **既存実ファイルの退避**（README §2・重要）: install.sh は実ファイルを SKIP するので、先に tar 退避し stale な `~/.claude/CLAUDE.md` 実体を削除。飛ばすと正本化が静かに失敗する。`~/.codex/AGENTS.md` が実ファイルなら同様——中身を確認し、価値ある行は `codex/AGENTS.md` へ PR してから tar 退避・削除する（黙って上書き・破棄しない）。
-4. **install → 検証**（README §3）: `./install.sh && ./bin/verify-install.sh`。verify が OK を返すまで直す（FAIL 行が退避すべき実ファイルを名指す）。
+4. **install → Codex routing 必須断片 → 検証**（README §3）: `./install.sh` 後、`~/.codex/config.toml` の `[features.multi_agent_v2]` に `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"` を冪等適用してから `./bin/verify-install.sh`。verify が OK を返すまで直す（FAIL 行が退避すべき実ファイルまたは不足設定を名指す）。
 5. **`settings.json` 断片の適用**（install.sh は `settings.json` を触らない＝ここが手挿しの代替。AI は jq で冪等・安全にマージせよ）: 正典は [docs/03_settings-fragments.md](docs/03_settings-fragments.md)。手順＝既存確認→バックアップ→追加分のみ→JSON 妥当性確認。**正本化ゲート hook は全端末必須**。実例（hook を PostToolUse に冪等追記）:
 
    ```bash
@@ -37,7 +37,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
    ```
 
    他の推奨断片（読み取り系 `permissions.allow` 等）も [docs/03_settings-fragments.md](docs/03_settings-fragments.md) 参照。ライブ反映＝次の発火から有効。
-6. **Codex 断片の適用**: 正典は [docs/05_codex-fragments.md](docs/05_codex-fragments.md)。要旨のみ——`~/.codex/config.toml` の `[agents]` は設定不要（委譲モードは effort から自動導出: ultra→proactive／それ以外→明示要求時のみ。`max_threads` を書くのは地雷）、親モデル×effort の既定はオーナー領分（AI は変更しない）。
+6. **Codex 断片の適用**: 正典は [docs/05_codex-fragments.md](docs/05_codex-fragments.md)。custom agent の `[agents.<name>]` 個別登録は不要だが、step 4 の V2 routing 断片は必須。親モデル×effort の既定はオーナー領分（AI は変更しない）。新規セッションで `agent_type` が schema に出ることを確認し、`agent_type=<role>`＋`fork_turns="none"` の handshake-only spawn 後、`verify-codex-agent-routing` が green になるまで本作業を渡さない。
 7. **メモリ整理・自動アップデート常設**（README §4・「自動アップデート」節）: 各端末のメモリ整理と週次 `agents-update`（macOS=launchd／Linux・WSL=cron）を必須で設置。
 
 ## 掟（複数端末リポの作法）

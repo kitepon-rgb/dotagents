@@ -9,7 +9,7 @@
 GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モデル配置の正典が旧世代（gpt-5.5・grok-build）のまま腐った。さらに:
 
 1. **最上位張り付き**: `~/.codex/config.toml` が Sol×ultra にピンされ、ultra＝「max 推論＋proactive 自動委譲」なので最上位モデルが最上位の子を自動量産していた。Claude 側も ultracode の子が親モデルを既定継承する同型問題。
-2. **Codex 親が憲法に従わない**: `~/.codex/AGENTS.md` は 20KB の Claude 中心憲法への symlink で遵守が薄く、aiterm 既定など Codex に有害な指示も混在。
+2. **Codex 親が憲法に従わない**: `~/.codex/AGENTS.md` は Claude 中心憲法への直接 symlink で、aiterm 既定など Codex に有害な指示が混在していた。解消時に専用憲法を約2KBへ過剰圧縮し、人格・応対・調査・計画・権限・変更作法まで落とした二次事故も発生した。
 3. **判断基準の不在**: モデル×エフォートの決定表がなく、親の賢さ頼み。日常の親は Claude=Opus 4.8 / Codex=Sol（設計者 Fable より弱い）なので、判断は表とゲートに焼き込む必要がある。
 
 ## 設計の背骨（5行）
@@ -36,7 +36,7 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 - [x] 本ファイルの正本化（正本化ゲート）
 - [x] step0: Codex CLI 更新 0.143.0→0.144.1＋ `codex features list` 記録（multi_agent=stable/true・multi_agent_v2=under development/false）
 - [x] **F 直轄** `docs/02_models.md`: ティア語彙（slug 併記）・4レーン決定表・エスカレーションゲート・入口注記・世代交代手順 step2′
-- [x] **F 直轄** `codex/AGENTS.md` 新規（約2KB・鉄則6条＋モデル節＋git＋報告。具体名なし・02 ポインタ・小径修正例外・入れ子 codex 禁止）
+- [x] **F 直轄** `codex/AGENTS.md` 新規（当初は約2KBへ過剰圧縮。2026-07-11 に共通憲法を復元し、Codex 固有差分だけを分離）
 - [x] **F 直轄** `claude/CLAUDE.md`: 着手ゲートに配置1行宣言＋Codex 親規範ポインタ＋「親はオーナー領分」
 - [x] **F 直轄** `claude/skills/orchestrate/`: SKILL.md に継承の罠＋「配置はゲートで宣言」、workflow-templates.md 冒頭差し替え
 - [x] **A 委譲** `codex/agents/{implementer,refuter,sorter}.toml`（実バイナリで3必須キー・warning 無言無効化を裏取りの上作成）
@@ -52,6 +52,24 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 - [x] caveat 登録 4件（ultra の正体／override 無言シャドー／grok --effort headless 専用／sidecar のピン継承）
 - [x] pathspec コミット → push
 - [x] aiterm 改修依頼リスト4件を aiterm プロジェクトへ起票（aiterm-mcp `docs/10_gpt56-model-alignment-plan.md`・コミット 17c46ae・push 済み。2026-07-11）
+- [x] **事故是正（2026-07-11）**: VS Code の `multi_agent_v2` で `spawn_agent` から
+  `agent_type` が隠れ、`task_name` を role 名と誤認した結果、3子すべてが親の
+  Sol×xhigh を継承した問題を解消する
+  - [x] `hide_spawn_agent_metadata = false`＋`tool_namespace = "agents"` を全端末必須断片にする
+  - [x] `task_name` と `agent_type`、`fork_turns="none"` の役割を Codex 規範・端末設定正典へ焼き込む
+  - [x] role 適用後の `agent_role / model / effort / sandbox` を実セッションから照合する
+    `verify-codex-agent-routing` を追加する
+  - [x] 実作業は handshake-only spawn → 実効値照合 → follow-up task の2段階に限定し、
+    不一致なら本タスクを渡さない
+  - [x] `make lint` → `install.sh` → `verify-install.sh` → 新規 Codex セッションで
+    implementer/refuter/sorter の E2E smoke を green にする
+- [ ] **別論点（上流）**: spawn 応答へ実効 role/model/effort/sandbox を載せる。role の `sandbox_mode` を
+  親 permission profile で上書きする 0.144.1 の仕様／文書不一致を解消する
+- [x] **憲法過剰圧縮の是正（2026-07-11）**: Codex 固有差分の分離時に共通原則まで削った問題を解消する
+  - [x] `claude/CLAUDE.md` を基準に人格・応対・五原則・調査・計画・権限・大規模変更・git・報告を `codex/AGENTS.md` へ復元
+  - [x] 差分を Codex のモデル配置・ネイティブ委譲・shell 入口・push 制約に限定
+  - [x] CLAUDE 側の「短い専用憲法がよい」という誤方針を撤回
+  - [x] README 追従、diff 監査、lint・install・verify、新規セッション実読確認
 - [ ] 他端末波及（下記チェックリスト）
 
 ## H（オーナー領分）
@@ -72,12 +90,12 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 
 - [ ] git pull → `~/.codex/AGENTS.md` が実ファイルなら意図確認・退避（価値ある行は codex/AGENTS.md へ PR）
 - [ ] `./install.sh` → `./bin/verify-install.sh` OK（override 非空があれば FAIL 名指しに従う）
-- [ ] docs/05 の断片適用（`[agents]` は設定不要。親既定はオーナー領分）
-- [ ] Codex 新セッション実測（role warning 無し・委譲実測）
+- [ ] docs/05 §3 の V2 routing 必須断片適用（custom role の個別 `[agents.<name>]` 登録は不要）
+- [ ] Codex 新セッション実測（schema に `agent_type`／`fork_turns="none"`／3 role の routing-check）
 
 ## 検証（end-to-end）
 
-`make lint` green／`./install.sh` の linked 出力／`./bin/verify-install.sh` OK／Codex 起動ログに「Ignoring malformed agent role definition」無し／「implementer に委譲して」で terra×medium が spawn／sidecar `codex_explore` の model 明示と defaults フォールバック両確認。
+`make lint` green／`./install.sh` の linked 出力／`./bin/verify-install.sh` OK／Codex 起動ログに「Ignoring malformed agent role definition」無し／新規セッションの `spawn_agent` に `agent_type` が存在／3 role を `fork_turns="none"` で handshake-only spawn／`verify-codex-agent-routing` が全件 green／sidecar `codex_explore` の model 明示と defaults フォールバック両確認。
 
 ## リスク（要点）
 

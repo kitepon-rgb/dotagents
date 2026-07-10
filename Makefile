@@ -4,15 +4,18 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-md help
+.PHONY: lint lint-sh lint-md lint-constitution help
 
-lint: lint-sh lint-md ## shell + markdown を両方 lint（CI と同一）
+lint: lint-sh lint-md lint-constitution ## shell + markdown + 共通憲法一致（CI と同一）
 
 lint-sh: ## shellcheck: install.sh + bin/*.sh
 	shellcheck install.sh bin/*.sh
 
 lint-md: ## markdownlint（緩い設定・生きた正典のみ / .markdownlint-cli2.jsonc）
 	$(MDLINT)
+
+lint-constitution: ## CLAUDE.md / AGENTS.md のツール非依存な共通章を照合
+	./bin/verify-constitution-parity.sh
 
 help: ## タスク一覧
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \

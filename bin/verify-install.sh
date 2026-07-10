@@ -47,6 +47,43 @@ if [ -s "$override_file" ]; then
   fail=1
 fi
 
+# GPT-5.6 Sol/Terra はモデルカタログにより multi_agent_v2 を選ぶ。0.144.1 の v2 既定は
+# agent_type/model/effort を spawn_agent schema から隠すため、role TOML が存在しても選べない。
+# namespace も既定 collaboration のまま schema を拡張すると backend の reserved-schema
+# 検証で拒否される組み合わせがあるため、全端末で agents へ明示移動する。
+codex_config="$HOME/.codex/config.toml"
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "FAIL: python3 不在（${codex_config} の agent routing 設定を検証できない）"
+  fail=1
+elif ! python3 - "$codex_config" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if not path.is_file():
+    raise SystemExit(1)
+try:
+    text = path.read_text(encoding="utf-8")
+except (OSError, UnicodeDecodeError):
+    raise SystemExit(1)
+match = re.search(
+    r"(?ms)^\[features\.multi_agent_v2\]\s*\n(.*?)(?=^\[|\Z)",
+    text,
+)
+if not match:
+    raise SystemExit(1)
+section = match.group(1)
+if not re.search(r"(?m)^hide_spawn_agent_metadata\s*=\s*false\s*$", section):
+    raise SystemExit(1)
+if not re.search(r'(?m)^tool_namespace\s*=\s*"agents"\s*$', section):
+    raise SystemExit(1)
+PY
+then
+  echo "FAIL: ${codex_config} に agent routing 必須断片がない（docs/05_codex-fragments.md §3 を適用）"
+  fail=1
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "verify-install: OK — 全エントリが本リポ ${REPO} 向き symlink"

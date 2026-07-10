@@ -3,7 +3,7 @@
 <!-- 前提: GPT-5.6 世代（2026-07 時点）。defaults の正は docs/02_models.md。本ファイルの体裁・構成は
      docs/03_settings-fragments.md（Claude Code settings.json の推奨断片カタログ）を踏襲する -->
 
-`~/.codex/config.toml` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」のカタログであり、適用は手動で行う。スキーマの根拠は `codex --version`（0.144.1・2026-07-11 時点）のバイナリ文字列を実読して確認したもの（`/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex` に `strings -a` を当てた）。公式ドキュメントページの多くは 403 でスニペット依拠のため、本ファイルは実装文字列で裏取りできた事実には出典として明記し、できなかった事実には確度を明記する。
+`~/.codex/config.toml` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」のカタログであり、適用は手動で行う。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、`codex --version` 0.144.1（2026-07-11 時点）の `openai/codex` tag `rust-v0.144.1` 実装。端末バイナリの `strings -a` と実セッション rollout も突合し、未再現の主張には確度を明記する。
 
 ## 1. 親既定モデル×エフォート（オーナー領分・情報提供のみ）
 
@@ -24,10 +24,51 @@ TUI/アプリの `/model` 選択（モデルピッカー）は `config.toml` へ
   2. 該当2行（`model = "..."` / `model_reasoning_effort = "..."`）を編集
   3. 妥当性確認: `codex exec 'echo ok'` が正常終了すること
 
-## 3. `[agents]` は設定不要（地雷警告）
+## 3. ネイティブ custom agent の必須設定と実効値ゲート
 
-- 委譲モード（proactive / explicit-request-only 相当）を指定するキーは存在しない。**effort から自動導出**される（`ultra` → proactive、それ以外 → explicit-request-only。実装文字列に `explicitRequestOnly` / `proactive` という enum 値が実在することを確認。導出ロジック自体はコード上の分岐まで裏取りできておらず確度: 中）。
-- `max_threads` = 6・`max_depth` = 1 は既定値。実装には `agents.max_threads must be at least 1` という下限バリデーションが実在するが、これは「1 未満はエラー」という制約であり「明示すると常にエラーになる」話ではない。**`agents.max_threads` を明示すると `multi_agent_v2` 有効時にセッション起動エラー化する**という事故メカニズムそのものは前セッションの refuter 反証で確認済みとされる事実で、今回のバイナリ文字列探索（`features.multi_agent_v2.max_concurrent_threads_per_session must be at least 1` 等は実在確認）だけでは実行時再現までは取れていない＝**確度: 中**。安全側に倒し、**`agents.max_threads` は書かない**。
+[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agents)どおり、
+`~/.codex/agents/*.toml` は personal custom agent として自動探索される。このリポの
+`implementer` / `refuter` / `sorter` に `[agents.<name>]` の個別登録は不要。
+
+ただし GPT-5.6 Sol/Terra が選ぶ MultiAgent V2 には、role 定義の探索とは別の入口バグがある。
+Codex 0.144.1 の実装では `hide_spawn_agent_metadata` の既定値が `true` で、単なる表示抑制ではなく
+`spawn_agent` schema から `agent_type / model / reasoning_effort / service_tier` の4入力を削除する。
+その状態の `task_name` は `/root/...` のタスクパス名を作るだけで、同名 custom agent を選ばない。
+今回の実被弾では3子すべて `agent_role = null` となり、親の Sol×xhigh を継承した。
+
+全端末で以下を必須適用する。`tool_namespace = "agents"` は、拡張した schema を既定の
+`collaboration` namespace に置いた時に backend の reserved-schema 検証で 400 になる組み合わせを避ける。
+
+```toml
+[features.multi_agent_v2]
+hide_spawn_agent_metadata = false
+tool_namespace = "agents"
+```
+
+注意:
+
+- 既存セッションの tool schema は変わらない。適用後は**必ず新規セッション**で確認する。
+- `features list` が `multi_agent_v2 = false` を表示しても、Sol/Terra のモデルカタログ指定が V2 を選ぶため、上記断片は必要。
+- `fork_turns` の V2 既定は `all`。これは full-history fork となり、`agent_type / model / reasoning_effort` を指定すると起動前に拒否される。custom role の spawn は必ず `fork_turns = "none"` を明示する。
+- `task_name` を role selector として使わない。`agent_type = "implementer"` のように明示する。
+- 最初の message は routing smoke だけにし、本作業を渡さない。起動後に
+  `verify-codex-agent-routing <role> <agent-path>` で `agent_role / model / effort /
+  developer_instructions` を照合し、green の時だけ follow-up task を渡す。sandbox は実効値を別表示し、
+  一致まで要求する時だけ `CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` を付ける。
+- 現行 spawn 応答は実効 role/model/effort/sandbox を返さないため、上記スクリプトが rollout JSONL を読む。
+
+**未解決の上流バグ（2026-07-11）**: 0.144.1 は role config 適用後に親 turn の live
+permission profile を子へ再適用するため、custom agent の `sandbox_mode` を親 sandbox で上書きする。
+実際、V1 で role/model/effort/developer instructions が正しく適用された過去の implementer 子も
+`sandbox_policy = danger-full-access` だった。これは公式文書の「custom agent ごとに sandbox を override
+できる」と不一致。ただし今回の role/model/effort 誤配線とは別論点なので、既定の routing 判定からは分離し、
+`CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` の時だけ差を FAIL にする。
+
+グローバル `[agents]` の `max_threads` / `max_depth` は既定値で足りるため明示しない。
+委譲モード（proactive / explicit-request-only 相当）の独立キーもなく、実効 mode は model/effort 側から
+決まる。`agents.max_threads` と `features.multi_agent_v2.max_concurrent_threads_per_session` を混同しない。
+
+実装根拠: [`MultiAgentV2Config` の hidden 既定](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/config/mod.rs)、[`spawn_agent` schema から4入力を除く処理](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/tools/handlers/multi_agents_spec.rs)、[role 適用後に親 permission profile を再適用する処理](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/tools/handlers/multi_agents_common.rs)。上流既報は [#31814](https://github.com/openai/codex/issues/31814)（hidden routing）・[#20077](https://github.com/openai/codex/issues/20077)（full-history 既定）。
 
 ## 4. `project_doc_fallback_filenames = ["CLAUDE.md"]`（任意・副作用明記）
 
