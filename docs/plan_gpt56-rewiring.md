@@ -48,10 +48,10 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 - [x] `codex/rules/default.rules` 1行目（旧 Iron Rules 生成 allow）削除
 - [x] ゲート: `make lint`（0 errors）→ `./install.sh`（新リンク4本）→ `./bin/verify-install.sh`（OK）
 - [x] 実測: `~/.codex/AGENTS.md` → codex/AGENTS.md 張替確認／malformed role warning 無し／**明示委譲で implementer spawn・子が toml どおり gpt-5.6-terra で応答**（親 luna×low から）／通常 exec で自動委譲不発火
-- [ ] 実測（残）: sidecar の model 明示＋defaults フォールバック（本セッションは codex-sidecar MCP 未登録のため次の Claude セッションで実測）
+- [x] 実測（残）: sidecar の model 明示＋defaults フォールバック——`codex-sidecar diagnostics`（dry-run）で実測。引数なし→ defaults の terra×medium に解決（端末 Sol×ultra ピンは不漏出・modelPolicy.source=explicit）／`--model gpt-5.6-sol --model-reasoning-effort high` → 指定どおり解決（2026-07-11）
 - [x] caveat 登録 4件（ultra の正体／override 無言シャドー／grok --effort headless 専用／sidecar のピン継承）
 - [x] pathspec コミット → push
-- [ ] aiterm 改修依頼リスト4件を aiterm プロジェクトへ（下記）
+- [x] aiterm 改修依頼リスト4件を aiterm プロジェクトへ起票（aiterm-mcp `docs/10_gpt56-model-alignment-plan.md`・コミット 17c46ae・push 済み。2026-07-11）
 - [ ] 他端末波及（下記チェックリスト）
 
 ## H（オーナー領分）
