@@ -61,6 +61,8 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 
 ## aiterm への改修依頼（aiterm プロジェクト側で対応・2026-07-11 裁定）
 
+**→ 全4件消化済み（2026-07-11・aiterm-mcp コミット 38a33f3・回帰183件 green・実起動検証済み。詳細は aiterm-mcp docs/10）**。実装結果: 3ツールに `model` 引数（grok 既定は `grok-4.5` へ）、codex managed config は引数の model/effort でピン上書き＋起動応答に実効値と出所（引数/端末config継承/CLI既定）を常時明示（effort=ultra は警告付き）、grok/composer への `reasoning_effort` 指定は起動前に明示エラー（headless 専用の旨を返す）。npm 未リリース（Unreleased）＝グローバル installed 版への反映は次リリース後の `npm i -g` から。
+
 1. `codex_agent` に `model` 引数を追加（現状渡す手段なし）
 2. codex の端末 config 丸ごとコピーによるピン継承の明示化（model/effort を引数で上書き可能に）
 3. `grok_agent` のハードコード `--model grok-build` を現行 `grok-4.5` へ（ライブカタログに不在の stale 名）
