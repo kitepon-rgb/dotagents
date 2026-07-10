@@ -10,6 +10,7 @@ tags:
   - ultra
   - multi-agent
   - quota
+  - hide_spawn_agent_metadata
 environment:
   os: macOS
   arch: arm64
@@ -20,7 +21,7 @@ source_project: null
 source_session: 2026-07-10T15:32:14.004Z/020905403b8d
 created_at: 2026-07-10
 updated_at: 2026-07-10
-last_verified: 2026-07-10
+last_verified: 2026-07-11
 ---
 
 ## Symptom
@@ -34,6 +35,14 @@ ultra は wire 上 max にマップされ（core/src/client.rs: ReasoningEffortC
 ## Resolution
 
 親（会話）セッションでは ultra を既定にしない。effort を low/medium 等に戻せば自動委譲は explicit-request-only に落ちる。注意: TUI の /model 選択は config.toml へ永続書き込みされるため、一度 ultra を選ぶと明示的に戻すまでピンされ続ける。
+
+**追記（2026-07-11・別角度の補完）**: ultra を維持したまま使いたい場合、子（サブエージェント）が親のモデルを強制継承する別バグが絡む。`spawn_agent` は既定で `hide_spawn_agent_metadata=true` のため、子を立てる指令からモデル/reasoning effort を選ぶ欄自体が消えており、`~/.codex/agents/*.toml` の役割別モデル設定を渡す手段が無い。結果、子は常に親の ultra をそのまま継承する。config.toml に
+```toml
+[features.multi_agent_v2]
+hide_spawn_agent_metadata = false
+tool_namespace = "agents"
+```
+を足してセッションを開き直すと、`spawn_agent` にモデル選択欄が戻り、役割ごとに安いモデルへ振り分けられるようになる（0.144.1 で確認）。同一症状の報告が 2026-07-09〜10 に X・GitHub issue（openai/codex #31814）で多数一致。ultra を捨てずに済む分、こちらの方が実用的な直し方になりうる。
 
 ## Evidence
 
