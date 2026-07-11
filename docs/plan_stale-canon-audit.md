@@ -41,18 +41,21 @@ docs/02_models.md・05_codex-fragments.md・06_oracle-mcp.md・claude/CLAUDE.md�
 
 ## 確定指摘（裁定対象・全12件）
 
-**A. dotagents リポ**
+### A. dotagents リポ
+
 - [ ] A1 (f5相当の正典側は無し) 完遂済みプラン2本の archive 退避: plan_agents-md-onboarding.md・plan_plan-gate-hook.md（+ 既退避 plan_oracle-chat-quota.md の命名を ADR 0004 の `2026-07_` 接頭辞へ是正）
 - [ ] A2 (f2) 00_overview.md 読む順表に 06_oracle-mcp.md を追加・plan_ 群の導線を整理
 - [ ] A3 (f7) rag/orchestration 2記事＋INDEX が削除済み bin/delegate.sh を現行構成として提示 → 冒頭に「現行は codex-sidecar/aiterm（当時の記述）」の注記を追加（歴史は書き換えない）
 - [ ] A4 (Critic#5) codex/rules/default.rules: `rtk npm publish`・`npm install -g` 無条件 allow＋プロジェクト固有裁定の全端末配布 → 要オーナー裁定（縮退 or プロジェクト移設）
 - [ ] A5 (Critic#2) 憲法の「codex-sidecar MCP はツール一覧に常在」が実機未登録と矛盾 → 登録する（AGENTS.md オンボーディング項へ追加）か憲法を実態に合わせるかの裁定
 
-**B. 端末ローカル**
+### B. 端末ローカル
+
 - [ ] B1 (f5) ~/.claude/settings.json の bare "Bash" 全許可 → docs/03 のスコープ付き断片へ置換（high・要オーナー裁定＝プロンプト増を伴う）
 - [ ] B2 (f8) Novel メモリ feedback-delegate-cheap-models の「Grok Build（Composer モデル）」表記を 02 の現行名（grok-4.5／composer-2.5）へ更新
 
-**C. 他プロジェクト（dotagents の外・各プロジェクトの領分）**
+### C. 他プロジェクト（dotagents の外・各プロジェクトの領分）
+
 - [ ] C1 (r3) OpenCClaw/CLAUDE.md: BellBot 会話モデル `BELLBOT_CODEX_MODEL=gpt-5.5` が現行手順として複数箇所（158/612 ほか）→ 実デプロイ env と併せた棚卸しが必要
 - [ ] C2 (r5/f9/f10/f11) Kikoeru・WebAICoding の gpt-5.5 記述群 → **統括裁定: 修正対象から除外**。反証で「Kikoeru 本番は実際に gpt-5.5 で稼働中（CODEX_MODEL 既定・sidecar 実測）」が判明＝文書は実態に正確。真の論点は「5.6 世代へ移行するか」というプロジェクト判断であり、文書ロットではない
 
