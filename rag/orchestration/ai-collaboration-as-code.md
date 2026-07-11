@@ -4,6 +4,7 @@
 - 取得日: 2026-07-04
 - 確度: 中（要旨は本文から明確。実装詳細は動画のため未検証）
 - 関連: dotagents/docs/02_models.md（役割配置表）・orchestrate skill・[[karpathy-obsidian-llm-knowledge-base]]
+- 注記（2026-07-11）: 本文中の `bin/delegate.sh` は**廃止済み**。委譲の現行入口は codex-sidecar MCP（`codex_work` 等）と aiterm 永続PTY（正典 docs/02_models.md）。以下は取得時点の記録。
 
 ## 要旨
 

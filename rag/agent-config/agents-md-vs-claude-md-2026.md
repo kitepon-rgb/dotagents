@@ -23,4 +23,4 @@
 - リポ直下 `AGENTS.md` を新設＝全エージェント共有の土台＋「AI オンボーディング」節（URL を渡された AI が clone→install→settings.json 断片マージ→verify を自走）。
 - リポ直下 `CLAUDE.md` を `@AGENTS.md`＋ベル固有の薄いラッパに組み替え。
 - **憲法 `claude/CLAUDE.md`（グローバル）と `PLAN.md`（憲章）は不変**——AGENTS にグローバル等価物が無く、憲法の symlink アーキテクチャを壊さないため。
-- 詳細計画: `docs/plan_agents-md-onboarding.md`。
+- 詳細計画: `docs/archive/2026-07_agents-md-onboarding.md`（完遂・退避済み）。

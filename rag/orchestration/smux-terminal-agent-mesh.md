@@ -3,7 +3,8 @@
 - 出典: @AiAircle34052（Aircle 学生AIコミュニティ）2026-03-29 https://x.com/AiAircle34052/status/2038144179822645459（1116 bookmarks・詳細は動画＋GitHub）
 - 取得日: 2026-07-04
 - 確度: 中（要旨は本文から明確。GitHub 実物は未評価＝**導入前に検証必須**）
-- 関連: dotagents/bin/delegate.sh・docs/02_models.md・[[ai-collaboration-as-code]]
+- 関連: docs/02_models.md・[[ai-collaboration-as-code]]
+- 注記（2026-07-11）: 本文中の `bin/delegate.sh` と「現構成」記述は**当時のもの（delegate.sh は廃止済み）**。委譲の現行入口は codex-sidecar MCP と aiterm 永続PTY（正典 docs/02_models.md）。smux 自体も aiterm PTY と機能重複のため不採用（orchestrate skill 協業ループ節）。
 
 ## 要旨
 

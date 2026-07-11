@@ -43,16 +43,16 @@ docs/02_models.md・05_codex-fragments.md・06_oracle-mcp.md・claude/CLAUDE.md�
 
 ### A. dotagents リポ
 
-- [ ] A1 (f5相当の正典側は無し) 完遂済みプラン2本の archive 退避: plan_agents-md-onboarding.md・plan_plan-gate-hook.md（+ 既退避 plan_oracle-chat-quota.md の命名を ADR 0004 の `2026-07_` 接頭辞へ是正）
-- [ ] A2 (f2) 00_overview.md 読む順表に 06_oracle-mcp.md を追加・plan_ 群の導線を整理
-- [ ] A3 (f7) rag/orchestration 2記事＋INDEX が削除済み bin/delegate.sh を現行構成として提示 → 冒頭に「現行は codex-sidecar/aiterm（当時の記述）」の注記を追加（歴史は書き換えない）
-- [ ] A4 (Critic#5) codex/rules/default.rules: `rtk npm publish`・`npm install -g` 無条件 allow＋プロジェクト固有裁定の全端末配布 → 要オーナー裁定（縮退 or プロジェクト移設）
-- [ ] A5 (Critic#2) 憲法の「codex-sidecar MCP はツール一覧に常在」が実機未登録と矛盾 → 登録する（AGENTS.md オンボーディング項へ追加）か憲法を実態に合わせるかの裁定
+- [x] A1 完遂済みプラン2本を `2026-07_` 接頭辞で archive 退避＋oracle プランの命名是正＋参照3箇所追従（docs/03・06・rag/agent-config）
+- [x] A2 (f2) 00_overview.md 読む順表に 06_oracle-mcp.md と `plan_*.md` 行を追加
+- [x] A3 (f7) rag/orchestration 2記事に「delegate.sh 廃止・現行は codex-sidecar/aiterm」の日付付き注記＋INDEX 2行更新（本文の歴史は不改変）
+- [ ] A4 (Critic#5) codex/rules/default.rules: `rtk npm publish`・`npm install -g` 無条件 allow＋プロジェクト固有裁定の全端末配布 → オーナーへ説明済み・裁定待ち
+- [x] A5 (Critic#2) codex-sidecar MCP を Claude user スコープへ登録（オーナー裁定 2026-07-11「登録しろ」。initialize handshake green 確認済み・Codex 側は入れ子禁止のため登録しない）＋AGENTS.md オンボーディング手順1へ追記
 
 ### B. 端末ローカル
 
-- [ ] B1 (f5) ~/.claude/settings.json の bare "Bash" 全許可 → docs/03 のスコープ付き断片へ置換（high・要オーナー裁定＝プロンプト増を伴う）
-- [ ] B2 (f8) Novel メモリ feedback-delegate-cheap-models の「Grok Build（Composer モデル）」表記を 02 の現行名（grok-4.5／composer-2.5）へ更新
+- [x] B1 (f5) ~/.claude/settings.json の bare "Bash" → **オーナー裁定（2026-07-11）: 意図的設計＝現状維持**（確認プロンプトの摩擦の方が害）。端末メモリ permissions-keep-bare-bash.md に記録し、以後の監査で除外・締め付け再提案禁止
+- [x] B2 (f8) Novel メモリ feedback-delegate-cheap-models を現行名（grok-4.5／composer-2.5・02 参照）へ更新
 
 ### C. 他プロジェクト（dotagents の外・各プロジェクトの領分）
 

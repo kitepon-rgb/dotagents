@@ -8,8 +8,8 @@
 - [second-brain/raw/obsidian-commercial-license-20260704.md](second-brain/raw/obsidian-commercial-license-20260704.md) — 商用ライセンス条件（WebFetch 要約経由・markitdown は JS ページで空出力の罠あり）
 - [second-brain/notebooklm-second-brain-critique.md](second-brain/notebooklm-second-brain-critique.md) — NotebookLM「第二の脳」論の批評: 主脳不適（サイロ・API Enterprise 限定）／窓なら可／還流思想は Karpathy と収束（2026-07-04・確度は claim 別）
 - [second-brain/longterm-memory-tools-survey.md](second-brain/longterm-memory-tools-survey.md) — 長期記憶ツール調査（mem0/Hindsight/claude-mem 等）: 全て見送り＝保存層サイロ化が原則7違反、既存5層で充足。再訪条件つき（2026-07-04）
-- [orchestration/ai-collaboration-as-code.md](orchestration/ai-collaboration-as-code.md) — AI協業のコード化（@UT_Codex: GPT計画×Codex実行 Skill）。うちの MODELS 委譲構造の外部実証・delegate 設計の参考（2026-07-04）
-- [orchestration/smux-terminal-agent-mesh.md](orchestration/smux-terminal-agent-mesh.md) — smux（Claude Code⇄Codex のターミナル双方向対話）。単発委譲の対話ループ拡張候補・導入前に実測必須（2026-07-04）
+- [orchestration/ai-collaboration-as-code.md](orchestration/ai-collaboration-as-code.md) — AI協業のコード化（@UT_Codex: GPT計画×Codex実行 Skill）。委譲構造の外部実証（2026-07-04。文中 delegate.sh は廃止済み→現行は codex-sidecar/aiterm）
+- [orchestration/smux-terminal-agent-mesh.md](orchestration/smux-terminal-agent-mesh.md) — smux（Claude Code⇄Codex のターミナル双方向対話）。aiterm PTY と機能重複で不採用（2026-07-04。文中の「現構成」は当時）
 - [model-steering/fable-behavior-porting-audit.md](model-steering/fable-behavior-porting-audit.md) — connect24h「型は移植できる」検分: output style での型移植は Fable に逆行（公式 L174/L9-13）＝棄却。記事の「Opus 4.8 は 200K」は誤り（1M 既定）。うちの会話規範は Fable の型と整合／憲法の選択的スリム化が宿題（2026-07-05・確度高・refuter 通過）
 - [agent-config/agents-md-vs-claude-md-2026.md](agent-config/agents-md-vs-claude-md-2026.md) — AGENTS.md vs CLAUDE.md の 2026 規約: Claude Code は CLAUDE.md を読み AGENTS.md は `@import` 推奨／AGENTS.md は横断標準だがリポ単位のみ（グローバル等価物なし）。dotagents に適用（2026-07-05・確度高・一次ソース）
 - [models/gpt-5.6-family.md](models/gpt-5.6-family.md) — GPT-5.6 世代（Sol/Terra/Luna）: 価格・effort 段階（Luna は ultra 非対応の5段階＝新発見）・ネイティブ agent role TOML の3必須キー・ultra=max+proactive委譲・sidecar 連携（2026-07-11・確度は claim 別。端末実測とバイナリ strings 実読で裏取り済み）

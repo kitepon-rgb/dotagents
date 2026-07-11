@@ -20,7 +20,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 
 新しい端末でこのリポを稼働させる手順。上から順に実行する。**詳細な前提・トラブルシュートは [README.md](README.md) の「他端末セットアップ・ランブック」（§0〜4）が正典**——本節はその AI 実行用の要約＋`install.sh` が触らない `settings.json` だけを補う。
 
-1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・`claude`/`codex`/`markitdown`・MCP 用 CLI（`aiterm-mcp`/`caveat`/`codegraph`）を導入し `claude mcp add --scope user` で登録。
+1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・`claude`/`codex`/`markitdown`・MCP 用 CLI（`aiterm-mcp`/`caveat`/`codegraph`/`codex-sidecar-mcp`）を導入し `claude mcp add --scope user` で登録（codex-sidecar は Claude 側のみ＝Codex 親はネイティブ委譲一択。2026-07-11 監査で登録漏れ実在＝憲法の「ツール一覧に常在」が空手形化していた）。
 2. **clone**（README §1）: `gh repo clone kitepon-rgb/dotagents ~/Developer/dotagents && cd ~/Developer/dotagents`。
 3. **既存実ファイルの退避**（README §2・重要）: install.sh は実ファイルを SKIP するので、先に tar 退避し stale な `~/.claude/CLAUDE.md` 実体を削除。飛ばすと正本化が静かに失敗する。`~/.codex/AGENTS.md` が実ファイルなら同様——中身を確認し、価値ある行は `codex/AGENTS.md` へ PR してから tar 退避・削除する（黙って上書き・破棄しない）。
 4. **install → Codex routing 必須断片 → 検証**（README §3）: `./install.sh` 後、`~/.codex/config.toml` の `[features.multi_agent_v2]` に `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"` を冪等適用してから `./bin/verify-install.sh`。verify が OK を返すまで直す（FAIL 行が退避すべき実ファイルまたは不足設定を名指す）。
