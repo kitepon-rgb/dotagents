@@ -9,7 +9,7 @@
 - 今回はこれを2系統へ横展開する:
   1. **配置ゲート**: オーケストレーション（委譲）のモデル×エフォートが聖典（02_models.md）に準じているか
   2. **TODO ゲート**: 計画文書のチェックボックス更新を怠っていないか／プランを docs/ に正本化したか
-- **射程の正直な限定**: hook が捕まえられるのは「委譲した時の配置」と「作業した時のプラン更新」。**「委譲すべきなのに統括が Edit/Write で抱え込む」失敗は本 hook 群の射程外**（検出はヒューリスティックになるため v2 課題として明示保留）。
+- **3系統に拡張（オーナー裁定 2026-07-12）**: 当初2系統（配置ゲート C1／TODO ゲート C2-C3）に、**着手ゲート C4** を追加。反証 #2 では「委譲すべきなのに Edit/Write で抱え込む失敗は射程外・v2」としたが、Throughline の Claude 要望＋オーナー 2026-07-11 裁定（層3）で本体へ格上げ——「検出」でなく「毎ターン注入」なら誤爆なく捕まえられる（C4 参照）。これで hook が捕まえる範囲は「着手時の配置判断」「委譲時の配置の質」「作業後のプラン更新」の3点になる。
 
 ## 調査で確定した事実（設計の前提）
 
@@ -18,7 +18,7 @@
 - Stop hook に達成不能な完了条件 → **15+ 回の無限ループ**（reproduced）→ ブロック系は達成可能条件＋ワンショット化必須
 - hook の matcher は **tool_name のみ**（payload 内容では絞れない）→ 内容判定は hook スクリプト側で
 - PostToolUse の同期重 I/O は**毎 tool call に 150-300ms** 乗る → hook は軽量 jq/grep のみ、重い処理は detached
-- hooks は **hot-reload されない**（セッション再起動が必要）
+- ~~hooks は hot-reload されない~~ → **プローブ P5 で「される」と決着**（現行 Claude Code は settings.json 変更を再起動なしで反映）。caveat の旧記載は現行版で誤り＝Phase 1 で訂正する
 - stdin 未消費 / stderr 出力で成功でも "Hook Error" ラベルが付く
 - Codex CLI hooks: `[features].hooks` フラグ＋ディレクトリ trust 必須・async 非対応・tool 成否は payload に出ない。**`update_plan` は PreToolUse/PostToolUse 両方発火し tool_input に全 plan（step×status）が乗る**
 
@@ -43,7 +43,19 @@
 - **SessionStart / UserPromptSubmit**: exit 0 の生 stdout がそのまま context 注入（UserPromptSubmit の timeout 既定 30s）。SubagentStart は additionalContext のみ（block 不可）。
 - settings.json の hook に `once:true` は無い＝スロットルは hook 側で状態ファイル自作。`async:true` / `asyncRewake:true`（exit 2 で Claude を起こす）あり。
 - hook type: command のほか prompt 型・agent 型（50ターン・ツール可）が存在。
-- **未確定3点（実装前に実測プローブ必須）**: ①Agent ツールの tool_input フィールド名（model/subagent_type が読めるか） ②メイン settings.json の PreToolUse がサブエージェント内部でも発火するか（agent_id/agent_type が共通入力に追加される仕様から発火濃厚） ③PostToolUse のトップレベル additionalContext 可否。
+- **未確定だった3点 → 全て Phase 1 プローブで確定**（下記「プローブ結果」）。
+
+### プローブ結果（Phase 1 実測・2026-07-12・全 green）
+
+Claude 側（P1-P5,P7）・Codex 側（P6）を implementer 2体で並列実測（`model: sonnet, effort: 低め` の物量委譲）。設計の急所は全てクリア:
+
+- **P1**: tool_name=`Agent`（Task でなく）。tool_input に `subagent_type`/`model`/`prompt`/`description`。Workflow は tool_input.script（JS 文字列）。→ C1 は Agent の `model` フィールドを見る。
+- **P2**: 子エージェント内部の Bash も親 PreToolUse で発火・`agent_id`/`agent_type` 付与・session_id は親と共通。→ C1 のスロットル（session_id キー）が子の多重発火も自然に抑える。
+- **P3（急所）**: additionalContext 単独注入は**届く**・permissionDecision 無しで権限フロー無干渉・毎回発火。到達は「ツール結果と同時〜直後」＝矯正型。→ **C1 warn 成立（deny 縮退を回避）**。
+- **P4**: Stop stdin に cwd あり・CLAUDE_PROJECT_DIR あり。**副産物: 1実行で Stop が複数回発火しうる**（バックグラウンド Agent 完了点＋最終応答点、いずれも stop_hook_active=false）→ C3 の rolling baseline は「Stop 発火ごとに前回差分」を見るので、この多重発火でも差分ゼロなら沈黙＝二重発火しない。
+- **P5**: **hot-reload される**（決着）。配線後の新セッション不要。user 設定変更は全稼働セッションに波及（注意）。
+- **P6（Codex）**: Stop の `decision:block` は Sol の続行と指示従属を実起こし＝**X4 成立**（一次証拠ゼロだったものが埋まった）。PreToolUse deny も第一形式で実ブロック＝X2 の deny 経路可。additionalContext/UserPromptSubmit 注入も到達。**async は 0.144.1 でも非対応・trust にすら乗らない**＝X1-X4 全て async:false 必須（既存 spotter の SessionStart async:true は現状死んでる公算）。hooks はグローバル×プロジェクトローカルで**マージ実行**。update_plan shape=`plan[].{step,status}` 再確認。
+- **P7**: matcher `mcp__.*` は MCP ツール名に効く。headless の ask は**自動 deny**（再試行なし・hang なし）＝C1 の ultra=ask は headless で自動拒否。Stop block の 8回 cap 実在（hang なし）。
 
 ## 設計（2視点 Plan〔A=最小・疲労回避／B=網羅・強制力〕→ 統括裁定済み）
 
@@ -100,6 +112,19 @@
 - **強度**: **warn（additionalContext）が既定**＝停止は止めない。`DOTAGENTS_TODO_GATE=block` で 1ターン1回の block へ昇格可（無視が続く実測が出た時のエスカレーション経路。block 時も stop_hook_active＋ターン内1回で無限ループ構造は不可能）
 - **文言**: 「【TODO ゲート】このターンで作業した（<差分の要約: N ファイル/コミット M>）が、docs/ のプラン正本（<plan_*.md>）が動いていない。消化した項目があればチェックを更新（完遂なら docs/archive/ へ退避）。この作業がプラン対象外なら、その旨を1行オーナーへ報告してから次へ。」
 
+#### C4: `bin/onset-gate-hook.sh`（着手ゲート注入）— オーナー裁定 2026-07-12 新設（Throughline 要望・層3 と符合）
+
+- **背景**: C1（配置ゲート）は委譲ツールが呼ばれた時しか発火せず、「委譲すべきなのに Edit/Write で抱え込む」失敗（2026-07-05／2026-07-11 実被弾）を捕まえられない＝反証 #2 で v2 送りにした穴。Throughline の Claude 要望＋オーナー 2026-07-11 裁定（層3・メモリ `canon-consultation-before-placement`）で本体へ格上げ。着手ゲートの一次定義は claude/CLAUDE.md:59。
+- **目的（2層）**: ①**抱え込み防止**＝統括の窓（有限レート予算）を守る。手足仕事（テスト・設定・一括置換・仕様固定の実装）を自分で書かず既定 A＝委譲へ。②**偽準拠防止**＝配置宣言を 02_models.md を開いて file:line 引用で写す（暗記の例文丸写しで sonnet/haiku・aiterm・grok・composer が抜けた 2026-07-11 の再発を潰す）。
+- **イベント×matcher**: `UserPromptSubmit`（matcher なし・毎ターン）。**発火点の裁定経緯**: 「Edit|Write 初回」案は (a) ソース/プラン編集の区別が file_path 判定で脆く腐る (b) Edit を待つと着手判断に遅い、の二重欠点でオーナー指摘により棄却。UserPromptSubmit＝実装のどんな形（Edit/委譲/Bash 直）より前・ファイルを見ないので区別問題が消える。caveat の毎ターン注入と同型。
+- **強度**: **warn（生 stdout が context 注入）。deny 不可**——「着手ゲートを踏んだか」は会話に書くテキスト行為で機械判定不能＝deny するとループ（Stop 15回の型）。plan-gate と同じ「常に通す・思い出させるだけ」。
+- **頻度**: **毎ターン**（着手ゲート＝毎ユニット、が憲法 claude/CLAUDE.md:59「実装の前に毎回・単発ユニットでも」の要求。当初検討した「セッション1回」は憲法より緩い＝棄却）。スロットルなし・compact 再武装も不要（毎ターン出るため自然回復）。
+- **共存**: 既存 caveat/throughline の UserPromptSubmit と hooks はマージ実行（P2/P5 実証）。
+- **文言（毎ターン・1文・薄いトリガー型）**: 「【着手ゲート】この依頼で実装・委譲・オーケストレーションに入るなら、手を動かす前に orchestrate スキルと docs/02_models.md を**開いて**、作業を F/A/H でラベルし配置（ティア×effort×入口）を決定表の該当行を **file:line 引用付き**で1行宣言する。既定は A＝委譲、自分で書く(F)なら理由を1行。調査・会話・小さな単発修正だけのターンは無視してよい。」
+- **文言の設計判断**: (a) 決定表レーンの列挙（sonnet/haiku・aiterm・grok・composer）は文言に焼かない——「開け」で代替＝原則9（モデル名を散らさない・世代交代で腐らせない）＋偽準拠潰し（開いて引用しろと言えば暗記の丸写しが構造的に不可能）。(b) 正本化ゲート（プランを docs/ に）は**含めない**——既存 plan-gate＋X2 が担当・毎ターン重複回避（オーナー裁定 2026-07-12）。C4 は「配置の着手ゲート」に絞る。
+- **エスカレーション**: `DOTAGENTS_ONSET_GATE=off|warn`（既定 warn）。
+- **Codex ミラー**: X5 として codex-callout-hook に同型を足す（UserPromptSubmit・毎ターン・同文言。P6f で UserPromptSubmit 注入到達を確認済み）。
+
 ### Hook 台帳（Codex 側 — `bin/codex-callout-hook.sh` サブコマンド分岐）
 
 Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で対象外ツールを python3 起動前に即 exit 0**（同期150-300ms 税対策）。trust 承認必須・async 非対応。
@@ -109,7 +134,7 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
   - **update_plan 初回かつ step 数 ≥4** → **正本化ゲートの Codex ミラー**（Claude 側 plan-gate にしか無かった片輪を埋める・セッション1回）。**docs/03「TodoWrite に貼らない」方針との差分理由を明示**（反証 #9）: Claude 側は ExitPlanMode という「意図的なプラン承認・低頻度」の発火点があるから TodoWrite を避けられる。Codex に等価イベントは無く、update_plan が唯一の観測可能なプラン瞬間＝最近傍。些末用途は step 数下限で素通しする。文言: 「【正本化ゲート発火】内蔵プラン（update_plan）を作った。実装に入る前にプランの正本を対象プロジェクトの docs/ に置く（チェックボックス付き＝TODO を兼ねる）。使い捨てで済ませるなら「なぜ docs/ に正本化しないか」を1行名指ししてから。正本なし・理由なしで実装を始めない（AGENTS.md 計画文書の作法）。」
   - **update_plan 全 step completed** → TODO 消化呼びかけ（レア発火・セッション1回): 「【TODO ゲート】内蔵プランを全消化した。docs/ のプラン正本にチェックを反映し、完遂なら docs/archive/ へ退避。正本の無い作業なら、正本化しない理由が宣言済みか確認。」
   - **spawn_agent 検査**（プローブ④=deny 尊重可否の結果で deny or pending 送り）: agent_type 欠落（routing 断片未適用の兆候）／model 日付 ID。
-- **X3 `user-prompt-submit`**: pending drain（X2 で deny 不可だった違反を次プロンプトで注入・pending 空なら常時沈黙）
+- **X3 `user-prompt-submit`**: pending drain（X2 で deny 不可だった違反を次プロンプトで注入・pending 空なら常時沈黙）＋ **X5 着手ゲート注入を相乗り**（C4 ミラー・毎ターン・同文言）
 - **X4 `stop`**: C3 ミラー（**毎ターン×warn・rolling baseline**＝オーナー裁定に追従）。**成立前提「Codex Stop hook の注入が実際に挙動へ反映される」は工場内に一次証拠ゼロ**（caveat 実測は観測専用の記録）＝プローブ P6 で最初に確認し、不可なら X4 は落として X3 pending 経路に降格（反証 #8）
 
 ### 規範側の同時修正（hook が空振りしないための地ならし）
@@ -125,7 +150,7 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 | 段階 | 適用 |
 |---|---|
 | silent（既定） | 全 hook の非該当時・スロットル済み |
-| warn（additionalContext・動的文言） | C1 初回委譲リマインダ（セッション1回・compact 再武装）／C2・X1 棚卸し（リポ×24h）／X2 正本化・全消化（セッション1回）／**C3・X4 TODO ゲート（毎ターン・rolling baseline＝オーナー裁定）** |
+| warn（additionalContext・動的文言） | C1 初回委譲リマインダ（セッション1回・compact 再武装）／C2・X1 棚卸し（リポ×24h）／X2 正本化・全消化（セッション1回）／**C3・X4 TODO ゲート（毎ターン・rolling baseline）**／**C4・X5 着手ゲート（毎ターン UserPromptSubmit・条件付き文言）** |
 | ask | effort=ultra（C1） |
 | deny | C1 deny①②③（日付 ID／codex_agent 引数省略／oracle 封印パラメータ・API engine）／X2 spawn_agent（プローブ結果依存） |
 | block（エスカレーション経路のみ） | C3/X4 を `DOTAGENTS_TODO_GATE=block` で昇格した時だけ（既定は warn） |
@@ -139,7 +164,9 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 | grok/composer の引数検査 | aiterm v0.11.0 が構造で解決済み（不正 effort は起動前エラー・既定が決定表の行そのもの） |
 | sidecar の model 省略 warn | .codex-sidecar.yml defaults が公認バックストップ。C1 初回リマインダが間接カバー |
 | 「表に無い slug」の deny／stale-slug 注意 | deny は `fable` 等の正当値で誤爆する反例あり。warn 格下げ案も、現行 slug 集合の取得機構（焼き込み=原則9違反／02 実行時パース=結合と重さ）が自家撞着するため **v1 では丸ごと落とす**（反証 #5）。再訪条件: stale slug 起因の誤配置が実際に観測されたら「readlink 自己解決→02 パース・失敗時は沈黙」を明文機構として v2 検討 |
-| 統括の抱え込み検出（Stop 時に直接編集量を報告） | 着手ゲート実被弾の主成分だが、機械判定はヒューリスティックで誤爆源。**v1 射程外と明示宣言**し、v2 候補として温存（反証 #2） |
+| ~~統括の抱え込み検出（Stop 時に直接編集量を報告）~~ | → **C4（着手ゲート注入）として本体へ格上げ**（オーナー裁定 2026-07-12）。「編集量の検出」でなく「毎ターン UserPromptSubmit で無条件に着手ゲートを注入」に転換したことで、ヒューリスティック誤爆を回避しつつ反証 #2 の穴を塞いだ |
+| C4 の "ソース編集 vs プラン編集" の file_path 判定 | 拡張子/パスのリストは腐る・境界ケース（docs/02_models.md 更新・.claude/settings.json 編集）で誤判定。UserPromptSubmit 発火にしてファイルを一切見ないことで問題ごと消した（オーナー指摘）|
+| C4 に正本化ゲートを同梱 | 既存 plan-gate（ExitPlanMode）＋X2 が担当。毎ターン文言に重ねると二重掲示＝C4 は配置に絞る（オーナー裁定 2026-07-12）|
 | 役割→ティア適合の意味論裁定（agent 型 hook） | 原則9違反（slug 焼き込み）または速度 fatigue。再訪条件: warn 無視が月複数回オーナー指摘になったら agent 型 advisory を検討（deny 権限は与えない） |
 | 「プラン正本が存在しないリポ」への Stop 催促 | 大半のリポ・雑務セッションで誤爆＝ノイズ源。プラン創設の呼びかけは既存 plan-gate（ExitPlanMode）と X2 正本化ミラーが担う |
 | 未チェック残 N 件の Stop 催促 | 実態（トリガー待ち）に反する純ノイズ。棚卸し（C2）の「7日以上動いていない項目の裁定確認」が代替 |
@@ -148,29 +175,30 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 
 ### Phase 0 — 正本化
 
-- [ ] git fetch 照合 → `docs/plan_callout-hooks.md` に本設計を正本化（前提行つき）→ pathspec コミット
+- [x] git fetch 照合 → `docs/plan_callout-hooks.md` に本設計を正本化（前提行つき）→ pathspec コミット（930011d）
 
-### Phase 1 — 実測プローブ（stdin dump するだけの使い捨て hook を一時配線→撤去）
+### Phase 1 — 実測プローブ（完了・2026-07-12）
 
-- [ ] P1: Agent(Task)/Workflow の tool_input 実フィールド名（model/subagent_type の乗り方）
-- [ ] P2: メイン settings の PreToolUse がサブエージェント内部ツール呼び出しに発火するか
-- [ ] P3: PreToolUse の additionalContext 単独注入の実挙動と到達タイミング（**本設計の急所**。不可なら C1 は deny①②のみへ縮退）
-- [ ] P4: Stop stdin の cwd／$CLAUDE_PROJECT_DIR 可用性（C3 のリポ解決）
-- [ ] P5: hot-reload 矛盾の決着 → 負けた正典（caveat or docs/03）を修正
-- [ ] P6: Codex PreToolUse の deny 尊重可否／update_plan tool_input 実 shape／Stop の stop_hook_active 相当／**Stop の block・注入が実挙動に反映されるか（X4 の成立前提・一次証拠ゼロ）**／**async hook の現状**（実 hooks.json の spotter SessionStart は async:true だが caveat 0.136.0 時点では skip されていた＝「現に発火中」は SessionStart について未確認。X1 を同期で置くかの判断材料）
-- [ ] P7: matcher 正規表現が MCP ツール名に効く空打ち確認／ask の headless 挙動／**Stop block 連続時の 8回 cap の実在確認**（C3 の状態書込失敗時〔Windows ~/.cache 不可等〕の最後の防壁・未検証のまま頼らない）
-- [ ] プローブ結果を rag/（hook 発火事実）と caveat（罠）へ還流・設計の分岐を確定
+- [x] P1: Agent(Task)/Workflow の tool_input 実フィールド名 → tool_name=`Agent`・`subagent_type`/`model`/`prompt`
+- [x] P2: サブエージェント内部ツールにも親 PreToolUse 発火・`agent_id`/`agent_type` 付与・session_id 共通
+- [x] P3（急所）: additionalContext 単独注入は届く・権限フロー無干渉・毎回発火 → C1 warn 成立
+- [x] P4: Stop stdin に cwd・CLAUDE_PROJECT_DIR あり。1実行で Stop 複数回発火しうる（rolling baseline は差分ゼロで沈黙）
+- [x] P5: hot-reload される（決着）→ caveat 訂正が残タスク
+- [x] P6: Codex Stop block 成立（X4）・deny 効く・async 非対応（全 async:false）・update_plan shape 確認
+- [x] P7: matcher は MCP 名に効く・headless の ask は自動 deny・Stop 8回 cap 実在
+- [ ] プローブ結果を rag/（hook 発火事実）と caveat（hot-reload 訂正・Codex Stop 注入到達）へ還流
 
 ### Phase 2 — Claude 側ペイロード（A ラベル: 仕様固定の実装物量→外部枠委譲、文言と判定条件は F=統括直轄）
 
 - [ ] `bin/delegation-gate-hook.sh`（C1）＋空打ちテスト
 - [ ] `bin/todo-gate-hook.sh`（C2/C3）＋空打ちテスト
+- [ ] `bin/onset-gate-hook.sh`（C4・毎ターン UserPromptSubmit・条件付き文言）＋空打ちテスト
 - [ ] plan-gate-hook.sh L9 stale ポインタ修正
-- [ ] `make lint` → `./install.sh`（linked 2本確認）
+- [ ] `make lint` → `./install.sh`（linked 3本確認）
 
 ### Phase 3 — Claude 側配線・実火
 
-- [ ] docs/03 に配線断片3種（PreToolUse／SessionStart／Stop）＋env 説明を追記
+- [ ] docs/03 に配線断片4種（PreToolUse／SessionStart／Stop／UserPromptSubmit＝C4）＋env 説明を追記
 - [ ] この端末の settings.json へ jq 冪等マージ（バックアップ→追加→妥当性）→ P5 の結果に従い新セッション
 - [ ] 実火観測: 準拠委譲で沈黙／日付 ID で deny→修正で通過／ultra で ask／棚卸し注入／コードのみコミット→block 1回→チェック更新→通過
 - [ ] pathspec コミット
@@ -209,9 +237,10 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 
 refuter 1体（主継承）に計画全文を攻撃させた。重傷8・かすり傷7 → 全件裁定して本文へ反映済み（C3 の HEAD 条件・snapshot の repo キー・compact 再武装・warn 事後形・stale-slug 落とし・deny 自動降格 cap・fail-open の記録・X4/async のプローブ昇格・codex 委譲既定の裁定事項化・射程限定の明示）。引用事実の照合は全弾生存（行番号・件数まで一致確認）。
 
-## オーナー裁定（2026-07-12・全4件確定）
+## オーナー裁定（2026-07-12）
 
 1. TODO ゲート: **毎ターン×warn**（rolling baseline。block は env 昇格の予備経路）
 2. 配置ゲートの強制力: **deny＋ask 採択**。かつオーナー指摘により **oracle.consult を監視対象に追加**（deny③: 封印パラメータ・API engine）
 3. Codex 展開: **同一リリースで両輪**
 4. Codex 親の委譲既定: **(b) レジーム変更**＝着手ゲート・委譲既定へ書き換え（F 直轄・単独コミット・push 前オーナー diff レビュー）
+5. **着手ゲート C4 新設**（Throughline 要望・層3 と符合）: **毎ターン UserPromptSubmit・warn・条件付き文言・判断は Claude 委任**。発火点は Edit|Write でなく UserPromptSubmit（ソース/プラン区別が脆い＋Edit は着手判断に遅い、で棄却）。正本化ゲートは C4 に含めず配置に絞る。Codex ミラー X5 も同型。
