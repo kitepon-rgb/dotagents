@@ -54,6 +54,75 @@
 - matcher は `ExitPlanMode` 完全一致（プラン承認専用イベントは無く PostToolUse で受ける）。
 - TodoWrite には貼らない（些末用途が多く毎回発火は alarm fatigue）。TodoWrite 経路は散文の正本化ゲートがカバー。
 
+### 呼びかけ hook 群の配線断片（配置ゲート・TODO ゲート・着手ゲート）
+
+前提: `./install.sh` 済み（`~/.local/bin/{delegation-gate-hook,todo-gate-hook,onset-gate-hook}` が存在。`todo-gate-hook` はサブコマンド `session-start` / `stop` を取る）。設計・Hook 台帳・オーナー裁定の正典は [docs/plan_callout-hooks.md](plan_callout-hooks.md)（進行中プラン）。4本とも `~/.claude/settings.json` にマージ（既存配列があればその配列へ足す、無ければ新規作成）。ライブ反映＝配線後の新セッション不要（計画 Phase 1・P5 で hot-reload 実測済み）。
+
+#### C1 配置ゲート（PreToolUse・委譲ツール呼び出し時）
+
+日付付き model ID・`codex_agent` の model/effort 省略・oracle 封印パラメータを deny、`effort:"ultra"` を ask、セッション初回の委譲を warn で呼びかける（[`../bin/delegation-gate-hook.sh`](../bin/delegation-gate-hook.sh)）。
+
+```bash
+S=~/.claude/settings.json
+MATCHER='Agent|Task|Workflow|mcp__codex-sidecar__codex_.*|mcp__aiterm__(codex|grok|composer)_agent|mcp__oracle__consult'
+if ! jq -e --arg m "$MATCHER" '.hooks.PreToolUse[]?|select(.matcher==$m)' "$S" >/dev/null; then
+  cp "$S" "$S.bak-delegationgate"                  # バックアップ
+  tmp=$(mktemp)
+  jq --arg m "$MATCHER" '.hooks.PreToolUse += [{"matcher":$m,"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}]' "$S" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"  # 妥当性を確認してから置換
+fi
+```
+
+#### C2 TODO 棚卸し（SessionStart・source=startup/clear のみ発火）
+
+docs/ の `plan_*.md`/`queue_*.md` の未消化・archive 未退避をリポ×24h スロットルで想起させる（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `session-start` サブコマンド）。
+
+```bash
+S=~/.claude/settings.json
+if ! jq -e '.hooks.SessionStart[]?.hooks[]?.command | select(.=="~/.local/bin/todo-gate-hook session-start")' "$S" >/dev/null; then
+  cp "$S" "$S.bak-todogate-start"
+  tmp=$(mktemp)
+  jq '.hooks.SessionStart += [{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]}]' "$S" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
+fi
+```
+
+#### C3 プラン更新忘れ（Stop・rolling baseline で毎ターン判定）
+
+このターンで dirty/コミットの差分があるのに `docs/plan_*.md` が動いていなければ warn（`DOTAGENTS_TODO_GATE=block` で 1 ターン 1 回の block に昇格可）（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `stop` サブコマンド）。
+
+```bash
+S=~/.claude/settings.json
+if ! jq -e '.hooks.Stop[]?.hooks[]?.command | select(.=="~/.local/bin/todo-gate-hook stop")' "$S" >/dev/null; then
+  cp "$S" "$S.bak-todogate-stop"
+  tmp=$(mktemp)
+  jq '.hooks.Stop += [{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}]' "$S" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
+fi
+```
+
+#### C4 着手ゲート（UserPromptSubmit・毎ターン）
+
+配置宣言（F/A/H ラベル＋02_models.md 該当行の file:line 引用）とプラン正本化を毎ターン思い出させる固定文言（[`../bin/onset-gate-hook.sh`](../bin/onset-gate-hook.sh)）。
+
+```bash
+S=~/.claude/settings.json
+if ! jq -e '.hooks.UserPromptSubmit[]?.hooks[]?.command | select(.=="~/.local/bin/onset-gate-hook")' "$S" >/dev/null; then
+  cp "$S" "$S.bak-onsetgate"
+  tmp=$(mktemp)
+  jq '.hooks.UserPromptSubmit += [{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}]' "$S" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
+fi
+```
+
+#### env による制御
+
+各 hook は環境変数で無効化・昇格できる。**注意**: 実装（2026-07-12 時点のスクリプト本体）を実測した結果、`DOTAGENTS_PLACEMENT_GATE` と `DOTAGENTS_ONSET_GATE` は「`off` かどうか」の2値判定のみで、`off` 以外はどんな値（未設定含む）でも既定動作になる。`DOTAGENTS_TODO_GATE` だけ3値とも分岐が実装されている:
+
+- `DOTAGENTS_PLACEMENT_GATE=off` — C1 を無効化（沈黙）。`off` 以外（未設定含む＝既定）は deny①②③・ask・warn の通常判定が有効。
+- `DOTAGENTS_TODO_GATE=off|block`（既定＝未設定は warn） — `off` で C2/C3 を無効化。`block` で C3 を 1 ターン 1 回の Stop block に昇格。それ以外（既定）は warn（additionalContext）。
+- `DOTAGENTS_ONSET_GATE=off`（既定＝未設定は毎ターン warn） — `off` で C4 を無効化。`off` 以外は毎ターン注入。
+
 ## 適用チェック
 
 - 適用後、`/permissions` 相当の UI か新セッションでプロンプト頻度が下がったことを確認。
