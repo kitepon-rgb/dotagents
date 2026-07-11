@@ -43,7 +43,7 @@ Codex / Claude の親エージェントから、**ChatGPT サブスクの Chat�
 - [x] 画面外シム実測 → **採用・主手段へ昇格**（macOS のクランプ問題は発生せず）
 - [x] `bin/oracle-chrome-shim.sh` 収容＋`./install.sh` 反映
 - [x] （計画外）`bin/oracle-mcp-stable.sh` 新設: undici EINVAL ガード＋CHROME_PATH 自動設定＋`cli` サブコマンド
-- [ ] upstream issue 2件（undici の無ガード setTypeOfService／oracle hideWindow の送信破壊）——**外部公開アクションのためオーナー承認待ち**
+- [x] upstream issue 2件（オーナー承認済み・2026-07-11 起票）: [nodejs/undici#5544](https://github.com/nodejs/undici/issues/5544)（setTypeOfService 無ガード）／[steipete/oracle#312](https://github.com/steipete/oracle/issues/312)（hideWindow 送信破壊＋画面外配置の提案）
 
 ### C. GPT-5.6 呼び出し形
 
@@ -66,7 +66,7 @@ Codex / Claude の親エージェントから、**ChatGPT サブスクの Chat�
 
 - [x] [06_oracle-mcp.md](06_oracle-mcp.md) 新設（実測反映済みの最終版）
 - [x] `bin/agents-update.sh` に `'@steipete/oracle'` 追加
-- [ ] caveat 登録（当初3件→**5件**に増加: Cloudflare 壁／0.15.2 ラベル不整合／cookie 同期 Keychain 罠／undici EINVAL／hideWindow 送信破壊）——**可視性（public/private）の裁定待ち**
+- [x] caveat 登録 5件・**public**（オーナー裁定 2026-07-11）: Cloudflare 壁／0.15.2 ラベル不整合／cookie 同期 Keychain 罠／undici EINVAL／hideWindow 送信破壊。repo ミラーへ収容済み（d61f464）
 - [x] rag/ 還流（調査＋実測罠を追記済み）
 - [x] [02_models.md](02_models.md) の oracle 行を実態に更新（2箇所）
 

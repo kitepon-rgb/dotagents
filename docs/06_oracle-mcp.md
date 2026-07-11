@@ -88,7 +88,7 @@
 - 「送信失敗」エラー後は**下書き滞留に注意**: 次の run に前回プロンプトが混入し得る。混入を検知したら ChatGPT 側の該当会話（アーカイブ済み）を確認する。
 - ガード発動は stderr の `[oracle-mcp-stable] setTypeOfService guard` 行で分かる（MCP ログに出る）。
 
-## upstream への報告（オーナー承認待ちの外部アクション）
+## upstream への報告（起票済み・2026-07-11）
 
-1. undici: `writeH1` の `setTypeOfService` 無ガード呼び出しが macOS で未捕捉 EINVAL → プロセス死（try/catch 要望）
-2. oracle: `hideWindow` が新 ChatGPT UI で送信を壊す（Cmd-H でなく画面外配置の採用提案）
+1. [nodejs/undici#5544](https://github.com/nodejs/undici/issues/5544): `writeH1` の `setTypeOfService` 無ガード呼び出しが macOS で未捕捉 EINVAL → プロセス死（try/catch 要望）。**解決したらラッパーの guard を外す**
+2. [steipete/oracle#312](https://github.com/steipete/oracle/issues/312): `hideWindow` が新 ChatGPT UI で送信を壊す（画面外配置の採用提案）。**解決したらシムを外して本体機能へ戻す**
