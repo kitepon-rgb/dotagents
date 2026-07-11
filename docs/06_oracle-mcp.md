@@ -87,6 +87,7 @@
 - 正常・異常どちらのパスも Chrome は終了する（実測）。残置を疑ったら `pgrep -fl "browser-profile"`。
 - 「送信失敗」エラー後は**下書き滞留に注意**: 次の run に前回プロンプトが混入し得る。混入を検知したら ChatGPT 側の該当会話（アーカイブ済み）を確認する。
 - ガード発動は stderr の `[oracle-mcp-stable] setTypeOfService guard` 行で分かる（MCP ログに出る）。
+- **`~/.oracle/config.json` は全セッション共有の可変状態**（実被弾 2026-07-11: 別セッションの AI が oracle エラーを"直そう"とバックアップ復元し、旧構成〔copyProfileSource＋cookieSync＋select〕が復活→可視 Chrome・Keychain・ピッカー暴走が再発）。oracle の挙動異常を見たら**まず本節上の config 正本と diff**。直すときは必ずこの正典の形へ——バックアップ `.bak-*` からの復元は旧構成の復活なので禁止。
 
 ## upstream への報告（起票済み・2026-07-11）
 
