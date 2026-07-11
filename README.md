@@ -15,7 +15,7 @@ dotagents/
 ├── install.sh           … symlink 配置（冪等・実ファイルは SKIP・失敗は停止）
 ├── docs/                … 00_overview.md（地図）・02_models.md（役割→モデル対応表）・01_project-layout.md・進行中プラン／archive/（役目を終えた文書）
 ├── rag/                 … 調査・研究の再利用棚（INDEX.md＋topic/raw/ 一次ソース）
-├── caveat/              … 罠DB（→ ~/.caveat/own。*.private.md は端末ローカル維持）
+├── caveat/              … 罠DB（→ ~/.caveat/own。public/private とも本 private repo で全端末同期）
 ├── claude/
 │   ├── CLAUDE.md        … グローバル鉄則の正本（→ ~/.claude/CLAUDE.md）
 │   ├── skills/          … → ~/.claude/skills/<name>
@@ -83,7 +83,7 @@ flowchart LR
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲定義（terra×medium / sol×high×read-only / luna×low） |
 | bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
 | bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
-| データ | `caveat/` | 外部仕様の罠DB（caveat MCP が参照。public 級のみ同期） |
+| データ | `caveat/` | 外部仕様の罠DB（caveat MCP が参照。dotagents は private repo なので public/private とも同期。境界執行は `caveat sync`/`caveat publish` が担う。v0.15+） |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
 
@@ -217,5 +217,5 @@ tail -5 ~/.local/state/agents-update/agents-update.log # "agents-update end" 行
 - `~/.codex/{config.toml,auth.json,sessions,*.sqlite}` — 同上
 - `~/.codex/skills/.system/` — Codex CLI バンドルのシステム skill
 - ~~`~/.codex/AGENTS.md`~~ — 2026-07 にリポ正本化（`codex/AGENTS.md` → symlink 配布）。端末ローカルの緊急上書きは `~/.codex/AGENTS.override.md`（非コミット・`bin/verify-install.sh` が非空を FAIL 名指し）
-- `caveat/**/*.private.md` — private 級の罠は端末ローカル（caveat 自前の gitignore で強制）
+- ~~`caveat/**/*.private.md`~~ — 旧モデルの死に文（record は常に `<slug>.md` を生成し `*.private.md` にならない）。v0.15 で撤廃: dotagents 自体が private repo なので private 級の罠もここで全端末同期する（第三者共有は `caveat publish` が public のみ抽出）
 - リポ直下の `.claude/` `.vscode/` `.obsidian/` — 端末固有状態（gitignore 済み）
