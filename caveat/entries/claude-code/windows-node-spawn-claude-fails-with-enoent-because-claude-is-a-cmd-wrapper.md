@@ -40,4 +40,4 @@ On `process.platform === 'win32'`, wrap the invocation as `spawn('cmd.exe', ['/c
 
 ## Evidence
 
-Spotter v0.7.0 shipped `spawn('claude', ...)` and on Windows the `spotter db refresh` subcommand died with `spawn claude ENOENT` before any Claude call could occur. macOS users of the same build had no issue. v0.8.0 introduced a Windows branch in `execClaude` / `buildStdioSpawn` that routes through `cmd.exe /c` and the ENOENT disappeared.
+A tool shipped `spawn('claude', ...)` and on Windows its refresh subcommand died with `spawn claude ENOENT` before any Claude call could occur. macOS users of the same build had no issue. Introducing a Windows branch in the exec/spawn helper that routes through `cmd.exe /c` made the ENOENT disappear.

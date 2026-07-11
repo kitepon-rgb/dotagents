@@ -1,7 +1,7 @@
 ---
 id: express-trust-proxy-rate-limit
 title: 'Express の app.set(''trust proxy'', true) は express-rate-limit とぶつかり ERR_ERL_PERMISSIVE_TRUST_PROXY'
-visibility: public
+visibility: private
 confidence: confirmed
 outcome: resolved
 tags: [express, nodejs, rate-limit, proxy]

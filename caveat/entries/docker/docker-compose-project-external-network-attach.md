@@ -1,7 +1,7 @@
 ---
 id: docker-compose-project-external-network-attach
 title: docker compose で別 project の external network に attach する書式
-visibility: public
+visibility: private
 confidence: reproduced
 outcome: resolved
 tags:

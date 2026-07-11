@@ -1,7 +1,7 @@
 ---
 id: docker-compose-var-interpolation-host-env-env-file
 title: docker compose の `${VAR}` interpolation は host env 経由のみ — env_file の値は展開されない
-visibility: public
+visibility: private
 confidence: reproduced
 outcome: resolved
 tags:

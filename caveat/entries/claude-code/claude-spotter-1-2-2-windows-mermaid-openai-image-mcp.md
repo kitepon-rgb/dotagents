@@ -1,7 +1,7 @@
 ---
 id: claude-spotter-1-2-2-windows-mermaid-openai-image-mcp
 title: claude-spotter < 1.2.2 が Windows で mermaid / openai-image MCP の自動収集に失敗する
-visibility: public
+visibility: private
 confidence: confirmed
 outcome: resolved
 tags:

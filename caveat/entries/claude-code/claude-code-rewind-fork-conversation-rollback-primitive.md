@@ -30,7 +30,7 @@ last_verified: 2026-05-08
 
 ## Context
 
-Throughline (Claude Code hooks plugin) で Codex 側 v0.3.25 の guarded current-thread trim (trim --execute --host codex: thread/rollback + thread/inject_items) と思想の対称性を保つため、Claude 側にも trim --execute --host claude を実装しようとしてつまずいた。実装は走り終わったが、/rewind Continue が Fork and rewind 確認画面を出すのを実機で見て、同 thread mutation ではなく fork であることが判明。新 session id になるなら既存の /tl baton 経路がそのまま動くため、Claude trim CLI は等価機能 = dead code になる。全 revert した (src/claude-trim.mjs, src/cli/trim.mjs の Claude 分岐, trim-model.mjs の host descriptor 進化, .claude/commands/tl-trim.md 拡張, bin/throughline.mjs help, docs/THROUGHLINE_CLAUDE_TRIM_PLAN.md, version bump など合計 17 ファイル分の変更を git checkout HEAD -- で復元)。
+Claude Code hooks plugin で、Codex 側の guarded current-thread trim (app-server の thread/rollback + thread/inject_items) と思想の対称性を保つため、Claude 側にも同 thread を破壊的に trim する CLI を実装しようとしてつまずいた。実装は走り終わったが、/rewind Continue が Fork and rewind 確認画面を出すのを実機で見て、同 thread mutation ではなく fork であることが判明。新 session id になるなら既存の baton + SessionStart 注入経路がそのまま動くため、Claude 側 trim CLI は等価機能 = dead code になり、全 revert した。
 
 ## Symptom
 
@@ -42,7 +42,7 @@ Claude Code の /rewind は picker 確認画面で 'A new forked conversation wi
 
 ## Resolution
 
-Claude 側で同 conversation 内 rollback primitive を実装しようとしないこと。/rewind も /clear も結果は新 session id 開始 → SessionStart hook 発火になるため、既存の /tl baton + SessionStart 注入経路で十分。Codex 側 trim --execute --host codex (app-server thread/rollback + thread/inject_items) のような同 thread mutation は Claude に写像できないと honest に認め、Claude 側には別 CLI surface を追加しない。Throughline などの hooks plugin で Claude 側でも guarded current-thread trim を実装しようと思ったら、ユーザーから見ると /tl の単なる alias になるだけで dead code 化する。
+Claude 側で同 conversation 内 rollback primitive を実装しようとしないこと。/rewind も /clear も結果は新 session id 開始 → SessionStart hook 発火になるため、既存の baton + SessionStart 注入経路で十分。Codex 側の app-server thread/rollback + thread/inject_items のような同 thread mutation は Claude に写像できないと honest に認め、Claude 側には別 CLI surface を追加しない。hooks plugin で Claude 側でも guarded current-thread trim を実装しても、ユーザーから見ると既存の引継ぎコマンドの単なる alias になるだけで dead code 化する。
 
 ## Evidence
 

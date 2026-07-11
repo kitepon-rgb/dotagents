@@ -39,4 +39,4 @@ In the Stop hook, read the file at `input.transcript_path`, parse it line-by-lin
 
 ## Evidence
 
-Spotter v0.4.4 had a Stop hook reading `input.final_response`; the downstream Haiku auditor was being fed an empty string on every turn and effectively no-op'd. Replacing the access with a `getLastAssistantText(transcript_path)` helper that reads the JSONL and filters to text blocks restored the expected behavior. Same fix shape was independently used in the Throughline project.
+A Stop-hook-based auditor read `input.final_response`; the downstream Haiku auditor was being fed an empty string on every turn and effectively no-op'd. Replacing the access with a `getLastAssistantText(transcript_path)` helper that reads the JSONL and filters to text blocks restored the expected behavior. The same fix shape has shown up independently in other hooks plugins.

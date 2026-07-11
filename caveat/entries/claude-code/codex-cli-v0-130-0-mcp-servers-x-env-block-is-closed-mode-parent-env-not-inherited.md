@@ -1,7 +1,7 @@
 ---
 id: codex-cli-v0-130-0-mcp-servers-x-env-block-is-closed-mode-parent-env-not-inherited
 title: 'Codex CLI v0.130.0: `[mcp_servers.X.env]` block is closed mode — parent env NOT inherited'
-visibility: public
+visibility: private
 confidence: confirmed
 outcome: resolved
 tags:

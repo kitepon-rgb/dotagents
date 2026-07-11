@@ -1,7 +1,7 @@
 ---
 id: x-api-v2-article-text-plain-text
 title: X API v2 article オブジェクトのフル本文キーは text ではなく plain_text
-visibility: public
+visibility: private
 confidence: reproduced
 outcome: resolved
 tags:

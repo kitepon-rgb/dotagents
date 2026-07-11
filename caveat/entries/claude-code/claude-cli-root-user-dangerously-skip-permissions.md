@@ -1,7 +1,7 @@
 ---
 id: claude-cli-root-user-dangerously-skip-permissions
 title: Claude CLI は root user で `--dangerously-skip-permissions` を拒否する
-visibility: public
+visibility: private
 confidence: reproduced
 outcome: resolved
 tags:

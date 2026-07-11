@@ -40,4 +40,4 @@ For programs that genuinely need to invoke MCP servers (not merely list them), r
 
 ## Evidence
 
-Spotter v0.8.0 added HTTP MCP transport and tried to live-fetch tool lists from x-api and claude.ai Gmail/Calendar/Drive via `claude mcp get` output; all returned 401/403 because the bearer tokens were blank. v0.9.0 switched to reading `~/.claude/.mcp.json` directly and the nine x-api tools began enumerating successfully. v0.10.0 extended this to also read `<projectRoot>/.mcp.json` after a project-scope server's env failed to merge.
+A tool-discovery daemon added HTTP MCP transport and tried to live-fetch tool lists from x-api and claude.ai Gmail/Calendar/Drive via `claude mcp get` output; all returned 401/403 because the bearer tokens were blank. Switching to reading `~/.claude/.mcp.json` directly made the nine x-api tools enumerate successfully. It was later extended to also read `<projectRoot>/.mcp.json` after a project-scope server's env failed to merge.

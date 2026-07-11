@@ -1,7 +1,7 @@
 ---
 id: docker-compose-v2-project-service-n-v1-project-service-n
 title: Docker Compose v2 はコンテナ名がハイフン区切り (`project-service-N`)、v1 のアンダースコア (`project_service_N`) と非互換
-visibility: public
+visibility: private
 confidence: reproduced
 outcome: resolved
 tags:

@@ -1,7 +1,7 @@
 ---
 id: podman-hostcontainersinternal-reboot-stale
 title: 'Podman rootless の host.containers.internal は reboot 直後に link-local が失効することがある'
-visibility: public
+visibility: private
 confidence: reproduced
 outcome: resolved
 tags: [podman, networking, caddy, link-local]

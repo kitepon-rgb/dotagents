@@ -29,7 +29,7 @@ last_verified: 2026-05-08
 
 ## Context
 
-Throughline (Claude Code hooks plugin) の v0.4.0 設計検討中、auto-handoff (/clear で自動引継ぎ) の実装可否判断のため source='clear' の reliability を検証。過去 (2026-04 時点) のバトン方式採用記録 (docs/INHERITANCE_ON_CLEAR_ONLY.md) では VSCode 拡張 2.1.112 で startup に潰れるバグがあった。実機検証で 2.1.128 では fix 済みと確認、auto path を default ON にできた。
+Claude Code hooks plugin の設計検討中、auto-handoff (/clear で自動引継ぎ) の実装可否判断のため source='clear' の reliability を検証。過去 (2026-04 時点) は VSCode 拡張 2.1.112 で startup に潰れるバグがあった。実機検証で 2.1.128 では fix 済みと確認、auto path を default ON にできた。
 
 ## Symptom
 
@@ -38,7 +38,7 @@ Claude Code の hooks plugin で /clear 後の SessionStart を識別する場�
 ## Cause
 
 Claude Code v2.1.105 で VSCode extension 側の `/clear not clearing conversation context fix` が入り、v2.1.126 で Windows の SessionStart hook env files が apply されるよう修正された。これらが段階的に fix を進め、v2.1.128 (Linux/WSL2 / VSCode native extension で実機検証) では SessionStart hook payload に source='clear' が安定して乗ることを確認できた。</cause>
-<parameter name="resolution">Claude Code 2.1.128 (またはそれ以降) を使う環境では `source='clear'` を auto-handoff trigger として使って良い。実機検証手順: VSCode で新 chat → 1 msg 送信 → `/clear` → 1 msg 送信 → `~/.throughline/logs/inheritance-decision.log` (または相当する hook log) で source 値を確認。本実装では Throughline v0.4.0 で `/clear` 後 source='clear' なら自動引継ぎする auto path を default ON にした。env `THROUGHLINE_DISABLE_AUTO_HANDOFF=1` で OFF も可能。古い Claude Code バージョン (< 2.1.105) を使うユーザーは auto path が発火しないので `/tl` baton 経路で明示する必要。
+<parameter name="resolution">Claude Code 2.1.128 (またはそれ以降) を使う環境では `source='clear'` を auto-handoff trigger として使って良い。実機検証手順: VSCode で新 chat → 1 msg 送信 → `/clear` → 1 msg 送信 → SessionStart hook の log で source 値を確認。`/clear` 後 source='clear' を auto-handoff trigger にする auto path を default ON にできる。古い Claude Code バージョン (< 2.1.105) では auto path が発火しないので明示的な引継ぎ経路が要る。
 
 ## Resolution
 
@@ -46,5 +46,5 @@ Claude Code v2.1.105 で VSCode extension 側の `/clear not clearing conversati
 
 ## Evidence
 
-1. 実機ログ (Throughline 開発環境, Linux/WSL2, Claude Code 2.1.128): inheritance-decision.log に 2026-05-08 12:26:08.481Z source="startup" (新 chat) と 12:26:52.257Z source="clear" (/clear 後) の両方が記録された。 2. Claude Code 公式 hooks docs (https://code.claude.com/docs/en/hooks) の SessionStart payload source field に startup / resume / clear / compact が列挙されている。 3. Claude Code changelog v2.1.105: "Fixed `/clear` not clearing conversation context (VSCode)"。 4. Claude Code changelog v2.1.126: "CLAUDE_ENV_FILE and SessionStart hook environment files now apply (Windows)" — 以前は no-op だった。 5. anthropics/claude-code#49937 (2026-04 時点未解決の Throughline 開発側 issue): 上記 fix で実質的に解決済み。</evidence>
+1. 実機ログ (Linux/WSL2, Claude Code 2.1.128): SessionStart hook log に 2026-05-08 12:26:08.481Z source="startup" (新 chat) と 12:26:52.257Z source="clear" (/clear 後) の両方が記録された。 2. Claude Code 公式 hooks docs (https://code.claude.com/docs/en/hooks) の SessionStart payload source field に startup / resume / clear / compact が列挙されている。 3. Claude Code changelog v2.1.105: "Fixed `/clear` not clearing conversation context (VSCode)"。 4. Claude Code changelog v2.1.126: "CLAUDE_ENV_FILE and SessionStart hook environment files now apply (Windows)" — 以前は no-op だった。 5. anthropics/claude-code#49937 (2026-04 時点未解決だった): 上記 fix で実質的に解決済み。</evidence>
 <parameter name="confidence">confirmed

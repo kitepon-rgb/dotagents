@@ -42,4 +42,4 @@ Do not rely on `process.ppid`-based parent liveness for daemons spawned from VSC
 
 ## Evidence
 
-Spotter v0.6.2 shipped `--parent-pid` watch (5s ping interval). Worked in terminal Claude Code. In VSCode native extension, 8 of 9 daemons observed across sessions self-terminated within seconds of spawn with ESRCH in their logs, leaving users unprotected. v0.12.0 replaced the watch with a heartbeat-reset scheme (`setTimeout(selfShutdown, 30min)` re-armed per envelope) and added UserPromptSubmit auto-resurrect; false self-shutdowns stopped.
+A daemon shipped a `--parent-pid` watch (5s ping interval). It worked in terminal Claude Code. In the VSCode native extension, 8 of 9 daemons observed across sessions self-terminated within seconds of spawn with ESRCH in their logs, leaving users unprotected. Replacing the watch with a heartbeat-reset scheme (`setTimeout(selfShutdown, 30min)` re-armed per envelope) plus a UserPromptSubmit auto-resurrect stopped the false self-shutdowns.

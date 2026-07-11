@@ -1,7 +1,7 @@
 ---
 id: windows-taskkill-pid-without-f-does-not-send-sigterm-to-node-js-console-applications
 title: 'Windows: `taskkill /PID` (without `/F`) does not send SIGTERM to Node.js console applications'
-visibility: public
+visibility: private
 confidence: tentative
 outcome: resolved
 tags: []

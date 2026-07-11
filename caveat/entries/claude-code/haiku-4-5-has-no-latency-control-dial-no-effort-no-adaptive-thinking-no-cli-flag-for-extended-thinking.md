@@ -25,7 +25,7 @@ last_verified: 2026-04-19
 
 ## Context
 
-Hit while trying to make a per-turn audit daemon (Spotter) responsive enough that users don't notice it. The audit runs Haiku on every UserPromptSubmit and Stop hook; at 30s timeout the tail caught real requests and failed them. Upstream fix (faster Haiku) is unavailable, so the engineering effort shifts entirely to timeout tuning and session reuse.
+Hit while trying to make a per-turn audit daemon responsive enough that users don't notice it. The audit runs Haiku on every UserPromptSubmit and Stop hook; at 30s timeout the tail caught real requests and failed them. Upstream fix (faster Haiku) is unavailable, so the engineering effort shifts entirely to timeout tuning and session reuse.
 
 ## Symptom
 
@@ -37,8 +37,8 @@ Per Anthropic docs, Haiku 4.5 does not support the `effort` parameter and does n
 
 ## Resolution
 
-Stop trying to speed up Haiku 4.5 itself. Instead: (1) widen caller-side timeouts to 45s+ (Spotter bumped 30s→45s in v0.13.1 after hitting `E_HAIKU_TIMEOUT`), (2) keep IPC-layer timeouts consistent with the model-layer timeout (Spotter had hook-IPC=15s while Haiku=30s — the hook gave up before Haiku could respond), (3) reduce prompt size and reuse sessions (`--resume`) so only the first call pays full cold-start.
+Stop trying to speed up Haiku 4.5 itself. Instead: (1) widen caller-side timeouts to 45s+ (bumping 30s→45s cleared a recurring `E_HAIKU_TIMEOUT`), (2) keep IPC-layer timeouts consistent with the model-layer timeout (a hook-IPC=15s while Haiku=30s means the hook gives up before Haiku can respond), (3) reduce prompt size and reuse sessions (`--resume`) so only the first call pays full cold-start.
 
 ## Evidence
 
-Observed `E_HAIKU_TIMEOUT: haiku did not respond within 30000ms` in a live Spotter session. One turn measured duration_ms=20900 (70% of the 30s budget). After raising to 45s, same prompts completed at duration_ms=24640 (55% of 45s) with headroom. Anthropic public docs confirm Haiku 4.5 does not accept the effort parameter and has no adaptive thinking; the claude CLI has no flag to disable extended thinking for Haiku.
+Observed `E_HAIKU_TIMEOUT: haiku did not respond within 30000ms` in a live audit-daemon session. One turn measured duration_ms=20900 (70% of the 30s budget). After raising to 45s, same prompts completed at duration_ms=24640 (55% of 45s) with headroom. Anthropic public docs confirm Haiku 4.5 does not accept the effort parameter and has no adaptive thinking; the claude CLI has no flag to disable extended thinking for Haiku.

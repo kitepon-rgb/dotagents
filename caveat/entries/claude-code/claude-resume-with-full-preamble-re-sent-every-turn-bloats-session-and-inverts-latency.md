@@ -39,4 +39,4 @@ Adopt a "preamble-once" pattern: send the full preamble (role, schema, catalog, 
 
 ## Evidence
 
-Confirmed by adding `mode=first|resumed, duration_ms=<N>` logging to a Spotter daemon's Haiku caller. v0.5.x always sent the full preamble and produced first=7.4s, resumed=12.5s, resumed=20.2s in real sessions. v0.6.0 split into preamble-once + per-turn delta and resumed-turn duration dropped back below first-turn duration as designed.
+Confirmed by adding `mode=first|resumed, duration_ms=<N>` logging to a daemon's Haiku caller. Always sending the full preamble produced first=7.4s, resumed=12.5s, resumed=20.2s in real sessions. Splitting into preamble-once + per-turn delta dropped resumed-turn duration back below first-turn duration as designed.

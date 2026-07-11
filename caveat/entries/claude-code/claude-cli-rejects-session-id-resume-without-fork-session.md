@@ -38,4 +38,4 @@ Use a two-phase invocation pattern: on the FIRST call pass only `--session-id <u
 
 ## Evidence
 
-Reproduced when building a long-lived agent that re-attaches to a single Haiku session across many hook events. v0.5.0 of the Spotter project shipped with both flags always passed and every spawn failed; v0.5.1 split the args by isFirstCall and the same workload started succeeding.
+Reproduced when building a long-lived agent that re-attaches to a single Haiku session across many hook events. An early build passed both flags on every spawn and every spawn failed; splitting the args by isFirstCall (pass `--session-id` only on the first call, `--resume` thereafter) made the same workload succeed.

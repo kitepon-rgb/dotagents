@@ -28,7 +28,7 @@ last_verified: 2026-05-14
 
 ## Context
 
-Phase 10A-2 (2026-05-09) で X 投稿が止まった原因調査セッション中、 直近 3 修正 commit のレビューを Spotter から指示されて codex_review を呼んだら sidecar 自身が schema validation で死んだ。 手動レビューに切り替えて完了。
+原因調査セッション中、 直近 3 修正 commit のレビューを自動監査ツールから促されて codex_review を呼んだら sidecar 自身が schema validation で死んだ。 手動レビューに切り替えて完了。
 
 ## Symptom
 
@@ -74,7 +74,7 @@ sidecar 側 (Rust 実装の app-server) が AJV / serde validation で reject、
 <parameter name="resolution">短期回避策:
 1. codex_review に頼らず手動レビューに切り替える (git diff を直接読んで punch list を出す)
 2. codex_review の代わりに codex_explore / codex_opinion 等の別 workflow を試す (同じ schema 不一致が出る可能性は高い)
-3. Spotter から「codex_review を呼べ」 指摘を受けても、 sidecar 障害時は明示的に「sidecar 不調のため手動レビュー」 と表明して進める (監査の透明性を保つ)
+3. 自動監査ツールから「codex_review を呼べ」 指摘を受けても、 sidecar 障害時は明示的に「sidecar 不調のため手動レビュー」 と表明して進める (監査の透明性を保つ)
 
 恒久策:
 - codex-sidecar 側 issue を確認 / 報告 (structured output schema を Codex 出力契約に追随させる)
