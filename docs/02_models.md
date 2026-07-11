@@ -35,7 +35,7 @@
 | 裁定・契約クリティカル | 主 直轄（F） | 親 直轄・直前だけ effort を上げる | —（難関形式推論は不向き） | 裁定の材料に consult 可 |
 | 監査・発見（finder・数で押す層） | `sonnet`×low・Workflow で明示 | 中位=`gpt-5.6-terra`×medium・codex_auditor/explore | **`grok-4.5`**・grok_agent / `grok -p`（並列 finder に好適） | — |
 | 反証・検証（リポ実読あり） | 主 継承×high・refuter | 旗艦=`gpt-5.6-sol`×high・refuter 定義 / codex_risk_check | —（ハルシ増・形式推論弱） | — |
-| セカンドオピニオン（実読不要の純推論） | — | — | `grok-4.5` 可（実務的専門判断は首位級） | **第一選択**: `oracle.consult`（chatgpt-pro-heavy） |
+| セカンドオピニオン（実読不要の純推論） | — | — | `grok-4.5` 可（実務的専門判断は首位級） | **第一選択**: `oracle.consult`（入口はラッパー `oracle-mcp-stable`。**preset `chatgpt-pro-heavy` は封印中**＝0.15.2 が GPT-5.6 UI 未対応。標準形は [06_oracle-mcp.md](06_oracle-mcp.md)） |
 | 設計（並列 Plan） | 主 継承×medium〜high | 旗艦×medium・codex_opinion | `grok-4.5`・実務判断の別視点 | 設計意見の別視点 |
 | 実装物量（第一選択・外部枠） | —（外部へ） | **中位=`gpt-5.6-terra`×medium**・codex_work / implementer 定義 | **`grok-composer-2.5-fast`＝並ぶ第一選択**（仕様固定＋検証コマンド必須の委譲契約を厳守） | —（Oracle は書けない） |
 | 実装物量（次善・Claude 枠） | `sonnet`×low〜medium・implementer | — | — | — |
@@ -73,7 +73,7 @@
 - **非対話の一括委譲・独立レビュー → codex-sidecar MCP**: `codex_work`（隔離 worktree で実装）・`codex_review`・`codex_explore`・`codex_opinion`・`codex_risk_check`・`codex_auditor`・`codex_generate`。**model/effort は毎回明示 or `.codex-sidecar.yml` defaults**（上記入口事実）。
 - **対話で外部エージェントを駆動 → aiterm**: `codex_agent`・`grok_agent`・`composer_agent`（対話 TUI を永続端末に起動→ `pty_read`/`pty_send`）。上記の入口事実（継承・stale・effort 無視）に注意。
 - **非対話の xAI 物量 → `grok -p`（headless）**: `--effort low|medium|high` はここでのみ有効。
-- **セカンドオピニオン → `oracle.consult`**（MCP 入口限定・`preset: "chatgpt-pro-heavy"`。API engine 禁止＝`OPENAI_API_KEY` を作らない）。
+- **セカンドオピニオン → `oracle.consult`**（MCP 入口限定・登録はラッパー `oracle-mcp-stable` 経由。API engine 禁止＝`OPENAI_API_KEY` を作らない）。**preset `chatgpt-pro-heavy`・`browserModelLabel`・`modelStrategy:"select"` は封印中**（0.15.2×GPT-5.6 UI 不整合）——標準形は `engine:"browser"` のみ＝モデル/Effort はアカウント現在値（Sol×Extra High）で走る（正典 [06_oracle-mcp.md](06_oracle-mcp.md)、解除条件も同所）。
 
 ## 指定の作法
 

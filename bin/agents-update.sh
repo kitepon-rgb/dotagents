@@ -19,6 +19,7 @@ LOG="$LOG_DIR/agents-update.log"
 PACKAGES=(
   '@anthropic-ai/claude-code'
   '@openai/codex'
+  '@steipete/oracle'
   '@anthropic-ai/sdk'
   '@colbymchenry/codegraph'
   'aiterm-mcp'

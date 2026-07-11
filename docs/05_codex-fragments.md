@@ -70,6 +70,17 @@ permission profile を子へ再適用するため、custom agent の `sandbox_mo
 
 実装根拠: [`MultiAgentV2Config` の hidden 既定](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/config/mod.rs)、[`spawn_agent` schema から4入力を除く処理](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/tools/handlers/multi_agents_spec.rs)、[role 適用後に親 permission profile を再適用する処理](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/tools/handlers/multi_agents_common.rs)。上流既報は [#31814](https://github.com/openai/codex/issues/31814)（hidden routing）・[#20077](https://github.com/openai/codex/issues/20077)（full-history 既定）。
 
+## 3b. oracle MCP（ChatGPT Chat枠セカンドオピニオン・全端末推奨）
+
+Chat枠（Work枠と別勘定）の第二意見を Codex 親からも使えるようにする。**素の `oracle-mcp` でなくラッパー必須**（undici EINVAL ガード＋画面外 Chrome。理由と運用の正典は [06_oracle-mcp.md](06_oracle-mcp.md)）:
+
+```toml
+[mcp_servers.oracle]
+command = "/Users/kite/.local/bin/oracle-mcp-stable"
+```
+
+適用は下記 7 の TOML 冪等適用手順で。事前に `./install.sh` でラッパーが `~/.local/bin` に入っていること。
+
 ## 4. `project_doc_fallback_filenames = ["CLAUDE.md"]`（任意・副作用明記）
 
 CLAUDE.md しか無いリポ（このリポ含む）に指示を届かせるための設定。`project_doc_fallback_filenames` と `project_doc_max_bytes` は config.toml のキーとして実在確認済み（実装文字列に両キー名が連続して実在）。
