@@ -1,7 +1,7 @@
 # 06_oracle-mcp — ChatGPT Chat枠セカンドオピニオン（oracle）の常用ランブック
 
 <!-- 前提: oracle 0.15.2・GPT-5.6 世代・Node 24/26 の undici バグ現存（2026-07 時点）。
-     役割配置の正は docs/02_models.md。経緯と調査・切り分けの全記録は docs/plan_oracle-chat-quota.md → 完了後 archive -->
+     役割配置の正は docs/02_models.md。経緯と調査・切り分けの全記録は docs/archive/plan_oracle-chat-quota.md（2026-07-11 完了・退避済み） -->
 
 [oracle](https://github.com/steipete/oracle)（`@steipete/oracle`・npm -g）で ChatGPT サブスクの **Chat枠**を MCP 経由の第二意見に使う。Work枠（Codex 消費分）と別勘定・追加課金なし。**API engine / `OPENAI_API_KEY` は禁止**（憲法）。**oracle 本体は改造しない**——構成は config・起動ラッパー・呼び出し引数で行う。
 

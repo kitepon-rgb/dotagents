@@ -1,7 +1,7 @@
 # plan: Chat枠 GPT-5.6 を MCP で常用する（oracle 無改造構成）
 
 前提: Fable 級統括／oracle 0.15.2・GPT-5.6 世代（2026-07 時点）。
-状態: 承認済み（2026-07-11）→ **同日実装・検証完了（残タスク: 次セッション疎通確認・caveat 可視性裁定・upstream issue 承認）**。本ファイルが正本＝TODO を兼ねる。完了後は docs/archive/ へ。
+状態: **全項目完了（2026-07-11。新セッション疎通確認 Claude/Codex 両 green まで消化）** → docs/archive/ へ退避済み。本ファイルが正本＝TODO を兼ねる。
 運用ランブックの正典は [06_oracle-mcp.md](06_oracle-mcp.md)。本プランは経緯と消化の台帳。
 
 ## Context — 目的と要件
@@ -60,7 +60,7 @@ Codex / Claude の親エージェントから、**ChatGPT サブスクの Chat�
 
 - [x] `~/.codex/config.toml` の既存 oracle 登録をラッパーへ差し替え（バックアップ: `config.toml.bak-20260711-oracle`）
 - [x] [05_codex-fragments.md](05_codex-fragments.md) に断片追記（§3b）
-- [ ] Codex 新セッションで oracle ツール疎通確認（次セッション・オーナー）
+- [x] Codex 新セッションで oracle ツール疎通確認（2026-07-11 `codex exec` 新セッション実測: `oracle/consult` 呼出成功・modelStrategy=ignore・manualLogin=true）
 
 ### F. 還流（dotagents）
 
@@ -74,7 +74,7 @@ Codex / Claude の親エージェントから、**ChatGPT サブスクの Chat�
 
 - [x] dryRun: MCP スモーク（ラッパー経由 stdio）で initialize/tools/consult-dryRun とも green・解決値 `modelStrategy: ignore`・`manualLogin: yes`
 - [x] 実走: ガード＋シム経由 CLI で 19.1s 完走「VERIFIED-F GPT-5.6 Thinking」。**Keychain ポップアップなし・ウィンドウ非出現・残置なし**
-- [ ] MCP ライブ実走: 本セッションは旧登録が焼き付いているため**次の新セッションで確認**（Claude/Codex 両方）
+- [x] MCP ライブ実走: 新セッションで確認済み（2026-07-11）。Claude=ラッパー経由 dryRun green→ライブ 21.7s「MCP-LIVE-OK GPT-5.6 Thinking」・Chrome 残置なし／Codex=`codex exec` 新セッションから dryRun 成功（両方ともラッパー `oracle-mcp-stable` 経由を実プロセスで確認）
 - [x] `bash -n`・`make lint`・pathspec コミット
 
 ### やらないこと
