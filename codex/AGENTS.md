@@ -55,14 +55,15 @@
 
 ## モデルとエフォート（Codex 固有差分）
 
-- 会話はこのモデル単体で行う。サブエージェントの proactive（自動）委譲は常時 OFF。委譲はユーザーが明示した時だけ。
+- 会話はこのモデル単体で行う。サブエージェントの proactive（自動）委譲機能は常時 OFF＝子は明示 spawn でのみ起動する（ultra 封印と同根）。
+- **着手ゲート（実装の前に毎回・単発ユニットでも）**: コードを書き始める前に作業を F（契約クリティカル＝親直轄）／A（仕様が固まった物量＝委譲）／H（人手）でラベルし、**既定は A＝ネイティブ委譲**（手動 spawn で配置表どおり子に出す。proactive 自動委譲とは別物）。親が直接書く（F）なら「なぜ契約クリティカルか」を1行名指ししてから＝"自分で書く"方を要正当化にする。F＝認可・トランザクション・公開APIバイト互換・依存方向・本番操作・履歴修復。A＝新規テスト・設定/CI・逐語移設・一括置換・仕様固定の実装。ラベルと同時に**配置を1行宣言する（役割名で。例 `A: 役割=実装物量 → implementer（ネイティブ委譲）`。model/effort は role TOML 由来＝自分で選ばない）**。配置に迷ったら安い方・採用に迷ったら棄却。
 - effort は low で始める。上げるのは推論不足の証拠がある時だけ——上げる前に3問（成功条件は明確か／入口の選択は正しいか／検証ループはあるか）を確認し、1段ずつ。
 - **xhigh / max / ultra はユーザーの明示要求時のみ**。ultra（自動委譲 ON）は要求されない限り使わない。
 - 子への委譲は `~/.codex/agents/` の定義（implementer=中位実装・refuter=旗艦反証・読み取り専用・sorter=軽量分類）を**そのまま使う**。自分で model / effort を選ばない。
 - ネイティブ委譲は必ず `agent_type=<role>` と `fork_turns="none"` を明示する。`task_name` は `/root/...` のタスクパス名であり role selector ではない。
 - 実作業を最初の spawn message に入れない。まず routing smoke だけを起動し、`verify-codex-agent-routing <role> <agent-path>` で `agent_role / model / effort / developer_instructions` が TOML と一致した時だけ follow-up task を渡す。sandbox は実効値を報告するが、親 permission profile 継承とは別論点として判定する。
 - `spawn_agent` schema に `agent_type` が無い時は委譲禁止。`~/.codex/config.toml` の `[features.multi_agent_v2]` に `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"` を適用し、新規セッションで再確認する。
-- 単一ファイル・小径（目安数十行）の単発修正は親直で可。それ以上は、ユーザーが委譲を明示許可した場合に限り配置表へ従って委譲する。
+- **効率カーブアウト**: A でも単一ファイル・小径（目安数十行）の非クリティカル修正は routing 儀式（handshake spawn＋verify-codex-agent-routing）を省略して親直で可。standing child が既にあれば follow-up で流す＝儀式コストを些細な手足仕事に課さないための逃がし弁。
 - 監査・レビューで確信が持てない指摘は棄却側に倒す。
 - 最新の対応表とエスカレーション条件は `~/Developer/dotagents/docs/02_models.md` を正とする。
 
