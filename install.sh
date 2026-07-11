@@ -57,12 +57,18 @@ for f in "$HERE/codex/agents"/*.toml; do
   link_one "$f" "$HOME/.codex/agents/$(basename "$f")"
 done
 
-# caveat own entries (trap DB shared across terminals; this repo is PRIVATE.
-# caveat's own .gitignore keeps *.private.md out of git — private-tier entries
-# stay terminal-local by design)
+# caveat own entries — Caveat v0.15+ manages its own sync (dotagents no longer
+# owns the trap DB). The knowledge repo lives at ~/.caveat/own as a standalone
+# git repo whose remote is the PRIVATE github.com/<you>/Caveat-Private (public
+# + private entries; the public subset is mirrored to Caveat-Public via
+# `caveat publish`). Set it up per machine with the tool, not a symlink:
+#   caveat sync --init            # first machine: gh-creates Caveat-Private, pushes
+#   caveat sync --init --repo <Caveat-Private-url>   # later machines: clones it
+# and thereafter `caveat sync` round-trips. This installer intentionally does
+# not wire ~/.caveat/own — that is Caveat's job now.
 if [ -d "$HERE/caveat" ]; then
-  mkdir -p "$HOME/.caveat"
-  link_one "$HERE/caveat" "$HOME/.caveat/own"
+  echo "NOTE: dotagents/caveat is a leftover from the pre-v0.15 symlink model." >&2
+  echo "      Caveat now syncs ~/.caveat/own to Caveat-Private itself; see comment above." >&2
 fi
 
 # bin scripts (extension dropped at the destination, e.g. agents-update.sh -> agents-update)

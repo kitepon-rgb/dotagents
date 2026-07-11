@@ -35,7 +35,18 @@ for f in "$REPO/claude/agents"/*.md;   do [ -e "$f" ] && check "$HOME/.claude/ag
 for d in "$REPO/codex/skills"/*/;    do [ -d "$d" ] && check "$HOME/.codex/skills/$(basename "$d")" "$d"; done
 for f in "$REPO/codex/rules"/*;      do [ -e "$f" ] && check "$HOME/.codex/rules/$(basename "$f")" "$f"; done
 for f in "$REPO/codex/agents"/*.toml; do [ -e "$f" ] && check "$HOME/.codex/agents/$(basename "$f")" "$f"; done
-[ -d "$REPO/caveat" ] && check "$HOME/.caveat/own" "$REPO/caveat"
+# caveat: v0.15+ manages ~/.caveat/own itself (standalone git repo → Caveat-Private).
+# dotagents no longer owns it, so verify the Caveat-standard setup instead of a symlink.
+if [ -d "$HOME/.caveat/own/.git" ]; then
+  _cav_remote="$(git -C "$HOME/.caveat/own" remote get-url origin 2>/dev/null || true)"
+  case "$_cav_remote" in
+    *Caveat-Private*) echo "OK  ~/.caveat/own → $_cav_remote" ;;
+    "") echo "WARN ~/.caveat/own has no 'origin' remote — run: caveat sync --init" >&2 ;;
+    *) echo "OK  ~/.caveat/own → $_cav_remote (custom private remote)" ;;
+  esac
+else
+  echo "WARN ~/.caveat/own is not a git repo — set up sync: caveat sync --init [--repo <Caveat-Private-url>]" >&2
+fi
 for f in "$REPO/bin"/*.sh;           do [ -e "$f" ] && check "$HOME/.local/bin/$(basename "$f" .sh)" "$f"; done
 
 # ~/.codex/AGENTS.override.md シャドー検出: Codex は override が存在すれば AGENTS.md より

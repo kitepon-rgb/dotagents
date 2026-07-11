@@ -9,7 +9,7 @@ dotagents は**開発工場の司令室**。工場そのものではなく、全
 
 - **規範**: ベルの憲法（グローバル CLAUDE.md 正本）・本憲章の原則・orchestrate（統括の型）・02_models.md（役割→モデル対応の唯一の参照点）・01_project-layout.md（フォルダ構成標準）
 - **同期ハブ**: install.sh が skill / command / agents / rule / bin / 罠DB を全端末へ symlink 配布。GitHub が真実の源
-- **知識台帳**: rag/（調査の複利棚）・caveat/（罠DB）・docs/（決定と計画）
+- **知識台帳**: rag/（調査の複利棚）・docs/（決定と計画）。罠DB は Caveat 自身が管理（`~/.caveat/own` → private の Caveat-Private・v0.15+。dotagents 外）
 
 出自: 期間限定の最高知能（Fable 5・2026-07 在任）の出力を「消える回答」でなく「残る構造と判断」に変換し尽くすキャンペーンの成果物。以後は世代を跨いで運用する。
 
