@@ -1,7 +1,7 @@
 # plan: 古い正典の全域監査（stale-canon audit）
 
 前提: Fable 級統括／oracle 0.15.2・GPT-5.6 世代・aiterm v0.11（2026-07-11 時点）。
-状態: 承認済み（2026-07-11 オーナー「全力でチェックして、エージェント駆使して」）→ 実施中。本ファイルが正本＝TODO を兼ねる。完了後は docs/archive/ へ。
+状態: **完了（2026-07-11。監査2ラウンド→確定12件全裁定→是正適用済み）** → docs/archive/ へ退避。本ファイルが正本＝TODO を兼ねる。
 
 ## Context — なぜやるか
 
@@ -36,8 +36,8 @@ docs/02_models.md・05_codex-fragments.md・06_oracle-mcp.md・claude/CLAUDE.md�
 - [x] Dedup（コード照合・重複0）
 - [x] Verify（2票制・確定8/棄却3。棄却例: 「Grok Build」製品名 vs モデル slug の混同を反証が検出）
 - [x] Critic（盲点5件 → 直轄確認2件＋第2ラウンド3 finder。R2 で確定+2/棄却5、bin/ 全8本は違反なし）
-- [ ] 確定指摘の報告とオーナー裁定（2026-07-11 報告済み・裁定待ち）
-- [ ] 裁定済み修正の適用・コミット・push
+- [x] 確定指摘の報告とオーナー裁定（2026-07-11 全12件裁定済み）
+- [x] 裁定済み修正の適用・コミット・push（9a338a3 ほか。B1/A4=現状維持、C1=管轄外、他は適用）
 
 ## 確定指摘（裁定対象・全12件）
 
@@ -46,7 +46,7 @@ docs/02_models.md・05_codex-fragments.md・06_oracle-mcp.md・claude/CLAUDE.md�
 - [x] A1 完遂済みプラン2本を `2026-07_` 接頭辞で archive 退避＋oracle プランの命名是正＋参照3箇所追従（docs/03・06・rag/agent-config）
 - [x] A2 (f2) 00_overview.md 読む順表に 06_oracle-mcp.md と `plan_*.md` 行を追加
 - [x] A3 (f7) rag/orchestration 2記事に「delegate.sh 廃止・現行は codex-sidecar/aiterm」の日付付き注記＋INDEX 2行更新（本文の歴史は不改変）
-- [ ] A4 (Critic#5) codex/rules/default.rules: `rtk npm publish`・`npm install -g` 無条件 allow＋プロジェクト固有裁定の全端末配布 → オーナーへ説明済み・裁定待ち
+- [x] A4 (Critic#5) codex/rules/default.rules → **オーナー裁定（2026-07-11）: 全部このまま＝現状維持**（摩擦ゼロ優先。permission 系の締め付け提案は以後しない——端末メモリ permissions-keep-bare-bash.md に統合記録）
 - [x] A5 (Critic#2) codex-sidecar MCP を Claude user スコープへ登録（オーナー裁定 2026-07-11「登録しろ」。initialize handshake green 確認済み・Codex 側は入れ子禁止のため登録しない）＋AGENTS.md オンボーディング手順1へ追記
 
 ### B. 端末ローカル
@@ -56,7 +56,7 @@ docs/02_models.md・05_codex-fragments.md・06_oracle-mcp.md・claude/CLAUDE.md�
 
 ### C. 他プロジェクト（dotagents の外・各プロジェクトの領分）
 
-- [ ] C1 (r3) OpenCClaw/CLAUDE.md: BellBot 会話モデル `BELLBOT_CODEX_MODEL=gpt-5.5` が現行手順として複数箇所（158/612 ほか）→ 実デプロイ env と併せた棚卸しが必要
+- [x] C1 (r3) OpenCClaw/CLAUDE.md の BellBot モデル記述 → **オーナー裁定（2026-07-11）: dotagents の管轄外＝本セッションでは扱わない**（タスクチップも取り下げ。対応するなら OpenCClaw 側で）
 - [ ] C2 (r5/f9/f10/f11) Kikoeru・WebAICoding の gpt-5.5 記述群 → **統括裁定: 修正対象から除外**。反証で「Kikoeru 本番は実際に gpt-5.5 で稼働中（CODEX_MODEL 既定・sidecar 実測）」が判明＝文書は実態に正確。真の論点は「5.6 世代へ移行するか」というプロジェクト判断であり、文書ロットではない
 
 ## 棄却（反証が殺した指摘・理由は監査ログ参照）
