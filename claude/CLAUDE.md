@@ -72,7 +72,7 @@
 - 外部 CLI: **Codex**（`/Users/kite/.local/bin/codex`・`codex exec`/`codex review`）、**Grok Build**（`~/.grok/bin/grok`・要 `grok login`）。仕様が完全に固まった機械的一括作業・第三者視点レビューの選択肢。対話 TUI は永続PTY 経由で駆動。
 - **外部委譲は習慣にする（工場の性能はここで出る）**。委譲先は2系統に分かれ、いずれもツールとして構造化済み（プロンプトの言い付けでなく、ツール一覧に常在＝確実に手に取れる）:
   - **非対話の一括委譲・独立レビュー → codex-sidecar の MCP ツール**（`codex_work`＝隔離 worktree で実装／`codex_review`＝差分レビュー／`codex_explore`・`codex_opinion`・`codex_risk_check`・`codex_auditor`・`codex_generate`）。仕様が固まった物量や、自分の設計・成果の独立検証はここへ（Claude レートを温存。実績: Codex レビューが verify-install の実バグを発見）。
-  - **Oracle second-opinion は MCP 入口に限定**（`oracle.consult` / `preset: "chatgpt-pro-heavy"`）。OpenAI API 課金を避けるため API engine は使わず、`OPENAI_API_KEY` も作らない。`oracle` CLI 直打ちは初回 ChatGPT ログイン、MCP/ブラウザ自動化の診断、session 確認など保守用途だけに限定する。
+  - **Oracle second-opinion は MCP 入口に限定**（`oracle.consult`・標準形は `engine: "browser"` のみ＝モデル/Effort はアカウント現在値で走る。**preset `chatgpt-pro-heavy`・`browserModelLabel`・`modelStrategy:"select"` は封印中**——0.15.2×GPT-5.6 UI 不整合。正典と解除条件は dotagents/docs/06_oracle-mcp.md）。OpenAI API 課金を避けるため API engine は使わず、`OPENAI_API_KEY` も作らない。`oracle` CLI 直打ちは初回 ChatGPT ログイン、MCP/ブラウザ自動化の診断、session 確認など保守用途だけに限定する。
   - **対話で外部エージェントを駆動 → aiterm の `codex_agent`／`grok_agent`／`composer_agent`**（各モデルの対話 TUI を永続端末に起動→ `pty_read`/`pty_send` で操作。`reasoning_effort` を引数指定）。試行錯誤や対話的な作業向け。
   - どちらも委譲物は必ず自分で検証してから採用。
 - **モデル格下げは AI 自身では検知できない**（実行中の実モデル ID は env に無い）。フォールバックの検知・リセットはオーナーに委ねる（VSCode 拡張の通知＋`/model`）。AI 側は検知機構を作らない。だから**契約クリティカル・監査確定・不可逆操作の前は、自分が最上位モデルか確証を持てない前提で、検証2票・refuter 一回・迷ったら棄却側を常時効かせる**（orchestrate の「ガードレール常時ON」節＝品質を統括モデルの当たり外れに依存させない）。
