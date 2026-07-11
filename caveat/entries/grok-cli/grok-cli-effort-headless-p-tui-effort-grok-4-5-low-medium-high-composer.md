@@ -19,7 +19,7 @@ environment:
 source_project: null
 source_session: 2026-07-10T15:32:37.472Z/8716acc06f66
 created_at: 2026-07-10
-updated_at: 2026-07-10
+updated_at: 2026-07-11
 last_verified: 2026-07-11
 ---
 
@@ -38,3 +38,7 @@ aiterm-mcp 38a33f3（2026-07-11）で対応済み: `grok_agent`/`composer_agent`
 ## Evidence
 
 ~/.grok/README.md（--effort headless 専用の明記）・~/.grok/models_cache.json（supports_reasoning_effort と段数）・aiterm-mcp dist/core.js（enum と --effort 付与ロジック）実読。
+
+## 追記
+
+2026-07-11 実 smoke で再確認: aiterm-mcp v0.11.0 の grok_agent/composer_agent は reasoning_effort 指定を起動前に明示エラーで拒否する（session 残骸ゼロ）。エラーメッセージが headless 代替（grok -p --effort low|medium|high）を案内する。Grok 4.5 TUI の既定 effort は high（footer 実測）。
