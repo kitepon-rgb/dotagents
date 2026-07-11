@@ -4,12 +4,15 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-md lint-constitution help
+.PHONY: lint lint-sh lint-py lint-md lint-constitution help
 
-lint: lint-sh lint-md lint-constitution ## shell + markdown + 共通憲法一致（CI と同一）
+lint: lint-sh lint-py lint-md lint-constitution ## shell + python + markdown + 共通憲法一致（CI と同一）
 
-lint-sh: ## shellcheck: install.sh + bin/*.sh
-	shellcheck install.sh bin/*.sh
+lint-sh: ## shellcheck: install.sh + bin/ の shell スクリプト（python hook は lint-py へ）
+	shellcheck install.sh $$(grep -lE '^#!.*sh$$' bin/*.sh)
+
+lint-py: ## bin/ の python hook を構文チェック（ast.parse・依存なし）
+	@for f in $$(grep -lE '^#!.*python' bin/*.sh); do python3 -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" "$$f" && echo "py-syntax OK: $$f"; done
 
 lint-md: ## markdownlint（緩い設定・生きた正典のみ / .markdownlint-cli2.jsonc）
 	$(MDLINT)

@@ -26,6 +26,7 @@ allowed_paths:
   - docs/
   - bin/
   - rag/
+  - tests/
 
 presets:
   explore:

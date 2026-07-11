@@ -6,7 +6,7 @@
 # リマインダ文言はこの1ファイルに集約＝git pull で全端末へ伝播する。
 # 契約: 常に exit 0・stdout に valid JSON（hookSpecificOutput.additionalContext）。
 # 依存なし（jq 不要）。文言に " と \ と生改行を含めないこと（printf で JSON 直書きのため）。
-# 設計・TODO: docs/plan_plan-gate-hook.md
+# 設計・TODO: docs/archive/2026-07_plan-gate-hook.md
 set -uo pipefail
 
 # フックへ渡る stdin(JSON) は本フックでは未使用。読み捨てて writer 側の SIGPIPE を避ける。

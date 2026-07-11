@@ -189,11 +189,12 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 
 ### Phase 2 — Claude 側ペイロード（A ラベル: 仕様固定の実装物量→外部枠委譲、文言と判定条件は F=統括直轄）
 
-- [ ] `bin/delegation-gate-hook.sh`（C1）＋空打ちテスト
-- [ ] `bin/todo-gate-hook.sh`（C2/C3）＋空打ちテスト
-- [ ] `bin/onset-gate-hook.sh`（C4・毎ターン UserPromptSubmit・条件付き文言）＋空打ちテスト
-- [ ] plan-gate-hook.sh L9 stale ポインタ修正
-- [ ] `make lint` → `./install.sh`（linked 3本確認）
+- [x] `bin/delegation-gate-hook.sh`（C1）＋空打ちテスト
+- [x] `bin/todo-gate-hook.sh`（C2/C3）＋空打ちテスト
+- [x] `bin/onset-gate-hook.sh`（C4・毎ターン UserPromptSubmit・条件付き文言）＋空打ちテスト
+- [x] plan-gate-hook.sh L9 stale ポインタ修正
+- [x] `make lint` → `./install.sh`（linked 3本確認）
+- 実装ノート: hook は python3。既存 shellcheck が python shebang を SC1071 で弾くため Makefile に lint-py（ast.parse）を新設し lint-sh は shell スクリプトのみへ。tests/hooks/smoke.sh 新設（XDG_CACHE_HOME 隔離・13ケース）。sidecar は PROTOCOL_ERROR で集約失敗も成果物は worktree 保持→統括が回収・レビュー・smoke green で採用。
 
 ### Phase 3 — Claude 側配線・実火
 
