@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2015
 # bin/codex-callout-hook.sh の空打ちテスト（X1-X5）。既存 smoke.sh（Claude 側）は触らない。
 set -u
 

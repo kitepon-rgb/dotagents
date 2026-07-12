@@ -15,10 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # shellcheck / node は ubuntu-latest ランナー同梱。欠けたら version 表示で
-      # fail-loud（黙って skip しない）。ローカルは `make lint`（正典 docs/04_ci.md）。
+      # fail-loud（黙って skip しない）。Codex は clean HOME test の完全 TOML parser として固定導入する。
       - name: tool versions
         run: |
           shellcheck --version
           node --version
-      - name: make lint (shellcheck + markdownlint)
-        run: make lint
+      - name: install Codex CLI
+        run: |
+          npm view @openai/codex@0.144.1 version
+          npm install --global @openai/codex@0.144.1
+          codex --version
+      - name: make ci (local/CI common gate)
+        run: make ci

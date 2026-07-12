@@ -8,12 +8,13 @@
 ## このリポジトリの役割
 
 Claude Code と Codex の自作 skill / slash command / rule を複数端末で同期する個人 dotfiles。
-コードは無く、`install.sh` がリポジトリ内エントリを `~/.claude/{skills,commands}` と
-`~/.codex/{skills,rules}` 配下に **ファイル / ディレクトリ単位の symlink** で配置する。
+`install.sh` がリポジトリ内エントリを `~/.claude/{skills,commands}`、`~/.codex/{rules,agents}`、
+Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ `~/.codex/skills`）へ
+**ファイル / ディレクトリ単位の symlink** で配置する。
 
 そのため:
 
-- リポジトリ内のファイルを編集すれば即 `~/.claude/...` / `~/.codex/...` に反映される (symlink なので同じファイル)。逆方向も同じ。
+- リポジトリ内のファイルを編集すれば、選択した配布面の `~/.claude/...` / `~/.codex/...` / `~/.agents/skills/...` に即反映される（symlink なので同じファイル）。逆方向も同じ。
 - `install.sh` は冪等。既存 symlink は上書き、実ファイルが存在する宛先は `SKIP` してログを出す。失敗は止まる (`set -euo pipefail` を維持。フォールバック禁止)。
 
 ## AI オンボーディング（この URL を渡された AI へ）
@@ -23,7 +24,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・`claude`/`codex`/`markitdown`・MCP 用 CLI（`aiterm-mcp`/`caveat`/`codegraph`/`codex-sidecar-mcp`）を導入し `claude mcp add --scope user` で登録（codex-sidecar は Claude 側のみ＝Codex 親はネイティブ委譲一択。2026-07-11 監査で登録漏れ実在＝憲法の「ツール一覧に常在」が空手形化していた）。
 2. **clone**（README §1）: `gh repo clone kitepon-rgb/dotagents ~/Developer/dotagents && cd ~/Developer/dotagents`。
 3. **既存実ファイルの退避**（README §2・重要）: install.sh は実ファイルを SKIP するので、先に tar 退避し stale な `~/.claude/CLAUDE.md` 実体を削除。飛ばすと正本化が静かに失敗する。`~/.codex/AGENTS.md` が実ファイルなら同様——中身を確認し、価値ある行は `codex/AGENTS.md` へ PR してから tar 退避・削除する（黙って上書き・破棄しない）。
-4. **install → Codex routing 必須断片 → 検証**（README §3）: `./install.sh` 後、`~/.codex/config.toml` の `[features.multi_agent_v2]` に `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"` を冪等適用してから `./bin/verify-install.sh`。verify が OK を返すまで直す（FAIL 行が退避すべき実ファイルまたは不足設定を名指す）。
+4. **install → Codex routing / hook 差分確認 → 検証**（README §3）: 既定の `./install.sh --profile official` 後、`./bin/apply-codex-config --dry-run` で変更範囲を確認する。`--apply` は routing 2キーと dotagents hook 4本だけを backup 付きで書き込むため、対象端末への適用承認後に限る。最後に `./bin/verify-install.sh --profile official` を通す（FAIL 行が退避すべき実ファイルまたは不足設定を名指しする）。
 5. **`settings.json` 断片の適用**（install.sh は `settings.json` を触らない＝ここが手挿しの代替。AI は jq で冪等・安全にマージせよ）: 正典は [docs/03_settings-fragments.md](docs/03_settings-fragments.md)。手順＝既存確認→バックアップ→追加分のみ→JSON 妥当性確認。**正本化ゲート hook は全端末必須**。実例（hook を PostToolUse に冪等追記）:
 
    ```bash
@@ -37,7 +38,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
    ```
 
    **正本化ゲートと同様、呼びかけ hook 4本（C1-C4＝delegation-gate／todo-gate×2／onset-gate）も全端末必須**——配線断片（PreToolUse／SessionStart／Stop／UserPromptSubmit＋env 説明）は同じ [docs/03_settings-fragments.md](docs/03_settings-fragments.md)。他の推奨断片（読み取り系 `permissions.allow` 等）も同ファイル参照。ライブ反映＝次の発火から有効。
-6. **Codex 断片の適用**: 正典は [docs/05_codex-fragments.md](docs/05_codex-fragments.md)。custom agent の `[agents.<name>]` 個別登録は不要だが、step 4 の V2 routing 断片は必須。親モデル×effort の既定はオーナー領分（AI は変更しない）。新規セッションで `agent_type` が schema に出ることを確認し、`agent_type=<role>`＋`fork_turns="none"` の handshake-only spawn 後、`verify-codex-agent-routing` が green になるまで本作業を渡さない。加えて **呼びかけ hook（X1-X5）を `~/.codex/hooks.json` へ冪等 append**（断片は同ファイル「## 9.」・**バックアップ必須**の共有ファイル・既存 throughline/caveat/spotter と共存・全 async:false・trust 承認要）。
+6. **Codex 断片の適用**: 正典は [docs/05_codex-fragments.md](docs/05_codex-fragments.md)。custom agent の `[agents.<name>]` 個別登録は不要だが、step 4 の V2 routing 断片は必須。親モデル×effort の既定はオーナー領分（AI は変更しない）。`apply-codex-config --apply` は、routing 2キーと呼びかけ hook 4イベントだけを冪等に正規化し、model / effort / permissions / OAuth / trust / 他ツール hook は変更しない。新規セッションで `agent_type` が schema に出ることを確認し、`agent_type=<role>`＋`fork_turns="none"` の handshake-only spawn 後、`verify-codex-agent-routing` が green になるまで本作業を渡さない。hook trust の UI 承認は別途 H を要する。
 7. **メモリ整理・自動アップデート常設**（README §4・「自動アップデート」節）: 各端末のメモリ整理と週次 `agents-update`（macOS=launchd／Linux・WSL=cron）を必須で設置。
 
 ## 掟（複数端末リポの作法）
@@ -52,13 +53,13 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 |---|---|---|---|
 | Claude skill | `claude/skills/<name>/` | `~/.claude/skills/<name>` | `SKILL.md` 必須のディレクトリ |
 | Claude command | `claude/commands/<name>.md` | `~/.claude/commands/<name>.md` | 単一 `.md` |
-| Codex skill | `codex/skills/<name>/` | `~/.codex/skills/<name>` | `SKILL.md` を含むディレクトリ (`agents/openai.yaml` 等を併設可) |
+| Codex skill | `codex/skills/<name>/` | 既定: `$HOME/.agents/skills/<name>`／明示 legacy: `~/.codex/skills/<name>` | `SKILL.md` を含むディレクトリ (`agents/openai.yaml` 等を併設可)。同一端末・入口には一方だけ |
 | Codex rule | `codex/rules/<file>` | `~/.codex/rules/<file>` | 任意ファイル (例: `default.rules`) |
 | Codex グローバル規範 | `codex/AGENTS.md` | `~/.codex/AGENTS.md` | 単一 `.md`（2026-07 リポ正本化。詳細は「含めないもの」節） |
 | Codex サブエージェント | `codex/agents/<name>.toml` | `~/.codex/agents/<name>.toml` | 単一 `.toml`（`name`/`description`/`developer_instructions` の3必須キー） |
-| 実行スクリプト | `bin/<name>.sh` | `~/.local/bin/<name>` | 単一 bash (`.sh` は配置時に外れる、`chmod +x` 必須) |
+| 実行スクリプト | `bin/<name>.sh` | `~/.local/bin/<name>` | shebang に従う単一実行スクリプト（bash / Python。`.sh` は配置時に外れる、`chmod +x` 必須） |
 
-`install.sh` は上記 7 グループのそれぞれを 1 階層だけ走査し symlink を張る。**新規エントリ追加後は `./install.sh` を再実行が必要** (既存エントリの編集だけなら不要)。
+`install.sh` は上記の配布対象を 1 階層だけ走査し symlink を張る。Codex skill 面は `--profile official|legacy` の一方だけを選ぶ。**新規エントリ追加後は `./install.sh --profile <面>` を再実行が必要** (既存エントリの編集だけなら不要)。
 
 ### Skill の frontmatter (Anthropic 規約)
 
@@ -94,10 +95,10 @@ claude/commands/audit-gauntlet.md -> ../skills/audit-gauntlet/SKILL.md
 
 ## ビルド / テスト / 検証
 
-ビルドは無し。`install.sh` 自身は `bash -n install.sh` で構文チェックのみ可能。lint ゲートは `make lint`（shellcheck＋markdownlint。正典 [docs/04_ci.md](docs/04_ci.md)）。構成（エントリの追加・削除・改名）を変えたら:
+ビルドは無し。`install.sh` 自身は `bash -n install.sh` で構文チェックのみ可能。静的 lint は `make lint`、CI と同一の完全ゲートは `make ci`（Codex CLI を使う隔離 HOME test を含む。正典 [docs/04_ci.md](docs/04_ci.md)）。構成（エントリの追加・削除・改名）を変えたら:
 
 1. `./install.sh` を再実行し、期待どおりの `linked:` / `SKIP` が出ること
-2. `ls -la ~/.claude/skills ~/.claude/commands ~/.codex/skills ~/.codex/rules` で link 先が本リポを向いていること
+2. `ls -la ~/.claude/skills ~/.claude/commands ~/.agents/skills ~/.codex/rules`（legacy 選択時は `~/.codex/skills`）で link 先が本リポを向いていること
 3. 新しい Claude Code / Codex セッションでスキル・コマンドが一覧に出ること
 
 ## 自動アップデート
@@ -107,4 +108,5 @@ claude/commands/audit-gauntlet.md -> ../skills/audit-gauntlet/SKILL.md
 ## 既知の罠
 
 - **旧 clone パスは `~/projects/dotagents`（消滅）**。2026-05 設置の symlink が旧パス向きで宙ぶらりんの端末がある（この Mac で実測）。`./install.sh` 再実行で貼り直す。
+- **Codex skill 面を同居させない**: `$HOME/.agents/skills` と `~/.codex/skills` の同名 skill は selector に二重出現しうる。通常は公式 profile、旧入口だけ `--profile legacy` を明示し、`verify-install` の重複 FAIL を解消してから新規 session を開く。
 - **Throughline 管理物と衝突しない**: `sc-detail` / `tl` / `tl-trim` コマンドは Throughline が端末側で実ファイル生成するためリポから除去済み (3cdff89)。再収録しない。`~/.codex/skills/throughline` も同様に端末側実ディレクトリが管理する——repo 版は 2026-07-04 の資産棚卸しで**廃止済み**（どの端末でも shadow され未使用の死荷重だった）。こちらも再収録しない。

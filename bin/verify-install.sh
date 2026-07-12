@@ -2,13 +2,49 @@
 # verify-install: install.sh 後、リポの各エントリが $HOME 側で本リポ向き symlink に
 # なっているかを自動検証する。ランブック §3「ls -la で目視」の実行可能版。
 # 他端末セットアップで「実ファイル退避を忘れて正本化が静かに失敗」を検出する狙い。
-# 使い方: verify-install   （引数不要。symlink 経由でも実体リポを解決する）
+# 使い方: verify-install [--profile official|legacy]
 set -uo pipefail
+
+profile=official
+profile_set=false
+usage() {
+  cat <<'EOF'
+使い方: verify-install [--profile official|legacy]
+
+Codex skill 検証面:
+  official  ~/.agents/skills （既定）
+  legacy    ~/.codex/skills
+EOF
+}
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --help|-h) usage; exit 0 ;;
+    --profile)
+      if [ "$#" -lt 2 ] || [ "$profile_set" != false ]; then
+        echo 'FAIL: --profile は一度だけ official または legacy を指定する' >&2; exit 2
+      fi
+      profile="$2"; profile_set=true; shift 2 ;;
+    --profile=*)
+      if [ "$profile_set" != false ]; then
+        echo 'FAIL: --profile を重複指定できない' >&2; exit 2
+      fi
+      profile="${1#--profile=}"; profile_set=true; shift ;;
+    *) echo "FAIL: 不明な引数: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+case "$profile" in official|legacy) ;; *) echo "FAIL: 不正な profile: $profile" >&2; exit 2 ;; esac
 
 # 自身の実体を辿ってリポルートを解決（install.sh は絶対パスで symlink するので readlink は絶対）
 SELF="${BASH_SOURCE[0]}"
 while [ -L "$SELF" ]; do SELF="$(readlink "$SELF")"; done
 REPO="$(cd "$(dirname "$SELF")/.." && pwd)"
+if [ "$profile" = official ]; then
+  codex_skills_dir="$HOME/.agents/skills"
+  other_codex_skills_dir="$HOME/.codex/skills"
+else
+  codex_skills_dir="$HOME/.codex/skills"
+  other_codex_skills_dir="$HOME/.agents/skills"
+fi
 
 fail=0
 check() { # check <dst> <expect_src>
@@ -50,7 +86,15 @@ for d in "$REPO/claude/skills"/*/;   do [ -d "$d" ] && check "$HOME/.claude/skil
 for f in "$REPO/claude/commands"/*.md; do [ -e "$f" ] && check "$HOME/.claude/commands/$(basename "$f")" "$f"; done
 for f in "$REPO/claude/agents"/*.md;   do [ -e "$f" ] && check "$HOME/.claude/agents/$(basename "$f")" "$f"; done
 [ -f "$REPO/codex/AGENTS.md" ] && check "$HOME/.codex/AGENTS.md" "$REPO/codex/AGENTS.md"
-for d in "$REPO/codex/skills"/*/;    do [ -d "$d" ] && check "$HOME/.codex/skills/$(basename "$d")" "$d"; done
+for d in "$REPO/codex/skills"/*/; do
+  [ -d "$d" ] || continue
+  skill_name="$(basename "$d")"
+  check "$codex_skills_dir/$skill_name" "$d"
+  if [ -e "$other_codex_skills_dir/$skill_name" ] || [ -L "$other_codex_skills_dir/$skill_name" ]; then
+    echo "FAIL: Codex skill ${skill_name} が反対 profile 面にも存在（${other_codex_skills_dir}/${skill_name}）"
+    fail=1
+  fi
+done
 for f in "$REPO/codex/rules"/*;      do [ -e "$f" ] && check "$HOME/.codex/rules/$(basename "$f")" "$f"; done
 for f in "$REPO/codex/agents"/*.toml; do [ -e "$f" ] && check "$HOME/.codex/agents/$(basename "$f")" "$f"; done
 # caveat: v0.15+ manages ~/.caveat/own itself (standalone git repo → Caveat-Private).
@@ -97,15 +141,15 @@ try:
 except (OSError, UnicodeDecodeError):
     raise SystemExit(1)
 match = re.search(
-    r"(?ms)^\[features\.multi_agent_v2\]\s*\n(.*?)(?=^\[|\Z)",
+    r"(?m)^\[features\.multi_agent_v2\](?:[ \t]+#[^\n]*)?[ \t]*\n(?s:(.*?))(?=^\[|\Z)",
     text,
 )
 if not match:
     raise SystemExit(1)
 section = match.group(1)
-if not re.search(r"(?m)^hide_spawn_agent_metadata\s*=\s*false\s*$", section):
+if not re.search(r"(?m)^hide_spawn_agent_metadata\s*=\s*false(?:[ \t]+#.*)?[ \t]*$", section):
     raise SystemExit(1)
-if not re.search(r'(?m)^tool_namespace\s*=\s*"agents"\s*$', section):
+if not re.search(r'(?m)^tool_namespace\s*=\s*"agents"(?:[ \t]+#.*)?[ \t]*$', section):
     raise SystemExit(1)
 PY
 then
@@ -119,6 +163,7 @@ if [ ! -f "$claude_settings" ]; then
   echo "WARN ${claude_settings} 不在（Claude Code 未セットアップ端末）" >&2
 elif ! python3 - "$claude_settings" <<'PY'
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -165,6 +210,7 @@ if [ ! -f "$codex_hooks" ]; then
   echo "WARN ${codex_hooks} 不在（Codex 未セットアップ端末）" >&2
 elif ! python3 - "$codex_hooks" <<'PY'
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -177,25 +223,29 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
     raise SystemExit(1)
 
 required = {
-    "SessionStart": "codex-callout-hook session-start",
-    "PreToolUse": "codex-callout-hook pre-tool-use",
-    "UserPromptSubmit": "codex-callout-hook user-prompt-submit",
-    "Stop": "codex-callout-hook stop",
+    "SessionStart": ("session-start", 10),
+    "PreToolUse": ("pre-tool-use", 5),
+    "UserPromptSubmit": ("user-prompt-submit", 5),
+    "Stop": ("stop", 10),
 }
 missing = []
-for event, required_command in required.items():
-    commands = (
-        hook.get("command", "")
+hook_path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-callout-hook")
+for event, (subcommand, timeout) in required.items():
+    matches = [
+        hook
         for entry in data.get("hooks", {}).get(event, [])
         if isinstance(entry, dict)
         for hook in entry.get("hooks", [])
-        if isinstance(hook, dict)
-    )
-    if not any(
-        isinstance(command, str) and required_command in command
-        for command in commands
-    ):
-        missing.append(f"{event}: {required_command}")
+        if isinstance(hook, dict) and hook.get("command") == f"{hook_path} {subcommand}"
+    ]
+    if len(matches) != 1 or matches[0] != {
+        "type": "command",
+        "command": f"{hook_path} {subcommand}",
+        "timeoutSec": timeout,
+        "async": False,
+        "statusMessage": None,
+    }:
+        missing.append(f"{event}: codex-callout-hook {subcommand} の正規 entry")
 
 if missing:
     print("FAIL: Codex 必須 hook が欠落: " + "、".join(missing))
@@ -207,8 +257,8 @@ fi
 
 echo
 if [ "$fail" -eq 0 ]; then
-  echo "verify-install: OK — 全エントリが本リポ ${REPO} 向き symlink"
+  echo "verify-install: OK — profile=${profile}、全エントリが本リポ ${REPO} 向き symlink"
 else
-  echo "verify-install: FAIL あり — 上記を退避/再 install で解消（手順は dotagents/README ランブック §2-3）"
+  echo "verify-install: FAIL あり — profile=${profile}。上記を退避/再 install で解消（手順は dotagents/README ランブック §2-3）"
 fi
 exit "$fail"

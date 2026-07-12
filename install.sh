@@ -1,13 +1,40 @@
 #!/usr/bin/env bash
-# Symlink dotagents entries into ~/.claude/{skills,commands} and ~/.codex/{skills,rules}.
+# Symlink dotagents entries into ~/.claude/{skills,commands} and a selected Codex skill surface.
 # Idempotent: re-running overwrites existing symlinks but never removes unrelated files.
 set -euo pipefail
+
+profile=official
+profile_set=false
+usage() {
+  cat <<'EOF'
+使い方: ./install.sh [--profile official|legacy]
+
+Codex skill 配布先:
+  official  ~/.agents/skills （既定）
+  legacy    ~/.codex/skills
+EOF
+}
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --help|-h) usage; exit 0 ;;
+    --profile)
+      [ "$#" -ge 2 ] || { echo 'FAIL: --profile には official または legacy が必要' >&2; exit 2; }
+      [ "$profile_set" = false ] || { echo 'FAIL: --profile を重複指定できない' >&2; exit 2; }
+      profile="$2"; profile_set=true; shift 2 ;;
+    --profile=*)
+      [ "$profile_set" = false ] || { echo 'FAIL: --profile を重複指定できない' >&2; exit 2; }
+      profile="${1#--profile=}"; profile_set=true; shift ;;
+    *) echo "FAIL: 不明な引数: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+case "$profile" in official|legacy) ;; *) echo "FAIL: 不正な profile: $profile" >&2; exit 2 ;; esac
 
 # MSYS/Git Bash（Windows native）: 無指定だと ln -s が実コピーになり正本化が静かに不成立する。
 # 開発者モード ON 前提で本物の symlink を強制（非対応なら ln が失敗して止まる＝静かなコピーへ逃げない）。
 case "$(uname -s)" in MINGW*|MSYS*) export MSYS=winsymlinks:nativestrict ;; esac
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "Codex skill profile: $profile"
 
 link_one() {
   local src="$1" dst="$2"
@@ -39,14 +66,20 @@ for f in "$HERE/claude/agents"/*.md; do
   link_one "$f" "$HOME/.claude/agents/$(basename "$f")"
 done
 
-# Codex
-mkdir -p "$HOME/.codex/skills" "$HOME/.codex/rules" "$HOME/.codex/agents"
+# Codex（skill 面は profile ごとに一方だけへ配布）
+mkdir -p "$HOME/.codex/rules" "$HOME/.codex/agents"
+if [ "$profile" = official ]; then
+  codex_skills_dir="$HOME/.agents/skills"
+else
+  codex_skills_dir="$HOME/.codex/skills"
+fi
+mkdir -p "$codex_skills_dir"
 if [ -e "$HERE/codex/AGENTS.md" ]; then
   link_one "$HERE/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
 fi
 for d in "$HERE/codex/skills"/*/; do
   [ -d "$d" ] || continue
-  link_one "${d%/}" "$HOME/.codex/skills/$(basename "$d")"
+  link_one "${d%/}" "$codex_skills_dir/$(basename "$d")"
 done
 for f in "$HERE/codex/rules"/*; do
   [ -e "$f" ] || continue

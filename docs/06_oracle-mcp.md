@@ -22,7 +22,7 @@
 
 ## セットアップ（新しい端末）
 
-1. **導入**: `agents-update` の対象（`bin/agents-update.sh` PACKAGES に `@steipete/oracle`）。手動なら `npm install -g @steipete/oracle@latest`。`./install.sh` で `oracle-mcp-stable` / `oracle-chrome-shim` が `~/.local/bin` に入る。
+1. **導入**: `agents-update` の対象（`bin/agents-update.sh` PACKAGES に `@steipete/oracle`）。手動なら `npm install -g @steipete/oracle@latest`。通常は `./install.sh --profile official` で `oracle-mcp-stable` / `oracle-chrome-shim` が `~/.local/bin` に入る（legacy 入口を選ぶ端末は `--profile legacy`）。
 2. **一回限りの手動ログイン**（オーナー操作・CLI 直打ちはこの用途のみ憲法許容）:
 
    ```bash
@@ -50,13 +50,8 @@
    - `modelStrategy: "ignore"` … ピッカー操作を丸ごとスキップ（0.15.2 暫定。upstream 5.6 対応リリース後に `"select"` へ戻す）
    - `hideWindow` / `thinkingTime` は**置かない**（前者は送信破壊、後者はアカウント既定に委ねる）
 4. **MCP 登録**:
-   - Claude Code: `claude mcp add --scope user oracle -- /Users/kite/.local/bin/oracle-mcp-stable`
-   - Codex: `~/.codex/config.toml` に（[05_codex-fragments.md](05_codex-fragments.md) の TOML 冪等適用手順で）:
-
-     ```toml
-     [mcp_servers.oracle]
-     command = "/Users/kite/.local/bin/oracle-mcp-stable"
-     ```
+   - Claude Code: `claude mcp add --scope user oracle -- "$HOME/.local/bin/oracle-mcp-stable"`
+   - Codex: [`05_codex-fragments.md`](05_codex-fragments.md) の限定 applier は MCP を変更しない。H 承認後に `codex mcp add oracle -- "$HOME/.local/bin/oracle-mcp-stable"` を実行し、`codex mcp get oracle --json` で確認する。
 
 ## 呼び出しの標準形（GPT-5.6 世代・0.15.2 時点）
 

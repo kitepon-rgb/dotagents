@@ -27,7 +27,7 @@
 - **plan-gate-hook.sh**（bin/）が唯一の規範系 hook。型: stdin 読み捨て → `hookSpecificOutput.additionalContext` に固定文言 → 常に exit 0。条件分岐・スロットル・jq 依存なし。設定断片は docs/03_settings-fragments.md L35-52（PostToolUse × matcher:"ExitPlanMode"）。
 - この端末の ~/.claude/settings.json 実配線: Stop=throughline+caveat / UserPromptSubmit=throughline+caveat / PostToolUse=caveat(全ツール)+plan-gate(ExitPlanMode) / PostToolUseFailure=caveat / SessionStart=throughline / SessionEnd=throughline。
 - **Codex 側**: `[features].hooks=true` 有効化済み。`~/.codex/hooks.json`（dotagents 管轄外・各ツールのインストーラが追記する方式）に throughline / caveat / **claude-spotter** が配線済み（UserPromptSubmit・Stop・SessionStart。UserPromptSubmit の注入は spotter の実出力で発火実証済み。**SessionStart は async:true 指定＝caveat 0.136.0 時点で async は skip されており発火未確認**→プローブ対象）。plan-gate 相当は未配線。プロジェクトローカル `.codex/hooks.json` も可（trust 承認必須）。
-- **verify-install.sh は symlink の存在しか見ない＝settings.json / hooks.json への実配線は誰も検証していない**（手挿し忘れが検出されない穴）。config.toml 断片検証（python3 正規表現・L61-96）が「$HOME 側実ファイル検証」の既存パターン。
+- ~~verify-install.sh は symlink の存在しか見ない~~ → Wave 2 で settings.json / hooks.json の実配線、選択 skill 面、routing 必須キー、canonical callout entry まで検証するよう更新済み。手挿し忘れは FAIL で名指しし、config / hooks の変更自体は限定 applier が backup 付きで扱う。
 - docs/03 に既存の明示方針: 「**TodoWrite に hook を貼らない**（些末用途が多く alarm fatigue）」。
 - 正本化ゲート・着手ゲートの一次定義は claude/CLAUDE.md（PLAN.md 原則ではない）。**codex/AGENTS.md には着手ゲート/F-A-H/配置宣言の語彙が無い**（既存の規範ズレ。verify-constitution-parity の対象5章にも入っていない）。
 
@@ -191,17 +191,17 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 
 - [x] **codex/AGENTS.md 委譲レジーム変更**（(b) 裁定: 親直既定→着手ゲート・A＝ネイティブ委譲既定へ書き換え。F 直轄・単独コミット・**push 前にオーナー diff レビュー**・verify-constitution-parity green）
 - [x] `bin/codex-callout-hook.sh`（X1-X5・fast-path・P6 結果で分岐）＋空打ち（3d8d371・codex-smoke 26 green）
-- [x] docs/05 に hooks.json 冪等 append 断片の節を新設
+- [x] docs/05 に hooks.json 配線の正典を追加し、Wave 2 で限定 applier（routing 2キー＋canonical callout 4イベント）へ更新
 - [x] この端末の ~/.codex/hooks.json へ append（10:37・バックアップ bak-calloutgate-20260712-103754）／✅ 実火確認済み（2026-07-12 11:41・codex-cli 0.144.1 gpt-5.6-sol：X5 着手ゲートが画面へ全文注入＋X1 session-start が snapshot 副作用〔porcelain＋HEAD=e80f25f〕を記録。棚卸し文言は 24h スロットルで設計どおり沈黙。X2=update_plan は今回未観測）
 - [x] pathspec コミット（codex hook=3d8d371・docs/05=0e92f8b で push 済み）
 
 ### Phase 5 — 検証常設と締め
 
 - [x] verify-install.sh に配線検証（Claude 側配線＝既存 plan-gate 含む・Codex 側エントリ。python3 断片検証の既存型）（39f3a77・make lint green・実行 OK）
-- [ ] AGENTS.md 手順5/6・README ランブック1行追記
-- [ ] `make lint` → `./install.sh` → `./bin/verify-install.sh` 全 green → pathspec コミット → オーナー GO → push
+- [x] AGENTS.md 手順5/6・README ランブックを profile / dry-run / applier / verify 契約へ更新
+- [ ] `make ci` → 対象端末の `./install.sh --profile <official|legacy>` / config dry-run/apply / 同じ profile を指定した `./bin/verify-install.sh --profile <official|legacy>` → pathspec コミット → オーナー GO → push（実端末 apply は H1 待ち）
 - [ ] 知識還流（caveat/rag）・プラン正本のチェック消化
-- [ ] 他端末波及チェックリスト（pull → install → 断片マージ → verify → 実火1件）— 全端末済みでプランを archive へ
+- [ ] 他端末波及チェックリスト（pull → `./install.sh --profile official` → Claude `settings.json` 断片マージ / Codex applier の dry-run→承認済み apply → `./bin/verify-install.sh --profile official` → 実火1件）— 全端末済みでプランを archive へ
 
 ## 検証方法
 

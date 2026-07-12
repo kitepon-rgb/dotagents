@@ -15,3 +15,12 @@
 ## 取得時の異常
 
 `openai-docs` の Codex manual helper は公式応答に `x-content-sha256` が無く失敗した。黙って成功扱いせず、スキルの規定どおり OpenAI Developer Docs MCP で必要箇所を取得した。
+
+## Wave 2 の隔離受入れ実測
+
+- 取得日: 2026-07-12
+- 確度: 高（このリポの clean HOME 実行）
+- `install.sh --profile official` は Codex skill を `$HOME/.agents/skills` へ symlink 配布し、実 symlink の `apply-codex-config` は dry-run / apply / 冪等 apply を通過した。
+- `codex debug prompt-input` は隔離 HOME でも `audit-gauntlet`、`auto-deploy-on-push`、`oracle`、`orchestrate`、`polish-github` をリポの公式 skill 面から列挙した。
+- `make ci` は `make lint` と clean HOME test を統合する。GitHub Actions は `@openai/codex@0.144.1` を明示導入するため、applier の Codex TOML parser 依存を黙って skip しない。
+- 旧 `~/.codex/skills` は互換 profile として隔離検証済みだが、実端末の公式面移行と旧 symlink 撤去は H 承認後の別作業である。

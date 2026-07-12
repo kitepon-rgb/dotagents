@@ -42,9 +42,9 @@
 
 ### 2. Phase 5（検証常設と締め）
 
-- `bin/verify-install.sh` に**配線検証**を追加（settings.json の4 hook＋既存 plan-gate、hooks.json の codex-callout。既存の config.toml 断片検証 L61-96 が python3 の型）。現状 verify-install は symlink しか見ず、手挿し忘れを検出できない穴がある。
-- `AGENTS.md` オンボーディング手順5/6・`README.md` ランブックに hook 配線を1行追記。
-- **他端末波及**: 各端末で pull → install → settings.json/hooks.json 断片マージ → verify → 実火1件。全端末済みで本プランと本書を docs/archive/ へ退避。
+- [x] `bin/verify-install.sh` に**配線検証**を追加（settings.json の4 hook＋既存 plan-gate、hooks.json の canonical codex-callout、routing 必須キー、選択 skill 面）。手挿し忘れは FAIL で名指しする。
+- [x] `AGENTS.md` オンボーディング手順5/6・`README.md` ランブックを profile / applier / verify 契約へ更新。
+- **他端末波及**: 各端末で pull → `./install.sh --profile official` → Claude `settings.json` 断片マージ / Codex applier の dry-run→承認済み apply → `./bin/verify-install.sh --profile official` → 実火1件。全端末済みで本プランと本書を docs/archive/ へ退避。
 
 ### 3. 知識還流（残り・tool が安定した状態で正確に）
 

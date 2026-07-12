@@ -23,9 +23,9 @@ dotagents/
 ├── codex/
 │   ├── AGENTS.md        … Codex グローバル規範の正本（→ ~/.codex/AGENTS.md）
 │   ├── agents/          … → ~/.codex/agents/<name>.toml
-│   ├── skills/          … → ~/.codex/skills/<name>
+│   ├── skills/          … → $HOME/.agents/skills/<name>（既定。legacy は明示指定）
 │   └── rules/           … → ~/.codex/rules/<file>
-└── bin/                 … → ~/.local/bin/<name>（.sh は外れる）
+└── bin/                 … → ~/.local/bin/<name>（.sh は外れる。実行言語は shebang）
 ```
 
 ```mermaid
@@ -48,7 +48,8 @@ flowchart LR
     hca["~/.claude/agents/&lt;name&gt;.md"]
     hxam["~/.codex/AGENTS.md"]
     hxca["~/.codex/agents/&lt;name&gt;.toml"]
-    hxs["~/.codex/skills/&lt;name&gt;"]
+    hxs["$HOME/.agents/skills/&lt;name&gt; (official)"]
+    hxsl["~/.codex/skills/&lt;name&gt; (legacy)"]
     hxr["~/.codex/rules/&lt;file&gt;"]
     hbin["~/.local/bin/&lt;name&gt;"]
   end
@@ -58,10 +59,15 @@ flowchart LR
   ca -. symlink .-> hca
   xam -. symlink .-> hxam
   xca -. symlink .-> hxca
-  xs -. symlink .-> hxs
+  xs -. "--profile official (既定)" .-> hxs
+  xs -. "--profile legacy (明示時のみ)" .-> hxsl
   xr -. symlink .-> hxr
   bin -. "symlink (.sh は外れる)" .-> hbin
 ```
+
+Codex skill は同一端末・同一入口で **official / legacy の一方だけ**に置く。既定は公式 user skill 面
+`$HOME/.agents/skills`。古い入口の互換検証だけ `./install.sh --profile legacy` を明示し、
+`verify-install --profile legacy` を通す。installer は反対面を勝手に削除しない。
 
 ## 同梱資産
 
@@ -82,6 +88,7 @@ flowchart LR
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲定義（terra×medium / sol×high×read-only / luna×low） |
 | bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
 | bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
+| bin | `apply-codex-config.sh` | routing 2キーと dotagents hook 4イベントだけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
@@ -102,10 +109,10 @@ Claude command の Codex 正規入口は slash command の模造ではなく、�
 | 面 | dotagents の正規入口 | 状態 |
 |---|---|---|
 | AGENTS_MD | `codex/AGENTS.md`＋リポごとの `AGENTS.md` | 対応済み |
-| CONFIG | `docs/05_codex-fragments.md`＋`verify-install` | 必須断片を配布・検証 |
+| CONFIG | `docs/05_codex-fragments.md`＋`apply-codex-config`＋`verify-install` | 必須断片を限定適用・検証 |
 | SKILLS | `codex/skills/` → user skill 面 | 移行中（公式面を既定化） |
 | PLUGINS | — | 非採用（個人git＋symlink配布と二重化するため） |
-| MCP_SERVER_CONFIG | `docs/05_codex-fragments.md` | 親別 matrix と疎通手順を整備中 |
+| MCP_SERVER_CONFIG | `docs/05_codex-fragments.md` | 親別 matrix・登録/list/疎通手順を正本化 |
 | SUBAGENTS | `codex/agents/*.toml`＋`verify-codex-agent-routing` | 対応済み |
 | HOOKS | `bin/codex-callout-hook.sh`＋`docs/05_codex-fragments.md` | INFO 契約で対応済み |
 | COMMANDS | Claude command に対応する Codex skill | 対応表を上記へ固定 |
@@ -160,25 +167,23 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 ### 3. install → 検証バッテリー
 
 ```bash
-./install.sh
+./install.sh --profile official
+./bin/apply-codex-config --dry-run
 ```
 
-`~/.codex/config.toml` に以下を既存 `[features]` と衝突しない形で追加する（詳細と冪等適用手順は [docs/05_codex-fragments.md](docs/05_codex-fragments.md) §3・§7）。この設定がないと GPT-5.6 Sol/Terra の `spawn_agent` から `agent_type` が消え、custom agent TOML を選べない。
-
-```toml
-[features.multi_agent_v2]
-hide_spawn_agent_metadata = false
-tool_namespace = "agents"
-```
-
-その後に検証する。
+既定は公式 user skill 面 `$HOME/.agents/skills`。`--dry-run` は一切書き込まず、routing の必須2キーと
+dotagents 固有 hook 4イベントだけの差分を出す。対象端末への適用を承認した後だけ、次を実行する。
 
 ```bash
-./bin/verify-install.sh     # 全エントリが本リポ向き symlink かを自動判定（PATH 非依存で直接実行）
+./bin/apply-codex-config --apply
+./bin/verify-install.sh --profile official
 ```
 
-- **`./bin/verify-install.sh` が OK を返すこと（省略不可**——stale 実ファイルが残ると正本化が静かに失敗する。FAIL 行が退避すべき実ファイルを名指しする）。`~/.local/bin` を PATH に通していれば以後は `verify-install` でも可
-- **呼びかけ hook の配線**（AGENTS.md 手順5/6）: Claude 側 `settings.json`（C1-C4）と Codex 側 `hooks.json`（X1-X5）へ断片を手挿しする。verify-install はこの実配線も検証する（symlink だけでなく手挿し忘れを FAIL 名指し）。断片は docs/03（Claude）・docs/05「## 9.」（Codex）
+`--apply` は `~/Archives/` に backup を作り、model / effort / permissions / OAuth / trust / 他ツールの
+hook は変更しない。legacy を選ぶのは旧入口の検証時だけで、`--profile legacy` を install / verify の両方へ付ける。
+
+- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale 実ファイル・反対 skill 面の同名重複・routing / hook 契約不足を FAIL 行で名指しする。`~/.local/bin` を PATH に通していれば以後は `verify-install --profile official` でも可
+- **呼びかけ hook の配線**（AGENTS.md 手順5/6）: Claude 側 `settings.json`（C1-C4）は docs/03 の手順で配線する。Codex 側 X1-X5 は `apply-codex-config` が4イベントを限定して冪等正規化する。両方とも trust 承認は別途必要。断片・復旧手順は docs/03・docs/05 が正本
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate`・`audit-gauntlet` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／極小タスクを implementer に委譲して契約どおりの報告が返る
 - 新しい Codex セッションで（対話確認）: skill 一覧に `orchestrate` が出る／`spawn_agent` schema に `agent_type` がある／`agent_type=<role>` と `fork_turns="none"` で routing smoke だけを起動／`verify-codex-agent-routing <role> <agent-path>` が green の時だけ follow-up task を渡す
 

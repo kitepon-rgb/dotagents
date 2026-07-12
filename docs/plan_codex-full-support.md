@@ -1,7 +1,7 @@
 # dotagents Codex 全対応計画
 
 作成: 2026-07-12
-状態: 実装中（オーナー GO: 2026-07-12）
+状態: 実装中（オーナー GO: 2026-07-12、Wave 2 の安全実装を検証済み。H1 rollout 待ち）
 
 ## 0. 目的
 
@@ -96,23 +96,31 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 ### Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）
 
-- [ ] `install.sh` が Codex skill を公式 `$HOME/.agents/skills` へ既定で symlink 配布
-- [ ] 古い入口用に explicit legacy profile を用意し、通常実行で公式/legacy を同時配布しない
+- [x] `install.sh` が Codex skill を公式 `$HOME/.agents/skills` へ既定で symlink 配布
+- [x] 古い入口用に explicit legacy profile を用意し、通常実行で公式/legacy を同時配布しない
 - [ ] 移行 probe で同名重複と優先順位を実測し、各入口が一つの面だけから同一 canonical content を読む状態を合格条件にする
 - [ ] dotagents 所有の旧 legacy symlink は dry-run一覧→backup→H承認後に対象限定で外し、他の local skill を保存
-- [ ] `verify-install.sh` が選択 profile、公式面/legacy面、リンク先、重複、`AGENTS.override.md` shadow を区別して検証
-- [ ] clean temporary HOME で repo配布と静的設定 fixture を検証する CI を追加
-- [ ] Claude/Codex hook smoke を `make lint` / GitHub Actions の明示ゲートへ昇格し、初回 INFO・2回目沈黙・compact 再武装・pending 1回配送・旧 deny/ask/block 不在を固定
-- [ ] 既存 `verify-install.sh` を読み取り診断の唯一の入口として維持（別の汎用 check tool は作らない）
-- [ ] routing 必須2キーと dotagents hook entry だけを、backup→dry-run→冪等追加できる適用スクリプトを追加
-- [ ] model、permissions、既存他tool hooks、OAuth、trust は変更せず、診断＋H手順に残す
-- [ ] 親別 MCP matrix を作成
+- [x] `verify-install.sh` が選択 profile、公式面/legacy面、リンク先、重複、`AGENTS.override.md` shadow を区別して検証
+- [x] clean temporary HOME で repo配布と静的設定 fixture を検証する CI を追加
+- [x] Claude/Codex hook smoke を `make lint` / GitHub Actions の明示ゲートへ昇格し、初回 INFO・2回目沈黙・compact 再武装・pending 1回配送・旧 deny/ask/block 不在を固定
+- [x] 既存 `verify-install.sh` を読み取り診断の唯一の入口として維持（別の汎用 check tool は作らない）
+- [x] routing 必須2キーと dotagents hook entry だけを、backup→dry-run→冪等追加できる適用スクリプトを追加
+- [x] model、permissions、既存他tool hooks、OAuth、trust は変更せず、診断＋H手順に残す
+- [x] 親別 MCP matrix を作成
   - Claude 親: codex-sidecar、aiterm、caveat、codegraph、oracle
   - Codex 親: native subagents、aiterm（Grok/Composer用）、caveat、codegraph、oracle/OpenAI Docs
-- [ ] `codex mcp` の登録・list・疎通、STDIO env closed-mode、必須/任意/親で禁止をランブック化
-- [ ] Throughline/codex-thread-handoff-smoke の代表 capture/restore/handoff を実測（本体改造・sessions同期はしない）
-- [ ] 既存 `docs/05` の max_threads 非設定契約を維持し、max_depth/fan-out は実在確認後に必要分だけ追記
-- [ ] rollback: 追加 symlink と設定追記だけを戻し、端末バックアップから復元可能にする
+- [x] `codex mcp` の登録・list・疎通、STDIO env closed-mode、必須/任意/親で禁止をランブック化
+- [ ] Throughline/codex-thread-handoff-smoke の代表 capture/restore/handoff を実測（本体改造・sessions同期はしない。capture/handoff は成功、restore は上流 mismatch で未達）
+- [x] 既存 `docs/05` の max_threads 非設定契約を維持し、max_depth/fan-out は実在確認後に必要分だけ追記
+- [x] rollback: 追加 symlink と設定追記だけを戻し、端末バックアップから復元可能にする
+
+#### Wave 2 の安全実装・実測（2026-07-12）
+
+- 隔離 temporary HOME で `install.sh --profile official`、symlink 経由の `apply-codex-config --dry-run/--apply`、`verify-install --profile official`、Codex `debug prompt-input` を通した。対象5 skill（`audit-gauntlet` / `auto-deploy-on-push` / `oracle` / `orchestrate` / `polish-github`）がリポの公式 skill 面を読んだ。
+- `make ci` は `make lint` と clean HOME の profile / config / rollback fixture を連結する。CI は `@openai/codex@0.144.1` を明示導入し、macOS/BSD 専用だった mode 検査は Python 標準ライブラリへ置換した。
+- 現端末は書換えず、既存 legacy 面に対する `verify-install.sh --profile legacy` の読み取り検証だけを green とした。公式面への実端末移行、同名重複 probe、legacy symlink 撤去は H1 待ちである。
+- MCP は `codex mcp` の list/get を read-only で確認し、`caveat` / OpenAI Docs / `aiterm` の最小 read-only 疎通を確認した。`.codegraph/` index は無いため query/init は行わず WARN、Oracle は `sessions` のみ確認して `consult` は呼んでいない。
+- Throughline は `codex-capture` と `codex-handoff-smoke` が成功した一方、experimental `codex-restore-smoke` は `app-server-restart-mismatch`（期待 turn 7、観測 8）で失敗した。dotagents / Throughline の本体や session state は変更せず、Wave 3 の新規 session E2E と上流側の再現・修正待ちとして残す。
 
 ### Wave 3 — 現役端末 rollout と既存プラン閉鎖
 

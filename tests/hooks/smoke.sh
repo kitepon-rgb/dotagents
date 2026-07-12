@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2015
 set -u
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
