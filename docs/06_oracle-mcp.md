@@ -16,8 +16,8 @@
 
 正体: [bin/oracle-mcp-stable.sh](../bin/oracle-mcp-stable.sh) → `~/.local/bin/oracle-mcp-stable`。素の `oracle`/`oracle-mcp` を直接叩かない。ラッパーが握る地雷:
 
-1. **Node undici の `setTypeOfService` EINVAL 即死**: undici が全 HTTP/1.1 リクエストで `socket.setTypeOfService(0)` を無条件に呼び（ガードなし）、macOS で特定ソケット状態だと未捕捉例外でプロセスごと死ぬ。Node 24.18.0 / 26.4.0 の両方で実測。MCP サーバーが「静かに接続クローズ」する事象の正体。→ ラッパーが `--import` の data: URL ガードで EINVAL を握って無害化（発動時 stderr に1回記録）。upstream 修正確認までの一時手段。
-2. **`hideWindow`（Cmd-H）は使用禁止**: 非表示アプリは描画が止まり、**送信が発火せずプロンプトが下書きのまま滞留 → 後続 run の送信に混入する**（実測: 3 run 分のプロンプトが1メッセージで送信された）。不可視化は代わりに **画面外起動シム** [bin/oracle-chrome-shim.sh](../bin/oracle-chrome-shim.sh)（`--window-position=-32000,-32000`）で行う。ラッパーが `CHROME_PATH` に自動設定。描画は生きたままなので送信・検知が壊れない。実測 19 秒で完走・ウィンドウ非出現・プロセス残置なし。
+1. **Node undici の `setTypeOfService` EINVAL 即死**: undici が全 HTTP/1.1 リクエストで `socket.setTypeOfService(0)` を無条件に呼び（ガードなし）、macOS で特定ソケット状態だと未捕捉例外でプロセスごと死ぬ。Node 24.18.0 / 26.4.0 の両方で実測。MCP サーバーが「静かに接続クローズ」する事象の正体。→ ラッパーが `--import` の data: URL ガードで EINVAL を握って無害化（発動時 stderr に1回記録）。Node と Oracle の global root は `PATH` / `npm root -g` から解決し、macOS・Linux・Windows Git Bash の固定パスへ依存しない。upstream 修正確認までの一時手段。
+2. **`hideWindow`（Cmd-H）は使用禁止**: 非表示アプリは描画が止まり、**送信が発火せずプロンプトが下書きのまま滞留 → 後続 run に混入する**（実測: 3 run 分のプロンプトが1メッセージで送信された）。不可視化は代わりに **画面外起動シム** [bin/oracle-chrome-shim.sh](../bin/oracle-chrome-shim.sh)（`--window-position=-32000,-32000`）で行う。ラッパーが `CHROME_PATH` に自動設定。シムは macOS / Windows / Linux の Chrome をOS別に解決し、見つからなければ fail-loud する。描画は生きたままなので送信・検知が壊れない。実測 19 秒で完走・ウィンドウ非出現・プロセス残置なし。
 3. **GPT-5.6 UI にモデルラベル照合が不追従**（preset/`browserModelLabel` とも 0.15.2 では機能しない。下記「呼び出しの標準形」）。
 
 ## セットアップ（新しい端末）

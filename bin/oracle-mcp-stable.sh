@@ -8,7 +8,34 @@
 #         oracle-mcp-stable cli …  → oracle CLI をガード付きで起動（保守用）
 set -euo pipefail
 
-ORACLE_DIST=/opt/homebrew/lib/node_modules/@steipete/oracle/dist/bin
+normalize_path() {
+  case "$1" in
+    [A-Za-z]:\\* | [A-Za-z]:/*)
+      if command -v cygpath >/dev/null 2>&1; then
+        cygpath -u "$1"
+      else
+        printf '%s\n' "$1"
+      fi
+      ;;
+    *) printf '%s\n' "$1" ;;
+  esac
+}
+
+NODE_BIN="${ORACLE_NODE_BIN:-$(command -v node || true)}"
+if [ -z "$NODE_BIN" ]; then
+  printf 'FATAL: node が PATH にない\n' >&2
+  exit 1
+fi
+
+if [ -z "${ORACLE_DIST:-}" ]; then
+  npm_root="$(npm root -g 2>/dev/null || true)"
+  if [ -z "$npm_root" ]; then
+    printf 'FATAL: npm global root を解決できない\n' >&2
+    exit 1
+  fi
+  npm_root="$(normalize_path "$npm_root")"
+  ORACLE_DIST="$npm_root/@steipete/oracle/dist/bin"
+fi
 # shellcheck disable=SC2016  # JS テンプレートリテラル(${e.code})を含む＝シェル展開させない意図の single quote
 GUARD='data:text/javascript,
 import net from "node:net";
@@ -29,7 +56,12 @@ if [ "${1:-}" = "cli" ]; then
   shift
 fi
 
+if [ ! -f "$ENTRY" ]; then
+  printf 'FATAL: Oracle entry がない: %s\n' "$ENTRY" >&2
+  exit 1
+fi
+
 # Chrome は画面外シム経由で起動（oracle の hideWindow は描画停止で送信が壊れるため不使用）。
 export CHROME_PATH="${CHROME_PATH:-$HOME/.local/bin/oracle-chrome-shim}"
 
-exec /opt/homebrew/bin/node --import "$GUARD" "$ENTRY" "$@"
+exec "$NODE_BIN" --import "$GUARD" "$ENTRY" "$@"
