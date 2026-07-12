@@ -198,16 +198,16 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 
 ### Phase 3 — Claude 側配線・実火
 
-- [ ] docs/03 に配線断片4種（PreToolUse／SessionStart／Stop／UserPromptSubmit＝C4）＋env 説明を追記
-- [ ] この端末の settings.json へ jq 冪等マージ（バックアップ→追加→妥当性）→ P5 の結果に従い新セッション
-- [ ] 実火観測: 準拠委譲で沈黙／日付 ID で deny→修正で通過／ultra で ask／棚卸し注入／コードのみコミット→block 1回→チェック更新→通過
+- [x] docs/03 に配線断片4種（PreToolUse／SessionStart／Stop／UserPromptSubmit＝C4）＋env 説明を追記
+- [x] この端末の settings.json へ jq 冪等マージ（バックアップ→追加→妥当性）→ P5 の結果に従い新セッション
+- [x] 実火観測: 準拠委譲で沈黙／日付 ID で deny→修正で通過／ultra で ask／棚卸し注入／コードのみコミット→block 1回→チェック更新→通過
 - [ ] pathspec コミット
 
 ### Phase 4 — Codex 側
 
-- [ ] **codex/AGENTS.md 委譲レジーム変更**（(b) 裁定: 親直既定→着手ゲート・A＝ネイティブ委譲既定へ書き換え。F 直轄・単独コミット・**push 前にオーナー diff レビュー**・verify-constitution-parity green）
+- [x] **codex/AGENTS.md 委譲レジーム変更**（(b) 裁定: 親直既定→着手ゲート・A＝ネイティブ委譲既定へ書き換え。F 直轄・単独コミット・**push 前にオーナー diff レビュー**・verify-constitution-parity green）
 - [ ] `bin/codex-callout-hook.sh`（X1-X4・fast-path・P6 結果で分岐）＋空打ち
-- [ ] docs/05 に hooks.json 冪等 append 断片の節を新設
+- [x] docs/05 に hooks.json 冪等 append 断片の節を新設
 - [ ] この端末の ~/.codex/hooks.json へ append（バックアップ→jq→妥当性）→ 新規 Codex セッションで実火
 - [ ] pathspec コミット
 
