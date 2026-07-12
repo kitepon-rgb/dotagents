@@ -167,9 +167,16 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 | 端末 | OS | Codex入口 | skill面 | backup | install | config | verify | Codex E2E | Claude回帰 | 結果 |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|
-| この端末 | macOS | desktop | 未確定 | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | 未実施 |
-| この端末 | macOS | CLI | 未確定 | 同端末参照 | 同端末参照 | 同端末参照 | [ ] | [ ] | 同端末参照 | 未実施 |
+| この端末 | macOS | desktop | legacy（移行前） | [ ] | [ ] | dry-run差分0 | [x] legacy | [ ] | [ ] | H1待ち |
+| この端末 | macOS | CLI | legacy（同端末） | 同端末参照 | 同端末参照 | 同端末参照 | 同端末参照 | [ ] | 同端末参照 | H1待ち |
 | オーナー確定後に追記 | — | — | — | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | 未実施 |
+
+### Wave 3 preflight（2026-07-12・この端末・read-only）
+
+- `apply-codex-config --dry-run` は routing / callout hook とも差分0。`config.toml` / `hooks.json` は symlink ではない regular file で、実設定 apply は不要。
+- legacy 面の dotagents 所有 symlink は `audit-gauntlet` / `auto-deploy-on-push` / `oracle` / `orchestrate` / `polish-github` の5件。`verify-install.sh --profile legacy` は green。
+- 公式面の `source-command-tl`、legacy 面の `codex-thread-handoff-smoke` / `throughline` は他ツール所有の実 directory であり、移行時も保存する。
+- H1 承認後の対象は、関連ディレクトリの tar backup → `./install.sh --profile official` → 上記 dotagents 所有 legacy symlink 5件だけを除去 → `./bin/verify-install.sh --profile official`。失敗時は新公式 symlink 5件を外し、backup から legacy symlink を復元する。
 
 ### Wave 0 baseline（2026-07-12・この端末）
 
