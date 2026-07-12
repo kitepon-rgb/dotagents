@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { chmod, mkdtemp, mkdir, rm, stat, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, test } from 'node:test';
@@ -16,6 +16,7 @@ function run(script, args, box) { return new Promise((resolveRun) => { const chi
 after(async () => { for (const root of roots) await rm(root, { recursive: true, force: true }); });
 
 test('dry-run/apply併用は順序にかかわらず拒否する', async () => { const box = await sandbox(); for (const flags of [['--dry-run', '--apply'], ['--apply', '--dry-run']]) { const result = await run(SCHEDULER, ['install', ...flags, '--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /併用/); } });
+test('配布symlink経由でもscheduler CLIがmainを実行する', async () => { const box = await sandbox('mac'); const link = join(box.root, 'factory-reporter-scheduler'); await symlink(SCHEDULER, link); const result = await run(link, ['install', '--dry-run', '--platform', 'darwin', '--config', box.config], box); assert.equal(result.code, 0, result.stderr); assert.equal(result.json.ok, true); assert.equal(result.json.dry_run, true); });
 test('macOS launchdはnode→runnerをXML escapeして生成する', async () => { const box = await sandbox('mac'); const result = await run(SCHEDULER, ['install', '--platform', 'darwin', '--config', box.config], box); assert.equal(result.code, 0); assert.match(result.json.artifact_content, /<string>.*node.*<\/string><string>.*factory-reporter-schedule-runner/); assert.match(result.json.artifact_content, /<key>Minute<\/key><integer>17<\/integer>/); });
 test('Linux/WSL cronは厳密single quoteでnode→runnerを起動する', async () => { const box = await sandbox('wsl'); const result = await run(SCHEDULER, ['install', '--platform', 'linux', '--config', box.config], box); assert.equal(result.code, 0); assert.match(result.json.artifact_content, /^17 \* \* \* \* '\/.*node' '\/.*factory-reporter-schedule-runner' --config '/); assert.match(result.json.artifact_content, /# dotagents-factory-reporter\n$/); });
 test('Windows Task SchedulerはUTF-8、毎時trigger、private ACL commandをdry-runへ出す', async () => { const box = await sandbox('windows-native'); const result = await run(SCHEDULER, ['install', '--platform', 'win32', '--config', box.config], box); assert.equal(result.code, 0); const xml = result.json.artifact_content; assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/); assert.match(xml, /<Interval>PT1H<\/Interval><Duration>P1D<\/Duration>/); assert.ok(xml.indexOf('<StartBoundary>') < xml.indexOf('<Repetition>')); assert.match(xml, /<Command>.*node.*<\/Command><Arguments>&quot;.*factory-reporter-schedule-runner/); assert.equal(result.json.acl_commands[0][0], 'powershell.exe'); assert.match(result.json.acl_commands[0][6], /SetAccessRuleProtection/); });

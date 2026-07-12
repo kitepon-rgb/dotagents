@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { chmod, lstat, mkdir, rm, writeFile } from 'node:fs/promises';
 import { homedir, platform as hostPlatform } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -98,4 +99,6 @@ async function main() {
   const spec = artifact(request.target, configPath, location); if (!request.dryRun) await apply(request.command, request.target, spec, location);
   emit({ ok: true, command: request.command, dry_run: request.dryRun, platform: request.target, config: configPath, state: location.state, artifact: spec.file, artifact_content: request.command === 'install' ? spec.content : undefined, commands: request.command === 'install' ? spec.commands : spec.uninstall, acl_commands: spec.acl, reporting_enabled_changed: false, collection_enabled_changed: false });
 }
-if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) main().catch((error) => fail(error?.message || '失敗'));
+if (process.argv[1] && pathToFileURL(realpathSync(process.argv[1])).href === import.meta.url) {
+  main().catch((error) => fail(error?.message || '失敗'));
+}
