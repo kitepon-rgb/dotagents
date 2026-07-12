@@ -230,8 +230,8 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] Throughline `.agents/` の所有意図を確認し、無関係なら触らず作業範囲を分離
 - [x] 4 host×9 productのrequired/optional/forbidden/unsupported matrixと期待connectorを`docs/factory-host-product-matrix.md`へ正本化
 - [ ] ServerManager BugHubの現行pull、DB、通知、`/ai`、deployをcharacterizationする
-- [ ] `INTEGRATION.md`の`master` URL、ServerManager AGENTSの`origin master`例、BugHub README/deploy commentの旧`~/projects` pathを現行`main`/`~/Developer`へ照合・訂正
-- [ ] 文書にだけある`auctionbot` adapter記載を実registryと照合し、実在する入口だけに訂正
+- [x] `INTEGRATION.md`の`master` URL、ServerManager AGENTSの`origin master`例、BugHub README/deploy commentの旧`~/projects` pathを現行`main`/`~/Developer`へ照合・訂正
+- [x] 文書にだけある`auctionbot` adapter記載を実registryと照合し、実在する入口だけに訂正
 
 ### Wave 1 — ServerManagerの安全網とprotocol（F中心）
 
@@ -242,7 +242,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] 既存signature契約との対応表、factory report JSON Schema、severity判定表、fingerprint規則、privacy allowlist、認証、冪等、host binding、size/time validationを仕様化
 - [ ] 可変値違い、類似別原因、resolve後再発、秘密混入、重複retryのcontract fixtureを先にgreenにし、製品instrumentation開始gateにする
 - [x] host credentialのprovision/rotate/revokeと401/403、紛失host廃止をfixture化
-- [ ] `deploy.sh`の`rsync --delete`をdry-run必須にし、image rebuildとhealth確認を固定
+- [x] `deploy.sh`の`rsync --delete`をdry-run必須にし、image rebuildとhealth確認を固定
 
 ### Wave 2 — dotagents reporter骨格（F＋A）
 
