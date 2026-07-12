@@ -207,9 +207,10 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 - `C:\Users\kite_\Documents\Program\dotagents` はオーナー裁定の既存正規パスとして維持した。Developer Modeとnative symlinkを使い、旧実体 `~/.codex/AGENTS.md` とdotagents所有legacy skillだけをtar退避後にofficial面へ移行した。
 - Windows実機で露見したLF・UTF-8・MSYS path・native symlink・tar path・POSIX mode・cron対象外の差を正本CIへ収容し、`verify-install --profile official`、対象5 skill discovery、`make ci` をgreenにした。Codex 0.144.1、Claude 2.1.207、Caveat 0.15.0へ更新し、週次Task Schedulerの既存 `agents-update` を確認した。
-- Codex routing / hooks、Claude必須hook 5本、Caveat-Private 205件、親別MCPを配線した。廃止済みdynv6のClaude 4件 / Codex 1件は設定backup後に削除した。
-- Oracle wrapperの `/opt/homebrew` / macOS Chrome固定を実機で検出し、Node/npm global rootとChromeをOS別解決する正本修正＋`tests/oracle/wrappers.sh`を追加した。新正本のWindows実機MCP health再検証は次コミット同期後に行う。
-- 未完了はWindows GitHub認証とshallow解除、Codex App上の `windows-workstation` 赤表示、hook trust、routing role / Throughline / Claude新規session E2E。通常SSHとWindows sshdはgreenで、App表示は基盤rolloutと分離して追跡する。
+- Codex routing / hooks、Claude必須hook 5本、Caveat-Private 205件、親別MCPを配線した。廃止済みdynv6のClaude 4件 / Codex 1件は設定backup後に削除し、WSLに残ったClaude 3件 / Codex 1件も同様に撤去した。main-serverには残存なし。
+- Oracle wrapperの `/opt/homebrew` / macOS Chrome固定を実機で検出し、Node/npm global rootとChromeをOS別解決する正本修正＋`tests/oracle/wrappers.sh`を追加した。コミット同期後のWindows実機でOracle MCP `Connected`、`make ci`、5 skill discoveryを再確認した。
+- Codex App上の `windows-workstation` 赤表示は、SSH認証後の `remote_codex_lookup` でAppがPOSIX/csh用bootstrapを送り、Windows OpenSSH既定のPowerShellが `MissingStatementBlock` にする製品側不整合とログで特定した。Windows既定SSH shellの全体変更は既存PowerShell運用を壊すため非採用。Appはgreenの `fox-wsl`、Windows nativeは通常SSHを正規入口とし、赤接続は再接続停止のためUIで無効化する。
+- 未完了はWindows GitHub認証とshallow解除、hook trust、routing role / Throughline / Claude新規session E2E。通常SSH、Windows sshd、remote `codex --version` はgreen。
 
 ### Wave 0 baseline（2026-07-12・この端末）
 
