@@ -29,16 +29,16 @@
 
 ## 端末ローカルの状態（この Mac のみ・非コミット）
 
-- **`~/.claude/settings.json` に Claude 側 hook 4本を配線済み**（PreToolUse=C1／SessionStart=C2／Stop=C3／UserPromptSubmit=C4）。バックアップ `~/.claude/settings.json.bak-callout-hooks` あり。**このセッションで着手ゲート・TODO ゲートの実火を実証済み**（hot-reload で即発火）。
-- `~/.codex/hooks.json` への Codex hook 配線は**未実施**（次の作業）。
+- **`~/.claude/settings.json` に Claude 側 hook 4本を配線済み**（PreToolUse=C1／SessionStart=C2／Stop=C3／UserPromptSubmit=C4）。バックアップ `~/.claude/settings.json.bak-callout-hooks` あり。**着手ゲート・TODO ゲートの実火を実証済み**（hot-reload で即発火）。
+- **`~/.codex/hooks.json` に Codex hook 4本を配線済み**（SessionStart/PreToolUse/UserPromptSubmit/Stop＝X1-X5。2026-07-12 10:37・バックアップ `hooks.json.bak-calloutgate-20260712-103754`）。既存 throughline/caveat/spotter と共存 append。**実火のみ新規 Codex セッションで未確認**（次の作業）。
 
 ## 次にやること（優先順）
 
-### 1. Codex 側 hooks.json 配線 → 実火
+### 1. Codex 側 hooks.json の実火確認（配線は完了済み）
 
-- 断片は [05_codex-fragments.md](05_codex-fragments.md) 「## 9.」。`~/.codex/hooks.json`（共有 append ファイル・**必ずバックアップ**）へ4イベント（session-start/pre-tool-use/user-prompt-submit/stop）を `async:false`・`timeoutSec` で追記。
-- **trust 承認が必要**（対話 codex で "Trust all"）。新規 Codex セッションで実火確認。
-- **配線前に matcher の実挙動を検証**: 公式 docs では PreToolUse 等に `tool_name` matcher が使える可能性あり（並列 implementer が発見）。使えれば配線側でツール名を絞り python 起動自体を減らせる（下記 fast-path 論点）。
+- 配線は 2026-07-12 10:37 に完了（4イベント append・バックアップ済み・既存 hook と共存）。**残るは実火確認のみ**＝新規 Codex セッションを立て、着手ゲート（X5・UserPromptSubmit）と正本化/棚卸し（X1-X2）の注入が実際に届くか1回観測する。aiterm の `codex_agent` で駆動可。
+- **trust 承認が必要**（対話 codex で "Trust all"）。
+- matcher の実挙動検証は fast-path 最適化の論点として残す（現状 async:false・stdin 先頭 grep で対象外ツールを弾く実装で稼働中）。
 
 ### 2. Phase 5（検証常設と締め）
 

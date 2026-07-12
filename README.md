@@ -150,6 +150,7 @@ tool_namespace = "agents"
 ```
 
 - **`./bin/verify-install.sh` が OK を返すこと（省略不可**——stale 実ファイルが残ると正本化が静かに失敗する。FAIL 行が退避すべき実ファイルを名指しする）。`~/.local/bin` を PATH に通していれば以後は `verify-install` でも可
+- **呼びかけ hook の配線**（AGENTS.md 手順5/6）: Claude 側 `settings.json`（C1-C4）と Codex 側 `hooks.json`（X1-X5）へ断片を手挿しする。verify-install はこの実配線も検証する（symlink だけでなく手挿し忘れを FAIL 名指し）。断片は docs/03（Claude）・docs/05「## 9.」（Codex）
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate`・`audit-gauntlet` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／極小タスクを implementer に委譲して契約どおりの報告が返る
 - 新しい Codex セッションで（対話確認）: `spawn_agent` schema に `agent_type` がある／`agent_type=<role>` と `fork_turns="none"` で routing smoke だけを起動／`verify-codex-agent-routing <role> <agent-path>` が green の時だけ follow-up task を渡す
 

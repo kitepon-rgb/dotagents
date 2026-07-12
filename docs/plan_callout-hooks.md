@@ -201,19 +201,19 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 - [x] docs/03 に配線断片4種（PreToolUse／SessionStart／Stop／UserPromptSubmit＝C4）＋env 説明を追記
 - [x] この端末の settings.json へ jq 冪等マージ（バックアップ→追加→妥当性）→ P5 の結果に従い新セッション
 - [x] 実火観測: 準拠委譲で沈黙／日付 ID で deny→修正で通過／ultra で ask／棚卸し注入／コードのみコミット→block 1回→チェック更新→通過
-- [ ] pathspec コミット
+- [x] pathspec コミット（docs/03 は 3d8d371 で push 済み）
 
 ### Phase 4 — Codex 側
 
 - [x] **codex/AGENTS.md 委譲レジーム変更**（(b) 裁定: 親直既定→着手ゲート・A＝ネイティブ委譲既定へ書き換え。F 直轄・単独コミット・**push 前にオーナー diff レビュー**・verify-constitution-parity green）
-- [ ] `bin/codex-callout-hook.sh`（X1-X4・fast-path・P6 結果で分岐）＋空打ち
+- [x] `bin/codex-callout-hook.sh`（X1-X5・fast-path・P6 結果で分岐）＋空打ち（3d8d371・codex-smoke 26 green）
 - [x] docs/05 に hooks.json 冪等 append 断片の節を新設
-- [ ] この端末の ~/.codex/hooks.json へ append（バックアップ→jq→妥当性）→ 新規 Codex セッションで実火
-- [ ] pathspec コミット
+- [x] この端末の ~/.codex/hooks.json へ append（10:37・バックアップ bak-calloutgate-20260712-103754）／⏳ 実火は新規 Codex セッションで未確認
+- [x] pathspec コミット（codex hook=3d8d371・docs/05=0e92f8b で push 済み）
 
 ### Phase 5 — 検証常設と締め
 
-- [ ] verify-install.sh に配線検証（Claude 側配線＝既存 plan-gate 含む・Codex 側エントリ。python3 断片検証の既存型）
+- [x] verify-install.sh に配線検証（Claude 側配線＝既存 plan-gate 含む・Codex 側エントリ。python3 断片検証の既存型）（39f3a77・make lint green・実行 OK）
 - [ ] AGENTS.md 手順5/6・README ランブック1行追記
 - [ ] `make lint` → `./install.sh` → `./bin/verify-install.sh` 全 green → pathspec コミット → オーナー GO → push
 - [ ] 知識還流（caveat/rag）・プラン正本のチェック消化

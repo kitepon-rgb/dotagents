@@ -36,8 +36,8 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
    fi
    ```
 
-   他の推奨断片（読み取り系 `permissions.allow` 等）も [docs/03_settings-fragments.md](docs/03_settings-fragments.md) 参照。ライブ反映＝次の発火から有効。
-6. **Codex 断片の適用**: 正典は [docs/05_codex-fragments.md](docs/05_codex-fragments.md)。custom agent の `[agents.<name>]` 個別登録は不要だが、step 4 の V2 routing 断片は必須。親モデル×effort の既定はオーナー領分（AI は変更しない）。新規セッションで `agent_type` が schema に出ることを確認し、`agent_type=<role>`＋`fork_turns="none"` の handshake-only spawn 後、`verify-codex-agent-routing` が green になるまで本作業を渡さない。
+   **正本化ゲートと同様、呼びかけ hook 4本（C1-C4＝delegation-gate／todo-gate×2／onset-gate）も全端末必須**——配線断片（PreToolUse／SessionStart／Stop／UserPromptSubmit＋env 説明）は同じ [docs/03_settings-fragments.md](docs/03_settings-fragments.md)。他の推奨断片（読み取り系 `permissions.allow` 等）も同ファイル参照。ライブ反映＝次の発火から有効。
+6. **Codex 断片の適用**: 正典は [docs/05_codex-fragments.md](docs/05_codex-fragments.md)。custom agent の `[agents.<name>]` 個別登録は不要だが、step 4 の V2 routing 断片は必須。親モデル×effort の既定はオーナー領分（AI は変更しない）。新規セッションで `agent_type` が schema に出ることを確認し、`agent_type=<role>`＋`fork_turns="none"` の handshake-only spawn 後、`verify-codex-agent-routing` が green になるまで本作業を渡さない。加えて **呼びかけ hook（X1-X5）を `~/.codex/hooks.json` へ冪等 append**（断片は同ファイル「## 9.」・**バックアップ必須**の共有ファイル・既存 throughline/caveat/spotter と共存・全 async:false・trust 承認要）。
 7. **メモリ整理・自動アップデート常設**（README §4・「自動アップデート」節）: 各端末のメモリ整理と週次 `agents-update`（macOS=launchd／Linux・WSL=cron）を必須で設置。
 
 ## 掟（複数端末リポの作法）
