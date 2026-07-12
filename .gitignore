@@ -8,6 +8,9 @@
 .claude/
 .vscode/
 
+# Throughline / Codex が生成する project-local state。dotagents の管理対象外。
+/.agents/
+
 # Spotter project marker / host別catalog / hook event は端末・host固有。
 # 正規生成入口は各projectでの `spotter install -y`。
 .spotter/
