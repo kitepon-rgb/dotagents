@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, test } from 'node:test';
@@ -162,6 +162,19 @@ test('duplicate accepted responseも同一report_idなら削除する', async ()
   const box = await sandbox(); await writeReport(box); const server = await startServer((req, res) => accepted(res, report().report_id, true)); await writeConfig(box, server.endpoint);
   await run(box, ['enqueue', '--report', box.report, '--config', box.config]); const flushed = await run(box, ['flush', '--config', box.config]);
   assert.equal(flushed.json.sent, 1); assert.equal(server.received.length, 1); await server.close();
+});
+
+test('受理後の削除失敗は同じbytesを保持し、duplicate再受理後だけ削除する', async () => {
+  const box = await sandbox(); const payload = await writeReport(box); let calls = 0;
+  const server = await startServer((req, res) => accepted(res, report().report_id, calls++ > 0)); await writeConfig(box, server.endpoint);
+  await run(box, ['enqueue', '--report', box.report, '--config', box.config]);
+  await chmod(queueDir(box), 0o500);
+  const interrupted = await run(box, ['flush', '--config', box.config]);
+  assert.equal(interrupted.code, 1); assert.deepEqual(await readFile(join(queueDir(box), `${report().report_id}.json`)), payload);
+  await chmod(queueDir(box), 0o700);
+  const retried = await run(box, ['flush', '--config', box.config]);
+  assert.equal(retried.code, 0); assert.equal(retried.json.sent, 1); assert.deepEqual(await readdir(queueDir(box)), []);
+  assert.deepEqual(server.received[0].body, payload); assert.deepEqual(server.received[1].body, payload); await server.close();
 });
 
 test('flushはoutbox reportとconfigのhost不一致をnetworkなしでdead-letterへ隔離する', async () => {

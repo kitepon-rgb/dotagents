@@ -250,7 +250,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] schema検証・送信・outbox・retry・上限を実装
 - [x] fake BugHubで成功、401、schema reject、timeout、duplicate、outbox再送をテスト
 - [x] enqueue-before-send、single-flight、overflow、dead-letter、応答消失をテスト
-- [ ] 削除前crashとserver dedupe retentionをテスト
+- [x] 受理後・削除前failureの同一bytes再送と、server dedupe retention（outbox上限超・期限前後prune）をテスト
 - [x] host ID/tokenをrepoへ保存しない設定・rotation・revoke手順を追加
 - [ ] Mac launchd、Linux/WSL cron、Windows Task Schedulerのinstall/uninstall/実火とOS別state/ACLを固定
 - [ ] `agents-update`後にcontract scan→reportを接続し、update失敗後も観測と報告を試行して最終的に非0終了
