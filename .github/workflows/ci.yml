@@ -14,12 +14,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      # shellcheck / node は ubuntu-latest ランナー同梱。欠けたら version 表示で
+      - name: install test prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ripgrep
+      # shellcheck / node は ubuntu-latest ランナー同梱。全依存を version 表示で
       # fail-loud（黙って skip しない）。Codex は clean HOME test の完全 TOML parser として固定導入する。
       - name: tool versions
         run: |
           shellcheck --version
           node --version
+          rg --version
       - name: install Codex CLI
         run: |
           npm view @openai/codex@0.144.1 version
