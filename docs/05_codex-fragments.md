@@ -123,3 +123,63 @@ jq が使えない（TOML）ため、以下の手順で安全に適用する:
 2. 実ファイルなら中身を読み、**価値ある行があれば** dotagents の `codex/AGENTS.md` へ PR（この判断はオーナー確認を要する＝勝手に統合しない）。
 3. tar 退避してから削除: `tar czf ~/.codex/AGENTS.md.bak-$(date +%Y%m%d).tar.gz -C ~/.codex AGENTS.md && rm ~/.codex/AGENTS.md`
 4. `./install.sh` を再実行し、symlink が張られることを確認: `readlink ~/.codex/AGENTS.md` が dotagents の `codex/AGENTS.md` を指すこと。
+
+## 9. hooks.json への呼びかけ hook 配線
+
+Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3／着手ゲート C4。docs/03_settings-fragments.md「呼びかけ hook 群の配線断片」参照）の Codex ミラー（X1-X5）。設計・Hook 台帳・オーナー裁定の正典は [docs/plan_callout-hooks.md](plan_callout-hooks.md)（進行中プラン）。
+
+**前提**: ペイロード `bin/codex-callout-hook.sh` は実装済み（コミット 3d8d371・`./install.sh` で `~/.local/bin/codex-callout-hook` に symlink 配布済み）。適用前に `readlink ~/.local/bin/codex-callout-hook` で実在を確認する。
+
+`~/.codex/hooks.json` は **dotagents 管轄外の共有 append ファイル**（throughline / caveat / claude-spotter が各自のインストーラで追記する方式）。この端末の実配線を実測すると、イベントキーは `hooks.<PascalCaseイベント名>` の配列で、各要素は `{"hooks":[{"type":"command","command":"...","timeoutSec":N,"async":false,"statusMessage":null}]}`（この端末の実 `hooks.json` に `matcher` キーは無く、対象ツールの絞り込みは hook スクリプト側の fast-path で行う。ただし公式 docs では PreToolUse 等で `tool_name` matcher が使える可能性があり、使えれば python 起動自体を減らせる＝hooks.json 配線時に実挙動を要検証）。**Claude 側の `timeout` と綴りが違う（`timeoutSec`）**ので取り違えない。
+
+配線するイベントは4つ（計画の X1/X2/X3・X5/X4）:
+
+- `SessionStart` → `codex-callout-hook session-start`（X1・C2 ミラー＋snapshot）
+- `PreToolUse` → `codex-callout-hook pre-tool-use`（X2・update_plan 初回＝正本化ゲートミラー／全 completed＝TODO 呼びかけ／spawn_agent 検査）
+- `UserPromptSubmit` → `codex-callout-hook user-prompt-submit`（X3 pending drain ＋ X5 着手ゲート注入の相乗り・毎ターン）
+- `Stop` → `codex-callout-hook stop`（X4・C3 ミラー・毎ターン rolling baseline・**Codex Stop hook の注入到達は本節適用時点で一次証拠なし＝計画のプローブ P6 結果に従うこと**。X4 が不成立なら X3 の pending 経路に降格する設計）
+
+`async` は **必ず `false`**（計画 P6 実測: Codex CLI 0.144.1 でも async は非対応・trust にも乗らない。既存 claude-spotter の SessionStart エントリが `async:true` になっているのは既知の死んでいる可能性がある配線で、今回追加分がこれを真似しないこと）。
+
+```bash
+H=~/.codex/hooks.json
+CMD_PREFIX="~/.local/bin/codex-callout-hook"
+
+# X1: SessionStart
+if ! jq -e --arg c "$CMD_PREFIX session-start" '.hooks.SessionStart[]?.hooks[]?.command | select(.==$c)' "$H" >/dev/null; then
+  cp "$H" "$H.bak-calloutgate"                     # バックアップ（他ツールと共有のファイルなので必須）
+  tmp=$(mktemp)
+  jq --arg c "$CMD_PREFIX session-start" '.hooks.SessionStart += [{"hooks":[{"type":"command","command":$c,"timeoutSec":10,"async":false,"statusMessage":null}]}]' "$H" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$H"  # 妥当性を確認してから置換
+fi
+
+# X2: PreToolUse
+if ! jq -e --arg c "$CMD_PREFIX pre-tool-use" '.hooks.PreToolUse[]?.hooks[]?.command | select(.==$c)' "$H" >/dev/null; then
+  cp "$H" "$H.bak-calloutgate"
+  tmp=$(mktemp)
+  jq --arg c "$CMD_PREFIX pre-tool-use" '.hooks.PreToolUse += [{"hooks":[{"type":"command","command":$c,"timeoutSec":5,"async":false,"statusMessage":null}]}]' "$H" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$H"
+fi
+
+# X3+X5: UserPromptSubmit
+if ! jq -e --arg c "$CMD_PREFIX user-prompt-submit" '.hooks.UserPromptSubmit[]?.hooks[]?.command | select(.==$c)' "$H" >/dev/null; then
+  cp "$H" "$H.bak-calloutgate"
+  tmp=$(mktemp)
+  jq --arg c "$CMD_PREFIX user-prompt-submit" '.hooks.UserPromptSubmit += [{"hooks":[{"type":"command","command":$c,"timeoutSec":5,"async":false,"statusMessage":null}]}]' "$H" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$H"
+fi
+
+# X4: Stop
+if ! jq -e --arg c "$CMD_PREFIX stop" '.hooks.Stop[]?.hooks[]?.command | select(.==$c)' "$H" >/dev/null; then
+  cp "$H" "$H.bak-calloutgate"
+  tmp=$(mktemp)
+  jq --arg c "$CMD_PREFIX stop" '.hooks.Stop += [{"hooks":[{"type":"command","command":$c,"timeoutSec":10,"async":false,"statusMessage":null}]}]' "$H" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$H"
+fi
+```
+
+注意点:
+
+- `command` を `~/.local/bin/codex-callout-hook <subcommand>` という `~` 表記で書いた。Claude 側 settings.json では同表記の `plan-gate-hook` が実配線・実火で動作実績あり（シェル経由の展開が効く前提）だが、**Codex hooks.json での `~` 展開は本節作成時点で未検証**（既存の throughline/caveat/spotter エントリは全て絶対パス実体で書かれており `~` 表記の実例が無い）。適用後に `codex exec 'echo ok'` 相当のプローブで発火・展開を確認し、展開されないようなら `$HOME/.local/bin/codex-callout-hook` または実絶対パスへ書き換える。
+- **trust 承認が必要**: `~/.codex/hooks.json` はプロジェクトローカルではなくグローバルだが、hooks 機能自体が `[features].hooks=true`＋ディレクトリ trust を要求する（対話 `codex` で "Trust all" 相当の承認）。未承認だと配線しても発火しない。
+- 適用後は新規 Codex セッションで X1（SessionStart）から発火することを確認する。P5（hot-reload）は Claude 側の実測でありCodex 側での再現は別途要確認。
