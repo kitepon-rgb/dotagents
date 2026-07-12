@@ -1,7 +1,7 @@
 # 工場コア9製品 BugHub 統合計画
 
 作成: 2026-07-13  
-状態: 計画策定中（実装未着手）  
+状態: 実装中（Wave 0〜2）
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 
@@ -225,9 +225,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 ### Wave 0 — 正本・baseline・dirty整理（挙動不変）
 
 - [ ] 本計画をaudit-gauntletで監査し、採用指摘だけ反映
-- [ ] 9製品とdotagents/ServerManagerでfetch→origin照合→stash→dirtyを記録
-- [ ] Caveatの並行dirtyはオーナー/作業sessionの完了までロックし、収容・破棄を勝手に行わない
-- [ ] Throughline `.agents/` の所有意図を確認し、無関係なら触らず作業範囲を分離
+- [x] 9製品とdotagents/ServerManagerでfetch→origin照合→stash→dirtyを記録
+- [x] Caveatの並行dirtyはオーナー/作業sessionの完了までロックし、収容・破棄を勝手に行わない
+- [x] Throughline `.agents/` の所有意図を確認し、無関係なら触らず作業範囲を分離
 - [x] 4 host×9 productのrequired/optional/forbidden/unsupported matrixと期待connectorを`docs/factory-host-product-matrix.md`へ正本化
 - [ ] ServerManager BugHubの現行pull、DB、通知、`/ai`、deployをcharacterizationする
 - [ ] `INTEGRATION.md`の`master` URL、ServerManager AGENTSの`origin master`例、BugHub README/deploy commentの旧`~/projects` pathを現行`main`/`~/Developer`へ照合・訂正
@@ -237,18 +237,20 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 - [ ] BugHubにCIと実SQLite characterization testを先に追加
 - [ ] 既存4sourceのpoll、severity素通し、再発、resolve表示、digest、`/ai`を固定
-- [ ] Discord送信が`false`の時に`markAlerted`しないこと、delivery failureを記録・再通知できることを固定
+- [x] Discord送信が`false`の時に`markAlerted`しないこと、delivery failureを記録・再通知できることを固定
 - [ ] versioned DB migration runner、backup/restore test、schema versionを追加
-- [ ] 既存signature契約との対応表、factory report JSON Schema、severity判定表、fingerprint規則、privacy allowlist、認証、冪等、host binding、size/time validationを仕様化
+- [x] 既存signature契約との対応表、factory report JSON Schema、severity判定表、fingerprint規則、privacy allowlist、認証、冪等、host binding、size/time validationを仕様化
 - [ ] 可変値違い、類似別原因、resolve後再発、秘密混入、重複retryのcontract fixtureを先にgreenにし、製品instrumentation開始gateにする
-- [ ] host credentialのprovision/rotate/revokeと401/403、紛失host廃止をfixture化
+- [x] host credentialのprovision/rotate/revokeと401/403、紛失host廃止をfixture化
 - [ ] `deploy.sh`の`rsync --delete`をdry-run必須にし、image rebuildとhealth確認を固定
 
 ### Wave 2 — dotagents reporter骨格（F＋A）
 
-- [ ] report生成・schema検証・送信・outbox・retry・上限を実装
-- [ ] fake BugHubで成功、401、schema reject、timeout、duplicate、outbox再送をテスト
-- [ ] enqueue-before-send、single-flight、overflow、dead-letter、応答消失、削除前crash、dedupe retentionをテスト
+- [ ] 9製品adapterからのreport生成を実装
+- [x] schema検証・送信・outbox・retry・上限を実装
+- [x] fake BugHubで成功、401、schema reject、timeout、duplicate、outbox再送をテスト
+- [x] enqueue-before-send、single-flight、overflow、dead-letter、応答消失をテスト
+- [ ] 削除前crashとserver dedupe retentionをテスト
 - [ ] host ID/tokenをrepoへ保存しない設定・rotation・revoke手順を追加
 - [ ] Mac launchd、Linux/WSL cron、Windows Task Schedulerのinstall/uninstall/実火とOS別state/ACLを固定
 - [ ] `agents-update`後にcontract scan→reportを接続し、update失敗後も観測と報告を試行して最終的に非0終了
