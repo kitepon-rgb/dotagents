@@ -1,0 +1,97 @@
+<svg viewBox="0 0 680 625" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ti de">
+<title id="ti">ベルのオーケストレーション全容 v2</title>
+<desc id="de">依頼が着手ゲート(F/A/H判定)を通り統括ベル(Claude主)が配置を決める。既定Aの物量は書ける4枠(Codex sidecar・Grok・aiterm対話・Claude内)へ委譲。Oracleは物量を書けない相談窓口として統括に破線で接続。委譲物は統括ゲートで検証しpushとmemory/caveat/ragへ還流。呼びかけhookが着手と委譲の瞬間に規範を注入する。</desc>
+<style>
+svg{--text-primary:#24211d;--text-secondary:#6b6459;--text-accent:#c65d3b;--border-strong:#cfc9be;--bg2:#f5f3ee;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;}
+@media (prefers-color-scheme:dark){svg{--text-primary:#ece9e3;--text-secondary:#a8a196;--text-accent:#e0805c;--border-strong:#4a453d;--bg2:#2b2824;}}
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+<rect x="292" y="16" width="96" height="32" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="340" y="36" text-anchor="middle" font-size="14" font-weight="500" fill="var(--text-primary)">依頼</text>
+<line x1="340" y1="48" x2="340" y2="66" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+
+<rect x="150" y="68" width="380" height="48" rx="8" fill="var(--bg2)" stroke="var(--text-accent)" stroke-width="2"/>
+<text x="340" y="88" text-anchor="middle" font-size="14" font-weight="500" fill="var(--text-accent)">⚡ ① 着手ゲート</text>
+<text x="340" y="106" text-anchor="middle" font-size="11.5" fill="var(--text-secondary)">F / A / H を判定・既定 A＝委譲・配置を1行宣言</text>
+<line x1="340" y1="116" x2="340" y2="134" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+
+<rect x="150" y="136" width="380" height="52" rx="8" fill="var(--bg2)" stroke="var(--text-accent)" stroke-width="2"/>
+<text x="340" y="158" text-anchor="middle" font-size="14" font-weight="500" fill="var(--text-primary)">統括ベル（L0・Claude 主）</text>
+<text x="340" y="176" text-anchor="middle" font-size="11.5" fill="var(--text-secondary)">裁定・契約クリティカル・コミット・最終責任</text>
+
+<line x1="530" y1="162" x2="542" y2="162" stroke="var(--text-accent)" stroke-width="1.5" stroke-dasharray="3 2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<rect x="544" y="138" width="128" height="48" rx="8" fill="var(--bg2)" stroke="var(--border-strong)" stroke-dasharray="4 3"/>
+<text x="608" y="156" text-anchor="middle" font-size="12" font-weight="500" fill="var(--text-primary)">Oracle</text>
+<text x="608" y="171" text-anchor="middle" font-size="9.5" fill="var(--text-secondary)">相談・純推論</text>
+<text x="608" y="183" text-anchor="middle" font-size="9" fill="var(--text-accent)">書けない・ChatGPT枠</text>
+
+<line x1="340" y1="188" x2="340" y2="206" stroke="var(--border-strong)"/>
+<line x1="130" y1="206" x2="550" y2="206" stroke="var(--border-strong)"/>
+<line x1="130" y1="206" x2="130" y2="224" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+<line x1="340" y1="206" x2="340" y2="224" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+<line x1="550" y1="206" x2="550" y2="224" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+
+<rect x="40" y="226" width="180" height="46" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="130" y="245" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">F＝契約クリティカル</text>
+<text x="130" y="262" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">統括が直轄で書く</text>
+
+<rect x="250" y="226" width="180" height="46" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="340" y="245" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">A＝仕様固定の物量</text>
+<text x="340" y="262" text-anchor="middle" font-size="10.5" fill="var(--text-accent)">→ 委譲（既定）⚡C1</text>
+
+<rect x="460" y="226" width="180" height="46" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="550" y="245" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">H＝人手</text>
+<text x="550" y="262" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">オーナーの領分</text>
+
+<line x1="340" y1="272" x2="340" y2="290" stroke="var(--border-strong)"/>
+<line x1="95" y1="290" x2="585" y2="290" stroke="var(--border-strong)"/>
+<line x1="95" y1="290" x2="95" y2="308" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+<line x1="258" y1="290" x2="258" y2="308" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+<line x1="422" y1="290" x2="422" y2="308" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+<line x1="585" y1="290" x2="585" y2="308" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+
+<rect x="20" y="310" width="150" height="62" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="95" y="330" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">Codex sidecar</text>
+<text x="95" y="347" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">非対話・隔離worktree</text>
+<text x="95" y="363" text-anchor="middle" font-size="10" fill="var(--text-accent)">OpenAI枠・第一選択</text>
+
+<rect x="183" y="310" width="150" height="62" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="258" y="330" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">Grok</text>
+<text x="258" y="347" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">grok -p 非対話・composer</text>
+<text x="258" y="363" text-anchor="middle" font-size="10" fill="var(--text-accent)">xAI枠・並ぶ第一選択</text>
+
+<rect x="346" y="310" width="150" height="62" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="421" y="330" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">aiterm 対話</text>
+<text x="421" y="347" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">codex/grok/composer</text>
+<text x="421" y="363" text-anchor="middle" font-size="10" fill="var(--text-secondary)">対話TUI・試行錯誤</text>
+
+<rect x="509" y="310" width="150" height="62" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="584" y="330" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">Claude 内</text>
+<text x="584" y="347" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">sonnet・haiku</text>
+<text x="584" y="363" text-anchor="middle" font-size="10" fill="var(--text-secondary)">Anthropic枠・次善</text>
+
+<line x1="95" y1="372" x2="95" y2="388" stroke="var(--border-strong)"/>
+<line x1="258" y1="372" x2="258" y2="388" stroke="var(--border-strong)"/>
+<line x1="422" y1="372" x2="422" y2="388" stroke="var(--border-strong)"/>
+<line x1="585" y1="372" x2="585" y2="388" stroke="var(--border-strong)"/>
+<line x1="95" y1="388" x2="585" y2="388" stroke="var(--border-strong)"/>
+<line x1="340" y1="388" x2="340" y2="406" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+
+<rect x="90" y="408" width="500" height="48" rx="8" fill="var(--bg2)" stroke="var(--text-accent)" stroke-width="2"/>
+<text x="340" y="428" text-anchor="middle" font-size="14" font-weight="500" fill="var(--text-accent)">② 統括ゲート（品質の網）</text>
+<text x="340" y="446" text-anchor="middle" font-size="11" fill="var(--text-secondary)">委譲物は必ず自分で検証・検証2票・refuter・迷ったら棄却</text>
+<line x1="340" y1="456" x2="340" y2="474" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
+
+<rect x="200" y="476" width="280" height="44" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
+<text x="340" y="496" text-anchor="middle" font-size="13.5" font-weight="500" fill="var(--text-primary)">③ 統合・還流</text>
+<text x="340" y="512" text-anchor="middle" font-size="10.5" fill="var(--text-secondary)">push → memory / caveat / rag</text>
+
+<rect x="20" y="546" width="22" height="13" rx="4" fill="none" stroke="var(--text-accent)" stroke-width="2"/>
+<text x="50" y="556" font-size="10.5" fill="var(--text-secondary)">統括が直接握る制御点（ゲート・裁定・検証）</text>
+<line x1="20" y1="573" x2="42" y2="573" stroke="var(--border-strong)" stroke-width="1.5"/>
+<text x="50" y="577" font-size="10.5" fill="var(--text-secondary)">実線＝物量委譲</text>
+<line x1="188" y1="573" x2="210" y2="573" stroke="var(--text-accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="218" y="577" font-size="10.5" fill="var(--text-secondary)">破線＝Oracle への相談（書けない）</text>
+<text x="20" y="597" font-size="10.5" fill="var(--text-secondary)">⚡ 呼びかけ hook（C1 配置ゲート・C4 着手ゲート）が行動の瞬間に規範を注入</text>
+</svg>
