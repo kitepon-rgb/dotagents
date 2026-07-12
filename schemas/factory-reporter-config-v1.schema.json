@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kitepon.dev/schemas/dotagents/factory-reporter-config-v1.schema.json",
+  "title": "dotagents Factory Reporter Config v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "collection", "reporting"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "collection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean", "default": false }
+      }
+    },
+    "reporting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "endpoint": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://",
+          "maxLength": 2048
+        },
+        "host_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$",
+          "maxLength": 64
+        },
+        "credential_file": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "enabled": { "const": true } },
+            "required": ["enabled"]
+          },
+          "then": {
+            "required": ["endpoint", "host_id", "credential_file"]
+          }
+        }
+      ]
+    }
+  }
+}

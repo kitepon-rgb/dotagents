@@ -110,11 +110,10 @@ reportの必須概念:
 - `report_mode`（v1は完全snapshotを既定とし、deltaを許す場合は別contract versionで意味を固定）
 - `observed_at`
 - `received_at`（serverが付与し、payload値を信用しない）
-- `sent_at`（送信attemptごと。offline観測の鮮度とは分離）
-- `reporter_version` / dotagents commit
-- products[]
-  - `product_id`
-  - `expected_on_host`
+- `created_at`（body確定・enqueue時。再送で変更しない）
+- `X-Factory-Sent-At` HTTP header（送信attemptごと。body hashに含めない）
+- `reporter`（version / dotagents commit）
+- products（固定9製品IDをkeyとするobject。同一ID重複を構造的に禁止）
   - `presence_status`（installed / missing / not_applicable / unverified）
   - `installed_version`
   - `latest_version`（取得できる時だけ。不能を推測しない）
@@ -122,10 +121,11 @@ reportの必須概念:
   - `contract_version`
   - `state_schema_version` / `migration_status`（製品の正規診断が出す時だけ）
   - `update_status` / `compatibility_status`
-  - checks[]（id、lifecycle state、status、severity、fingerprint、message_template、count、first/last seen、evidenceの安全な要約）
+  - checks[]（id、status、失敗時のseverity、fingerprint、message_template、count、first/last seen、安全なcontext）
   - runtime_errors[]（自作製品の管理端末だけ。error code、fingerprint、count、first/last seen、安全なtemplate）
+  - resolutions[]（過去fingerprintの明示解決。snapshotからの消失だけでは解決しない）
 
-BugHubはtoken→host_idをserver側で固定し、host profile/product期待matrix、body size、`sent_at`のskew、重複report_id、payload hashを検証する。`observed_at`は長期offline後も正当な履歴として受け入れ、同じhost×productの既知観測より古ければcurrent matrixを巻き戻さない。完全snapshotで省略されたproduct/checkを自動resolvedにせず、`presence_status`とcheck lifecycleを根拠にする。deltaを将来許す場合は明示resolve一覧を必須にする。秘密、絶対パス、生ログ、prompt/session本文、DB内容は送らない。
+BugHubはtoken→host_idをserver側で固定し、host profile/product期待matrix、body size、`X-Factory-Sent-At`のskew、`host_id + report_id`、outboxへ保存した正確なbody bytesのhashを検証する。期待状態はclientに自己申告させずserver matrixだけを正とし、`required + missing`等はreportを受理してissue化する。`observed_at`は長期offline後も正当な履歴として受け入れ、同じhost×productの既知観測より古ければcurrent matrixを巻き戻さない。future skewと`observed_at <= created_at <= sent header`等の時刻順序、fingerprintの重複とopen/resolve排他をsemantic validationする。完全snapshotで省略されたproduct/checkを自動resolvedにせず、明示`resolutions[]`を根拠にする。秘密、絶対パス、生ログ、prompt/session本文、DB内容は送らない。
 
 factory issueの状態遷移は既存pull issueと分けて仕様化する。正常な完全snapshot、明示resolve、手動resolve、再観測reopen、host廃止、長期offlineを区別し、「reportに無い」だけで解決しない。
 
@@ -160,6 +160,7 @@ factory issueの状態遷移は既存pull issueと分けて仕様化する。正
 - `reporting.enabled`は既定`false`とし、明示設定された時だけoutboxへの送信対象enqueueとnetwork送信を行う。tokenの存在、管理端末判定、scheduler導入をONの代用にしない。
 - `collection.enabled`はlocal structured error storeの収集可否を独立に制御する。収集ON・送信OFFでは端末外へ出さず、利用者が送信予定payloadをpreviewできる。
 - 製品更新で`reporting.enabled`を暗黙にONへ変更しない。クオ管理端末も導入時に明示ONを記録し、設定なし・不正値・送信先不明はfail closedで送信しない。
+- 設定shapeの正本は`schemas/factory-reporter-config-v1.schema.json`。config fileのJSON booleanだけを正規設定面にし、env文字列やtoken存在からONを推測しない。
 
 factory ingestion認証は既存の任意dashboard tokenと分離し、常時必須のhost-scoped credentialにする。発行、server登録、端末配置、rotation猶予、revoke、紛失端末廃止、backup/restoreをrunbookとtestに含める。query parameterへtokenを出さない。
 
@@ -227,7 +228,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] 9製品とdotagents/ServerManagerでfetch→origin照合→stash→dirtyを記録
 - [ ] Caveatの並行dirtyはオーナー/作業sessionの完了までロックし、収容・破棄を勝手に行わない
 - [ ] Throughline `.agents/` の所有意図を確認し、無関係なら触らず作業範囲を分離
-- [ ] 4 host×9 productのrequired/optional/forbidden/unsupported matrixと期待connectorを正本化
+- [x] 4 host×9 productのrequired/optional/forbidden/unsupported matrixと期待connectorを`docs/factory-host-product-matrix.md`へ正本化
 - [ ] ServerManager BugHubの現行pull、DB、通知、`/ai`、deployをcharacterizationする
 - [ ] `INTEGRATION.md`の`master` URL、ServerManager AGENTSの`origin master`例、BugHub README/deploy commentの旧`~/projects` pathを現行`main`/`~/Developer`へ照合・訂正
 - [ ] 文書にだけある`auctionbot` adapter記載を実registryと照合し、実在する入口だけに訂正
