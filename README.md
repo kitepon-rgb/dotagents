@@ -84,6 +84,23 @@ flowchart LR
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
 
+### Codex 9面の対応状況
+
+「全対応」はファイル数の左右対称ではなく能力対称で判定する。詳細な合格条件と進捗は
+[Codex 全対応計画](docs/plan_codex-full-support.md) が正本。
+
+| 面 | dotagents の正規入口 | 状態 |
+|---|---|---|
+| AGENTS_MD | `codex/AGENTS.md`＋リポごとの `AGENTS.md` | 対応済み |
+| CONFIG | `docs/05_codex-fragments.md`＋`verify-install` | 必須断片を配布・検証 |
+| SKILLS | `codex/skills/` → user skill 面 | 移行中（公式面を既定化） |
+| PLUGINS | — | 非採用（個人git＋symlink配布と二重化するため） |
+| MCP_SERVER_CONFIG | `docs/05_codex-fragments.md` | 親別 matrix と疎通手順を整備中 |
+| SUBAGENTS | `codex/agents/*.toml`＋`verify-codex-agent-routing` | 対応済み |
+| HOOKS | `bin/codex-callout-hook.sh`＋`docs/05_codex-fragments.md` | INFO 契約で対応済み |
+| COMMANDS | Claude command に対応する Codex skill | skill 入口へ統一中 |
+| SESSIONS | Throughline＋Codex handoff smoke | 外部正本を Wave 2-3 で受入検証予定 |
+
 ## 他端末セットアップ・ランブック
 
 ### 0. 前提（未充足ならここで導入。所要時間は状態次第）

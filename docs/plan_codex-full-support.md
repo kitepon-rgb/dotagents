@@ -1,7 +1,7 @@
 # dotagents Codex 全対応計画
 
 作成: 2026-07-12
-状態: 独立反証済み・オーナー GO 待ち
+状態: 実装中（オーナー GO: 2026-07-12）
 
 ## 0. 目的
 
@@ -74,13 +74,13 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 ### Wave 0 — ベースラインと有限化（挙動不変）
 
 - [ ] 現役端末×Codex入口（desktop / CLI / IDE 等）をオーナーと確定し、存在しない端末・入口を推測で追加しない
-- [ ] `git fetch`、ahead/behind、dirty、stash を記録
-- [ ] `make lint`、Claude/Codex hook smoke、`install.sh`、`verify-install.sh` を green にする。hook baseline は初回 INFO・同セッション2回目沈黙・compact 後1回再武装・Stop pending の次回1回配送・deny/ask/block 不在を保存
-- [ ] `/import` または `externalAgentConfig/detect` を**検出だけ**実行し、9面の差を保存（import禁止）
+- [x] `git fetch`、ahead/behind、dirty、stash を記録
+- [x] `make lint`、Claude/Codex hook smoke、`install.sh`、`verify-install.sh` を green にする。hook baseline は初回 INFO・同セッション2回目沈黙・compact 後1回再武装・Stop pending の次回1回配送・deny/ask/block 不在を保存
+- [x] `/import` または `externalAgentConfig/detect` を**検出だけ**実行し、9面の差を保存（import禁止）
 - [ ] 各現役入口の新規 Claude/Codex session で skills・agents・MCP・hooks baseline を保存
-- [ ] AGENTS の実効 byte budget と、人格・計画・F/A/H・git・報告の先頭/末尾カナリアが実読されることを保存
-- [ ] README に9面の小さな対応表を追加（配布対象だけ。docs/rag/bin全件の第三台帳は作らない）
-- [ ] rollback: 文書・baseline fixture の commit だけ revert
+- [x] AGENTS の実効 byte budget と、人格・計画・F/A/H・git・報告の先頭/末尾カナリアが実読されることを保存
+- [x] README に9面の小さな対応表を追加（配布対象だけ。docs/rag/bin全件の第三台帳は作らない）
+- [x] rollback: Wave 0 の文書・baseline 差分だけを独立 commit とし、その commit 単位で revert
 
 ### Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）
 
@@ -163,6 +163,15 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 | この端末 | macOS | CLI | 未確定 | 同端末参照 | 同端末参照 | 同端末参照 | [ ] | [ ] | 同端末参照 | 未実施 |
 | オーナー確定後に追記 | — | — | — | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | 未実施 |
 
+### Wave 0 baseline（2026-07-12・この端末）
+
+- 同期: `main` と `origin/main` 一致、stash 0、shallow=false。着手前の Hook INFO 契約コミット `0b9d383` は push 済み。
+- green: `make lint`、Claude hook smoke 20件、Codex hook smoke 28件、`install.sh`、`verify-install.sh`。
+- routing: implementer / sorter / refuter は role・model・effort・developer instructions が verifier green。sandbox は親 permission profile により `danger-full-access` へ上書きされたため別表示。
+- detect-only: Codex App Server 0.144.1 の `externalAgentConfig/detect`（`includeHome=true`、cwd=`dotagents`）を実行し、import は未実行。残件は `MCP_SERVER_CONFIG` 3件（chrome-devtools / codex-sidecar / relay-local）、`SKILLS` 1件（app-store-submit）、`SESSIONS`。その他6面は検出項目なし。
+- AGENTS: `project_doc_max_bytes=65536`、global 16,141 bytes＋project 12,373 bytes＝28,514 bytes。現 Codex desktop session で人格・計画文書・F/A/H・git・報告を含む global/project 両正典の先頭から末尾まで到達を確認。非空 `AGENTS.override.md` は不在。
+- 未確定: 他端末と IDE 入口の実在は H1 でオーナー確定する。現端末の CLI/desktop 個別 E2E は Wave 3 で記録する。
+
 ## 9. やらないこと
 
 - 全面 `shared/` 移行、全資産 manifest、agent serializer を今回の目的にしない。
@@ -200,6 +209,6 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 ## 12. オーナー承認ゲート
 
-- [ ] **GO** 本計画で実装開始（既存ディレクトリの移動・改名は含まない）
+- [x] **GO** 本計画で実装開始（既存ディレクトリの移動・改名は含まない）
 - [ ] **H1** 現役端末×入口一覧、変更してよい必須設定キー/hook entry、dotagents所有legacy symlink移行の一括 rollout 承認
 - [ ] hook trust、MCP OAuth 等の各端末 UI 操作
