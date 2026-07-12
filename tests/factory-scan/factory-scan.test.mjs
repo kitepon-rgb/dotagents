@@ -58,6 +58,30 @@ else
   echo 'converted'
 fi`);
   }
+  await box.script('throughline', `
+if [ "$1" = "--version" ]; then
+  echo 'throughline 1.2.3'
+elif [ "$1" = "factory-diagnostics" ] && [ "$2" = "--json" ]; then
+  echo '{"schema":"throughline.native_factory_diagnostics.v1","version":"1.2.3","overall":{"status":"ready"},"databaseSchema":{"schema":"throughline.database.v8","status":"ready"}}'
+else
+  exit 2
+fi`);
+  await box.script('spotter', `
+if [ "$1" = "--version" ]; then
+  echo 'spotter 1.2.3'
+elif [ "$1" = "diagnostics" ] && [ "$2" = "factory" ]; then
+  echo '{"schema_version":"1.0","product":"spotter","version":"1.2.3","overall_status":"pass","marker_schema_version":"2"}'
+else
+  exit 2
+fi`);
+  await box.script('aiterm-mcp', `
+if [ "$1" = "--version" ]; then
+  echo 'aiterm-mcp 1.2.3'
+else
+  cat >/dev/null
+  echo '{"jsonrpc":"2.0","id":1,"result":{"serverInfo":{"version":"1.2.3"}}}'
+  echo '{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"{\\"diagnostic_schema\\":\\"aiterm-mcp.factory-diagnostics.v1\\",\\"version\\":\\"1.2.3\\",\\"overall\\":\\"ready\\"}"}]}}'
+fi`);
 }
 
 function runScanner(box) {
@@ -97,12 +121,35 @@ fi`);
   assert.equal(report.products.codegraph.checks[0].reason_code, 'not_indexed');
   assert.equal(report.products.markitdown.checks[0].status, 'pass');
   assert.equal(report.products.oracle.checks[0].status, 'pass');
+  assert.equal(report.products.throughline.checks[0].status, 'pass');
+  assert.equal(report.products.throughline.migration_status, 'current');
+  assert.equal(report.products.spotter.checks[0].status, 'pass');
+  assert.equal(report.products.spotter.state_schema_version, '2');
+  assert.equal(report.products['aiterm-mcp'].checks[0].status, 'pass');
   assert.equal(report.products.servermanager.presence_status, 'not_applicable');
   assert.equal(
     report.reporter.dotagents_revision,
     execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim(),
   );
   assert.equal((await stat(box.output)).mode & 0o777, 0o600);
+});
+
+test('native diagnosticsの既知not_readyを固定fingerprintのfailへ写像し、生値を出さない', async (t) => {
+  const box = await sandbox(t);
+  await installHealthyCommands(box);
+  await box.script('throughline', `
+echo '{"schema":"throughline.native_factory_diagnostics.v1","version":"1.2.3","overall":{"status":"not_ready"},"databaseSchema":{"schema":"throughline.database.v8","status":"not_ready"},"raw":"/Users/kite/secret"}'`);
+  await writeFile(box.config, JSON.stringify(validConfig()));
+
+  const result = await runScanner(box);
+  assert.equal(result.code, 0, result.stderr);
+  const report = JSON.parse(await readFile(box.output));
+  const check = report.products.throughline.checks[0];
+  assert.equal(check.status, 'fail');
+  assert.equal(check.severity, 'high');
+  assert.match(check.fingerprint, /^[0-9a-f]{64}$/);
+  assert.equal(report.products.throughline.compatibility_status, 'incompatible');
+  assert.doesNotMatch(JSON.stringify(report), /Users|secret|raw/);
 });
 
 test('不正host idと未知config fieldを同じ共有契約で拒否する', async (t) => {

@@ -22,17 +22,17 @@
 ### `throughline`
 
 - 所有/修正先: 自作 / `kitepon-rgb/Throughline`。version入口: `throughline --version`。
-- diagnostics/state正本: repo所有の`throughline doctor`等、state schema/DB migration。現adapterは未接続。
+- diagnostics/state正本: `throughline factory-diagnostics --json`（schema `throughline.native_factory_diagnostics.v1`）。DB schema/migration、connector、capture/restore/handoffをread-onlyで返す。
 - host/connector: 全4 host required、Claudeはhook/CLI、Codexはhook/skill/CLI required。
-- 現adapter: presenceとversionのみ。capture/restore/handoff、hook、state、runtime errorは未実装。
+- 現adapter: native JSONのversion、database schema/migration、overallを接続済み。runtime errorは未実装。製品診断が示すClaude connector `unverified`等をgreenへ丸めない。
 - 表現/禁止: 正規JSON診断なしは`unverified`。session本文送信、破壊的restore、`.agents`直接解釈は禁止。
 
 ### `spotter`
 
 - 所有/修正先: 自作 / `kitepon-rgb/Spotter`。version入口: `spotter --version`。
-- diagnostics/state正本: `spotter doctor`、`spotter diagnostics logs --json`、`spotter status`、marker/catalog/tool DB。現adapterは未接続。
+- diagnostics/state正本: `spotter diagnostics factory`（schema 1.0）。既存doctor inspectorとtool DB validatorを再利用するread-only JSON。
 - host/connector: 全4 host required。明示install済み対象projectだけClaude/Codex hook required。
-- 現adapter: presenceとversionのみ。marker/catalog/hook/Throughline context/runtime errorは未実装。
+- 現adapter: native JSONのversion、marker schema、overallを接続済み。runtime errorは未実装。
 - 表現/禁止: 対象外projectは`not_applicable`、対象で診断不能は`unverified`。全project自動activation、tool DB直接読解は禁止。
 
 ### `codegraph`
@@ -61,10 +61,10 @@
 
 ### `aiterm-mcp`
 
-- 所有/修正先: 自作 / `kitepon-rgb/aiterm-mcp`。version入口: `aiterm-mcp --version`が安定するまでpackage版を代用しない。
-- diagnostics/state正本: MCP initialize、read-only `pty_list`、vendor prerequisite診断（製品repo所有、現adapter未接続）。
+- 所有/修正先: 自作 / `kitepon-rgb/aiterm-mcp`。version入口: native MCP `diagnostics` responseのpackage version。
+- diagnostics/state正本: stdio MCP initialize後のread-only `diagnostics` tool（schema `aiterm-mcp.factory-diagnostics.v1`）。PTY一覧は件数だけ、vendor依存は実行可能性だけを返す。
 - host/connector: 全4 host required。Claude MCP、CodexはGrok/Composer用MCPのみ。
-- 現adapter: `aiterm-mcp --version`抽出だけ。非出力なら`unverified`。MCP/PTY/vendor/runtime errorは未実装。
+- 現adapter: stdio MCP initialize→`diagnostics`を接続済み。tmux不能やschema driftは`unverified`、native `not_ready`は固定fingerprintのfailへ写像する。runtime errorは未実装。診断toolは次回製品releaseまで現行registry版0.12.1には未収録。
 - 禁止: PTY/agent起動をhealth扱い、Codex親から入れ子Codex。native Windowsの`agent_done`非対応は`unsupported`。
 
 ### `codex-sidecar`

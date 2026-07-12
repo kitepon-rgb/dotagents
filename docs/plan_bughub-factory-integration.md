@@ -265,9 +265,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 ### Wave 4 — 自作5製品のnative diagnostics（repo別A、契約はF）
 
 - [ ] Caveat: 並行dirty解消後、DB schema/migration/own/sync/hook/MCPの機械可読診断
-- [ ] Throughline: state schema/hook/代表smokeの機械可読診断
-- [ ] Spotter: 既存doctor/status/Codex diagnosticsの統合JSONまたはadapter契約
-- [ ] aiterm-mcp: versionとMCP/PTY/vendor readinessのread-only診断
+- [x] Throughline: state schema/hook/代表smokeの機械可読診断
+- [x] Spotter: 既存doctor/status/Codex diagnosticsの統合JSONまたはadapter契約
+- [x] aiterm-mcp: versionとMCP/PTY/vendor readinessのread-only診断
 - [ ] codex-sidecar: package整合、diagnostics/dry-run、result schema/model policy診断
 - [ ] 各製品で既存error log/診断を棚卸し、共通fieldへ安全に出せるものだけlocal structured error storeへ接続
 - [ ] `collection.enabled`と`reporting.enabled`を分離し、送信が既定OFF、明示ON時だけnetwork I/Oすることをfixtureと文書で固定
