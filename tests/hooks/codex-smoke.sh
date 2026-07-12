@@ -6,6 +6,10 @@ set -u
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 STATE=$(mktemp -d)
 REPO=$(mktemp -d)
+HOOK_REPO=$REPO
+if command -v cygpath >/dev/null 2>&1; then
+  HOOK_REPO=$(cygpath -m "$REPO")
+fi
 trap 'rm -rf "$STATE" "$REPO"' EXIT
 export XDG_CACHE_HOME="$STATE"
 HOOK="$ROOT/bin/codex-callout-hook.sh"
@@ -81,46 +85,46 @@ mkdir "$REPO/docs"; printf '%s\n' '- [ ] task' >"$REPO/docs/plan_x.md"; printf '
 git -C "$REPO" add . && git -C "$REPO" commit -qm initial
 
 run x1-stocktake python3 "$HOOK" session-start <<EOF
-{"session_id":"t1","source":"startup","cwd":"$REPO"}
+{"session_id":"t1","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 json && [[ "$RUN_OUT" == *'INFO: docs/'* ]] && pass x1-stocktake || fail_case x1-stocktake
 
 run x1-resume python3 "$HOOK" session-start <<EOF
-{"session_id":"t2","source":"resume","cwd":"$REPO"}
+{"session_id":"t2","source":"resume","cwd":"$HOOK_REPO"}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x1-resume || fail_case x1-resume
 
 run x1-off env DOTAGENTS_TODO_GATE=off python3 "$HOOK" session-start <<EOF
-{"session_id":"t3","source":"startup","cwd":"$REPO"}
+{"session_id":"t3","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x1-off || fail_case x1-off
 
 # --- X4 stop（C3 ミラー） ---
 run x4-clean python3 "$HOOK" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x4-clean || fail_case x4-clean
 
 printf '%s\n' changed >>"$REPO/source.txt"
 run x4-warn python3 "$HOOK" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/t1.codex-pending" ] && pass x4-warn || fail_case x4-warn
 
 run x4-active python3 "$HOOK" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":true}
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":true}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x4-active || fail_case x4-active
 
 run x4-off env DOTAGENTS_TODO_GATE=off python3 "$HOOK" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x4-off || fail_case x4-off
 
 # block 値でもStopは止めず、pending保存だけ
 printf '%s\n' new2 >"$REPO/source2.txt"
 run x4-block-1 env DOTAGENTS_TODO_GATE=block python3 "$HOOK" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/t1.codex-pending" ] && pass x4-block-1 || fail_case x4-block-1
 
@@ -141,7 +145,7 @@ run x35-pending python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u3"}' \
 [ ! -f "$STATE/dotagents/hooks/u3.codex-pending" ] && pass x35-pending-drained || fail_case x35-pending-drained
 
 run x35-compact python3 "$HOOK" session-start <<EOF
-{"session_id":"u1","source":"compact","cwd":"$REPO"}
+{"session_id":"u1","source":"compact","cwd":"$HOOK_REPO"}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x35-compact || fail_case x35-compact
 run x35-rearmed python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
