@@ -236,9 +236,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 ### Wave 1 — ServerManagerの安全網とprotocol（F中心）
 
 - [x] BugHubにCIと実SQLite characterization testを先に追加
-- [ ] 既存4sourceのpoll、severity素通し、再発、resolve表示、digest、`/ai`を固定
+- [x] 既存4sourceのpoll、severity素通し、再発、resolve表示、digest、`/ai`を固定
 - [x] Discord送信が`false`の時に`markAlerted`しないこと、delivery failureを記録・再通知できることを固定
-- [ ] versioned DB migration runner、backup/restore test、schema versionを追加
+- [x] versioned DB migration runner、backup/restore test、schema versionを追加
 - [x] 既存signature契約との対応表、factory report JSON Schema、severity判定表、fingerprint規則、privacy allowlist、認証、冪等、host binding、size/time validationを仕様化
 - [x] 可変値違い、類似別原因、resolve後再発、秘密混入、重複retryのcontract fixtureを先にgreenにし、製品instrumentation開始gateにする
 - [x] host credentialのprovision/rotate/revokeと401/403、紛失host廃止をfixture化
