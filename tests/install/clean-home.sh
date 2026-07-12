@@ -98,16 +98,22 @@ PY
 archive_count="$(find "$OFFICIAL_HOME/Archives" -name '*.tar.gz' | wc -l | tr -d ' ')"
 [ "$archive_count" = 1 ] || fail 'apply の backup 数が期待と不一致'
 "$PYTHON_BIN" - "$OFFICIAL_HOME/Archives" 700 <<'PY' || fail 'Archives の権限が 0700 でない'
+import os
 import stat
 import sys
 from pathlib import Path
+if os.name == "nt":
+    raise SystemExit(0)
 raise SystemExit(0 if stat.S_IMODE(Path(sys.argv[1]).stat().st_mode) == int(sys.argv[2], 8) else 1)
 PY
 archive_path="$(find "$OFFICIAL_HOME/Archives" -name '*.tar.gz' | head -n1)"
 "$PYTHON_BIN" - "$archive_path" 600 <<'PY' || fail 'backup archive の権限が 0600 でない'
+import os
 import stat
 import sys
 from pathlib import Path
+if os.name == "nt":
+    raise SystemExit(0)
 raise SystemExit(0 if stat.S_IMODE(Path(sys.argv[1]).stat().st_mode) == int(sys.argv[2], 8) else 1)
 PY
 "$PYTHON_BIN" - "$archive_path" <<'PY' || fail 'backup member の権限が 0600 でない'
