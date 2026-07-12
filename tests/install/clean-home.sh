@@ -166,8 +166,12 @@ external_output="$(HOME="$OFFICIAL_HOME" CODEX_HOME="$EXTERNAL_CODEX_HOME" "$PYT
 external_archive="${external_output#*backup: }"
 external_archive="${external_archive%）}"
 [ -f "$external_archive" ] || fail 'HOME 外 config の backup path を出力しない'
-tar -tzf "$external_archive" | grep -Fxq 'external-codex-home/config.toml' || fail 'HOME 外 config の backup 名が安全な相対名でない'
-tar -tzf "$external_archive" | grep -Fxq 'external-codex-home/hooks.json' || fail 'HOME 外 hooks の backup 名が安全な相対名でない'
+external_archive_for_tar=$external_archive
+if command -v cygpath >/dev/null 2>&1; then
+  external_archive_for_tar=$(cygpath -u "$external_archive")
+fi
+tar -tzf "$external_archive_for_tar" | grep -Fxq 'external-codex-home/config.toml' || fail 'HOME 外 config の backup 名が安全な相対名でない'
+tar -tzf "$external_archive_for_tar" | grep -Fxq 'external-codex-home/hooks.json' || fail 'HOME 外 hooks の backup 名が安全な相対名でない'
 grep -Fq 'hide_spawn_agent_metadata = false' "$EXTERNAL_CODEX_HOME/config.toml" || fail 'HOME 外 CODEX_HOME の routing を適用しない'
 
 printf '%s\n' 'model = "target"' >"$SYMLINK_TARGETS/config.toml"
