@@ -141,3 +141,26 @@ factory-reporter flush --config ~/.config/dotagents/factory-reporter.json
 - `factory-reporter`非0: stdoutの`{ok:false,code:"FACTORY_REPORTER_ERROR"}`とstderrを確認する。409/413/422はdead-letter、401/403/429/5xx/timeout/networkはoutbox保持であり、成功ではない。
 - stdout JSONは機械判定用で、token本文を出さない。report JSONには秘密・prompt・absolute pathを入れない。
 - config、credential、state/outbox、scan outputは0700 directory/0600 file（Windowsは現在userのみACL）にする。reportを共有・git add・チャット貼付けしない。
+
+## 8. 定期scheduler（dry-runから開始）
+
+`factory-reporter-scheduler` は `collection.enabled=true` の時だけ scan → enqueue → flush を毎時17分に起動するOS別schedulerを管理する。収集OFF時はscan前に正常skipし、state/outboxにも触れない。設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushは既存契約どおりnetwork I/Oをしない。
+
+最初は必ずdry-runで生成物・登録commandを確認する。実登録は明示`--apply`だけであり、通常のinstall/updateはschedulerを登録しない。configが未配置または不正ならinstall/runnerはfail closedで、scheduler登録もscanも行わない。停止のためのuninstallだけはconfigなしでも実行できる。
+
+```bash
+# macOS
+factory-reporter-scheduler install --dry-run --platform darwin
+# Linux / WSL2
+factory-reporter-scheduler install --dry-run --platform linux
+# Windows native PowerShell
+factory-reporter-scheduler install --dry-run --platform win32
+```
+
+承認済みの対象hostだけで、dry-runの出力を確認してから同じcommandに`--apply`を付ける。`--apply`は実行中OSと一致するplatformだけを受け付ける。
+
+- macOS: `~/Library/LaunchAgents/com.kite.factory-reporter.plist`を`launchctl bootstrap gui/$UID`で登録する。`node`の絶対path → runnerの絶対pathをXML escapeした引数配列で起動する。state/logは`$XDG_STATE_HOME/dotagents/factory-reporter/`（既定`~/.local/state/...`）で0700。
+- Linux / WSL2: 現在userのcrontabに`# dotagents-factory-reporter`で終わる**完全一致の自管理行だけ**を置換する。cron最小環境でもNodeとrunnerの絶対pathをPOSIX single-quoteして起動する。WSL2ではcron service自体を別途常設する。
+- Windows native: `%LOCALAPPDATA%\dotagents\factory-reporter\scheduler\dotagents-factory-reporter.xml`をUTF-8で生成し、毎時のTaskを`schtasks.exe /Create /TN dotagents-factory-reporter /XML <file> /F`で登録する。apply時は継承・既存明示ACEを外し、現在userのSIDだけを許可するprivate ACLをPowerShell/.NETで設定する。
+
+停止はoutboxを消さずschedulerだけ外す。`factory-reporter-scheduler uninstall --dry-run --platform <OS>`で対象commandを確認し、承認後に`--apply`を付ける。

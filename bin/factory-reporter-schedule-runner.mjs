@@ -1,0 +1,18 @@
+#!/usr/bin/env node
+import { spawn } from 'node:child_process';
+import { chmod, lstat, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { homedir, platform } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+import { readConfig } from '../lib/factory/contract.mjs';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(HERE, '..');
+function platformMatches(profile) { return (platform() === 'darwin' && profile === 'mac') || (platform() === 'linux' && ['server', 'wsl'].includes(profile)) || (platform() === 'win32' && profile === 'windows-native'); }
+function statePath() { return platform() === 'win32' ? join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'dotagents', 'factory-reporter') : join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'dotagents', 'factory-reporter'); }
+function parseArgs(argv) { if (argv.length !== 2 || argv[0] !== '--config' || !argv[1] || /[\0\r\n]/.test(argv[1])) throw new Error('使い方: factory-reporter-schedule-runner --config <file>'); return argv[1]; }
+function run(script, args) { return new Promise((resolveRun, rejectRun) => { const child = spawn(process.execPath, [join(HERE, script), ...args], { stdio: 'inherit' }); child.on('error', rejectRun); child.on('close', (code) => code === 0 ? resolveRun() : rejectRun(new Error(`${script} がexit ${code}で失敗`))); }); }
+async function privateState(state) { try { const info = await lstat(state); if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('state pathはsymlinkでないdirectoryでなければなりません'); } catch (error) { if (error.code !== 'ENOENT') throw error; await mkdir(state, { recursive: true, mode: 0o700 }); } if (platform() !== 'win32') await chmod(state, 0o700); }
+async function withLock(state, fn) { const lock = join(state, 'schedule.lock'); try { await mkdir(lock, { mode: 0o700 }); } catch (error) { if (error.code !== 'EEXIST') throw error; const info = await lstat(lock); if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('scheduler lockが不正です'); let stale = false; try { const pid = Number((await readFile(join(lock, 'pid'), 'utf8')).trim()); if (Number.isInteger(pid) && pid > 0) { try { process.kill(pid, 0); } catch (probe) { stale = probe.code === 'ESRCH'; } } } catch {} if (!stale) throw new Error('schedulerはすでに実行中です'); await rm(lock, { recursive: true, force: true }); await mkdir(lock, { mode: 0o700 }); } await writeFile(join(lock, 'pid'), String(process.pid), { mode: 0o600 }); try { return await fn(); } finally { await rm(lock, { recursive: true, force: true }); } }
+try { const configPath = parseArgs(process.argv.slice(2)); const config = await readConfig(configPath); if (config.source !== 'file') throw new Error('schedulerは設定ファイルなしでは実行しません'); if (!platformMatches(config.host.profile)) throw new Error(`host.profile=${config.host.profile}は実行中platformと一致しません`); if (!config.collection.enabled) { process.stdout.write(`${JSON.stringify({ ok: true, skipped: 'collection-disabled' })}\n`); } else { const state = statePath(); await privateState(state); await withLock(state, async () => { const report = join(state, 'latest-report.json'); await run('factory-scan.mjs', ['--config', configPath, '--output', report, '--cwd', ROOT]); await run('factory-reporter.mjs', ['enqueue', '--config', configPath, '--report', report]); await run('factory-reporter.mjs', ['flush', '--config', configPath]); }); } } catch (error) { process.stderr.write(`[factory-reporter-schedule-runner] ${error?.message || '失敗'}\n`); process.exitCode = 1; }

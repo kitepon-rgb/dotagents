@@ -43,8 +43,8 @@ test-oracle: ## Oracle wrapper のOS非依存な入口選択を検証
 test-factory-core: ## Caveat / Throughline / Spotter の外部コア受入契約を検証
 	bash tests/factory-core/smoke.sh
 
-test-factory-reporter: ## BugHub factory reporter のprivacy/outbox/retry契約を検証
-	node --test tests/factory-reporter/factory-reporter.test.mjs
+test-factory-reporter: ## BugHub factory reporter のprivacy/outbox/retry/scheduler契約を検証
+	node --test tests/factory-reporter/*.test.mjs
 
 test-factory-scan: ## 工場9製品scanの公開CLI・privacy・platform契約を検証
 	node --test tests/factory-scan/factory-scan.test.mjs
