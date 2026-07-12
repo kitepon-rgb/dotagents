@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0",
+  "host": { "id": "mac-kite", "profile": "mac" },
+  "collection": { "enabled": false },
+  "reporting": { "enabled": false }
+}

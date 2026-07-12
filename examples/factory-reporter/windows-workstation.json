@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0",
+  "host": { "id": "windows-workstation", "profile": "windows-native" },
+  "collection": { "enabled": false },
+  "reporting": { "enabled": false }
+}

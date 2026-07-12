@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0",
+  "host": { "id": "fox-wsl", "profile": "wsl" },
+  "collection": { "enabled": false },
+  "reporting": { "enabled": false }
+}

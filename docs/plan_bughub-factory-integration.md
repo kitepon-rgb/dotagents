@@ -251,7 +251,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] fake BugHubで成功、401、schema reject、timeout、duplicate、outbox再送をテスト
 - [x] enqueue-before-send、single-flight、overflow、dead-letter、応答消失をテスト
 - [ ] 削除前crashとserver dedupe retentionをテスト
-- [ ] host ID/tokenをrepoへ保存しない設定・rotation・revoke手順を追加
+- [x] host ID/tokenをrepoへ保存しない設定・rotation・revoke手順を追加
 - [ ] Mac launchd、Linux/WSL cron、Windows Task Schedulerのinstall/uninstall/実火とOS別state/ACLを固定
 - [ ] `agents-update`後にcontract scan→reportを接続し、update失敗後も観測と報告を試行して最終的に非0終了
 
