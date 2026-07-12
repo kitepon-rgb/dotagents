@@ -201,7 +201,7 @@ hook は変更しない。legacy を選ぶのは旧入口の検証時だけで�
 
 ## 自動アップデート（常設・全端末必須）
 
-`~/.local/bin/agents-update` が curated CLI / SDK / MCP 群 (Claude Code / Codex CLI / Oracle / aiterm-mcp / Codex Sidecar / Throughline / Caveat / Codegraph / claude-spotter / Anthropic SDK / pnpm) をNPM `@latest`へ、MarkItDownを `uv tool upgrade` で更新する。**「推奨」ではなく常設が必須**（2026-07-04 実測: この一手を省いた端末では旧世代の自動更新が別リストで回り続け、真実が二重化していた）。1製品でも更新に失敗したら製品名をログへ残してジョブを非0終了し、残り製品の更新は継続する。更新後の `verify-install` / `make ci` が上流互換の受入ゲートである。
+`~/.local/bin/agents-update` が curated CLI / SDK / MCP 群 (Claude Code / Codex CLI / Oracle / aiterm-mcp / Codex Sidecar / Throughline / Caveat / Codegraph / claude-spotter / Anthropic SDK / pnpm) をNPM `@latest`へ、MarkItDownを `uv tool upgrade` で更新する。**「推奨」ではなく常設が必須**（2026-07-04 実測: この一手を省いた端末では旧世代の自動更新が別リストで回り続け、真実が二重化していた）。1製品でも更新に失敗したら製品名をログへ残し、残り製品の更新と更新後のfactory contract scan/reportを継続する。更新処理とreporterの成否は別々に記録し、どちらか一方でも失敗ならジョブを非0終了する。reporterは明示opt-in設定に従い、収集OFFならscan前、送信OFFならnetwork前で停止する。詳細は [factory reporterランブック](docs/factory-reporter-runbook.md#9-agents-updateとの接続) を参照。
 
 **Step 0 — 旧自動更新の撲滅（一つの真実）**: 先に古い npm 自動更新が居ないか掃引し、居たら停止・撤去する。
 

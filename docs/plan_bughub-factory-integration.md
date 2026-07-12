@@ -253,7 +253,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] 受理後・削除前failureの同一bytes再送と、server dedupe retention（outbox上限超・期限前後prune）をテスト
 - [x] host ID/tokenをrepoへ保存しない設定・rotation・revoke手順を追加
 - [ ] Mac launchd、Linux/WSL cron、Windows Task Schedulerのinstall/uninstall/実火とOS別state/ACLを固定
-- [ ] `agents-update`後にcontract scan→reportを接続し、update失敗後も観測と報告を試行して最終的に非0終了
+- [x] `agents-update`後にcontract scan→reportを接続し、update失敗後も観測と報告を試行して最終的に非0終了
 
 ### Wave 3 — 第三者3製品adapter（A）
 

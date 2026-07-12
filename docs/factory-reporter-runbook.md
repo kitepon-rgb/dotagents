@@ -164,3 +164,15 @@ factory-reporter-scheduler install --dry-run --platform win32
 - Windows native: `%LOCALAPPDATA%\dotagents\factory-reporter\scheduler\dotagents-factory-reporter.xml`をUTF-8で生成し、毎時のTaskを`schtasks.exe /Create /TN dotagents-factory-reporter /XML <file> /F`で登録する。apply時は継承・既存明示ACEを外し、現在userのSIDだけを許可するprivate ACLをPowerShell/.NETで設定する。
 
 停止はoutboxを消さずschedulerだけ外す。`factory-reporter-scheduler uninstall --dry-run --platform <OS>`で対象commandを確認し、承認後に`--apply`を付ける。
+
+## 9. agents-updateとの接続
+
+`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、`factory-reporter-schedule-runner --config <host config>`を必ず1回呼ぶ。runnerが担う順序はscan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
+
+- 既定configはPOSIXで`~/.config/dotagents/factory-reporter.json`、Windows nativeで`%LOCALAPPDATA%\dotagents\factory-reporter\config.json`。
+- `collection.enabled=false`ならrunnerがscan前に正常skipする。`reporting.enabled=false`ならenqueue/flushはnetworkへ出ない。
+- config欠落・runner欠落・scan/report失敗はreport失敗としてログに残す。更新成功をreport成功で代用せず、report成功を更新成功で代用しない。
+- 最終行直前の`agents-update result: update=<success|failed> report=<success|failed>`で両系統を判定でき、どちらかが`failed`なら終了codeは1。
+- 試験時だけ`FACTORY_REPORTER_RUNNER`と`FACTORY_REPORTER_CONFIG`で入口を差し替えられる。通常運用でこのoverrideを使わない。
+
+この接続はschedulerを新規登録せず、configを作成・変更せず、collection/reportingをONにしない。実hostへのconfig・credential配置とON操作は前節までのH手順で別途行う。
