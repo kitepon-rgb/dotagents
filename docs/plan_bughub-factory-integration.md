@@ -268,7 +268,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] Throughline: state schema/hook/代表smokeの機械可読診断
 - [x] Spotter: 既存doctor/status/Codex diagnosticsの統合JSONまたはadapter契約
 - [x] aiterm-mcp: versionとMCP/PTY/vendor readinessのread-only診断
-- [ ] codex-sidecar: package整合、diagnostics/dry-run、result schema/model policy診断
+- [x] codex-sidecar: package整合、diagnostics/dry-run、result schema/model policy診断
 - [ ] 各製品で既存error log/診断を棚卸し、共通fieldへ安全に出せるものだけlocal structured error storeへ接続
 - [ ] `collection.enabled`と`reporting.enabled`を分離し、送信が既定OFF、明示ON時だけnetwork I/Oすることをfixtureと文書で固定
 - [ ] stderr、生stack、例外オブジェクトの丸投げと、同じ失敗の複数layer計上をnegative fixtureで拒否
