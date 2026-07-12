@@ -110,5 +110,9 @@ for f in "$HERE/bin"/*.sh; do
   [ -e "$f" ] || continue
   link_one "$f" "$HOME/.local/bin/$(basename "$f" .sh)"
 done
+for f in "$HERE/bin"/*.mjs; do
+  [ -e "$f" ] || continue
+  link_one "$f" "$HOME/.local/bin/$(basename "$f" .mjs)"
+done
 
 echo "done."

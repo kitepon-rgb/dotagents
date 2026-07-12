@@ -25,7 +25,7 @@ dotagents/
 │   ├── agents/          … → ~/.codex/agents/<name>.toml
 │   ├── skills/          … → $HOME/.agents/skills/<name>（既定。legacy は明示指定）
 │   └── rules/           … → ~/.codex/rules/<file>
-└── bin/                 … → ~/.local/bin/<name>（.sh は外れる。実行言語は shebang）
+└── bin/                 … → ~/.local/bin/<name>（.sh / .mjs は外れる。実行言語は shebang）
 ```
 
 ```mermaid
@@ -87,6 +87,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | Codex グローバル規範 | `codex/AGENTS.md` | ベルの共通憲法＋Codex 固有のモデル配置・ネイティブ委譲・shell 入口（2026-07 リポ正本化。対応表は docs/02_models.md） |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲定義（terra×medium / sol×high×read-only / luna×low） |
 | bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
+| bin | `factory-reporter.mjs` | 明示opt-inされた工場reportを検証・outbox保存・BugHubへ冪等送信 |
 | bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
 | bin | `apply-codex-config.sh` | routing 2キーと dotagents hook 4イベントだけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |

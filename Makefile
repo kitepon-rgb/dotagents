@@ -5,15 +5,18 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-py lint-md lint-constitution lint-skills lint-hooks test-install test-update test-oracle test-factory-core ci help
+.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-install test-update test-oracle test-factory-core test-factory-reporter ci help
 
-lint: lint-sh lint-py lint-md lint-constitution lint-skills lint-hooks ## 静的 lint + skill/hook smoke
+lint: lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks ## 静的 lint + skill/hook smoke
 
 lint-sh: ## shellcheck: install.sh + bin/ と tests/ の shell スクリプト（python は lint-py へ）
 	shellcheck install.sh $$(grep -lE '^#!.*sh$$' bin/*.sh tests/**/*.sh)
 
 lint-py: ## bin/ の python script を構文チェック（ast.parse・依存なし）
 	@for f in $$(grep -lE '^#!.*python' bin/*.sh); do python3 -c "import ast,sys; ast.parse(open(sys.argv[1], encoding='utf-8').read())" "$$f" && echo "py-syntax OK: $$f"; done
+
+lint-js: ## bin/ の Node.js script を構文チェック
+	@for f in bin/*.mjs; do node --check "$$f"; done
 
 lint-md: ## markdownlint（緩い設定・生きた正典のみ / .markdownlint-cli2.jsonc）
 	$(MDLINT)
@@ -40,7 +43,10 @@ test-oracle: ## Oracle wrapper のOS非依存な入口選択を検証
 test-factory-core: ## Caveat / Throughline / Spotter の外部コア受入契約を検証
 	bash tests/factory-core/smoke.sh
 
-ci: lint test-install test-update test-oracle test-factory-core ## ローカル/CI 共通の全ゲート
+test-factory-reporter: ## BugHub factory reporter のprivacy/outbox/retry契約を検証
+	node --test tests/factory-reporter/factory-reporter.test.mjs
+
+ci: lint test-install test-update test-oracle test-factory-core test-factory-reporter ## ローカル/CI 共通の全ゲート
 
 help: ## タスク一覧
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \

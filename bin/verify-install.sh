@@ -255,7 +255,7 @@ elif ! grep -Fq '../../../shared/orchestrate/contract.md' "$codex_orchestrate/SK
   fail=1
 fi
 
-# install.sh の10グループと対称に検証
+# install.sh の配布グループと対称に検証
 [ -f "$REPO/claude/CLAUDE.md" ] && check "$HOME/.claude/CLAUDE.md" "$REPO/claude/CLAUDE.md"
 for d in "$REPO/claude/skills"/*/;   do [ -d "$d" ] && check "$HOME/.claude/skills/$(basename "$d")" "$d"; done
 for f in "$REPO/claude/commands"/*.md; do [ -e "$f" ] && check "$HOME/.claude/commands/$(basename "$f")" "$f"; done
@@ -273,6 +273,7 @@ done
 for f in "$REPO/codex/rules"/*;      do [ -e "$f" ] && check "$HOME/.codex/rules/$(basename "$f")" "$f"; done
 for f in "$REPO/codex/agents"/*.toml; do [ -e "$f" ] && check "$HOME/.codex/agents/$(basename "$f")" "$f"; done
 for f in "$REPO/bin"/*.sh;           do [ -e "$f" ] && check "$HOME/.local/bin/$(basename "$f" .sh)" "$f"; done
+for f in "$REPO/bin"/*.mjs;          do [ -e "$f" ] && check "$HOME/.local/bin/$(basename "$f" .mjs)" "$f"; done
 
 # ~/.codex/AGENTS.override.md シャドー検出: Codex は override が存在すれば AGENTS.md より
 # 優先して読むため、非空の override は配布憲法（codex/AGENTS.md）を無言で無効化する。

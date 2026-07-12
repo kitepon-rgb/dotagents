@@ -64,7 +64,7 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 | Codex rule | `codex/rules/<file>` | `~/.codex/rules/<file>` | 任意ファイル (例: `default.rules`) |
 | Codex グローバル規範 | `codex/AGENTS.md` | `~/.codex/AGENTS.md` | 単一 `.md`（2026-07 リポ正本化。詳細は「含めないもの」節） |
 | Codex サブエージェント | `codex/agents/<name>.toml` | `~/.codex/agents/<name>.toml` | 単一 `.toml`（`name`/`description`/`developer_instructions` の3必須キー） |
-| 実行スクリプト | `bin/<name>.sh` | `~/.local/bin/<name>` | shebang に従う単一実行スクリプト（bash / Python。`.sh` は配置時に外れる、`chmod +x` 必須） |
+| 実行スクリプト | `bin/<name>.sh` / `bin/<name>.mjs` | `~/.local/bin/<name>` | shebang に従う単一実行スクリプト（bash / Python / Node.js。拡張子は配置時に外れる、`chmod +x` 必須） |
 
 `install.sh` は上記の配布対象を 1 階層だけ走査し symlink を張る。Codex skill 面は `--profile official|legacy` の一方だけを選ぶ。**新規エントリ追加後は `./install.sh --profile <面>` を再実行が必要** (既存エントリの編集だけなら不要)。
 
