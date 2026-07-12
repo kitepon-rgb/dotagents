@@ -1,7 +1,7 @@
 # 工場コア9製品 BugHub 統合計画
 
 作成: 2026-07-13  
-状態: 実装中（Wave 0〜2）
+状態: 実装中（Wave 0〜5、Wave 2・5は継続中）
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 
@@ -14,17 +14,17 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 ## 1. 完了条件（本計画がTODOを兼ねる）
 
 - [ ] 端末能力8製品とServerManagerについて、製品別のversion・diagnostics・state/schema・migration・互換性契約が有限表になっている
-- [ ] 4環境×9製品の期待状態（required / optional / forbidden / unsupported）、期待connector、欠落時severityが一意なmatrixになっている
+- [x] 4環境×9製品の期待状態（required / optional / forbidden / unsupported）、期待connector、欠落時severityが一意なmatrixになっている
 - [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの4環境が、認証付きでBugHubへ観測結果を報告できる
-- [ ] BugHubにhost×productの現在値と履歴があり、installed/latest・contract・schema・update・compatibilityの状態を区別できる
+- [x] BugHubにhost×productの現在値と履歴があり、installed/latest・contract・schema・update・compatibilityの状態を区別できる
 - [ ] 互換異常は既存BugHubのfingerprint・severity・再発・解決・Discord・`/ai`へ統合される
 - [ ] 既存4アプリのpull巡回・重大度・resolve/reopen・dashboard・日次/週次通知に回帰がない
-- [ ] 第三者製品をfork、`node_modules`パッチ、内部DB決め打ちで改造していない
+- [x] 第三者製品をfork、`node_modules`パッチ、内部DB決め打ちで改造していない
 - [ ] 自作製品は機械可読な正規diagnosticsを製品側に持ち、dotagentsが内部状態を勝手に解釈しない
 - [ ] 自作製品をクオ管理端末で実利用した時の構造化errorを、入力本文・秘密・ファイル内容なしでローカル記録し、dotagents reporter経由でBugHubへ集約できる
-- [ ] 公開製品の外部利用者からは明示opt-inなしにtelemetryを送らない
+- [x] 公開製品の外部利用者からは明示opt-inなしにtelemetryを送らない
 - [ ] BugHub自身をBugHubの自己申告だけで合格させず、main-server上の外部runnerがServerManager/BugHubを検証する
-- [ ] 報告不能時は端末ローカルのdotagents所有outboxへ保持し、成功扱いせず、復旧後に冪等再送できる
+- [x] 報告不能時は端末ローカルのdotagents所有outboxへ保持し、成功扱いせず、復旧後に冪等再送できる
 - [ ] 更新後contract gateと定期read-only gateがgreenになり、失敗製品・host・検査項目をBugHubとローカルlogで特定できる
 - [ ] 各repoを独立commit・独立rollback可能なwaveで実装し、全remoteへpushして真実を返している
 - [ ] 最終反証、全端末E2E、本番canary、rollback drillを完了し、本計画を`docs/archive/`へ退避している
@@ -224,23 +224,23 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 0 — 正本・baseline・dirty整理（挙動不変）
 
-- [ ] 本計画をaudit-gauntletで監査し、採用指摘だけ反映
+- [x] 本計画をaudit-gauntletで監査し、採用指摘だけ反映
 - [x] 9製品とdotagents/ServerManagerでfetch→origin照合→stash→dirtyを記録
 - [x] Caveatの並行dirtyはオーナー/作業sessionの完了までロックし、収容・破棄を勝手に行わない
 - [x] Throughline `.agents/` の所有意図を確認し、無関係なら触らず作業範囲を分離
 - [x] 4 host×9 productのrequired/optional/forbidden/unsupported matrixと期待connectorを`docs/factory-host-product-matrix.md`へ正本化
-- [ ] ServerManager BugHubの現行pull、DB、通知、`/ai`、deployをcharacterizationする
+- [x] ServerManager BugHubの現行pull、DB、通知、`/ai`、deployをcharacterizationする
 - [x] `INTEGRATION.md`の`master` URL、ServerManager AGENTSの`origin master`例、BugHub README/deploy commentの旧`~/projects` pathを現行`main`/`~/Developer`へ照合・訂正
 - [x] 文書にだけある`auctionbot` adapter記載を実registryと照合し、実在する入口だけに訂正
 
 ### Wave 1 — ServerManagerの安全網とprotocol（F中心）
 
-- [ ] BugHubにCIと実SQLite characterization testを先に追加
+- [x] BugHubにCIと実SQLite characterization testを先に追加
 - [ ] 既存4sourceのpoll、severity素通し、再発、resolve表示、digest、`/ai`を固定
 - [x] Discord送信が`false`の時に`markAlerted`しないこと、delivery failureを記録・再通知できることを固定
 - [ ] versioned DB migration runner、backup/restore test、schema versionを追加
 - [x] 既存signature契約との対応表、factory report JSON Schema、severity判定表、fingerprint規則、privacy allowlist、認証、冪等、host binding、size/time validationを仕様化
-- [ ] 可変値違い、類似別原因、resolve後再発、秘密混入、重複retryのcontract fixtureを先にgreenにし、製品instrumentation開始gateにする
+- [x] 可変値違い、類似別原因、resolve後再発、秘密混入、重複retryのcontract fixtureを先にgreenにし、製品instrumentation開始gateにする
 - [x] host credentialのprovision/rotate/revokeと401/403、紛失host廃止をfixture化
 - [x] `deploy.sh`の`rsync --delete`をdry-run必須にし、image rebuildとhealth確認を固定
 
@@ -276,12 +276,12 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 5 — BugHub ingestion・表示・通知（F＋A）
 
-- [ ] `POST /api/factory/v1/reports`とfactory DBを実装
+- [x] `POST /api/factory/v1/reports`とfactory DBを実装
 - [ ] full snapshot/delta、check lifecycle、正常snapshot、手動resolve、再観測reopen、host廃止の状態遷移を固定
 - [ ] check failureを既存issueへhost付きで統合し、runtime errorのack/cursor/retentionも固定
 - [ ] dashboardにhost×product matrix、version履歴、latest/compat/schema状態を追加
 - [ ] `/ai`とDiscord/daily/weeklyへ修正先repo・host・product・fingerprintを追加
-- [ ] 既存pull sourceとの後方互換testを通す
+- [x] 既存pull sourceとの後方互換testを通す
 
 ### Wave 6 — ServerManager/BugHub自己監視（F）
 
