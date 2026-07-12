@@ -1,7 +1,7 @@
 # dotagents Codex 全対応計画
 
 作成: 2026-07-12
-状態: 実装中（オーナー GO: 2026-07-12、Wave 2 の安全実装を検証済み。H1 rollout 待ち）
+状態: 実装中（オーナー GO: 2026-07-12、Wave 2 の安全実装とこの Mac の official 面移行を検証済み。他端末確定・新規 session E2E 待ち）
 
 ## 0. 目的
 
@@ -99,7 +99,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 - [x] `install.sh` が Codex skill を公式 `$HOME/.agents/skills` へ既定で symlink 配布
 - [x] 古い入口用に explicit legacy profile を用意し、通常実行で公式/legacy を同時配布しない
 - [ ] 移行 probe で同名重複と優先順位を実測し、各入口が一つの面だけから同一 canonical content を読む状態を合格条件にする
-- [ ] dotagents 所有の旧 legacy symlink は dry-run一覧→backup→H承認後に対象限定で外し、他の local skill を保存
+- [ ] dotagents 所有の旧 legacy symlink は dry-run一覧→backup→H承認後に対象限定で外し、他の local skill を保存（この Mac は完了、他端末は一覧確定後）
 - [x] `verify-install.sh` が選択 profile、公式面/legacy面、リンク先、重複、`AGENTS.override.md` shadow を区別して検証
 - [x] clean temporary HOME で repo配布と静的設定 fixture を検証する CI を追加
 - [x] Claude/Codex hook smoke を `make lint` / GitHub Actions の明示ゲートへ昇格し、初回 INFO・2回目沈黙・compact 再武装・pending 1回配送・旧 deny/ask/block 不在を固定
@@ -118,7 +118,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 - 隔離 temporary HOME で `install.sh --profile official`、symlink 経由の `apply-codex-config --dry-run/--apply`、`verify-install --profile official`、Codex `debug prompt-input` を通した。対象5 skill（`audit-gauntlet` / `auto-deploy-on-push` / `oracle` / `orchestrate` / `polish-github`）がリポの公式 skill 面を読んだ。
 - `make ci` は `make lint` と clean HOME の profile / config / rollback fixture を連結する。CI は `@openai/codex@0.144.1` を明示導入し、macOS/BSD 専用だった mode 検査は Python 標準ライブラリへ置換した。
-- 現端末は書換えず、既存 legacy 面に対する `verify-install.sh --profile legacy` の読み取り検証だけを green とした。公式面への実端末移行、同名重複 probe、legacy symlink 撤去は H1 待ちである。
+- 現端末は preflight 後にオーナー承認を受け、公式面へ移行した。実績は「Wave 3 rollout 実績」に記録する。他端末の同名重複 probe と legacy symlink 撤去は、現役端末×入口の確定待ちである。
 - MCP は `codex mcp` の list/get を read-only で確認し、`caveat` / OpenAI Docs / `aiterm` の最小 read-only 疎通を確認した。`.codegraph/` index は無いため query/init は行わず WARN、Oracle は `sessions` のみ確認して `consult` は呼んでいない。
 - Throughline は `codex-capture` と `codex-handoff-smoke` が成功した一方、experimental `codex-restore-smoke` は `app-server-restart-mismatch`（期待 turn 7、観測 8）で失敗した。dotagents / Throughline の本体や session state は変更せず、Wave 3 の新規 session E2E と上流側の再現・修正待ちとして残す。
 
@@ -167,8 +167,8 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 | 端末 | OS | Codex入口 | skill面 | backup | install | config | verify | Codex E2E | Claude回帰 | 結果 |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|
-| この端末 | macOS | desktop | legacy（移行前） | [ ] | [ ] | dry-run差分0 | [x] legacy | [ ] | [ ] | H1待ち |
-| この端末 | macOS | CLI | legacy（同端末） | 同端末参照 | 同端末参照 | 同端末参照 | 同端末参照 | [ ] | 同端末参照 | H1待ち |
+| この端末 | macOS | desktop | official | [x] | [x] | dry-run差分0（apply不要） | [x] official | [ ] | [ ] | skill discovery green、新規 session E2E待ち |
+| この端末 | macOS | CLI | official（同端末） | 同端末参照 | 同端末参照 | 同端末参照 | 同端末参照 | [ ] | 同端末参照 | skill discovery green、新規 session E2E待ち |
 | オーナー確定後に追記 | — | — | — | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | 未実施 |
 
 ### Wave 3 preflight（2026-07-12・この端末・read-only）
@@ -177,6 +177,13 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 - legacy 面の dotagents 所有 symlink は `audit-gauntlet` / `auto-deploy-on-push` / `oracle` / `orchestrate` / `polish-github` の5件。`verify-install.sh --profile legacy` は green。
 - 公式面の `source-command-tl`、legacy 面の `codex-thread-handoff-smoke` / `throughline` は他ツール所有の実 directory であり、移行時も保存する。
 - H1 承認後の対象は、関連ディレクトリの tar backup → `./install.sh --profile official` → 上記 dotagents 所有 legacy symlink 5件だけを除去 → `./bin/verify-install.sh --profile official`。失敗時は新公式 symlink 5件を外し、backup から legacy symlink を復元する。
+
+### Wave 3 rollout 実績（2026-07-12・この端末）
+
+- オーナー承認後、`/Users/kite/Archives/dotagents-codex-skill-migration-20260712T140950Z.tar.gz` へ旧 legacy symlink 5件を退避し、`./install.sh --profile official` で公式面へ配布した。
+- dotagents 所有の旧 legacy symlink 5件だけを除去した。公式面の `source-command-tl`、legacy 面の `codex-thread-handoff-smoke` / `throughline` は保持した。
+- `apply-codex-config --dry-run` は引き続き差分0のため apply をスキップした。`verify-install.sh --profile official` と Codex `debug prompt-input` による対象5 skill の discovery は green。
+- 未完了は、新規 desktop / CLI session での AGENTS・明示/暗黙 skill invocation・hooks・subagent routing・Throughline E2E、Claude 回帰、他の現役端末×入口の確定と rollout である。
 
 ### Wave 0 baseline（2026-07-12・この端末）
 
@@ -225,5 +232,5 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 ## 12. オーナー承認ゲート
 
 - [x] **GO** 本計画で実装開始（既存ディレクトリの移動・改名は含まない）
-- [ ] **H1** 現役端末×入口一覧、変更してよい必須設定キー/hook entry、dotagents所有legacy symlink移行の一括 rollout 承認
+- [ ] **H1** 現役端末×入口一覧、変更してよい必須設定キー/hook entry、dotagents所有legacy symlink移行の一括 rollout 承認（この Mac の official 面移行と push は 2026-07-12 承認済み。他端末一覧は未確定）
 - [ ] hook trust、MCP OAuth 等の各端末 UI 操作
