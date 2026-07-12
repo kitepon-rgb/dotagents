@@ -185,7 +185,8 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 - [x] P5: hot-reload される（決着）→ caveat 訂正が残タスク
 - [x] P6: Codex Stop block 成立（X4）・deny 効く・async 非対応（全 async:false）・update_plan shape 確認
 - [x] P7: matcher は MCP 名に効く・headless の ask は自動 deny・Stop 8回 cap 実在
-- [x] caveat 還流: hot-reload 訂正（`claude-code-hooks-no-hot-reload`＝バージョンで挙動変化と明記）・Codex Stop 注入到達（`codex-cli-hooks-posttooluse…` に「観測専用ではない」補足）／⏳ rag（hook 発火事実）は未
+- [x] caveat 還流: hot-reload 訂正（`claude-code-hooks-no-hot-reload`＝バージョンで挙動変化と明記）・Codex Stop 注入到達（`codex-cli-hooks-posttooluse…` に「観測専用ではない」補足）
+- [x] rag 還流: `rag/hooks/callout-hooks-firing-behavior.md`（発火挙動の永続リファレンス・INDEX 追記済み）
 
 ### Phase 2 — Claude 側ペイロード（A ラベル: 仕様固定の実装物量→外部枠委譲、文言と判定条件は F=統括直轄）
 
