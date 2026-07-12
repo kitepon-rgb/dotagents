@@ -7,7 +7,6 @@ import difflib
 import json
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -113,12 +112,13 @@ def is_callout_command(command: object, hook_path: Path, subcommand: str, home: 
     if not isinstance(command, str):
         return False
     try:
-        parts = shlex.split(command)
+        executable, actual_subcommand = command.rsplit(maxsplit=1)
     except ValueError:
         return False
-    if len(parts) != 2 or parts[1] != subcommand:
+    if actual_subcommand != subcommand:
         return False
-    executable = parts[0]
+    if len(executable) >= 2 and executable[0] == executable[-1] and executable[0] in ("'", '"'):
+        executable = executable[1:-1]
     if executable == "~" or executable.startswith("~/"):
         executable = str(home) + executable[1:]
     return Path(executable).expanduser().resolve(strict=False) == hook_path.expanduser().resolve(strict=False)
