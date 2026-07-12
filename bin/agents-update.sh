@@ -10,7 +10,20 @@
 set -u
 
 # launchd / cron は最小 PATH で起動する（npm が /opt/homebrew 等にあると見つからず静かに失敗する）。
-PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
+PATH="${AGENTS_UPDATE_PATH_PREFIX:-/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin}:$PATH"
+
+# Linux / WSL2 の cron は NVM の選択済み Node を PATH に含めない。
+# 対話 shell 側の偶然の PATH に頼らず、NVM がある端末では正規入口から復元する。
+if ! command -v npm >/dev/null 2>&1 && [[ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]]; then
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  # shellcheck disable=SC1090,SC1091
+  . "$NVM_DIR/nvm.sh"
+fi
+
+if ! command -v npm >/dev/null 2>&1; then
+  printf 'FATAL: npm が PATH にない（NVM 利用時は %s/nvm.sh と default Node を確認）\n' "${NVM_DIR:-$HOME/.nvm}" >&2
+  exit 1
+fi
 
 LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/agents-update"
 mkdir -p "$LOG_DIR"

@@ -1,7 +1,7 @@
 # dotagents Codex 全対応計画
 
 作成: 2026-07-12
-状態: 実装中（オーナー GO: 2026-07-12、Wave 2 の安全実装とこの Mac の official 面移行を検証済み。他端末確定・新規 session E2E 待ち）
+状態: 実装中（オーナー GO: 2026-07-12、Wave 2・この Mac・メインサーバーの基盤 rollout を検証済み。Windows / WSL2 rollout・新規 session E2E 待ち）
 
 ## 0. 目的
 
@@ -125,6 +125,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 ### Wave 3 — 現役端末 rollout と既存プラン閉鎖
 
 - [ ] 各現役端末で pull→tar backup→install→config dry-run/apply→verify
+- [x] NVM配下の npm をLinux / WSL2のcron最小PATHでも解決し、週次 `agents-update` の実走を固定
 - [ ] 各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS）
 - [ ] 端末で共有できる routing/MCP 証拠は入口ごとの台帳から同じ証拠へ参照し、未実施を共有扱いにしない
 - [ ] 各端末で implementer/refuter/sorter の routing smoke＋親側 verifier green
@@ -169,7 +170,9 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|
 | この端末 | macOS | desktop | official | [x] | [x] | dry-run差分0（apply不要） | [x] official | [ ] | [ ] | skill discovery green、新規 session E2E待ち |
 | この端末 | macOS | CLI | official（同端末） | 同端末参照 | 同端末参照 | 同端末参照 | 同端末参照 | [ ] | 同端末参照 | skill discovery green、新規 session E2E待ち |
-| オーナー確定後に追記 | — | — | — | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | 未実施 |
+| main-server | Ubuntu 26.04 | Codex App SSH / CLI | official | [x] | [x] | routing＋hooks適用 | [x] official | [ ] | [ ] | 基盤green、hook trust・新規session E2E待ち |
+| FOX | Windows 10 | Codex App SSH / native | 未導入 | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | 接続green、rollout待ち |
+| FOX | WSL2 Ubuntu 26.04 | CLI | 未導入 | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] | Windows経由probe green、独立rollout待ち |
 
 ### Wave 3 preflight（2026-07-12・この端末・read-only）
 
@@ -184,6 +187,15 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 - dotagents 所有の旧 legacy symlink 5件だけを除去した。公式面の `source-command-tl`、legacy 面の `codex-thread-handoff-smoke` / `throughline` は保持した。
 - `apply-codex-config --dry-run` は引き続き差分0のため apply をスキップした。`verify-install.sh --profile official` と Codex `debug prompt-input` による対象5 skill の discovery は green。
 - 未完了は、新規 desktop / CLI session での AGENTS・明示/暗黙 skill invocation・hooks・subagent routing・Throughline E2E、Claude 回帰、他の現役端末×入口の確定と rollout である。
+
+### Wave 3 rollout 実績（2026-07-12・main-server）
+
+- Codex App公式Remote connectionで `main-server` を追加し、`kite@ubuntu` へのSSH接続を実測した。Codex CLIを0.130.0から0.144.1へ更新し、ChatGPT認証済みを確認した。
+- `~/Developer/dotagents` へprivate repoをcloneし、origin/main同期・stash 0・shallow=false・clean・着手前 `make ci` greenを確認した。GitHub資格情報はheadless環境の `~/.config/gh/hosts.yml` にmode 0600で保存される。
+- tar backup後にofficial install、Codex routing / hooks、Claude必須hook 5本、Caveat-Private、親別MCP、MarkItDown、週次cronを配線した。`verify-install --profile official` と対象5 skill discoveryはgreen。Chrome不在のため任意Oracle MCPは理由付きSKIPした。
+- 稼働監査はsystemd failed 0、containerd active・restart count 0、全Docker container running、healthcheck対象全件healthy。メインサーバーはオーナー裁定により常時稼働工場として正式採用した。
+- [x] cron最小PATHではNVM配下のnpmを解決できない実測欠陥を正本スクリプトで修正。NVM復元・npm不在時のfail-loud・fake npm 13件を `tests/update/cron-env.sh` と `make ci` で固定した。
+- [ ] Codex App remote project `/home/kite/Developer/dotagents` のhook trust、新規session、skill / routing / Throughline、Claude回帰を実火する。
 
 ### Wave 0 baseline（2026-07-12・この端末）
 
