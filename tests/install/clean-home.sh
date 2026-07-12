@@ -14,7 +14,11 @@ trap 'rm -rf "$OFFICIAL_HOME" "$LEGACY_HOME" "$EXTERNAL_CODEX_HOME" "$BAD_CODEX_
 PYTHON_BIN=python3
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
-assert_link() { [ -L "$1" ] && [ "$(readlink "$1")" = "$2" ] || fail "$1 が $2 向き symlink でない"; }
+assert_link() {
+  if [ ! -L "$1" ] || [ "$(readlink "$1")" != "$2" ]; then
+    fail "$1 が $2 向き symlink でない"
+  fi
+}
 seed_config() {
   mkdir -p "$1/.codex"
   cat >"$1/.codex/config.toml" <<'EOF'
@@ -196,8 +200,12 @@ fi
 if HOME="$OFFICIAL_HOME" CODEX_HOME="$TRANSACTION_CODEX_HOME" DOTAGENTS_TEST_FAIL_REPLACE=hooks.json "$PYTHON_BIN" "$OFFICIAL_HOME/.local/bin/apply-codex-config" --apply >/dev/null 2>&1; then
   fail '空既存 file の transaction failure を受理した'
 fi
-[ -f "$TRANSACTION_CODEX_HOME/config.toml" ] && [ ! -s "$TRANSACTION_CODEX_HOME/config.toml" ] || fail '空既存 config を rollback で復元しない'
-[ -f "$TRANSACTION_CODEX_HOME/hooks.json" ] && [ ! -s "$TRANSACTION_CODEX_HOME/hooks.json" ] || fail '空既存 hooks を rollback で復元しない'
+if [ ! -f "$TRANSACTION_CODEX_HOME/config.toml" ] || [ -s "$TRANSACTION_CODEX_HOME/config.toml" ]; then
+  fail '空既存 config を rollback で復元しない'
+fi
+if [ ! -f "$TRANSACTION_CODEX_HOME/hooks.json" ] || [ -s "$TRANSACTION_CODEX_HOME/hooks.json" ]; then
+  fail '空既存 hooks を rollback で復元しない'
+fi
 
 seed_config "$LEGACY_HOME"
 HOME="$LEGACY_HOME" "$ROOT/install.sh" --profile=legacy
