@@ -54,7 +54,7 @@ Claude 側（P1-P5,P7）・Codex 側（P6）を implementer 2体で並列実測�
 - **P3（急所）**: additionalContext 単独注入は**届く**・permissionDecision 無しで権限フロー無干渉・毎回発火。到達は「ツール結果と同時〜直後」＝矯正型。→ **C1 warn 成立（deny 縮退を回避）**。
 - **P4**: Stop stdin に cwd あり・CLAUDE_PROJECT_DIR あり。**副産物: 1実行で Stop が複数回発火しうる**（バックグラウンド Agent 完了点＋最終応答点、いずれも stop_hook_active=false）→ C3 の rolling baseline は「Stop 発火ごとに前回差分」を見るので、この多重発火でも差分ゼロなら沈黙＝二重発火しない。
 - **P5**: **hot-reload される**（決着）。配線後の新セッション不要。user 設定変更は全稼働セッションに波及（注意）。
-- **P6（Codex）**: Stop の `decision:block` は Sol の続行と指示従属を実起こし＝**X4 成立**（一次証拠ゼロだったものが埋まった）。PreToolUse deny も第一形式で実ブロック＝X2 の deny 経路可。additionalContext/UserPromptSubmit 注入も到達。**async は 0.144.1 でも非対応・trust にすら乗らない**＝X1-X4 全て async:false 必須（既存 spotter の SessionStart async:true は現状死んでる公算）。hooks はグローバル×プロジェクトローカルで**マージ実行**。update_plan shape=`plan[].{step,status}` 再確認。
+- **P6（Codex）**: Stop の `decision:block` は Sol の続行と指示従属を実起こし＝**X4 成立**（一次証拠ゼロだったものが埋まった）。PreToolUse deny も第一形式で実ブロック＝X2 の deny 経路可。additionalContext/UserPromptSubmit 注入も到達。**async は 0.144.1 でも非対応・trust にすら乗らない**＝X1-X4 全て async:false 必須（既存 spotter の SessionStart async:true は現状死んでいる＝2026-07-12 実火で `skipping async hook … async hooks are not supported yet` を実測確定。codex-callout は全 async:false ゆえ無影響）。hooks はグローバル×プロジェクトローカルで**マージ実行**。update_plan shape=`plan[].{step,status}` 再確認。
 - **P7**: matcher `mcp__.*` は MCP ツール名に効く。headless の ask は**自動 deny**（再試行なし・hang なし）＝C1 の ultra=ask は headless で自動拒否。Stop block の 8回 cap 実在（hang なし）。
 
 ## 設計（2視点 Plan〔A=最小・疲労回避／B=網羅・強制力〕→ 統括裁定済み）
@@ -208,7 +208,7 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 - [x] **codex/AGENTS.md 委譲レジーム変更**（(b) 裁定: 親直既定→着手ゲート・A＝ネイティブ委譲既定へ書き換え。F 直轄・単独コミット・**push 前にオーナー diff レビュー**・verify-constitution-parity green）
 - [x] `bin/codex-callout-hook.sh`（X1-X5・fast-path・P6 結果で分岐）＋空打ち（3d8d371・codex-smoke 26 green）
 - [x] docs/05 に hooks.json 冪等 append 断片の節を新設
-- [x] この端末の ~/.codex/hooks.json へ append（10:37・バックアップ bak-calloutgate-20260712-103754）／⏳ 実火は新規 Codex セッションで未確認
+- [x] この端末の ~/.codex/hooks.json へ append（10:37・バックアップ bak-calloutgate-20260712-103754）／✅ 実火確認済み（2026-07-12 11:41・codex-cli 0.144.1 gpt-5.6-sol：X5 着手ゲートが画面へ全文注入＋X1 session-start が snapshot 副作用〔porcelain＋HEAD=e80f25f〕を記録。棚卸し文言は 24h スロットルで設計どおり沈黙。X2=update_plan は今回未観測）
 - [x] pathspec コミット（codex hook=3d8d371・docs/05=0e92f8b で push 済み）
 
 ### Phase 5 — 検証常設と締め

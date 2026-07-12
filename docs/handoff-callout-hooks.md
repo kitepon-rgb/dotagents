@@ -34,10 +34,10 @@
 
 ## 次にやること（優先順）
 
-### 1. Codex 側 hooks.json の実火確認（配線は完了済み）
+### 1. ✅ Codex 側 hooks.json の実火確認（完了・2026-07-12 11:41）
 
-- 配線は 2026-07-12 10:37 に完了（4イベント append・バックアップ済み・既存 hook と共存）。**残るは実火確認のみ**＝新規 Codex セッションを立て、着手ゲート（X5・UserPromptSubmit）と正本化/棚卸し（X1-X2）の注入が実際に届くか1回観測する。aiterm の `codex_agent` で駆動可。
-- **trust 承認が必要**（対話 codex で "Trust all"）。
+- 配線は 10:37 完了、実火は 11:41 に確認済み（codex-cli 0.144.1・gpt-5.6-sol）: **X5 着手ゲートが画面へ全文注入**（`UserPromptSubmit hook (completed)` として）／**X1 session-start が snapshot 副作用**（`~/.cache/dotagents/hooks/<sid>.<repo>.codex-snapshot` に porcelain＋HEAD=e80f25f を記録）。棚卸し文言は 24h スロットル（`<repo>.stocktake` 10:20）で設計どおり沈黙。**X2=update_plan は今回 Codex がプランを作らず未観測**（codex-smoke 26 green＋同 hooks.json/同スクリプトで基盤は実証）。
+- 副次実測: 既存 spotter の SessionStart（async:true）は `skipping async hook` で skip 確定（codex-callout は全 async:false ゆえ無影響）。
 - matcher の実挙動検証は fast-path 最適化の論点として残す（現状 async:false・stdin 先頭 grep で対象外ツールを弾く実装で稼働中）。
 
 ### 2. Phase 5（検証常設と締め）
