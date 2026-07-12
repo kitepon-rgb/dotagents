@@ -79,6 +79,14 @@ function runScanner(box) {
 test('公開CLIだけで固定9製品のreportを生成し、shared contractを通す', async (t) => {
   const box = await sandbox(t);
   await installHealthyCommands(box);
+  await box.script('oracle', `
+if [ "$1" = "--version" ]; then
+  echo 'oracle 1.2.3'
+elif [ "$1" = "doctor" ] && [ "$2" = "--providers" ] && [ "$3" = "--json" ]; then
+  echo '{"healthy":true}'
+else
+  exit 2
+fi`);
   await writeFile(box.config, JSON.stringify(validConfig()));
 
   const result = await runScanner(box);
@@ -139,6 +147,22 @@ if [ "$1" = "--version" ]; then echo 'codegraph 1.2.3'; else exit 9; fi`);
   assert.equal(report.products.codegraph.checks[0].reason_code, undefined);
   assert.equal(report.products.oracle.checks[0].status, 'unverified');
   assert.doesNotMatch(JSON.stringify(report), /top-secret|\/Users\/kite|human status/);
+});
+
+test('Oracleの機械可読なprovider未準備はpassにせず理由付きunverifiedにする', async (t) => {
+  const box = await sandbox(t);
+  await installHealthyCommands(box);
+  await box.script('oracle', `
+if [ "$1" = "--version" ]; then echo 'oracle 1.2.3'; else echo '{"providers":[]}' && exit 1; fi`);
+  await writeFile(box.config, JSON.stringify(validConfig()));
+
+  const result = await runScanner(box);
+  assert.equal(result.code, 0, result.stderr);
+  const report = JSON.parse(await readFile(box.output));
+  assert.deepEqual(report.products.oracle.checks[0], {
+    check_id: 'doctor', status: 'unverified', reason_code: 'provider_not_ready',
+  });
+  assert.doesNotMatch(JSON.stringify(report), /providers/);
 });
 
 test('command出力上限とtimeoutは固定reasonで失敗し、生出力を返さない', async (t) => {
