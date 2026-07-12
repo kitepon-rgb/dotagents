@@ -168,7 +168,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 - 同期: `main` と `origin/main` 一致、stash 0、shallow=false。着手前の Hook INFO 契約コミット `0b9d383` は push 済み。
 - green: `make lint`、Claude hook smoke 20件、Codex hook smoke 28件、`install.sh`、`verify-install.sh`。
 - routing: implementer / sorter / refuter は role・model・effort・developer instructions が verifier green。sandbox は親 permission profile により `danger-full-access` へ上書きされたため別表示。
-- detect-only: Codex App Server 0.144.1 の `externalAgentConfig/detect`（`includeHome=true`、cwd=`dotagents`）を実行し、import は未実行。残件は `MCP_SERVER_CONFIG` 3件（chrome-devtools / codex-sidecar / relay-local）、`SKILLS` 1件（app-store-submit）、`SESSIONS`。その他6面は検出項目なし。
+- detect-only: Codex App Server 0.144.1 の `externalAgentConfig/detect`（`includeHome=true`、cwd=`dotagents`）を実行し、import は未実行。検出項目は `MCP_SERVER_CONFIG` 3件（chrome-devtools / codex-sidecar / relay-local）、`SKILLS` 1件（app-store-submit）、`SESSIONS`。その他6面は検出項目なし。検出有無は移行候補の有無であり、9面の対応合否を意味しない。
 - AGENTS: `project_doc_max_bytes=65536`、global 16,141 bytes＋project 12,373 bytes＝28,514 bytes。現 Codex desktop session で人格・計画文書・F/A/H・git・報告を含む global/project 両正典の先頭から末尾まで到達を確認。非空 `AGENTS.override.md` は不在。
 - 未確定: 他端末と IDE 入口の実在は H1 でオーナー確定する。現端末の CLI/desktop 個別 E2E は Wave 3 で記録する。
 
