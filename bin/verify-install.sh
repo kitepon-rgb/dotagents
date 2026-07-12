@@ -26,6 +26,21 @@ check() { # check <dst> <expect_src>
   fi
 }
 
+# Codex の orchestrate は Claude 側の唯一の正本を参照する薄い adapter とする。
+# 実ディレクトリへの複製・絶対リンク・参照先の取り違えをここで明示的に検出する。
+codex_orchestrate="$REPO/codex/skills/orchestrate"
+codex_orchestrate_target="../../claude/skills/orchestrate"
+if [ ! -L "$codex_orchestrate" ]; then
+  echo "FAIL: $codex_orchestrate は Claude 正本への相対 symlink ではない（複製を置かない）"
+  fail=1
+elif [ "$(readlink "$codex_orchestrate")" != "$codex_orchestrate_target" ]; then
+  echo "FAIL: $codex_orchestrate → $(readlink "$codex_orchestrate")（期待 $codex_orchestrate_target）"
+  fail=1
+elif [ ! -d "$codex_orchestrate" ] || [ ! -r "$codex_orchestrate/SKILL.md" ] || [ ! -d "$codex_orchestrate/references" ]; then
+  echo "FAIL: $codex_orchestrate の Claude 正本参照が壊れている（SKILL.md と references を読めない）"
+  fail=1
+fi
+
 # install.sh の10グループと対称に検証
 [ -f "$REPO/claude/CLAUDE.md" ] && check "$HOME/.claude/CLAUDE.md" "$REPO/claude/CLAUDE.md"
 for d in "$REPO/claude/skills"/*/;   do [ -d "$d" ] && check "$HOME/.claude/skills/$(basename "$d")" "$d"; done
