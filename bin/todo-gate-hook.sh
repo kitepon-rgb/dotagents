@@ -8,6 +8,10 @@ import subprocess
 import sys
 import time
 
+for stream in (sys.stdin, sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8")
+
 STATE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "dotagents", "hooks")
 
 
@@ -21,7 +25,7 @@ def error_log():
 
 
 def run_git(cwd, *args):
-    result = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True)
+    result = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True, encoding="utf-8")
     if result.returncode:
         raise RuntimeError
     return result.stdout

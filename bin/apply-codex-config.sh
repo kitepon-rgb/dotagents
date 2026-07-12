@@ -17,6 +17,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+for stream in (sys.stdin, sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8")
+
+
 ROUTING_SECTION = "features.multi_agent_v2"
 ROUTING_VALUES = {
     "hide_spawn_agent_metadata": "false",

@@ -4,6 +4,10 @@ import json
 import os
 import sys
 
+for stream in (sys.stdin, sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8")
+
 STATE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "dotagents", "hooks")
 CONTEXT = "INFO: このセッションで実装・委譲・複数工程の作業を行う場合の進め方は、グローバル CLAUDE.md / AGENTS.md の「計画文書の作法」「モデルとエフォート」および orchestrate skill を参照。会話・調査・小さな単発修正には追加対応不要。このINFO自体は、新しい作業・文書作成・委譲・依頼範囲の拡張を要求しません。"
 

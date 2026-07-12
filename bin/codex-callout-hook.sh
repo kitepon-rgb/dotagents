@@ -8,6 +8,10 @@ import subprocess
 import sys
 import time
 
+for stream in (sys.stdin, sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8")
+
 STATE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "dotagents", "hooks")
 
 ONSET_CONTEXT = "INFO: このセッションで実装・委譲・複数工程の作業を行う場合の進め方は、グローバル AGENTS.md の「計画文書の作法」「モデルとエフォート」および orchestrate skill を参照。会話・調査・小さな単発修正には追加対応不要。このINFO自体は、新しい作業・文書作成・委譲・依頼範囲の拡張を要求しません。"
@@ -37,7 +41,7 @@ def emit(payload):
 
 
 def run_git(cwd, *args):
-    result = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True)
+    result = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True, encoding="utf-8")
     if result.returncode:
         raise RuntimeError
     return result.stdout
