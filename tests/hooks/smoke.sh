@@ -5,6 +5,10 @@ set -u
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 STATE=$(mktemp -d)
 REPO=$(mktemp -d)
+HOOK_REPO=$REPO
+if command -v cygpath >/dev/null 2>&1; then
+  HOOK_REPO=$(cygpath -m "$REPO")
+fi
 trap 'rm -rf "$STATE" "$REPO"' EXIT
 export XDG_CACHE_HOME="$STATE"
 
@@ -34,20 +38,20 @@ git -C "$REPO" init -q && git -C "$REPO" config user.email smoke@example.test &&
 mkdir "$REPO/docs"; printf '%s\n' '- [ ] task' >"$REPO/docs/plan_x.md"; printf '%s\n' base >"$REPO/source.txt"
 git -C "$REPO" add . && git -C "$REPO" commit -qm initial
 run c2-stocktake python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
-{"session_id":"t1","source":"startup","cwd":"$REPO"}
+{"session_id":"t1","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [[ "$RUN_OUT" == *'INFO: docs/'* ]] && pass c2-stocktake || fail_case c2-stocktake
 run c3-clean python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass c3-clean || fail_case c3-clean
 printf '%s\n' changed >>"$REPO/source.txt"
 run c3-warn python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/t1.todo-pending" ] && pass c3-warn || fail_case c3-warn
 run c3-active python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":true}
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":true}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass c3-active || fail_case c3-active
 
@@ -57,14 +61,14 @@ run c4-off env DOTAGENTS_ONSET_GATE=off python3 "$ROOT/bin/onset-gate-hook.sh" <
 run c4-pending python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"t1"}' && json && [[ "$RUN_OUT" == *'前ターン'* ]] && pass c4-pending || fail_case c4-pending
 [ ! -f "$STATE/dotagents/hooks/t1.todo-pending" ] && pass c4-pending-drained || fail_case c4-pending-drained
 run c4-compact python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
-{"session_id":"u1","source":"compact","cwd":"$REPO"}
+{"session_id":"u1","source":"compact","cwd":"$HOOK_REPO"}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass c4-compact || fail_case c4-compact
 run c4-rearmed python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass c4-rearmed || fail_case c4-rearmed
 
 # TODO gate off でも compact は onset/placement の再武装だけ行う
 run c4-compact-todo-off env DOTAGENTS_TODO_GATE=off python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
-{"session_id":"u1","source":"compact","cwd":"$REPO"}
+{"session_id":"u1","source":"compact","cwd":"$HOOK_REPO"}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass c4-compact-todo-off || fail_case c4-compact-todo-off
 run c4-rearmed-todo-off python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass c4-rearmed-todo-off || fail_case c4-rearmed-todo-off
