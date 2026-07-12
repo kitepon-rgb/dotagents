@@ -2,6 +2,9 @@
 # install profile と apply-codex-config を実 HOME に触れず検証する。
 set -euo pipefail
 
+# install.sh 外で作る symlink fixture も Windows では native symlink にする。
+case "$(uname -s)" in MINGW*|MSYS*) export MSYS=winsymlinks:nativestrict ;; esac
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OFFICIAL_HOME="$(mktemp -d)"
 LEGACY_HOME="$(mktemp -d)"
