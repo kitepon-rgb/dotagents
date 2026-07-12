@@ -1,0 +1,2 @@
+# Git Bash でも shell 契約を壊さないよう、実行スクリプトは常に LF で checkout する。
+*.sh text eol=lf
