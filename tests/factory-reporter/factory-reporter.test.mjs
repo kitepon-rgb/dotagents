@@ -28,9 +28,9 @@ function report(id = '018f0000-0000-8000-8000-000000000001') {
 }
 
 async function writeReport(box, body = report()) { await writeFile(box.report, JSON.stringify(body, null, 2)); return readFile(box.report); }
-async function writeConfig(box, endpoint, enabled = true, hostId = 'test-host') {
+async function writeConfig(box, endpoint, enabled = true, hostId = 'test-host', hostProfile = 'mac') {
   await writeFile(box.credential, 'unit-test-token\n', { mode: 0o600 });
-  await writeFile(box.config, JSON.stringify({ schema_version: '1.0', collection: { enabled: false }, reporting: enabled ? { enabled: true, endpoint, host_id: hostId, credential_file: box.credential } : { enabled: false } }));
+  await writeFile(box.config, JSON.stringify({ schema_version: '1.0', host: { id: hostId, profile: hostProfile }, collection: { enabled: false }, reporting: enabled ? { enabled: true, endpoint, credential_file: box.credential } : { enabled: false } }));
 }
 function run(box, args, extra = {}) {
   return new Promise((resolveRun) => {
@@ -79,9 +79,11 @@ test('previewはnetworkゼロでreportを検証する', async () => {
   assert.equal(result.code, 0); assert.equal(result.json.report_id, report().report_id); assert.equal(server.received.length, 0); await server.close();
 });
 
-test('reporting.host_idとreport.host_idの不一致はpreview/enqueueで拒否する', async () => {
+test('config.hostとreport host identityの不一致はpreview/enqueueで拒否する', async () => {
   const box = await sandbox(); await writeReport(box); await writeConfig(box, 'http://127.0.0.1:1/api', true, 'other-host');
-  for (const command of ['preview', 'enqueue']) { const result = await run(box, [command, '--report', box.report, '--config', box.config]); assert.equal(result.code, 1); assert.match(result.stderr, /host_id.*一致/); }
+  for (const command of ['preview', 'enqueue']) { const result = await run(box, [command, '--report', box.report, '--config', box.config]); assert.equal(result.code, 1); assert.match(result.stderr, /identity.*一致/); }
+  await writeConfig(box, 'http://127.0.0.1:1/api', true, 'test-host', 'wsl');
+  const profileMismatch = await run(box, ['preview', '--report', box.report, '--config', box.config]); assert.equal(profileMismatch.code, 1); assert.match(profileMismatch.stderr, /identity.*一致/);
 });
 
 test('同一report_idは同bytesのみduplicateであり、異なるbytesはcollisionとして既存を保持する', async () => {
@@ -131,8 +133,20 @@ test('不正UTF-8のconfig/reportとoptional config fieldは拒否する', async
   const invalidReport = await run(reportBox, ['preview', '--report', reportBox.report]); assert.equal(invalidReport.code, 1); assert.match(invalidReport.stderr, /report JSON/);
   const configBox = await sandbox(); await writeReport(configBox); await writeFile(configBox.config, Buffer.from([0xff, 0xfe]));
   const invalidConfig = await run(configBox, ['preview', '--report', configBox.report, '--config', configBox.config]); assert.equal(invalidConfig.code, 1); assert.match(invalidConfig.stderr, /設定JSON/);
-  await writeFile(configBox.config, JSON.stringify({ schema_version: '1.0', collection: { enabled: false }, reporting: { enabled: false, endpoint: 'ftp://example.test', host_id: 'x'.repeat(65), credential_file: '' } }));
+  await writeFile(configBox.config, JSON.stringify({ schema_version: '1.0', host: { id: 'test-host', profile: 'mac' }, collection: { enabled: false }, reporting: { enabled: false, endpoint: 'ftp://example.test', credential_file: '' } }));
   const invalidOptional = await run(configBox, ['preview', '--report', configBox.report, '--config', configBox.config]); assert.equal(invalidOptional.code, 1); assert.match(invalidOptional.stderr, /endpoint/);
+});
+
+test('config host profile/additional fieldと旧reporting.host_idを拒否する', async () => {
+  const cases = [
+    { host: { id: 'test-host', profile: 'linux' }, collection: { enabled: false }, reporting: { enabled: false } },
+    { host: { id: 'test-host', profile: 'mac', extra: true }, collection: { enabled: false }, reporting: { enabled: false } },
+    { host: { id: 'test-host', profile: 'mac' }, collection: { enabled: false }, reporting: { enabled: false, host_id: 'test-host' } },
+  ];
+  for (const config of cases) {
+    const box = await sandbox(); await writeReport(box); await writeFile(box.config, JSON.stringify({ schema_version: '1.0', ...config }));
+    const result = await run(box, ['preview', '--report', box.report, '--config', box.config]); assert.equal(result.code, 1);
+  }
 });
 
 test('accepted responseのみoutboxから削除する', async () => {
@@ -152,7 +166,7 @@ test('duplicate accepted responseも同一report_idなら削除する', async ()
 
 test('flushはoutbox reportとconfigのhost不一致をnetworkなしでdead-letterへ隔離する', async () => {
   const box = await sandbox(); await writeReport(box); const server = await startServer(() => assert.fail('host mismatch must not network')); await writeConfig(box, server.endpoint);
-  await run(box, ['enqueue', '--report', box.report, '--config', box.config]); await writeConfig(box, server.endpoint, true, 'other-host');
+  await run(box, ['enqueue', '--report', box.report, '--config', box.config]); await writeConfig(box, server.endpoint, true, 'test-host', 'wsl');
   const flushed = await run(box, ['flush', '--config', box.config]); assert.equal(flushed.json.dead_lettered, 1); assert.equal(server.received.length, 0); assert.equal((await readdir(deadDir(box))).length, 1); await server.close();
 });
 

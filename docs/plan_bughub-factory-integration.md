@@ -160,7 +160,7 @@ factory issueの状態遷移は既存pull issueと分けて仕様化する。正
 - `reporting.enabled`は既定`false`とし、明示設定された時だけoutboxへの送信対象enqueueとnetwork送信を行う。tokenの存在、管理端末判定、scheduler導入をONの代用にしない。
 - `collection.enabled`はlocal structured error storeの収集可否を独立に制御する。収集ON・送信OFFでは端末外へ出さず、利用者が送信予定payloadをpreviewできる。
 - 製品更新で`reporting.enabled`を暗黙にONへ変更しない。クオ管理端末も導入時に明示ONを記録し、設定なし・不正値・送信先不明はfail closedで送信しない。
-- 設定shapeの正本は`schemas/factory-reporter-config-v1.schema.json`。config fileのJSON booleanだけを正規設定面にし、env文字列やtoken存在からONを推測しない。
+- 設定shapeの正本は`schemas/factory-reporter-config-v1.schema.json`。top-level `host.id / host.profile`は送信同意と独立した端末identity、`collection.enabled / reporting.enabled`のJSON booleanだけを正規opt-in面にし、env文字列やtoken存在からONを推測しない。
 
 factory ingestion認証は既存の任意dashboard tokenと分離し、常時必須のhost-scoped credentialにする。発行、server登録、端末配置、rotation猶予、revoke、紛失端末廃止、backup/restoreをrunbookとtestに含める。query parameterへtokenを出さない。
 

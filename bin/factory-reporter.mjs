@@ -45,18 +45,20 @@ async function readConfig(configPath) {
 }
 
 function validateConfig(config) {
-  if (!isObject(config) || Object.keys(config).some((key) => !['schema_version', 'collection', 'reporting'].includes(key))) throw new Error('設定shapeが不正です');
+  if (!isObject(config) || Object.keys(config).some((key) => !['schema_version', 'host', 'collection', 'reporting'].includes(key))) throw new Error('設定shapeが不正です');
   if (config.schema_version !== '1.0') throw new Error('設定schema_versionは1.0でなければなりません');
+  if (!isObject(config.host)) throw new Error('hostが必要です');
+  exactKeys(config.host, ['id', 'profile'], 'host'); stableId(config.host.id, 'host.id');
+  if (!['server', 'mac', 'wsl', 'windows-native'].includes(config.host.profile)) throw new Error('host.profileが不正です');
   for (const section of ['collection', 'reporting']) {
     if (!isObject(config[section]) || typeof config[section].enabled !== 'boolean') throw new Error(`${section}.enabledはboolean必須です`);
   }
   if (Object.keys(config.collection).some((key) => key !== 'enabled')) throw new Error('collectionに未定義fieldがあります');
-  if (Object.keys(config.reporting).some((key) => !['enabled', 'endpoint', 'host_id', 'credential_file'].includes(key))) throw new Error('reportingに未定義fieldがあります');
-  const { endpoint, host_id: hostId, credential_file: credentialFile } = config.reporting;
+  if (Object.keys(config.reporting).some((key) => !['enabled', 'endpoint', 'credential_file'].includes(key))) throw new Error('reportingに未定義fieldがあります');
+  const { endpoint, credential_file: credentialFile } = config.reporting;
   if ('endpoint' in config.reporting) { if (typeof endpoint !== 'string' || endpoint.length > 2048) throw new Error('reporting.endpointが不正です'); let url; try { url = new URL(endpoint); } catch { throw new Error('reporting.endpointが不正です'); } if (!['http:', 'https:'].includes(url.protocol)) throw new Error('reporting.endpointが不正です'); }
-  if ('host_id' in config.reporting) stableId(hostId, 'reporting.host_id');
   if ('credential_file' in config.reporting && (typeof credentialFile !== 'string' || credentialFile.length < 1 || credentialFile.length > 4096)) throw new Error('reporting.credential_fileが不正です');
-  if (config.reporting.enabled && (!('endpoint' in config.reporting) || !('host_id' in config.reporting) || !('credential_file' in config.reporting))) throw new Error('reporting.enabled時にendpoint/host_id/credential_fileが必要です');
+  if (config.reporting.enabled && (!('endpoint' in config.reporting) || !('credential_file' in config.reporting))) throw new Error('reporting.enabled時にendpoint/credential_fileが必要です');
 }
 
 function isObject(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
@@ -147,6 +149,7 @@ function validateRuntimeError(item, path, observedAt, productId) {
 function validateResolution(item, path, observedAt) { exactKeys(item, ['fingerprint', 'resolved_at', 'reason_code'], path); fingerprint(item.fingerprint, `${path}.fingerprint`); if (utcAt(item.resolved_at, `${path}.resolved_at`) > observedAt) throw new Error(`${path}.resolved_atがobserved_atより未来です`); stableId(item.reason_code, `${path}.reason_code`); return item.fingerprint; }
 
 function validUtc(value) { return typeof value === 'string' && value.endsWith('Z') && Number.isFinite(Date.parse(value)); }
+function assertConfigIdentity(config, report) { if (config.host && (config.host.id !== report.host_id || config.host.profile !== report.host_profile)) throw new Error('report host identityとconfig.hostが一致しません'); }
 
 async function readAndValidateReport(reportPath) {
   const bytes = await readFile(reportPath);
@@ -223,7 +226,7 @@ async function postOne(config, token, entry) {
   const bytes = await readFile(entry.file);
   let report;
   try { report = JSON.parse(UTF8.decode(bytes)); validateReport(report); } catch { return { action: 'dead', reason: 'malformed' }; }
-  if (report.host_id !== config.reporting.host_id) return { action: 'dead', reason: 'host-mismatch' };
+  if (!config.host || report.host_id !== config.host.id || report.host_profile !== config.host.profile) return { action: 'dead', reason: 'host-mismatch' };
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
@@ -257,14 +260,14 @@ async function main() {
   const loc = locations(defaultStatePath());
   if (command === 'preview') {
     const { bytes, report } = await readAndValidateReport(options.report);
-    if (config.reporting.enabled && config.reporting.host_id !== report.host_id) throw new Error('report.host_idとreporting.host_idが一致しません');
+    assertConfigIdentity(config, report);
     emit({ ok: true, command, reporting_enabled: config.reporting.enabled, report_id: report.report_id, body_bytes: bytes.length, report });
     return;
   }
   if (command === 'enqueue') {
     const { bytes, report } = await readAndValidateReport(options.report);
     if (!config.reporting.enabled) { emit({ ok: true, command, reporting_enabled: false, enqueued: false, report_id: report.report_id, ...(await queueStats(loc)) }); return; }
-    if (config.reporting.host_id !== report.host_id) throw new Error('report.host_idとreporting.host_idが一致しません');
+    assertConfigIdentity(config, report);
     const result = await enqueue(loc, bytes, report.report_id);
     emit({ ok: true, command, reporting_enabled: true, enqueued: !result.duplicate, report_id: report.report_id, ...(await queueStats(loc)) });
     return;

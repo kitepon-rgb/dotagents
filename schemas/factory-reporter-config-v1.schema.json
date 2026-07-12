@@ -4,9 +4,24 @@
   "title": "dotagents Factory Reporter Config v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "collection", "reporting"],
+  "required": ["schema_version", "host", "collection", "reporting"],
   "properties": {
     "schema_version": { "const": "1.0" },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "profile"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$",
+          "maxLength": 64
+        },
+        "profile": {
+          "enum": ["server", "mac", "wsl", "windows-native"]
+        }
+      }
+    },
     "collection": {
       "type": "object",
       "additionalProperties": false,
@@ -27,11 +42,6 @@
           "pattern": "^https?://",
           "maxLength": 2048
         },
-        "host_id": {
-          "type": "string",
-          "pattern": "^[a-z0-9][a-z0-9._-]*$",
-          "maxLength": 64
-        },
         "credential_file": {
           "type": "string",
           "minLength": 1,
@@ -45,7 +55,7 @@
             "required": ["enabled"]
           },
           "then": {
-            "required": ["endpoint", "host_id", "credential_file"]
+            "required": ["endpoint", "credential_file"]
           }
         }
       ]
