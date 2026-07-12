@@ -7,10 +7,10 @@
 # codex-sidecar-cli/core は registry 運用で確定（2026-07-04 オーナー裁定「そのままで」）。
 # link 開発へ戻す場合は先にこのリストから外して npm link する（将来の任意事項）。
 
-set -u
+set -uo pipefail
 
 # launchd / cron は最小 PATH で起動する（npm が /opt/homebrew 等にあると見つからず静かに失敗する）。
-PATH="${AGENTS_UPDATE_PATH_PREFIX:-/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin}:$PATH"
+PATH="${AGENTS_UPDATE_PATH_PREFIX:-$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin}:$PATH"
 
 # Linux / WSL2 の cron は NVM の選択済み Node を PATH に含めない。
 # 対話 shell 側の偶然の PATH に頼らず、NVM がある端末では正規入口から復元する。
@@ -45,13 +45,32 @@ PACKAGES=(
   'throughline'
 )
 
+UV_TOOLS=(
+  'markitdown'
+)
+
 {
+  failed=0
   printf '\n=== agents-update start: %s ===\n' "$(date -Iseconds)"
   for pkg in "${PACKAGES[@]}"; do
     printf -- '--- %s ---\n' "$pkg"
     if ! npm install -g "${pkg}@latest"; then
       printf 'FAILED: %s\n' "$pkg"
+      failed=1
     fi
   done
+  if ! command -v uv >/dev/null 2>&1; then
+    printf 'FAILED: uv 不在（MarkItDownを更新できない）\n'
+    failed=1
+  else
+    for pkg in "${UV_TOOLS[@]}"; do
+      printf -- '--- uv-tool:%s ---\n' "$pkg"
+      if ! uv tool upgrade "$pkg"; then
+        printf 'FAILED: uv-tool:%s\n' "$pkg"
+        failed=1
+      fi
+    done
+  fi
   printf '=== agents-update end:   %s ===\n' "$(date -Iseconds)"
+  exit "$failed"
 } 2>&1 | tee -a "$LOG"

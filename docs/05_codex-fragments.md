@@ -70,7 +70,7 @@ permission profile を子へ再適用するため、custom agent の `sandbox_mo
 
 実装根拠: [`MultiAgentV2Config` の hidden 既定](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/config/mod.rs)、[`spawn_agent` schema から4入力を除く処理](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/tools/handlers/multi_agents_spec.rs)、[role 適用後に親 permission profile を再適用する処理](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/tools/handlers/multi_agents_common.rs)。上流既報は [#31814](https://github.com/openai/codex/issues/31814)（hidden routing）・[#20077](https://github.com/openai/codex/issues/20077)（full-history 既定）。
 
-## 3b. oracle MCP（ChatGPT Chat枠セカンドオピニオン・全端末推奨）
+## 3b. oracle MCP（ChatGPT Chat枠セカンドオピニオン・工場コア全端末必須）
 
 Chat枠（Work枠と別勘定）の第二意見を Codex 親からも使えるようにする。**素の `oracle-mcp` でなくラッパー必須**（undici EINVAL ガード＋画面外 Chrome。理由と運用の正典は [06_oracle-mcp.md](06_oracle-mcp.md)）。ラッパーだけは事前に選択中の skill 面で `./install.sh --profile <official|legacy>` を実行し、`$HOME/.local/bin` へ配布する。MCP 登録は section 7 の限定 applier の対象外なので、端末固有の絶対パスを TOML へ手挿しせず、H 承認後に section 10 の `codex mcp add oracle` で行う。
 
@@ -156,14 +156,20 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 
 `~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話 Codex で trust を承認し、新規 session で X1 から実火確認する。`verify-install` は4イベントが canonical entry 1件ずつであることを検証する。
 
+### Spotter Codex hook（工場コア・Spotter所有）
+
+対象projectで `spotter install -y` を実行する。Spotterがuser-level `SessionStart` / `UserPromptSubmit` / `Stop` の3本を同期command schemaでcanonical化し、projectの `.spotter/marker.json` がある時だけ発火する。`SessionStart` を `async:true` にしない（Codex CLI 0.144.1はasync hookをskipする）。dotagentsの `apply-codex-config` はSpotter entryを保持し、再実装・削除・trust変更をしない。
+
+検証は `spotter codex-hook diagnostics --project <project>` で `installed / compatible / canonical` を確認した後、対話Codexの `/hooks` で3本をreviewし、新規sessionで `.spotter/hook-events.jsonl` の `spotter.hook_event.v1` を実火する。機械診断の `configured-unverified` は設定合格であって、trust・実火完了を意味しない。
+
 ## 10. MCP の親別 matrix と登録 / 疎通
 
 MCP は親に応じて入口を分ける。Codex 親から入れ子 Codex を起動しないことは性能だけでなく、native routing・並列数・usage 制御の契約である。
 
 | 親 | core | 任意 / 認証依存 | 禁止 / 非採用 |
 |---|---|---|---|
-| Claude Code | `codex-sidecar`、`caveat`、`codegraph` | `aiterm`（Codex / Grok / Composer）、`oracle` | — |
-| Codex | native subagents、`caveat`、`codegraph` | `aiterm`（Grok / Composer のみ）、`oracle`、OpenAI Docs | `codex-sidecar`、`aiterm` の `codex_agent`（入れ子 Codex） |
+| Claude Code | `codex-sidecar`、`aiterm`、`oracle`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | — |
+| Codex | native subagents、`aiterm`（Grok / Composerのみ）、`oracle`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | `codex-sidecar`、`aiterm` の `codex_agent`（入れ子 Codex） |
 
 登録前は read-only に現在値を確認する。
 

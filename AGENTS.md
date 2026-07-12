@@ -21,10 +21,10 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 
 新しい端末でこのリポを稼働させる手順。上から順に実行する。**詳細な前提・トラブルシュートは [README.md](README.md) の「他端末セットアップ・ランブック」（§0〜4）が正典**——本節はその AI 実行用の要約＋`install.sh` が触らない `settings.json` だけを補う。
 
-1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・`claude`/`codex`/`markitdown`・MCP 用 CLI（`aiterm-mcp`/`caveat`/`codegraph`/`codex-sidecar-mcp`）を導入し `claude mcp add --scope user` で登録（codex-sidecar は Claude 側のみ＝Codex 親はネイティブ委譲一択。2026-07-11 監査で登録漏れ実在＝憲法の「ツール一覧に常在」が空手形化していた）。
+1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・`claude`/`codex`・工場コア8製品（`caveat`/`throughline`/`spotter`/`codegraph`/`markitdown`/`oracle`/`aiterm-mcp`/`codex-sidecar-mcp`）を導入し、親別matrixどおりMCP登録する（codex-sidecar は Claude 側のみ＝Codex 親はネイティブ委譲一択。2026-07-11 監査で登録漏れ実在＝憲法の「ツール一覧に常在」が空手形化していた）。
 2. **clone**（README §1）: `gh repo clone kitepon-rgb/dotagents ~/Developer/dotagents && cd ~/Developer/dotagents`。
 3. **既存実ファイルの退避**（README §2・重要）: install.sh は実ファイルを SKIP するので、先に tar 退避し stale な `~/.claude/CLAUDE.md` 実体を削除。飛ばすと正本化が静かに失敗する。`~/.codex/AGENTS.md` が実ファイルなら同様——中身を確認し、価値ある行は `codex/AGENTS.md` へ PR してから tar 退避・削除する（黙って上書き・破棄しない）。
-4. **install → Codex routing / hook 差分確認 → 検証**（README §3）: 既定の `./install.sh --profile official` 後、`./bin/apply-codex-config --dry-run` で変更範囲を確認する。`--apply` は routing 2キーと dotagents hook 4本だけを backup 付きで書き込むため、対象端末への適用承認後に限る。最後に `./bin/verify-install.sh --profile official` を通す（FAIL 行が退避すべき実ファイルまたは不足設定を名指しする）。
+4. **install → Codex routing / hook 差分確認 → Spotter project install → 検証**（README §3）: 既定の `./install.sh --profile official` 後、`./bin/apply-codex-config --dry-run` で変更範囲を確認する。`--apply` は routing 2キーと dotagents hook 4本だけを backup 付きで書き込むため、対象端末への適用承認後に限る。続けてdotagentsルートで `spotter install -y` を実行し、Spotter自身にproject marker・Claude/Codex hook・host別catalog・Throughline auditor contextを管理させる。最後に `./bin/verify-install.sh --profile official` を通す（FAIL 行が退避すべき実ファイルまたは不足設定を名指しする）。
 5. **`settings.json` 断片の適用**（install.sh は `settings.json` を触らない＝ここが手挿しの代替。AI は jq で冪等・安全にマージせよ）: 正典は [docs/03_settings-fragments.md](docs/03_settings-fragments.md)。手順＝既存確認→バックアップ→追加分のみ→JSON 妥当性確認。**正本化ゲート hook は全端末必須**。実例（hook を PostToolUse に冪等追記）:
 
    ```bash
@@ -104,6 +104,8 @@ claude/commands/audit-gauntlet.md -> ../skills/audit-gauntlet/SKILL.md
 ## 自動アップデート
 
 `bin/agents-update.sh` が curated な NPM ツール群 (Claude Code / Codex CLI / aiterm-mcp / Codex Sidecar / pnpm ほか) を `npm install -g <pkg>@latest` で順次更新する。`install.sh` で `~/.local/bin/agents-update` に symlink される。**週次の常設は必須**（macOS=launchd／Linux・WSL=cron。手順と「旧自動更新の撲滅」は [README.md](README.md)「自動アップデート」節——2026-07-04 実測で旧 tools-manager 製の週次更新が別リストで並走していた）。**対象パッケージ一覧はスクリプト先頭の `PACKAGES=` を直接編集**。`npm link` / `npm install -g .` 中の package をリストに残したまま走らせると registry 版で上書きされる点だけ注意。
+
+工場コア8製品は「導入済み」で終わらない。NPM製品は `@latest`、MarkItDownは `uv tool upgrade` で更新し、更新後も `verify-install` と `make ci` の互換契約を維持する。失敗した製品名を明示して更新ジョブを非0終了させ、上流更新でCLI・hook・MCP・設定schemaが変わった時は、製品側の正規契約を確認してdotagentsのadapter・ランブック・fixtureを同じ作業で追従させる。
 
 ## 既知の罠
 

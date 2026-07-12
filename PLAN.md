@@ -10,10 +10,11 @@ dotagents は**開発工場の司令室**。工場そのものではなく、全
 - **規範**: ベルの憲法（グローバル CLAUDE.md 正本）・本憲章の原則・orchestrate（統括の型）・02_models.md（役割→モデル対応の唯一の参照点）・01_project-layout.md（フォルダ構成標準）
 - **同期ハブ**: install.sh が skill / command / agents / rule / bin / 罠DB を全端末へ symlink 配布。GitHub が真実の源
 - **知識台帳**: rag/（調査の複利棚）・docs/（決定と計画）。罠DB は Caveat 自身が管理（`~/.caveat/own` → private の Caveat-Private・v0.15+。dotagents 外）
+- **工場コア8製品**: Caveat（罠知識）・Throughline（セッション継続）・Spotter（未使用ツール監査）・Codegraph（コード構造理解）・MarkItDown（外部資料の再利用可能化）・Oracle（独立したChatGPT second opinion）・aiterm-mcp（PTYと外部モデル枠）・codex-sidecar（Claude親からのCodex実行）。各製品のソース・状態・hookは各製品自身が所有し、dotagents は全端末・対象projectへの正規導入、週次更新、親別配線、互換検証、代表E2E、上流更新への追従を担う
 
 出自: 期間限定の最高知能（Fable 5・2026-07 在任）の出力を「消える回答」でなく「残る構造と判断」に変換し尽くすキャンペーンの成果物。以後は世代を跨いで運用する。
 
-**範囲**: 本旨は「開発工場（環境）の最適化」。個々のプロダクトの品質監査・法務チェック・深いバグ探しは範囲外——それは「工場で作る製品の検品」であり、オーナーが個別に依頼した時だけ行う。各プロジェクトへの介入は原則、①GitHub 同期 ②フォルダ構成の標準化 ③CLAUDE.md ブラッシュアップの3つに絞る。
+**範囲**: 本旨は「開発工場（環境）の最適化」。個々のプロダクトの品質監査・法務チェック・深いバグ探しは範囲外——それは「工場で作る製品の検品」であり、オーナーが個別に依頼した時だけ行う。各プロジェクトへの介入は原則、①GitHub 同期 ②フォルダ構成の標準化 ③CLAUDE.md ブラッシュアップ ④Spotter のproject-scoped有効化に絞る。Spotterは全projectで無条件発火させず、正規CLIが作るmarkerで対象を限定する。
 
 ## 原則（番号は生きた参照＝変更禁止）
 

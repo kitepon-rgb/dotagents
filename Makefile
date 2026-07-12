@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-py lint-md lint-constitution lint-skills lint-hooks test-install test-update test-oracle ci help
+.PHONY: lint lint-sh lint-py lint-md lint-constitution lint-skills lint-hooks test-install test-update test-oracle test-factory-core ci help
 
 lint: lint-sh lint-py lint-md lint-constitution lint-skills lint-hooks ## 静的 lint + skill/hook smoke
 
@@ -37,7 +37,10 @@ test-update: ## cron 最小 PATH で NVM 配下の npm を解決できること�
 test-oracle: ## Oracle wrapper のOS非依存な入口選択を検証
 	bash tests/oracle/wrappers.sh
 
-ci: lint test-install test-update test-oracle ## ローカル/CI 共通の全ゲート
+test-factory-core: ## Caveat / Throughline / Spotter の外部コア受入契約を検証
+	bash tests/factory-core/smoke.sh
+
+ci: lint test-install test-update test-oracle test-factory-core ## ローカル/CI 共通の全ゲート
 
 help: ## タスク一覧
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \

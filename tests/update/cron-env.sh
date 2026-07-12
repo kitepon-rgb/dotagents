@@ -24,18 +24,79 @@ export PATH
 EOF
 cat > "$TEST_HOME/.nvm/fake-bin/npm" <<'EOF'
 #!/bin/sh
-printf '%s\n' "$*" >> "$HOME/npm-calls.log"
+printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/npm-calls.log"
+case "${NPM_FAIL_PACKAGE:-}" in
+  '') exit 0 ;;
+esac
+case "$*" in
+  *"${NPM_FAIL_PACKAGE}@latest"*) exit 23 ;;
+esac
 EOF
 chmod +x "$TEST_HOME/.nvm/fake-bin/npm"
+cat > "$TEST_HOME/.nvm/fake-bin/uv" <<'EOF'
+#!/bin/sh
+printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/uv-calls.log"
+case "${UV_FAIL_PACKAGE:-}" in
+  '') exit 0 ;;
+esac
+case "$*" in
+  *"${UV_FAIL_PACKAGE}"*) exit 24 ;;
+esac
+EOF
+chmod +x "$TEST_HOME/.nvm/fake-bin/uv"
 
 env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  RUN_ID=normal \
   /bin/bash "$ROOT/bin/agents-update.sh" >/dev/null
 
-[ "$(wc -l < "$TEST_HOME/npm-calls.log" | tr -d ' ')" -eq 13 ] \
+[ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
   || fail 'curated package 13件を fake npm へ渡していない'
+[ "$(grep -c '^normal:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
+  || fail 'markitdown を fake uv tool upgrade へ1件渡していない'
 grep -q '=== agents-update end:' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
   || fail '完了行がない'
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  RUN_ID=npm-fail \
+  NPM_FAIL_PACKAGE='claude-spotter' \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/fail.out" 2>&1; then
+  fail '途中の npm install 失敗を成功扱いした'
+fi
+[ "$(grep -c '^npm-fail:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+  || fail '途中失敗後も残り package を更新しなかった'
+grep -q '^FAILED: claude-spotter$' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
+  || fail '失敗した package 名を log に残さない'
+grep -q '^npm-fail:install -g codex-sidecar-mcp@latest$' "$TEST_HOME/npm-calls.log" \
+  || fail '途中失敗後の package を fake npm へ渡していない'
+[ "$(grep -c '^npm-fail:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
+  || fail 'npm 失敗後も uv tool upgrade を継続しなかった'
+
+mv "$TEST_HOME/.nvm/fake-bin/uv" "$TEST_HOME/.nvm/fake-bin/uv.off"
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  RUN_ID=uv-missing \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/uv-missing.out" 2>&1; then
+  fail 'uv 不在を成功扱いした'
+fi
+[ "$(grep -c '^uv-missing:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+  || fail 'uv 不在時に npm の残件を更新しなかった'
+mv "$TEST_HOME/.nvm/fake-bin/uv.off" "$TEST_HOME/.nvm/fake-bin/uv"
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  RUN_ID=uv-fail \
+  UV_FAIL_PACKAGE='markitdown' \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/uv-fail.out" 2>&1; then
+  fail 'uv tool upgrade 失敗を成功扱いした'
+fi
+[ "$(grep -c '^uv-fail:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+  || fail 'uv tool upgrade 失敗時に npm の残件を更新しなかった'
+[ "$(grep -c '^uv-fail:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
+  || fail 'uv tool upgrade を実行していない'
+grep -q '^FAILED: uv-tool:markitdown$' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
+  || fail 'uv 失敗した package 名を log に残さない'
 
 if env -i HOME="$EMPTY_HOME" PATH="$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \

@@ -8,6 +8,10 @@
 .claude/
 .vscode/
 
+# Spotter project marker / host別catalog / hook event は端末・host固有。
+# 正規生成入口は各projectでの `spotter install -y`。
+.spotter/
+
 # codex-sidecar の作業物（隔離 worktree の App Server ログ等）は端末ローカル
 .codex-sidecar/
 

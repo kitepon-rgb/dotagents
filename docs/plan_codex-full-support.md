@@ -7,6 +7,8 @@
 
 dotagents を全端末の開発工場の中心として、Claude Code と Codex のどちらを親にしても同じ工場原則・主要 workflow・委譲品質・端末再現性を得られる状態にする。
 
+工場の外部コアは **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Codegraph（コード構造理解）／MarkItDown（外部資料変換）／Oracle（独立したChatGPT second opinion）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude親からのCodex実行）** の8製品とする。dotagents は各製品のソースと状態を所有せず、全現役端末への導入・週次更新・親別配線・互換検証・代表 E2E・上流更新への追従を所有する。
+
 「全対応」はファイル数の左右対称ではなく**能力対称**を指す。製品固有機能は無理に移植せず、`対応 / 製品固有 / 非採用（理由）` のいずれかを明記できれば閉じる。
 
 ## 1. 完了条件（本計画が TODO を兼ねる）
@@ -15,6 +17,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 - [ ] Claude の主要 workflow 3件に Codex の正規入口があり、Claude 固有ツールを誤って呼ばない
 - [ ] Codex の公式 user skill 面 `$HOME/.agents/skills` から対象 skill を利用できる
 - [ ] 規範・skills・subagents・hooks・必須 MCP・session 継続を新規 Codex session で実測済み
+- [ ] 工場コア8製品が全現役端末に導入・更新され、親別matrixどおり疎通し、Spotter限定発火・Throughline context・Codegraph／MarkItDown／Oracle／aiterm／sidecar代表 E2E が green
 - [ ] 現役端末すべてで clone/pull→install→必須設定→verify→代表 E2E が green
 - [ ] Claude 側の skill/command/agent/hook に回帰がない
 - [ ] 既存 Codex 関連プランの重複 TODO を完了または移管理由付きで閉じている
@@ -45,6 +48,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 | HOOKS | Claude C1-C4 / Codex X1-X5 は正典参照の短い INFO。初回案内・compact 再武装・Stop pending 配送を smoke 済み | INFO 契約を再設計しない。CI 昇格、README、他端末実火だけ |
 | COMMANDS | Claude command 3件、Codex 対応表なし | Codex は対応 skill の明示 invocation を正規入口にする。架空の plugin command は作らない |
 | SESSIONS | Throughline と handoff smoke が端末外で実装済み | 新規実装しない。dotagents は配線存在と代表 capture/restore/handoff を受け入れ検証 |
+| FACTORY_CORE | 8製品の必須度・更新面が不整合。Oracleは任意、aitermは前提とmatrixが矛盾、sidecarはClaude親だけcore、Spotterはdotagents自身に未接続、MarkItDownは更新管理外 | 8製品を外部所有の必須工場コアとして統一。NPM＋`uv tool`更新、親別配線、互換・代表E2Eをdotagentsの保守責務にする |
 | 配布/CI | `~/.codex/skills` のみ。clean HOME E2E なし | 公式 skill 面を追加し、repo配布CIと実端末 E2Eを分離 |
 
 ## 4. 設計方針
@@ -56,6 +60,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 5. **公式面を既定、legacy は明示互換**: `$HOME/.agents/skills` を既定にする。古い入口だけ explicit legacy profile を使い、同じ入口へ両面を常設しない。dotagents 所有の旧 symlink を外す時は dry-run・backup・H承認を必須にし、他の local skill は触らない。
 6. **端末設定は狭く扱う**: model、permissions、OAuth、hook trust を自動変更しない。自動適用は routing 必須2キーと dotagents 固有 hook entry の追加だけ。
 7. **一波一責務**: 各 wave は独立 commit、フルゲート、個別 revert が可能な単位にする。
+8. **工場コア8製品の所有権と統合責務を分ける**: 製品ソース・Caveatのown・Throughlineの状態・Spotterの状態/hook等は各製品自身に管理させる。dotagentsは再実装・複製せず、導入・NPM/`uv tool`週次更新・親別配線・互換fixture・代表E2E・上流更新追従を所有する。Spotterは対象projectごとの明示installに限定し、Codex親からsidecar/aiterm経由の入れ子Codexを禁止する。
 
 ## 5. Workflow 対応表
 
@@ -111,6 +116,9 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
   - Codex 親: native subagents、aiterm（Grok/Composer用）、caveat、codegraph、oracle/OpenAI Docs
 - [x] `codex mcp` の登録・list・疎通、STDIO env closed-mode、必須/任意/親で禁止をランブック化
 - [ ] Throughline/codex-thread-handoff-smoke の代表 capture/restore/handoff を実測（本体改造・sessions同期はしない。capture/handoff は成功、restore は上流 mismatch で未達）
+- [ ] 工場コア8製品を onboarding・README・親別matrix・`verify-install` に必須化し、Spotter project契約とCodegraph／MarkItDown／Oracle／aiterm／sidecar代表疎通を検証する
+- [ ] clean HOME fixture で8製品のCLI・NPM/`uv tool`更新package・設定schema・所有権境界を固定し、外部製品の状態や実装をdotagentsへ複製しない
+- [ ] `agents-update` は1製品失敗をログへ残し、残りを続行した後に非0終了する。更新後のcompatibility gateを `make ci` に固定する
 - [x] 既存 `docs/05` の max_threads 非設定契約を維持し、max_depth/fan-out は実在確認後に必要分だけ追記
 - [x] rollback: 追加 symlink と設定追記だけを戻し、端末バックアップから復元可能にする
 
@@ -126,10 +134,11 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 - [x] 各現役端末で pull相当の同期→tar backup→install→config dry-run/apply→verify（FOX 2環境はGitHub認証切れのためローカルbundleで同期。remote同期はH待ち）
 - [x] NVM配下の npm をLinux / WSL2のcron最小PATHでも解決し、週次 `agents-update` の実走を固定
-- [ ] 各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS）
+- [ ] 各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS / Spotter監査）
 - [ ] 端末で共有できる routing/MCP 証拠は入口ごとの台帳から同じ証拠へ参照し、未実施を共有扱いにしない
 - [ ] 各端末で implementer/refuter/sorter の routing smoke＋親側 verifier green
 - [ ] 各入口で Codex hooks の初回 INFO・同セッション2回目沈黙・compact 再武装・Stop pending の次回1回配送を実火し、代表 skill、Throughline 代表 smoke を成功させる。明示エラーは FAIL/blocker であり合格にしない
+- [ ] 各対象projectで `spotter install` → marker／Claude 5 hook／Codex 3 hook／Claude・Codex別tool-db／Throughline context default-onを確認し、新規sessionで `spotter.hook_event.v1` を実火する
 - [ ] 任意 MCP/OAuth は未認証を FAIL にせず、理由付き WARN と H 手順を記録
 - [ ] Claude の skill/command/agent/hook smoke を再実行し回帰なしを確認
 - [ ] `plan_gpt56-rewiring.md` の他端末 routing TODO を本 wave の実測で消化
@@ -192,7 +201,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 - Codex App公式Remote connectionで `main-server` を追加し、`kite@ubuntu` へのSSH接続を実測した。Codex CLIを0.130.0から0.144.1へ更新し、ChatGPT認証済みを確認した。
 - `~/Developer/dotagents` へprivate repoをcloneし、origin/main同期・stash 0・shallow=false・clean・着手前 `make ci` greenを確認した。GitHub資格情報はheadless環境の `~/.config/gh/hosts.yml` にmode 0600で保存される。
-- tar backup後にofficial install、Codex routing / hooks、Claude必須hook 5本、Caveat-Private、親別MCP、MarkItDown、週次cronを配線した。`verify-install --profile official` と対象5 skill discoveryはgreen。Chrome不在のため任意Oracle MCPは理由付きSKIPした。
+- tar backup後にofficial install、Codex routing / hooks、Claude必須hook 5本、Caveat-Private、親別MCP、MarkItDown、週次cronを配線した。`verify-install --profile official` と対象5 skill discoveryは当時の契約でgreen。Chrome不在のためOracle MCPは未配線であり、2026-07-13の工場コア再分類後は未完了として再検証対象に戻す。
 - 稼働監査はsystemd failed 0、containerd active・restart count 0、全Docker container running、healthcheck対象全件healthy。メインサーバーはオーナー裁定により常時稼働工場として正式採用した。
 - [x] cron最小PATHではNVM配下のnpmを解決できない実測欠陥を正本スクリプトで修正。NVM復元・npm不在時のfail-loud・fake npm 13件を `tests/update/cron-env.sh` と `make ci` で固定した。
 - [ ] Codex App remote project `/home/kite/Developer/dotagents` のhook trust、新規session、skill / routing / Throughline、Claude回帰を実火する。
@@ -201,7 +210,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 - Windows の ProxyJump 経由 `fox-wsl` SSH を確立し、`/home/kite/Developer/dotagents` を origin/main 相当へ同期した。GitHub認証切れのため初期同期はMacからのローカルbundleを使い、remote自体はGitHubのまま保持した。
 - tar backup後にofficial install、Codex routing / hooks、Claude必須hook 5本、Caveat-Private、親別MCP、MarkItDown、週次cronを配線した。`verify-install --profile official`、対象5 skill discovery、`make ci` はgreen。
-- Chrome不在かつOracle 0.16.0が当時のNode 22を拒否したため、任意Oracle MCPは理由付きSKIPした。hook trust、routing role実火、Throughline、Claude新規session回帰はH待ち。
+- Chrome不在かつOracle 0.16.0が当時のNode 22を拒否したため、Oracle MCPは未配線。2026-07-13の工場コア再分類後は未完了として再検証対象に戻す。hook trust、routing role実火、Throughline、Claude新規session回帰はH待ち。
 
 ### Wave 3 rollout 実績（2026-07-13・FOX Windows native）
 

@@ -35,7 +35,7 @@ EOF
 EOF
 }
 apply_config() { HOME="$1" CODEX_HOME="$1/.codex" "$PYTHON_BIN" "$1/.local/bin/apply-codex-config" "$2"; }
-verify() { HOME="$1" "$ROOT/bin/verify-install.sh" --profile "$2"; }
+verify() { HOME="$1" DOTAGENTS_SKIP_FACTORY_CORE=1 "$ROOT/bin/verify-install.sh" --profile "$2"; }
 assert_stop_count() {
   "$PYTHON_BIN" - "$1" <<'PY'
 import json
