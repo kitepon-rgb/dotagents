@@ -91,7 +91,8 @@ import sys
 from pathlib import Path
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 hooks = [h for e in data["hooks"]["Stop"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command", "").endswith("codex-callout-hook stop")]
-expected = {"type":"command", "command":f"{Path(sys.argv[2]).resolve()}/.local/bin/codex-callout-hook stop", "timeoutSec":10, "async":False, "statusMessage":None}
+hook_path = Path(sys.argv[2]).resolve() / ".local/bin/codex-callout-hook"
+expected = {"type":"command", "command":f"{hook_path} stop", "timeoutSec":10, "async":False, "statusMessage":None}
 raise SystemExit(0 if hooks == [expected] else 1)
 PY
 archive_count="$(find "$OFFICIAL_HOME/Archives" -name '*.tar.gz' | wc -l | tr -d ' ')"
@@ -132,12 +133,14 @@ verify "$OFFICIAL_HOME" official
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY'
 import json
 import sys
-path, home = sys.argv[1:]
+from pathlib import Path
+path, home_arg = sys.argv[1:]
+home = Path(home_arg).resolve()
 data = json.load(open(path, encoding="utf-8"))
 for entry in data["hooks"]["Stop"]:
     for hook in entry.get("hooks", []):
         if hook.get("command") == "~/.local/bin/codex-callout-hook stop":
-            hook["command"] = f"{home}/.local/bin/codex-callout-hook stop"
+            hook["command"] = f"{home / '.local/bin/codex-callout-hook'} stop"
 with open(path, "w", encoding="utf-8") as file:
     json.dump(data, file)
 PY
