@@ -70,10 +70,11 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 
 ### 3.2 維持する
 
-1. severityは観測側の製品契約が決め、BugHubは推測・格上げ・格下げしない。
+1. 既存`INTEGRATION.md`のerror意味論を継承する。severityは観測側の製品契約が決め、BugHubは推測・格上げ・格下げしない。
 2. BugHubは製品を自動修復しない。初期scopeは観測・通知・AIガイドまで。
 3. resolve/reopenは明示的かつ冪等。異常の再観測時は再openする。
 4. LAN限定＋認証、秘密は端末ローカル、失敗は非0・記録、silent fallback禁止。
+5. `fingerprint`は同じ原因を同じbug classへ束ね、可変値を除いた`message_template`、累計発生数、UTCの最終発生時刻、`open / resolved`を持つ。新しいpush入口でもこの意味を変えない。
 
 ## 4. 採用アーキテクチャ
 
@@ -97,6 +98,8 @@ ServerManager / BugHub
 ### 4.1 wire contract v1
 
 正確なJSON Schemaの正本はServerManager `bughub/FACTORY_INTEGRATION.md` とversioned schema fileに置く。dotagentsはclient fixtureと対応schema versionを持ち、server/client双方が未知のmajor versionを明示拒否する。
+
+**この正本とfixtureがgreenになるまで、各製品へruntime error観測点を追加しない。** 既存BugHubのsignature契約を基礎に、CLI向けpushでも`severity / fingerprint / message_template / occurrence_count / last_seen / status`の意味を固定する。stderr文字列、生stack、例外オブジェクトをそのまま転送する実装はBugHub対応と認めない。
 
 reportの必須概念:
 
@@ -126,6 +129,16 @@ BugHubはtoken→host_idをserver側で固定し、host profile/product期待mat
 
 factory issueの状態遷移は既存pull issueと分けて仕様化する。正常な完全snapshot、明示resolve、手動resolve、再観測reopen、host廃止、長期offlineを区別し、「reportに無い」だけで解決しない。
 
+#### 4.1.1 runtime error出力契約の確定順序
+
+1. ServerManagerで既存`INTEGRATION.md`との対応表、versioned JSON Schema、severity判定表、fingerprint生成規則、privacy allowlistを正本化する。
+2. 同じ原因の可変値違い、別原因の類似文、resolve後の再発、秘密混入、重複retryをfixtureにして、分類と状態遷移をcharacterizationする。
+3. dotagents reporterのproducer/consumer contractをそのfixtureへ適合させる。
+4. 契約がgreenになった後だけ、自作製品ごとに失敗境界を棚卸しして観測点を追加する。
+5. 全製品で契約testを通し、単に出力件数が多いことを完了条件にしない。
+
+観測点は、利用不能、処理失敗、永続化・migration失敗、外部依存・connector失敗、契約破壊など、原因特定と修正判断に使える境界へ置く。同じ失敗を複数layerで重複計上せず、retryごとの生ログではなく同一fingerprintのcountへ集約する。利用者の取消、正常な未設定、仕様どおりのunsupportedなど期待された制御フローをerrorへ水増ししない。
+
 ### 4.2 DB
 
 - 既存`issues`を壊さず、versioned migration runnerを先に導入する。
@@ -144,6 +157,9 @@ factory issueの状態遷移は既存pull issueと分けて仕様化する。正
 - queueは件数・byte・保持日数を上限化する。overflow時は新規reportを黙って捨てず生成を非0にし、既存queueを保持する。上限・lock・crash recoveryをfixture化する。
 - post-updateで必ず実行し、定期read-only scanも各端末の正規schedulerで行う。
 - state/outbox/log/tokenはmacOS/Linux/WSLではdotagentsのXDG state、Windows nativeでは`%LOCALAPPDATA%\dotagents\factory-reporter`を既定とし、所有者限定ACLを検証する。
+- `reporting.enabled`は既定`false`とし、明示設定された時だけoutboxへの送信対象enqueueとnetwork送信を行う。tokenの存在、管理端末判定、scheduler導入をONの代用にしない。
+- `collection.enabled`はlocal structured error storeの収集可否を独立に制御する。収集ON・送信OFFでは端末外へ出さず、利用者が送信予定payloadをpreviewできる。
+- 製品更新で`reporting.enabled`を暗黙にONへ変更しない。クオ管理端末も導入時に明示ONを記録し、設定なし・不正値・送信先不明はfail closedで送信しない。
 
 factory ingestion認証は既存の任意dashboard tokenと分離し、常時必須のhost-scoped credentialにする。発行、server登録、端末配置、rotation猶予、revoke、紛失端末廃止、backup/restoreをrunbookとtestに含める。query parameterへtokenを出さない。
 
@@ -183,7 +199,7 @@ Codegraph、MarkItDown、Oracleは本体を改造しない。
 
 ### 5.4 実利用時errorの収集境界
 
-- 対象はクオが管理するMac、main-server、FOX WSL2、FOX Windows native上の自作製品だけ。製品は実行時errorをまず端末ローカルへ構造化保存し、dotagents reporterがBugHubへ運ぶ。
+- 対象はクオが管理するMac、main-server、FOX WSL2、FOX Windows native上の自作製品だけ。製品は実行時errorをまず端末ローカルへ構造化保存し、`reporting.enabled=true`が明示された端末だけdotagents reporterがBugHubへ運ぶ。
 - 最小fieldはproduct version、component、安定error code、可変値を除いたmessage template、fingerprint、count、first/last seen、state schema version、OS/arch。prompt、入力本文、file内容、session本文、token、cookie、絶対path、生stackの秘密部分は保存・送信しない。
 - telemetry保存・送信の故障で本来の製品動作を止めない。ただし故障をsilentにせず、固定stderr、local diagnostics、reporter checkで観測可能にする。
 - 解決後の同一fingerprint再発はreopenする。version更新で消えたerrorは、観測窓と製品側の明示resolve条件を満たしてからresolvedにする。
@@ -196,10 +212,10 @@ Codegraph、MarkItDown、Oracleは本体を改造しない。
 
 severityはproduct adapterが明示し、BugHubは変更しない。
 
-- `fatal`: BugHubの受信/DB破損、reporter全体破損など、工場観測系が成立しない。
-- `high`: 必須製品欠落、正規migration失敗、主要connector不能、update後の契約破壊。
-- `warn`: latest未追従、認証/手動trust待ち、部分的diagnostic不能、特定hostだけのdrift。
-- `info`: upstream診断非対応、任意能力未設定、変更を要しない観測情報。
+- `fatal`: 製品が止まる、または利用不能。例: BugHubの受信/DB破損、reporter全体破損。
+- `high`: 製品は動作していても実害がある、または条件により停止する。例: 必須製品欠落、正規migration失敗、主要connector不能、update後の契約破壊。
+- `warn`: 理想状態ではないが動作しており、修正すべき。例: latest未追従、部分的diagnostic不能、特定hostだけのdrift。
+- `info`: 修正すべきだが現時点で解決方法がないもの、またはそれ以下の参考情報。正常イベントの大量記録には使わない。
 
 checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける。`unsupported`や`unverified`を`pass`へ丸めない。`skipped`には必ず機械可読reasonを持たせる。
 
@@ -222,7 +238,8 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] 既存4sourceのpoll、severity素通し、再発、resolve表示、digest、`/ai`を固定
 - [ ] Discord送信が`false`の時に`markAlerted`しないこと、delivery failureを記録・再通知できることを固定
 - [ ] versioned DB migration runner、backup/restore test、schema versionを追加
-- [ ] factory report JSON Schema、認証、冪等、host binding、size/time validationを仕様化
+- [ ] 既存signature契約との対応表、factory report JSON Schema、severity判定表、fingerprint規則、privacy allowlist、認証、冪等、host binding、size/time validationを仕様化
+- [ ] 可変値違い、類似別原因、resolve後再発、秘密混入、重複retryのcontract fixtureを先にgreenにし、製品instrumentation開始gateにする
 - [ ] host credentialのprovision/rotate/revokeと401/403、紛失host廃止をfixture化
 - [ ] `deploy.sh`の`rsync --delete`をdry-run必須にし、image rebuildとhealth確認を固定
 
@@ -250,7 +267,8 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] aiterm-mcp: versionとMCP/PTY/vendor readinessのread-only診断
 - [ ] codex-sidecar: package整合、diagnostics/dry-run、result schema/model policy診断
 - [ ] 各製品で既存error log/診断を棚卸し、共通fieldへ安全に出せるものだけlocal structured error storeへ接続
-- [ ] 外部利用者への送信が既定OFFであることをfixtureと文書で固定
+- [ ] `collection.enabled`と`reporting.enabled`を分離し、送信が既定OFF、明示ON時だけnetwork I/Oすることをfixtureと文書で固定
+- [ ] stderr、生stack、例外オブジェクトの丸投げと、同じ失敗の複数layer計上をnegative fixtureで拒否
 - [ ] 各repoでbaseline green→characterization→実装→full gate→独立commit→push
 
 ### Wave 5 — BugHub ingestion・表示・通知（F＋A）
