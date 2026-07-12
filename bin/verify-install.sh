@@ -95,6 +95,98 @@ then
   fail=1
 fi
 
+# 呼びかけ hook は settings.json へ手挿しするため、symlink 検証とは別に配線を確認する。
+claude_settings="$HOME/.claude/settings.json"
+if [ ! -f "$claude_settings" ]; then
+  echo "WARN ${claude_settings} 不在（Claude Code 未セットアップ端末）" >&2
+elif ! python3 - "$claude_settings" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    with path.open(encoding="utf-8") as file:
+        data = json.load(file)
+except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+    print(f"FAIL: {path} の JSON パース失敗: {exc}")
+    raise SystemExit(1)
+
+required = {
+    "PreToolUse": "delegation-gate-hook",
+    "SessionStart": "todo-gate-hook session-start",
+    "Stop": "todo-gate-hook stop",
+    "UserPromptSubmit": "onset-gate-hook",
+    "PostToolUse": "plan-gate-hook",
+}
+missing = []
+for event, required_command in required.items():
+    commands = (
+        hook.get("command", "")
+        for entry in data.get("hooks", {}).get(event, [])
+        if isinstance(entry, dict)
+        for hook in entry.get("hooks", [])
+        if isinstance(hook, dict)
+    )
+    if not any(
+        isinstance(command, str) and required_command in command
+        for command in commands
+    ):
+        missing.append(f"{event}: {required_command}")
+
+if missing:
+    print("FAIL: Claude Code 必須 hook が欠落: " + "、".join(missing))
+    raise SystemExit(1)
+PY
+then
+  fail=1
+fi
+
+codex_hooks="$HOME/.codex/hooks.json"
+if [ ! -f "$codex_hooks" ]; then
+  echo "WARN ${codex_hooks} 不在（Codex 未セットアップ端末）" >&2
+elif ! python3 - "$codex_hooks" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    with path.open(encoding="utf-8") as file:
+        data = json.load(file)
+except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+    print(f"FAIL: {path} の JSON パース失敗: {exc}")
+    raise SystemExit(1)
+
+required = {
+    "SessionStart": "codex-callout-hook session-start",
+    "PreToolUse": "codex-callout-hook pre-tool-use",
+    "UserPromptSubmit": "codex-callout-hook user-prompt-submit",
+    "Stop": "codex-callout-hook stop",
+}
+missing = []
+for event, required_command in required.items():
+    commands = (
+        hook.get("command", "")
+        for entry in data.get("hooks", {}).get(event, [])
+        if isinstance(entry, dict)
+        for hook in entry.get("hooks", [])
+        if isinstance(hook, dict)
+    )
+    if not any(
+        isinstance(command, str) and required_command in command
+        for command in commands
+    ):
+        missing.append(f"{event}: {required_command}")
+
+if missing:
+    print("FAIL: Codex 必須 hook が欠落: " + "、".join(missing))
+    raise SystemExit(1)
+PY
+then
+  fail=1
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "verify-install: OK — 全エントリが本リポ ${REPO} 向き symlink"
