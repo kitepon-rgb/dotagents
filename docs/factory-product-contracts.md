@@ -40,7 +40,8 @@
 - 所有/修正先: 第三者 / `kitepon-rgb/dotagents`外付けadapter。version入口: `codegraph --version`。
 - diagnostics/state正本: 既存indexの`codegraph status --json`を試行。現CLI helpは`status`のみを保証し、JSONが得られた場合だけ`initialized`を判定する。`.codegraph/`はupstream所有。
 - host/connector: 全4 host required、Claude/Codex MCP required。
-- 現adapter: version、`initialized:true`なら`index=pass`、falseなら`skipped:not_indexed`、非JSON/非対応は`unverified`。
+- 対応version: stable `>=1.4.0 <1.5.0`（build metadata付きは許容、prereleaseは未検証で範囲外）。範囲外は`installed`を保った`index=unsupported:upstream_version_unsupported`、version取得不能・形式drift・CLI不在は`unverified:version_unverified`として診断を実行しない。
+- 現adapter: 対応versionだけ診断を実行し、`initialized:true`なら`index=pass`、falseなら`skipped:not_indexed`、診断出力が非JSONまたはshape非対応なら`index=unverified`。version範囲外の`unsupported`とは区別する。
 - 禁止: `codegraph init`/index自動作成、内部index解析。
 
 ### `markitdown`
@@ -48,7 +49,8 @@
 - 所有/修正先: 第三者 / `kitepon-rgb/dotagents`外付けadapter。version入口: `markitdown --version`。
 - diagnostics/state正本: 一時local text fixtureを`markitdown <file>`で変換しstdout byte数を確認。永続state/schema/migrationは契約しない。
 - host/connector: 全4 host required、Claude/Codex CLI required。
-- 現adapter: versionとlocal fixtureのみ。latest/update/runtime errorは未実装。失敗/空出力は`unverified`。
+- 対応version: stable `>=0.1.0 <0.2.0`（build metadata付きは許容、prereleaseは未検証で範囲外）。範囲外は`installed`を保った`local_fixture=unsupported:upstream_version_unsupported`、version取得不能・形式drift・CLI不在は`unverified:version_unverified`としてfixture診断を実行しない。
+- 現adapter: 対応versionだけlocal fixtureを実行する。fixture診断の失敗または空出力は`local_fixture=unverified`であり、version範囲外の`unsupported`とは区別する。latest/update/runtime errorは未実装。
 - 禁止: URL/JSレンダリングをhealth扱い、rc=0だけでpass。
 
 ### `oracle`
@@ -56,7 +58,8 @@
 - 所有/修正先: 第三者 / `kitepon-rgb/dotagents`外付けadapter。version入口: `oracle --version`。
 - diagnostics/state正本: `oracle doctor --providers --json`を試行しobject JSONだけを機械可読結果として扱う。認証/browser runtimeはconnector側状態。
 - host/connector: 全4 host required、Claude MCP、Codex skill/MCP required。browser runtime非対応connectorは`unsupported`。
-- 現adapter: versionとdoctor JSON shapeだけ。exit 0のobjectはpass、機械可読なprovider未準備は`unverified:provider_not_ready`、非JSONは`unverified`。認証詳細、latest、runtime errorは未実装。
+- 対応version: stable `>=0.16.0 <0.17.0`（build metadata付きは許容、prereleaseは未検証で範囲外）。範囲外は`installed`を保った`doctor=unsupported:upstream_version_unsupported`、version取得不能・形式drift・CLI不在は`unverified:version_unverified`としてdoctorを実行しない。
+- 現adapter: 対応versionだけdoctor JSON shapeを実行する。exit 0のobjectはpass、機械可読なprovider未準備は`unverified:provider_not_ready`、診断出力の非JSON/shape不正は`doctor=unverified`であり、version範囲外の`unsupported`とは区別する。認証詳細、latest、runtime errorは未実装。
 - 禁止: `consult`、prompt送信、人間向け出力解析。
 
 ### `aiterm-mcp`

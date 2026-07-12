@@ -260,7 +260,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] Codegraph: version＋既存index限定status。index無しは`skipped:not-indexed`
 - [x] MarkItDown: version＋local fixture byte判定。JS URLはhealth fixtureに使わない
 - [x] Oracle: version＋wrapper＋`doctor --providers --json`。認証依存を区別しconsult/status禁止
-- [ ] upstream version drift fixtureとunsupported表現を固定
+- [x] upstream version drift fixtureとunsupported表現を固定
 
 ### Wave 4 — 自作5製品のnative diagnostics（repo別A、契約はF）
 

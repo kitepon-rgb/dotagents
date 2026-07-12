@@ -49,7 +49,12 @@ async function installHealthyCommands(box) {
   for (const name of COMMANDS) {
     await box.script(name, `
 if [ "$1" = "--version" ]; then
-  echo '${name} 1.2.3'
+  case "$0" in
+    */codegraph) echo 'codegraph 1.4.0' ;;
+    */markitdown) echo 'markitdown 0.1.0' ;;
+    */oracle) echo 'oracle 0.16.0' ;;
+    *) echo '${name} 1.2.3' ;;
+  esac
 elif [ "$1" = "status" ]; then
   echo '{"initialized":false}'
 elif [ "$1" = "doctor" ]; then
@@ -111,7 +116,7 @@ test('公開CLIだけで固定9製品のreportを生成し、shared contractを�
   await installHealthyCommands(box);
   await box.script('oracle', `
 if [ "$1" = "--version" ]; then
-  echo 'oracle 1.2.3'
+  echo 'oracle 0.16.0'
 elif [ "$1" = "doctor" ] && [ "$2" = "--providers" ] && [ "$3" = "--json" ]; then
   echo '{"healthy":true}'
 else
@@ -264,9 +269,9 @@ test('悪意あるversion出力・Oracle人間向け出力・Codegraph失敗をg
   await installHealthyCommands(box);
   await box.script('caveat', "echo 'Bearer top-secret /Users/kite/private'");
   await box.script('oracle', `
-if [ "$1" = "--version" ]; then echo 'oracle 1.2.3'; else echo 'human status'; fi`);
+if [ "$1" = "--version" ]; then echo 'oracle 0.16.0'; else echo 'human status'; fi`);
   await box.script('codegraph', `
-if [ "$1" = "--version" ]; then echo 'codegraph 1.2.3'; else exit 9; fi`);
+if [ "$1" = "--version" ]; then echo 'codegraph 1.4.0'; else exit 9; fi`);
   await writeFile(box.config, JSON.stringify(validConfig()));
 
   const result = await runScanner(box);
@@ -283,7 +288,7 @@ test('Oracleの機械可読なprovider未準備はpassにせず理由付きunver
   const box = await sandbox(t);
   await installHealthyCommands(box);
   await box.script('oracle', `
-if [ "$1" = "--version" ]; then echo 'oracle 1.2.3'; else echo '{"providers":[]}' && exit 1; fi`);
+if [ "$1" = "--version" ]; then echo 'oracle 0.16.0'; else echo '{"providers":[]}' && exit 1; fi`);
   await writeFile(box.config, JSON.stringify(validConfig()));
 
   const result = await runScanner(box);
@@ -293,6 +298,53 @@ if [ "$1" = "--version" ]; then echo 'oracle 1.2.3'; else echo '{"providers":[]}
     check_id: 'doctor', status: 'unverified', reason_code: 'provider_not_ready',
   });
   assert.doesNotMatch(JSON.stringify(report), /providers/);
+});
+
+test('第三者adapterは対応範囲外またはversion不明で診断を実行しない', async (t) => {
+  const products = [
+    { id: 'codegraph', checkId: 'index', supported: '1.4.0+build.7', known: '1.4.1', drift: '1.5.0', prerelease: '1.4.0-rc.1' },
+    { id: 'markitdown', checkId: 'local_fixture', supported: '0.1.0+build.7', known: 'markitdown 0.1.5', drift: '0.2.0', prerelease: '0.1.0-rc.1' },
+    { id: 'oracle', checkId: 'doctor', supported: '0.16.0+build.7', known: '0.16.0', drift: '0.17.0', prerelease: '0.16.0-rc.1' },
+  ];
+  for (const product of products) {
+    for (const [name, stdout, expected] of [
+      ['supported_boundary', `${product.id} ${product.supported}`, { presence: 'installed', status: 'pass' }],
+      ['known_stdout', product.known, { presence: 'installed', status: 'pass' }],
+      ['prefixed_v', `${product.id} v${product.supported}`, { presence: 'installed', status: 'pass' }],
+      ['next_minor', `${product.id} ${product.drift}`, { presence: 'installed', status: 'unsupported', reason: 'upstream_version_unsupported' }],
+      ['prerelease', `${product.id} ${product.prerelease}`, { presence: 'installed', status: 'unsupported', reason: 'upstream_version_unsupported' }],
+      ['unknown', 'version format drift', { presence: 'unverified', status: 'unverified', reason: 'version_unverified' }],
+      ['multiple_versions', `dependency ${product.supported} actual ${product.drift}`, { presence: 'unverified', status: 'unverified', reason: 'version_unverified' }],
+      ['warning', `warning ${product.supported}`, { presence: 'unverified', status: 'unverified', reason: 'version_unverified' }],
+    ]) {
+      const box = await sandbox(t);
+      await installHealthyCommands(box);
+      const calls = join(box.root, `${product.id}-${name}.calls`);
+      await box.script(product.id, `
+if [ "$1" = "--version" ]; then
+  echo '${stdout}'
+else
+  echo diagnostic >> '${calls}'
+  ${product.id === 'codegraph' ? "echo '{\"initialized\":true}'" : product.id === 'oracle' ? "echo '{\"healthy\":true}'" : "echo 'converted'"}
+fi`);
+      await writeFile(box.config, JSON.stringify(validConfig()));
+
+      const result = await runScanner(box);
+      assert.equal(result.code, 0, `${product.id}/${name}: ${result.stderr}`);
+      const report = JSON.parse(await readFile(box.output));
+      const observed = report.products[product.id];
+      assert.equal(observed.presence_status, expected.presence, `${product.id}/${name}`);
+      assert.deepEqual(observed.checks, [{
+        check_id: product.checkId, status: expected.status,
+        ...(expected.reason ? { reason_code: expected.reason } : {}),
+      }], `${product.id}/${name}`);
+      if (expected.status === 'pass') {
+        assert.equal((await readFile(calls, 'utf8')).trim(), 'diagnostic');
+      } else {
+        await assert.rejects(readFile(calls), { code: 'ENOENT' });
+      }
+    }
+  }
 });
 
 test('command出力上限とtimeoutは固定reasonで失敗し、生出力を返さない', async (t) => {
