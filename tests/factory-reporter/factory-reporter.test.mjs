@@ -120,11 +120,16 @@ test('ServerManager schema/semantic validatorのnegative fixtureを拒否する'
     ['host profile platform consistency', (r) => { r.platform.os = 'linux'; }],
     ['timestamp order', (r) => { r.products.caveat.runtime_errors = [{ ...runtime(), first_seen: '2026-07-13T00:00:02Z', last_seen: '2026-07-13T00:00:01Z' }]; }],
     ['fingerprint duplicate', (r) => { r.products.caveat.checks = [failingCheck(), { ...failingCheck(), check_id: 'other' }]; }],
+    ['stderr丸投げ', (r) => { r.products.caveat.runtime_errors = [{ ...runtime(), stderr: 'raw-stderr-secret' }]; }],
+    ['stack丸投げ', (r) => { r.products.caveat.runtime_errors = [{ ...runtime(), stack: 'raw-stack-secret' }]; }],
+    ['exception丸投げ', (r) => { r.products.caveat.runtime_errors = [{ ...runtime(), exception: { message: 'raw-exception-secret' } }]; }],
+    ['複数layerで同一失敗', (r) => { r.products.caveat.checks = [failingCheck()]; r.products.caveat.runtime_errors = [runtime('open')]; }],
     ['open resolve conflict', (r) => { r.products.caveat.runtime_errors = [runtime('open')]; r.products.caveat.resolutions = [resolution()]; }],
   ];
   for (const [name, mutate] of fixtures) {
     const box = await sandbox(); const invalid = report(); mutate(invalid); await writeReport(box, invalid);
     const result = await run(box, ['preview', '--report', box.report]); assert.equal(result.code, 1, name); assert.equal(result.json.code, 'FACTORY_REPORTER_ERROR', name);
+    assert.doesNotMatch(result.stderr, /raw-(?:stderr|stack|exception)-secret/, name);
   }
 });
 
