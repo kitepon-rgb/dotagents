@@ -69,11 +69,11 @@
 
 ### `codex-sidecar`
 
-- 所有/修正先: 自作 / `kitepon-rgb/codex-sidecar`。version入口: `codex-sidecar-mcp --version`または製品が明示するCLI。
-- diagnostics/state正本: `codex-sidecar diagnostics --project …`、dry-run、result schema/model policy（製品repo所有、現adapter未接続）。
+- 所有/修正先: 自作 / `kitepon-rgb/codex-sidecar`。version入口: `codex-sidecar factory-diagnostics --project <scan cwd>` の `factoryReadiness.packageVersions.packages.cli`。
+- diagnostics/state正本: `factory-diagnostics` の read-only JSON（top-level `status`、`factoryReadiness.schemaVersion="1"`、`overall`、`packageVersions.status`と3 package version整合、result schema/workflow/preset/model policy/read-only dry-run readiness）。`ready`は`status:ok`かつexit 0、`not_ready`/`unverified`は`status:failed`かつ非0。`unverified`はpackage情報を省略した最小shapeも正規。実agent/Codexを起動しない。
 - host/connector: 全4 host required。Claude MCP required、Codex親connectorはforbidden。
-- 現adapter: `codex-sidecar-mcp --version`抽出だけ。package整合、diagnostics/dry-run/schema/policy/runtime errorは未実装。
-- 表現/禁止: 診断不能は`unverified`。実agent起動をhealth扱い、Codex親connector登録は禁止。
+- 現adapter: native JSONをschema allowlistで検証し、`ready`をpass/compatible、`not_ready`を固定fingerprintのfail/incompatible、`unverified`・schema不正・CLI不在をunverifiedへ射影する。installed versionは整合済みのCLI package versionだけを採用する。runtime error store/telemetryは未実装。
+- 表現/禁止: raw output、absolute path、prompt/context/file内容、preset名、token/env/log/result本文をreportへ転記しない。実agent起動をhealth扱い、Codex親connector登録は禁止。
 
 ### `servermanager`
 

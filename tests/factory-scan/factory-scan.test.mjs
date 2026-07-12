@@ -14,7 +14,7 @@ const ROOT = resolve(import.meta.dirname, '..', '..');
 const CLI = join(ROOT, 'bin', 'factory-scan.mjs');
 const COMMANDS = [
   'caveat', 'throughline', 'spotter', 'aiterm-mcp',
-  'codex-sidecar-mcp', 'codegraph', 'markitdown', 'oracle',
+  'codex-sidecar', 'codegraph', 'markitdown', 'oracle',
 ];
 
 function validConfig(overrides = {}) {
@@ -74,6 +74,12 @@ elif [ "$1" = "diagnostics" ] && [ "$2" = "factory" ]; then
 else
   exit 2
 fi`);
+  await box.script('codex-sidecar', `
+if [ "$1" = "factory-diagnostics" ] && [ "$2" = "--project" ] && [ "$3" = "${box.root}" ]; then
+  echo '{"status":"ok","factoryReadiness":{"schemaVersion":"1","overall":"ready","packageVersions":{"status":"ready","packages":{"cli":"1.2.3","core":"1.2.3","mcp":"1.2.3"}}}}'
+else
+  exit 2
+fi`);
   await box.script('aiterm-mcp', `
 if [ "$1" = "--version" ]; then
   echo 'aiterm-mcp 1.2.3'
@@ -126,6 +132,9 @@ fi`);
   assert.equal(report.products.spotter.checks[0].status, 'pass');
   assert.equal(report.products.spotter.state_schema_version, '2');
   assert.equal(report.products['aiterm-mcp'].checks[0].status, 'pass');
+  assert.equal(report.products['codex-sidecar'].installed_version, '1.2.3');
+  assert.equal(report.products['codex-sidecar'].checks[0].status, 'pass');
+  assert.equal(report.products['codex-sidecar'].compatibility_status, 'compatible');
   assert.equal(report.products.servermanager.presence_status, 'not_applicable');
   assert.equal(
     report.reporter.dotagents_revision,
@@ -137,19 +146,93 @@ fi`);
 test('native diagnosticsの既知not_readyを固定fingerprintのfailへ写像し、生値を出さない', async (t) => {
   const box = await sandbox(t);
   await installHealthyCommands(box);
-  await box.script('throughline', `
-echo '{"schema":"throughline.native_factory_diagnostics.v1","version":"1.2.3","overall":{"status":"not_ready"},"databaseSchema":{"schema":"throughline.database.v8","status":"not_ready"},"raw":"/Users/kite/secret"}'`);
+  await box.script('codex-sidecar', `
+echo '{"status":"failed","factoryReadiness":{"schemaVersion":"1","overall":"not_ready","packageVersions":{"status":"ready","packages":{"cli":"1.2.3","core":"1.2.3","mcp":"1.2.3"}},"raw":"/Users/kite/secret","preset":"private-preset"}}'
+exit 1`);
   await writeFile(box.config, JSON.stringify(validConfig()));
 
   const result = await runScanner(box);
   assert.equal(result.code, 0, result.stderr);
   const report = JSON.parse(await readFile(box.output));
-  const check = report.products.throughline.checks[0];
+  const check = report.products['codex-sidecar'].checks[0];
   assert.equal(check.status, 'fail');
   assert.equal(check.severity, 'high');
-  assert.match(check.fingerprint, /^[0-9a-f]{64}$/);
-  assert.equal(report.products.throughline.compatibility_status, 'incompatible');
-  assert.doesNotMatch(JSON.stringify(report), /Users|secret|raw/);
+  assert.equal(check.fingerprint, '3a8158a0c08f294e83f725fb53ab71755c1be5e13567a2cb0dfb229aa2a8a034');
+  assert.equal(report.products['codex-sidecar'].compatibility_status, 'incompatible');
+  assert.equal(report.products['codex-sidecar'].installed_version, '1.2.3');
+  assert.doesNotMatch(JSON.stringify(report), /Users|secret|raw|private-preset/);
+});
+
+test('codex-sidecarのschema不正とunverifiedはgreenへ丸めずunverifiedにする', async (t) => {
+  const box = await sandbox(t);
+  await installHealthyCommands(box);
+  await box.script('codex-sidecar', `
+echo '{"status":"ok","factoryReadiness":{"schemaVersion":"2","overall":"ready","packageVersions":{"packages":{"cli":"1.2.3","core":"1.2.3","mcp":"1.2.3"}}}}'`);
+  await writeFile(box.config, JSON.stringify(validConfig()));
+
+  const result = await runScanner(box);
+  assert.equal(result.code, 0, result.stderr);
+  const report = JSON.parse(await readFile(box.output));
+  assert.equal(report.products['codex-sidecar'].presence_status, 'unverified');
+  assert.deepEqual(report.products['codex-sidecar'].checks, [{
+    check_id: 'native_diagnostics', status: 'unverified', reason_code: 'native_schema_invalid',
+  }]);
+  assert.equal(report.products['codex-sidecar'].compatibility_status, undefined);
+});
+
+test('codex-sidecar package version不整合はfixed fail/incompatibleへ写像する', async (t) => {
+  const box = await sandbox(t);
+  await installHealthyCommands(box);
+  await box.script('codex-sidecar', `
+echo '{"status":"failed","factoryReadiness":{"schemaVersion":"1","overall":"not_ready","packageVersions":{"status":"not_ready","packages":{"cli":"1.2.3","core":"1.2.4","mcp":"1.2.3"}}}}'
+exit 1`);
+  await writeFile(box.config, JSON.stringify(validConfig()));
+
+  const result = await runScanner(box);
+  assert.equal(result.code, 0, result.stderr);
+  const report = JSON.parse(await readFile(box.output));
+  assert.equal(report.products['codex-sidecar'].presence_status, 'unverified');
+  assert.equal(report.products['codex-sidecar'].compatibility_status, 'incompatible');
+  assert.equal(report.products['codex-sidecar'].checks[0].status, 'fail');
+  assert.equal(report.products['codex-sidecar'].installed_version, undefined);
+});
+
+test('codex-sidecar native unverifiedはinstalledや生出力をreportへ転記しない', async (t) => {
+  const box = await sandbox(t);
+  await installHealthyCommands(box);
+  await box.script('codex-sidecar', `
+echo '{"status":"failed","factoryReadiness":{"schemaVersion":"1","overall":"unverified","prompt":"Bearer private-token","projectRoot":"/Users/kite/private"}}'
+exit 1`);
+  await writeFile(box.config, JSON.stringify(validConfig()));
+
+  const result = await runScanner(box);
+  assert.equal(result.code, 0, result.stderr);
+  const report = JSON.parse(await readFile(box.output));
+  assert.equal(report.products['codex-sidecar'].presence_status, 'unverified');
+  assert.equal(report.products['codex-sidecar'].installed_version, undefined);
+  assert.equal(report.products['codex-sidecar'].compatibility_status, 'unverified');
+  assert.deepEqual(report.products['codex-sidecar'].checks, [{
+    check_id: 'native_diagnostics', status: 'unverified',
+  }]);
+  assert.doesNotMatch(JSON.stringify(report), /Bearer|private-token|\/Users|projectRoot|prompt/);
+});
+
+test('codex-sidecarのtop/overallとexit statusの矛盾はunverifiedにする', async (t) => {
+  for (const [name, body] of [
+    ['top_overall', 'echo \'{"status":"ok","factoryReadiness":{"schemaVersion":"1","overall":"not_ready","packageVersions":{"status":"not_ready","packages":{"cli":"1.2.3","core":"1.2.4","mcp":"1.2.3"}}}}\''],
+    ['exit_status', 'echo \'{"status":"failed","factoryReadiness":{"schemaVersion":"1","overall":"not_ready","packageVersions":{"status":"not_ready","packages":{"cli":"1.2.3","core":"1.2.4","mcp":"1.2.3"}}}}\''],
+  ]) {
+    const box = await sandbox(t);
+    await installHealthyCommands(box);
+    await box.script('codex-sidecar', body);
+    await writeFile(box.config, JSON.stringify(validConfig()));
+    const result = await runScanner(box);
+    assert.equal(result.code, 0, `${name}: ${result.stderr}`);
+    const report = JSON.parse(await readFile(box.output));
+    assert.deepEqual(report.products['codex-sidecar'].checks, [{
+      check_id: 'native_diagnostics', status: 'unverified', reason_code: 'native_schema_invalid',
+    }]);
+  }
 });
 
 test('不正host idと未知config fieldを同じ共有契約で拒否する', async (t) => {
