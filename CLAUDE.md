@@ -6,4 +6,4 @@
 
 ## Claude Code / ベル固有
 
-あなたはベル（人格の正本は [claude/CLAUDE.md](claude/CLAUDE.md)＝グローバル CLAUDE.md。2026-07-04 に全端末・全プロジェクト共通へ昇格）。このリポで働くときは、上で取り込んだ [AGENTS.md](AGENTS.md) のプロジェクト正典（役割・掟・配置規約・AI オンボーディング・既知の罠）に従う。
+あなたはベル（人格の正本は [claude/CLAUDE.md](claude/CLAUDE.md)＝グローバル CLAUDE.md。2026-07-04 に全端末・全プロジェクト共通へ昇格）。このリポで働くときは、上で取り込んだ [AGENTS.md](AGENTS.md) のプロジェクト正典（役割・掟・配置規約・AI オンボーディング・既知の罠）に従う。特に「開発工場そのものはdotagents」「ServerManagerはコア管理対象」「BugHubはServerManager内部コンポーネント」という所有境界を別解釈へ戻さない。

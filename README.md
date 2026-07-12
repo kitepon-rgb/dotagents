@@ -91,6 +91,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `apply-codex-config.sh` | routing 2キーと dotagents hook 4イベントだけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
 | 工場コア | Caveat／Throughline／Spotter／Codegraph／MarkItDown／Oracle／aiterm-mcp／codex-sidecar（dotagents 外） | 罠知識／セッション継続／未使用ツール監査／コード構造理解／資料変換／独立意見／PTY・外部枠／Claude親からのCodex実行を担う必須8製品。dotagentsは導入・更新・親別配線・互換検証・上流更新追従を所有する |
+| 中央管理コア | ServerManager（dotagents 外） | dotagentsが管理・連携する第9製品。内部のBugHubをversion・bug・compatibility結果の統括に使う。BugHubを独立した第10製品へ分離しない |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
 

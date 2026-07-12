@@ -17,6 +17,13 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 - リポジトリ内のファイルを編集すれば、選択した配布面の `~/.claude/...` / `~/.codex/...` / `~/.agents/skills/...` に即反映される（symlink なので同じファイル）。逆方向も同じ。
 - `install.sh` は冪等。既存 symlink は上書き、実ファイルが存在する宛先は `SKIP` してログを出す。失敗は止まる (`set -euo pipefail` を維持。フォールバック禁止)。
 
+### 開発工場の定義（所有境界）
+
+- **開発工場そのものはdotagents**。dotagentsを「工場の一部」「司令室だけ」「ServerManagerと並ぶ一方のcontrol plane」と再定義しない。全端末・全projectの規範、導入、更新、親別配線、互換契約、検証、上流追従をここが統括する。
+- 工場のコア管理対象は計9製品。端末能力を担う8製品（Caveat／Throughline／Spotter／Codegraph／MarkItDown／Oracle／aiterm-mcp／codex-sidecar）と、中央運用管理を担うServerManagerである。8製品は全端末への常備・project activation・親別connectorなど配線強度が異なるため、同じ方法で一律有効化しない。
+- **BugHubは独立した第10製品ではなく、ServerManager内部のコンポーネント**。既存の読み取り専用集約、報告元アプリによる重大度決定、`resolve` / `reopen`、`/ai`という契約を守り、8製品のversion・bug・compatibility結果を統括する連携先として活用する。
+- 各製品は自身のソース・状態・schema・migration・正規診断を所有する。dotagentsはそれらを複製せず統合契約を所有し、ServerManager/BugHubはdotagentsの代わりに工場方針を決めたり製品状態を直接書き換えたりしない。
+
 ## AI オンボーディング（この URL を渡された AI へ）
 
 新しい端末でこのリポを稼働させる手順。上から順に実行する。**詳細な前提・トラブルシュートは [README.md](README.md) の「他端末セットアップ・ランブック」（§0〜4）が正典**——本節はその AI 実行用の要約＋`install.sh` が触らない `settings.json` だけを補う。

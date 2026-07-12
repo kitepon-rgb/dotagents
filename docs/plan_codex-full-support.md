@@ -5,9 +5,9 @@
 
 ## 0. 目的
 
-dotagents を全端末の開発工場の中心として、Claude Code と Codex のどちらを親にしても同じ工場原則・主要 workflow・委譲品質・端末再現性を得られる状態にする。
+dotagents を全端末の**開発工場そのもの**として、Claude Code と Codex のどちらを親にしても同じ工場原則・主要 workflow・委譲品質・端末再現性を得られる状態にする。ServerManagerをdotagentsと並ぶ別の工場またはcontrol planeとは定義しない。
 
-工場の外部コアは **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Codegraph（コード構造理解）／MarkItDown（外部資料変換）／Oracle（独立したChatGPT second opinion）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude親からのCodex実行）** の8製品とする。dotagents は各製品のソースと状態を所有せず、全現役端末への導入・週次更新・親別配線・互換検証・代表 E2E・上流更新への追従を所有する。
+工場のコア管理対象は、端末能力を担う **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Codegraph（コード構造理解）／MarkItDown（外部資料変換）／Oracle（独立したChatGPT second opinion）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude親からのCodex実行）** の8製品と、中央の運用管理を担う **ServerManager** の計9製品とする。**BugHubは独立した第10製品ではなくServerManager内部のバグ・version・互換性統括コンポーネント**である。dotagentsは各製品のソースと状態を所有せず、正規導入・更新・親別配線・互換検証・代表E2E・上流更新追従、およびServerManager/BugHubへの結果連携を所有する。
 
 「全対応」はファイル数の左右対称ではなく**能力対称**を指す。製品固有機能は無理に移植せず、`対応 / 製品固有 / 非採用（理由）` のいずれかを明記できれば閉じる。
 
@@ -18,6 +18,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 - [ ] Codex の公式 user skill 面 `$HOME/.agents/skills` から対象 skill を利用できる
 - [ ] 規範・skills・subagents・hooks・必須 MCP・session 継続を新規 Codex session で実測済み
 - [ ] 工場コア8製品が全現役端末に導入・更新され、親別matrixどおり疎通し、Spotter限定発火・Throughline context・Codegraph／MarkItDown／Oracle／aiterm／sidecar代表 E2E が green
+- [ ] ServerManagerを中央管理コアとしてdotagentsの管理対象へ接続し、BugHubを独立製品へ分離せずversion・bug・互換結果の統括に再利用する
 - [ ] 現役端末すべてで clone/pull→install→必須設定→verify→代表 E2E が green
 - [ ] Claude 側の skill/command/agent/hook に回帰がない
 - [ ] 既存 Codex 関連プランの重複 TODO を完了または移管理由付きで閉じている
@@ -49,6 +50,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 | COMMANDS | Claude command 3件、Codex 対応表なし | Codex は対応 skill の明示 invocation を正規入口にする。架空の plugin command は作らない |
 | SESSIONS | Throughline と handoff smoke が端末外で実装済み | 新規実装しない。dotagents は配線存在と代表 capture/restore/handoff を受け入れ検証 |
 | FACTORY_CORE | 8製品の必須度・更新面が不整合。Oracleは任意、aitermは前提とmatrixが矛盾、sidecarはClaude親だけcore、Spotterはdotagents自身に未接続、MarkItDownは更新管理外 | 8製品を外部所有の必須工場コアとして統一。NPM＋`uv tool`更新、親別配線、互換・代表E2Eをdotagentsの保守責務にする |
+| FACTORY_MANAGEMENT | ServerManager/BugHubはサーバー運用・アプリbug集約を実装済みだが、dotagents配下のコア管理階層と8製品のversion/compatibility連携が未定義 | ServerManagerを第9のコア管理対象、BugHubをその内部コンポーネントと定義。工場そのものはdotagentsに一意化し、既存BugHub契約を壊さず連携する |
 | 配布/CI | `~/.codex/skills` のみ。clean HOME E2E なし | 公式 skill 面を追加し、repo配布CIと実端末 E2Eを分離 |
 
 ## 4. 設計方針
@@ -61,6 +63,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 6. **端末設定は狭く扱う**: model、permissions、OAuth、hook trust を自動変更しない。自動適用は routing 必須2キーと dotagents 固有 hook entry の追加だけ。
 7. **一波一責務**: 各 wave は独立 commit、フルゲート、個別 revert が可能な単位にする。
 8. **工場コア8製品の所有権と統合責務を分ける**: 製品ソース・Caveatのown・Throughlineの状態・Spotterの状態/hook等は各製品自身に管理させる。dotagentsは再実装・複製せず、導入・NPM/`uv tool`週次更新・親別配線・互換fixture・代表E2E・上流更新追従を所有する。Spotterは対象projectごとの明示installに限定し、Codex親からsidecar/aiterm経由の入れ子Codexを禁止する。
+9. **工場と管理製品を混同しない**: 工場そのものはdotagents。ServerManagerはdotagentsが管理・連携する中央管理コアであり、BugHubはその内部コンポーネント。ServerManager/BugHubをdotagentsと並ぶ別工場・別control planeとして扱わない。
 
 ## 5. Workflow 対応表
 
