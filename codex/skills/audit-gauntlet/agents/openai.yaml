@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit Gauntlet"
+  short_description: "Adversarial multi-view document audits"
+  default_prompt: "Use $audit-gauntlet to audit these documents with independent refutation and report the finding counts."

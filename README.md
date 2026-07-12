@@ -68,9 +68,11 @@ flowchart LR
 | 種類 | 名前 | 用途 |
 |---|---|---|
 | Claude skill | `orchestrate` | 多エージェント/多モデル統括の標準型（憲法8カ条・委譲契約・Workflow 雛形） |
-| Codex skill | `orchestrate` | Claude 側の同名正本を相対 symlink で共有し、Codex の統括・着手 hook から利用する |
+| Codex skill | `orchestrate` | 製品中立の共通契約を読み、Codex native subagent で統括する製品固有入口 |
 | Claude skill | `audit-gauntlet` | 文書を ultracode 型監査（並列多視点→敵対的反証→Critic）で磨き込む |
 | Claude skill | `auto-deploy-on-push` | push 契機の SSH + docker compose 自動デプロイ構築 |
+| Codex skill | `audit-gauntlet` | native finder→existence/value独立反証→Critic→親裁定で文書を監査 |
+| Codex skill | `auto-deploy-on-push` | read-only調査とH承認を先行するpush起点デプロイ構築 |
 | Claude agent | `implementer` | 委譲契約焼き込み済みの実装者（安価枠。対応表は docs/02_models.md） |
 | Claude agent | `refuter` | 敵対的検証者（読み取り専用） |
 | Claude command | `audit-gauntlet` / `auto-deploy-on-push` / `polish-github` | 各スキルの入口（audit-gauntlet は skill への相対 symlink） |
@@ -83,6 +85,14 @@ flowchart LR
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
+
+Claude command の Codex 正規入口は slash command の模造ではなく、対応 skill の明示 invocation とする。
+
+| Claude command | Codex 入口 |
+|---|---|
+| `/audit-gauntlet` | `$audit-gauntlet` |
+| `/auto-deploy-on-push` | `$auto-deploy-on-push` |
+| `/polish-github` | `$polish-github` |
 
 ### Codex 9面の対応状況
 
@@ -98,7 +108,7 @@ flowchart LR
 | MCP_SERVER_CONFIG | `docs/05_codex-fragments.md` | 親別 matrix と疎通手順を整備中 |
 | SUBAGENTS | `codex/agents/*.toml`＋`verify-codex-agent-routing` | 対応済み |
 | HOOKS | `bin/codex-callout-hook.sh`＋`docs/05_codex-fragments.md` | INFO 契約で対応済み |
-| COMMANDS | Claude command に対応する Codex skill | skill 入口へ統一中 |
+| COMMANDS | Claude command に対応する Codex skill | 対応表を上記へ固定 |
 | SESSIONS | Throughline＋Codex handoff smoke | 外部正本を Wave 2-3 で受入検証予定 |
 
 ## 他端末セットアップ・ランブック

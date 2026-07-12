@@ -84,15 +84,15 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 ### Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）
 
-- [ ] `orchestrate` の共通契約 reference を追加（既存ディレクトリの移動・改名なし）
-- [ ] Claude 入口を Claude Workflow/外部枠 appendix として整理
-- [ ] Codex の symlink adapter を製品固有 skill ディレクトリへ置換し、native agents/routing を使う
-- [ ] `audit-gauntlet` Codex skill を追加し、2票反証と件数遷移を fixture で検証
-- [ ] `auto-deploy-on-push` Codex skill を追加し、高リスク操作の説明・H承認・rollback を固定
-- [ ] `polish-github`・`oracle` は既存対応との差分監査のみ。必要がなければ「変更なし」を記録
-- [ ] Claude command 3件→Codex skill 入口の対応表を README に追加
+- [x] `orchestrate` の共通契約 reference を追加（既存ディレクトリの移動・改名なし）
+- [x] Claude 入口を Claude Workflow/外部枠 appendix として整理
+- [x] Codex の symlink adapter を製品固有 skill ディレクトリへ置換し、native agents/routing を使う
+- [x] `audit-gauntlet` Codex skill を追加し、2票反証と件数遷移を fixture で検証
+- [x] `auto-deploy-on-push` Codex skill を追加し、高リスク操作の説明・H承認・rollback を固定
+- [x] `polish-github`・`oracle` は既存対応との差分監査のみ。必要がなければ「変更なし」を記録
+- [x] Claude command 3件→Codex skill 入口の対応表を README に追加
 - [ ] 全対象 skill の frontmatter、明示 invocation、代表暗黙 invocation を新規 session で確認
-- [ ] rollback: skill ごとの pathspec revert。旧 orchestrate symlink を復元可能にする
+- [x] rollback: Wave 1 を独立 commit とし、revert で旧 orchestrate symlink を復元可能にする
 
 ### Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）
 

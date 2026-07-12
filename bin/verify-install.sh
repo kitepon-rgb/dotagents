@@ -26,18 +26,21 @@ check() { # check <dst> <expect_src>
   fi
 }
 
-# Codex の orchestrate は Claude 側の唯一の正本を参照する薄い adapter とする。
-# 実ディレクトリへの複製・絶対リンク・参照先の取り違えをここで明示的に検出する。
+# Codex の orchestrate は製品固有の実ディレクトリとし、製品中立の共通契約を参照する。
+# Claude 本文の複製や symlink への後退をここで明示的に検出する。
 codex_orchestrate="$REPO/codex/skills/orchestrate"
-codex_orchestrate_target="../../claude/skills/orchestrate"
-if [ ! -L "$codex_orchestrate" ]; then
-  echo "FAIL: $codex_orchestrate は Claude 正本への相対 symlink ではない（複製を置かない）"
+shared_orchestrate_contract="$REPO/shared/orchestrate/contract.md"
+if [ -L "$codex_orchestrate" ] || [ ! -d "$codex_orchestrate" ]; then
+  echo "FAIL: $codex_orchestrate は製品固有の実ディレクトリではない（Claude 側への symlink を置かない）"
   fail=1
-elif [ "$(readlink "$codex_orchestrate")" != "$codex_orchestrate_target" ]; then
-  echo "FAIL: $codex_orchestrate → $(readlink "$codex_orchestrate")（期待 $codex_orchestrate_target）"
+elif [ ! -r "$codex_orchestrate/SKILL.md" ]; then
+  echo "FAIL: $codex_orchestrate/SKILL.md を読めない"
   fail=1
-elif [ ! -d "$codex_orchestrate" ] || [ ! -r "$codex_orchestrate/SKILL.md" ] || [ ! -d "$codex_orchestrate/references" ]; then
-  echo "FAIL: $codex_orchestrate の Claude 正本参照が壊れている（SKILL.md と references を読めない）"
+elif [ ! -r "$shared_orchestrate_contract" ]; then
+  echo "FAIL: $shared_orchestrate_contract を読めない"
+  fail=1
+elif ! grep -Fq '../../../shared/orchestrate/contract.md' "$codex_orchestrate/SKILL.md"; then
+  echo "FAIL: $codex_orchestrate/SKILL.md が共通契約を参照していない"
   fail=1
 fi
 

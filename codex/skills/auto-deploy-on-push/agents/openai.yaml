@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Deploy on Push"
+  short_description: "Plan approval-gated GitHub deployment workflows"
+  default_prompt: "Use $auto-deploy-on-push to assess this deployment request and present the approved safe implementation steps."
