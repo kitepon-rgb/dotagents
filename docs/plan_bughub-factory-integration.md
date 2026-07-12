@@ -13,12 +13,12 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 
 ## 1. 完了条件（本計画がTODOを兼ねる）
 
-- [ ] 端末能力8製品とServerManagerについて、製品別のversion・diagnostics・state/schema・migration・互換性契約が有限表になっている
+- [x] 端末能力8製品とServerManagerについて、製品別のversion・diagnostics・state/schema・migration・互換性契約が有限表になっている
 - [x] 4環境×9製品の期待状態（required / optional / forbidden / unsupported）、期待connector、欠落時severityが一意なmatrixになっている
 - [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの4環境が、認証付きでBugHubへ観測結果を報告できる
 - [x] BugHubにhost×productの現在値と履歴があり、installed/latest・contract・schema・update・compatibilityの状態を区別できる
 - [ ] 互換異常は既存BugHubのfingerprint・severity・再発・解決・Discord・`/ai`へ統合される
-- [ ] 既存4アプリのpull巡回・重大度・resolve/reopen・dashboard・日次/週次通知に回帰がない
+- [x] 既存4アプリのpull巡回・重大度・resolve/reopen・dashboard・日次/週次通知に回帰がない
 - [x] 第三者製品をfork、`node_modules`パッチ、内部DB決め打ちで改造していない
 - [ ] 自作製品は機械可読な正規diagnosticsを製品側に持ち、dotagentsが内部状態を勝手に解釈しない
 - [ ] 自作製品をクオ管理端末で実利用した時の構造化errorを、入力本文・秘密・ファイル内容なしでローカル記録し、dotagents reporter経由でBugHubへ集約できる
@@ -52,7 +52,7 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 | Spotter | 自作・別repo | `spotter --version`（1.4.22） | doctor/status/logs、Codex hook diagnostics | clean |
 | Codegraph | 第三者 | `codegraph --version`（1.4.1） | 既存indexだけ`status`/read-only query | 本体改造禁止。index自動作成禁止 |
 | MarkItDown | 第三者 | `markitdown --version`（0.1.5） | ローカルfixture変換＋出力byte数 | `uv tool`管理。本体改造禁止 |
-| Oracle | 第三者 | `oracle --version`（0.16.0） | canonical wrapper、doctor/status | Chrome/ChatGPT認証依存。consultをhealthに使わない |
+| Oracle | 第三者 | `oracle --version`（0.16.0） | canonical wrapper、`doctor --providers --json` | Chrome/ChatGPT認証依存。consult/statusをhealthに使わない |
 | aiterm-mcp | 自作・別repo | package.json/npm（0.12.1） | MCP initialize、PTY list、vendor前提 | clean。現行CLIはversion出力なし |
 | codex-sidecar | 自作・別repo | CLI/package群（0.3.5） | diagnostics/dry-run、result schema | clean |
 | ServerManager | 自作・別repo | package.json/source commit（2.0.0） | BugHub health/poll/DB/container/Pi5 | clean。BugHubを内包 |
@@ -193,7 +193,7 @@ Codegraph、MarkItDown、Oracleは本体を改造しない。
 | Spotter | CLI | doctor、marker、host別catalog、Claude/Codex hook、Throughline context | 全project無条件activation |
 | Codegraph | CLI | 既存indexだけstatus/read-only query | `codegraph init`自動実行 |
 | MarkItDown | CLI/uv | bundled local fixtureを変換し出力byte数>0 | URL変換のrc=0だけでgreen |
-| Oracle | CLI | wrapper、`doctor --json`、認証状態 | consult、promptを表示しうるstatus、人間向け出力解析 |
+| Oracle | CLI | wrapper、`doctor --providers --json`、認証状態 | consult、promptを表示しうるstatus、人間向け出力解析 |
 | aiterm-mcp | package/追加version入口 | MCP initialize、read-only PTY list、依存CLI状態 | Codex親から入れ子Codex起動 |
 | codex-sidecar | 3 npm package | diagnostics/dry-run、result schema、model policy | 実装不要な実agent起動 |
 | ServerManager | package/commit | BugHub外部health、poll鮮度、DB migration、container/source一致、Pi5監視 | BugHubの自己申告だけで合格 |
@@ -246,7 +246,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 2 — dotagents reporter骨格（F＋A）
 
-- [ ] 9製品adapterからのreport生成を実装
+- [x] 9製品adapterからのreport生成を実装
 - [x] schema検証・送信・outbox・retry・上限を実装
 - [x] fake BugHubで成功、401、schema reject、timeout、duplicate、outbox再送をテスト
 - [x] enqueue-before-send、single-flight、overflow、dead-letter、応答消失をテスト
@@ -257,9 +257,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 3 — 第三者3製品adapter（A）
 
-- [ ] Codegraph: version＋既存index限定status。index無しは`skipped:not-indexed`
-- [ ] MarkItDown: version＋local fixture byte判定。JS URLはhealth fixtureに使わない
-- [ ] Oracle: version＋wrapper＋`doctor --json`。認証依存を区別しconsult/status禁止
+- [x] Codegraph: version＋既存index限定status。index無しは`skipped:not-indexed`
+- [x] MarkItDown: version＋local fixture byte判定。JS URLはhealth fixtureに使わない
+- [x] Oracle: version＋wrapper＋`doctor --providers --json`。認証依存を区別しconsult/status禁止
 - [ ] upstream version drift fixtureとunsupported表現を固定
 
 ### Wave 4 — 自作5製品のnative diagnostics（repo別A、契約はF）
@@ -279,8 +279,8 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] `POST /api/factory/v1/reports`とfactory DBを実装
 - [ ] full snapshot/delta、check lifecycle、正常snapshot、手動resolve、再観測reopen、host廃止の状態遷移を固定
 - [ ] check failureを既存issueへhost付きで統合し、runtime errorのack/cursor/retentionも固定
-- [ ] dashboardにhost×product matrix、version履歴、latest/compat/schema状態を追加
-- [ ] `/ai`とDiscord/daily/weeklyへ修正先repo・host・product・fingerprintを追加
+- [x] dashboardにhost×product matrix、version履歴、latest/compat/schema状態を追加
+- [x] `/ai`とDiscord/daily/weeklyへ修正先repo・host・product・fingerprintを追加
 - [x] 既存pull sourceとの後方互換testを通す
 
 ### Wave 6 — ServerManager/BugHub自己監視（F）

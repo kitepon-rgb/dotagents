@@ -108,3 +108,36 @@ ssh main-server 'cd /home/kite/bughub && docker compose exec -T bughub node src/
 - token漏洩時はrotation猶予を使わず旧credentialを即revokeし、server staging・対象host tokenを置換する。
 
 秘密を含むfileの削除・転送、`.env`変更、factory入口ON、本番deployは端末ごとのH確認を伴う。通常のinstall/updateがこれらを暗黙に実行してはならない。
+
+## 7. 日常の正規実行順序
+
+scan、preview、enqueue、flushは別操作である。`reporting.enabled=false`のままでもscan/previewは実行でき、いずれもnetwork I/Oを行わない。
+
+```bash
+# 1. read-only scan。outputはcredential/outboxと別の所有者限定pathへ置く。
+umask 077
+factory-scan --config ~/.config/dotagents/factory-reporter.json \
+  --output ~/.local/state/dotagents/factory-reporter/latest-report.json
+
+# 2. 送らずにschema・host identity・privacyを確認する。
+factory-reporter preview \
+  --config ~/.config/dotagents/factory-reporter.json \
+  --report ~/.local/state/dotagents/factory-reporter/latest-report.json
+
+# 3. 明示ON済みの時だけoutboxへ保存する。OFFなら成功終了でもenqueued=false。
+factory-reporter enqueue \
+  --config ~/.config/dotagents/factory-reporter.json \
+  --report ~/.local/state/dotagents/factory-reporter/latest-report.json
+
+# 4. 明示ON済みの時だけnetwork送信。accepted確認後だけoutboxから削除する。
+factory-reporter flush --config ~/.config/dotagents/factory-reporter.json
+```
+
+`preview`は常にnetworkゼロである。`enqueue`と`flush`はOFFならnetworkゼロで、既存outboxを消さない。tokenの存在、scheduler、過去のON状態は送信許可にならない。
+
+### exitと出力の扱い
+
+- `factory-scan`非0: config/profile、dotagents revision、report schema、atomic outputのいずれかに失敗した。outputの成功扱い・enqueueはしない。個別製品CLIの不在・非対応はreport全体を偽成功/失敗へ丸めず、その製品を`unverified`として残す。
+- `factory-reporter`非0: stdoutの`{ok:false,code:"FACTORY_REPORTER_ERROR"}`とstderrを確認する。409/413/422はdead-letter、401/403/429/5xx/timeout/networkはoutbox保持であり、成功ではない。
+- stdout JSONは機械判定用で、token本文を出さない。report JSONには秘密・prompt・absolute pathを入れない。
+- config、credential、state/outbox、scan outputは0700 directory/0600 file（Windowsは現在userのみACL）にする。reportを共有・git add・チャット貼付けしない。
