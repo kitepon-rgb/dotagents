@@ -2,6 +2,10 @@
 # Linux / WSL2 の cron 最小環境で agents-update が NVM の npm を復元することを検証する。
 set -euo pipefail
 
+case "$(uname -s)" in
+  MINGW*|MSYS*) printf 'agents-update cron env: SKIP — Windows native は cron/NVM 対象外\n'; exit 0 ;;
+esac
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TEST_HOME="$(mktemp -d)"
 EMPTY_HOME="$(mktemp -d)"
