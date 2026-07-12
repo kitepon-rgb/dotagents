@@ -14,7 +14,7 @@ cat >/dev/null 2>&1 || true
 
 # additionalContext = モデルへ注入される正本化リマインダ（文言の集約点）。
 # " \ 生改行を含めない（下の printf で JSON 文字列へ直書きするため）。
-context='【正本化ゲート発火】プランが承認された。実装に入る前に、このプランの正本を対象プロジェクトの docs/ に置く（plan_<名前>.md・チェックボックス付き＝TODO を兼ねる。ADR 命名規約に従う）。会話・端末メモリ・TodoWrite の使い捨てで済ませるなら、なぜ docs/ に正本化しないかを1行名指ししてから。正本なし・理由なしで実装を始めない。根拠: グローバル CLAUDE.md「計画文書の作法」。'
+context='INFO: プランが承認されました。プランの保存先、チェックボックスによる進捗管理、完了後の archive 方針は、グローバル CLAUDE.md / AGENTS.md「計画文書の作法」を参照。このINFO自体は、依頼されていない文書作成や作業範囲の拡張を要求しません。'
 
 printf '{"continue":true,"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"%s"}}\n' "$context"
 exit 0

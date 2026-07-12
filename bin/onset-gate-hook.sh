@@ -4,11 +4,33 @@ import json
 import os
 import sys
 
-CONTEXT = "【着手ゲート】この依頼で実装・委譲・オーケストレーションに入るなら、手を動かす前に: (1) orchestrate スキルと docs/02_models.md を**開いて**、作業を F/A/H でラベルし配置（ティア×effort×入口）を決定表の該当行を **file:line 引用付き**で1行宣言する（既定は A＝委譲、自分で書く(F)なら理由を1行）。(2) プランは docs/ に正本化したか（会話・TodoWrite の使い捨てで済ませない）。調査・会話・小さな単発修正だけのターンは無視してよい。"
+STATE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "dotagents", "hooks")
+CONTEXT = "INFO: このセッションで実装・委譲・複数工程の作業を行う場合の進め方は、グローバル CLAUDE.md / AGENTS.md の「計画文書の作法」「モデルとエフォート」および orchestrate skill を参照。会話・調査・小さな単発修正には追加対応不要。このINFO自体は、新しい作業・文書作成・委譲・依頼範囲の拡張を要求しません。"
 
 try:
-    sys.stdin.read()
-    if os.environ.get("DOTAGENTS_ONSET_GATE") != "off":
-        sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": CONTEXT}}, ensure_ascii=False) + "\n")
+    data = json.loads(sys.stdin.read())
+    session_id = data.get("session_id")
+    if not isinstance(session_id, str):
+        raise ValueError
+    os.makedirs(STATE_DIR, exist_ok=True)
+    parts = []
+    shown = os.path.join(STATE_DIR, f"{session_id}.onset-info")
+    if os.environ.get("DOTAGENTS_ONSET_GATE") != "off" and not os.path.exists(shown):
+        open(shown, "a", encoding="utf-8").close()
+        parts.append(CONTEXT)
+    pending = os.path.join(STATE_DIR, f"{session_id}.todo-pending")
+    if os.environ.get("DOTAGENTS_TODO_GATE") != "off" and os.path.exists(pending):
+        try:
+            content = open(pending, encoding="utf-8").read().strip()
+        except Exception:
+            content = ""
+        try:
+            os.unlink(pending)
+        except Exception:
+            pass
+        if content:
+            parts.append(content)
+    if parts:
+        sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": "\n".join(parts)}}, ensure_ascii=False) + "\n")
 except Exception:
     pass

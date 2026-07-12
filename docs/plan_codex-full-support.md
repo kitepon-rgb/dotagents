@@ -42,7 +42,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 | PLUGINS | repo 内 manifest/marketplace なし | **非採用**。個人git+symlink配布を二重化するため今回の完了条件外 |
 | MCP_SERVER_CONFIG | Claude 登録手順が中心。Codex は一部断片のみ | 親別の必須/任意/禁止 matrix と Codex 登録・疎通手順を追加 |
 | SUBAGENTS | Codex 3 role、routing verifier、現端末 smoke あり | 基盤は対応済み。native audit 追加と他端末 E2E だけ |
-| HOOKS | Claude C1-C4 / Codex X1-X5、smoke・配線検証あり | 再設計しない。CI 昇格、README、他端末実火だけ |
+| HOOKS | Claude C1-C4 / Codex X1-X5 は正典参照の短い INFO。初回案内・compact 再武装・Stop pending 配送を smoke 済み | INFO 契約を再設計しない。CI 昇格、README、他端末実火だけ |
 | COMMANDS | Claude command 3件、Codex 対応表なし | Codex は対応 skill の明示 invocation を正規入口にする。架空の plugin command は作らない |
 | SESSIONS | Throughline と handoff smoke が端末外で実装済み | 新規実装しない。dotagents は配線存在と代表 capture/restore/handoff を受け入れ検証 |
 | 配布/CI | `~/.codex/skills` のみ。clean HOME E2E なし | 公式 skill 面を追加し、repo配布CIと実端末 E2Eを分離 |
@@ -75,7 +75,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 
 - [ ] 現役端末×Codex入口（desktop / CLI / IDE 等）をオーナーと確定し、存在しない端末・入口を推測で追加しない
 - [ ] `git fetch`、ahead/behind、dirty、stash を記録
-- [ ] `make lint`、Claude/Codex hook smoke、`install.sh`、`verify-install.sh` を green にする
+- [ ] `make lint`、Claude/Codex hook smoke、`install.sh`、`verify-install.sh` を green にする。hook baseline は初回 INFO・同セッション2回目沈黙・compact 後1回再武装・Stop pending の次回1回配送・deny/ask/block 不在を保存
 - [ ] `/import` または `externalAgentConfig/detect` を**検出だけ**実行し、9面の差を保存（import禁止）
 - [ ] 各現役入口の新規 Claude/Codex session で skills・agents・MCP・hooks baseline を保存
 - [ ] AGENTS の実効 byte budget と、人格・計画・F/A/H・git・報告の先頭/末尾カナリアが実読されることを保存
@@ -102,7 +102,7 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 - [ ] dotagents 所有の旧 legacy symlink は dry-run一覧→backup→H承認後に対象限定で外し、他の local skill を保存
 - [ ] `verify-install.sh` が選択 profile、公式面/legacy面、リンク先、重複、`AGENTS.override.md` shadow を区別して検証
 - [ ] clean temporary HOME で repo配布と静的設定 fixture を検証する CI を追加
-- [ ] Claude/Codex hook smoke を `make lint` / GitHub Actions の明示ゲートへ昇格
+- [ ] Claude/Codex hook smoke を `make lint` / GitHub Actions の明示ゲートへ昇格し、初回 INFO・2回目沈黙・compact 再武装・pending 1回配送・旧 deny/ask/block 不在を固定
 - [ ] 既存 `verify-install.sh` を読み取り診断の唯一の入口として維持（別の汎用 check tool は作らない）
 - [ ] routing 必須2キーと dotagents hook entry だけを、backup→dry-run→冪等追加できる適用スクリプトを追加
 - [ ] model、permissions、既存他tool hooks、OAuth、trust は変更せず、診断＋H手順に残す
@@ -120,12 +120,12 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 - [ ] 各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS）
 - [ ] 端末で共有できる routing/MCP 証拠は入口ごとの台帳から同じ証拠へ参照し、未実施を共有扱いにしない
 - [ ] 各端末で implementer/refuter/sorter の routing smoke＋親側 verifier green
-- [ ] 各入口で Codex hooks の実火、代表 skill、Throughline 代表 smoke を成功させる。明示エラーは FAIL/blocker であり合格にしない
+- [ ] 各入口で Codex hooks の初回 INFO・同セッション2回目沈黙・compact 再武装・Stop pending の次回1回配送を実火し、代表 skill、Throughline 代表 smoke を成功させる。明示エラーは FAIL/blocker であり合格にしない
 - [ ] 任意 MCP/OAuth は未認証を FAIL にせず、理由付き WARN と H 手順を記録
 - [ ] Claude の skill/command/agent/hook smoke を再実行し回帰なしを確認
 - [ ] `plan_gpt56-rewiring.md` の他端末 routing TODO を本 wave の実測で消化
 - [ ] 同プランの sandbox上書き/spawn応答上流問題は non-blocking の独立追跡として残す
-- [ ] `plan_callout-hooks.md` の README・全ゲートは Wave 2、他端末実火は本 wave で消化
+- [ ] `plan_callout-hooks.md` Phase 6 の INFO 契約を baseline とし、README・全ゲートは Wave 2、他端末実火は本 wave で消化
 - [ ] PLAN.md の「Codex skill 一覧目視」を閉じる
 - [ ] 端末台帳を完成し、完了した既存プランを archive へ移す
 - [ ] rollback: 問題端末だけ旧commit＋backupへ戻し、他端末のgreenを巻き戻さない
@@ -148,10 +148,10 @@ dotagents を全端末の開発工場の中心として、Claude Code と Codex 
 | PLUGINS | `非採用: 個人git+symlink配布と二重化、hook仕様も未確定` と記録 |
 | MCP_SERVER_CONFIG | core必須 server が connected。任意/認証依存は理由付き WARN |
 | SUBAGENTS | 3 role の routing-check green。sandbox 差は別表示 |
-| HOOKS | SessionStart / PreToolUse / UserPromptSubmit / Stop の実火と trust を確認 |
+| HOOKS | trust 済みの SessionStart / PreToolUse / UserPromptSubmit / Stop で、初回 INFO・2回目沈黙・compact 後1回再武装・Stop pending の次回1回配送を確認。deny/ask/block を返さず、INFO が依頼範囲を拡張しない |
 | COMMANDS | Claude command 3件の目的を対応 Codex skill から実行可能 |
 | SESSIONS | 必須の現役入口で既存 Throughline/handoff の代表 smoke が成功。失敗は明示されても blocker。製品固有で対象外と裁定した入口だけ理由付きSKIP可 |
-| 回帰 | Claude 側の既存ゲートが変更前と同等以上 |
+| 回帰 | Claude 側も新しい INFO 契約を満たし、Hook 外の既存挙動に回帰がない |
 
 ## 8. 端末台帳
 

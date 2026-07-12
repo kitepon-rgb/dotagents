@@ -38,7 +38,7 @@ run x2-plan-small python3 "$HOOK" pre-tool-use <<<'{"session_id":"p1","tool_name
 run x2-plan-canon python3 "$HOOK" pre-tool-use <<EOF
 {"session_id":"p2","tool_name":"update_plan","tool_input":{"plan":[{"step":"a","status":"pending"},{"step":"b","status":"pending"},{"step":"c","status":"pending"},{"step":"d","status":"pending"}]}}
 EOF
-json && [[ "$RUN_OUT" == *"正本化ゲート発火"* ]] && pass x2-plan-canon || fail_case x2-plan-canon
+json && [[ "$RUN_OUT" == *"INFO: Codex"* ]] && pass x2-plan-canon || fail_case x2-plan-canon
 
 # 同一セッション2回目の update_plan（4件以上でも）→ 初回スロットル済みで沈黙
 run x2-plan-canon-2nd python3 "$HOOK" pre-tool-use <<EOF
@@ -50,7 +50,7 @@ EOF
 run x2-plan-done python3 "$HOOK" pre-tool-use <<EOF
 {"session_id":"p3","tool_name":"update_plan","tool_input":{"plan":[{"step":"a","status":"completed"},{"step":"b","status":"completed"}]}}
 EOF
-json && [[ "$RUN_OUT" == *"内蔵プランを全消化した"* ]] && pass x2-plan-done || fail_case x2-plan-done
+json && [[ "$RUN_OUT" == *"completed"* ]] && pass x2-plan-done || fail_case x2-plan-done
 
 # 同一セッション再度全 completed → スロットル済みで沈黙
 run x2-plan-done-2nd python3 "$HOOK" pre-tool-use <<EOF
@@ -64,26 +64,14 @@ run x2-plan-off env DOTAGENTS_TODO_GATE=off python3 "$HOOK" pre-tool-use <<EOF
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x2-plan-off || fail_case x2-plan-off
 
-# spawn_agent: agent_type 欠落 → deny（1,2回目）
-run x2-spawn-noagenttype-1 python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1","tool_name":"spawn_agent","tool_input":{"model":"sonnet"}}' \
-  && json && [[ "$RUN_OUT" == *'"deny"'* ]] && pass x2-spawn-noagenttype-1 || fail_case x2-spawn-noagenttype-1
+# spawn_agent: 引数に関係なく初回はINFO、同一セッション2回目は沈黙
+run x2-spawn-info python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1","tool_name":"spawn_agent","tool_input":{"model":"x-20260227"}}' \
+  && json && [[ "$RUN_OUT" == *'INFO:'* && "$RUN_OUT" != *permissionDecision* ]] && pass x2-spawn-info || fail_case x2-spawn-info
+run x2-spawn-silent python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1","tool_name":"spawn_agent","tool_input":{"agent_type":"implementer"}}' \
+  && [ "$RUN_BYTES" -eq 0 ] && pass x2-spawn-silent || fail_case x2-spawn-silent
 
-# spawn_agent: model 日付ID → deny
-run x2-spawn-dateid python3 "$HOOK" pre-tool-use <<<'{"session_id":"s2","tool_name":"spawn_agent","tool_input":{"agent_type":"implementer","model":"x-20260227"}}' \
-  && json && [[ "$RUN_OUT" == *'"deny"'* ]] && pass x2-spawn-dateid || fail_case x2-spawn-dateid
-
-# spawn_agent: 同一セッション×同一違反キーを3回連呼 → 3回目は warn に自動降格
-python3 "$HOOK" pre-tool-use <<<'{"session_id":"s3","tool_name":"spawn_agent","tool_input":{"agent_type":"implementer","model":"x-20260227"}}' >/dev/null
-python3 "$HOOK" pre-tool-use <<<'{"session_id":"s3","tool_name":"spawn_agent","tool_input":{"agent_type":"implementer","model":"x-20260227"}}' >/dev/null
-run x2-spawn-degrade python3 "$HOOK" pre-tool-use <<<'{"session_id":"s3","tool_name":"spawn_agent","tool_input":{"agent_type":"implementer","model":"x-20260227"}}' \
-  && json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *permissionDecision* ]] && pass x2-spawn-degrade || fail_case x2-spawn-degrade
-
-# spawn_agent: 準拠（agent_type あり・model 非日付ID）→ 沈黙
-run x2-spawn-clean python3 "$HOOK" pre-tool-use <<<'{"session_id":"s4","tool_name":"spawn_agent","tool_input":{"agent_type":"implementer","model":"sonnet"}}' \
-  && [ "$RUN_BYTES" -eq 0 ] && pass x2-spawn-clean || fail_case x2-spawn-clean
-
-# DOTAGENTS_PLACEMENT_GATE=off → spawn_agent 違反があっても沈黙
-run x2-spawn-off env DOTAGENTS_PLACEMENT_GATE=off python3 "$HOOK" pre-tool-use <<<'{"session_id":"s5","tool_name":"spawn_agent","tool_input":{"model":"x-20260227"}}' \
+# DOTAGENTS_PLACEMENT_GATE=off → spawn_agent は沈黙
+run x2-spawn-off env DOTAGENTS_PLACEMENT_GATE=off python3 "$HOOK" pre-tool-use <<<'{"session_id":"s5","tool_name":"spawn_agent","tool_input":{}}' \
   && [ "$RUN_BYTES" -eq 0 ] && pass x2-spawn-off || fail_case x2-spawn-off
 
 # --- X1 session-start（C2 ミラー） ---
@@ -94,7 +82,7 @@ git -C "$REPO" add . && git -C "$REPO" commit -qm initial
 run x1-stocktake python3 "$HOOK" session-start <<EOF
 {"session_id":"t1","source":"startup","cwd":"$REPO"}
 EOF
-json && [[ "$RUN_OUT" == *'【TODO 棚卸し】'* ]] && pass x1-stocktake || fail_case x1-stocktake
+json && [[ "$RUN_OUT" == *'INFO: docs/'* ]] && pass x1-stocktake || fail_case x1-stocktake
 
 run x1-resume python3 "$HOOK" session-start <<EOF
 {"session_id":"t2","source":"resume","cwd":"$REPO"}
@@ -116,7 +104,7 @@ printf '%s\n' changed >>"$REPO/source.txt"
 run x4-warn python3 "$HOOK" stop <<EOF
 {"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
 EOF
-json && [[ "$RUN_OUT" == *additionalContext* ]] && pass x4-warn || fail_case x4-warn
+[ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/t1.codex-pending" ] && pass x4-warn || fail_case x4-warn
 
 run x4-active python3 "$HOOK" stop <<EOF
 {"session_id":"t1","cwd":"$REPO","stop_hook_active":true}
@@ -128,25 +116,19 @@ run x4-off env DOTAGENTS_TODO_GATE=off python3 "$HOOK" stop <<EOF
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x4-off || fail_case x4-off
 
-# 同一ファイルへの再追記は git status --porcelain の文字列が変わらず rolling baseline が
-# 「差分なし」と判定する（todo-gate-hook.sh 由来の既存挙動）ため、新規ファイルで porcelain を変える
+# block 値でもStopは止めず、pending保存だけ
 printf '%s\n' new2 >"$REPO/source2.txt"
 run x4-block-1 env DOTAGENTS_TODO_GATE=block python3 "$HOOK" stop <<EOF
 {"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
 EOF
-json && [[ "$RUN_OUT" == *'"decision"'*'"block"'* ]] && pass x4-block-1 || fail_case x4-block-1
+[ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/t1.codex-pending" ] && pass x4-block-1 || fail_case x4-block-1
 
-# block スロットルはターン内1回上限＝2回目は decision:block でなく通常の warn(additionalContext) へフォールバック
-# （todo-gate-hook.sh 由来の既定仕様。沈黙ではない）
-printf '%s\n' new3 >"$REPO/source3.txt"
-run x4-block-2 env DOTAGENTS_TODO_GATE=block python3 "$HOOK" stop <<EOF
-{"session_id":"t1","cwd":"$REPO","stop_hook_active":false}
-EOF
-json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *'"decision"'* ]] && pass x4-block-2 || fail_case x4-block-2
-
-# --- X3/X5 user-prompt-submit（着手ゲート毎ターん ＋ pending drain） ---
+# --- X3/X5 user-prompt-submit（セッション1回のINFO ＋ pending drain） ---
 run x35-normal python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
-  && json && [[ "$RUN_OUT" == *'【着手ゲート】'* ]] && pass x35-normal || fail_case x35-normal
+  && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass x35-normal || fail_case x35-normal
+
+run x35-silent python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
+  && [ "$RUN_BYTES" -eq 0 ] && pass x35-silent || fail_case x35-silent
 
 run x35-off env DOTAGENTS_ONSET_GATE=off python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u2"}' \
   && [ "$RUN_BYTES" -eq 0 ] && pass x35-off || fail_case x35-off
@@ -154,8 +136,20 @@ run x35-off env DOTAGENTS_ONSET_GATE=off python3 "$HOOK" user-prompt-submit <<<'
 mkdir -p "$STATE/dotagents/hooks"
 printf '%s' 'pending-notice-text' >"$STATE/dotagents/hooks/u3.codex-pending"
 run x35-pending python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u3"}' \
-  && json && [[ "$RUN_OUT" == *'pending-notice-text'* && "$RUN_OUT" == *'【着手ゲート】'* ]] && pass x35-pending || fail_case x35-pending
+  && json && [[ "$RUN_OUT" == *'pending-notice-text'* && "$RUN_OUT" == *'INFO:'* ]] && pass x35-pending || fail_case x35-pending
 [ ! -f "$STATE/dotagents/hooks/u3.codex-pending" ] && pass x35-pending-drained || fail_case x35-pending-drained
+
+run x35-compact python3 "$HOOK" session-start <<EOF
+{"session_id":"u1","source":"compact","cwd":"$REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass x35-compact || fail_case x35-compact
+run x35-rearmed python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
+  && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass x35-rearmed || fail_case x35-rearmed
+
+# TODO gate off なら既存 pending も配送しない
+printf '%s' 'must-stay-pending' >"$STATE/dotagents/hooks/u4.codex-pending"
+run x35-pending-off env DOTAGENTS_TODO_GATE=off DOTAGENTS_ONSET_GATE=off python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u4"}' \
+  && [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/u4.codex-pending" ] && pass x35-pending-off || fail_case x35-pending-off
 
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'

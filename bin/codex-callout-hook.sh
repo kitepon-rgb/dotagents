@@ -4,14 +4,13 @@ import datetime
 import hashlib
 import json
 import os
-import re
 import subprocess
 import sys
 import time
 
 STATE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "dotagents", "hooks")
 
-ONSET_CONTEXT = "【着手ゲート】この依頼で実装・委譲・オーケストレーションに入るなら、手を動かす前に: (1) orchestrate スキルと docs/02_models.md を**開いて**、作業を F/A/H でラベルし配置（ティア×effort×入口）を決定表の該当行を **file:line 引用付き**で1行宣言する（既定は A＝委譲、自分で書く(F)なら理由を1行）。(2) プランは docs/ に正本化したか（会話・TodoWrite の使い捨てで済ませない）。調査・会話・小さな単発修正だけのターンは無視してよい。"
+ONSET_CONTEXT = "INFO: このセッションで実装・委譲・複数工程の作業を行う場合の進め方は、グローバル AGENTS.md の「計画文書の作法」「モデルとエフォート」および orchestrate skill を参照。会話・調査・小さな単発修正には追加対応不要。このINFO自体は、新しい作業・文書作成・委譲・依頼範囲の拡張を要求しません。"
 
 
 def error_log(name):
@@ -83,13 +82,19 @@ def status_paths(porcelain):
 
 # --- X1: session-start（C2 ミラー。棚卸し文言は additionalContext 契約で統一） ---
 def session_start(data):
-    if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
-        return
     session_id, source, cwd = data.get("session_id"), data.get("source"), data.get("cwd")
     if not all(isinstance(value, str) for value in (session_id, source, cwd)):
         raise ValueError
-    root, repo_key, porcelain_hash, head, _ = repo_info(cwd)
     os.makedirs(STATE_DIR, exist_ok=True)
+    if source == "compact":
+        for suffix in ("codex-onset-info", "codex-placement-info"):
+            try:
+                os.unlink(os.path.join(STATE_DIR, f"{session_id}.{suffix}"))
+            except FileNotFoundError:
+                pass
+    if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
+        return
+    root, repo_key, porcelain_hash, head, _ = repo_info(cwd)
     snap = snapshot_path(session_id, repo_key)
     if not os.path.exists(snap):
         write_snapshot(snap, porcelain_hash, head)
@@ -117,7 +122,7 @@ def session_start(data):
         fragments.append("全消化済みで archive 未退避: " + "・".join(archived))
     gc()
     open(stocktake, "a", encoding="utf-8").close()
-    message = "【TODO 棚卸し】docs/ の生きたプラン: " + "・".join(fragments) + "。このセッションで消化した項目はチェックを入れ、役目を終えた文書は docs/archive/ へ。7日以上動いていない項目は「トリガー待ち」の明記があるか確認し、無ければ裁定をオーナーに仰ぐ。"
+    message = "INFO: docs/ のプラン状況: " + "・".join(fragments) + "。プランの維持・完了処理の方針は、グローバル AGENTS.md「計画文書の作法」を参照。この一覧は現在の依頼範囲を変更しません。"
     emit({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": message}})
 
 
@@ -143,13 +148,13 @@ def pre_tool_use(data):
         if not os.path.exists(canon_path):
             open(canon_path, "a", encoding="utf-8").close()
             if len(plan) >= 4:
-                messages.append("【正本化ゲート発火】内蔵プラン（update_plan）を作った。実装に入る前にプランの正本を対象プロジェクトの docs/ に置く（チェックボックス付き＝TODO を兼ねる）。使い捨てで済ませるなら「なぜ docs/ に正本化しないか」を1行名指ししてから。正本なし・理由なしで実装を始めない（AGENTS.md 計画文書の作法）。")
+                messages.append("INFO: Codex の内蔵プランが作成されました。永続プランの保存先とTODO管理の方針は、グローバル AGENTS.md「計画文書の作法」を参照。内蔵プランはセッション内の補助情報であり、正本の代替になるかは同規約に従います。")
 
         if statuses and all(status == "completed" for status in statuses):
             done_path = os.path.join(STATE_DIR, f"{session_id}.codex-plan-done")
             if not os.path.exists(done_path):
                 open(done_path, "a", encoding="utf-8").close()
-                messages.append("【TODO ゲート】内蔵プランを全消化した。docs/ のプラン正本にチェックを反映し、完遂なら docs/archive/ へ退避。正本の無い作業なら、正本化しない理由が宣言済みか確認。")
+                messages.append("INFO: Codex の内蔵プランが全項目 completed になりました。永続プランの進捗反映と完了文書の扱いは、グローバル AGENTS.md「計画文書の作法」を参照。")
 
         if messages:
             gc()
@@ -159,46 +164,28 @@ def pre_tool_use(data):
     if tool_name == "spawn_agent":
         if os.environ.get("DOTAGENTS_PLACEMENT_GATE") == "off":
             return
-        agent_type = tool_input.get("agent_type")
-        model = tool_input.get("model")
-        model_text = str(model) if model is not None else ""
-
-        kind, message = None, None
-        if not agent_type:
-            kind = "agent_type"
-            message = "【配置ゲート・ブロック】spawn_agent に agent_type が指定されていない＝routing 断片未適用の兆候(02_models.md 決定表準拠のロール指定が規約)。agent_type を明示して再実行すれば通る。"
-        elif re.search(r"-20\d{6}", model_text):
-            kind = "model"
-            message = f"【配置ゲート・ブロック】spawn_agent の model \"{model_text}\" は日付付き model ID＝規約違反(02_models.md 指定の作法)。floating alias か現行ティア語彙に替えて再実行すれば通る。"
-
-        if kind is None:
-            return
-
         os.makedirs(STATE_DIR, exist_ok=True)
-        # C1 delegation-gate-hook と同型の自動降格 cap（headless での deny 連呼を初版から封じる）
-        key = hashlib.sha1((tool_name + "|" + kind + "|" + model_text).encode()).hexdigest()[:12]
-        count_path = os.path.join(STATE_DIR, f"{session_id}.codex-deny.{key}")
-        try:
-            count = int(open(count_path, encoding="utf-8").read().strip() or "0")
-        except Exception:
-            count = 0
-        with open(count_path, "w", encoding="utf-8") as handle:
-            handle.write(str(count + 1) + "\n")
+        shown = os.path.join(STATE_DIR, f"{session_id}.codex-placement-info")
+        if os.path.exists(shown):
+            return
+        open(shown, "a", encoding="utf-8").close()
         gc()
-        if count >= 2:
-            emit({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": message}})
-        else:
-            emit({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": message}})
+        message = "INFO: このセッションで最初のネイティブ委譲を検出しました。配置・routing・委譲契約の基準は、グローバル AGENTS.md「モデルとエフォート」および docs/02_models.md を参照。このINFO自体は追加の委譲や依頼範囲の拡張を要求しません。"
+        emit({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": message}})
         return
 
 
-# --- X3+X5: user-prompt-submit（着手ゲート毎ターン注入 ＋ pending drain） ---
+# --- X3+X5: user-prompt-submit（セッション初回INFO ＋ pending drain） ---
 def user_prompt_submit(data):
     session_id = data.get("session_id")
     parts = []
-    if os.environ.get("DOTAGENTS_ONSET_GATE") != "off":
-        parts.append(ONSET_CONTEXT)
-    if isinstance(session_id, str):
+    if isinstance(session_id, str) and os.environ.get("DOTAGENTS_ONSET_GATE") != "off":
+        os.makedirs(STATE_DIR, exist_ok=True)
+        shown = os.path.join(STATE_DIR, f"{session_id}.codex-onset-info")
+        if not os.path.exists(shown):
+            open(shown, "a", encoding="utf-8").close()
+            parts.append(ONSET_CONTEXT)
+    if isinstance(session_id, str) and os.environ.get("DOTAGENTS_TODO_GATE") != "off":
         pending_path = os.path.join(STATE_DIR, f"{session_id}.codex-pending")
         if os.path.exists(pending_path):
             try:
@@ -215,7 +202,7 @@ def user_prompt_submit(data):
         emit({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": "\n".join(parts)}})
 
 
-# --- X4: stop（C3 ミラー。毎ターン rolling baseline・warn 既定／block は env 昇格） ---
+# --- X4: stop（C3 ミラー。rolling baseline で検出し pending 保存） ---
 def stop(data):
     session_id, cwd = data.get("session_id"), data.get("cwd")
     if not isinstance(session_id, str) or not isinstance(cwd, str):
@@ -253,14 +240,9 @@ def stop(data):
         return
     gc()
     summary = f"{len(paths)} ファイル/コミット {commits}"
-    message = f"【TODO ゲート】このターンで作業した（{summary}）が、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）が動いていない。消化した項目があればチェックを更新（完遂なら docs/archive/ へ退避）。この作業がプラン対象外なら、その旨を1行オーナーへ報告してから次へ。"
-    if os.environ.get("DOTAGENTS_TODO_GATE") == "block":
-        block = os.path.join(STATE_DIR, f"{session_id}.codex-todo-block")
-        if not os.path.exists(block):
-            open(block, "a", encoding="utf-8").close()
-            emit({"decision": "block", "reason": message})
-            return
-    emit({"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": message}})
+    message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。対象作業の進捗管理方法は、グローバル AGENTS.md「計画文書の作法」を参照。この情報は今回の依頼範囲を広げず、前ターンの応答を再開する指示でもありません。"
+    with open(os.path.join(STATE_DIR, f"{session_id}.codex-pending"), "w", encoding="utf-8") as handle:
+        handle.write(message + "\n")
 
 
 def main():

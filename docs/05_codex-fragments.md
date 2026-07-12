@@ -134,10 +134,10 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 
 配線するイベントは4つ（計画の X1/X2/X3・X5/X4）:
 
-- `SessionStart` → `codex-callout-hook session-start`（X1・C2 ミラー＋snapshot）
-- `PreToolUse` → `codex-callout-hook pre-tool-use`（X2・update_plan 初回＝正本化ゲートミラー／全 completed＝TODO 呼びかけ／spawn_agent 検査）
-- `UserPromptSubmit` → `codex-callout-hook user-prompt-submit`（X3 pending drain ＋ X5 着手ゲート注入の相乗り・毎ターン）
-- `Stop` → `codex-callout-hook stop`（X4・C3 ミラー・毎ターン rolling baseline・**Codex Stop hook の注入到達は本節適用時点で一次証拠なし＝計画のプローブ P6 結果に従うこと**。X4 が不成立なら X3 の pending 経路に降格する設計）
+- `SessionStart` → `codex-callout-hook session-start`（X1・C2 ミラー＋snapshot。棚卸しは観測事実と正典参照だけ）
+- `PreToolUse` → `codex-callout-hook pre-tool-use`（X2・update_plan 初回／全 completed／初回 spawn_agent を短い INFO で案内。引数検査・deny は行わない）
+- `UserPromptSubmit` → `codex-callout-hook user-prompt-submit`（X3 pending drain ＋ X5 セッション初回案内。compact 後に1回だけ再案内）
+- `Stop` → `codex-callout-hook stop`（X4・C3 ミラー。rolling baseline で更新忘れを検出し、context 注入や block をせず pending 保存）
 
 `async` は **必ず `false`**（計画 P6 実測: Codex CLI 0.144.1 でも async は非対応・trust にも乗らない。既存 claude-spotter の SessionStart エントリが `async:true` になっているのは既知の死んでいる可能性がある配線で、今回追加分がこれを真似しないこと）。
 

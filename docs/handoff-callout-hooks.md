@@ -6,14 +6,14 @@
 
 ## 目的（この工場に何を足しているか）
 
-規範（CLAUDE.md/AGENTS.md/orchestrate）に書いてあるのに行動の瞬間に無視される3点を、hook で文脈の最前面へ注入する:
+規範（CLAUDE.md/AGENTS.md/orchestrate）への参照を、反復命令にならない短い INFO として必要な時だけ提示する:
 
-1. **配置ゲート（C1/delegation-gate-hook）**: 委譲時のモデル×エフォートが 02_models.md に準じているか。
-2. **TODO ゲート（C2-C3/todo-gate-hook）**: 起動時の棚卸し＋作業したのにプラン正本を更新していない時の呼びかけ。
-3. **着手ゲート（C4/onset-gate-hook）**: 毎ターン、実装/委譲前に F/A/H ラベルと配置宣言・正本化を促す。
+1. **配置案内（C1/delegation-gate-hook）**: セッション最初の委譲時だけ、配置契約の正典を INFO で案内する。引数検査や deny / ask はしない。
+2. **TODO 案内（C2-C3/todo-gate-hook）**: 起動時の棚卸しを INFO で返し、更新忘れ候補は Stop で pending 保存して次の自然な入力へ1回配送する。
+3. **着手案内（C4/onset-gate-hook）**: セッション初回と compact 後だけ、作業規範の所在を INFO で案内する。
    Codex 側は `codex-callout-hook.sh`（X1-X5）が同型ミラー。
 
-## 完了済み（GitHub origin/main = dcf459d に push 済み・8コミット）
+## Phase 1-5 完了時点の履歴
 
 | コミット | 内容 |
 |---|---|
@@ -29,14 +29,14 @@
 
 ## 端末ローカルの状態（この Mac のみ・非コミット）
 
-- **`~/.claude/settings.json` に Claude 側 hook 4本を配線済み**（PreToolUse=C1／SessionStart=C2／Stop=C3／UserPromptSubmit=C4）。バックアップ `~/.claude/settings.json.bak-callout-hooks` あり。**着手ゲート・TODO ゲートの実火を実証済み**（hot-reload で即発火）。
-- **`~/.codex/hooks.json` に Codex hook 4本を配線済み**（SessionStart/PreToolUse/UserPromptSubmit/Stop＝X1-X5。2026-07-12 10:37・バックアップ `hooks.json.bak-calloutgate-20260712-103754`）。既存 throughline/caveat/spotter と共存 append。**実火のみ新規 Codex セッションで未確認**（次の作業）。
+- **`~/.claude/settings.json` に Claude 側 hook 4本を配線済み**（PreToolUse=C1／SessionStart=C2／Stop=C3／UserPromptSubmit=C4）。バックアップ `~/.claude/settings.json.bak-callout-hooks` あり。新しい初回 INFO 契約を smoke で検証済み。
+- **`~/.codex/hooks.json` に Codex hook 4本を配線済み**（SessionStart/PreToolUse/UserPromptSubmit/Stop＝X1-X5。2026-07-12 10:37・バックアップ `hooks.json.bak-calloutgate-20260712-103754`）。既存 throughline/caveat/spotter と共存 appendし、実火確認済み。
 
 ## 次にやること（優先順）
 
 ### 1. ✅ Codex 側 hooks.json の実火確認（完了・2026-07-12 11:41）
 
-- 配線は 10:37 完了、実火は 11:41 に確認済み（codex-cli 0.144.1・gpt-5.6-sol）: **X5 着手ゲートが画面へ全文注入**（`UserPromptSubmit hook (completed)` として）／**X1 session-start が snapshot 副作用**（`~/.cache/dotagents/hooks/<sid>.<repo>.codex-snapshot` に porcelain＋HEAD=e80f25f を記録）。棚卸し文言は 24h スロットル（`<repo>.stocktake` 10:20）で設計どおり沈黙。**X2=update_plan は今回 Codex がプランを作らず未観測**（codex-smoke 26 green＋同 hooks.json/同スクリプトで基盤は実証）。
+- 配線は 10:37 完了、実火は 11:41 に確認済み（codex-cli 0.144.1・gpt-5.6-sol）。当時は X5 の旧全文注入と X1 snapshot を実測した。その後 Phase 6 で全文注入を廃止し、初回 INFO・同セッション2回目沈黙・compact 再武装・Stop pending の次回1回配送へ変更して smoke 済み。新契約の他端末実火は残タスク。
 - 副次実測: 既存 spotter の SessionStart（async:true）は `skipping async hook` で skip 確定（codex-callout は全 async:false ゆえ無影響）。
 - matcher の実挙動検証は fast-path 最適化の論点として残す（現状 async:false・stdin 先頭 grep で対象外ツールを弾く実装で稼働中）。
 
@@ -52,12 +52,12 @@
 - **Codex Stop hook の注入が実挙動に反映される**（P6e 実証・既存 codex-cli-hooks caveat は「観測専用」と記録＝補足する）。
 - 記録済み: メモリ `long-session-generation-degrades`（生成劣化と対処）／caveat `codex-sidecar-codex-work-protocol-error-...`（worktree 回収）。
 
-## 未解決の設計論点（実装は仕様どおり・実火/検証で詰める）
+## 旧設計の未解決論点（Phase 6 INFO化で解消済み）
 
-- **env は実装上2値**: `DOTAGENTS_PLACEMENT_GATE`/`DOTAGENTS_ONSET_GATE` は `off` か否かの2値のみ（計画の `off|warn|enforce` は未実装）。`DOTAGENTS_TODO_GATE` のみ `off`/`block`/既定(warn) の3値。warn モードのエスカレーションを足すか、計画を2値に合わせるか要裁定。
-- **deny の warn 自動降格は deny①（日付ID）のみ**（計画は C1 全体想定）。deny②③の連呼は非現実的なので実害小だが、記述を実態へ寄せるか②③にも足すか。
+- `DOTAGENTS_*_GATE=off` だけを無効化値として扱う。旧 `DOTAGENTS_TODO_GATE=block` の昇格は廃止済み。
+- C1 の個別パラメータ検査と deny / ask は廃止済み。初回委譲 INFO だけを返す。
 - **fast-path は「python 起動後・JSON parse 前 return」**（1本 python では bash 側で起動回避不能）。重い git subprocess は避けるが python 起動コストは残る。matcher が使えれば配線側で減らせる（上記1参照）。
-- **onset-gate（C4）の発火が background 通知ターンで不安定**: 実オーナー発言では発火するが、Agent 完了通知等のターンで注入されないことがあった。実害は「会話でないターンは無視してよい」範囲だが、UserPromptSubmit の発火条件を実火で要観察。
+- **onset-gate（C4）**: セッション初回＋compact 後1回だけの INFO に変更済み。background 通知ターンでの反復注入は設計対象外になった。
 - **todo-gate stop が無関係な plan まで列挙**: 変更ファイルに `docs/plan_*.md` が無いと全 plan を挙げる（hook はどれが今の作業に関連するか判別不能）。仕様の限界。気になるなら「最近更新された plan のみ」等の絞り込みを検討。
 
 ## 再開時の作法（重要・このセッションの実被弾から）

@@ -82,10 +82,13 @@ def session_start(data):
     if not os.path.exists(snap):
         write_snapshot(snap, porcelain_hash, head)
     if source == "compact":
-        try:
-            os.unlink(os.path.join(STATE_DIR, f"{session_id}.placement-warn"))
-        except FileNotFoundError:
-            pass
+        for suffix in ("placement-warn", "onset-info"):
+            try:
+                os.unlink(os.path.join(STATE_DIR, f"{session_id}.{suffix}"))
+            except FileNotFoundError:
+                pass
+    if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
+        return
     if source not in ("startup", "clear"):
         return
     stocktake = os.path.join(STATE_DIR, f"{repo_key}.stocktake")
@@ -109,13 +112,15 @@ def session_start(data):
         fragments.append("全消化済みで archive 未退避: " + "・".join(archived))
     gc()
     open(stocktake, "a", encoding="utf-8").close()
-    sys.stdout.write("【TODO 棚卸し】docs/ の生きたプラン: " + "・".join(fragments) + "。このセッションで消化した項目はチェックを入れ、役目を終えた文書は docs/archive/ へ。7日以上動いていない項目は「トリガー待ち」の明記があるか確認し、無ければ裁定をオーナーに仰ぐ。\n")
+    sys.stdout.write("INFO: docs/ のプラン状況: " + "・".join(fragments) + "。プランの維持・完了処理の方針は、グローバル CLAUDE.md / AGENTS.md「計画文書の作法」を参照。この一覧は現在の依頼範囲を変更しません。\n")
 
 
 def stop(data):
     session_id, cwd = data["session_id"], data["cwd"]
     if not isinstance(session_id, str) or not isinstance(cwd, str):
         raise ValueError
+    if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
+        return
     if data.get("stop_hook_active") is True:
         return
     root, repo_key, porcelain_hash, head, porcelain = repo_info(cwd)
@@ -147,20 +152,13 @@ def stop(data):
         return
     gc()
     summary = f"{len(paths)} ファイル/コミット {commits}"
-    message = f"【TODO ゲート】このターンで作業した（{summary}）が、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）が動いていない。消化した項目があればチェックを更新（完遂なら docs/archive/ へ退避）。この作業がプラン対象外なら、その旨を1行オーナーへ報告してから次へ。"
-    if os.environ.get("DOTAGENTS_TODO_GATE") == "block":
-        block = os.path.join(STATE_DIR, f"{session_id}.todo-block")
-        if not os.path.exists(block):
-            open(block, "a", encoding="utf-8").close()
-            sys.stdout.write(json.dumps({"decision": "block", "reason": message}, ensure_ascii=False) + "\n")
-            return
-    sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": message}}, ensure_ascii=False) + "\n")
+    message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。対象作業の進捗管理方法は、グローバル CLAUDE.md / AGENTS.md「計画文書の作法」を参照。この情報は今回の依頼範囲を広げず、前ターンの応答を再開する指示でもありません。"
+    with open(os.path.join(STATE_DIR, f"{session_id}.todo-pending"), "w", encoding="utf-8") as handle:
+        handle.write(message + "\n")
 
 
 def main():
     raw = sys.stdin.read()
-    if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
-        return
     if len(sys.argv) != 2 or sys.argv[1] not in ("session-start", "stop"):
         return
     try:

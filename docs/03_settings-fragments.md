@@ -60,11 +60,11 @@
 
 #### C1 配置ゲート（PreToolUse・委譲ツール呼び出し時）
 
-日付付き model ID・`codex_agent` の model/effort 省略・oracle 封印パラメータを deny、`effort:"ultra"` を ask、セッション初回の委譲を warn で呼びかける（[`../bin/delegation-gate-hook.sh`](../bin/delegation-gate-hook.sh)）。
+セッションで最初の委譲を検出した時だけ、配置・委譲契約の正典を案内する短い INFO を返す。引数の検査や deny / ask は行わない。Oracle は相談であって委譲ではないため対象外（[`../bin/delegation-gate-hook.sh`](../bin/delegation-gate-hook.sh)）。
 
 ```bash
 S=~/.claude/settings.json
-MATCHER='Agent|Task|Workflow|mcp__codex-sidecar__codex_.*|mcp__aiterm__(codex|grok|composer)_agent|mcp__oracle__consult'
+MATCHER='Agent|Task|Workflow|mcp__codex-sidecar__codex_.*|mcp__aiterm__(codex|grok|composer)_agent'
 if ! jq -e --arg m "$MATCHER" '.hooks.PreToolUse[]?|select(.matcher==$m)' "$S" >/dev/null; then
   cp "$S" "$S.bak-delegationgate"                  # バックアップ
   tmp=$(mktemp)
@@ -75,7 +75,7 @@ fi
 
 #### C2 TODO 棚卸し（SessionStart・source=startup/clear のみ発火）
 
-docs/ の `plan_*.md`/`queue_*.md` の未消化・archive 未退避をリポ×24h スロットルで想起させる（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `session-start` サブコマンド）。
+docs/ の `plan_*.md`/`queue_*.md` の未消化・archive 未退避をリポ×24h スロットルで棚卸しし、観測事実と正典への参照だけを INFO で返す（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `session-start` サブコマンド）。
 
 ```bash
 S=~/.claude/settings.json
@@ -89,7 +89,7 @@ fi
 
 #### C3 プラン更新忘れ（Stop・rolling baseline で毎ターン判定）
 
-このターンで dirty/コミットの差分があるのに `docs/plan_*.md` が動いていなければ warn（`DOTAGENTS_TODO_GATE=block` で 1 ターン 1 回の block に昇格可）（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `stop` サブコマンド）。
+このターンで dirty/コミットの差分があるのに `docs/plan_*.md` が動いていなければ INFO を pending に保存する。Stop 自体には注入せず、次の自然な UserPromptSubmit で C4 が1回だけ配送する（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `stop` サブコマンド）。
 
 ```bash
 S=~/.claude/settings.json
@@ -101,9 +101,9 @@ if ! jq -e '.hooks.Stop[]?.hooks[]?.command | select(.=="~/.local/bin/todo-gate-
 fi
 ```
 
-#### C4 着手ゲート（UserPromptSubmit・毎ターン）
+#### C4 着手案内（UserPromptSubmit・セッション初回と compact 後）
 
-配置宣言（F/A/H ラベル＋02_models.md 該当行の file:line 引用）とプラン正本化を毎ターン思い出させる固定文言（[`../bin/onset-gate-hook.sh`](../bin/onset-gate-hook.sh)）。
+作業の進め方をグローバル `CLAUDE.md` / `AGENTS.md` と orchestrate skill へ案内する短い INFO。セッション初回だけ返し、compact 後に1回だけ再案内する。C3 の pending があれば同じ経路で配送する（[`../bin/onset-gate-hook.sh`](../bin/onset-gate-hook.sh)）。
 
 ```bash
 S=~/.claude/settings.json
@@ -117,11 +117,11 @@ fi
 
 #### env による制御
 
-各 hook は環境変数で無効化・昇格できる。**注意**: 実装（2026-07-12 時点のスクリプト本体）を実測した結果、`DOTAGENTS_PLACEMENT_GATE` と `DOTAGENTS_ONSET_GATE` は「`off` かどうか」の2値判定のみで、`off` 以外はどんな値（未設定含む）でも既定動作になる。`DOTAGENTS_TODO_GATE` だけ3値とも分岐が実装されている:
+各 hook は環境変数で無効化できる。`off` 以外の値（未設定を含む）は既定動作になる:
 
-- `DOTAGENTS_PLACEMENT_GATE=off` — C1 を無効化（沈黙）。`off` 以外（未設定含む＝既定）は deny①②③・ask・warn の通常判定が有効。
-- `DOTAGENTS_TODO_GATE=off|block`（既定＝未設定は warn） — `off` で C2/C3 を無効化。`block` で C3 を 1 ターン 1 回の Stop block に昇格。それ以外（既定）は warn（additionalContext）。
-- `DOTAGENTS_ONSET_GATE=off`（既定＝未設定は毎ターン warn） — `off` で C4 を無効化。`off` 以外は毎ターン注入。
+- `DOTAGENTS_PLACEMENT_GATE=off` — C1 の初回委譲 INFO を無効化。
+- `DOTAGENTS_TODO_GATE=off` — C2 の棚卸しと C3 の pending 保存・配送を無効化。旧 `block` 値に特別な昇格動作はない。
+- `DOTAGENTS_ONSET_GATE=off` — C4 の初回案内 INFO を無効化。C3 pending の配送は `DOTAGENTS_TODO_GATE` 側で制御する。
 
 ## 適用チェック
 

@@ -8,6 +8,16 @@
 
 将来 hook を新設・改修する時の一次リファレンス。plan は工場の設計・進捗で役目を終えれば archive されるが、発火挙動の実測は使い回す。caveat（罠）とは役割が違う＝これは「正の実測記録」。
 
+## 現行の dotagents 呼びかけ契約（2026-07-12 INFO 化後）
+
+- Hook は詳細な手順を再掲せず、観測事実とグローバル `CLAUDE.md` / `AGENTS.md` への短い INFO だけを返す。
+- C1/X2 の委譲案内はセッション初回だけ。model ID、引数省略、Oracle パラメータ、`ultra` を Hook で検査せず、deny / ask もしない。Oracle は C1 matcher の対象外。
+- C4/X5 の着手案内はセッション初回だけで、compact 後に1回再武装する。毎 UserPromptSubmit の固定文注入はしない。
+- C3/X4 は Stop で rolling baseline を判定するが、その場で context 注入や block はしない。必要時だけ pending を保存し、次の自然な UserPromptSubmit で1回配送する。
+- C2/X1 の棚卸しと plan gate / X2 update_plan は、従来の命令文を正典参照の INFO に置換した。検出とスロットル自体は維持する。
+
+以下の deny / ask / block に関する記録は、Hook API がその制御形式を受理するかを確認した当時の実測であり、現行 dotagents Hook がそれらを使うという意味ではない。
+
 ## Claude Code hook（settings.json）の実測挙動
 
 - **PreToolUse の additionalContext 単独注入は届く**（P3）。`permissionDecision` 無しなら権限フロー無干渉・毎回発火。到達タイミングは「ツール結果と同時〜直後」＝**矯正型**（当該ツール呼び出し自体には間に合わない。文言は事後宣言を促す形にする）。
@@ -17,7 +27,7 @@
 - **Stop は1実行で複数回発火しうる**（P4。バックグラウンド Agent 完了点＋最終応答点、いずれも `stop_hook_active=false`）。rolling baseline 方式は差分ゼロで沈黙するので二重発火に耐える。stdin に cwd・CLAUDE_PROJECT_DIR あり。
 - **settings.json は hot-reload される**（P5・現行版）。配線後の新セッション不要。**user 設定変更は全稼働セッションに波及**。→ caveat `claude-code-hooks-no-hot-reload` を「バージョンで挙動変化」と訂正済み。
 - **headless の ask は自動 deny**（P7・再試行なし・hang なし）。Stop block の 8回 cap 実在。
-- **動的文言は実生成される**: 2026-07-12 実火で C1 配置ゲートが `codex_agent` 呼び出し時に `model=gpt-5.6-sol, effort=low` を埋め込んだ文言を注入＝観測値ベースの動的生成（テンプレ焼き込みでない実証。同文言の学習的無視を構造的に防ぐ設計が機能）。
+- **動的文言は実生成される**: 2026-07-12 実火で旧 C1 が `codex_agent` 呼び出し時に `model=gpt-5.6-sol, effort=low` を埋め込んだ文言を注入した。現行 C1 も初回委譲の観測値は INFO に含めるが、判断や修正は命令しない。
 
 ## Codex CLI hook（hooks.json）の実測挙動
 
@@ -39,7 +49,12 @@
 |---|---|---|
 | `<session_id>.<repo_hash>.snapshot` | 2行＝porcelain の SHA1＋HEAD sha | Claude C2/C3 の rolling baseline |
 | `<session_id>.<repo_hash>.codex-snapshot` | 同上 | Codex X1/X4 の rolling baseline |
-| `<session_id>.placement-warn` | 空 | C1 初回委譲リマインダの session スロットル |
+| `<session_id>.placement-warn` | 空 | C1 初回委譲 INFO の session スロットル |
+| `<session_id>.codex-placement-info` | 空 | Codex X2 初回委譲 INFO の session スロットル |
+| `<session_id>.onset-info` | 空 | Claude C4 初回案内 INFO の session スロットル |
+| `<session_id>.codex-onset-info` | 空 | Codex X5 初回案内 INFO の session スロットル |
+| `<session_id>.todo-pending` | INFO 文字列 | Claude C3 から次の UserPromptSubmit への1回配送 |
+| `<session_id>.codex-pending` | INFO 文字列 | Codex X4 から次の UserPromptSubmit への1回配送 |
 | `<repo_hash>.stocktake` | 空 | 棚卸し（C2/X1）の 24h スロットル（repo パスキー） |
 | `errors.log` | 1行/件 | fail-open 記録（parse 不能時。stderr 禁止の代替＝憲法のフォールバック明示要件） |
 
