@@ -192,3 +192,41 @@ factory-reporter-scheduler install --dry-run --platform win32
 - 試験時だけ`FACTORY_REPORTER_RUNNER`と`FACTORY_REPORTER_CONFIG`で入口を差し替えられる。通常運用でこのoverrideを使わない。
 
 この接続はschedulerを新規登録せず、configを作成・変更せず、collection/reportingをONにしない。実hostへのconfig・credential配置とON操作は前節までのH手順で別途行う。
+
+## 10. 定常実行値
+
+定常値は次で固定する。変更時はscheduler生成fixture、runner/adapterのtimeout fixture、ServerManagerの通知fixture、本文を同じwaveで更新する。
+
+| 項目 | 固定値 | 失敗時 |
+|---|---|---|
+| 定期scan | 全hostで毎時17分 | 次回へ黙って持ち越さず、そのrunを非0・local logへ残す。outboxは保持 |
+| post-update gate | `agents-update`の全更新試行後に毎回1回。更新失敗時も実行 | update/reportを別々に失敗記録し、どちらか失敗ならjob非0 |
+| 通常製品command | 1 command 5秒、stdout+stderr 64KiB | 固定`timeout`/`output_limit`へ写像し、生出力を送らない |
+| runtime error snapshot | 1製品3秒 | scan全体を偽greenにせず、adapter failureとして非0 |
+| BugHub外部probe | 外側7秒、内部HTTP 5秒 | `availability:unreachable`等の固定checkへ写像 |
+| BugHub送信 | 1 HTTP attempt 10秒 | 同じbody bytesをoutboxへ保持し、次runで再送 |
+| BugHub即時通知cooldown | 既定6時間。`COOLDOWN_HOURS`をHで明示する場合だけ1〜168時間の整数 | 同一fingerprint・同一severityを成功送信後に抑止。severity上昇は抑止せず、送信false/例外はcooldownを開始しない |
+| Pi5外部通知 | 既存の監視抑止に入る時は未trigger観測窓だけを切り、Layer監視と別の固定60秒tickerで抑止解除後2回連続failureを観測して初回通知を試行 | 通常約120秒。trigger済みeventは抑止中も保持する。配送時刻は保証せず、Discord HTTP timeout後もevent stateを保持してDiscordとBugHubを別々に再試行。時限cooldownで消さない |
+
+runner全体へ別の強制timeoutは重ねない。各外部境界を上表でboundedにし、single-flight lockで重複runを拒否する。環境変数は表で明示した`COOLDOWN_HOURS`以外を暗黙の値変更手段にせず、変更はcode・fixture・runbookの明示改訂として行う。`COOLDOWN_HOURS`の変更も`.env`のH操作として記録し、範囲外は起動時にfail closedする。
+
+## 11. BugHub wire schema major互換matrix
+
+現行はpayload `schema_version="1.0"`、`report_mode="full"`、endpoint `/api/factory/v1/reports`だけである。未知major/minor、未知field、deltaを推測・黙示変換しない。
+
+| client | server入口 | 結果 | rollout可否 |
+|---|---|---|---|
+| v1 | v1 endpoint | 受理。現行正規経路 | 可 |
+| v2 payload | v1 endpoint | `422`、clientはdead-letter。v1へ自動downgradeしない | 本番送信禁止 |
+| v1 | v2 codeが保持するv1 endpoint | v1契約のまま受理 | server-first期間に必須 |
+| v2 | v2 endpoint | v2 schema/semantic fixtureとcredential契約がgreenの時だけ受理 | host単位opt-in後に可 |
+| 未知major | 任意の既知endpoint | 明示reject。fallback、field削除、再serializeをしない | 不可 |
+
+major変更は同じv1 endpointの意味を差し替えず、`/api/factory/v2/reports`とv2 schemaを追加する。順序は次で固定する。
+
+1. ServerManagerへv1を保持したままv2 endpoint、validator、DB migration、dedupe、notification、rollback fixtureを追加してdeployする。
+2. dotagentsへv1生成を残したままv2 client/outboxを追加する。majorごとにbody bytesとdead-letterを分離し、v2失敗をv1成功へ偽装しない。
+3. 1 hostずつHでv2へopt-inし、v1/v2のcurrent、履歴、resolve/reopen、Discord、`/ai`が同じ意味になることをcanaryする。rollbackはそのhostをv1 configへ戻し、v2 outboxを消さない。
+4. 全host移行、旧v1 outbox drain、最大offline/dedupe保持期間、rollback drill完了後にだけv1 retireを別waveで承認する。履歴tableを削除しない。
+
+後方互換なoptional field追加でも、v1は`additionalProperties:false`なのでserverを先に更新し、旧client fixtureを保持する。config schema、製品native diagnostics schema、BugHub readiness schemaはwire majorとは別契約であり、同時にまとめてversionを上げない。

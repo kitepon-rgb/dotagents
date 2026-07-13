@@ -298,7 +298,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] main-server上のdotagents reporterからBugHubを外部probe
   - [x] loopback `/readyz`限定の外部probe CLIとserver profile adapter、SSRF/privacy/contract fixtureを実装
   - [ ] main-serverへ配布し、実reportでServerManagerの6 readiness check（DB/schema/pull/ingest/delivery/revision）を確認
-- [ ] BugHub停止、stale poll、DB migration失敗、image/source不一致をfixture化
+- [x] BugHub停止、stale poll、DB migration失敗、image/source不一致をfixture化
   - [x] stale pull、source未設定、DB query/schema mismatch、factory ingest/delivery stale・失敗を`/readyz`の固定reason codeでfixture化
   - [x] process停止・到達不能を外部probeの`unreachable`としてfixture化
   - [x] image/source一致はrebuild済み判定と分離し、build時source revisionをOCI labelとread-only readiness fieldへ焼き込み、main-serverのdeploy manifestに保存した期待revisionと外部probeで比較する
@@ -306,7 +306,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] BugHub停止中のoutbox保持→復旧後再送を実測
 - [x] readinessをDB query、poll/ingest鮮度、source error、pull/factory通知deliveryまで拡張し、Docker healthcheckとdeploy canaryを`/readyz`へ接続
 - [ ] BugHub停止/readiness failureはBugHubを経由しないPi5→Discord専用bridgeで通知し、復旧後に同じfingerprintをBugHubへ還流
-  - [x] 専用bridgeは`/readyz`をDocker health retryとは独立に観測し、2連続失敗（最大120秒）で通知する。自動restartは行わず、既存Layer 3の3周期観測・restart責務を奪わない
+  - [x] 専用bridgeは既存の監視抑止に入る時に未trigger観測窓だけを切り、`/readyz`をDocker health retryとは独立した60秒tickerで観測する。trigger済みeventは保持し、抑止解除後2連続失敗（通常約120秒）で通知を試行し、配送失敗はtimeout付きでdurable retryする。自動restartは行わず、既存Layer 3の3周期観測・restart責務を奪わない
   - [x] `sha256(servermanager:<check_id>:<reason_code>)`（process到達不能は固定`availability:unreachable`）をdurable eventとしてPi5に保存し、dotagents所有の明示connector CLI経由でmain-server reporterへopen/resolveを渡す
   - [x] Discord成功とBugHub還流成功を別ackにし、片方の失敗をもう片方の成功で消さない。復旧後もBugHub accepted確認までeventを保持する
   - [ ] main-serverとPi5へ配布し、意図的停止canaryでDiscord通知→BugHub accepted→resolve→state削除を実証する
@@ -321,9 +321,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 8 — 定常運用と完了
 
-- [ ] post-update gateと定期scanの頻度・timeout・通知cooldownを確定
-- [ ] 製品追加/削除/第三者化/所有移管の手順をAGENTS/READMEへ正典化
-- [ ] BugHub schema major変更時のclient互換matrixを追加
+- [x] post-update gateと定期scanの頻度・timeout・通知cooldownを確定
+- [x] 製品追加/削除/第三者化/所有移管の手順をAGENTS/READMEへ正典化
+- [x] BugHub schema major変更時のclient互換matrixを追加
 - [ ] `make ci`、各repo full gate、H承認済みの全端末E2E・rollback drill、最終反証を通す
 - [ ] repo単位でpushし、計画をarchiveする
 

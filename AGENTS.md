@@ -23,6 +23,7 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 - 工場のコア管理対象は計9製品。端末能力を担う8製品（Caveat／Throughline／Spotter／Codegraph／MarkItDown／Oracle／aiterm-mcp／codex-sidecar）と、中央運用管理を担うServerManagerである。8製品は全端末への常備・project activation・親別connectorなど配線強度が異なるため、同じ方法で一律有効化しない。
 - **BugHubは独立した第10製品ではなく、ServerManager内部のコンポーネント**。既存の読み取り専用集約、報告元アプリによる重大度決定、`resolve` / `reopen`、`/ai`という契約を守り、8製品のversion・bug・compatibility結果を統括する連携先として活用する。
 - 各製品は自身のソース・状態・schema・migration・正規診断を所有する。dotagentsはそれらを複製せず統合契約を所有し、ServerManager/BugHubはdotagentsの代わりに工場方針を決めたり製品状態を直接書き換えたりしない。
+- コア製品の追加・削除・第三者化・所有移管は、単なる一覧編集ではない。[README.md](README.md) の「工場コア製品の変更管理」に従い、製品契約、host/connector matrix、更新経路、adapter、BugHub schema/期待matrix、fixture、rollbackを同じ独立waveで更新する。第三者化後はfork・内部patchを止めて公開入口だけを使い、削除時も履歴を消さず、移行中の旧clientでは`not_applicable`へ遷移させてBugHub履歴を保持する。source repoの移動・改名は別途オーナー承認が必要であり、管理区分の変更をその承認の代用にしない。
 
 ## AI オンボーディング（この URL を渡された AI へ）
 

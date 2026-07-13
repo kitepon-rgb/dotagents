@@ -24,7 +24,7 @@
 - 所有/修正先: 自作 / `kitepon-rgb/Throughline`。version入口: `throughline --version`。
 - diagnostics/state正本: `throughline factory-diagnostics --json`（schema `throughline.native_factory_diagnostics.v1`）。DB schema/migration、connector、capture/restore/handoffをread-onlyで返す。
 - host/connector: 全4 host required、Claudeはhook/CLI、Codexはhook/skill/CLI required。
-- 現adapter: native JSONのversion、database schema/migration、overallを接続済み。runtime errorは未実装。製品診断が示すClaude connector `unverified`等をgreenへ丸めない。
+- 現adapter: native JSONのversion、database schema/migration、overallと、明示opt-inされた公開runtime error snapshot/ackを接続済み。製品診断が示すClaude connector `unverified`等をgreenへ丸めない。
 - 表現/禁止: 正規JSON診断なしは`unverified`。session本文送信、破壊的restore、`.agents`直接解釈は禁止。
 
 ### `spotter`
@@ -32,7 +32,7 @@
 - 所有/修正先: 自作 / `kitepon-rgb/Spotter`。version入口: `spotter --version`。
 - diagnostics/state正本: `spotter diagnostics factory`（schema 1.0）。既存doctor inspectorとtool DB validatorを再利用するread-only JSON。
 - host/connector: 全4 host required。明示install済み対象projectだけClaude/Codex hook required。
-- 現adapter: native JSONのversion、marker schema、overallを接続済み。runtime errorは未実装。
+- 現adapter: native JSONのversion、marker schema、overallと、明示opt-inされた公開runtime error snapshot/ackを接続済み。
 - 表現/禁止: 対象外projectは`not_applicable`、対象で診断不能は`unverified`。全project自動activation、tool DB直接読解は禁止。
 
 ### `codegraph`
@@ -67,7 +67,7 @@
 - 所有/修正先: 自作 / `kitepon-rgb/aiterm-mcp`。version入口: native MCP `diagnostics` responseのpackage version。
 - diagnostics/state正本: stdio MCP initialize後のread-only `diagnostics` tool（schema `aiterm-mcp.factory-diagnostics.v1`）。PTY一覧は件数だけ、vendor依存は実行可能性だけを返す。
 - host/connector: 全4 host required。Claude MCP、CodexはGrok/Composer用MCPのみ。
-- 現adapter: stdio MCP initialize→`diagnostics`を接続済み。tmux不能やschema driftは`unverified`、native `not_ready`は固定fingerprintのfailへ写像する。runtime errorは未実装。診断toolは次回製品releaseまで現行registry版0.12.1には未収録。
+- 現adapter: stdio MCP initialize→`diagnostics`と、明示opt-inされた公開runtime error snapshot/ackを接続済み。tmux不能やschema driftは`unverified`、native `not_ready`は固定fingerprintのfailへ写像する。診断toolは次回製品releaseまで現行registry版0.12.1には未収録。
 - 禁止: PTY/agent起動をhealth扱い、Codex親から入れ子Codex。native Windowsの`agent_done`非対応は`unsupported`。
 
 ### `codex-sidecar`
@@ -75,13 +75,13 @@
 - 所有/修正先: 自作 / `kitepon-rgb/codex-sidecar`。version入口: `codex-sidecar factory-diagnostics --project <scan cwd>` の `factoryReadiness.packageVersions.packages.cli`。
 - diagnostics/state正本: `factory-diagnostics` の read-only JSON（top-level `status`、`factoryReadiness.schemaVersion="1"`、`overall`、`packageVersions.status`と3 package version整合、result schema/workflow/preset/model policy/read-only dry-run readiness）。`ready`は`status:ok`かつexit 0、`not_ready`/`unverified`は`status:failed`かつ非0。`unverified`はpackage情報を省略した最小shapeも正規。実agent/Codexを起動しない。
 - host/connector: 全4 host required。Claude MCP required、Codex親connectorはforbidden。
-- 現adapter: native JSONをschema allowlistで検証し、`ready`をpass/compatible、`not_ready`を固定fingerprintのfail/incompatible、`unverified`・schema不正・CLI不在をunverifiedへ射影する。installed versionは整合済みのCLI package versionだけを採用する。runtime error store/telemetryは未実装。
+- 現adapter: native JSONをschema allowlistで検証し、`ready`をpass/compatible、`not_ready`を固定fingerprintのfail/incompatible、`unverified`・schema不正・CLI不在をunverifiedへ射影する。installed versionは整合済みのCLI package versionだけを採用し、明示opt-inされた公開runtime error snapshot/ackも接続済み。
 - 表現/禁止: raw output、absolute path、prompt/context/file内容、preset名、token/env/log/result本文をreportへ転記しない。実agent起動をhealth扱い、Codex親connector登録は禁止。
 
 ### `servermanager`
 
-- 所有/修正先: 自作 / `kitepon-rgb/ServerManager`。version入口: repoの`package.json`/source revision（現adapter未接続）。
+- 所有/修正先: 自作 / `kitepon-rgb/ServerManager`。version入口: loopback readinessのpackage versionとbuild/deploy source revision。
 - diagnostics/state正本: 外部runnerのBugHub health、poll/ingest鮮度、DB migration、container/source一致、Pi5監視。SQLite migration/Pi5 runtimeはServerManager所有。
 - host/connector: main-serverのみrequired、他3 hostは`not_applicable`。親connectorはnot_applicable。
-- 現adapter: server profileでもempty product=`unverified`、非server=`not_applicable`。version/health/migration/runtime errorは未実装。
+- 現adapter: server profileではloopback `/readyz`とdeploy revision manifestを外部probeで照合し、DB/schema/pull/ingest/delivery/revisionの固定checkへ投影する。Pi5のdurable external eventは公開connector経由でsnapshot/ackし、非serverは`not_applicable`。
 - 禁止: BugHub自己申告だけで合格、dotagentsからDB直接読解。
