@@ -28,7 +28,10 @@ test('未知・不足引数は台帳を作らず拒否し、Windows ACL契約を
   assert.equal((await run(args(file).slice(0, -2))).code, 1);
   await assert.rejects(readFile(file));
   const source = await readFile(CLI, 'utf8');
-  assert.match(source, /DirectorySecurity/); assert.match(source, /FileSecurity/); assert.match(source, /SetAccessRuleProtection\(\$true,\$false\)/); assert.match(source, /ownerOnlyAcl\(path\)/);
+  assert.match(source, /DOTAGENTS_FACTORY_ACL_TARGET/); assert.match(source, /WindowsIdentity\]::GetCurrent\(\)\.User/); assert.match(source, /DirectorySecurity/); assert.match(source, /FileSecurity/);
+  assert.match(source, /SetAccessRuleProtection\(\$true, \$false\)/); assert.match(source, /FileSystemAccessRule\]::new\(\$sid, \[Security\.AccessControl\.FileSystemRights\]::FullControl/);
+  assert.match(source, /Set-Acl -LiteralPath \$p -AclObject \$acl/); assert.doesNotMatch(source, /\[IO\.(?:Directory|File)\]::SetAccessControl/); assert.match(source, /timeout: 5_000/); assert.match(source, /acl_apply_failed/); assert.match(source, /ownerOnlyAcl\(path\)/);
+  const afterRename = source.slice(source.indexOf('await rename(temporary, path)'), source.indexOf('} finally', source.indexOf('await rename(temporary, path)'))); assert.doesNotMatch(afterRename, /ownerOnlyAcl\(path\)/);
 });
 
 test('並行recordでも3製品の成功結果をlost updateしない', async (t) => {

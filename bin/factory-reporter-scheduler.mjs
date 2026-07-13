@@ -78,14 +78,26 @@ function artifact(target, config, location, wireMajor) {
   const file = join(location.control, 'scheduler', `${TASK_NAME}.xml`);
   const argumentsText = `${windowsQuote(runner)} --config ${windowsQuote(config)}`;
   const content = `<?xml version="1.0" encoding="UTF-8"?><Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Triggers><CalendarTrigger><StartBoundary>2026-01-01T00:17:00</StartBoundary><Repetition><Interval>PT1H</Interval><Duration>P1D</Duration><StopAtDurationEnd>false</StopAtDurationEnd></Repetition><ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay></CalendarTrigger></Triggers><Principals><Principal id="Author"><RunLevel>LeastPrivilege</RunLevel></Principal></Principals><Settings><MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy><StartWhenAvailable>true</StartWhenAvailable></Settings><Actions Context="Author"><Exec><Command>${xml(node)}</Command><Arguments>${argumentsText}</Arguments><WorkingDirectory>${xml(location.home)}</WorkingDirectory></Exec></Actions></Task>`;
-  const script = "$p=$args[0];$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User;$acl=New-Object Security.AccessControl.DirectorySecurity;$acl.SetAccessRuleProtection($true,$false);$rule=New-Object Security.AccessControl.FileSystemAccessRule($sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow');[void]$acl.AddAccessRule($rule);[IO.Directory]::SetAccessControl($p,$acl)";
-  return { file, content, commands: [['schtasks.exe', '/Create', '/TN', TASK_NAME, '/XML', file, '/F']], uninstall: [['schtasks.exe', '/Delete', '/TN', TASK_NAME, '/F']], acl: [['powershell.exe', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script, location.control]] };
+  const script = String.raw`$ErrorActionPreference = 'Stop'
+$p = $env:DOTAGENTS_FACTORY_ACL_TARGET
+if ([string]::IsNullOrWhiteSpace($p) -or -not (Test-Path -LiteralPath $p -PathType Container)) { throw 'ACL target is invalid' }
+$sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+$acl = New-Object Security.AccessControl.DirectorySecurity
+$acl.SetAccessRuleProtection($true, $false)
+$inherit = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
+$rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inherit, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
+[void]$acl.AddAccessRule($rule)
+Set-Acl -LiteralPath $p -AclObject $acl`;
+  return { file, content, commands: [['schtasks.exe', '/Create', '/TN', TASK_NAME, '/XML', file, '/F']], uninstall: [['schtasks.exe', '/Delete', '/TN', TASK_NAME, '/F']], acl: [['powershell.exe', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script]] };
 }
 
 async function ensurePrivateState(target, state, acl) {
   try { const info = await lstat(state); if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('state pathはsymlinkでないdirectoryでなければなりません'); } catch (error) { if (error.code !== 'ENOENT') throw error; await mkdir(state, { recursive: true, mode: 0o700 }); const info = await lstat(state); if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('state pathはsymlinkでないdirectoryでなければなりません'); }
   if (target !== 'win32') { await chmod(state, 0o700); return; }
-  const [bin, ...args] = acl[0]; const scopedArgs = [...args]; scopedArgs[scopedArgs.length - 1] = state; const result = spawnSync(bin, scopedArgs, { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, 'Windows ACL設定');
+  const [bin, ...args] = acl[0]; const result = spawnSync(bin, args, { encoding: 'utf8', env: { ...process.env, DOTAGENTS_FACTORY_ACL_TARGET: state }, timeout: 5_000 });
+  if (result.error?.code === 'ETIMEDOUT') throw new Error('Windows owner-only ACL設定に失敗しました (acl_timeout)');
+  if (result.error) throw new Error('Windows owner-only ACL設定に失敗しました (acl_process_failed)');
+  if (result.status !== 0) throw new Error('Windows owner-only ACL設定に失敗しました (acl_apply_failed)');
 }
 
 function readCrontab() { const result = spawnSync('crontab', ['-l'], { encoding: 'utf8' }); if (result.status === 0) return result.stdout; if (result.status === 1 && NO_CRONTAB.test(`${result.stderr}\n${result.stdout}`)) return ''; throw commandError(result, 'crontab読取'); }
