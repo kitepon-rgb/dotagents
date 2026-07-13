@@ -223,7 +223,7 @@ async function postOne(config, token, loc, entry) {
     if (response.ok && body?.accepted === true && body.report_id === report.report_id) {
       if (acknowledgements) {
         try { await acknowledgeRuntimeErrors(acknowledgements); }
-        catch { return { action: 'keep', reason: 'ack-failed' }; }
+        catch (error) { return { action: 'keep', reason: 'ack-failed', product: error?.product_id ?? 'unknown' }; }
       }
       return { action: 'delete' };
     }
@@ -311,6 +311,7 @@ async function main() {
     let retained = 0;
     let deadLettered = 0;
     let ackFailed = 0;
+    const ackFailedProducts = new Set();
     for (const entry of await queueEntries(loc)) {
       const result = await postOne(config, token, loc, entry);
       if (result.action === 'delete') {
@@ -321,10 +322,16 @@ async function main() {
         deadLettered++;
       } else {
         retained++;
-        if (result.reason === 'ack-failed') ackFailed++;
+        if (result.reason === 'ack-failed') {
+          ackFailed++;
+          ackFailedProducts.add(result.product);
+        }
       }
     }
-    return { sent, retained, dead_lettered: deadLettered, ack_failed: ackFailed };
+    return {
+      sent, retained, dead_lettered: deadLettered, ack_failed: ackFailed,
+      ...(ackFailed > 0 ? { ack_failed_products: [...ackFailedProducts].sort() } : {}),
+    };
   });
   emit({ ok: outcome.ack_failed === 0, command, reporting_enabled: true, ...outcome, ...(await queueStats(loc)) });
   if (outcome.ack_failed > 0) {

@@ -94,10 +94,10 @@ async function installAckCommands(box, { failOnce = null } = {}) {
       : '';
     const response = {
       caveat: `n="$3"; printf '{"schema":"caveat.runtime_errors.v1","product":"caveat","version":"1.2.3","state_schema_version":"1.0","cursor":{"high_watermark":%s,"acknowledged_through":%s,"next":0},"runtime_errors":[],"resolutions":[],"diagnostics":{"collection":"enabled","status":"ready","total_count":0,"pending_count":0,"truncated":false}}\\n' "$n" "$n"`,
-      throughline: `n="$3"; printf '{"schema":"throughline.runtime_errors.v1","product":"throughline","version":"1.2.3","state_schema_version":"1.0","cursor":{"high_watermark":%s,"acknowledged_through":%s,"next":0},"runtime_errors":[],"resolutions":[],"diagnostics":{"collection":"enabled","status":"ready","total_count":0,"pending_count":0,"truncated":false}}\\n' "$n" "$n"`,
-      spotter: `n="$4"; printf '{"schema":"spotter.runtime_errors.v1","collection":"enabled","records":[],"after_cursor":0,"next_cursor":0,"latest_sequence":%s,"acknowledged_through":%s,"has_more":false}\\n' "$n" "$n"`,
+      throughline: `n="$3"; printf '{"status":"acknowledged","acknowledgedThrough":%s}\\n' "$n"`,
+      spotter: `n="$4"; printf '{"acknowledged":true,"acknowledged_through":%s}\\n' "$n"`,
       'aiterm-runtime-errors': `n="$3"; printf '{"ok":true,"command":"ack","snapshot":{"collection":"enabled","schema_version":"aiterm-mcp.runtime-errors.v1","cursor":%s,"acknowledged_cursor":%s,"records":[]}}\\n' "$n" "$n"`,
-      'codex-sidecar': `n="$5"; printf '{"status":"ok","factoryRuntimeErrors":{"schema_version":"2","cursor":%s,"acknowledged_through":%s,"records":[]}}\\n' "$n" "$n"`,
+      'codex-sidecar': `n="$5"; printf '{"status":"ok","action":"ack","cursor":%s}\\n' "$n"`,
       'factory-external-event': `n="$3"; printf '{"ok":true,"acknowledged_through":%s}\\n' "$n"`,
     }[command];
     await writeFile(path, `#!/bin/sh
@@ -319,6 +319,7 @@ test('ack途中失敗は非0でenvelopeを保持し、duplicate再受理後に�
   assert.equal(failed.code, 1, failed.stderr);
   assert.equal(failed.json.ok, false);
   assert.equal(failed.json.ack_failed, 1);
+  assert.deepEqual(failed.json.ack_failed_products, ['caveat']);
   const queued = await queuedEnvelope(box);
   assert.deepEqual(JSON.parse(queued.reportBytes), report());
   assert.deepEqual(queued.value.acknowledgements, metadata());
