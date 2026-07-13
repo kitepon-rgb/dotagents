@@ -51,6 +51,23 @@ TOOLCHAIN_LEDGER_FILE="${TOOLCHAIN_LEDGER_FILE:-$LOG_DIR/toolchain-ledger.json}"
 
 extract_semver() { node -e 'const s=require("fs").readFileSync(0,"utf8");const m=s.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?/);if(m)process.stdout.write(m[0]);'; }
 json_semver() { node -e 'let v;try{v=JSON.parse(require("fs").readFileSync(0,"utf8"))}catch{process.exit(1)};const x=v[process.argv[1]];if(typeof x!=="string"||!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(x))process.exit(1);process.stdout.write(x)' "$1"; }
+resolve_npm_global_bin() {
+  local prefix bin
+  prefix="$(npm prefix -g)" || return 1
+  [[ -n "$prefix" && "$prefix" != *$'\n'* && "$prefix" != *$'\r'* ]] || return 1
+  case "$runtime_os" in
+    MINGW*|MSYS*|Windows_NT)
+      if [[ "$prefix" =~ ^[A-Za-z]:[\\/] ]]; then
+        command -v cygpath >/dev/null 2>&1 || return 1
+        prefix="$(cygpath -u "$prefix")" || return 1
+      fi
+      bin="$prefix"
+      ;;
+    *) bin="$prefix/bin" ;;
+  esac
+  [[ "$bin" = /* && -d "$bin" ]] || return 1
+  printf '%s' "$bin"
+}
 record_toolchain() {
   node "$TOOLCHAIN_LEDGER_HELPER" record --file "$TOOLCHAIN_LEDGER_FILE" --product "$1" \
     --before "${2:-none}" --latest "${3:-none}" --operation "$4" --after "${5:-none}" \
@@ -92,6 +109,13 @@ UV_TOOLS=(
     record_toolchain codex-cli none none failed none pending npm_unavailable || update_failed=1
     claude_reason=npm_unavailable; codex_reason=npm_unavailable
   else
+    npm_global_bin=''
+    if ! npm_global_bin="$(resolve_npm_global_bin)"; then
+      printf 'FAILED: npm global prefix/bin が不正または利用不能\n'
+      update_failed=1
+    else
+      PATH="$npm_global_bin:$PATH"
+    fi
     for pkg in "${PACKAGES[@]}"; do
       printf -- '--- %s ---\n' "$pkg"
       product=''; cli=''
@@ -101,7 +125,9 @@ UV_TOOLS=(
       esac
       before=none; latest=none; after=none; operation=success; reason=updated
       if [[ -n "$product" ]]; then
-        before="$($cli --version 2>/dev/null | extract_semver || true)"; before="${before:-none}"
+        if [[ -n "$npm_global_bin" ]]; then
+          before="$($cli --version 2>/dev/null | extract_semver || true)"; before="${before:-none}"
+        fi
         latest="$(npm view "$pkg" version --json 2>/dev/null | extract_semver || true)"; latest="${latest:-none}"
       fi
       if ! npm install -g "${pkg}@latest"; then
@@ -110,7 +136,9 @@ UV_TOOLS=(
         operation=failed; reason=install_failed
       fi
       if [[ -n "$product" ]]; then
-        after="$($cli --version 2>/dev/null | extract_semver || true)"; after="${after:-none}"
+        if [[ -n "$npm_global_bin" ]]; then
+          after="$($cli --version 2>/dev/null | extract_semver || true)"; after="${after:-none}"
+        fi
         if [[ "$operation" = success && "$latest" = none ]]; then operation=failed; reason=registry_unavailable; update_failed=1
         elif [[ "$operation" = success && "$after" = none ]]; then operation=failed; reason=post_version_unavailable; update_failed=1
         elif [[ "$operation" = success && "$after" != "$latest" ]]; then operation=failed; reason=version_mismatch; update_failed=1

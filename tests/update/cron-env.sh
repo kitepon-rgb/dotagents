@@ -13,7 +13,7 @@ trap 'rm -rf "$TEST_HOME" "$EMPTY_HOME"' EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
-mkdir -p "$TEST_HOME/.nvm/fake-bin" "$TEST_HOME/base-bin"
+mkdir -p "$TEST_HOME/.nvm/fake-bin" "$TEST_HOME/base-bin" "$TEST_HOME/npm-global/bin" "$TEST_HOME/shadow-bin"
 for command_path in /bin/date /bin/mkdir /usr/bin/tee "$(command -v readlink)" "$(command -v node)"; do
   [ -x "$command_path" ] || fail "test prerequisite がない: $command_path"
   ln -s "$command_path" "$TEST_HOME/base-bin/${command_path##*/}"
@@ -25,7 +25,8 @@ EOF
 cat > "$TEST_HOME/.nvm/fake-bin/npm" <<'EOF'
 #!/bin/sh
 case "$*" in
-  'view @anthropic-ai/claude-code version --json') echo '"2.1.0"'; exit 0 ;;
+  'prefix -g') printf '%s\n' "${NPM_PREFIX:-$HOME/npm-global}"; exit 0 ;;
+  'view @anthropic-ai/claude-code version --json') echo '"2.1.207"'; exit 0 ;;
   'view @openai/codex version --json') echo '"0.144.3"'; exit 0 ;;
 esac
 printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/npm-calls.log"
@@ -40,13 +41,35 @@ EOF
 chmod +x "$TEST_HOME/.nvm/fake-bin/npm"
 cat > "$TEST_HOME/.nvm/fake-bin/claude" <<'EOF'
 #!/bin/sh
-echo '2.1.0'
+echo '2.1.207'
 EOF
 cat > "$TEST_HOME/.nvm/fake-bin/codex" <<'EOF'
 #!/bin/sh
 echo '0.144.3'
 EOF
 chmod +x "$TEST_HOME/.nvm/fake-bin/claude" "$TEST_HOME/.nvm/fake-bin/codex"
+cat > "$TEST_HOME/npm-global/bin/claude" <<'EOF'
+#!/bin/sh
+printf '%s:global-claude\n' "${RUN_ID:-default}" >> "$HOME/cli-calls.log"
+echo '2.1.207'
+EOF
+cat > "$TEST_HOME/npm-global/bin/codex" <<'EOF'
+#!/bin/sh
+printf '%s:global-codex\n' "${RUN_ID:-default}" >> "$HOME/cli-calls.log"
+echo '0.144.3'
+EOF
+cat > "$TEST_HOME/shadow-bin/claude" <<'EOF'
+#!/bin/sh
+printf '%s:shadow-claude\n' "${RUN_ID:-default}" >> "$HOME/cli-calls.log"
+echo '2.1.128'
+EOF
+cat > "$TEST_HOME/shadow-bin/codex" <<'EOF'
+#!/bin/sh
+printf '%s:shadow-codex\n' "${RUN_ID:-default}" >> "$HOME/cli-calls.log"
+echo '0.144.2'
+EOF
+chmod +x "$TEST_HOME/npm-global/bin/claude" "$TEST_HOME/npm-global/bin/codex" \
+  "$TEST_HOME/shadow-bin/claude" "$TEST_HOME/shadow-bin/codex"
 cat > "$TEST_HOME/.nvm/fake-bin/uv" <<'EOF'
 #!/bin/sh
 printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/uv-calls.log"
@@ -121,6 +144,38 @@ node -e '
   for(const id of ["claude-code","codex-cli","grok-build"]){const r=v.products[id];if(!r||r.post_gate_status!=="success"||!["success","skipped"].includes(r.operation_status))process.exit(1)}
 ' "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" \
   || fail '3基盤CLIの更新前後・post-gate台帳を保存していない'
+
+if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/shadow-bin:$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" \
+  FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  RUN_ID=path-shadow \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/path-shadow.out" 2>&1; then
+  cat "$TEST_HOME/path-shadow.out" >&2
+  fail 'npm global binより前にshadow CLIがあってもagents-updateが失敗した'
+fi
+grep -q '^path-shadow:global-claude$' "$TEST_HOME/cli-calls.log" \
+  || fail 'npm global prefixのclaudeをversion判定に使っていない'
+grep -q '^path-shadow:global-codex$' "$TEST_HOME/cli-calls.log" \
+  || fail 'npm global prefixのcodexをversion判定に使っていない'
+if grep -q '^path-shadow:shadow-' "$TEST_HOME/cli-calls.log"; then
+  fail 'PATH shadowされた旧CLIをversion判定に使った'
+fi
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/shadow-bin:$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" \
+  FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  NPM_PREFIX='relative-prefix' \
+  RUN_ID=invalid-prefix \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/invalid-prefix.out" 2>&1; then
+  fail '不正なnpm global prefixを成功扱いした'
+fi
+grep -q '^FAILED: npm global prefix/bin が不正または利用不能$' "$TEST_HOME/invalid-prefix.out" \
+  || fail '不正なnpm global prefixを名指ししない'
+if grep -q '^invalid-prefix:shadow-' "$TEST_HOME/cli-calls.log"; then
+  fail '不正prefix時にPATH shadowされたCLIでversion判定した'
+fi
 
 # install.sh の配布面は agents-update と ledger helper の拡張子を落とした symlink になる。
 # source 実行と同じ helper を解決できなければ、実 package 更新なしのこのfixtureでも非0になる。
