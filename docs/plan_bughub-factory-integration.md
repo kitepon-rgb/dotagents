@@ -1,7 +1,7 @@
 # 工場コア9製品 BugHub 統合計画
 
 作成: 2026-07-13  
-状態: 実装中（Wave 0〜5、Wave 2・5は継続中）
+状態: 実装中（Wave 0〜5のCaveat以外は完了、Wave 6以降を継続中）
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 
@@ -127,7 +127,7 @@ reportの必須概念:
 
 BugHubはtoken→host_idをserver側で固定し、host profile/product期待matrix、body size、`X-Factory-Sent-At`のskew、`host_id + report_id`、outboxへ保存した正確なbody bytesのhashを検証する。期待状態はclientに自己申告させずserver matrixだけを正とし、`required + missing`等はreportを受理してissue化する。`observed_at`は長期offline後も正当な履歴として受け入れ、同じhost×productの既知観測より古ければcurrent matrixを巻き戻さない。future skewと`observed_at <= created_at <= sent header`等の時刻順序、fingerprintの重複とopen/resolve排他をsemantic validationする。完全snapshotで省略されたproduct/checkを自動resolvedにせず、明示`resolutions[]`を根拠にする。秘密、絶対パス、生ログ、prompt/session本文、DB内容は送らない。
 
-factory issueの状態遷移は既存pull issueと分けて仕様化する。正常な完全snapshot、明示resolve、手動resolve、再観測reopen、host廃止、長期offlineを区別し、「reportに無い」だけで解決しない。
+factory issueの状態遷移は既存pull issueと分けて仕様化する。v1は`report_mode=full`だけを受理し、正常な完全snapshot、producerによる明示resolve、再観測reopen、host廃止、長期offlineを区別し、「reportに無い」だけで解決しない。BugHub側の手動resolveはproducer-authoritative契約と競合するため提供せず、deltaは将来のschema majorで互換matrix・順序・欠落意味を再設計するまで非対応とする。
 
 #### 4.1.1 runtime error出力契約の確定順序
 
@@ -252,7 +252,8 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] enqueue-before-send、single-flight、overflow、dead-letter、応答消失をテスト
 - [x] 受理後・削除前failureの同一bytes再送と、server dedupe retention（outbox上限超・期限前後prune）をテスト
 - [x] host ID/tokenをrepoへ保存しない設定・rotation・revoke手順を追加
-- [ ] Mac launchd、Linux/WSL cron、Windows Task Schedulerのinstall/uninstall/実火とOS別state/ACLを固定
+- [x] Mac launchd、Linux/WSL cron、Windows Task Schedulerのinstall/uninstallとOS別state/ACL契約を実装・fixture化
+- [ ] 4環境でschedulerをH承認後に実登録し、実火・uninstall・state/ACLを確認
 - [x] `agents-update`後にcontract scan→reportを接続し、update失敗後も観測と報告を試行して最終的に非0終了
 
 ### Wave 3 — 第三者3製品adapter（A）
@@ -281,7 +282,8 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 ### Wave 5 — BugHub ingestion・表示・通知（F＋A）
 
 - [x] `POST /api/factory/v1/reports`とfactory DBを実装
-- [ ] full snapshot/delta、check lifecycle、正常snapshot、手動resolve、再観測reopen、host廃止の状態遷移を固定
+- [x] v1 full snapshot、check lifecycle、消失だけでは非resolve、producer明示resolve、再観測reopen、host廃止、長期offlineの状態遷移を固定
+- [x] deltaとBugHub側manual resolveをv1非目標とし、将来schema majorの互換設計へ分離
 - [x] check failureを既存issueへhost付きで統合し、明示resolve、再観測reopen、古いoffline観測による巻き戻し拒否を固定
 - [ ] runtime errorのack/cursor/retentionを全自作製品で固定
   - [x] 完了済み4製品はBugHubの同一report受理後だけackし、ack失敗は非0・単一atomic outbox envelope保持・duplicate再受理後再試行とする
@@ -295,37 +297,40 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 - [ ] main-server上のdotagents reporterからBugHubを外部probe
   - [x] loopback `/readyz`限定の外部probe CLIとserver profile adapter、SSRF/privacy/contract fixtureを実装
-  - [ ] main-serverへ配布し、実reportでServerManagerの5 readiness checkを確認
+  - [ ] main-serverへ配布し、実reportでServerManagerの6 readiness check（DB/schema/pull/ingest/delivery/revision）を確認
 - [ ] BugHub停止、stale poll、DB migration失敗、image/source不一致をfixture化
   - [x] stale pull、source未設定、DB query/schema mismatch、factory ingest/delivery stale・失敗を`/readyz`の固定reason codeでfixture化
   - [x] process停止・到達不能を外部probeの`unreachable`としてfixture化
-  - [ ] image/source不一致はmain-server外部probe側へ追加
+  - [ ] image/source一致はrebuild済み判定と分離し、build時source revisionをOCI labelとread-only readiness fieldへ焼き込み、main-serverのdeploy manifestに保存した期待revisionと外部probeで比較する
+  - [ ] revision欠落・不正・期待値不一致を固定reason codeへ写像し、Docker restartだけでは一致扱いにしないfixtureを追加
 - [ ] BugHub停止中のoutbox保持→復旧後再送を実測
 - [x] readinessをDB query、poll/ingest鮮度、source error、pull/factory通知deliveryまで拡張し、Docker healthcheckとdeploy canaryを`/readyz`へ接続
-- [ ] BugHub停止/readiness failureの即時通知はBugHubを経由せず既存Pi5→Discord経路へ出し、復旧後に同じfingerprintをBugHubへ還流
-- [ ] Pi5の既存Layer 3監視と重複責務を整理し、片方の失敗をもう片方が隠さない
+- [ ] BugHub停止/readiness failureはBugHubを経由しないPi5→Discord専用bridgeで通知し、復旧後に同じfingerprintをBugHubへ還流
+  - [ ] 専用bridgeは`/readyz`をDocker health retryとは独立に観測し、2連続失敗（最大120秒）で通知する。自動restartは行わず、既存Layer 3の3周期観測・restart責務を奪わない
+  - [ ] `sha256(servermanager:<check_id>:<reason_code>)`（process到達不能は固定`availability:unreachable`）をdurable eventとしてPi5に保存し、dotagents所有の明示connector CLI経由でmain-server reporterへopen/resolveを渡す
+  - [ ] Discord成功とBugHub還流成功を別ackにし、片方の失敗をもう片方の成功で消さない。復旧後もBugHub accepted確認までeventを保持する
 
 ### Wave 7 — 4環境canary rollout（H＋F）
 
-1. [ ] Mac: local fake→本番BugHub、通知抑制canary、手動確認
-2. [ ] main-server: BugHub自身を含む全9製品、DB backup後deploy
-3. [ ] FOX WSL2: cron/read-only scan/outbox/再送
-4. [ ] FOX Windows native: Task Scheduler/Node入口、WSLとhost IDを混同しない
-5. [ ] 全環境のinstalled/latest/compat matrixと意図的1件fail→通知→修復→resolve→再発なしを実証
+1. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認
+2. [ ] main-server: Hでtoken/config opt-in、scheduler apply、DB backup付きdeploy → FでBugHub自身を含む全9製品とrevision attestationを確認
+3. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認
+4. [ ] FOX Windows native: Hでtoken/config opt-inとTask Scheduler apply → FでNode入口、実火・uninstall・所有者限定ACL、WSLとhost IDを混同しないことを確認
+5. [ ] Hで意図的障害を許可後、Fで全環境のinstalled/latest/compat matrixと意図的1件fail→通知→修復→resolve→再発なしを実証
 
 ### Wave 8 — 定常運用と完了
 
 - [ ] post-update gateと定期scanの頻度・timeout・通知cooldownを確定
 - [ ] 製品追加/削除/第三者化/所有移管の手順をAGENTS/READMEへ正典化
 - [ ] BugHub schema major変更時のclient互換matrixを追加
-- [ ] `make ci`、各repo full gate、全端末E2E、最終反証を通す
+- [ ] `make ci`、各repo full gate、H承認済みの全端末E2E・rollback drill、最終反証を通す
 - [ ] repo単位でpushし、計画をarchiveする
 
 ## 8. 実行経路と役割
 
 - **F（親直轄）**: wire contract、認証、DB migration、severity、所有境界、本番deploy、rollback、公開API後方互換。
 - **A（native委譲）**: 仕様固定後のrepo別diagnostics、adapter、fixture、dashboard、文書の逐語追従。
-- **H（オーナー）**: dirty作業の裁定、秘密/token配置、hook trust、Windows Task Scheduler、DB backupを伴う本番deploy、意図的障害試験。
+- **H（オーナー）**: dirty作業の裁定、秘密/token配置、hook trust、全OSのscheduler実登録/解除、DB backupを伴う本番deploy、意図的障害試験、実端末rollback drill。
 
 Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative subagentへ委譲する。aiterm/MCP経由で入れ子Codexを起動しない。Claude親で実施する場合は、aitermの永続PTYを対象repoのcwdで使うことはできるが、aitermを使うこと自体を「project native」の条件にはしない。
 
@@ -337,6 +342,7 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 - session本文、prompt、秘密、生DB、生logの中央送信。
 - ServerManagerをdotagentsと並ぶ別工場へ昇格すること。
 - 既存アプリのBugHub pull契約を一斉にpushへ移行すること。
+- factory report v1へのdelta追加、BugHub側からのfactory issue手動resolve。
 
 ## 10. rollback
 
