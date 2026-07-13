@@ -27,7 +27,30 @@ function locations(stateDir) { return { stateDir, outbox: join(stateDir, 'outbox
 function exact(value, keys, label) { if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== keys.length || Object.keys(value).some((key) => !keys.includes(key))) throw new Error(`${label}が不正です`); }
 function v2Endpoint(config) { if (!config.reporting.enabled) return; let url; try { url = new URL(config.reporting.endpoint); } catch { throw new Error('v2 endpointが不正です'); } if (!['http:', 'https:'].includes(url.protocol) || url.pathname !== '/api/factory/v2/reports' || url.search || url.hash) throw new Error('v2 endpointが必要です'); }
 function assertIdentity(config, report) { if (!config.host || config.host.id !== report.host_id || config.host.profile !== report.host_profile) throw new Error('config host identityとreportが一致しません'); }
-function ownerOnlyAcl(path) { if (platform() !== 'win32') return; const script = "$p=$args[0];$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User;if(Test-Path $p -PathType Container){$acl=New-Object Security.AccessControl.DirectorySecurity;$inherit='ContainerInherit,ObjectInherit'}else{$acl=New-Object Security.AccessControl.FileSecurity;$inherit='None'};$acl.SetAccessRuleProtection($true,$false);$rule=New-Object Security.AccessControl.FileSystemAccessRule($sid,'FullControl',$inherit,'None','Allow');[void]$acl.AddAccessRule($rule);if(Test-Path $p -PathType Container){[IO.Directory]::SetAccessControl($p,$acl)}else{[IO.File]::SetAccessControl($p,$acl)}"; const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script, path], { encoding: 'utf8' }); if (result.status !== 0) throw new Error('Windows owner-only ACL設定に失敗しました'); }
+function ownerOnlyAcl(path) {
+  if (platform() !== 'win32') return;
+  const script = String.raw`$ErrorActionPreference = 'Stop'
+$p = $env:DOTAGENTS_FACTORY_ACL_TARGET
+if ([string]::IsNullOrWhiteSpace($p) -or -not (Test-Path -LiteralPath $p)) { throw 'ACL target is invalid' }
+$sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+$isDirectory = (Get-Item -LiteralPath $p).PSIsContainer
+if ($isDirectory) {
+  $acl = New-Object Security.AccessControl.DirectorySecurity
+  $inherit = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
+} else {
+  $acl = New-Object Security.AccessControl.FileSecurity
+  $inherit = [Security.AccessControl.InheritanceFlags]::None
+}
+$acl.SetAccessRuleProtection($true, $false)
+$rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inherit, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
+[void]$acl.AddAccessRule($rule)
+Set-Acl -LiteralPath $p -AclObject $acl`;
+  const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script], {
+    encoding: 'utf8',
+    env: { ...process.env, DOTAGENTS_FACTORY_ACL_TARGET: path },
+  });
+  if (result.error || result.status !== 0) throw new Error('Windows owner-only ACL設定に失敗しました');
+}
 
 async function ensureState(loc) { for (const directory of [loc.stateDir, loc.outbox, loc.dead, loc.retry]) { await mkdir(directory, { recursive: true, mode: 0o700 }); const info = await lstat(directory); if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('state pathが不正です'); if (platform() !== 'win32' && (info.mode & 0o077) !== 0) await chmod(directory, 0o700); else ownerOnlyAcl(directory); } }
 async function entries(loc) { await ensureState(loc); const names = (await readdir(loc.outbox)).filter((name) => name.endsWith('.json')).sort(); const result = []; for (const name of names) { const file = join(loc.outbox, name); try { const info = await stat(file); result.push({ name, file, size: info.size, mtimeMs: info.mtimeMs }); } catch {} } return result; }
