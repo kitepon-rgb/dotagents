@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { chmod, mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, test } from 'node:test';
@@ -32,14 +32,21 @@ async function writeConfig(box, endpoint, enabled = true, hostId = 'test-host', 
   await writeFile(box.credential, 'unit-test-token\n', { mode: 0o600 });
   await writeFile(box.config, JSON.stringify({ schema_version: '1.0', host: { id: hostId, profile: hostProfile }, collection: { enabled: false }, reporting: enabled ? { enabled: true, endpoint, credential_file: box.credential } : { enabled: false } }));
 }
-function run(box, args, extra = {}) {
+function run(box, args, extra = {}, cli = CLI) {
   return new Promise((resolveRun) => {
-    const child = spawn(process.execPath, [CLI, ...args], { env: { ...process.env, XDG_STATE_HOME: box.state, XDG_CONFIG_HOME: join(box.root, 'config-home'), ...extra }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [cli, ...args], { env: { ...process.env, XDG_STATE_HOME: box.state, XDG_CONFIG_HOME: join(box.root, 'config-home'), ...extra }, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = ''; let stderr = '';
     child.stdout.on('data', (chunk) => { stdout += chunk; }); child.stderr.on('data', (chunk) => { stderr += chunk; });
     child.on('close', (code) => resolveRun({ code, stdout, stderr, json: stdout ? JSON.parse(stdout) : null }));
   });
 }
+
+test('配布symlink経由でもv1 reporterがmainを実行する', async () => {
+  const box = await sandbox(); const link = join(box.root, 'factory-reporter');
+  await symlink(CLI, link); await writeReport(box); await writeConfig(box, 'http://127.0.0.1:1/api/factory/v1/reports');
+  const result = await run(box, ['preview', '--report', box.report, '--config', box.config], {}, link);
+  assert.equal(result.code, 0, result.stderr); assert.equal(result.json?.ok, true); assert.equal(result.json?.command, 'preview');
+});
 async function startServer(handler) {
   const received = [];
   const server = createServer(async (req, res) => {

@@ -4,7 +4,6 @@ import { chmod, lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile } f
 import { homedir, platform } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
-import { pathToFileURL } from 'node:url';
 import {
   assertConfigIdentity,
   readAndValidateReport,
@@ -334,6 +333,4 @@ async function main() {
   }
 }
 
-if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
-  main().catch((error) => fail('FACTORY_REPORTER_ERROR', error?.message || '失敗'));
-}
+main().catch((error) => fail('FACTORY_REPORTER_ERROR', error?.message || '失敗'));

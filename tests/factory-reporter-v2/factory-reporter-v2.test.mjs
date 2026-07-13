@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { chmod, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -24,13 +24,20 @@ async function writeConfig(box, endpoint, enabled = true) {
   await writeFile(box.config, JSON.stringify({ schema_version: '1.0', host: { id: 'test-host', profile: 'mac' }, collection: { enabled: false }, reporting: enabled ? { enabled: true, endpoint, credential_file: box.credential } : { enabled: false } }));
 }
 async function writeReport(box, value = report()) { await writeFile(box.report, JSON.stringify(value, null, 2)); return readFile(box.report); }
-function run(box, args, env = {}) { return new Promise((resolve) => { const child = spawn(process.execPath, [CLI, ...args], { env: { ...process.env, XDG_STATE_HOME: box.state, ...env }, stdio: ['ignore', 'pipe', 'pipe'] }); let stdout = ''; let stderr = ''; child.stdout.on('data', (chunk) => { stdout += chunk; }); child.stderr.on('data', (chunk) => { stderr += chunk; }); child.on('close', (code) => resolve({ code, stdout, stderr, json: stdout ? JSON.parse(stdout) : null })); }); }
+function run(box, args, env = {}, cli = CLI) { return new Promise((resolve) => { const child = spawn(process.execPath, [cli, ...args], { env: { ...process.env, XDG_STATE_HOME: box.state, ...env }, stdio: ['ignore', 'pipe', 'pipe'] }); let stdout = ''; let stderr = ''; child.stdout.on('data', (chunk) => { stdout += chunk; }); child.stderr.on('data', (chunk) => { stderr += chunk; }); child.on('close', (code) => resolve({ code, stdout, stderr, json: stdout ? JSON.parse(stdout) : null })); }); }
 async function startServer(handler) { const received = []; const server = createServer(async (req, res) => { const chunks = []; for await (const chunk of req) chunks.push(chunk); received.push({ body: Buffer.concat(chunks), headers: req.headers }); await handler(req, res, received.length); }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve)); return { received, endpoint: `http://127.0.0.1:${server.address().port}/api/factory/v2/reports`, close: () => new Promise((resolve) => server.close(resolve)) }; }
 function outbox(box) { return join(box.state, 'dotagents', 'factory-reporter-v2', 'outbox'); }
 function dead(box) { return join(box.state, 'dotagents', 'factory-reporter-v2', 'dead-letter'); }
 function accepted(res, id) { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ accepted: true, report_id: id })); }
 
 after(async () => { for (const root of roots) await rm(root, { recursive: true, force: true }); });
+
+test('配布symlink経由でもv2 reporterがmainを実行する', async () => {
+  const box = await sandbox(); const link = join(box.root, 'factory-reporter-v2');
+  await symlink(CLI, link); await writeReport(box); await writeConfig(box, 'http://127.0.0.1:1/api/factory/v2/reports');
+  const result = await run(box, ['preview', '--report', box.report, '--config', box.config], {}, link);
+  assert.equal(result.code, 0, result.stderr); assert.equal(result.json?.ok, true); assert.equal(result.json?.command, 'preview');
+});
 
 test('enqueue-before-sendし、accepted後だけ同一body bytesを削除する', async () => {
   const box = await sandbox(); const server = await startServer((req, res) => accepted(res, report().report_id)); const bytes = await writeReport(box); await writeConfig(box, server.endpoint);

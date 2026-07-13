@@ -409,6 +409,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 0a. [ ] Wave 6の`gpt-connector`公開版、基盤CLI 3製品adapter/update契約、ServerManagerの固定12製品new-major endpoint、dotagents new-major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
 1. [ ] main-server: `FACTORY_INGEST_ENABLED=true`でv1を維持し、v2 ingest/view OFFでschema 4対応serverをDB backup付き配備 → `/readyz`とv1継続を確認 → v2 ingest/viewをON → v2 endpoint単体canaryを確認する。candidateはrevision一致activation markerまでHTTP書込みを503で閉じ、activation前の切替失敗だけをquiesced rollback setから自動復元する。旧containerなしの初回導入も同じfixtureで扱う
 1a. [x] v1 scannerへ一回限りの明示`--oracle-retired`入口を追加し、Oracle CLIを実行せず`not_applicable`にした最終full snapshotをschema検証付きで生成する。通常scanとv1 rollback schedulerは従来どおりOracleを観測する
+1b. [x] `factory-reporter` / `factory-reporter-v2`がinstall.shの配布symlink経由でもmainを必ず実行し、exit 0・無出力でenqueue/flushを省略しない回帰テストを追加する
 2. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認。host切替は`retire-oracle`→v1最終`not_applicable`→v2初回full snapshotの順にする
 3. [ ] main-server client: Hでtoken/config opt-inとscheduler apply → FでBugHub自身を含むコア9＋基盤CLI 3の全12管理製品とrevision attestationを確認
 4. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認
