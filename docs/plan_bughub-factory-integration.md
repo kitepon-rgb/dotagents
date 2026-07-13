@@ -295,8 +295,10 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 - [ ] main-server上のdotagents reporterからBugHubを外部probe
 - [ ] BugHub停止、stale poll、DB migration失敗、image/source不一致をfixture化
+  - [x] stale pull、source未設定、DB query/schema mismatch、factory ingest/delivery stale・失敗を`/readyz`の固定reason codeでfixture化
+  - [ ] process停止とimage/source不一致はmain-server外部probe側でfixture化
 - [ ] BugHub停止中のoutbox保持→復旧後再送を実測
-- [ ] readinessをDB query、poll/ingest鮮度、source error、通知deliveryまで拡張し、compose healthcheckへ接続
+- [x] readinessをDB query、poll/ingest鮮度、source error、pull/factory通知deliveryまで拡張し、Docker healthcheckとdeploy canaryを`/readyz`へ接続
 - [ ] BugHub停止/readiness failureの即時通知はBugHubを経由せず既存Pi5→Discord経路へ出し、復旧後に同じfingerprintをBugHubへ還流
 - [ ] Pi5の既存Layer 3監視と重複責務を整理し、片方の失敗をもう片方が隠さない
 
