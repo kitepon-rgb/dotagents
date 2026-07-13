@@ -19,11 +19,11 @@ dotagents が管理対象とするコア9製品と基盤toolchain 3製品につ�
 
 ## 1. 完了条件（本計画がTODOを兼ねる）
 
-- [ ] 端末能力8製品、ServerManager、基盤CLI 3製品について、製品別のversion・diagnostics・state/schema・migration・互換性契約が有限表になっている
-- [ ] 4環境×12管理製品の期待状態（required / optional / forbidden / unsupported）、期待connector、欠落時severityが一意なmatrixになっている
+- [x] 端末能力8製品、ServerManager、基盤CLI 3製品について、製品別のversion・diagnostics・state/schema・migration・互換性契約が有限表になっている
+- [x] 4環境×12管理製品の期待状態（required / optional / forbidden / unsupported）、期待connector、欠落時severityが一意なmatrixになっている
 - [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの4環境が、認証付きでBugHubへ観測結果を報告できる
 - [x] BugHubにhost×productの現在値と履歴があり、installed/latest・contract・schema・update・compatibilityの状態を区別できる
-- [ ] 互換異常は既存BugHubのfingerprint・severity・再発・解決・Discord・`/ai`へ統合される
+- [x] 互換異常は既存BugHubのfingerprint・severity・再発・解決・Discord・`/ai`へ統合される
 - [x] 既存4アプリのpull巡回・重大度・resolve/reopen・dashboard・日次/週次通知に回帰がない
 - [x] 第三者製品をfork、`node_modules`パッチ、内部DB決め打ちで改造していない
 - [x] 自作製品は機械可読な正規diagnosticsを製品側に持ち、dotagentsが内部状態を勝手に解釈しない
@@ -33,7 +33,7 @@ dotagents が管理対象とするコア9製品と基盤toolchain 3製品につ�
 - [ ] Claude Code CLI、Codex CLI、Grok Buildについて、installed/latest、更新前後version、update成否、対応host、親別互換性をBugHubで追跡し、1製品の更新失敗を他製品の成功で隠さない
 - [ ] 全現役hostで`gpt-connector`の導入・更新・診断・期待connector・MCPをmatrixどおり検証し、Oracleへの暗黙fallbackなしで切替とrollback drillを完了する
 - [x] 公開製品の外部利用者からは明示opt-inなしにtelemetryを送らない
-- [ ] BugHub自身をBugHubの自己申告だけで合格させず、main-server上の外部runnerがServerManager/BugHubを検証する
+- [x] BugHub自身をBugHubの自己申告だけで合格させず、main-server上の外部runnerがServerManager/BugHubを検証する
 - [x] 報告不能時は端末ローカルのdotagents所有outboxへ保持し、成功扱いせず、復旧後に冪等再送できる
 - [ ] 更新後contract gateと定期read-only gateがgreenになり、失敗製品・host・検査項目をBugHubとローカルlogで特定できる
 - [ ] 自作製品のfactory diagnostics/runtime error契約が各端末の正規配布版へ収録され、repo HEADだけに存在する未公開実装へ依存していない
@@ -340,7 +340,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] runtime error storeの異常終了後に残ったlockを有界・安全に回収し、diagnosticsがstale lockを偽greenにしないcharacterizationと修復を追加する
 - [x] runtime error adapter失敗が、秘密や生stderrを出さずに失敗製品IDと固定reason codeをローカル診断へ残す
 - [ ] macOS、Linux、WSL2、Windows nativeでCLI/version/read-only diagnosticsを動かし、live Chat connectorの期待可否はhost matrixで別管理する。未対応hostを導入失敗や偽greenへ丸めない
-- [ ] `pnpm check`、pack/install smoke、既存Chat/添付/job回帰をgreenにし、version更新・release準備後、npm publishは対象version・影響・rollbackを提示してH承認後だけ行う
+- [x] `pnpm check`、pack/install smoke、既存Chat/添付/job回帰をgreenにし、version更新・release準備後、npm publishは対象version・影響・rollbackを提示してH承認後だけ行う
 
 #### 6.2 基盤CLI 3製品のversion/update契約（repo内A、契約はF）
 
@@ -359,7 +359,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] v1最終Oracle `not_applicable`＋明示resolution、新major最初の`gpt-connector`＋基盤CLI 3製品を含む固定12製品full snapshot、旧観測の遅着、重複retry、resolve後再発、schema片側停止をcharacterizationする
 - [x] BugHub readinessの期待DB schemaを最新migrationと一致させ、既存のv1 factory issue fingerprint saltを維持して再導入時に履歴を孤児化しない回帰testを通す
 - [x] Oracle退役状態をglobal booleanではなくhost別cutover状態として保持し、移行済みhostだけを`not_applicable`にしつつ未移行hostのv1観測を早期免除しない
-- [ ] v1/new-major dual-run中のDB backup/restore、endpoint feature flag、revision attestation、canary、旧major retire条件をランブックへ追加する
+- [x] v1/new-major dual-run中のDB backup/restore、endpoint feature flag、revision attestation、canary、旧major retire条件をランブックへ追加する
 
 #### 6.4 dotagents配線と正典（repo内A、契約はF）
 
@@ -385,9 +385,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 7 — ServerManager/BugHub自己監視（F）
 
-- [ ] main-server上のdotagents reporterからBugHubを外部probe
+- [x] main-server上のdotagents reporterからBugHubを外部probe
   - [x] loopback `/readyz`限定の外部probe CLIとserver profile adapter、SSRF/privacy/contract fixtureを実装
-  - [ ] main-serverへ配布し、実reportでServerManagerの6 readiness check（DB/schema/pull/ingest/delivery/revision）を確認
+  - [x] main-serverへ配布し、実reportでServerManagerの6 readiness check（DB/schema/pull/ingest/delivery/revision）を確認
 - [x] BugHub停止、stale poll、DB migration失敗、image/source不一致をfixture化
   - [x] stale pull、source未設定、DB query/schema mismatch、factory ingest/delivery stale・失敗を`/readyz`の固定reason codeでfixture化
   - [x] process停止・到達不能を外部probeの`unreachable`としてfixture化
@@ -399,27 +399,42 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
   - [x] 専用bridgeは既存の監視抑止に入る時に未trigger観測窓だけを切り、`/readyz`をDocker health retryとは独立した60秒tickerで観測する。trigger済みeventは保持し、抑止解除後2連続失敗（通常約120秒）で通知を試行し、配送失敗はtimeout付きでdurable retryする。自動restartは行わず、既存Layer 3の3周期観測・restart責務を奪わない
   - [x] `sha256(servermanager:<check_id>:<reason_code>)`（process到達不能は固定`availability:unreachable`）をdurable eventとしてPi5に保存し、dotagents所有の明示connector CLI経由でmain-server reporterへopen/resolveを渡す
   - [x] Discord成功とBugHub還流成功を別ackにし、片方の失敗をもう片方の成功で消さない。復旧後もBugHub accepted確認までeventを保持する
-  - [ ] main-serverとPi5へ配布し、意図的停止canaryでDiscord通知→BugHub accepted→resolve→state削除を実証する
+  - [x] main-serverのexternal-event connectorとPi5のbridge/tickerを配布し、実`/readyz` ready状態で120秒間にstate mtimeが2回進み、events空・connector pending 0を維持するnormal canaryを確認する
+  - [ ] Wave 8.6a/6bの分離済み意図的canaryで、transient誤openなしとDiscord通知→BugHub accepted→resolve→isolated state削除をそれぞれ実証する
 
 ### Wave 8 — 4環境canary rollout（H＋F）
 
 0. [x] H承認後、repo実装済み・公開版未収録のThroughline、Spotter、aiterm-mcpと、今回追加するCaveatのfactory契約を独立releaseし、npm `latest`・packed install smoke・`--version`・native diagnostics/runtime snapshotを確認する（codex-sidecarはv0.3.6へ収録済み）
    - 2026-07-13: Throughline `0.6.2`（`e6ce6e3` / CI `29238704750`）、Spotter `1.4.23`（`a117a99` / CI `29238199094`）、Caveat `0.16.3`（`8f06d17` / CI `29238199765`）をnpm `latest`、annotated tag、GitHub Releaseへ公開した。
    - aiterm-mcp `0.12.2`（`239e7e4`）はtag CI `29245251184`のTrusted Publishingでnpmへ公開し、Release起点のMCP Registry workflow `29245462227`もgreen。4製品をregistry由来の隔離prefixへinstallし、version、native diagnostics、runtime snapshotを確認した。collectionは既定OFFで、このsmokeから外部送信は発生しない。
-0a. [ ] Wave 6の`gpt-connector`公開版、基盤CLI 3製品adapter/update契約、ServerManagerの固定12製品new-major endpoint、dotagents new-major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
+0a. [x] Wave 6の`gpt-connector`公開版、基盤CLI 3製品adapter/update契約、ServerManagerの固定12製品new-major endpoint、dotagents new-major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
 0b. [ ] SpotterのWindows Codex実行経路修正版を公開し、dotagentsの`.codex-sidecar.yml`へ`auditor` presetを収録して、4 hostでinstall・doctor・Codex auditor・sidecar diagnosticsを実配布版から検証する
-1. [ ] main-server: `FACTORY_INGEST_ENABLED=true`でv1を維持し、v2 ingest/view OFFでschema 4対応serverをDB backup付き配備 → `/readyz`とv1継続を確認 → v2 ingest/viewをON → v2 endpoint単体canaryを確認する。candidateはrevision一致activation markerまでHTTP書込みを503で閉じ、activation前の切替失敗だけをquiesced rollback setから自動復元する。旧containerなしの初回導入も同じfixtureで扱う
+1. [x] main-server: `FACTORY_INGEST_ENABLED=true`でv1を維持し、v2 ingest/view OFFでschema 4対応serverをDB backup付き配備 → `/readyz`とv1継続を確認 → v2 ingest/viewをON → v2 endpoint単体canaryを確認する。candidateはrevision一致activation markerまでHTTP書込みを503で閉じ、activation前の切替失敗だけをquiesced rollback setから自動復元する。旧containerなしの初回導入も同じfixtureで扱う
 1a. [x] v1 scannerへ一回限りの明示`--oracle-retired`入口を追加し、Oracle CLIを実行せず`not_applicable`にした最終full snapshotをschema検証付きで生成する。通常scanとv1 rollback schedulerは従来どおりOracleを観測する
 1b. [x] `factory-reporter` / `factory-reporter-v2`がinstall.shの配布symlink経由でもmainを必ず実行し、exit 0・無出力でenqueue/flushを省略しない回帰テストを追加する
 1c. [x] v1受理後ACKを5製品の実公開response schemaへ合わせ、失敗時は生出力なしで製品IDをローカル結果へ残し、duplicate再受理で安全に完遂する
 1d. [x] macOS schedulerはHomebrew Cellarのversion固定Nodeではなくstable symlinkを保存し、stable入口欠落時は登録前に明示失敗する
 1e. [x] v1 reporterもHTTP/network/timeoutによる保持とpermanent rejectのdead-letterを送信失敗として非0終了し、rollback schedulerがfalse successにしない
 1f. [x] v2 scannerは全製品の観測完了後にreportのobserved_atを確定し、gpt-connectorの診断failureと並行runtime eventを未来timestampにしない
-2. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認。host切替は`retire-oracle`→v1最終`not_applicable`→v2初回full snapshotの順にする
-3. [ ] main-server client: Hでtoken/config opt-inとscheduler apply → FでBugHub自身を含むコア9＋基盤CLI 3の全12管理製品とrevision attestationを確認
-4. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認
-5. [ ] FOX Windows native: Hでtoken/config opt-inとTask Scheduler apply → FでNode入口、実火・uninstall・所有者限定ACL、WSLとhost IDを混同しないことを確認
-6. [ ] Hで意図的障害を許可後、Fで全環境のinstalled/latest/compat matrixと意図的1件fail→通知→修復→resolve→再発なしを実証
+1g. [x] FOX Windows native実機で`factory-reporter-v2 enqueue`のowner-only ACL適用が失敗する経路を根治し、current-SID-onlyのdirectory/file契約、秘密非表示、非0 fail-loudを維持したWindows回帰testと実機scan→enqueue→flushを通す
+1h. [x] `agents-update`を配布symlinkから起動するとtoolchain ledger helperを`.mjs`付きで誤参照する欠陥を直し、source直実行と`~/.local/bin`配布入口の双方でClaude Code／Codex CLI／Grok Build台帳とpost-update reportを確定する
+1i. [x] FOX Windows nativeでnpm `.cmd` shimをNodeの直接spawnが解決できず導入済み製品を`missing`へ誤投影する欠陥を、固定CLI・引数非再解釈・timeout/output上限を保つ共通command runnerで直し、12製品matrixを実機再送する
+1j. [x] `agents-update`が追加する`/usr/local/bin`でWSLの正規npm global CLIをshadowし、Claude Code更新後versionを旧入口から読む欠陥を直す。検証済み`npm prefix -g`のbinを更新・version確認の同一入口にし、PATH shadowをfixtureと実host ledgerで閉じる
+1k. [ ] registry公開版のThroughline／Spotter／aiterm-mcp／codex-sidecar native diagnosticsとdotagents v2 adapterのschema driftを、製品側正本とexact validatorを保ったまま同期し、main-serverのCaveat診断とGrok Build導入状態も分離して全host post-update gateをgreenにする
+1m. [ ] Throughline factory diagnosticsのCodex hook集約をdoctorの実状態と一致させ、main-serverの正規hook導入、Macのhandoff readiness、FOX WSL2の`events=ready`なのにsummary=`unverified`となるproducer矛盾を製品repoのcharacterization→修正→patch releaseで閉じる
+1n. [x] Windows共通command runnerのnpm shim解決を実物cmd-shim variantへ追従し、PATH／shimのfilesystem解決も5秒全体deadline内のkill可能helperへ隔離して、UNC・late spawn・悪意あるshimをfail-loudに拒否する
+1o. [x] native diagnosticsを単一overall checkへ潰さずThroughline／Spotter／aiterm-mcpのcomponent別checkへ安全に投影し、report/BugHubでは`unverified`を保持する。gateはdefault-denyのまま、Spotterの人手trust、Throughlineのadvisory evidence/Claude connector、headless aitermのPTY観測不能という完全tupleだけをnonblockingにする
+1p. [ ] Windows実機でtoolchain ledger、v2 schedule runner、Task Scheduler control artifactが旧`[IO.*]::SetAccessControl` ACL入口で失敗する欠陥を、reporter本体と同じ`Set-Acl -LiteralPath`系current-SID-only契約へ統一する。ACL済みtemporary ledgerのrename後に再適用して「更新済みなのに非0」となる窓をなくし、PowerShell失敗は秘密・絶対pathを出さない固定reasonでfail-loudにする。ledger生成→post-update scan/gate/enqueue/flush→scheduler dry-run/applyを実機で再確認する
+1q. [ ] FOX Windows nativeの現行npm global `.cmd` shimが`_prog`行を2スペース字下げする実形を、旧1スペース形と同じbounded helperのexact allowlistへ追加する。あわせて`PATHEXT`の許可外拡張子は実行せず後続候補へ進めるが、実行許可は`.exe`と検証済みnpm `.cmd`だけ、悪意あるshim拒否、5秒全体deadline、Node entrypointの`node_modules`内実在・realpath検証を維持し、実機12製品scan/post-update gateを再送する
+1r. [ ] Codex Sidecar 0.3.6の`factory-diagnostics`がWindowsで`spawn("codex-sidecar-mcp")`を直呼びし、実際のMCP initializeは成功するのにnpm `.cmd` shimを解決できず`packageVersions=unverified`へ誤投影する欠陥を製品側で根治する。固定command・引数非再解釈・timeout・出力上限・fail-loudを維持したWindows回帰test、pack/install smoke、releaseを通し、FOX Windows nativeの実配布版で12製品scan→post-update gate→enqueue/flush→Task Scheduler dry-run/applyを再送する
+1s. [ ] Macの対話shellではBugHubへHTTP 200なのにuser launchd配下だけLocal Network Privacyで遮断される実機差を、Apple TN3179の管理端末向けCIDR例外で解消する。現在の実経路`en5`（USB Ethernet）だけを対象にsystem domainの`AllowedEthernetLocalNetworkAddresses`へ`192.168.1.2/32`を追加し、Wi-Fi側は変更しない。再起動後にlaunchd childの実送信canaryを通し、rollbackは対象entry削除＋再起動とする
+2. [ ] Mac: Hでtoken/config opt-in → Fでscheduler未登録のままlocal fake→本番BugHubへmanual scan/preview/enqueue/flushし、accepted/current/history/通知抑制/ACK/outbox drainを確認 → launchd dry-run/apply → scheduled run・uninstall・state権限を確認。host切替は`retire-oracle`→v1最終`not_applicable`→v2初回full snapshotの順にする
+2a. [ ] Mac canaryでv2 scheduler停止（outbox保持）→host別Oracle復帰→v1送信→Oracle再退役と最終`not_applicable`受理→v2復帰を実証し、同一issue/historyを二重化しないことを確認してからWindows schedulerと障害演習へ進む
+3. [x] main-server client: Hでtoken/config opt-in → Fでscheduler未登録のmanual v2受理、BugHub自身を含むコア9＋基盤CLI 3の全12管理製品とrevision attestationを確認 → cron dry-run/apply → scheduled runを確認
+4. [ ] FOX WSL2: Hでtoken/config opt-in → Fでscheduler未登録のread-only scan/preview/enqueue/flush、outbox/再送を確認 → cron dry-run/apply → 実火・uninstall・state権限を確認
+5. [ ] FOX Windows native: Hでtoken/config opt-in → Fでscheduler未登録のmanual scan/preview/enqueue/flush、Node入口、所有者限定ACL、WSLとhost IDを混同しないことを確認 → Task Scheduler dry-run/apply → 実火・uninstallを確認
+6a. [ ] H承認済みの意図的障害としてmain-serverのBugHub containerだけをhealthy tick直後から最長45秒停止し、既存アプリ本体・DBを変更しない。natural 60秒tickerで未trigger observation 1件までに留まること、停止中のreporter非0/outbox保持、`docker compose up -d bughub`と`/readyz`での復旧、復旧後flush、次のhealthy tickで未trigger stateが消えることを確認し、Discord・external-event・BugHub issueを誤openしないtransient吸収を実証する
+6b. [ ] fixed 60秒ticker＋2連続failureの契約を変えず、open→resolve E2Eは別の隔離canaryとして実施する。Pi5 bridgeの公開`run(deps)`で本番stateをtemporary fileへ差し替え、2 synthetic observations（natural 2周期とは称さない）だけtransport failureを注入し、Discordは実module、connectorは実SSHへ委譲する。main-serverの`factory-external-event`とmanual v2 reporterも専用`XDG_STATE_HOME`へ隔離し、固定`servermanager/availability/unreachable`（high、同一fingerprint）のopen→BugHub accepted/ACKを確認する。復旧は実`/readyz`の200/readyだけを入力し、Discord success→同fingerprint resolve/ACK→isolated bridge state消去→次回本番scheduled full snapshotでreopenしないことと全環境のinstalled/latest/compat matrixを確認する
 
 ### Wave 9 — 定常運用と完了
 
