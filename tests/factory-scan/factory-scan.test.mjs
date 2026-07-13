@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import {
-  chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile,
+  chmod, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, posix, resolve } from 'node:path';
 import process from 'node:process';
 import { test } from 'node:test';
-import { run as runCommand } from '../../lib/factory/command.mjs';
+import { resolveWindowsCommand, run as runCommand } from '../../lib/factory/command.mjs';
 import { validateReport } from '../../lib/factory/contract.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..', '..');
@@ -471,6 +471,65 @@ test('command出力上限とtimeoutは固定reasonで失敗し、生出力を返
   assert.deepEqual({ reason: slow.reason, stdout: slow.stdout, stderr: slow.stderr }, {
     reason: 'timeout', stdout: '', stderr: '',
   });
+});
+
+async function windowsCommandFixture(t) {
+  const root = await mkdtemp(join(tmpdir(), 'factory-windows-command-'));
+  const bin = join(root, 'bin with space');
+  await mkdir(bin, { recursive: true });
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const npmShim = (entry) => `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n SET "_prog=node"\r\n)\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & set PATHEXT=%PATHEXT:;.JS;=;% & "%_prog%"  "%dp0%\\${entry}" %*\r\n`;
+  return {
+    root, bin,
+    env: { Path: bin, PathExt: '.CMD;.EXE' },
+    async entry(name, body) {
+      const file = join(bin, 'node_modules', 'safe-package', 'bin', name);
+      await mkdir(resolve(file, '..'), { recursive: true });
+      await writeFile(file, body);
+      return file;
+    },
+    async cmd(name, entry) {
+      const file = join(bin, `${name}.cmd`);
+      await writeFile(file, npmShim(entry));
+      return file;
+    },
+  };
+}
+
+test('Windows npm .cmdは空白を含むPATHから検証済みNode entrypointへ解決する', async (t) => {
+  const box = await windowsCommandFixture(t);
+  const entry = await box.entry('safe.js', 'process.exit(0);\n');
+  await box.cmd('safe-cli', 'node_modules\\safe-package\\bin\\safe.js');
+  const resolved = await resolveWindowsCommand('safe-cli', { env: box.env, pathModule: { ...posix, delimiter: ';' } });
+  assert.deepEqual(resolved, { command: process.execPath, prefixArgs: [await realpath(entry)] });
+});
+
+test('Windows .exeはPATHEXT順で直接起動し、npm .cmdへはcmd.exeを介在させない', async (t) => {
+  const box = await windowsCommandFixture(t);
+  const executable = join(box.bin, 'native.exe');
+  await writeFile(executable, 'placeholder');
+  const resolved = await resolveWindowsCommand('native', { env: { ...box.env, PathExt: '.EXE;.CMD' }, pathModule: { ...posix, delimiter: ';' } });
+  assert.deepEqual(resolved, { command: executable, prefixArgs: [] });
+});
+
+test('Windows npm .cmdはstdin・cwd・envを保ってNodeで実行する', async (t) => {
+  const box = await windowsCommandFixture(t);
+  await box.entry('runner.js', "let input = ''; process.stdin.on('data', (chunk) => { input += chunk; }); process.stdin.on('end', () => process.stdout.write(JSON.stringify({ input, cwd: process.cwd(), marker: process.env.FACTORY_MARKER })));\n");
+  await box.cmd('runner', 'node_modules\\safe-package\\bin\\runner.js');
+  const result = await runCommand('runner', [], { cwd: box.root, env: { ...box.env, FACTORY_MARKER: 'kept' }, input: 'stdin-kept', platform: 'win32', windowsPathModule: { ...posix, delimiter: ';' } });
+  assert.equal(result.ok, true, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), { input: 'stdin-kept', cwd: await realpath(box.root), marker: 'kept' });
+});
+
+test('Windows command解決は悪意あるshim・traversal・dynamic command pathをfail-loudする', async (t) => {
+  const box = await windowsCommandFixture(t);
+  const marker = join(box.root, 'executed');
+  await writeFile(join(box.bin, 'evil.cmd'), `@ECHO off\nGOTO start\n:find_dp0\nSET dp0=%~dp0\nEXIT /b\n:start\nSETLOCAL\nCALL :find_dp0\n\n"%dp0%\\node.exe"  "%dp0%\\node_modules\\safe-package\\bin\\safe.js" %* & echo owned > "${marker}"\n`);
+  await assert.rejects(resolveWindowsCommand('evil', { env: box.env, pathModule: { ...posix, delimiter: ';' } }), { code: 'EINVAL' });
+  await assert.rejects(readFile(marker), { code: 'ENOENT' });
+  await box.cmd('traversal', 'node_modules\\safe-package\\bin\\..\\..\\..\\escape.js');
+  await assert.rejects(resolveWindowsCommand('traversal', { env: box.env, pathModule: { ...posix, delimiter: ';' } }), { code: 'EINVAL' });
+  await assert.rejects(resolveWindowsCommand('..\\evil', { env: box.env, pathModule: { ...posix, delimiter: ';' } }), { code: 'EINVAL' });
 });
 
 test('rename失敗時に一時reportを残さない', async (t) => {
