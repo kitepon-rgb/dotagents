@@ -20,17 +20,18 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 ### 開発工場の定義（所有境界）
 
 - **開発工場そのものはdotagents**。dotagentsを「工場の一部」「司令室だけ」「ServerManagerと並ぶ一方のcontrol plane」と再定義しない。全端末・全projectの規範、導入、更新、親別配線、互換契約、検証、上流追従をここが統括する。
-- 工場のコア管理対象は計9製品。端末能力を担う8製品（Caveat／Throughline／Spotter／Codegraph／MarkItDown／Oracle／aiterm-mcp／codex-sidecar）と、中央運用管理を担うServerManagerである。8製品は全端末への常備・project activation・親別connectorなど配線強度が異なるため、同じ方法で一律有効化しない。
+- 工場のコア管理対象は計9製品。端末能力を担う8製品（Caveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar）と、中央運用管理を担うServerManagerである。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとしてversion・update・compatibility管理対象にする。Oracleはv1互換・rollback専用であり、恒久コアではない。
 - **BugHubは独立した第10製品ではなく、ServerManager内部のコンポーネント**。既存の読み取り専用集約、報告元アプリによる重大度決定、`resolve` / `reopen`、`/ai`という契約を守り、8製品のversion・bug・compatibility結果を統括する連携先として活用する。
 - 各製品は自身のソース・状態・schema・migration・正規診断を所有する。dotagentsはそれらを複製せず統合契約を所有し、ServerManager/BugHubはdotagentsの代わりに工場方針を決めたり製品状態を直接書き換えたりしない。
 - オーナーは、dotagentsの統括AIが**自作コア製品**の正規repoへ必要な修正を行い、version更新、release準備、publish、公開後smokeまで管理することを明示許可している。これは責務範囲の恒久裁定であり、第三者製品のfork/patch許可や、本番deploy・credential・意図的障害・registry publish等のH操作に対する目的/影響/rollback説明と実行時承認を省略するものではない。各製品repoの正典・release gate・独立履歴を守る。
+- コア製品を正規入口で実利用中に再現した欠陥は、元依頼と無関係な大掃除へ広げない限り、所有repoの`docs/`正本TODOへ追加して修正へ寄り道してよい。影響と本筋との関係を報告し、repoごとの独立gate・独立commitを守って修正後は本筋へ戻る。publish・本番deploy・credential/login・意図的障害試験はこの裁定に含めず、Hとして別途説明・承認する。
 - コア製品の追加・削除・第三者化・所有移管は、単なる一覧編集ではない。[README.md](README.md) の「工場コア製品の変更管理」に従い、製品契約、host/connector matrix、更新経路、adapter、BugHub schema/期待matrix、fixture、rollbackを同じ独立waveで更新する。第三者化後はfork・内部patchを止めて公開入口だけを使い、削除時も履歴を消さず、移行中の旧clientでは`not_applicable`へ遷移させてBugHub履歴を保持する。source repoの移動・改名は別途オーナー承認が必要であり、管理区分の変更をその承認の代用にしない。
 
 ## AI オンボーディング（この URL を渡された AI へ）
 
 新しい端末でこのリポを稼働させる手順。上から順に実行する。**詳細な前提・トラブルシュートは [README.md](README.md) の「他端末セットアップ・ランブック」（§0〜4）が正典**——本節はその AI 実行用の要約＋`install.sh` が触らない `settings.json` だけを補う。
 
-1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・`claude`/`codex`・工場コア8製品（`caveat`/`throughline`/`spotter`/`codegraph`/`markitdown`/`oracle`/`aiterm-mcp`/`codex-sidecar-mcp`）を導入し、親別matrixどおりMCP登録する（codex-sidecar は Claude 側のみ＝Codex 親はネイティブ委譲一択。2026-07-11 監査で登録漏れ実在＝憲法の「ツール一覧に常在」が空手形化していた）。
+1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・基盤CLI（`claude`/`codex`/`grok`）・工場コア8製品（`caveat`/`throughline`/`spotter`/`codegraph`/`markitdown`/`gpt-connector`/`aiterm-mcp`/`codex-sidecar-mcp`）を導入し、親別matrixどおりMCP登録する。正規MCP IDは`gpt_connector`、commandは`gpt-connector-mcp`。Oracleは互換・rollback時だけ扱う。
 2. **clone**（README §1）: `gh repo clone kitepon-rgb/dotagents ~/Developer/dotagents && cd ~/Developer/dotagents`。
 3. **既存実ファイルの退避**（README §2・重要）: install.sh は実ファイルを SKIP するので、先に tar 退避し stale な `~/.claude/CLAUDE.md` 実体を削除。飛ばすと正本化が静かに失敗する。`~/.codex/AGENTS.md` が実ファイルなら同様——中身を確認し、価値ある行は `codex/AGENTS.md` へ PR してから tar 退避・削除する（黙って上書き・破棄しない）。
 4. **install → Codex routing / hook 差分確認 → Spotter project install → 検証**（README §3）: 既定の `./install.sh --profile official` 後、`./bin/apply-codex-config --dry-run` で変更範囲を確認する。`--apply` は routing 2キーと dotagents hook 4本だけを backup 付きで書き込むため、対象端末への適用承認後に限る。続けてdotagentsルートで `spotter install -y` を実行し、Spotter自身にproject marker・Claude/Codex hook・host別catalog・Throughline auditor contextを管理させる。最後に `./bin/verify-install.sh --profile official` を通す（FAIL 行が退避すべき実ファイルまたは不足設定を名指しする）。

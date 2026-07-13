@@ -1,4 +1,4 @@
-# 工場9製品の有限契約台帳
+# 工場コア9製品＋基盤toolchain 3製品の有限契約台帳
 
 更新日: 2026-07-13。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
@@ -53,14 +53,19 @@
 - 現adapter: 対応versionだけlocal fixtureを実行する。fixture診断の失敗または空出力は`local_fixture=unverified`であり、version範囲外の`unsupported`とは区別する。latest/update/runtime errorは未実装。
 - 禁止: URL/JSレンダリングをhealth扱い、rc=0だけでpass。
 
-### `oracle`
+### `gpt-connector`
 
-- 所有/修正先: 第三者 / `kitepon-rgb/dotagents`外付けadapter。version入口: `oracle --version`。
-- diagnostics/state正本: `oracle doctor --providers --json`を試行しobject JSONだけを機械可読結果として扱う。認証/browser runtimeはconnector側状態。
-- host/connector: 全4 host required、Claude MCP、Codex skill/MCP required。browser runtime非対応connectorは`unsupported`。
-- 対応version: stable `>=0.16.0 <0.17.0`（build metadata付きは許容、prereleaseは未検証で範囲外）。範囲外は`installed`を保った`doctor=unsupported:upstream_version_unsupported`、version取得不能・形式drift・CLI不在は`unverified:version_unverified`としてdoctorを実行しない。
-- 現adapter: 対応versionだけdoctor JSON shapeを実行する。exit 0のobjectはpass、機械可読なprovider未準備は`unverified:provider_not_ready`、診断出力の非JSON/shape不正は`doctor=unverified`であり、version範囲外の`unsupported`とは区別する。認証詳細、latest、runtime errorは未実装。
-- 禁止: `consult`、prompt送信、人間向け出力解析。
+- 所有/修正先: 自作 / `gpt-connector`。version入口: `gpt-connector --version`。
+- diagnostics/state正本: versioned native factory diagnosticsとproduct-owned runtime error snapshot。dotagentsはChatGPT会話・job stateを直接読解しない。
+- host/connector: 全4 host required、Claude/Codex MCP IDは`gpt_connector`、commandは`gpt-connector-mcp`。専用Chrome非対応はconnectorを`unsupported`とする。
+- update/compatibility: 製品の正規update・diagnosticsでinstalled/latest、model/effort、MCP readinessを観測する。caller既知slugだけを受け、unknown slugを推測しない。
+- 禁止: Oracle/OpenAI APIへの暗黙fallback、prompt/response/file/conversation ID/絶対pathの送信、Oracle profileの流用。timeout後は sessions で回収する。
+
+### 基盤toolchain
+
+- `claude-code`、`codex-cli`、`grok-build`はコア製品ではないが、version・update結果・互換性を固定product IDで管理する。
+- Claude/Codexはnpm `@latest`、Grok Buildは正規self-updateを用いる。失敗を他製品の成功で隠さず、第三者本体のpatch・内部状態読解・認証変更・agent起動はしない。
+- Oracleはv1互換・手動rollbackの履歴対象としてのみ残し、新規契約台帳・通常connector・更新対象には含めない。
 
 ### `aiterm-mcp`
 

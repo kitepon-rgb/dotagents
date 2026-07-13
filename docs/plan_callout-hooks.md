@@ -80,7 +80,7 @@ Claude 側（P1-P5,P7）・Codex 側（P6）を implementer 2体で並列実測�
 
 #### C1: `bin/delegation-gate-hook.sh`（配置ゲート）
 
-- **イベント×matcher**: `PreToolUse` × `"Agent|Task|Workflow|mcp__codex-sidecar__codex_.*|mcp__aiterm__(codex|grok|composer)_agent"`（Oracle は相談であって委譲ではないため対象外）
+- **イベント×matcher**: `PreToolUse` × `"Agent|Task|Workflow|mcp__codex-sidecar__codex_.*|mcp__aiterm__(codex|grok|composer)_agent"`（`mcp__gpt_connector__consult` は相談であって委譲ではないため対象外）
 - **射程の限定（反証 #2 反映・過大広告しない）**: C1 が守るのは「委譲する時の配置の質」。**「委譲すべきなのに統括が抱え込む」失敗（実被弾 2026-07-05 は Edit/Write で発生＝委譲ツール未使用）は matcher 上見えない＝本 hook の射程外**。抱え込み検出（Stop 時に統括の直接編集量を報告する等）は v2 候補としてやらない表に記載。
 - **出力**: セッション最初の委譲時だけ、実際のツール名・model・effort と、グローバル `CLAUDE.md` / `AGENTS.md`「モデルとエフォート」および `docs/02_models.md` への参照を INFO で返す。個別パラメータ検査、deny、ask は行わない。
 - **沈黙**: 2回目以降の委譲／stdin パース不能（fail-open。ただし `~/.cache/dotagents/hooks/errors.log` へ記録）／`DOTAGENTS_PLACEMENT_GATE=off`。
@@ -226,7 +226,7 @@ refuter 1体（主継承）に計画全文を攻撃させた。重傷8・かす�
 以下は初版の設計経緯。現在の実装判断には使わず、直後の Phase 6 を正とする。
 
 1. TODO ゲート: **毎ターン×warn**（rolling baseline。block は env 昇格の予備経路）
-2. 配置ゲートの強制力: **deny＋ask 採択**。かつオーナー指摘により **oracle.consult を監視対象に追加**（deny③: 封印パラメータ・API engine）
+2. 配置ゲートの強制力: **deny＋ask 採択**。かつオーナー指摘により **oracle.consult を監視対象に追加**（deny③: 封印パラメータ・API engine）。これは初版の過去経緯であり、現行標準は `gpt_connector`、`consult` は委譲ではない。
 3. Codex 展開: **同一リリースで両輪**
 4. Codex 親の委譲既定: **(b) レジーム変更**＝着手ゲート・委譲既定へ書き換え（F 直轄・単独コミット・push 前オーナー diff レビュー）
 5. **着手ゲート C4 新設**（Throughline 要望・層3 と符合）: **毎ターン UserPromptSubmit・warn・条件付き文言・判断は Claude 委任**。発火点は Edit|Write でなく UserPromptSubmit（ソース/プラン区別が脆い＋Edit は着手判断に遅い、で棄却）。**文言は配置宣言＋正本化の2点**（当初「配置に絞る」としたが、plan-gate はプランモード承認時しか出ず、モードを飛ばした実装の正本化漏れは C4 でしか捕まらないため正本化も含める）。Codex ミラー X5 も同型。
@@ -236,7 +236,7 @@ refuter 1体（主継承）に計画全文を攻撃させた。重傷8・かす�
 
 実機 transcript で、呼びかけ hook の強い命令文が Claude / Codex の両方へ Developer 相当の context として反復注入されることを確認。オーナー裁定により、詳細な義務はグローバル `CLAUDE.md` / `AGENTS.md` に一元化し、hook は「観測事実＋正典への短い INFO」だけを返す。この節は上記の「毎ターン」「deny＋ask」裁定を supersede する。
 
-- [x] C1: 特定パラメータ判定（日付付き model ID / `codex_agent` 引数省略 / Oracle 封印パラメータ / `ultra`）を削除し、セッション初回の委譲 INFO だけ残す
+- [x] C1: 特定パラメータ判定（日付付き model ID / `codex_agent` 引数省略 / Oracle 封印パラメータ / `ultra`）を削除し、セッション初回の委譲 INFO だけ残す（当時Oracle。現行の相談入口は `gpt_connector`）
 - [x] C4/X5: 毎 UserPromptSubmit の固定文注入を廃止し、セッション初回＋ compact 後1回だけの INFO にする
 - [x] plan gate / X2 update_plan: 命令文を正典参照の INFO に置換する
 - [x] C2/X1: TODO 棚卸しを「観測事実＋正典参照」に置換し、24h スロットルは維持する

@@ -10,7 +10,7 @@ dotagents は**開発工場そのもの**。全プロジェクトに共通して
 - **規範**: ベルの憲法（グローバル CLAUDE.md 正本）・本憲章の原則・orchestrate（統括の型）・02_models.md（役割→モデル対応の唯一の参照点）・01_project-layout.md（フォルダ構成標準）
 - **同期ハブ**: install.sh が skill / command / agents / rule / bin / 罠DB を全端末へ symlink 配布。GitHub が真実の源
 - **知識台帳**: rag/（調査の複利棚）・docs/（決定と計画）。罠DB は Caveat 自身が管理（`~/.caveat/own` → private の Caveat-Private・v0.15+。dotagents 外）
-- **工場コア管理対象9製品**: 端末能力を担う8製品＝Caveat（罠知識）・Throughline（セッション継続）・Spotter（未使用ツール監査）・Codegraph（コード構造理解）・MarkItDown（外部資料の再利用可能化）・Oracle（独立したChatGPT second opinion）・aiterm-mcp（PTYと外部モデル枠）・codex-sidecar（Claude親からのCodex実行）、中央運用管理を担う1製品＝ServerManager。BugHubは独立製品でなくServerManager内部のversion・bug・compatibility統括コンポーネント。各製品のソース・状態・schema・migrationは各製品自身が所有し、dotagentsは正規導入、更新、親別配線、互換検証、代表E2E、上流更新追従、ServerManager/BugHub連携を担う
+- **工場コア管理対象9製品**: 端末能力を担う8製品＝Caveat（罠知識）・Throughline（セッション継続）・Spotter（未使用ツール監査）・Codegraph（コード構造理解）・MarkItDown（外部資料の再利用可能化）・gpt-connector（ChatGPT接続）・aiterm-mcp（PTYと外部モデル枠）・codex-sidecar（Claude親からのCodex実行）、中央運用管理を担う1製品＝ServerManager。Claude Code CLI・Codex CLI・Grok Buildはコアではない基盤toolchainとしてversion・update・compatibility管理対象に置く。Oracleはv1互換・rollback専用。BugHubは独立製品でなくServerManager内部のversion・bug・compatibility統括コンポーネント。
 
 出自: 期間限定の最高知能（Fable 5・2026-07 在任）の出力を「消える回答」でなく「残る構造と判断」に変換し尽くすキャンペーンの成果物。以後は世代を跨いで運用する。
 

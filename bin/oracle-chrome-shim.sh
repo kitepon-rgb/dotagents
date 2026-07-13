@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# oracle 用 Chrome を画面外座標で起動するシム（CHROME_PATH に指定して使う）。
+# oracle rollback用Chromeへ旧画面外座標を付ける互換シム（CHROME_PATH に指定して使う）。
 # oracle の hideWindow(Cmd-H) は非表示アプリの描画停止により ChatGPT の送信・DOM 検知が
 # 壊れるため使えない（2026-07-11 実測: 送信が下書きのまま残り、後続 run に混入する）。
-# 画面外配置なら描画が続いたままデスクトップを奪わない。upstream 対応までの一時手段。
+# 2026-07-14の複数display実測ではmacOS/Chromeが画面内へclampしたため、非可視を保証しない。
+# 通常運用はgpt-connectorへ移行済み。Oracle rollback互換のためだけに残す。
 set -euo pipefail
 
 normalize_path() {

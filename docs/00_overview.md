@@ -14,7 +14,8 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | [03_settings-fragments.md](03_settings-fragments.md) | .claude/settings.json の生成手順・断片 |
 | [04_ci.md](04_ci.md) | lint / CI ゲート（`make ci`＝CI同一、`make lint`＝静的部分ゲート）の正典 |
 | [05_codex-fragments.md](05_codex-fragments.md) | Codex 端末設定の断片カタログ（MultiAgent V2 role routing 必須断片・実効値ゲート・親既定はオーナー領分） |
-| [06_oracle-mcp.md](06_oracle-mcp.md) | ChatGPT Chat枠セカンドオピニオン（oracle）の常用ランブック（ラッパー入口・封印オプション・config 正本） |
+| [06_gpt-connector.md](06_gpt-connector.md) | ChatGPT接続の正規ランブック（`gpt_connector` / `gpt-connector-mcp`・専用Chrome・session回収） |
+| [06_oracle-mcp.md](06_oracle-mcp.md) | Oracleの互換・手動rollback記録（新規導入の正本ではない） |
 | `plan_*.md` | 進行中プラン（TODO 兼務。完遂で `YYYY-MM_` 接頭辞にして archive へ） |
 | [queue_memory-promotion.md](queue_memory-promotion.md) | 端末メモリ→リポ正典への昇格待ち行列（全行消化で削除） |
 | [adr/](adr/) | このリポ自身の構造決定の記録 |

@@ -3,7 +3,9 @@ name: oracle
 description: "ChatGPT Chat枠 second-opinion（oracle MCP）の呼び出し標準形。oracle.consult を使う前・oracle の設定/挙動異常を疑った時に読む。"
 ---
 
-# oracle — ChatGPT Chat枠 second-opinion（MCP）
+# oracle — 非推奨互換・rollback専用
+
+> 新規のChatGPT second-opinionは `$gpt-connector` と MCP `gpt_connector` を使う。Oracleはv1 client・履歴・手動rollbackの互換期間だけ残す。通常利用や新規MCP登録の入口ではない。
 
 前提: oracle 0.15.2・GPT-5.6 世代（2026-07 時点）。**運用正典は dotagents/docs/06_oracle-mcp.md**——本スキルはその要約で、食い違ったら 06 が正（本スキル側を更新する）。
 
@@ -18,7 +20,7 @@ description: "ChatGPT Chat枠 second-opinion（oracle MCP）の呼び出し標�
 
 - `preset: "chatgpt-pro-heavy"` — 旧 "Pro" ラベル照合で失敗
 - `browserModelLabel`／`modelStrategy: "select"` — GPT-5.6 UI に不追従（非 gpt 文字列はファジー解決で別モデルに化ける実測）
-- `hideWindow` — 描画停止で送信が発火せず、下書き滞留が後続 run に混入。不可視化は画面外シムが担う（ラッパーが `CHROME_PATH` に自動適用）
+- `hideWindow` — 描画停止で送信が発火せず、下書き滞留が後続 run に混入。互換shimは固定負座標を付けるが複数displayでは画面内へclampされるため、非可視を保証しない。通常運用はgpt-connectorを使う
 - 解除条件は upstream の 5.6 対応リリース後に 06 を更新した時のみ。
 
 ## config 正本（`~/.oracle/config.json`）

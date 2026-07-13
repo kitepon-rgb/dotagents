@@ -49,7 +49,7 @@ exit 64
 EOF
 chmod +x "$BIN_DIR/uv"
 
-for command in oracle aiterm-mcp codex-sidecar-mcp; do
+for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp; do
   cat > "$BIN_DIR/$command" <<'EOF'
 #!/bin/sh
 [ "$1" = --version ] && exit 0
@@ -96,13 +96,17 @@ assert_rejected() {
 
 # updater の curated package は同名重複を許さず、8製品の導入面を必須化する。
 for package in \
-  caveat-cli throughline claude-spotter '@steipete/oracle' aiterm-mcp \
+  caveat-cli throughline claude-spotter gpt-connector aiterm-mcp \
   codex-sidecar-cli codex-sidecar-core codex-sidecar-mcp '@colbymchenry/codegraph'; do
   [ "$(grep -Ec "^[[:space:]]*'${package}'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
     || fail "agents-update の $package は1件でなければならない"
 done
 [ "$(grep -Ec "^[[:space:]]*'markitdown'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
   || fail 'agents-update の uv tool package markitdown は1件でなければならない'
+! grep -Eq "^[[:space:]]*'grok(-build)?'[[:space:]]*$" "$ROOT/bin/agents-update.sh" \
+  || fail 'Grok Build を npm package として更新してはならない'
+grep -Fq 'grok update --check --json' "$ROOT/bin/agents-update.sh" \
+  || fail 'Grok Build の stable JSON update check がない'
 
 verify_core || fail '有効な factory core fixture が verify-install に拒否された'
 
@@ -128,15 +132,14 @@ mv "$BIN_DIR/spotter" "$BIN_DIR/spotter.off"
 assert_rejected 'spotter CLI 欠落'
 mv "$BIN_DIR/spotter.off" "$BIN_DIR/spotter"
 
-for command in oracle aiterm-mcp codex-sidecar-mcp; do
+for command in aiterm-mcp codex-sidecar-mcp; do
   mv "$BIN_DIR/$command" "$BIN_DIR/$command.off"
   assert_rejected "$command CLI 欠落"
   mv "$BIN_DIR/$command.off" "$BIN_DIR/$command"
 done
 
-chmod -x "$HOME_DIR/.local/bin/oracle-mcp-stable"
-assert_rejected 'Oracle canonical wrapper が実行不能'
-chmod +x "$HOME_DIR/.local/bin/oracle-mcp-stable"
+# Oracle はv1 rollback互換だけに残す。v2の通常導入・更新対象ではないため、
+# v2 factory core smokeはOracle wrapperの正常性を要求しない。
 
 git -C "$HOME_DIR/.caveat/own" remote set-url origin 'git@github.com:kitepon-rgb/not-private.git'
 assert_rejected 'Caveat-Private remote 欠落'

@@ -20,28 +20,40 @@ if ! command -v npm >/dev/null 2>&1 && [[ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]];
   . "$NVM_DIR/nvm.sh"
 fi
 
-LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/agents-update"
-mkdir -p "$LOG_DIR"
-LOG="$LOG_DIR/agents-update.log"
-
 runtime_os="${OS:-}"
 if command -v uname >/dev/null 2>&1; then
   runtime_os="$(uname -s)"
 fi
 case "$runtime_os" in
   MINGW*|MSYS*|Windows_NT)
+    LOG_DIR="${LOCALAPPDATA:-$HOME/AppData/Local}/dotagents/agents-update"
     FACTORY_REPORTER_CONFIG="${FACTORY_REPORTER_CONFIG:-${LOCALAPPDATA:-$HOME/AppData/Local}/dotagents/factory-reporter/config.json}"
     ;;
   *)
+    LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/agents-update"
     FACTORY_REPORTER_CONFIG="${FACTORY_REPORTER_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/dotagents/factory-reporter.json}"
     ;;
 esac
-FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-schedule-runner}"
+mkdir -p "$LOG_DIR"
+LOG="$LOG_DIR/agents-update.log"
+FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v2-schedule-runner}"
+case "$0" in */*) script_parent=${0%/*} ;; *) script_parent=. ;; esac
+SCRIPT_DIR="$(CDPATH='' cd -- "$script_parent" && pwd -P)"
+TOOLCHAIN_LEDGER_HELPER="${TOOLCHAIN_LEDGER_HELPER:-$SCRIPT_DIR/factory-toolchain-ledger.mjs}"
+TOOLCHAIN_LEDGER_FILE="${TOOLCHAIN_LEDGER_FILE:-$LOG_DIR/toolchain-ledger.json}"
+
+extract_semver() { node -e 'const s=require("fs").readFileSync(0,"utf8");const m=s.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?/);if(m)process.stdout.write(m[0]);'; }
+json_semver() { node -e 'let v;try{v=JSON.parse(require("fs").readFileSync(0,"utf8"))}catch{process.exit(1)};const x=v[process.argv[1]];if(typeof x!=="string"||!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(x))process.exit(1);process.stdout.write(x)' "$1"; }
+record_toolchain() {
+  node "$TOOLCHAIN_LEDGER_HELPER" record --file "$TOOLCHAIN_LEDGER_FILE" --product "$1" \
+    --before "${2:-none}" --latest "${3:-none}" --operation "$4" --after "${5:-none}" \
+    --post-gate "$6" --reason "$7" --observed-at "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+}
 
 PACKAGES=(
   '@anthropic-ai/claude-code'
   '@openai/codex'
-  '@steipete/oracle'
+  'gpt-connector'
   '@anthropic-ai/sdk'
   '@colbymchenry/codegraph'
   'aiterm-mcp'
@@ -61,16 +73,46 @@ UV_TOOLS=(
 {
   update_failed=0
   report_failed=0
+  post_gate=failed
+  claude_before=none; claude_latest=none; claude_operation=failed; claude_after=none; claude_reason=not_observed
+  codex_before=none; codex_latest=none; codex_operation=failed; codex_after=none; codex_reason=not_observed
+  grok_before=none; grok_latest=none; grok_operation=skipped; grok_after=none; grok_reason=optional_missing
   printf '\n=== agents-update start: %s ===\n' "$(date -Iseconds)"
   if ! command -v npm >/dev/null 2>&1; then
     printf 'FAILED: npm が PATH にない（NVM 利用時は %s/nvm.sh と default Node を確認）\n' "${NVM_DIR:-$HOME/.nvm}"
     update_failed=1
+    record_toolchain claude-code none none failed none pending npm_unavailable || update_failed=1
+    record_toolchain codex-cli none none failed none pending npm_unavailable || update_failed=1
+    claude_reason=npm_unavailable; codex_reason=npm_unavailable
   else
     for pkg in "${PACKAGES[@]}"; do
       printf -- '--- %s ---\n' "$pkg"
+      product=''; cli=''
+      case "$pkg" in
+        '@anthropic-ai/claude-code') product='claude-code'; cli='claude' ;;
+        '@openai/codex') product='codex-cli'; cli='codex' ;;
+      esac
+      before=none; latest=none; after=none; operation=success; reason=updated
+      if [[ -n "$product" ]]; then
+        before="$($cli --version 2>/dev/null | extract_semver || true)"; before="${before:-none}"
+        latest="$(npm view "$pkg" version --json 2>/dev/null | extract_semver || true)"; latest="${latest:-none}"
+      fi
       if ! npm install -g "${pkg}@latest"; then
         printf 'FAILED: %s\n' "$pkg"
         update_failed=1
+        operation=failed; reason=install_failed
+      fi
+      if [[ -n "$product" ]]; then
+        after="$($cli --version 2>/dev/null | extract_semver || true)"; after="${after:-none}"
+        if [[ "$operation" = success && "$latest" = none ]]; then operation=failed; reason=registry_unavailable; update_failed=1
+        elif [[ "$operation" = success && "$after" = none ]]; then operation=failed; reason=post_version_unavailable; update_failed=1
+        elif [[ "$operation" = success && "$after" != "$latest" ]]; then operation=failed; reason=version_mismatch; update_failed=1
+        elif [[ "$operation" = success && "$before" = "$after" ]]; then operation=skipped; reason=already_current
+        fi
+        record_toolchain "$product" "$before" "$latest" "$operation" "$after" pending "$reason" || update_failed=1
+        if [[ "$product" = claude-code ]]; then claude_before="$before"; claude_latest="$latest"; claude_operation="$operation"; claude_after="$after"; claude_reason="$reason"
+        else codex_before="$before"; codex_latest="$latest"; codex_operation="$operation"; codex_after="$after"; codex_reason="$reason"
+        fi
       fi
     done
   fi
@@ -87,13 +129,104 @@ UV_TOOLS=(
     done
   fi
 
+  # Grok Build は npm 管理ではない。公開された stable JSON check だけを使い、
+  # 人間向け version 文字列や alpha channel を推測して更新成功にはしない。
+  printf -- '--- grok-build:stable-update-check ---\n'
+  if ! command -v grok >/dev/null 2>&1; then
+    printf 'SKIPPED: grok-build が PATH にない（optional toolchain）\n'
+    grok_operation=skipped; grok_reason=optional_missing
+  else
+    grok_check="$(grok update --check --json)" || {
+      printf 'FAILED: grok-build stable update check\n'
+      update_failed=1
+      grok_check=''
+      grok_operation=failed; grok_reason=check_failed
+    }
+    if [[ -n "$grok_check" ]] && ! printf '%s' "$grok_check" | node -e '
+      let value; try { value = JSON.parse(require("fs").readFileSync(0, "utf8")); } catch { process.exit(1); }
+      const keys = ["currentVersion", "latestVersion", "updateAvailable", "installer", "channel", "autoUpdate", "error"];
+      const semver = (v) => typeof v === "string" && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(v);
+      process.exit((!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).length !== keys.length || keys.some((key) => !(key in value)) || value.channel !== "stable" || !semver(value.currentVersion) || !semver(value.latestVersion) || typeof value.updateAvailable !== "boolean" || typeof value.installer !== "string" || !(value.autoUpdate === null || typeof value.autoUpdate === "boolean") || !(value.error === null || typeof value.error === "string")) ? 1 : 0);
+    '; then
+      printf 'FAILED: grok-build stable update JSON\n'
+      update_failed=1
+      grok_operation=failed; grok_reason=check_schema_invalid
+    elif [[ -n "$grok_check" ]] && printf '%s' "$grok_check" | node -e '
+      let value; try { value = JSON.parse(require("fs").readFileSync(0, "utf8")); } catch { process.exit(1); }
+      process.exit(value.updateAvailable === true ? 0 : 1);
+    '; then
+      grok_before="$(printf '%s' "$grok_check" | json_semver currentVersion || true)"; grok_before="${grok_before:-none}"
+      grok_latest="$(printf '%s' "$grok_check" | json_semver latestVersion || true)"; grok_latest="${grok_latest:-none}"
+      grok_operation=failed; grok_reason=update_failed
+      if ! grok update --stable; then
+        printf 'FAILED: grok-build stable update\n'
+        update_failed=1
+      elif ! grok --version >/dev/null; then
+        printf 'FAILED: grok-build version after stable update\n'
+        update_failed=1
+        grok_reason=post_version_unavailable
+      else
+        grok_after="$(grok update --check --json)" || grok_after=''
+        if ! printf '%s' "$grok_after" | node -e '
+          let value; try { value = JSON.parse(require("fs").readFileSync(0, "utf8")); } catch { process.exit(1); }
+          const keys = ["currentVersion", "latestVersion", "updateAvailable", "installer", "channel", "autoUpdate", "error"];
+          const semver = (v) => typeof v === "string" && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(v);
+          process.exit((!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).length !== keys.length || keys.some((key) => !(key in value)) || value.channel !== "stable" || !semver(value.currentVersion) || !semver(value.latestVersion) || typeof value.installer !== "string" || !(value.autoUpdate === null || typeof value.autoUpdate === "boolean") || !(value.error === null || typeof value.error === "string") || value.currentVersion !== value.latestVersion || value.updateAvailable !== false) ? 1 : 0);
+        '; then
+          printf 'FAILED: grok-build post-update stable contract\n'
+          update_failed=1
+          grok_reason=post_contract_failed
+        else
+          grok_after="$(printf '%s' "$grok_after" | json_semver currentVersion || true)"; grok_after="${grok_after:-none}"
+          grok_operation=success; grok_reason=updated
+        fi
+      fi
+    elif [[ -n "$grok_check" ]]; then
+      grok_before="$(printf '%s' "$grok_check" | json_semver currentVersion || true)"; grok_before="${grok_before:-none}"
+      grok_latest="$(printf '%s' "$grok_check" | json_semver latestVersion || true)"; grok_latest="${grok_latest:-none}"
+      grok_after="$grok_before"; grok_operation=skipped; grok_reason=already_current
+    fi
+  fi
+  record_toolchain grok-build "$grok_before" "$grok_latest" "$grok_operation" "$grok_after" pending "$grok_reason" || update_failed=1
+
   printf -- '--- factory-reporter:post-update-contract ---\n'
   if [[ ! -x "$FACTORY_REPORTER_RUNNER" ]]; then
     printf 'FAILED: factory reporter runner が実行できない: %s\n' "$FACTORY_REPORTER_RUNNER"
     report_failed=1
-  elif ! "$FACTORY_REPORTER_RUNNER" --config "$FACTORY_REPORTER_CONFIG"; then
-    printf 'FAILED: factory reporter の更新後contract scan/report\n'
+  else
+    reporter_output="$($FACTORY_REPORTER_RUNNER --config "$FACTORY_REPORTER_CONFIG" --post-update 2>&1)"
+    reporter_rc=$?
+    printf '%s\n' "$reporter_output"
+    post_gate="$(printf '%s\n' "$reporter_output" | node -e '
+        const lines=require("fs").readFileSync(0,"utf8").trim().split(/\r?\n/).reverse();
+        for(const line of lines){try{const value=JSON.parse(line);if(value&&["success","failed"].includes(value.post_gate_status)){process.stdout.write(value.post_gate_status);process.exit(0)}}catch{}}
+        process.exit(1);
+      ' || true)"
+    if [[ "$reporter_rc" -ne 0 || "$post_gate" != success ]]; then
+      printf 'FAILED: factory reporter の更新後contract gate\n'
+      post_gate=failed
+      report_failed=1
+    fi
+  fi
+
+  [[ "$report_failed" -ne 0 ]] && post_gate=failed
+  final_record_failed=0
+  record_toolchain claude-code "$claude_before" "$claude_latest" "$claude_operation" "$claude_after" "$post_gate" "$claude_reason" || { update_failed=1; final_record_failed=1; }
+  record_toolchain codex-cli "$codex_before" "$codex_latest" "$codex_operation" "$codex_after" "$post_gate" "$codex_reason" || { update_failed=1; final_record_failed=1; }
+  record_toolchain grok-build "$grok_before" "$grok_latest" "$grok_operation" "$grok_after" "$post_gate" "$grok_reason" || { update_failed=1; final_record_failed=1; }
+
+  # gate結果を台帳へ確定した後に、最終bytesを再投影して送る。pending状態はBugHubへ送らない。
+  if [[ "$final_record_failed" -ne 0 ]]; then
+    printf 'FAILED: factory reporter の最終台帳を確定できないため送信しません\n'
     report_failed=1
+  elif [[ -x "$FACTORY_REPORTER_RUNNER" ]]; then
+    final_output="$($FACTORY_REPORTER_RUNNER --config "$FACTORY_REPORTER_CONFIG" --finalize-update 2>&1)"
+    final_rc=$?
+    printf '%s\n' "$final_output"
+    if [[ "$final_rc" -ne 0 ]]; then
+      printf 'FAILED: factory reporter の最終update observation\n'
+      report_failed=1
+    fi
   fi
 
   printf 'agents-update result: update=%s report=%s\n' \

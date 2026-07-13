@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex routing と dotagents callout hook だけを安全に適用する。"""
+"""Codex routing、deprecated hook flag、dotagents callout hookを安全に適用する。"""
 
 import argparse
 import copy
@@ -36,7 +36,7 @@ HOOKS = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Codex routing と dotagents hook だけを差分適用する。"
+        description="Codex routing、deprecated hook flag、dotagents hookを差分適用する。"
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--dry-run", action="store_true", help="差分を表示する（既定）")
@@ -92,6 +92,37 @@ def update_routing(text: str) -> str:
             prefix = "" if not section or section.endswith("\n") else "\n"
             section += f"{prefix}{key} = {value}\n"
     return text[:start] + section + text[end:]
+
+
+def migrate_deprecated_hooks_flag(text: str) -> str:
+    """[features].codex_hooksを現行hooksへ移行し、警告の再発を止める。"""
+    header_match = re.search(r"(?m)^\[features\](?:[ \t]+#.*)?[ \t]*$", text)
+    if not header_match:
+        return text
+    start = header_match.end()
+    next_header = re.search(r"(?m)^\[", text[start:])
+    end = start + next_header.start() if next_header else len(text)
+    section = text[start:end]
+    legacy = re.compile(
+        r"^(?P<indent>[ \t]*)codex_hooks(?P<assignment>[ \t]*=[ \t]*)"
+        r"(?P<value>true|false)(?P<comment>[ \t]*(?:#.*)?)(?P<newline>\r?\n)?$"
+    )
+    modern = re.compile(r"^[ \t]*hooks[ \t]*=", re.MULTILINE)
+    if not any(legacy.match(line) for line in section.splitlines(keepends=True)):
+        return text
+    migrated = []
+    modern_exists = modern.search(section) is not None
+    for line in section.splitlines(keepends=True):
+        match = legacy.match(line)
+        if not match:
+            migrated.append(line)
+        elif not modern_exists:
+            migrated.append(
+                f"{match.group('indent')}hooks{match.group('assignment')}"
+                f"{match.group('value')}{match.group('comment')}{match.group('newline') or ''}"
+            )
+            modern_exists = True
+    return text[:start] + "".join(migrated) + text[end:]
 
 
 def load_hooks(text: str, path: Path) -> dict:
@@ -269,7 +300,7 @@ def main() -> int:
     original_hooks = copy.deepcopy(hooks)
     updated_hooks = update_hooks(hooks, home)
     proposed = {
-        config_path: update_routing(originals[config_path]),
+        config_path: update_routing(migrate_deprecated_hooks_flag(originals[config_path])),
         hooks_path: originals[hooks_path] if updated_hooks == original_hooks else render_hooks(updated_hooks),
     }
     validate_toml(proposed[config_path], config_path)

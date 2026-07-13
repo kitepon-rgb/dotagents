@@ -1,4 +1,6 @@
-# 06_oracle-mcp — ChatGPT Chat枠セカンドオピニオン（oracle）の常用ランブック
+# 06_oracle-mcp — 非推奨互換・rollbackランブック
+
+> **移行先:** [06_gpt-connector.md](06_gpt-connector.md) がChatGPT接続の生きた正本である。Oracleはv1 client・履歴・手動rollbackの互換期限中だけ残す。以下は新規導入・通常MCP登録の手順ではなく、承認済みrollback時だけ参照する記録である。
 
 <!-- 前提: oracle 0.15.2・GPT-5.6 世代・Node 24/26 の undici バグ現存（2026-07 時点）。
      役割配置の正は docs/02_models.md。経緯と調査・切り分けの全記録は docs/archive/2026-07_oracle-chat-quota.md（2026-07-11 完了・退避済み） -->
@@ -17,7 +19,7 @@
 正体: [bin/oracle-mcp-stable.sh](../bin/oracle-mcp-stable.sh) → `~/.local/bin/oracle-mcp-stable`。素の `oracle`/`oracle-mcp` を直接叩かない。ラッパーが握る地雷:
 
 1. **Node undici の `setTypeOfService` EINVAL 即死**: undici が全 HTTP/1.1 リクエストで `socket.setTypeOfService(0)` を無条件に呼び（ガードなし）、macOS で特定ソケット状態だと未捕捉例外でプロセスごと死ぬ。Node 24.18.0 / 26.4.0 の両方で実測。MCP サーバーが「静かに接続クローズ」する事象の正体。→ ラッパーが `--import` の data: URL ガードで EINVAL を握って無害化（発動時 stderr に1回記録）。Node と Oracle の global root は `PATH` / `npm root -g` から解決し、macOS・Linux・Windows Git Bash の固定パスへ依存しない。upstream 修正確認までの一時手段。
-2. **`hideWindow`（Cmd-H）は使用禁止**: 非表示アプリは描画が止まり、**送信が発火せずプロンプトが下書きのまま滞留 → 後続 run に混入する**（実測: 3 run 分のプロンプトが1メッセージで送信された）。不可視化は代わりに **画面外起動シム** [bin/oracle-chrome-shim.sh](../bin/oracle-chrome-shim.sh)（`--window-position=-32000,-32000`）で行う。ラッパーが `CHROME_PATH` に自動設定。シムは macOS / Windows / Linux の Chrome をOS別に解決し、見つからなければ fail-loud する。描画は生きたままなので送信・検知が壊れない。実測 19 秒で完走・ウィンドウ非出現・プロセス残置なし。
+2. **`hideWindow`（Cmd-H）は使用禁止**: 非表示アプリは描画が止まり、**送信が発火せずプロンプトが下書きのまま滞留 → 後続 run に混入する**（実測: 3 run 分のプロンプトが1メッセージで送信された）。互換shim [bin/oracle-chrome-shim.sh](../bin/oracle-chrome-shim.sh) は`--window-position=-32000,-32000`を付けるが、2026-07-14の複数display実測でChrome/macOSが画面内へclampすることが判明したため、**非可視を保証しない**。Oracleはrollback専用であり、この欠陥を理由にshimやOracle本体へ新規改造を足さない。非可視が必要な通常運用はgpt-connectorの正規launcherを使う。
 3. **GPT-5.6 UI にモデルラベル照合が不追従**（preset/`browserModelLabel` とも 0.15.2 では機能しない。下記「呼び出しの標準形」）。
 
 ## セットアップ（新しい端末）
@@ -87,4 +89,4 @@
 ## upstream への報告（起票済み・2026-07-11）
 
 1. [nodejs/undici#5544](https://github.com/nodejs/undici/issues/5544): `writeH1` の `setTypeOfService` 無ガード呼び出しが macOS で未捕捉 EINVAL → プロセス死（try/catch 要望）。**解決したらラッパーの guard を外す**
-2. [steipete/oracle#312](https://github.com/steipete/oracle/issues/312): `hideWindow` が新 ChatGPT UI で送信を壊す（画面外配置の採用提案）。**解決したらシムを外して本体機能へ戻す**
+2. [steipete/oracle#312](https://github.com/steipete/oracle/issues/312): `hideWindow` が新 ChatGPT UI で送信を壊す（当時は画面外配置を提案）。後続実測で固定負座標も複数displayでは非可視を保証しないと判明。Oracleはrollback専用のため、通常運用はgpt-connectorへ移行する

@@ -93,7 +93,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
 | bin | `apply-codex-config.sh` | routing 2キーと dotagents hook 4イベントだけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
-| 工場コア | Caveat／Throughline／Spotter／Codegraph／MarkItDown／Oracle／aiterm-mcp／codex-sidecar（dotagents 外） | 罠知識／セッション継続／未使用ツール監査／コード構造理解／資料変換／独立意見／PTY・外部枠／Claude親からのCodex実行を担う必須8製品。dotagentsは導入・更新・親別配線・互換検証・上流更新追従を所有する |
+| 工場コア | Caveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar（dotagents 外） | 罠知識／セッション継続／未使用ツール監査／コード構造理解／資料変換／ChatGPT接続／PTY・外部枠／Claude親からのCodex実行を担う必須8製品。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理する。Oracleは互換・rollback専用 |
 | 中央管理コア | ServerManager（dotagents 外） | dotagentsが管理・連携する第9製品。内部のBugHubをversion・bug・compatibility結果の統括に使う。BugHubを独立した第10製品へ分離しない |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
@@ -147,16 +147,16 @@ Claude command の Codex 正規入口は slash command の模造ではなく、�
   ```
 - **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境。install.sh は実行した環境の `$HOME` に symlink を張る）。cron の起動は下の「自動アップデート」節参照
 - **ランタイム**: node>=22＋corepack・docker・python3（`command -v node docker` で存在確認、`node --version` が v22+、`docker info` が通ること。**python3 だけは実行判定 `python3 -c "print(1)"` で確認**——Windows のストア偽エイリアスは存在チェックを通り、黙って exit 0 を返す〔罠DB `windows-python3-store-exit-0`〕）
-- **CLI（必須）**: Claude Code・Codex CLI・工場コア8製品の Caveat／Throughline／Spotter／Codegraph／MarkItDown／Oracle／aiterm-mcp／codex-sidecar（JS ページは空を吐く罠あり→caveat 参照）。`command -v claude codex caveat throughline spotter codegraph markitdown oracle aiterm-mcp codex-sidecar-mcp` で確認。MarkItDownの正規更新面は `uv tool` なので `command -v uv` と `uv tool list` も確認する
+- **CLI（必須）**: 基盤toolchainのClaude Code・Codex CLI、工場コア8製品のCaveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar。`command -v claude codex caveat throughline spotter codegraph markitdown gpt-connector aiterm-mcp codex-sidecar-mcp` で確認。Grok Buildは対応hostで確認する。MarkItDownの正規更新面は `uv tool`。
 - **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する（委譲は当面 Codex 主で回る＝必須ではない）
-- **MCP 用 CLI を先に入れる**（下の登録が参照する。`agents-update` が入れる各packageと同源）: `aiterm-mcp`・`caveat`・`codex-sidecar-mcp`・`oracle`・`codegraph` が PATH にあること。登録先は親別matrixに従い、Codex親へcodex-sidecarを登録しない
+- **MCP 用 CLI を先に入れる**（下の登録が参照する。`agents-update` が入れる各packageと同源）: `aiterm-mcp`・`caveat`・`codex-sidecar-mcp`・`gpt-connector-mcp`・`codegraph` が PATH にあること。登録先は親別matrixに従い、Codex親へcodex-sidecarを登録しない
 - **MCP（ユーザースコープ登録。上の CLI 導入後）**:
   ```bash
   claude mcp add --scope user aiterm -- aiterm-mcp
   claude mcp add --scope user caveat -- caveat mcp-server
   claude mcp add --scope user codegraph -- codegraph serve --mcp
   claude mcp add --scope user codex-sidecar -- codex-sidecar-mcp
-  claude mcp add --scope user oracle -- ~/.local/bin/oracle-mcp-stable
+  claude mcp add --scope user gpt_connector -- gpt-connector-mcp
   ```
 - **人間用の窓（任意だが標準）**: Obsidian（`brew install --cask obsidian`。無料・md 直読み。vault 設定 `.obsidian/` は端末ローカル＝gitignore 済み）
 - **home-server ssh**: `kite@192.168.1.2` 直IP（固定IP・エイリアスは作らない）
@@ -203,7 +203,7 @@ hook は変更しない。legacy を選ぶのは旧入口の検証時だけで�
 
 `spotter install -y` はSpotterの正規project-scoped入口である。dotagentsの `.claude/settings.json` と `.spotter/`（どちらも端末ローカル・gitignore）を作り、user-level Codex hook 3本をcanonical化し、Claude/Codex別catalogをseedする。PATH上のThroughlineを絶対実行パスへ解決できる時はauditor contextが既定ONになる。Spotter自身のCLI以外でmarkerやhookを複製・手書きしない。
 
-- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale 実ファイル・反対 skill 面の同名重複・routing / hook 契約不足に加え、工場コア8製品のCLI、Caveat-Private、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalog、Oracle wrapperを FAIL 行で名指しする。`~/.local/bin` を PATH に通していれば以後は `verify-install --profile official` でも可
+- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale 実ファイル・反対 skill 面の同名重複・routing / hook 契約不足に加え、工場コア8製品のCLI、Caveat-Private、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalog、gpt-connector を FAIL 行で名指しする。Oracle wrapper は v1 互換・明示 rollback 用の検査として残す。`~/.local/bin` を PATH に通していれば以後は `verify-install --profile official` でも可
 - **呼びかけ hook の配線**（AGENTS.md 手順5/6）: Claude 側 `settings.json`（C1-C4）は docs/03 の手順で配線する。Codex 側 X1-X5 は `apply-codex-config` が4イベントを限定して冪等正規化する。両方とも trust 承認は別途必要。断片・復旧手順は docs/03・docs/05 が正本
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate`・`audit-gauntlet` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／SpotterのUserPromptSubmit・Stop eventが記録される／極小タスクを implementer に委譲して契約どおりの報告が返る
 - 新しい Codex セッションで（対話確認）: skill 一覧に `orchestrate` が出る／`spawn_agent` schema に `agent_type` がある／`agent_type=<role>` と `fork_turns="none"` で routing smoke だけを起動／`verify-codex-agent-routing <role> <agent-path>` が green／Spotter 3 hookを `/hooks` でreviewし `spotter.hook_event.v1` が記録される時だけ follow-up task を渡す
@@ -214,7 +214,7 @@ hook は変更しない。legacy を選ぶのは旧入口の検証時だけで�
 
 ## 自動アップデート（常設・全端末必須）
 
-`~/.local/bin/agents-update` が curated CLI / SDK / MCP 群 (Claude Code / Codex CLI / Oracle / aiterm-mcp / Codex Sidecar / Throughline / Caveat / Codegraph / claude-spotter / Anthropic SDK / pnpm) をNPM `@latest`へ、MarkItDownを `uv tool upgrade` で更新する。**「推奨」ではなく常設が必須**（2026-07-04 実測: この一手を省いた端末では旧世代の自動更新が別リストで回り続け、真実が二重化していた）。1製品でも更新に失敗したら製品名をログへ残し、残り製品の更新と更新後のfactory contract scan/reportを継続する。更新処理とreporterの成否は別々に記録し、どちらか一方でも失敗ならジョブを非0終了する。reporterは明示opt-in設定に従い、収集OFFならscan前、送信OFFならnetwork前で停止する。詳細は [factory reporterランブック](docs/factory-reporter-runbook.md#9-agents-updateとの接続) を参照。
+`~/.local/bin/agents-update` が curated CLI / SDK / MCP 群 (Claude Code / Codex CLI / gpt-connector / aiterm-mcp / Codex Sidecar / Throughline / Caveat / Codegraph / claude-spotter / Anthropic SDK / pnpm) をNPM `@latest`へ、MarkItDownを `uv tool upgrade` で更新する。**「推奨」ではなく常設が必須**（2026-07-04 実測: この一手を省いた端末では旧世代の自動更新が別リストで回り続け、真実が二重化していた）。1製品でも更新に失敗したら製品名をログへ残し、残り製品の更新と更新後のfactory contract scan/reportを継続する。更新処理とreporterの成否は別々に記録し、どちらか一方でも失敗ならジョブを非0終了する。reporterは明示opt-in設定に従い、収集OFFならscan前、送信OFFならnetwork前で停止する。詳細は [factory reporterランブック](docs/factory-reporter-runbook.md#9-agents-updateとの接続) を参照。
 
 **Step 0 — 旧自動更新の撲滅（一つの真実）**: 先に古い npm 自動更新が居ないか掃引し、居たら停止・撤去する。
 

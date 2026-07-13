@@ -28,8 +28,8 @@ function commandError(result, action) { return new Error(`${action}に失敗し�
 function locations(target) {
   const home = safePath(process.env.HOME || process.env.USERPROFILE || homedir(), 'HOME');
   const local = safePath(process.env.LOCALAPPDATA || join(home, 'AppData', 'Local'), 'LOCALAPPDATA');
-  if (target === 'win32') return { home, config: join(local, 'dotagents', 'factory-reporter', 'config.json'), state: join(local, 'dotagents', 'factory-reporter') };
-  return { home, config: process.env.XDG_CONFIG_HOME ? join(safePath(process.env.XDG_CONFIG_HOME, 'XDG_CONFIG_HOME'), 'dotagents', 'factory-reporter.json') : join(home, '.config', 'dotagents', 'factory-reporter.json'), state: process.env.XDG_STATE_HOME ? join(safePath(process.env.XDG_STATE_HOME, 'XDG_STATE_HOME'), 'dotagents', 'factory-reporter') : join(home, '.local', 'state', 'dotagents', 'factory-reporter') };
+  if (target === 'win32') return { home, config: join(local, 'dotagents', 'factory-reporter', 'config.json'), state: join(local, 'dotagents', 'factory-reporter-v2') };
+  return { home, config: process.env.XDG_CONFIG_HOME ? join(safePath(process.env.XDG_CONFIG_HOME, 'XDG_CONFIG_HOME'), 'dotagents', 'factory-reporter.json') : join(home, '.config', 'dotagents', 'factory-reporter.json'), state: process.env.XDG_STATE_HOME ? join(safePath(process.env.XDG_STATE_HOME, 'XDG_STATE_HOME'), 'dotagents', 'factory-reporter-v2') : join(home, '.local', 'state', 'dotagents', 'factory-reporter-v2') };
 }
 
 function parseArgs(argv) {
@@ -50,7 +50,7 @@ function parseArgs(argv) {
 
 function platformMatches(profile, target) { return (target === 'darwin' && profile === 'mac') || (target === 'linux' && ['server', 'wsl'].includes(profile)) || (target === 'win32' && profile === 'windows-native'); }
 function artifact(target, config, location) {
-  const node = safePath(process.execPath, 'node path'); const runner = join(location.home, '.local', 'bin', 'factory-reporter-schedule-runner'); const log = join(location.state, 'scheduler.log');
+  const node = safePath(process.execPath, 'node path'); const runner = join(location.home, '.local', 'bin', 'factory-reporter-v2-schedule-runner'); const log = join(location.state, 'scheduler.log');
   [runner, log, config, location.state].forEach((value) => safePath(value, 'scheduler path'));
   if (target === 'darwin') {
     const file = join(location.home, 'Library', 'LaunchAgents', `${LABEL}.plist`);

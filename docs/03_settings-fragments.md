@@ -61,7 +61,7 @@
 
 #### C1 配置ゲート（PreToolUse・委譲ツール呼び出し時）
 
-セッションで最初の委譲を検出した時だけ、配置・委譲契約の正典を案内する短い INFO を返す。引数の検査や deny / ask は行わない。Oracle は相談であって委譲ではないため対象外（[`../bin/delegation-gate-hook.sh`](../bin/delegation-gate-hook.sh)）。
+セッションで最初の委譲を検出した時だけ、配置・委譲契約の正典を案内する短い INFO を返す。引数の検査や deny / ask は行わない。`gpt_connector` の `consult` は相談であって委譲ではないため対象外（[`../bin/delegation-gate-hook.sh`](../bin/delegation-gate-hook.sh)）。
 
 ```bash
 S=~/.claude/settings.json

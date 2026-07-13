@@ -29,6 +29,7 @@ model = "keep-me"
 
 [features]
 hooks = true
+codex_hooks = true
 EOF
   cat >"$1/.codex/hooks.json" <<'EOF'
 {"hooks":{"Stop":[{"hooks":[{"type":"command","command":"/custom/keep stop"}]},{"matcher":"never-match","hooks":[{"type":"command","command":"~/.local/bin/codex-callout-hook stop","async":true}]}]}}
@@ -83,6 +84,10 @@ assert_link "$OFFICIAL_HOME/.local/bin/factory-scan" "$ROOT/bin/factory-scan.mjs
 assert_link "$OFFICIAL_HOME/.local/bin/bughub-external-probe" "$ROOT/bin/bughub-external-probe.mjs"
 [ ! -e "$OFFICIAL_HOME/.codex/skills/orchestrate" ] || fail 'official が legacy skill 面を作った'
 grep -Fq 'model = "keep-me"' "$OFFICIAL_HOME/.codex/config.toml" || fail '既存 config を保持しない'
+grep -Fq 'hooks = true' "$OFFICIAL_HOME/.codex/config.toml" || fail '現行 hooks flag を保持しない'
+if grep -Eq '^[[:space:]]*codex_hooks[[:space:]]*=' "$OFFICIAL_HOME/.codex/config.toml"; then
+  fail 'deprecated codex_hooks flag を除去しない'
+fi
 grep -Fq '/custom/keep stop' "$OFFICIAL_HOME/.codex/hooks.json" || fail '既存 hook を保持しない'
 assert_stop_count "$OFFICIAL_HOME/.codex/hooks.json" || fail '~ 表記の callout hook を重複追加した'
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" <<'PY' || fail 'matcher group から callout hook を分離しない'

@@ -3,7 +3,7 @@
 <!-- 前提: GPT-5.6 世代（2026-07 時点）。defaults の正は docs/02_models.md。本ファイルの体裁・構成は
      docs/03_settings-fragments.md（Claude Code settings.json の推奨断片カタログ）を踏襲する -->
 
-`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キーと dotagents callout hook 4イベントだけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、`codex --version` 0.144.1（2026-07-11 時点）の `openai/codex` tag `rust-v0.144.1` 実装。端末バイナリの `strings -a` と実セッション rollout も突合し、未再現の主張には確度を明記する。
+`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベントだけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
 
 ## 1. 親既定モデル×エフォート（オーナー領分・情報提供のみ）
 
@@ -64,15 +64,21 @@ permission profile を子へ再適用するため、custom agent の `sandbox_mo
 できる」と不一致。ただし今回の role/model/effort 誤配線とは別論点なので、既定の routing 判定からは分離し、
 `CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` の時だけ差を FAIL にする。
 
-グローバル `[agents]` の `max_threads` / `max_depth` は既定値で足りるため明示しない。
+グローバル `[agents]` の `max_threads` / `max_depth` は公開設定で、公式既定はそれぞれ `6` / `1`。
+通常は既定で足りるため明示しないが、必要なら user config または信頼済みproject configで設定できる。
+ただしDesktop／実行サービスがより低いconcurrency slotsをセッションへ割り当てた場合、設定を上げても
+そのホスト側上限は越えない。変更後は新規セッションで実効spawn数を確認する。
 委譲モード（proactive / explicit-request-only 相当）の独立キーもなく、実効 mode は model/effort 側から
 決まる。`agents.max_threads` と `features.multi_agent_v2.max_concurrent_threads_per_session` を混同しない。
 
+根拠: [OpenAI公式 Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、
+実測・訂正記録は [`rag/codex/subagent-thread-limits.md`](../rag/codex/subagent-thread-limits.md)。
+
 実装根拠: [`MultiAgentV2Config` の hidden 既定](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/config/mod.rs)、[`spawn_agent` schema から4入力を除く処理](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/tools/handlers/multi_agents_spec.rs)、[role 適用後に親 permission profile を再適用する処理](https://github.com/openai/codex/blob/rust-v0.144.1/codex-rs/core/src/tools/handlers/multi_agents_common.rs)。上流既報は [#31814](https://github.com/openai/codex/issues/31814)（hidden routing）・[#20077](https://github.com/openai/codex/issues/20077)（full-history 既定）。
 
-## 3b. oracle MCP（ChatGPT Chat枠セカンドオピニオン・工場コア全端末必須）
+## 3b. gpt-connector MCP（ChatGPT接続・工場コア全端末必須）
 
-Chat枠（Work枠と別勘定）の第二意見を Codex 親からも使えるようにする。**素の `oracle-mcp` でなくラッパー必須**（undici EINVAL ガード＋画面外 Chrome。理由と運用の正典は [06_oracle-mcp.md](06_oracle-mcp.md)）。ラッパーだけは事前に選択中の skill 面で `./install.sh --profile <official|legacy>` を実行し、`$HOME/.local/bin` へ配布する。MCP 登録は section 7 の限定 applier の対象外なので、端末固有の絶対パスを TOML へ手挿しせず、H 承認後に section 10 の `codex mcp add oracle` で行う。
+Chat枠（Work枠と別勘定）の第二意見を Codex 親からも使えるようにする。最終server IDは `gpt_connector`、commandは `gpt-connector-mcp`。専用Chrome、product-owned state、明示model/effort、caller既知slug、timeout後の sessions 回収を守る。MCP登録は限定applierの対象外なので、H承認後に `codex mcp add gpt_connector -- gpt-connector-mcp` で行う。正典は [06_gpt-connector.md](06_gpt-connector.md)。
 
 ## 4. `project_doc_fallback_filenames = ["CLAUDE.md"]`（任意・副作用明記）
 
@@ -109,11 +115,11 @@ codex --profile work
 ./bin/apply-codex-config --dry-run
 ```
 
-差分は次の **6項目だけ**。model / effort / permissions / OAuth / trust / MCP / 既存他ツールの hook は対象外で、触れない。
+差分は次の **7項目だけ**。model / effort / permissions / OAuth / trust / MCP / 既存他ツールの hook は対象外で、触れない。
 
 | 対象 | 許可する変更 |
 |---|---|
-| `config.toml` | `[features.multi_agent_v2]` の `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"` |
+| `config.toml` | `[features.multi_agent_v2]` の `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"`。旧`[features].codex_hooks`があれば現行`hooks`へ移行し、両方あれば現行値を保持して旧キーだけ除去 |
 | `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handler を各1件の canonical entry に正規化 |
 
 `--apply` は端末設定を書き換えるので、dry-run の差分を確認し、対象端末への適用承認を得てからだけ実行する。
@@ -126,6 +132,7 @@ codex --profile work
 安全契約:
 
 - 既存・提案後の TOML は Codex CLI 自身の parser で検証する。不正なら fail-loud で書き込まない。
+- lifecycle hookの現行flagは`[features].hooks`。`codex_hooks`はdeprecated警告を出すため限定applierが除去し、hook機能を無効化するfallbackには使わない。
 - `config.toml` / `hooks.json` が symlink なら所有境界を壊さないため fail-loud にする。
 - inline comment と他 section / 他 hook は保持する。dotagents 自身の callout だけを、絶対パス・`type: command`・イベント別 `timeoutSec`・`async: false`・`statusMessage: null` の1件に畳む。
 - 変更がある時だけ `~/Archives/dotagents-codex-config-*.tar.gz` に backup を作る。directory は `0700`、archive と member は `0600`。`CODEX_HOME` が HOME 外でも archive 内は安全な相対名にする。
@@ -168,8 +175,8 @@ MCP は親に応じて入口を分ける。Codex 親から入れ子 Codex を起
 
 | 親 | core | 任意 / 認証依存 | 禁止 / 非採用 |
 |---|---|---|---|
-| Claude Code | `codex-sidecar`、`aiterm`、`oracle`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | — |
-| Codex | native subagents、`aiterm`（Grok / Composerのみ）、`oracle`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | `codex-sidecar`、`aiterm` の `codex_agent`（入れ子 Codex） |
+| Claude Code | `codex-sidecar`、`aiterm`、`gpt_connector`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | — |
+| Codex | native subagents、`aiterm`（Grok / Composerのみ）、`gpt_connector`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | `codex-sidecar`、`aiterm` の `codex_agent`（入れ子 Codex） |
 
 登録前は read-only に現在値を確認する。
 
@@ -184,9 +191,9 @@ codex mcp get caveat --json
 codex mcp add caveat -- caveat mcp-server
 codex mcp add codegraph -- codegraph serve --mcp
 codex mcp add aiterm -- aiterm-mcp
-codex mcp add oracle -- "$HOME/.local/bin/oracle-mcp-stable"
+codex mcp add gpt_connector -- gpt-connector-mcp
 ```
 
 STDIO の environment は closed-mode として扱う。親 shell の値が必要だと推測して継承に頼らず、`mcp_servers.<id>.env` / `env_vars` に必要最小限を明示する。secret をコマンド行・repo・会話ログに書かない。OAuth は `codex mcp login <name>` を対話 H の下で行い、未認証の任意 MCP は理由付き WARN とする。
 
-疎通は書込みを伴わない最小操作で確認する。`caveat_search`、OpenAI Docs 検索、`aiterm` の session list は read-only。`codegraph` は既存 `.codegraph/` index がある project にだけ query し、index が無ければ `codegraph init` を勝手に実行しない。Oracle の `sessions` は read-only だが、`consult` は ChatGPT session を作るため依頼に必要な時だけ行う。
+疎通は書込みを伴わない最小操作で確認する。`caveat_search`、OpenAI Docs 検索、`aiterm` の session list は read-only。`codegraph` は既存 `.codegraph/` index がある project にだけ query し、index が無ければ `codegraph init` を勝手に実行しない。gpt-connectorの `sessions` はread-onlyだが、Chat送信は依頼に必要な時だけ行う。Oracleは互換・rollback時だけ参照する。

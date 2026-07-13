@@ -13,7 +13,7 @@ ChatGPT サブスクの **Chat枠**（Work枠=Codex 消費分と別勘定）を�
    - oracle 実装コメント「disable headless; Cloudflare blocks it」（dist/src/cli/browserConfig.js:159）
    - ChatGPT-Web2API README「headless Chrome triggers ChatGPT's bot detection」
    - 検知回避ブラウザ（patchright/camoufox）で ChatGPT 向けに保守された製品は GitHub 更新順検索でゼロ。自作は ToS 違反＝Pro アカウント BAN リスク。
-3. **[steipete/oracle](https://github.com/steipete/oracle) が最成熟で乗り換え先なし**（確度: 高・2026-07-11 時点）。採用構成は [docs/06_oracle-mcp.md](../../docs/06_oracle-mcp.md)。
+3. **2026-07-11時点では[steipete/oracle](https://github.com/steipete/oracle)を採用したが、2026-07-13のオーナー裁定で自作gpt-connectorへ置換済み**。Oracleはv1互換・手動rollback専用である（確度: 高）。現行構成は[docs/06_gpt-connector.md](../../docs/06_gpt-connector.md)。
 
 ## 候補の実勢（実物確認済み）
 
@@ -37,5 +37,5 @@ ChatGPT サブスクの **Chat枠**（Work枠=Codex 消費分と別勘定）を�
 ## 導入時に実測で踏んだ罠（2026-07-11・すべて再現済み）
 
 1. **Node undici の `setTypeOfService` EINVAL 即死**: undici（2026-03 の IP 優先度ヒント機能）が全 HTTP/1.1 リクエストで `socket.setTypeOfService(request.typeOfService ?? 0)` を**無条件・ガードなし**に呼ぶ（lib/dispatcher/client-h1.js）。macOS で特定ソケット状態だと未捕捉例外→プロセスごと死ぬ。**Node 24.18.0 / 26.4.0 の両方で再現**＝バージョン替えでは逃げられない。単純な fetch（IPv4/IPv6/localhost/https）では再現せず、発火条件は未特定（oracle のブラウザ実行後クリーンアップ中の HTTP 呼び出しで安定的に発生）。対処: `--import 'data:text/javascript,...'` プリロードで try/catch ラップ（dotagents `bin/oracle-mcp-stable.sh`）。MCP サーバーが「静かに接続クローズ」する事象の正体でもある。
-2. **oracle `hideWindow`（Cmd-H）は送信を壊す**: 非表示アプリの描画停止で ChatGPT の送信が発火せず、**プロンプトが下書きのまま滞留して後続 run の送信に混入**（実測: 3 run 分が1メッセージで送信された）。不可視化は Chrome 起動フラグ `--window-position=-32000,-32000`（CHROME_PATH シム）で行う＝描画が生きたままウィンドウだけ画面外。実測 19 秒完走・非出現・残置なし。
+2. **oracle `hideWindow`（Cmd-H）は送信を壊す**: 非表示アプリの描画停止で ChatGPT の送信が発火せず、**プロンプトが下書きのまま滞留して後続 run の送信に混入**（実測: 3 run 分が1メッセージで送信された）。当時は`--window-position=-32000,-32000`（CHROME_PATH shim）を採用したが、2026-07-14の複数display実測でmacOS/Chromeが画面内へclampすることを確認したため、非可視保証は撤回する。通常運用は窓なしcold起動とCDP最小化を持つgpt-connectorへ移行済み。
 3. **Google SSO が自動化ブラウザを弾く**: oracle 専用プロファイルでの初回ログインで「ChatGPT はブロックされています」（Google の insecure-browser 判定）。パスキー認証なら通ることを実測。ダメなら ChatGPT ネイティブのメールコードへ。

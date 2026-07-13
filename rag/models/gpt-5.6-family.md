@@ -66,7 +66,7 @@ GA: 2026-07-09。コンテキストは API ≈1.05M（Sol/Terra）と Codex CLI 
 - V2 の `fork_turns` 既定は `all` → full-history fork。role/model/effort override と併用すると `reject_full_fork_spawn_overrides` が拒否するため、custom role は `fork_turns="none"` が必須。
 - **sandbox の別バグ（source＋rollout 実測、確度: 高）**: `apply_role_to_config` の後に `apply_spawn_agent_runtime_overrides` が親 turn の permission profile を再適用する。このため role の `sandbox_mode` は親 sandbox で上書きされる。V1 の implementer 成功対照でも role/model/effort/developer instructions は適用された一方、sandbox は親の `danger-full-access` のままだった。公式文書の agent 別 sandbox override と不一致。
 - 現行 spawn 応答は実効 role/model/effort/sandbox を返さない。`verify-codex-agent-routing` が rollout の `session_meta` / `turn_context` / developer message を照合し、role/model/effort/developer instructions の不一致なら本作業を渡さない。sandbox は別表示し、明示的な厳格モードでだけ必須化する。
-- `[agents]` の委譲モードキーは config.toml 側に不在（effort から自動導出。詳細は [[../../docs/05_codex-fragments.md]] §3）。`max_threads`=6・`max_depth`=1 が既定値。`multi_agent_v2` 有効時に `agents.max_threads` を明示すると起動エラー化するという事故メカニズムは前セッションの refuter 反証由来（本セッションでは `agents.max_threads must be at least 1` という下限バリデーション文言のみ実装文字列で確認でき、事故そのものの再現は未実施＝**確度: 中**）。
+- `[agents]` の委譲モードキーは config.toml 側に不在（effort から自動導出。詳細は [[../../docs/05_codex-fragments.md]] §3）。`max_threads`=6・`max_depth`=1 が公式既定値で、どちらも公開設定。旧版の「`multi_agent_v2` 有効時に `agents.max_threads` を明示すると起動エラー」という説は再現未実施のまま現行公式仕様と矛盾したため撤回した。Desktop／サービスがより低い実効上限を課す場合はある（[[../codex/subagent-thread-limits.md]]、2026-07-13訂正）。
 
 ## Codex CLI 呼び出し
 

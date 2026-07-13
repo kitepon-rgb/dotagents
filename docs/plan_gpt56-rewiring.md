@@ -18,21 +18,21 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 2. **判断はティアで買い、粘りは effort で買う**: 「中位×xhigh」より「旗艦×low」。標語: **配置に迷ったら安い方・採用に迷ったら棄却**。
 3. **親は選ばず、引く**: 弱い親でも決定表を「写すだけ」で正しい配置。上振れ（上位ティア・xhigh 以上・ultra・物量への主モデル継承）は要正当化。
 4. **親のモデル×エフォートはオーナーの領分**（2026-07-10 裁定）: 規範・AI はピンを打ち替えない。事実と推奨値の提示まで。規範が縛るのは子の配置だけ。
-5. **消費枠は4つ**（2026-07-10/11 裁定）: Anthropic／OpenAI-Codex／OpenAI-ChatGPT（Oracle）／xAI。実読不要の純推論は Oracle 第一選択、物量は Terra/Composer、並列 finder は grok-4.5。
+5. **消費枠は4つ**（2026-07-10/11 裁定、現行入口へ更新）: Anthropic／OpenAI-Codex／OpenAI-ChatGPT（gpt-connector）／xAI。実読不要の純推論は `gpt_connector` の `consult` を第一選択とし、caller既知slugで model+effort を明示する。物量は Terra/Composer、並列 finder は grok-4.5。専用Chromeとproduct-owned stateを使い、timeout後はsessionsで追跡する。Oracle・APIへの暗黙fallbackは禁止し、Oracleはv1互換または手動rollback時だけ明示する。
 
 ## 調査で確定した事実（要点。詳細は rag/models/ の2記事）
 
 - **GPT-5.6**（2026-07-09 GA）: `gpt-5.6-sol`（旗艦 $5/$30）/`gpt-5.6-terra`（中位 $2.5/$15）/`gpt-5.6-luna`（軽量 $1/$6）。effort=low/medium/high/xhigh/max/ultra、**Sol の既定は low**（公式「低く始めて上げろ」「max を無条件推奨するな」）。**ultra＝max 推論＋proactive 自動委譲 ON**（使用量急増の公式警告）。ネイティブサブエージェント: `~/.codex/agents/<name>.toml`（`name`/`description`/`developer_instructions` **3必須**・欠落や綴りミスは起動 warning のみで無言無効化）。
 - **xAI**（2026-07-08 GA）: `grok-4.5`（$2/$6・500k・effort low/medium/high のみ・実務判断は首位級だが難関SWE/形式推論は弱い・ハルシ増）／`grok-composer-2.5-fast`（effort 非対応・物量特化・判断力低）。この端末は認証済み（tier 4）。
-- **refuter 反証で判明**: codex-sidecar は端末 config の model/effort 行を**正確に継承する**（＝Sol×ultra ピンが sidecar 委譲へ波及していた）。`.codex-sidecar.yml` が無いと sidecar 自体が CONFIG_NOT_FOUND。`[agents]` に委譲モードのキーは無い（effort から自動導出）＋`agents.max_threads` は multi_agent_v2 有効時に起動エラー化する地雷。`/model` ピッカーは config.toml へ**再ピン永続化**する。aiterm の grok/composer は隔離設計（OAuth のみ共有）で継承問題なし。
+- **refuter 反証で判明（max_threadsのみ2026-07-13訂正）**: codex-sidecar は端末 config の model/effort 行を**正確に継承する**（＝Sol×ultra ピンが sidecar 委譲へ波及していた）。`.codex-sidecar.yml` が無いと sidecar 自体が CONFIG_NOT_FOUND。`[agents]` に委譲モードのキーは無い（effort から自動導出）。当時の `agents.max_threads` 起動エラー説は再現未実施で、現行公式仕様が公開設定として明記したため撤回。`/model` ピッカーは config.toml へ**再ピン永続化**する。aiterm の grok/composer は隔離設計（OAuth のみ共有）で継承問題なし。
 
 ## 決定表（docs/02_models.md へ収容済みが正。ここは要旨）
 
-役割→〔ティア×effort×入口〕を Claude／Codex／xAI／Oracle の4レーンで規定。要点: 実装物量の第一選択は **Terra×medium（codex_work / implementer.toml）と Composer 2.5**（並列）、並列 finder は **grok-4.5**、実読不要の純推論・独立視点は **Oracle**、反証・裁定は**旗艦×high か Claude 主モデル**。**入口は呼び手で決まる**: Codex 親の子はネイティブ委譲一択（aiterm/MCP 経由の入れ子 codex 禁止）。
+役割→〔ティア×effort×入口〕を Claude／Codex／xAI／OpenAI-ChatGPT（gpt-connector）の4レーンで規定。要点: 実装物量の第一選択は **Terra×medium（codex_work / implementer.toml）と Composer 2.5**（並列）、並列 finder は **grok-4.5**、実読不要の純推論・独立視点は **`mcp__gpt_connector__consult`**（相談であり委譲ではない。caller既知slug、model+effort明示、専用Chrome、product-owned state、timeout後sessions）、反証・裁定は**旗艦×high か Claude 主モデル**。Oracle・APIの暗黙fallbackは禁止し、Oracleはv1互換／手動rollbackに限定する。**入口は呼び手で決まる**: Codex 親の子はネイティブ委譲一択（aiterm/MCP 経由の入れ子 codex 禁止）。
 
 ## 実装チェックリスト
 
-- [x] git fetch 照合・Oracle dirty 行の分離コミット（752f387）
+- [x] git fetch 照合・Oracle dirty 行の分離コミット（752f387、当時Oracle。現行標準はgpt-connector）
 - [x] 本ファイルの正本化（正本化ゲート）
 - [x] step0: Codex CLI 更新 0.143.0→0.144.1＋ `codex features list` 記録（multi_agent=stable/true・multi_agent_v2=under development/false）
 - [x] **F 直轄** `docs/02_models.md`: ティア語彙（slug 併記）・4レーン決定表・エスカレーションゲート・入口注記・世代交代手順 step2′
@@ -99,4 +99,4 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 
 ## リスク（要点）
 
-他端末の実ファイル SKIP（→verify が名指し）／override 無言シャドー（→非空検出）／toml 必須キー欠落の無言無効化（→3必須焼き込み＋実 spawn 検証）／再ピン永続化（→子は継承非依存の構造で遮断）／multi_agent_v2 既定 ON 化で `agents.max_threads` 設定端末が起動不能（→そもそも設定しない）／toml・sidecar defaults の具体名が世代交代で腐る（→前提行＋02 手順 step2′＋原則6 grep）。
+他端末の実ファイル SKIP（→verify が名指し）／override 無言シャドー（→非空検出）／toml 必須キー欠落の無言無効化（→3必須焼き込み＋実 spawn 検証）／再ピン永続化（→子は継承非依存の構造で遮断）／`agents.max_threads` とホスト側concurrency slotsの混同（→公式既定6/1を記録し、新規sessionで実効値を検証）／toml・sidecar defaults の具体名が世代交代で腐る（→前提行＋02 手順 step2′＋原則6 grep）。

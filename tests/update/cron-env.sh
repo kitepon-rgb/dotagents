@@ -14,7 +14,7 @@ trap 'rm -rf "$TEST_HOME" "$EMPTY_HOME"' EXIT
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
 mkdir -p "$TEST_HOME/.nvm/fake-bin" "$TEST_HOME/base-bin"
-for command_path in /bin/date /bin/mkdir /usr/bin/tee; do
+for command_path in /bin/date /bin/mkdir /usr/bin/tee "$(command -v node)"; do
   [ -x "$command_path" ] || fail "test prerequisite がない: $command_path"
   ln -s "$command_path" "$TEST_HOME/base-bin/${command_path##*/}"
 done
@@ -24,6 +24,10 @@ export PATH
 EOF
 cat > "$TEST_HOME/.nvm/fake-bin/npm" <<'EOF'
 #!/bin/sh
+case "$*" in
+  'view @anthropic-ai/claude-code version --json') echo '"2.1.0"'; exit 0 ;;
+  'view @openai/codex version --json') echo '"0.144.3"'; exit 0 ;;
+esac
 printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/npm-calls.log"
 printf 'npm:%s\n' "$*" >> "$HOME/update-events.log"
 case "${NPM_FAIL_PACKAGE:-}" in
@@ -34,6 +38,15 @@ case "$*" in
 esac
 EOF
 chmod +x "$TEST_HOME/.nvm/fake-bin/npm"
+cat > "$TEST_HOME/.nvm/fake-bin/claude" <<'EOF'
+#!/bin/sh
+echo '2.1.0'
+EOF
+cat > "$TEST_HOME/.nvm/fake-bin/codex" <<'EOF'
+#!/bin/sh
+echo '0.144.3'
+EOF
+chmod +x "$TEST_HOME/.nvm/fake-bin/claude" "$TEST_HOME/.nvm/fake-bin/codex"
 cat > "$TEST_HOME/.nvm/fake-bin/uv" <<'EOF'
 #!/bin/sh
 printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/uv-calls.log"
@@ -50,30 +63,64 @@ cat > "$TEST_HOME/base-bin/factory-reporter-schedule-runner" <<'EOF'
 #!/bin/sh
 printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/reporter-calls.log"
 printf 'reporter:%s\n' "$*" >> "$HOME/update-events.log"
-[ "${REPORT_FAIL:-0}" -eq 0 ]
+if [ "${REPORT_FAIL:-0}" -ne 0 ]; then exit 1; fi
+case "$*" in
+  *--post-update) echo '{"ok":true,"post_gate_status":"success"}' ;;
+  *--finalize-update)
+    node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));if(Object.values(v.products).some((r)=>r.post_gate_status==="pending"))process.exit(1)' "$HOME/.local/state/agents-update/toolchain-ledger.json" || exit 25
+    echo '{"ok":true,"finalized":true}' ;;
+esac
 EOF
 chmod +x "$TEST_HOME/base-bin/factory-reporter-schedule-runner"
+cat > "$TEST_HOME/.nvm/fake-bin/grok" <<'EOF'
+#!/bin/sh
+printf 'grok:%s\n' "$*" >> "$HOME/update-events.log"
+case "$*" in
+  'update --check --json')
+    if [ -f "$HOME/grok-updated" ]; then echo '{"currentVersion":"0.2.1","latestVersion":"0.2.1","updateAvailable":false,"installer":"native","channel":"stable","autoUpdate":null,"error":null}'; else echo '{"currentVersion":"0.2.0","latestVersion":"0.2.1","updateAvailable":true,"installer":"native","channel":"stable","autoUpdate":null,"error":null}'; fi ;;
+  'update --stable') : > "$HOME/grok-updated" ;;
+  --version) echo '0.2.1' ;;
+esac
+EOF
+chmod +x "$TEST_HOME/.nvm/fake-bin/grok"
 
 REPORTER="$TEST_HOME/base-bin/factory-reporter-schedule-runner"
 REPORTER_CONFIG="$TEST_HOME/factory-reporter.json"
 
-env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
   FACTORY_REPORTER_RUNNER="$REPORTER" \
   FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
   RUN_ID=normal \
-  /bin/bash "$ROOT/bin/agents-update.sh" >/dev/null
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/normal.out" 2>&1; then
+  cat "$TEST_HOME/normal.out" >&2
+  fail '正常fixtureのagents-updateが失敗した'
+fi
 
 [ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
   || fail 'curated package 13件を fake npm へ渡していない'
 [ "$(grep -c '^normal:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
   || fail 'markitdown を fake uv tool upgrade へ1件渡していない'
-[ "$(grep -c '^normal:--config '"$REPORTER_CONFIG"'$' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
+[ "$(grep -c '^normal:--config '"$REPORTER_CONFIG"' --post-update$' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
   || fail '更新後に factory reporter を1回実行していない'
-[ "$(tail -n 1 "$TEST_HOME/update-events.log")" = "reporter:--config $REPORTER_CONFIG" ] \
+[ "$(grep -c '^normal:--config '"$REPORTER_CONFIG"' --finalize-update$' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
+  || fail 'gate確定後に最終update observationを1回実行していない'
+[ "$(tail -n 1 "$TEST_HOME/update-events.log")" = "reporter:--config $REPORTER_CONFIG --finalize-update" ] \
   || fail 'factory reporter が更新処理より前に実行された'
+grep -q 'grok:update --check --json' "$TEST_HOME/update-events.log" \
+  || fail 'Grok stable update check を実行していない'
+grep -q 'grok:update --stable' "$TEST_HOME/update-events.log" \
+  || fail 'Grok update_available時にstable updateを実行していない'
+grep -q 'grok:--version' "$TEST_HOME/update-events.log" \
+  || fail 'Grok stable update後のversion確認がない'
 grep -q '=== agents-update end:' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
   || fail '完了行がない'
+node -e '
+  const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
+  if(v.schema_version!=="dotagents.toolchain-update.v1")process.exit(1);
+  for(const id of ["claude-code","codex-cli","grok-build"]){const r=v.products[id];if(!r||r.post_gate_status!=="success"||!["success","skipped"].includes(r.operation_status))process.exit(1)}
+' "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" \
+  || fail '3基盤CLIの更新前後・post-gate台帳を保存していない'
 
 if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
@@ -92,7 +139,7 @@ grep -q '^npm-fail:install -g codex-sidecar-mcp@latest$' "$TEST_HOME/npm-calls.l
   || fail '途中失敗後の package を fake npm へ渡していない'
 [ "$(grep -c '^npm-fail:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
   || fail 'npm 失敗後も uv tool upgrade を継続しなかった'
-[ "$(grep -c '^npm-fail:' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
+[ "$(grep -c '^npm-fail:' "$TEST_HOME/reporter-calls.log")" -eq 2 ] \
   || fail 'npm 失敗後に factory reporter を実行しなかった'
 
 mv "$TEST_HOME/.nvm/fake-bin/uv" "$TEST_HOME/.nvm/fake-bin/uv.off"
@@ -106,7 +153,7 @@ if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
 fi
 [ "$(grep -c '^uv-missing:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
   || fail 'uv 不在時に npm の残件を更新しなかった'
-[ "$(grep -c '^uv-missing:' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
+[ "$(grep -c '^uv-missing:' "$TEST_HOME/reporter-calls.log")" -eq 2 ] \
   || fail 'uv 不在時に factory reporter を実行しなかった'
 mv "$TEST_HOME/.nvm/fake-bin/uv.off" "$TEST_HOME/.nvm/fake-bin/uv"
 
@@ -139,6 +186,33 @@ fi
   || fail 'reporter 失敗の試験で更新処理を省略した'
 grep -q '^agents-update result: update=success report=failed$' "$TEST_HOME/report-fail.out" \
   || fail '更新成功とreport失敗を区別していない'
+node -e '
+  const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
+  if(Object.values(v.products).some((r)=>r.post_gate_status!=="failed"))process.exit(1)
+' "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" \
+  || fail 'report失敗を3基盤CLIのpost-gate台帳へ反映していない'
+
+cat > "$TEST_HOME/base-bin/failing-ledger-helper.mjs" <<'EOF'
+import { readFileSync, writeFileSync } from 'node:fs';
+const path = `${process.env.HOME}/ledger-helper-count`;
+let count = 0;
+try { count = Number(readFileSync(path, 'utf8')); } catch {}
+count += 1; writeFileSync(path, String(count));
+if (count > 3) process.exit(42);
+EOF
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" \
+  FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  TOOLCHAIN_LEDGER_HELPER="$TEST_HOME/base-bin/failing-ledger-helper.mjs" \
+  RUN_ID=ledger-fail \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/ledger-fail.out" 2>&1; then
+  fail '最終台帳record失敗を成功扱いした'
+fi
+[ "$(grep -c '^ledger-fail:' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
+  || fail '最終台帳record失敗後にfinalizeを呼んだ'
+grep -q '最終台帳を確定できないため送信しません' "$TEST_HOME/ledger-fail.out" \
+  || fail '最終台帳record失敗の送信停止理由を名指ししない'
 
 if env -i HOME="$EMPTY_HOME" PATH="$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
@@ -150,7 +224,7 @@ if env -i HOME="$EMPTY_HOME" PATH="$TEST_HOME/base-bin" \
 fi
 grep -q '^FAILED: npm が PATH にない' "$EMPTY_HOME/out.log" \
   || fail 'npm 不在の原因を名指ししない'
-[ "$(grep -c '^npm-missing:' "$EMPTY_HOME/reporter-calls.log")" -eq 1 ] \
+[ "$(grep -c '^npm-missing:' "$EMPTY_HOME/reporter-calls.log")" -eq 2 ] \
   || fail 'npm / NVM 不在でも factory reporter を実行しなかった'
 
 echo 'agents-update cron env: OK'

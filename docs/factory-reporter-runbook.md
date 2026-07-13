@@ -10,7 +10,7 @@
 - token、実config、outboxはgitへ入れない。tokenを引数、query parameter、通常JSON出力へ出さない。
 - host identityはtop-level `host.id / host.profile`で固定し、tokenのserver-side bindingと一致させる。
 - credential fileは所有者限定。POSIXはdirectory `0700`・file `0600`、Windowsは継承ACLを除去して現在userだけにする。
-- 本番BugHubは`FACTORY_INGEST_ENABLED=true`を明示するまでfactory入口を404にする。
+- 本番BugHubはv2の`FACTORY_V2_INGEST_ENABLED=true`を明示するまで`/api/factory/v2/reports`を404にする。v1の`FACTORY_INGEST_ENABLED`はOracle互換・手動rollback専用である。
 - Pi5からのServerManager outageは、main-server上の`factory-external-event`だけで記録する。任意本文・path・URLは受け取らず、固定`check`/`reason`とcanonical UTCだけを保存する。
 
 ## 1. 送信OFFでconfigを配置
@@ -79,7 +79,7 @@ reporter configの`reporting`を次の形へ編集する。tokenが存在する�
 ```json
 {
   "enabled": true,
-  "endpoint": "http://192.168.1.2:39310/api/factory/v1/reports",
+  "endpoint": "http://192.168.1.2:39310/api/factory/v2/reports",
   "credential_file": "/home/kite/.config/dotagents/credentials/factory.token"
 }
 ```
@@ -117,24 +117,26 @@ scan、preview、enqueue、flushは別操作である。`reporting.enabled=false
 ```bash
 # 1. read-only scan。outputはcredential/outboxと別の所有者限定pathへ置く。
 umask 077
-factory-scan --config ~/.config/dotagents/factory-reporter.json \
-  --output ~/.local/state/dotagents/factory-reporter/latest-report.json
+factory-scan-v2 --config ~/.config/dotagents/factory-reporter.json \
+  --output ~/.local/state/dotagents/factory-reporter-v2/latest-report.json \
+  --ack-output ~/.local/state/dotagents/factory-reporter-v2/latest-acks.json
 
 # 2. 送らずにschema・host identity・privacyを確認する。
-factory-reporter preview \
+factory-reporter-v2 preview \
   --config ~/.config/dotagents/factory-reporter.json \
-  --report ~/.local/state/dotagents/factory-reporter/latest-report.json
+  --report ~/.local/state/dotagents/factory-reporter-v2/latest-report.json
 
 # 3. 明示ON済みの時だけoutboxへ保存する。OFFなら成功終了でもenqueued=false。
-factory-reporter enqueue \
+factory-reporter-v2 enqueue \
   --config ~/.config/dotagents/factory-reporter.json \
-  --report ~/.local/state/dotagents/factory-reporter/latest-report.json
+  --report ~/.local/state/dotagents/factory-reporter-v2/latest-report.json \
+  --ack-metadata ~/.local/state/dotagents/factory-reporter-v2/latest-acks.json
 
 # 4. 明示ON済みの時だけnetwork送信。accepted確認後だけoutboxから削除する。
-factory-reporter flush --config ~/.config/dotagents/factory-reporter.json
+factory-reporter-v2 flush --config ~/.config/dotagents/factory-reporter.json
 ```
 
-`preview`は常にnetworkゼロである。`enqueue`と`flush`はOFFならnetworkゼロで、既存outboxを消さない。tokenの存在、scheduler、過去のON状態は送信許可にならない。
+`preview`は常にnetworkゼロである。`enqueue`と`flush`はOFFならnetworkゼロで、既存outboxを消さない。v2 ACKはBugHub accepted後だけ`gpt-connector`のproduct-owned stateへ実行する。tokenの存在、scheduler、過去のON状態は送信許可にならない。
 
 ### Pi5 external outage event
 
@@ -149,18 +151,18 @@ factory-external-event resolve --check availability --reason unreachable \
   --observed-at 2026-07-13T00:01:00.000Z --json
 ```
 
-stateはPOSIXで`~/.local/state/dotagents/factory-reporter/`（directory `0700`、file/lock `0600`）にあり、symlink・schema改ざん・同時書込みを拒否する。open/resolveは冪等でappend-only sequenceを持ち、同一fingerprintはopen phaseをBugHubが受理してackするまでresolve phaseを送らない。`snapshot --json`と`status --json`は運用確認専用、`ack --cursor N --json`はreporterだけがBugHub accepted後に実行する。reporting OFFまたはack失敗時もstateは保持される。
+このPi5 external eventのstateはPOSIXで`~/.local/state/dotagents/factory-reporter/`（directory `0700`、file/lock `0600`）にあり、symlink・schema改ざん・同時書込みを拒否する。これは固定external eventの互換stateであり、通常のv2 reporter outboxは`factory-reporter-v2/`を使う。open/resolveは冪等でappend-only sequenceを持ち、同一fingerprintはopen phaseをBugHubが受理してackするまでresolve phaseを送らない。`snapshot --json`と`status --json`は運用確認専用、`ack --cursor N --json`はreporterだけがBugHub accepted後に実行する。reporting OFFまたはack失敗時もstateは保持される。
 
 ### exitと出力の扱い
 
-- `factory-scan`非0: config/profile、dotagents revision、report schema、atomic outputのいずれかに失敗した。outputの成功扱い・enqueueはしない。個別製品CLIの不在・非対応はreport全体を偽成功/失敗へ丸めず、その製品を`unverified`として残す。
-- `factory-reporter`非0: stdoutの`{ok:false,code:"FACTORY_REPORTER_ERROR"}`とstderrを確認する。409/413/422はdead-letter、401/403/429/5xx/timeout/networkはoutbox保持であり、成功ではない。
+- `factory-scan-v2`非0: config/profile、dotagents revision、report schema、atomic outputのいずれかに失敗した。outputの成功扱い・enqueueはしない。個別製品CLIの不在・非対応はreport全体を偽成功/失敗へ丸めず、その製品を`unverified`として残す。
+- `factory-reporter-v2`非0: stdoutの`{ok:false,code:"FACTORY_REPORTER_V2_ERROR"}`とstderrを確認する。409/413/422はdead-letter、401/403/429/5xx/timeout/network/backoffはoutbox保持であり、いずれも成功ではない。
 - stdout JSONは機械判定用で、token本文を出さない。report JSONには秘密・prompt・absolute pathを入れない。
-- config、credential、state/outbox、scan outputは0700 directory/0600 file（Windowsは現在userのみACL）にする。reportを共有・git add・チャット貼付けしない。
+- config、credential、v2 state/outbox、scan outputは0700 directory/0600 fileにする。Windows nativeではstate root、outbox/dead-letter/retry/lock、生成fileの継承を遮断し、現在SIDだけにFullControlを許可する。ACL設定失敗は非0であり、pathや秘密を成功JSONへ出さない。reportを共有・git add・チャット貼付けしない。
 
 ## 8. 定期scheduler（dry-runから開始）
 
-`factory-reporter-scheduler` は `collection.enabled=true` の時だけ scan → enqueue → flush を毎時17分に起動するOS別schedulerを管理する。収集OFF時はscan前に正常skipし、state/outboxにも触れない。設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushは既存契約どおりnetwork I/Oをしない。
+`factory-reporter-scheduler` は `factory-reporter-v2-schedule-runner` を毎時17分に起動するOS別schedulerを管理する。runnerは`collection.enabled=true`の時だけ v2 scan → enqueue → flush を行い、収集・送信ともOFFならstate/outboxに触れず正常skipする。設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushはnetwork I/Oをしない。
 
 最初は必ずdry-runで生成物・登録commandを確認する。実登録は明示`--apply`だけであり、通常のinstall/updateはschedulerを登録しない。configが未配置または不正ならinstall/runnerはfail closedで、scheduler登録もscanも行わない。停止のためのuninstallだけはconfigなしでも実行できる。
 
@@ -175,21 +177,23 @@ factory-reporter-scheduler install --dry-run --platform win32
 
 承認済みの対象hostだけで、dry-runの出力を確認してから同じcommandに`--apply`を付ける。`--apply`は実行中OSと一致するplatformだけを受け付ける。
 
-- macOS: `~/Library/LaunchAgents/com.kite.factory-reporter.plist`を`launchctl bootstrap gui/$UID`で登録する。`node`の絶対path → runnerの絶対pathをXML escapeした引数配列で起動する。state/logは`$XDG_STATE_HOME/dotagents/factory-reporter/`（既定`~/.local/state/...`）で0700。
+- macOS: `~/Library/LaunchAgents/com.kite.factory-reporter.plist`を`launchctl bootstrap gui/$UID`で登録する。`node`の絶対path → v2 runnerの絶対pathをXML escapeした引数配列で起動する。state/logは`$XDG_STATE_HOME/dotagents/factory-reporter-v2/`（既定`~/.local/state/...`）で0700。
 - Linux / WSL2: 現在userのcrontabに`# dotagents-factory-reporter`で終わる**完全一致の自管理行だけ**を置換する。cron最小環境でもNodeとrunnerの絶対pathをPOSIX single-quoteして起動する。WSL2ではcron service自体を別途常設する。
-- Windows native: `%LOCALAPPDATA%\dotagents\factory-reporter\scheduler\dotagents-factory-reporter.xml`をUTF-8で生成し、毎時のTaskを`schtasks.exe /Create /TN dotagents-factory-reporter /XML <file> /F`で登録する。apply時は継承・既存明示ACEを外し、現在userのSIDだけを許可するprivate ACLをPowerShell/.NETで設定する。
+- Windows native: `%LOCALAPPDATA%\dotagents\factory-reporter-v2\scheduler\dotagents-factory-reporter.xml`をUTF-8で生成し、毎時のTaskを`schtasks.exe /Create /TN dotagents-factory-reporter /XML <file> /F`で登録する。apply時は継承・既存明示ACEを外し、現在userのSIDだけを許可するprivate ACLをPowerShell/.NETで設定する。
 
 停止はoutboxを消さずschedulerだけ外す。`factory-reporter-scheduler uninstall --dry-run --platform <OS>`で対象commandを確認し、承認後に`--apply`を付ける。
 
 ## 9. agents-updateとの接続
 
-`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、`factory-reporter-schedule-runner --config <host config>`を必ず1回呼ぶ。runnerが担う順序はscan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
+`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、`factory-reporter-v2-schedule-runner --config <host config>`を必ず1回呼ぶ。runnerが担う順序はv2 scan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
 
 - 既定configはPOSIXで`~/.config/dotagents/factory-reporter.json`、Windows nativeで`%LOCALAPPDATA%\dotagents\factory-reporter\config.json`。
 - `collection.enabled=false`ならrunnerがscan前に正常skipする。`reporting.enabled=false`ならenqueue/flushはnetworkへ出ない。
 - config欠落・runner欠落・scan/report失敗はreport失敗としてログに残す。更新成功をreport成功で代用せず、report成功を更新成功で代用しない。
 - 最終行直前の`agents-update result: update=<success|failed> report=<success|failed>`で両系統を判定でき、どちらかが`failed`なら終了codeは1。
 - 試験時だけ`FACTORY_REPORTER_RUNNER`と`FACTORY_REPORTER_CONFIG`で入口を差し替えられる。通常運用でこのoverrideを使わない。
+
+Claude Code、Codex、Grok Build は更新ごとにowner-onlyのtoolchain ledgerへ `before`、`latest`、`operation`、`after`、`post_gate`、`reason`、UTC観測時刻を記録する。Claude/Codexはnpm registryのsemverと`npm install -g @latest`、Grokは`grok update --check --json`とstable updateを正規入力とする。post-update v2 runnerが失敗すれば全3製品の`post_gate=failed`となり、更新自体の成功を全体成功へ丸めない。
 
 この接続はschedulerを新規登録せず、configを作成・変更せず、collection/reportingをONにしない。実hostへのconfig・credential配置とON操作は前節までのH手順で別途行う。
 
@@ -212,11 +216,11 @@ runner全体へ別の強制timeoutは重ねない。各外部境界を上表でb
 
 ## 11. BugHub wire schema major互換matrix
 
-現行はpayload `schema_version="1.0"`、`report_mode="full"`、endpoint `/api/factory/v1/reports`だけである。未知major/minor、未知field、deltaを推測・黙示変換しない。
+通常経路はpayload `schema_version="2.0"`、`report_mode="full"`、endpoint `/api/factory/v2/reports`である。v1 command/state/endpointはOracle互換・手動rollback専用で、通常運用は参照しない。未知major/minor、未知field、deltaを推測・黙示変換しない。
 
 | client | server入口 | 結果 | rollout可否 |
 |---|---|---|---|
-| v1 | v1 endpoint | 受理。現行正規経路 | 可 |
+| v1 | v1 endpoint | Oracle互換・手動rollbackだけで受理 | rollback時だけ |
 | v2 payload | v1 endpoint | `422`、clientはdead-letter。v1へ自動downgradeしない | 本番送信禁止 |
 | v1 | v2 codeが保持するv1 endpoint | v1契約のまま受理 | server-first期間に必須 |
 | v2 | v2 endpoint | v2 schema/semantic fixtureとcredential契約がgreenの時だけ受理 | host単位opt-in後に可 |

@@ -14,7 +14,7 @@
 
 ## 製品導入matrix
 
-端末能力を担う8製品は全現役hostへ常備する。ServerManagerのsource/runtimeはmain-serverだけが必須で、他hostは管理clientとして接続するだけである。
+端末能力を担う8製品は全現役hostへ常備する。ServerManagerのsource/runtimeはmain-serverだけが必須で、他hostは管理clientとして接続するだけである。Claude Code CLI／Codex CLI／Grok Buildはコアと別の基盤toolchainであり、version・update・compatibility管理対象である。
 
 | product | Mac | main-server | FOX WSL2 | FOX Windows native | 欠落severity |
 |---|---|---|---|---|---|
@@ -23,10 +23,13 @@
 | Spotter | required | required | required | required | high |
 | Codegraph | required | required | required | required | high |
 | MarkItDown | required | required | required | required | high |
-| Oracle | required | required | required | required | high |
+| gpt-connector | required | required | required | required | high |
 | aiterm-mcp | required | required | required | required | high |
 | codex-sidecar | required | required | required | required | high |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
+| Claude Code CLI | required | required | required | unsupported | high |
+| Codex CLI | required | required | required | unsupported | high |
+| Grok Build | optional | optional | optional | unsupported | info |
 
 ## 親別connector matrix
 
@@ -39,12 +42,12 @@
 | Spotter | 対象projectで明示install required | 対象projectで明示install required |
 | Codegraph | MCP required | MCP required |
 | MarkItDown | CLI required | CLI required |
-| Oracle | MCP required。browser runtime非対応hostはconnectorだけunsupported | skill/MCP required。browser runtime非対応hostはconnectorだけunsupported |
+| gpt-connector | MCP `gpt_connector` required。専用Chrome非対応hostはconnectorだけunsupported | MCP `gpt_connector` required。timeout後は sessions 回収 |
 | aiterm-mcp | MCP required | Grok/Composer用MCP required。入れ子Codexは禁止 |
 | codex-sidecar | MCP required | connector forbidden。Codex native subagentを使う |
 | ServerManager | connector not_applicable | connector not_applicable |
 
-Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。Oracle connectorがbrowser runtime非対応でも、Oracle CLI自体の導入・version・`doctor --json`診断はrequiredのまま維持する。
+Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。gpt-connectorは専用Chrome、product-owned state、明示model/effort、caller既知slugを必須とし、timeout時は sessions で回収する。Oracleはv1互換・手動rollback専用で、通常matrixには含めない。
 
 ## 2026-07-13 実測baseline
 
@@ -52,10 +55,10 @@ read-only SSHとlocal PATHで確認した。PATH文字列そのものは端末�
 
 | host | 8製品CLI | ServerManager | 備考 |
 |---|---|---|---|
-| Mac | 全8件解決 | not_applicable | MarkItDownはuv tool、それ以外は正規CLI |
-| main-server | 全8件解決 | source/runtimeあり | Oracle connectorはbrowser runtime未整備のため再検証対象 |
-| FOX WSL2 | login shellで全8件解決 | not_applicable | 非login SSHではnpm prefix PATHが復元されないため、scheduler診断はlogin相当env必須 |
-| FOX Windows native | PowerShellで全8件解決 | not_applicable | `C:\Users\kite_\Documents\Program`をproject rootとして維持 |
+| Mac | 旧Oracleを含む全8件解決 | not_applicable | gpt-connector／基盤CLIは切替前の再検証対象 |
+| main-server | 旧Oracleを含む全8件解決 | source/runtimeあり | gpt-connector connectorは再検証対象 |
+| FOX WSL2 | 旧Oracleを含む全8件解決 | not_applicable | 非login SSHではnpm prefix PATHが復元されないため、scheduler診断はlogin相当env必須 |
+| FOX Windows native | PowerShellで旧Oracleを含む全8件解決 | not_applicable | gpt-connector／基盤CLIは未検証 |
 
 ## reporter profileへの写像
 

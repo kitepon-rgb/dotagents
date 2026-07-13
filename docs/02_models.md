@@ -12,7 +12,7 @@
 |---|---|---|
 | Anthropic | Claude Code 本体・Agent/Workflow・`sonnet`/`haiku` | 統括の窓＝有限資源。物量を流さない |
 | OpenAI **Codex** | codex CLI・codex-sidecar MCP・Codex ネイティブ子 | 物量の第一柱 |
-| OpenAI **ChatGPT** | **Oracle**（`oracle.consult`・MCP 入口限定・API 課金禁止） | Codex 枠と別勘定。実読不要の純推論はここが最得 |
+| OpenAI **ChatGPT** | **gpt-connector**（MCP ID `gpt_connector`・API fallback禁止） | Codex 枠と別勘定。実読不要の純推論はここが最得。Oracleは互換・rollback専用 |
 | xAI | grok CLI・aiterm の grok/composer agent | 完全独立枠。物量の第二柱＋並列 finder |
 
 ## ティア語彙（この表だけがモデル名を持つ）
@@ -29,15 +29,15 @@
 
 ## 決定表（役割→ティア×effort×入口。既定は写すだけ・外れる方を要正当化）
 
-| 役割 | Claude レーン | Codex レーン | xAI レーン | Oracle レーン（ChatGPT 枠） |
+| 役割 | Claude レーン | Codex レーン | xAI レーン | ChatGPT レーン |
 |---|---|---|---|---|
 | 統括・会話（親） | **オーナー指定** | **オーナー指定**（旗艦単体・proactive OFF を推奨） | — | — |
 | 裁定・契約クリティカル | 主 直轄（F） | 親 直轄・直前だけ effort を上げる | —（難関形式推論は不向き） | 裁定の材料に consult 可 |
 | 監査・発見（finder・数で押す層） | `sonnet`×low・Workflow で明示 | 中位=`gpt-5.6-terra`×medium・codex_auditor/explore | **`grok-4.5`**・grok_agent / `grok -p`（並列 finder に好適） | — |
 | 反証・検証（リポ実読あり） | 主 継承×high・refuter | 旗艦=`gpt-5.6-sol`×high・refuter 定義 / codex_risk_check | —（ハルシ増・形式推論弱） | — |
-| セカンドオピニオン（実読不要の純推論） | — | — | `grok-4.5` 可（実務的専門判断は首位級） | **第一選択**: `oracle.consult`（入口はラッパー `oracle-mcp-stable`。**preset `chatgpt-pro-heavy` は封印中**＝0.15.2 が GPT-5.6 UI 未対応。標準形は [06_oracle-mcp.md](06_oracle-mcp.md)） |
+| セカンドオピニオン（実読不要の純推論） | — | — | `grok-4.5` 可（実務的専門判断は首位級） | **第一選択**: `gpt_connector`（command=`gpt-connector-mcp`。正典は [06_gpt-connector.md](06_gpt-connector.md)） |
 | 設計（並列 Plan） | 主 継承×medium〜high | 旗艦×medium・codex_opinion | `grok-4.5`・実務判断の別視点 | 設計意見の別視点 |
-| 実装物量（第一選択・外部枠） | —（外部へ） | **中位=`gpt-5.6-terra`×medium**・codex_work / implementer 定義 | **`grok-composer-2.5-fast`＝並ぶ第一選択**（仕様固定＋検証コマンド必須の委譲契約を厳守） | —（Oracle は書けない） |
+| 実装物量（第一選択・外部枠） | —（外部へ） | **中位=`gpt-5.6-terra`×medium**・codex_work / implementer 定義 | **`grok-composer-2.5-fast`＝並ぶ第一選択**（仕様固定＋検証コマンド必須の委譲契約を厳守） | —（ChatGPT second-opinion laneは実装を担わない） |
 | 実装物量（次善・Claude 枠） | `sonnet`×low〜medium・implementer | — | — | — |
 | 軽作業・分類・抽出 | `haiku`×low（次善） | 軽量=`gpt-5.6-luna`×low・sorter 定義 / codex_generate | composer 可 | — |
 | 第三者レビュー | — | 旗艦×medium・codex_review（契約クリティカル差分は high） | — | 差分を貼れる規模なら併用可 |
@@ -73,7 +73,7 @@
 - **非対話の一括委譲・独立レビュー → codex-sidecar MCP**: `codex_work`（隔離 worktree で実装）・`codex_review`・`codex_explore`・`codex_opinion`・`codex_risk_check`・`codex_auditor`・`codex_generate`。**model/effort は毎回明示 or `.codex-sidecar.yml` defaults**（上記入口事実）。
 - **対話で外部エージェントを駆動 → aiterm**: `codex_agent`・`grok_agent`・`composer_agent`（対話 TUI を永続端末に起動→ `pty_read`/`pty_send`）。上記の入口事実（継承・stale・effort 無視）に注意。
 - **非対話の xAI 物量 → `grok -p`（headless）**: `--effort low|medium|high` はここでのみ有効。
-- **セカンドオピニオン → `oracle.consult`**（MCP 入口限定・登録はラッパー `oracle-mcp-stable` 経由。API engine 禁止＝`OPENAI_API_KEY` を作らない）。**preset `chatgpt-pro-heavy`・`browserModelLabel`・`modelStrategy:"select"` は封印中**（0.15.2×GPT-5.6 UI 不整合）——標準形は `engine:"browser"` のみ＝モデル/Effort はアカウント現在値（Sol×Extra High）で走る（正典 [06_oracle-mcp.md](06_oracle-mcp.md)、解除条件も同所）。
+- **セカンドオピニオン → `gpt_connector`**（command=`gpt-connector-mcp`）。専用Chrome・product-owned state・明示model/effort・caller既知slugを使い、timeout後は sessions で回収する。Oracle/OpenAI APIへの暗黙fallbackは禁止（正典 [06_gpt-connector.md](06_gpt-connector.md)）。
 
 ## 指定の作法
 

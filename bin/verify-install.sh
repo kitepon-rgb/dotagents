@@ -65,7 +65,7 @@ check() { # check <dst> <expect_src>
 verify_factory_core() {
   local project_root="${DOTAGENTS_FACTORY_PROJECT_ROOT:-$REPO}"
   local cli
-  for cli in caveat throughline spotter codegraph markitdown oracle aiterm-mcp codex-sidecar-mcp; do
+  for cli in caveat throughline spotter codegraph markitdown gpt-connector aiterm-mcp codex-sidecar-mcp; do
     if command -v "$cli" >/dev/null 2>&1; then
       echo "OK  factory core CLI: $cli → $(command -v "$cli")"
     else
@@ -272,8 +272,20 @@ for d in "$REPO/codex/skills"/*/; do
 done
 for f in "$REPO/codex/rules"/*;      do [ -e "$f" ] && check "$HOME/.codex/rules/$(basename "$f")" "$f"; done
 for f in "$REPO/codex/agents"/*.toml; do [ -e "$f" ] && check "$HOME/.codex/agents/$(basename "$f")" "$f"; done
-for f in "$REPO/bin"/*.sh;           do [ -e "$f" ] && check "$HOME/.local/bin/$(basename "$f" .sh)" "$f"; done
-for f in "$REPO/bin"/*.mjs;          do [ -e "$f" ] && check "$HOME/.local/bin/$(basename "$f" .mjs)" "$f"; done
+for f in "$REPO/bin"/*.sh; do
+  if [ -e "$f" ]; then
+    installed="$HOME/.local/bin/$(basename "$f" .sh)"
+    check "$installed" "$f"
+    if [ ! -x "$installed" ]; then echo "FAIL: 配布CLIが実行不能: $installed"; fail=1; fi
+  fi
+done
+for f in "$REPO/bin"/*.mjs; do
+  if [ -e "$f" ]; then
+    installed="$HOME/.local/bin/$(basename "$f" .mjs)"
+    check "$installed" "$f"
+    if [ ! -x "$installed" ]; then echo "FAIL: 配布CLIが実行不能: $installed"; fail=1; fi
+  fi
+done
 
 # ~/.codex/AGENTS.override.md シャドー検出: Codex は override が存在すれば AGENTS.md より
 # 優先して読むため、非空の override は配布憲法（codex/AGENTS.md）を無言で無効化する。

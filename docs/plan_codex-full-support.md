@@ -7,7 +7,7 @@
 
 dotagents を全端末の**開発工場そのもの**として、Claude Code と Codex のどちらを親にしても同じ工場原則・主要 workflow・委譲品質・端末再現性を得られる状態にする。ServerManagerをdotagentsと並ぶ別の工場またはcontrol planeとは定義しない。
 
-工場のコア管理対象は、端末能力を担う **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Codegraph（コード構造理解）／MarkItDown（外部資料変換）／Oracle（独立したChatGPT second opinion）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude親からのCodex実行）** の8製品と、中央の運用管理を担う **ServerManager** の計9製品とする。**BugHubは独立した第10製品ではなくServerManager内部のバグ・version・互換性統括コンポーネント**である。dotagentsは各製品のソースと状態を所有せず、正規導入・更新・親別配線・互換検証・代表E2E・上流更新追従、およびServerManager/BugHubへの結果連携を所有する。
+工場のコア管理対象は、端末能力を担う **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Codegraph（コード構造理解）／MarkItDown（外部資料変換）／gpt-connector（独立したChatGPT consultation）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude親からのCodex実行）** の8製品と、中央の運用管理を担う **ServerManager** の計9製品とする。gpt-connector は MCP ID `gpt_connector`、command `gpt-connector-mcp`、専用Chrome、product-owned state、caller既知slug、model+effort明示、timeout後sessionsを正規契約とし、Oracle・APIへの暗黙fallbackを許さない。Oracleはv1互換または手動rollback時だけ扱う。**BugHubは独立した第10製品ではなくServerManager内部のバグ・version・互換性統括コンポーネント**である。dotagentsは各製品のソースと状態を所有せず、正規導入・更新・親別配線・互換検証・代表E2E・上流更新追従、およびServerManager/BugHubへの結果連携を所有する。
 
 「全対応」はファイル数の左右対称ではなく**能力対称**を指す。製品固有機能は無理に移植せず、`対応 / 製品固有 / 非採用（理由）` のいずれかを明記できれば閉じる。
 
@@ -17,7 +17,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 - [ ] Claude の主要 workflow 3件に Codex の正規入口があり、Claude 固有ツールを誤って呼ばない
 - [ ] Codex の公式 user skill 面 `$HOME/.agents/skills` から対象 skill を利用できる
 - [ ] 規範・skills・subagents・hooks・必須 MCP・session 継続を新規 Codex session で実測済み
-- [ ] 工場コア8製品が全現役端末に導入・更新され、親別matrixどおり疎通し、Spotter限定発火・Throughline context・Codegraph／MarkItDown／Oracle／aiterm／sidecar代表 E2E が green
+- [ ] 工場コア8製品が全現役端末に導入・更新され、親別matrixどおり疎通し、Spotter限定発火・Throughline context・Codegraph／MarkItDown／gpt-connector／aiterm／sidecar代表 E2E が green
 - [ ] ServerManagerを中央管理コアとしてdotagentsの管理対象へ接続し、BugHubを独立製品へ分離せずversion・bug・互換結果の統括に再利用する
 - [ ] 現役端末すべてで clone/pull→install→必須設定→verify→代表 E2E が green
 - [ ] Claude 側の skill/command/agent/hook に回帰がない
@@ -49,7 +49,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 | HOOKS | Claude C1-C4 / Codex X1-X5 は正典参照の短い INFO。初回案内・compact 再武装・Stop pending 配送を smoke 済み | INFO 契約を再設計しない。CI 昇格、README、他端末実火だけ |
 | COMMANDS | Claude command 3件、Codex 対応表なし | Codex は対応 skill の明示 invocation を正規入口にする。架空の plugin command は作らない |
 | SESSIONS | Throughline と handoff smoke が端末外で実装済み | 新規実装しない。dotagents は配線存在と代表 capture/restore/handoff を受け入れ検証 |
-| FACTORY_CORE | 8製品の必須度・更新面が不整合。Oracleは任意、aitermは前提とmatrixが矛盾、sidecarはClaude親だけcore、Spotterはdotagents自身に未接続、MarkItDownは更新管理外 | 8製品を外部所有の必須工場コアとして統一。NPM＋`uv tool`更新、親別配線、互換・代表E2Eをdotagentsの保守責務にする |
+| FACTORY_CORE | 8製品の必須度・更新面が不整合。gpt-connectorは通常入口、aitermは前提とmatrixが矛盾、sidecarはClaude親だけcore、Spotterはdotagents自身に未接続、MarkItDownは更新管理外 | 8製品を外部所有の必須工場コアとして統一。NPM＋`uv tool`更新、親別配線、互換・代表E2Eをdotagentsの保守責務にする。Oracleはv1互換・手動rollbackだけ |
 | FACTORY_MANAGEMENT | ServerManager/BugHubはサーバー運用・アプリbug集約を実装済みだが、dotagents配下のコア管理階層と8製品のversion/compatibility連携が未定義 | ServerManagerを第9のコア管理対象、BugHubをその内部コンポーネントと定義。工場そのものはdotagentsに一意化し、既存BugHub契約を壊さず連携する |
 | 配布/CI | `~/.codex/skills` のみ。clean HOME E2E なし | 公式 skill 面を追加し、repo配布CIと実端末 E2Eを分離 |
 
@@ -73,7 +73,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 | audit-gauntlet | skill + command | 新規 Codex skill | Find→Dedup→existence/value反証→Critic を native subagent で再現 |
 | auto-deploy-on-push | skill + command | 新規 Codex skill | 承認・安全・検証契約を共通化し、Codex shell/agent 入口へ翻訳 |
 | polish-github | Claude command | 既存 Codex skill | 既存正本参照を確認し、変更は差分がある場合だけ |
-| oracle | Claude MCP | 既存 Codex skill + MCP | API key禁止・封印条件を維持し、入口差だけ文書化 |
+| gpt-connector | Claude/Codex MCP（`gpt_connector`） | `gpt-connector-mcp` | `consult` は相談であり委譲ではない。caller既知slug、model+effort明示、専用Chrome、product-owned state、timeout後sessionsを使い、Oracle・APIへ暗黙fallbackしない |
 
 暗黙 invocation は非決定的なので全件×複数回を完了条件にしない。frontmatter 静的検証、全件の明示 invocation、代表 skill の暗黙 invocation を新規 session で確認する。
 
@@ -97,7 +97,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 - [x] Codex の symlink adapter を製品固有 skill ディレクトリへ置換し、native agents/routing を使う
 - [x] `audit-gauntlet` Codex skill を追加し、2票反証と件数遷移を fixture で検証
 - [x] `auto-deploy-on-push` Codex skill を追加し、高リスク操作の説明・H承認・rollback を固定
-- [x] `polish-github`・`oracle` は既存対応との差分監査のみ。必要がなければ「変更なし」を記録
+- [x] `polish-github`・`oracle` は既存対応との差分監査のみ。必要がなければ「変更なし」を記録（当時Oracle。現行の通常ChatGPT入口はgpt-connector）
 - [x] Claude command 3件→Codex skill 入口の対応表を README に追加
 - [ ] 全対象 skill の frontmatter、明示 invocation、代表暗黙 invocation を新規 session で確認
 - [x] rollback: Wave 1 を独立 commit とし、revert で旧 orchestrate symlink を復元可能にする
@@ -115,14 +115,14 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 - [x] routing 必須2キーと dotagents hook entry だけを、backup→dry-run→冪等追加できる適用スクリプトを追加
 - [x] model、permissions、既存他tool hooks、OAuth、trust は変更せず、診断＋H手順に残す
 - [x] 親別 MCP matrix を作成
-  - Claude 親: codex-sidecar、aiterm、caveat、codegraph、oracle
-  - Codex 親: native subagents、aiterm（Grok/Composer用）、caveat、codegraph、oracle/OpenAI Docs
+  - Claude 親: codex-sidecar、aiterm、caveat、codegraph、gpt_connector
+  - Codex 親: native subagents、aiterm（Grok/Composer用）、caveat、codegraph、gpt_connector/OpenAI Docs
 - [x] `codex mcp` の登録・list・疎通、STDIO env closed-mode、必須/任意/親で禁止をランブック化
 - [ ] Throughline/codex-thread-handoff-smoke の代表 capture/restore/handoff を実測（本体改造・sessions同期はしない。capture/handoff は成功、restore は上流 mismatch で未達）
-- [ ] 工場コア8製品を onboarding・README・親別matrix・`verify-install` に必須化し、Spotter project契約とCodegraph／MarkItDown／Oracle／aiterm／sidecar代表疎通を検証する
+- [ ] 工場コア8製品を onboarding・README・親別matrix・`verify-install` に必須化し、Spotter project契約とCodegraph／MarkItDown／gpt-connector／aiterm／sidecar代表疎通を検証する
 - [ ] clean HOME fixture で8製品のCLI・NPM/`uv tool`更新package・設定schema・所有権境界を固定し、外部製品の状態や実装をdotagentsへ複製しない
 - [ ] `agents-update` は1製品失敗をログへ残し、残りを続行した後に非0終了する。更新後のcompatibility gateを `make ci` に固定する
-- [x] 既存 `docs/05` の max_threads 非設定契約を維持し、max_depth/fan-out は実在確認後に必要分だけ追記
+- [x] `max_threads` / `max_depth` は公式公開設定（既定6/1）として記録し、通常は未設定、必要時だけ新規sessionで実効上限を検証する契約へ訂正（2026-07-13）
 - [x] rollback: 追加 symlink と設定追記だけを戻し、端末バックアップから復元可能にする
 
 #### Wave 2 の安全実装・実測（2026-07-12）
@@ -130,7 +130,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 - 隔離 temporary HOME で `install.sh --profile official`、symlink 経由の `apply-codex-config --dry-run/--apply`、`verify-install --profile official`、Codex `debug prompt-input` を通した。対象5 skill（`audit-gauntlet` / `auto-deploy-on-push` / `oracle` / `orchestrate` / `polish-github`）がリポの公式 skill 面を読んだ。
 - `make ci` は `make lint` と clean HOME の profile / config / rollback fixture を連結する。CI は `@openai/codex@0.144.1` を明示導入し、macOS/BSD 専用だった mode 検査は Python 標準ライブラリへ置換した。
 - 現端末は preflight 後にオーナー承認を受け、公式面へ移行した。実績は「Wave 3 rollout 実績」に記録する。他端末の同名重複 probe と legacy symlink 撤去は、現役端末×入口の確定待ちである。
-- MCP は `codex mcp` の list/get を read-only で確認し、`caveat` / OpenAI Docs / `aiterm` の最小 read-only 疎通を確認した。`.codegraph/` index は無いため query/init は行わず WARN、Oracle は `sessions` のみ確認して `consult` は呼んでいない。
+- MCP は `codex mcp` の list/get を read-only で確認し、`caveat` / OpenAI Docs / `aiterm` の最小 read-only 疎通を確認した。`.codegraph/` index は無いため query/init は行わず WARN、Oracle は `sessions` のみ確認して `consult` は呼んでいない（当時Oracle。現行の通常入口はgpt-connector）。
 - Throughline は `codex-capture` と `codex-handoff-smoke` が成功した一方、experimental `codex-restore-smoke` は `app-server-restart-mismatch`（期待 turn 7、観測 8）で失敗した。dotagents / Throughline の本体や session state は変更せず、Wave 3 の新規 session E2E と上流側の再現・修正待ちとして残す。
 
 ### Wave 3 — 現役端末 rollout と既存プラン閉鎖
@@ -140,7 +140,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 - [ ] 各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS / Spotter監査）
 - [ ] 端末で共有できる routing/MCP 証拠は入口ごとの台帳から同じ証拠へ参照し、未実施を共有扱いにしない
 - [ ] 各端末で implementer/refuter/sorter の routing smoke＋親側 verifier green
-- [ ] 各入口で Codex hooks の初回 INFO・同セッション2回目沈黙・compact 再武装・Stop pending の次回1回配送を実火し、代表 skill、Throughline 代表 smoke を成功させる。明示エラーは FAIL/blocker であり合格にしない
+- [ ] 各入口で Codex hooks の初回 INFO・同セッション2回目沈黙・compact 再武装・Stop pending の次回1回配送を実火し、代表 skill、Throughline、gpt-connector consultation の代表 smoke を成功させる。gpt-connector は model+effortを明示し、timeout後sessionsも確認する。明示エラーは FAIL/blocker であり合格にしない
 - [ ] 各対象projectで `spotter install` → marker／Claude 5 hook／Codex 3 hook／Claude・Codex別tool-db／Throughline context default-onを確認し、新規sessionで `spotter.hook_event.v1` を実火する
 - [ ] 任意 MCP/OAuth は未認証を FAIL にせず、理由付き WARN と H 手順を記録
 - [ ] Claude の skill/command/agent/hook smoke を再実行し回帰なしを確認
