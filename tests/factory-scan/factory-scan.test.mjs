@@ -99,6 +99,8 @@ else
   echo '{"jsonrpc":"2.0","id":1,"result":{"serverInfo":{"version":"1.2.3"}}}'
   echo '{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"{\\"diagnostic_schema\\":\\"aiterm-mcp.factory-diagnostics.v1\\",\\"version\\":\\"1.2.3\\",\\"overall\\":\\"ready\\"}"}]}}'
 fi`);
+  await box.script('bughub-external-probe', `
+echo '{"schema_version":"dotagents.bughub-external-probe.v1","product_version":"0.1.0","source_revision":"0123456789abcdef0123456789abcdef01234567","status":"ready","reason_code":"ready","checks":[{"id":"database","status":"pass","reason_code":"ready"},{"id":"schema","status":"pass","reason_code":"ready"},{"id":"pull_poll","status":"pass","reason_code":"ready"},{"id":"factory_ingest","status":"pass","reason_code":"ready"},{"id":"factory_delivery","status":"pass","reason_code":"ready"},{"id":"source_revision","status":"pass","reason_code":"revision_match"}]}'`);
 }
 
 function runScanner(box, extraEnv = {}) {
@@ -128,9 +130,7 @@ elif [ "$1" = "doctor" ] && [ "$2" = "--providers" ] && [ "$3" = "--json" ]; the
 else
   exit 2
 fi`);
-  await writeFile(box.config, JSON.stringify(validConfig({
-    host: { id: 'test-host', profile: 'mac' },
-  })));
+  await writeFile(box.config, JSON.stringify(validConfig()));
 
   const result = await runScanner(box);
   assert.equal(result.code, 0, result.stderr);
@@ -152,7 +152,10 @@ fi`);
   assert.equal(report.products['codex-sidecar'].installed_version, '1.2.3');
   assert.equal(report.products['codex-sidecar'].checks[0].status, 'pass');
   assert.equal(report.products['codex-sidecar'].compatibility_status, 'compatible');
-  assert.equal(report.products.servermanager.presence_status, 'not_applicable');
+  assert.equal(
+    report.products.servermanager.presence_status,
+    process.platform === 'linux' ? 'installed' : 'not_applicable',
+  );
   assert.equal(
     report.reporter.dotagents_revision,
     execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim(),
