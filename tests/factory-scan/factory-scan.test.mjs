@@ -512,6 +512,15 @@ test('Windows .exeはPATHEXT順で直接起動し、npm .cmdへはcmd.exeを介�
   assert.deepEqual(resolved, { command: executable, prefixArgs: [] });
 });
 
+test('Windows command解決はPATHEXT先頭の許可外ps1を実行せず検証済みnpm cmdへ進む', async (t) => {
+  const box = await windowsCommandFixture(t);
+  const entry = await box.entry('safe.js', 'process.exit(0);\n');
+  await writeFile(join(box.bin, 'safe-cli.ps1'), 'throw "must not run"\n');
+  await box.cmd('safe-cli', 'node_modules\\safe-package\\bin\\safe.js');
+  const resolved = await resolveWindowsCommand('safe-cli', { env: { ...box.env, PathExt: '.PS1;.CMD;.EXE' }, pathModule: { ...posix, delimiter: ';' } });
+  assert.deepEqual(resolved, { command: process.execPath, prefixArgs: [await realpath(entry)] });
+});
+
 test('Windows npm .cmdはstdin・cwd・envを保ってNodeで実行する', async (t) => {
   const box = await windowsCommandFixture(t);
   const entry = await box.entry('runner.js', "let input = ''; process.stdin.on('data', (chunk) => { input += chunk; }); process.stdin.on('end', () => process.stdout.write(JSON.stringify({ input, cwd: process.cwd(), marker: process.env.FACTORY_MARKER })));\n");
