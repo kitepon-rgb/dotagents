@@ -8,7 +8,7 @@ import {
   readConfig,
   validateReport,
 } from '../lib/factory/contract.mjs';
-import { scan } from '../lib/factory/scan.mjs';
+import { scanWithAcknowledgements } from '../lib/factory/scan.mjs';
 
 function fail(message) {
   process.stderr.write(`[factory-scan] ${message}\n`);
@@ -19,8 +19,8 @@ function parseArgs(argv) {
   const options = {};
   for (let index = 0; index < argv.length; index++) {
     const key = argv[index];
-    if (!['--config', '--output', '--cwd'].includes(key) || !argv[index + 1] || options[key]) {
-      throw new Error('使い方: factory-scan --config <file> --output <file> [--cwd <project>]');
+    if (!['--config', '--output', '--ack-output', '--cwd'].includes(key) || !argv[index + 1] || options[key]) {
+      throw new Error('使い方: factory-scan --config <file> --output <file> [--ack-output <file>] [--cwd <project>]');
     }
     options[key.slice(2)] = argv[++index];
   }
@@ -32,11 +32,12 @@ let temporaryOutput;
 try {
   const options = parseArgs(process.argv.slice(2));
   const config = await readConfig(options.config);
-  const report = await scan({
+  const { report, acknowledgements } = await scanWithAcknowledgements({
     host: config.host,
     cwd: options.cwd || process.cwd(),
     arch: arch(),
     platform: platform(),
+    collectionEnabled: config.collection.enabled,
   });
   validateReport(report);
   assertConfigIdentity(config, report);
@@ -47,7 +48,16 @@ try {
   await writeFile(temporaryOutput, JSON.stringify(report), { mode: 0o600 });
   await rename(temporaryOutput, output);
   temporaryOutput = null;
-  process.stdout.write(`${JSON.stringify({ ok: true, report_id: report.report_id, output })}\n`);
+  let acknowledgementOutput = null;
+  if (options['ack-output']) {
+    acknowledgementOutput = resolve(options['ack-output']);
+    await mkdir(dirname(acknowledgementOutput), { recursive: true });
+    temporaryOutput = `${acknowledgementOutput}.${process.pid}.tmp`;
+    await writeFile(temporaryOutput, JSON.stringify(acknowledgements), { mode: 0o600 });
+    await rename(temporaryOutput, acknowledgementOutput);
+    temporaryOutput = null;
+  }
+  process.stdout.write(`${JSON.stringify({ ok: true, report_id: report.report_id, output, acknowledgement_output: acknowledgementOutput })}\n`);
 } catch (error) {
   if (temporaryOutput) await rm(temporaryOutput, { force: true });
   fail(error?.message || '失敗');

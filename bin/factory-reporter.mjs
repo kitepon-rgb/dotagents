@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { chmod, lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
@@ -11,11 +11,16 @@ import {
   readConfig,
   validateReport,
 } from '../lib/factory/contract.mjs';
+import {
+  acknowledgeRuntimeErrors,
+  validateAcknowledgementBundle,
+} from '../lib/factory/runtime-errors.mjs';
 
 const MAX_QUEUE_ITEMS = 128;
 const MAX_QUEUE_BYTES = 2 * 1024 * 1024;
 const MAX_QUEUE_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_ACK_METADATA_BYTES = 64 * 1024;
 const UTF8 = new TextDecoder('utf-8', { fatal: true });
 
 function diagnostic(message) { process.stderr.write(`[factory-reporter] ${message}\n`); }
@@ -59,10 +64,12 @@ function locations(stateDir) {
 }
 
 async function ensureState(loc) {
-  await Promise.all([
-    mkdir(loc.outbox, { recursive: true }),
-    mkdir(loc.dead, { recursive: true }),
-  ]);
+  for (const directory of [loc.stateDir, loc.outbox, loc.dead]) {
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    const info = await lstat(directory);
+    if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('state pathが不正です');
+    if (platform() !== 'win32' && (info.mode & 0o077) !== 0) await chmod(directory, 0o700);
+  }
 }
 
 async function queueEntries(loc) {
@@ -114,9 +121,42 @@ async function enqueue(loc, bytes, reportId) {
     throw new Error('outbox上限超過: 既存queueを保持したまま新規reportを拒否しました');
   }
   const temporary = join(loc.outbox, `.${name}.${randomUUID()}.tmp`);
-  await writeFile(temporary, bytes, { flag: 'wx', mode: 0o600 });
-  await rename(temporary, target);
+  try {
+    await writeFile(temporary, bytes, { flag: 'wx', mode: 0o600 });
+    await rename(temporary, target);
+  } finally {
+    await rm(temporary, { force: true });
+  }
   return { name, duplicate: false };
+}
+
+function outboxEnvelope(reportBytes, acknowledgements) {
+  return Buffer.from(JSON.stringify({
+    schema_version: 'dotagents.factory-outbox.v1',
+    report_id: acknowledgements.report_id,
+    report_base64: reportBytes.toString('base64'),
+    acknowledgements,
+  }));
+}
+
+function decodeOutboxEntry(storedBytes) {
+  const value = JSON.parse(UTF8.decode(storedBytes));
+  if (value?.schema_version !== 'dotagents.factory-outbox.v1') {
+    return { bytes: storedBytes, report: value, acknowledgements: null };
+  }
+  const keys = Object.keys(value);
+  if (keys.length !== 4 || keys.some((key) => !['schema_version', 'report_id', 'report_base64', 'acknowledgements'].includes(key))
+    || typeof value.report_id !== 'string' || typeof value.report_base64 !== 'string'
+    || value.report_base64.length > Math.ceil(MAX_QUEUE_BYTES * 4 / 3) + 4) throw new Error('outbox envelopeが不正です');
+  const bytes = Buffer.from(value.report_base64, 'base64');
+  if (bytes.toString('base64') !== value.report_base64) throw new Error('outbox envelopeが不正です');
+  const report = JSON.parse(UTF8.decode(bytes));
+  if (report?.report_id !== value.report_id) throw new Error('outbox envelopeが不正です');
+  return {
+    bytes,
+    report,
+    acknowledgements: validateAcknowledgementBundle(value.acknowledgements, value.report_id),
+  };
 }
 
 async function withLock(loc, fn) {
@@ -152,11 +192,13 @@ async function credential(config) {
   return token;
 }
 
-async function postOne(config, token, entry) {
-  const bytes = await readFile(entry.file);
+async function postOne(config, token, loc, entry) {
+  const storedBytes = await readFile(entry.file);
+  let bytes;
   let report;
+  let acknowledgements;
   try {
-    report = JSON.parse(UTF8.decode(bytes));
+    ({ bytes, report, acknowledgements } = decodeOutboxEntry(storedBytes));
     validateReport(report);
   } catch {
     return { action: 'dead', reason: 'malformed' };
@@ -180,6 +222,10 @@ async function postOne(config, token, entry) {
     let body = null;
     try { body = await response.json(); } catch { /* 不正responseはqueueへ保持する。 */ }
     if (response.ok && body?.accepted === true && body.report_id === report.report_id) {
+      if (acknowledgements) {
+        try { await acknowledgeRuntimeErrors(acknowledgements); }
+        catch { return { action: 'keep', reason: 'ack-failed' }; }
+      }
       return { action: 'delete' };
     }
     if ([409, 413, 422].includes(response.status)) {
@@ -196,11 +242,11 @@ async function postOne(config, token, entry) {
 function parseArgs(argv) {
   const [command, ...rest] = argv;
   if (!['preview', 'enqueue', 'flush'].includes(command)) {
-    throw new Error('使い方: factory-reporter.mjs preview|enqueue|flush [--report <file>] [--config <file>]');
+    throw new Error('使い方: factory-reporter.mjs preview|enqueue|flush [--report <file>] [--ack-metadata <file>] [--config <file>]');
   }
   const options = {};
   for (let index = 0; index < rest.length; index++) {
-    if (!['--report', '--config'].includes(rest[index]) || !rest[index + 1] || options[rest[index]]) {
+    if (!['--report', '--ack-metadata', '--config'].includes(rest[index]) || !rest[index + 1] || options[rest[index]]) {
       throw new Error('引数が不正です');
     }
     options[rest[index].slice(2)] = rest[++index];
@@ -209,6 +255,7 @@ function parseArgs(argv) {
     throw new Error('--reportが必要です');
   }
   if (command === 'flush' && options.report) throw new Error('flushは--reportを受け取りません');
+  if (command !== 'enqueue' && options['ack-metadata']) throw new Error('--ack-metadataはenqueue専用です');
   return { command, options };
 }
 
@@ -227,6 +274,14 @@ async function main() {
   }
   if (command === 'enqueue') {
     const { bytes, report } = await readAndValidateReport(options.report);
+    let acknowledgementBytes = null;
+    let acknowledgementValue = null;
+    if (options['ack-metadata']) {
+      const info = await stat(options['ack-metadata']);
+      if (!info.isFile() || info.size > MAX_ACK_METADATA_BYTES) throw new Error('ack metadataが不正です');
+      acknowledgementBytes = await readFile(options['ack-metadata']);
+      acknowledgementValue = validateAcknowledgementBundle(JSON.parse(UTF8.decode(acknowledgementBytes)), report.report_id);
+    }
     if (!config.reporting.enabled) {
       emit({
         ok: true, command, reporting_enabled: false, enqueued: false,
@@ -235,7 +290,8 @@ async function main() {
       return;
     }
     assertConfigIdentity(config, report);
-    const result = await enqueue(loc, bytes, report.report_id);
+    const queuedBytes = acknowledgementValue ? outboxEnvelope(bytes, acknowledgementValue) : bytes;
+    const result = await enqueue(loc, queuedBytes, report.report_id);
     emit({
       ok: true, command, reporting_enabled: true, enqueued: !result.duplicate,
       report_id: report.report_id, ...(await queueStats(loc)),
@@ -255,8 +311,9 @@ async function main() {
     let sent = 0;
     let retained = 0;
     let deadLettered = 0;
+    let ackFailed = 0;
     for (const entry of await queueEntries(loc)) {
-      const result = await postOne(config, token, entry);
+      const result = await postOne(config, token, loc, entry);
       if (result.action === 'delete') {
         await rm(entry.file, { force: true });
         sent++;
@@ -265,11 +322,16 @@ async function main() {
         deadLettered++;
       } else {
         retained++;
+        if (result.reason === 'ack-failed') ackFailed++;
       }
     }
-    return { sent, retained, dead_lettered: deadLettered };
+    return { sent, retained, dead_lettered: deadLettered, ack_failed: ackFailed };
   });
-  emit({ ok: true, command, reporting_enabled: true, ...outcome, ...(await queueStats(loc)) });
+  emit({ ok: outcome.ack_failed === 0, command, reporting_enabled: true, ...outcome, ...(await queueStats(loc)) });
+  if (outcome.ack_failed > 0) {
+    diagnostic('BugHub受理後のruntime error acknowledgementに失敗しました');
+    process.exitCode = 1;
+  }
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {

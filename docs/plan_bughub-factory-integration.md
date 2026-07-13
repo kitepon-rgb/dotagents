@@ -270,15 +270,23 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] aiterm-mcp: versionとMCP/PTY/vendor readinessのread-only診断
 - [x] codex-sidecar: package整合、diagnostics/dry-run、result schema/model policy診断
 - [ ] 各製品で既存error log/診断を棚卸し、共通fieldへ安全に出せるものだけlocal structured error storeへ接続
+  - [x] Throughline、Spotter、aiterm-mcp、codex-sidecarは、明示opt-in、local store、resolution、cursor/ack、retentionを製品側の公開CLI契約として実装
+  - [ ] Caveatはオーナー指示によるロック中。既存作業へ干渉せず、解除後に別waveで実装
 - [x] `collection.enabled`と`reporting.enabled`を分離し、送信が既定OFF、明示ON時だけnetwork I/Oすることをfixtureと文書で固定
 - [x] stderr、生stack、例外オブジェクトの丸投げと、同じ失敗の複数layer計上をnegative fixtureで拒否
 - [ ] 各repoでbaseline green→characterization→実装→full gate→独立commit→push
+  - [x] Throughline、Spotter、aiterm-mcp、codex-sidecarは独立commit・push・full gate・独立反証まで完了
+  - [ ] Caveatはロック解除後に実施
 
 ### Wave 5 — BugHub ingestion・表示・通知（F＋A）
 
 - [x] `POST /api/factory/v1/reports`とfactory DBを実装
 - [ ] full snapshot/delta、check lifecycle、正常snapshot、手動resolve、再観測reopen、host廃止の状態遷移を固定
-- [ ] check failureを既存issueへhost付きで統合し、runtime errorのack/cursor/retentionも固定
+- [x] check failureを既存issueへhost付きで統合し、明示resolve、再観測reopen、古いoffline観測による巻き戻し拒否を固定
+- [ ] runtime errorのack/cursor/retentionを全自作製品で固定
+  - [x] 完了済み4製品はBugHubの同一report受理後だけackし、ack失敗は非0・単一atomic outbox envelope保持・duplicate再受理後再試行とする
+  - [ ] Caveatはロック解除後に製品側storeと接続
+- [x] runtime adapter/outbox契約を独立反証し、collection OFF時のqueue drain、二ファイルorphan、ack失敗のfalse successがないことを確認
 - [x] dashboardにhost×product matrix、version履歴、latest/compat/schema状態を追加
 - [x] `/ai`とDiscord/daily/weeklyへ修正先repo・host・product・fingerprintを追加
 - [x] 既存pull sourceとの後方互換testを通す

@@ -47,7 +47,7 @@ test-factory-reporter: ## BugHub factory reporter のprivacy/outbox/retry/schedu
 	node --test tests/factory-reporter/*.test.mjs
 
 test-factory-scan: ## 工場9製品scanの公開CLI・privacy・platform契約を検証
-	node --test tests/factory-scan/factory-scan.test.mjs
+	node --test tests/factory-scan/*.test.mjs
 
 ci: lint test-install test-update test-oracle test-factory-core test-factory-reporter test-factory-scan ## ローカル/CI 共通の全ゲート
 
