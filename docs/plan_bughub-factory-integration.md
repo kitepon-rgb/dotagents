@@ -407,6 +407,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
    - 2026-07-13: Throughline `0.6.2`（`e6ce6e3` / CI `29238704750`）、Spotter `1.4.23`（`a117a99` / CI `29238199094`）、Caveat `0.16.3`（`8f06d17` / CI `29238199765`）をnpm `latest`、annotated tag、GitHub Releaseへ公開した。
    - aiterm-mcp `0.12.2`（`239e7e4`）はtag CI `29245251184`のTrusted Publishingでnpmへ公開し、Release起点のMCP Registry workflow `29245462227`もgreen。4製品をregistry由来の隔離prefixへinstallし、version、native diagnostics、runtime snapshotを確認した。collectionは既定OFFで、このsmokeから外部送信は発生しない。
 0a. [ ] Wave 6の`gpt-connector`公開版、基盤CLI 3製品adapter/update契約、ServerManagerの固定12製品new-major endpoint、dotagents new-major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
+0b. [ ] SpotterのWindows Codex実行経路修正版を公開し、dotagentsの`.codex-sidecar.yml`へ`auditor` presetを収録して、4 hostでinstall・doctor・Codex auditor・sidecar diagnosticsを実配布版から検証する
 1. [ ] main-server: `FACTORY_INGEST_ENABLED=true`でv1を維持し、v2 ingest/view OFFでschema 4対応serverをDB backup付き配備 → `/readyz`とv1継続を確認 → v2 ingest/viewをON → v2 endpoint単体canaryを確認する。candidateはrevision一致activation markerまでHTTP書込みを503で閉じ、activation前の切替失敗だけをquiesced rollback setから自動復元する。旧containerなしの初回導入も同じfixtureで扱う
 1a. [x] v1 scannerへ一回限りの明示`--oracle-retired`入口を追加し、Oracle CLIを実行せず`not_applicable`にした最終full snapshotをschema検証付きで生成する。通常scanとv1 rollback schedulerは従来どおりOracleを観測する
 1b. [x] `factory-reporter` / `factory-reporter-v2`がinstall.shの配布symlink経由でもmainを必ず実行し、exit 0・無出力でenqueue/flushを省略しない回帰テストを追加する

@@ -29,6 +29,9 @@ allowed_paths:
   - tests/
 
 presets:
+  auditor:
+    workflow: auditor
+    readonly: true
   explore:
     workflow: explore
     readonly: true
