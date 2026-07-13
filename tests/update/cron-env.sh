@@ -14,7 +14,7 @@ trap 'rm -rf "$TEST_HOME" "$EMPTY_HOME"' EXIT
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
 mkdir -p "$TEST_HOME/.nvm/fake-bin" "$TEST_HOME/base-bin"
-for command_path in /bin/date /bin/mkdir /usr/bin/tee "$(command -v node)"; do
+for command_path in /bin/date /bin/mkdir /usr/bin/tee "$(command -v readlink)" "$(command -v node)"; do
   [ -x "$command_path" ] || fail "test prerequisite がない: $command_path"
   ln -s "$command_path" "$TEST_HOME/base-bin/${command_path##*/}"
 done
@@ -121,6 +121,26 @@ node -e '
   for(const id of ["claude-code","codex-cli","grok-build"]){const r=v.products[id];if(!r||r.post_gate_status!=="success"||!["success","skipped"].includes(r.operation_status))process.exit(1)}
 ' "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" \
   || fail '3基盤CLIの更新前後・post-gate台帳を保存していない'
+
+# install.sh の配布面は agents-update と ledger helper の拡張子を落とした symlink になる。
+# source 実行と同じ helper を解決できなければ、実 package 更新なしのこのfixtureでも非0になる。
+mkdir -p "$TEST_HOME/distributed-bin"
+ln -s "$ROOT/bin/agents-update.sh" "$TEST_HOME/distributed-bin/agents-update"
+ln -s "$ROOT/bin/factory-toolchain-ledger.mjs" "$TEST_HOME/distributed-bin/factory-toolchain-ledger"
+if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" \
+  FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  RUN_ID=distributed-symlink \
+  /bin/bash "$TEST_HOME/distributed-bin/agents-update" >"$TEST_HOME/distributed-symlink.out" 2>&1; then
+  cat "$TEST_HOME/distributed-symlink.out" >&2
+  fail '配布symlink経由のagents-updateが失敗した'
+fi
+[ "$(grep -c '^distributed-symlink:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+  || fail '配布symlink経由でcurated packageをfake npmへ渡していない'
+if grep -q 'MODULE_NOT_FOUND' "$TEST_HOME/distributed-symlink.out"; then
+  fail '配布symlink経由でledger helperを誤った拡張子付きpathへ解決した'
+fi
 
 if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \

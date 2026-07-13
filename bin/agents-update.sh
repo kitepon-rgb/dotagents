@@ -37,8 +37,15 @@ esac
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/agents-update.log"
 FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v2-schedule-runner}"
-case "$0" in */*) script_parent=${0%/*} ;; *) script_parent=. ;; esac
-SCRIPT_DIR="$(CDPATH='' cd -- "$script_parent" && pwd -P)"
+script_source="${BASH_SOURCE[0]}"
+while [ -h "$script_source" ]; do
+  case "$script_source" in */*) script_parent=${script_source%/*} ;; *) script_parent=. ;; esac
+  script_parent="$(CDPATH='' cd -P -- "$script_parent" && pwd)"
+  script_source="$(readlink -- "$script_source")"
+  case "$script_source" in /*) ;; *) script_source="$script_parent/$script_source" ;; esac
+done
+case "$script_source" in */*) script_parent=${script_source%/*} ;; *) script_parent=. ;; esac
+SCRIPT_DIR="$(CDPATH='' cd -P -- "$script_parent" && pwd)"
 TOOLCHAIN_LEDGER_HELPER="${TOOLCHAIN_LEDGER_HELPER:-$SCRIPT_DIR/factory-toolchain-ledger.mjs}"
 TOOLCHAIN_LEDGER_FILE="${TOOLCHAIN_LEDGER_FILE:-$LOG_DIR/toolchain-ledger.json}"
 
