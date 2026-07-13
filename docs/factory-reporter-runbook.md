@@ -98,7 +98,7 @@ v2からそのhostだけをrollbackする時は、次の順序を守る。
 4. `factory-reporter-scheduler install --wire-major v1 --dry-run --platform <OS>`でartifactを確認し、H承認後に`--apply`でv1 schedulerを登録する。
 5. v1送信を再開する。v2 outboxはv1として再送・変換しない。
 
-v2へ復帰する時は、main-serverで `docker compose exec -T bughub node src/factory-admin.js retire-oracle --host-id <host-id>` を実行し、v1の最終full snapshotでOracleを`not_applicable`へ遷移してBugHub受理を確認する。次にhost configの`reporting.endpoint`を`/api/factory/v2/reports`へ変更し、`factory-reporter-scheduler install --wire-major v2 --dry-run --platform <OS>`を確認後、H承認済みの`--apply`でv2 schedulerを登録する。v2の最初のfull snapshotは固定12製品集合として送信し、v1の消失だけでOracle履歴やissueをresolveしない。
+v2へ復帰する時は、main-serverで `docker compose exec -T bughub node src/factory-admin.js retire-oracle --host-id <host-id>` を実行する。続けてv1 endpointを向いたhost configで `factory-scan --oracle-retired --config <config> --output <report> --ack-output <acks>` を一度だけ実行し、通常のv1 reporterでenqueue/flushして、Oracleが`not_applicable`になった最終full snapshotのBugHub受理を確認する。`--oracle-retired`はOracle CLIを実行せず、指定なしの通常scanとv1 rollback schedulerは従来どおりOracleを観測する。次にhost configの`reporting.endpoint`を`/api/factory/v2/reports`へ変更し、`factory-reporter-scheduler install --wire-major v2 --dry-run --platform <OS>`を確認後、H承認済みの`--apply`でv2 schedulerを登録する。v2の最初のfull snapshotは固定12製品集合として送信し、v1の消失だけでOracle履歴やissueをresolveしない。
 
 ## 5. rotation
 

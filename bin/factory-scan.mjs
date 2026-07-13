@@ -19,8 +19,13 @@ function parseArgs(argv) {
   const options = {};
   for (let index = 0; index < argv.length; index++) {
     const key = argv[index];
+    if (key === '--oracle-retired') {
+      if (options.oracleRetired) throw new Error('--oracle-retiredが重複しています');
+      options.oracleRetired = true;
+      continue;
+    }
     if (!['--config', '--output', '--ack-output', '--cwd'].includes(key) || !argv[index + 1] || options[key]) {
-      throw new Error('使い方: factory-scan --config <file> --output <file> [--ack-output <file>] [--cwd <project>]');
+      throw new Error('使い方: factory-scan --config <file> --output <file> [--ack-output <file>] [--cwd <project>] [--oracle-retired]');
     }
     options[key.slice(2)] = argv[++index];
   }
@@ -38,6 +43,7 @@ try {
     arch: arch(),
     platform: platform(),
     collectionEnabled: config.collection.enabled,
+    oracleRetired: options.oracleRetired === true,
   });
   validateReport(report);
   assertConfigIdentity(config, report);

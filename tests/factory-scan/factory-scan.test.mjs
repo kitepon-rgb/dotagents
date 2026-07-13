@@ -103,10 +103,11 @@ fi`);
 echo '{"schema_version":"dotagents.bughub-external-probe.v1","product_version":"0.1.0","source_revision":"0123456789abcdef0123456789abcdef01234567","status":"ready","reason_code":"ready","checks":[{"id":"database","status":"pass","reason_code":"ready"},{"id":"schema","status":"pass","reason_code":"ready"},{"id":"pull_poll","status":"pass","reason_code":"ready"},{"id":"factory_ingest","status":"pass","reason_code":"ready"},{"id":"factory_delivery","status":"pass","reason_code":"ready"},{"id":"source_revision","status":"pass","reason_code":"revision_match"}]}'`);
 }
 
-function runScanner(box, extraEnv = {}) {
+function runScanner(box, extraEnv = {}, extraArgs = []) {
   return new Promise((done) => {
     const child = spawn(process.execPath, [
       CLI, '--config', box.config, '--output', box.output, '--cwd', box.root,
+      ...extraArgs,
     ], {
       env: { ...process.env, PATH: `${box.bin}:${process.env.PATH}`, ...extraEnv },
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -161,6 +162,37 @@ fi`);
     execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim(),
   );
   assert.equal((await stat(box.output)).mode & 0o777, 0o600);
+});
+
+test('--oracle-retiredはOracle CLIを実行せずv1最終not_applicable snapshotを生成する', async (t) => {
+  const box = await sandbox(t);
+  await installHealthyCommands(box);
+  const calls = join(box.root, 'oracle.calls');
+  await box.script('oracle', `echo called >> '${calls}'; exit 99`);
+  await writeFile(box.config, JSON.stringify(validConfig()));
+
+  const result = await runScanner(box, {}, ['--oracle-retired']);
+  assert.equal(result.code, 0, result.stderr);
+  const report = JSON.parse(await readFile(box.output, 'utf8'));
+  assert.doesNotThrow(() => validateReport(report));
+  assert.equal(report.report_mode, 'full');
+  assert.deepEqual(report.products.oracle, {
+    presence_status: 'not_applicable',
+    contract_version: '1.0',
+    checks: [],
+    runtime_errors: [],
+    resolutions: [],
+  });
+  await assert.rejects(readFile(calls), { code: 'ENOENT' });
+});
+
+test('--oracle-retiredの重複はreport生成前に拒否する', async (t) => {
+  const box = await sandbox(t);
+  await writeFile(box.config, JSON.stringify(validConfig()));
+  const result = await runScanner(box, {}, ['--oracle-retired', '--oracle-retired']);
+  assert.notEqual(result.code, 0);
+  assert.match(result.stderr, /重複/);
+  await assert.rejects(readFile(box.output), { code: 'ENOENT' });
 });
 
 test('Caveat native diagnosticsはexitとの組合せ、DB射影、exact schemaを厳密に検証する', async (t) => {
