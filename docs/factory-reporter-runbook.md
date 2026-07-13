@@ -10,7 +10,7 @@
 - token、実config、outboxはgitへ入れない。tokenを引数、query parameter、通常JSON出力へ出さない。
 - host identityはtop-level `host.id / host.profile`で固定し、tokenのserver-side bindingと一致させる。
 - credential fileは所有者限定。POSIXはdirectory `0700`・file `0600`、Windowsは継承ACLを除去して現在userだけにする。
-- 本番BugHubはv2の`FACTORY_V2_INGEST_ENABLED=true`を明示するまで`/api/factory/v2/reports`を404にする。v1の`FACTORY_INGEST_ENABLED`はOracle互換・手動rollback専用である。
+- 本番BugHubはv2の`FACTORY_V2_INGEST_ENABLED=true`を明示するまで`/api/factory/v2/reports`を404にする。v1の`FACTORY_INGEST_ENABLED=true`はserver-first互換期間とhost別rollbackの間だけ維持する。
 - Pi5からのServerManager outageは、main-server上の`factory-external-event`だけで記録する。任意本文・path・URLは受け取らず、固定`check`/`reason`とcanonical UTCだけを保存する。
 
 ## 1. 送信OFFでconfigを配置
@@ -84,7 +84,21 @@ reporter configの`reporting`を次の形へ編集する。tokenが存在する�
 }
 ```
 
-Windowsでは`credential_file`にWindows nativeの絶対pathをJSON escapingして指定する。次にmain-serverの`~/bughub/.env`へ`FACTORY_INGEST_ENABLED=true`を追加し、ServerManagerの`bughub/deploy.sh`をまず引数なしでdry-run、削除一覧確認後だけ`--apply`する。
+Windowsでは`credential_file`にWindows nativeの絶対pathをJSON escapingして指定する。host clientをONにする前に、次のserver-first順序を完了する。v1の`FACTORY_INGEST_ENABLED`はOracle互換期間と手動rollbackのため、全host移行完了まで独立して維持する。
+
+## 4a. server-first cutover と host別rollback
+
+main-serverはまず`FACTORY_INGEST_ENABLED=true`でv1を維持し、`FACTORY_V2_INGEST_ENABLED=false`および`FACTORY_V2_VIEWS_ENABLED=false`のままschema 4対応codeをdeployする。`bughub/deploy.sh`は引数なしでdry-run（削除一覧確認）してからH承認後に`--apply`する。次に`/readyz`とv1 report受理を確認する。その後だけ両v2 flagを`true`にして再deployし、v2 endpoint canaryを確認する。host clientはこのserver canaryの後に1台ずつ切り替える。全hostを一括で切り替えず、`FACTORY_ORACLE_RETIRED`のようなglobal booleanは使わない。cutover状態とOracle retirementはhostごとに扱う。
+
+v2からそのhostだけをrollbackする時は、次の順序を守る。
+
+1. `factory-reporter-scheduler uninstall --dry-run --platform <OS>`を確認し、H承認後に`--apply`でv2 schedulerを停止する。v2 state/outboxは削除しない。
+2. host configの`reporting.endpoint`を`/api/factory/v1/reports`へ変更する。
+3. main-serverで `docker compose exec -T bughub node src/factory-admin.js restore-oracle --host-id <host-id>` を実行する。
+4. `factory-reporter-scheduler install --wire-major v1 --dry-run --platform <OS>`でartifactを確認し、H承認後に`--apply`でv1 schedulerを登録する。
+5. v1送信を再開する。v2 outboxはv1として再送・変換しない。
+
+v2へ復帰する時は、main-serverで `docker compose exec -T bughub node src/factory-admin.js retire-oracle --host-id <host-id>` を実行し、v1の最終full snapshotでOracleを`not_applicable`へ遷移してBugHub受理を確認する。次にhost configの`reporting.endpoint`を`/api/factory/v2/reports`へ変更し、`factory-reporter-scheduler install --wire-major v2 --dry-run --platform <OS>`を確認後、H承認済みの`--apply`でv2 schedulerを登録する。v2の最初のfull snapshotは固定12製品集合として送信し、v1の消失だけでOracle履歴やissueをresolveしない。
 
 ## 5. rotation
 
@@ -105,7 +119,8 @@ ssh main-server 'cd /home/kite/bughub && docker compose exec -T bughub node src/
 - credentialだけを止める: `factory-admin.js revoke --credential-id <id>`。
 - host全体を廃止する: `factory-admin.js retire-host --host-id <host>`。active credentialを同時にrevokeする。
 - reporter送信だけを止める: configの`reporting.enabled=false`。既存outboxは削除しない。
-- server入口を止める: `FACTORY_INGEST_ENABLED`を削除またはfalseにして、dry-run後に再deployする。既存pull collectorは継続する。
+- v2だけをrollbackする: `FACTORY_V2_INGEST_ENABLED=false`と`FACTORY_V2_VIEWS_ENABLED=false`にして、dry-run後に再deployする。schema 4対応codeとv1入口、既存pull collectorは継続する。
+- factory入口を全停止する: v1/v2の3 flagをすべてfalseにして再deployする。host schedulerを先に停止し、outboxを保持する。
 - token漏洩時はrotation猶予を使わず旧credentialを即revokeし、server staging・対象host tokenを置換する。
 
 秘密を含むfileの削除・転送、`.env`変更、factory入口ON、本番deployは端末ごとのH確認を伴う。通常のinstall/updateがこれらを暗黙に実行してはならない。
@@ -162,24 +177,24 @@ factory-external-event resolve --check availability --reason unreachable \
 
 ## 8. 定期scheduler（dry-runから開始）
 
-`factory-reporter-scheduler` は `factory-reporter-v2-schedule-runner` を毎時17分に起動するOS別schedulerを管理する。runnerは`collection.enabled=true`の時だけ v2 scan → enqueue → flush を行い、収集・送信ともOFFならstate/outboxに触れず正常skipする。設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushはnetwork I/Oをしない。
+`factory-reporter-scheduler` は毎時17分に起動するOS別schedulerを管理する。既定の`--wire-major v2`は`factory-reporter-v2-schedule-runner`と`factory-reporter-v2` stateを使う。手動rollback時だけ`--wire-major v1`で`factory-reporter-schedule-runner`とv1 stateを使う。runnerは該当wireの契約に従ってscan → enqueue → flush を行い、設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushはnetwork I/Oをしない。
 
 最初は必ずdry-runで生成物・登録commandを確認する。実登録は明示`--apply`だけであり、通常のinstall/updateはschedulerを登録しない。configが未配置または不正ならinstall/runnerはfail closedで、scheduler登録もscanも行わない。停止のためのuninstallだけはconfigなしでも実行できる。
 
 ```bash
 # macOS
-factory-reporter-scheduler install --dry-run --platform darwin
+factory-reporter-scheduler install --dry-run --platform darwin --wire-major v2
 # Linux / WSL2
-factory-reporter-scheduler install --dry-run --platform linux
+factory-reporter-scheduler install --dry-run --platform linux --wire-major v2
 # Windows native PowerShell
-factory-reporter-scheduler install --dry-run --platform win32
+factory-reporter-scheduler install --dry-run --platform win32 --wire-major v2
 ```
 
-承認済みの対象hostだけで、dry-runの出力を確認してから同じcommandに`--apply`を付ける。`--apply`は実行中OSと一致するplatformだけを受け付ける。
+承認済みの対象hostだけで、dry-runの出力を確認してから同じcommandに`--apply`を付ける。`--apply`は実行中OSと一致するplatformだけを受け付ける。uninstallは登録済みの共通launchd label / cron marker / Task Scheduler名を外すためwire-major非依存である。
 
-- macOS: `~/Library/LaunchAgents/com.kite.factory-reporter.plist`を`launchctl bootstrap gui/$UID`で登録する。`node`の絶対path → v2 runnerの絶対pathをXML escapeした引数配列で起動する。state/logは`$XDG_STATE_HOME/dotagents/factory-reporter-v2/`（既定`~/.local/state/...`）で0700。
-- Linux / WSL2: 現在userのcrontabに`# dotagents-factory-reporter`で終わる**完全一致の自管理行だけ**を置換する。cron最小環境でもNodeとrunnerの絶対pathをPOSIX single-quoteして起動する。WSL2ではcron service自体を別途常設する。
-- Windows native: `%LOCALAPPDATA%\dotagents\factory-reporter-v2\scheduler\dotagents-factory-reporter.xml`をUTF-8で生成し、毎時のTaskを`schtasks.exe /Create /TN dotagents-factory-reporter /XML <file> /F`で登録する。apply時は継承・既存明示ACEを外し、現在userのSIDだけを許可するprivate ACLをPowerShell/.NETで設定する。
+- macOS: `~/Library/LaunchAgents/com.kite.factory-reporter.plist`を`launchctl bootstrap gui/$UID`で登録する。`node`の絶対path → 選択wireのrunnerをXML escapeした引数配列で起動する。runner state/logはwireごとのstateで0700、control artifactはmajor非依存である。
+- Linux / WSL2: 現在userのcrontabに`# dotagents-factory-reporter`で終わる**完全一致の自管理行だけ**を置換する。cron最小環境でもNodeとrunnerの絶対pathをPOSIX single-quoteして起動する。control artifactは`factory-reporter-scheduler/`配下でmajor非依存、runner state/outboxは削除しない。WSL2ではcron service自体を別途常設する。
+- Windows native: `%LOCALAPPDATA%\dotagents\factory-reporter-scheduler\scheduler\dotagents-factory-reporter.xml`をUTF-8で生成し、毎時のTaskを`schtasks.exe /Create /TN dotagents-factory-reporter /XML <file> /F`で登録する。control artifactはmajor非依存で、runner state/outboxは削除しない。apply時は継承・既存明示ACEを外し、現在userのSIDだけを許可するprivate ACLをPowerShell/.NETで設定する。
 
 停止はoutboxを消さずschedulerだけ外す。`factory-reporter-scheduler uninstall --dry-run --platform <OS>`で対象commandを確認し、承認後に`--apply`を付ける。
 
@@ -228,9 +243,9 @@ runner全体へ別の強制timeoutは重ねない。各外部境界を上表でb
 
 major変更は同じv1 endpointの意味を差し替えず、`/api/factory/v2/reports`とv2 schemaを追加する。順序は次で固定する。
 
-1. ServerManagerへv1を保持したままv2 endpoint、validator、DB migration、dedupe、notification、rollback fixtureを追加してdeployする。
+1. ServerManagerへv1を保持したままv2 endpoint、validator、DB migration、dedupe、notification、rollback fixtureを追加し、`FACTORY_INGEST_ENABLED=true`、v2 flagsは両方falseでdeployする。`/readyz`とv1 report受理を確認後、`FACTORY_V2_INGEST_ENABLED=true`と`FACTORY_V2_VIEWS_ENABLED=true`で再deployし、v2 endpoint canaryを通す。
 2. dotagentsへv1生成を残したままv2 client/outboxを追加する。majorごとにbody bytesとdead-letterを分離し、v2失敗をv1成功へ偽装しない。
-3. 1 hostずつHでv2へopt-inし、v1/v2のcurrent、履歴、resolve/reopen、Discord、`/ai`が同じ意味になることをcanaryする。rollbackはそのhostをv1 configへ戻し、v2 outboxを消さない。
+3. 1 hostずつHでv2へopt-inし、v1/v2のcurrent、履歴、resolve/reopen、Discord、`/ai`が同じ意味になることをcanaryする。rollbackはv2 schedulerをuninstall（outbox保持）→config endpointをv1へ変更→host別restore-oracle→`--wire-major v1` scheduler登録→v1送信再開の順とする。復帰はretire-oracle→v1最終`not_applicable`受理→config endpointをv2へ変更→`--wire-major v2` scheduler登録→初回12製品full snapshotの順とする。
 4. 全host移行、旧v1 outbox drain、最大offline/dedupe保持期間、rollback drill完了後にだけv1 retireを別waveで承認する。履歴tableを削除しない。
 
 後方互換なoptional field追加でも、v1は`additionalProperties:false`なのでserverを先に更新し、旧client fixtureを保持する。config schema、製品native diagnostics schema、BugHub readiness schemaはwire majorとは別契約であり、同時にまとめてversionを上げない。

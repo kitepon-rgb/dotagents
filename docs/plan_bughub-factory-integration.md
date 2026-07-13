@@ -406,11 +406,12 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
    - 2026-07-13: Throughline `0.6.2`（`e6ce6e3` / CI `29238704750`）、Spotter `1.4.23`（`a117a99` / CI `29238199094`）、Caveat `0.16.3`（`8f06d17` / CI `29238199765`）をnpm `latest`、annotated tag、GitHub Releaseへ公開した。
    - aiterm-mcp `0.12.2`（`239e7e4`）はtag CI `29245251184`のTrusted Publishingでnpmへ公開し、Release起点のMCP Registry workflow `29245462227`もgreen。4製品をregistry由来の隔離prefixへinstallし、version、native diagnostics、runtime snapshotを確認した。collectionは既定OFFで、このsmokeから外部送信は発生しない。
 0a. [ ] Wave 6の`gpt-connector`公開版、基盤CLI 3製品adapter/update契約、ServerManagerの固定12製品new-major endpoint、dotagents new-major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
-1. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認
-2. [ ] main-server: Hでtoken/config opt-in、scheduler apply、DB backup付きdeploy → FでBugHub自身を含むコア9＋基盤CLI 3の全12管理製品とrevision attestationを確認
-3. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認
-4. [ ] FOX Windows native: Hでtoken/config opt-inとTask Scheduler apply → FでNode入口、実火・uninstall・所有者限定ACL、WSLとhost IDを混同しないことを確認
-5. [ ] Hで意図的障害を許可後、Fで全環境のinstalled/latest/compat matrixと意図的1件fail→通知→修復→resolve→再発なしを実証
+1. [ ] main-server: `FACTORY_INGEST_ENABLED=true`でv1を維持し、v2 ingest/view OFFでschema 4対応serverをDB backup付き配備 → `/readyz`とv1継続を確認 → v2 ingest/viewをON → v2 endpoint単体canaryを確認する。candidateはrevision一致activation markerまでHTTP書込みを503で閉じ、activation前の切替失敗だけをquiesced rollback setから自動復元する。旧containerなしの初回導入も同じfixtureで扱う
+2. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認。host切替は`retire-oracle`→v1最終`not_applicable`→v2初回full snapshotの順にする
+3. [ ] main-server client: Hでtoken/config opt-inとscheduler apply → FでBugHub自身を含むコア9＋基盤CLI 3の全12管理製品とrevision attestationを確認
+4. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認
+5. [ ] FOX Windows native: Hでtoken/config opt-inとTask Scheduler apply → FでNode入口、実火・uninstall・所有者限定ACL、WSLとhost IDを混同しないことを確認
+6. [ ] Hで意図的障害を許可後、Fで全環境のinstalled/latest/compat matrixと意図的1件fail→通知→修復→resolve→再発なしを実証
 
 ### Wave 9 — 定常運用と完了
 
@@ -445,11 +446,13 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 ## 10. rollback
 
 - BugHub ingestionはfeature flagで無効化でき、既存pull collectorだけで起動できること。
-- additive migrationでは旧codeが新tableを無視する**code-only rollbackを第一選択**にする。
+- schema 4移行前のbuild失敗では稼働中の旧container・旧revision manifest・DBを変更しない。container切替時は旧image・旧manifest・quiesced DB backupを一組にし、candidate起動/readiness失敗時だけ自動復元する。
+- candidateは`/readyz`成功後にsource revision一致のactivation markerをatomic保存するまで、HTTP書込みを503で拒否する。marker保存の成否がSSH切断で曖昧な時はACK済み書込み消失を避けるためDBを自動復元せず、candidateをfail closedのまま手動確認する。
+- schema 4移行後に書込みを受理した環境の通常rollbackは、v2 scheduler停止（outbox保持）と`FACTORY_V2_INGEST_ENABLED=false`／`FACTORY_V2_VIEWS_ENABLED=false`で行い、schema 4対応code上のv1 endpointを継続する。旧schema 2 code＋旧DB復元は切替直後の自動復元以外に使わず、必要時はcutover後deltaの処遇を別途裁定する。
 - 旧DB復元が必要な時はquiesce、cutover後delta export、factory report replay、既存pull/resolve差分の処遇をrunbook化し、単純なbackup上書きでcanary中のデータを失わない。
 - reporterはschedulerから外して停止でき、outboxを保持したまま送信だけ止められること。
 - 製品native diagnosticsは既存CLI挙動を変更せず追加入口に限定すること。
-- Oracleを含むv1 endpointと`gpt-connector`を含む新major endpointをfeature flagで独立停止でき、server-first導入後も旧clientを互換期間中は受理できること。
+- Oracleを含むv1 endpointと`gpt-connector`を含む新major endpointをfeature flagで独立停止でき、server-first導入後も旧clientを互換期間中は受理できること。Oracle退役はglobal flagではなくhost別`factory-admin retire-oracle`、復帰は`restore-oracle`で行う。
 - `gpt-connector`は前releaseとMCP command/envへ戻せること。必要時のOracle一時切戻しは手動・期限付きとし、BugHubのOracle履歴を削除せず、`gpt-connector`失敗から自動発動させないこと。
 - Claude Code/Codexは直前の確認済みnpm versionへ明示再installでき、Grok Buildは`grok update --version <version>`で直前stableへ戻せること。rollback後も恒久pinにせず、BugHubへdowngrade理由と再更新待ちを明示すること。
 - 各repo・各waveを独立commitにし、複数repoを一つの履歴操作で巻き戻さないこと。
@@ -472,3 +475,5 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 - 反証5「Claude Code／Codex／Grok Buildもコア製品へ足してコア12と呼べばよい」: 棄却。3製品は工場能力そのものではなく、その能力を動かす交換可能な基盤toolchainであり、所有境界と変更管理を混同する。
 - 反証6「`agents-update`のlogに名前があればBugHub productは不要」: 棄却。logだけではhost×productのcurrent/history、latest差、互換性、resolve/reopen、通知を一意に管理できない。
 - 反証7「Grok Buildもnpm `@latest`へ入れればよい」: 棄却。実体は`~/.grok/bin/grok`のinternal installerで、正規更新面はmachine-readable checkを備えた`grok update`である。
+
+2026-07-14、rollout直前に独立refuterでserver-first、schema rollback、client v1復帰、Oracle host別退役、deploy transactionを再監査した。初回指摘の誤flag/order、build前manifest更新、schema 4後の旧code rollback、v1 scheduler復帰不能、global Oracle flagを修正した後、deploy failure pathからremote command構文、旧containerなし、activation前ACK消失、modern旧imageのliveness誤判定、WAL copy失敗の成功扱いを追加検出した。write activation gate、quiesced atomic snapshot、old有無分岐、modern/legacy readiness分岐、remote `set -euo pipefail`と実shell構文fixtureへ直し、最終再反証でP0/P1なしを確認した。
