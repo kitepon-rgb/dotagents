@@ -478,7 +478,7 @@ async function windowsCommandFixture(t) {
   const bin = join(root, 'bin with space');
   await mkdir(bin, { recursive: true });
   t.after(() => rm(root, { recursive: true, force: true }));
-  const npmShim = (entry, { elsePathext = true, pathext = '%PATHEXT:;.JS;=;%' } = {}) => `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n SET "_prog=node"\r\n${elsePathext ? `  SET PATHEXT=${pathext}\r\n` : ''})\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & ${elsePathext ? '' : 'set PATHEXT=%PATHEXT:;.JS;=;% & '}"%_prog%"  "%dp0%\\${entry}" %*\r\n`;
+  const npmShim = (entry, { elsePathext = true, pathext = '%PATHEXT:;.JS;=;%', programIndent = ' ' } = {}) => `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n${programIndent}SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n${programIndent}SET "_prog=node"\r\n${elsePathext ? `  SET PATHEXT=${pathext}\r\n` : ''})\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & ${elsePathext ? '' : 'set PATHEXT=%PATHEXT:;.JS;=;% & '}"%_prog%"  "%dp0%\\${entry}" %*\r\n`;
   return {
     root, bin,
     env: { Path: bin, PathExt: '.CMD;.EXE' },
@@ -499,7 +499,7 @@ async function windowsCommandFixture(t) {
 test('Windows npm .cmd実物variantは空白を含むPathから検証済みNode entrypointへ解決する', async (t) => {
   const box = await windowsCommandFixture(t);
   const entry = await box.entry('safe.js', 'process.exit(0);\n');
-  await box.cmd('safe-cli', 'node_modules\\safe-package\\bin\\safe.js');
+  await box.cmd('safe-cli', 'node_modules\\safe-package\\bin\\safe.js', { programIndent: '  ' });
   const resolved = await resolveWindowsCommand('safe-cli', { env: box.env, pathModule: { ...posix, delimiter: ';' } });
   assert.deepEqual(resolved, { command: process.execPath, prefixArgs: [await realpath(entry)] });
 });
