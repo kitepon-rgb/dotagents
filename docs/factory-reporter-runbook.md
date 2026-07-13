@@ -212,6 +212,14 @@ Claude Code、Codex、Grok Build は更新ごとにowner-onlyのtoolchain ledger
 
 この接続はschedulerを新規登録せず、configを作成・変更せず、collection/reportingをONにしない。実hostへのconfig・credential配置とON操作は前節までのH手順で別途行う。
 
+### v2 component health と post-update gate
+
+v2 report は Throughline、Spotter、aiterm-mcp の native diagnostics を単一の `native_diagnostics` へ縮約しない。各 component の `pass` / `fail` / `unverified` / `skipped` と reason をそのまま送る。通常定期実行は scan → enqueue → flush の成否だけで exit を決め、component health の判定は raw report と BugHub の host matrix に委譲する。
+
+`--post-update` だけは default-deny gate を適用する。`fail` は常時 blocking、`unverified` は次の完全一致 tuple だけ non-blocking とする: Spotter `codex_hooks/trust_not_machine_verifiable`、Throughline `evidence_restore_smoke/diagnostic_unverified` と `claude_connector/diagnostic_unverified`、aiterm-mcp `pty_list/pty_list_unverified`。未知の check、reason 違い、別 product は blocking である。`post_gate_pending` の既存例外は維持する。
+
+現 ServerManager は fail を中心に issue 化するため、critical な `unverified` が直ちに通知されない限界がある。reporter は通知のために `unverified` を `fail` へ変換しない。
+
 ## 10. 定常実行値
 
 定常値は次で固定する。変更時はscheduler生成fixture、runner/adapterのtimeout fixture、ServerManagerの通知fixture、本文を同じwaveで更新する。

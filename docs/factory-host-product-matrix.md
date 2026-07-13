@@ -60,6 +60,8 @@ read-only SSHとlocal PATHで確認した。PATH文字列そのものは端末�
 | FOX WSL2 | 旧Oracleを含む全8件解決 | not_applicable | 非login SSHではnpm prefix PATHが復元されないため、scheduler診断はlogin相当env必須 |
 | FOX Windows native | PowerShellで旧Oracleを含む全8件解決 | not_applicable | gpt-connector／基盤CLIは未検証 |
 
+native diagnostics は product overall に加えて component check を報告する。定期runnerは component health を exit failure へ変換せず、raw report を ServerManager/BugHub host matrix へ送る。post-update gate だけが有限 allowlist 以外の `unverified` と全 `fail` を blocking にする。ServerManager は現在 fail 中心に issue 化するため、critical `unverified` の即時通知は保証されない。
+
 ## reporter profileへの写像
 
 - `mac`: 上表Mac列

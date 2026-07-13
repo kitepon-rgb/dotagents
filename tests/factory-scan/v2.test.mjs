@@ -105,6 +105,9 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
   assert.equal(report.products['grok-build'].checks[0].check_id, 'stable_update'); assert.equal(report.products['grok-build'].update_status, 'current');
   assert.equal(report.products['gpt-connector'].compatibility_status, 'compatible'); assert.equal(report.products.servermanager.presence_status, 'not_applicable');
   assert.equal(report.products.caveat.compatibility_status, 'compatible');
+  assert.deepEqual(report.products.throughline.checks.map((item) => item.check_id), ['database_schema', 'codex_hooks', 'capture', 'restore', 'handoff', 'evidence_restore_smoke', 'claude_connector']);
+  assert.deepEqual(report.products.spotter.checks.map((item) => item.check_id), ['project_activation', 'marker_schema', 'throughline_context', 'claude_catalog', 'codex_catalog', 'audit_catalog_readiness', 'codex_hooks']);
+  assert.deepEqual(report.products['aiterm-mcp'].checks.map((item) => item.check_id), ['mcp', 'pty_list', 'runtime_error_store']);
   assert.equal(report.products['codex-sidecar'].installed_version, '1.2.3');
   assert.equal(report.products['claude-code'].compatibility_status, 'compatible'); assert.equal(report.products['codex-cli'].compatibility_status, 'compatible');
   assert.equal(report.products['claude-code'].checks.at(-1).status, 'pass');
