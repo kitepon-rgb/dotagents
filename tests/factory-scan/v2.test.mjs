@@ -35,6 +35,44 @@ function nativeFixtures() {
   };
 }
 
+test('native v1の状態別shape・exit code・unknown fieldをfail closedで扱う', { concurrency: false }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'factory-v2-native-negative-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
+  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  for (const name of ['caveat', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'claude', 'codex', 'npm', 'grok']) await script(name, 'exit 1');
+  const fixtures = nativeFixtures(); const unverifiedAiterm = structuredClone(fixtures.aiterm); unverifiedAiterm.overall = 'unverified'; unverifiedAiterm.pty_list = { ...unverifiedAiterm.pty_list, status: 'unverified', session_count: null };
+  await script('aiterm-mcp', `cat >/dev/null; echo '${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: JSON.stringify(unverifiedAiterm) }] } })}'`);
+  await script('throughline', `echo '${JSON.stringify(fixtures.throughline)}'; exit 1`);
+  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  const report = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
+  assert.equal(report.products.throughline.checks[0].reason_code, 'native_exit_mismatch');
+  assert.equal(report.products['aiterm-mcp'].compatibility_status, 'unverified');
+  assert.doesNotThrow(() => validateReportV2(report));
+});
+
+test('native diagnosticsの製品別不変条件と非0 exitを個別に拒否する', { concurrency: false }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'factory-v2-native-invariants-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
+  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  for (const name of ['caveat', 'gpt-connector', 'codegraph', 'markitdown', 'claude', 'codex', 'npm', 'grok']) await script(name, 'exit 1');
+  const fixtures = nativeFixtures();
+  const setJson = async (name, payload, exitCode = 0) => script(name, `echo '${JSON.stringify(payload)}'; exit ${exitCode}`);
+  const setAiterm = async (payload, exitCode = 0) => script('aiterm-mcp', `cat >/dev/null; echo '${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: JSON.stringify(payload) }] } })}'; exit ${exitCode}`);
+  const scan = () => scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, toolchainLedgerPath: join(root, 'missing-toolchain-ledger.json') });
+  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  await setJson('spotter', fixtures.spotter); await setJson('codex-sidecar', fixtures.sidecar); await setAiterm(fixtures.aiterm);
+  for (const mutate of [
+    (value) => { value.databaseSchema.databaseSchemaVersion = 7; },
+    (value) => { value.hooks.events.stop = 'unverified'; },
+    (value) => { value.readiness.capture.reason = 'not_ready'; },
+  ]) { const value = structuredClone(fixtures.throughline); mutate(value); await setJson('throughline', value); const report = await scan(); assert.equal(report.products.throughline.checks[0].reason_code, 'native_diagnostics_schema'); }
+  await setJson('throughline', fixtures.throughline);
+  const emptySpotter = structuredClone(fixtures.spotter); emptySpotter.checks = []; await setJson('spotter', emptySpotter); let report = await scan(); assert.equal(report.products.spotter.checks[0].reason_code, 'native_diagnostics_schema');
+  await setJson('spotter', fixtures.spotter);
+  const versionsDrift = structuredClone(fixtures.sidecar); versionsDrift.factoryReadiness.packageVersions.packages.mcp = '1.2.4'; await setJson('codex-sidecar', versionsDrift); report = await scan(); assert.equal(report.products['codex-sidecar'].checks[0].reason_code, 'native_diagnostics_schema');
+  const presetDrift = structuredClone(fixtures.sidecar); presetDrift.factoryReadiness.presets.notReady = 1; await setJson('codex-sidecar', presetDrift); report = await scan(); assert.equal(report.products['codex-sidecar'].checks[0].reason_code, 'native_diagnostics_schema');
+  await setJson('codex-sidecar', fixtures.sidecar); await setJson('spotter', fixtures.spotter, 1); report = await scan(); assert.equal(report.products.spotter.checks[0].reason_code, 'native_exit_mismatch');
+  await setJson('spotter', fixtures.spotter); await setAiterm(fixtures.aiterm, 1); report = await scan(); assert.equal(report.products['aiterm-mcp'].checks[0].reason_code, 'native_exit_mismatch');
+});
+
 test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull snapshotへ投影する', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
   const previousHome = process.env.HOME; process.env.HOME = root; t.after(() => { process.env.HOME = previousHome; });
