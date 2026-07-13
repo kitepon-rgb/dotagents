@@ -5,7 +5,7 @@
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 
-進捗（2026-07-14）: `gpt-connector`製品側は既存commit `67f38df`以降のlauncher修正を作業中、ServerManager/BugHub側はcommit `009d349`まで独立収容。dotagents側はv2固定12製品schema/scanner/reporter、基盤CLI更新台帳、host別Oracle退役、正典/MCP切替、配布CLIまで実装し、実`gpt-connector` consultで`gpt-5-6-thinking`＋`min`の成功とfactory diagnostics greenを確認した。固定負座標が複数displayで画面内へclampされる欠陥は、窓なしcold起動→background最小化target→正規PIDだけunhideする製品launcherへ置換した。新規Chrome PIDを約10ms間隔で15秒監視して画面内layer 0 window最大0、同時startの`started`/`already_ready`収束、`hidden=false`、CDP `minimized`、最小化中のmodels・実Chat成功、`show`→`start`の画面内window `0→1→0`を実測した。残件は製品commit・配布、全host配布・新規sessionでのMCP surface再読込、publish/deploy/canary/rollback等のHと全端末E2Eである。
+進捗（2026-07-14）: `gpt-connector`製品側はcommit `9856ea9`、ServerManager/BugHub側はcommit `009d349`、dotagents側はcommit `2b8c83c`まで独立収容した。dotagentsはv2固定12製品schema/scanner/reporter、基盤CLI更新台帳、host別Oracle退役、正典/MCP切替、配布CLIまで実装し、実`gpt-connector` consultで`gpt-5-6-thinking`＋`min`の成功とfactory diagnostics greenを確認した。固定負座標が複数displayで画面内へclampされる欠陥は、窓なしcold起動→background最小化target→正規PIDだけunhideする製品launcherへ置換した。新規Chrome PIDを約10ms間隔で15秒監視して画面内layer 0 window最大0、同時startの`started`/`already_ready`収束、`hidden=false`、CDP `minimized`、最小化中のmodels・実Chat成功、`show`→`start`の画面内window `0→1→0`を実測し、このMacのglobal CLIへsource installした。残件はregistry公開・全host配布、新規sessionでのMCP surface再読込、deploy/canary/rollback等のHと全端末E2Eである。
 
 ## 0. 目的
 
