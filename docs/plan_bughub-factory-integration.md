@@ -412,6 +412,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 1b. [x] `factory-reporter` / `factory-reporter-v2`がinstall.shの配布symlink経由でもmainを必ず実行し、exit 0・無出力でenqueue/flushを省略しない回帰テストを追加する
 1c. [x] v1受理後ACKを5製品の実公開response schemaへ合わせ、失敗時は生出力なしで製品IDをローカル結果へ残し、duplicate再受理で安全に完遂する
 1d. [x] macOS schedulerはHomebrew Cellarのversion固定Nodeではなくstable symlinkを保存し、stable入口欠落時は登録前に明示失敗する
+1e. [x] v1 reporterもHTTP/network/timeoutによる保持とpermanent rejectのdead-letterを送信失敗として非0終了し、rollback schedulerがfalse successにしない
 2. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認。host切替は`retire-oracle`→v1最終`not_applicable`→v2初回full snapshotの順にする
 3. [ ] main-server client: Hでtoken/config opt-inとscheduler apply → FでBugHub自身を含むコア9＋基盤CLI 3の全12管理製品とrevision attestationを確認
 4. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認

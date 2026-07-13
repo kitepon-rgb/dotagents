@@ -333,9 +333,14 @@ async function main() {
       ...(ackFailed > 0 ? { ack_failed_products: [...ackFailedProducts].sort() } : {}),
     };
   });
-  emit({ ok: outcome.ack_failed === 0, command, reporting_enabled: true, ...outcome, ...(await queueStats(loc)) });
-  if (outcome.ack_failed > 0) {
-    diagnostic('BugHub受理後のruntime error acknowledgementに失敗しました');
+  const failed = outcome.retained > 0 || outcome.dead_lettered > 0 || outcome.ack_failed > 0;
+  emit({ ok: !failed, command, reporting_enabled: true, ...outcome, ...(await queueStats(loc)) });
+  if (failed) {
+    diagnostic(outcome.ack_failed > 0
+      ? 'BugHub受理後のruntime error acknowledgementに失敗しました'
+      : outcome.dead_lettered > 0
+        ? 'BugHubに永久拒否されたreportをdead-letterへ隔離しました'
+        : 'outboxに未送信reportが残っています');
     process.exitCode = 1;
   }
 }

@@ -193,25 +193,27 @@ test('flushはoutbox reportとconfigのhost不一致をnetworkなしでdead-lett
   const box = await sandbox(); await writeReport(box); const server = await startServer(() => assert.fail('host mismatch must not network')); await writeConfig(box, server.endpoint);
   await run(box, ['enqueue', '--report', box.report, '--config', box.config]); await writeConfig(box, server.endpoint, true, 'test-host', 'wsl');
   const flushed = await run(box, ['flush', '--config', box.config]); assert.equal(flushed.json.dead_lettered, 1); assert.equal(server.received.length, 0); assert.equal((await readdir(deadDir(box))).length, 1); await server.close();
+  assert.equal(flushed.code, 1); assert.equal(flushed.json.ok, false); assert.match(flushed.stderr, /永久拒否/);
 });
 
 for (const status of [409, 413, 422]) test(`HTTP ${status} はdead-letterへ隔離する`, async () => {
   const box = await sandbox(); await writeReport(box); const server = await startServer((req, res) => { res.statusCode = status; res.end('{}'); }); await writeConfig(box, server.endpoint);
   await run(box, ['enqueue', '--report', box.report, '--config', box.config]); const flushed = await run(box, ['flush', '--config', box.config]);
-  assert.equal(flushed.json.dead_lettered, 1); assert.equal((await readdir(deadDir(box))).length, 1); await server.close();
+  assert.equal(flushed.code, 1); assert.equal(flushed.json.ok, false); assert.equal(flushed.json.dead_lettered, 1); assert.match(flushed.stderr, /永久拒否/); assert.equal((await readdir(deadDir(box))).length, 1); await server.close();
 });
 
 for (const status of [401, 429]) test(`HTTP ${status} は復旧可能としてoutboxを保持する`, async () => {
   const box = await sandbox(); await writeReport(box); const server = await startServer((req, res) => { res.statusCode = status; res.end('{}'); }); await writeConfig(box, server.endpoint);
   await run(box, ['enqueue', '--report', box.report, '--config', box.config]); const flushed = await run(box, ['flush', '--config', box.config]);
-  assert.equal(flushed.json.retained, 1); assert.equal((await readdir(queueDir(box))).length, 1); await server.close();
+  assert.equal(flushed.code, 1); assert.equal(flushed.json.ok, false); assert.equal(flushed.json.retained, 1); assert.match(flushed.stderr, /未送信report/); assert.equal((await readdir(queueDir(box))).length, 1); await server.close();
 });
 
 test('500後は本文bytesを変えず再送する（crash/応答消失と同じ保持経路）', async () => {
   const box = await sandbox(); const payload = await writeReport(box); let calls = 0;
   const server = await startServer((req, res) => { calls++; if (calls === 1) { res.statusCode = 500; return res.end('{}'); } accepted(res, report().report_id); }); await writeConfig(box, server.endpoint);
   await run(box, ['enqueue', '--report', box.report, '--config', box.config]);
-  assert.equal((await run(box, ['flush', '--config', box.config])).json.retained, 1);
+  const retained = await run(box, ['flush', '--config', box.config]);
+  assert.equal(retained.code, 1); assert.equal(retained.json.ok, false); assert.equal(retained.json.retained, 1);
   assert.equal((await run(box, ['flush', '--config', box.config])).json.sent, 1);
   assert.deepEqual(server.received[0].body, payload); assert.deepEqual(server.received[1].body, payload); await server.close();
 });
@@ -219,7 +221,7 @@ test('500後は本文bytesを変えず再送する（crash/応答消失と同じ
 test('timeoutはoutboxを保持する', async () => {
   const box = await sandbox(); await writeReport(box); const server = await startServer(async () => { await new Promise((resolveDelay) => setTimeout(resolveDelay, 10_500)); }); await writeConfig(box, server.endpoint);
   await run(box, ['enqueue', '--report', box.report, '--config', box.config]); const flushed = await run(box, ['flush', '--config', box.config]);
-  assert.equal(flushed.json.retained, 1); assert.equal((await readdir(queueDir(box))).length, 1); await server.close();
+  assert.equal(flushed.code, 1); assert.equal(flushed.json.ok, false); assert.equal(flushed.json.retained, 1); assert.equal((await readdir(queueDir(box))).length, 1); await server.close();
 });
 
 test('single-flight lockは並行flushを拒否する', async () => {
@@ -245,5 +247,5 @@ test('outbox overflowは既存queueを保持して新規enqueueを拒否する',
 test('malformed outbox itemはflushを塞がずdead-letterへ隔離する', async () => {
   const box = await sandbox(); const server = await startServer(() => assert.fail('malformed must not network')); await writeConfig(box, server.endpoint);
   await mkdir(queueDir(box), { recursive: true }); await writeFile(join(queueDir(box), 'broken.json'), '{bad');
-  const flushed = await run(box, ['flush', '--config', box.config]); assert.equal(flushed.json.dead_lettered, 1); assert.equal((await readdir(deadDir(box))).length, 1); await server.close();
+  const flushed = await run(box, ['flush', '--config', box.config]); assert.equal(flushed.code, 1); assert.equal(flushed.json.ok, false); assert.equal(flushed.json.dead_lettered, 1); assert.equal((await readdir(deadDir(box))).length, 1); await server.close();
 });
