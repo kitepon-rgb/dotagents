@@ -1,7 +1,7 @@
 # 工場コア9製品 BugHub 統合計画
 
 作成: 2026-07-13  
-状態: 実装中（Wave 0〜5のCaveat以外は完了、Wave 6以降を継続中）
+状態: 実装中（Wave 0〜5のrepo実装は完了、実環境登録はWave 8へ継続。Oracle→gpt-connector置換をWave 6へ追加し、Wave 7以降を継続中）
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 
@@ -10,6 +10,8 @@
 dotagents が管理対象とするコア9製品について、全現役端末の導入version、更新結果、正規diagnostics、state/schema/migration、親別connector互換、既知bugをBugHubへ集約する。
 
 工場そのものはdotagentsである。ServerManagerはdotagentsが管理・連携する中央管理コアで、BugHubはServerManager内部のversion・bug・compatibility統括コンポーネントである。BugHubを独立した第10製品、またはdotagentsと並ぶ別工場へ分離しない。
+
+2026-07-13のオーナー裁定により、ChatGPT second-opinion製品はOracleから自作`gpt-connector`へ置換することを確定した。以後は置換可否を再検討せず、`gpt-connector`をdotagentsの自作コア製品契約へ適合させ、Oracleは履歴を保持したまま退役させる。障害時の一時切戻しは運用rollbackであり、製品選定の再裁定ではない。
 
 ## 1. 完了条件（本計画がTODOを兼ねる）
 
@@ -22,6 +24,9 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 - [x] 第三者製品をfork、`node_modules`パッチ、内部DB決め打ちで改造していない
 - [x] 自作製品は機械可読な正規diagnosticsを製品側に持ち、dotagentsが内部状態を勝手に解釈しない
 - [x] 自作製品をクオ管理端末で実利用した時の構造化errorを、入力本文・秘密・ファイル内容なしでローカル記録し、dotagents reporter経由でBugHubへ集約できる
+- [ ] `gpt-connector`がversioned native factory diagnosticsとopt-inのlocal runtime error storeを製品側で所有し、dotagentsが内部stateやChatGPT会話を解析せずBugHubへ投影できる
+- [ ] factory wireをserver-firstの新majorへ移行し、固定9製品集合をOracleから`gpt-connector`へ置換しても旧client、Oracle履歴、resolve/reopen、dashboard、通知が壊れない
+- [ ] 全現役hostで`gpt-connector`の導入・更新・診断・期待connector・MCPをmatrixどおり検証し、Oracleへの暗黙fallbackなしで切替とrollback drillを完了する
 - [x] 公開製品の外部利用者からは明示opt-inなしにtelemetryを送らない
 - [ ] BugHub自身をBugHubの自己申告だけで合格させず、main-server上の外部runnerがServerManager/BugHubを検証する
 - [x] 報告不能時は端末ローカルのdotagents所有outboxへ保持し、成功扱いせず、復旧後に冪等再送できる
@@ -53,7 +58,7 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 | Spotter | 自作・別repo | `spotter --version`（1.4.23） | native diagnostics、runtime error store | 1.4.23公開・registry smoke完了 |
 | Codegraph | 第三者 | `codegraph --version`（1.4.1） | 既存indexだけ`status`/read-only query | 本体改造禁止。index自動作成禁止 |
 | MarkItDown | 第三者 | `markitdown --version`（0.1.5） | ローカルfixture変換＋出力byte数 | `uv tool`管理。本体改造禁止 |
-| Oracle | 第三者 | `oracle --version`（0.16.0） | canonical wrapper、`doctor --providers --json` | Chrome/ChatGPT認証依存。consult/statusをhealthに使わない |
+| gpt-connector | 自作・別repo | `gpt-connector --version`（0.2.0） | 現行`doctor`、追加するnative factory diagnostics/runtime error store | 0.2.0公開済み。通常Chat、正規添付、model/effort、冪等job、再起動後回収、read-only診断は成立。factory契約と全host適合は未実装 |
 | aiterm-mcp | 自作・別repo | package.json/npm（0.12.2） | native diagnostics、runtime error store | 0.12.2公開・MCP Registry / registry smoke完了 |
 | codex-sidecar | 自作・別repo | CLI/package群（0.3.6） | diagnostics/dry-run、result schema | 0.3.6へ公開済み |
 | ServerManager | 自作・別repo | package.json/source commit（2.0.0） | BugHub health/poll/DB/container/Pi5 | clean。BugHubを内包 |
@@ -114,7 +119,7 @@ reportの必須概念:
 - `created_at`（body確定・enqueue時。再送で変更しない）
 - `X-Factory-Sent-At` HTTP header（送信attemptごと。body hashに含めない）
 - `reporter`（version / dotagents commit）
-- products（固定9製品IDをkeyとするobject。同一ID重複を構造的に禁止）
+- products（schema majorごとに固定した9製品IDをkeyとするobject。同一ID重複を構造的に禁止。v1はOracle、置換後majorは`gpt-connector`を含む）
   - `presence_status`（installed / missing / not_applicable / unverified）
   - `installed_version`
   - `latest_version`（取得できる時だけ。不能を推測しない）
@@ -129,6 +134,8 @@ reportの必須概念:
 BugHubはtoken→host_idをserver側で固定し、host profile/product期待matrix、body size、`X-Factory-Sent-At`のskew、`host_id + report_id`、outboxへ保存した正確なbody bytesのhashを検証する。期待状態はclientに自己申告させずserver matrixだけを正とし、`required + missing`等はreportを受理してissue化する。`observed_at`は長期offline後も正当な履歴として受け入れ、同じhost×productの既知観測より古ければcurrent matrixを巻き戻さない。future skewと`observed_at <= created_at <= sent header`等の時刻順序、fingerprintの重複とopen/resolve排他をsemantic validationする。完全snapshotで省略されたproduct/checkを自動resolvedにせず、明示`resolutions[]`を根拠にする。秘密、絶対パス、生ログ、prompt/session本文、DB内容は送らない。
 
 factory issueの状態遷移は既存pull issueと分けて仕様化する。v1は`report_mode=full`だけを受理し、正常な完全snapshot、producerによる明示resolve、再観測reopen、host廃止、長期offlineを区別し、「reportに無い」だけで解決しない。BugHub側の手動resolveはproducer-authoritative契約と競合するため提供せず、deltaは将来のschema majorで互換matrix・順序・欠落意味を再設計するまで非対応とする。
+
+Oracle→`gpt-connector`は固定product集合の変更なので、v1へoptional keyを足して意味を曖昧にしない。既存のwire major移行ランブックに従い、ServerManagerへ新majorの別endpointをserver-firstで追加し、v1 Oracle clientと新major `gpt-connector` clientをdual-runする。host切替前にv1でOracleを明示`not_applicable`＋必要な`resolutions[]`へ遷移させ、新majorの最初のfull snapshotで`gpt-connector`を観測する。schema間の「消失」だけで自動resolveせず、Oracleの履歴を物理削除しない。
 
 #### 4.1.1 runtime error出力契約の確定順序
 
@@ -169,7 +176,7 @@ factory ingestion認証は既存の任意dashboard tokenと分離し、常時必
 
 ### 5.1 自作製品
 
-Caveat、Throughline、Spotter、aiterm-mcp、codex-sidecar、ServerManagerは、各製品repoに機械可読diagnosticsを置く。dotagents adapterが内部DBや設定を独自解釈する形にしない。
+Caveat、Throughline、Spotter、gpt-connector、aiterm-mcp、codex-sidecar、ServerManagerは、各製品repoに機械可読diagnosticsを置く。dotagents adapterが内部DBや設定を独自解釈する形にしない。
 
 - 共通最低要件: version、diagnostic schema version、overall status、個別check ID、state schema/migration（該当時）、秘密を含まないJSON、非0の意味。
 - CLI名やJSON schemaは各製品が所有する。dotagentsはversioned adapterとfixtureで受ける。
@@ -177,7 +184,7 @@ Caveat、Throughline、Spotter、aiterm-mcp、codex-sidecar、ServerManagerは�
 
 ### 5.2 第三者製品
 
-Codegraph、MarkItDown、Oracleは本体を改造しない。
+Codegraph、MarkItDownは本体を改造しない。Oracleは退役まで公開入口だけを利用し、新規改造しない。
 
 - 公開version、公式doctor/status、black-box smoke、安定したexit codeだけを使う。
 - fork、直接patch、postinstall改変、`node_modules`編集、内部DB/schema解析を禁止する。
@@ -194,7 +201,7 @@ Codegraph、MarkItDown、Oracleは本体を改造しない。
 | Spotter | CLI | doctor、marker、host別catalog、Claude/Codex hook、Throughline context | 全project無条件activation |
 | Codegraph | CLI | 既存indexだけstatus/read-only query | `codegraph init`自動実行 |
 | MarkItDown | CLI/uv | bundled local fixtureを変換し出力byte数>0 | URL変換のrc=0だけでgreen |
-| Oracle | CLI | wrapper、`doctor --providers --json`、認証状態 | consult、promptを表示しうるstatus、人間向け出力解析 |
+| gpt-connector | CLI | native factory diagnostics、product-owned runtime error snapshot、version、state/job schema、CDP/auth/runtime/MCP readiness | Chat/consult/uploadによるhealth判定、prompt/response/file内容/conversation ID/絶対pathの出力、Oracle/APIへのfallback |
 | aiterm-mcp | package/追加version入口 | MCP initialize、read-only PTY list、依存CLI状態 | Codex親から入れ子Codex起動 |
 | codex-sidecar | 3 npm package | diagnostics/dry-run、result schema、model policy | 実装不要な実agent起動 |
 | ServerManager | package/commit | BugHub外部health、poll鮮度、DB migration、container/source一致、Pi5監視 | BugHubの自己申告だけで合格 |
@@ -208,7 +215,7 @@ Codegraph、MarkItDown、Oracleは本体を改造しない。
 - local error storeはack/cursor、compact/delete、retention、mode/ACLを製品契約で定め、送信成功前に消さない。
 - template化はallowlist fieldから組み立て、token/cookie/home/絶対path/prompt/stack断片を混入させたnegative fixtureで漏洩防止を検証する。JSON Schemaだけをprivacy gateにしない。
 - npm等で配布した外部利用者からprivate BugHubへ自動送信しない。将来行う場合は明示opt-in、送信前preview、privacy文書、匿名化、削除手段、公開受信基盤を別計画で設計する。
-- 第三者製品へruntime instrumentationを加えない。公開diagnosticsとblack-box smokeで観測できる範囲に限定する。
+- 第三者製品へruntime instrumentationを加えない。公開diagnosticsとblack-box smokeで観測できる範囲に限定する。自作`gpt-connector`はWave 6で同じprivacy・ack/cursor・retention契約へ適合させる。
 
 ## 6. severityと状態
 
@@ -257,14 +264,14 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] 4環境でschedulerをH承認後に実登録し、実火・uninstall・state/ACLを確認
 - [x] `agents-update`後にcontract scan→reportを接続し、update失敗後も観測と報告を試行して最終的に非0終了
 
-### Wave 3 — 第三者3製品adapter（A）
+### Wave 3 — 第三者3製品adapter（A、完了済み旧Oracle契約を含む）
 
 - [x] Codegraph: version＋既存index限定status。index無しは`skipped:not-indexed`
 - [x] MarkItDown: version＋local fixture byte判定。JS URLはhealth fixtureに使わない
-- [x] Oracle: version＋wrapper＋`doctor --providers --json`。認証依存を区別しconsult/status禁止
+- [x] Oracle: version＋wrapper＋`doctor --providers --json`。認証依存を区別しconsult/status禁止。2026-07-13の置換裁定によりWave 6で退役対象へ変更
 - [x] upstream version drift fixtureとunsupported表現を固定
 
-### Wave 4 — 自作5製品のnative diagnostics（repo別A、契約はF）
+### Wave 4 — 当時の自作5製品のnative diagnostics（repo別A、契約はF）
 
 - [x] Caveat: DB schema/migration/own sync/Claude MCP・hook/Codex native hookの機械可読診断
 - [x] Throughline: state schema/hook/代表smokeの機械可読診断
@@ -294,7 +301,54 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] `/ai`とDiscord/daily/weeklyへ修正先repo・host・product・fingerprintを追加
 - [x] 既存pull sourceとの後方互換testを通す
 
-### Wave 6 — ServerManager/BugHub自己監視（F）
+### Wave 6 — gpt-connector製品適合とOracle置換（F＋repo別A＋H）
+
+このwaveは`gpt-connector`、dotagents、ServerManagerの3repoを独立commit・独立rollback可能に保つ。挙動不変のcharacterization／adapter追加と、収集開始・wire major・MCP切替・Oracle撤去の挙動修正を混ぜない。
+
+#### 6.0 正本・baseline・契約固定（挙動不変）
+
+- [x] オーナー裁定としてOracle→`gpt-connector`置換を確定し、Oracle継続・併用を選択肢から外す
+- [x] `gpt-connector@0.2.0`の通常Chat、正規添付、model/effort、冪等job、terminal回収、read-only diagnostics、Oracle互換`consult`/`sessions`を実ブラウザと配布物で確認する
+- [x] Oracleとの同一prompt＋2添付shadowで、`gpt-connector`成功、Oracle upload timeoutを確認し、Oracleへ自動fallbackしないことを確認する
+- [ ] `gpt-connector` repoの`docs/`へ本waveの製品側TODO正本を作り、既存AI installer作業と書き込み範囲・commitを分離する
+- [ ] 3repoでfetch、origin照合、stash、dirty、baseline full gateを取り、`gpt-connector`の`doctor`／`consult`／`sessions`／MCP tool schemaとdotagents v1 reporterをcharacterizationする
+
+#### 6.1 gpt-connector native factory契約（製品側A、契約はF）
+
+- [ ] 既存`gpt-connector.diagnostics.v1`を壊さず、`gpt-connector factory-diagnostics --json`相当のversioned read-only入口を追加する。version、diagnostic schema、overall、state/job schemaとmigration、CDP、official origin、auth、runtime bridge、MCP contractを固定check IDで返す
+- [ ] factory diagnosticsはChrome/CDP/auth未準備を`not_ready`、host非対応を`unsupported`、未検証を`unverified`として区別し、upload・conversation・archive・job作成を一切行わない
+- [ ] `runtime-errors snapshot|diagnostics|ack|resolve|reopen|compact --json`相当のproduct-owned storeを追加し、canonical dotagents configのJSON boolean `collection.enabled: true`だけで収集する。network送信は実装せず、`reporting.enabled`やtoken存在から収集を推測しない
+- [ ] error定義をCDP/auth/runtime drift、upload/attachment read-back、Chat/stream/archive、job state永続化・migration等の修正可能な製品境界へ限定する。通常の入力拒否、利用者取消、期待されたunsupportedをerror件数へ水増ししない
+- [ ] 固定code/template、SHA-256 fingerprint、count、first/last seen、resolve/reopen、monotonic cursor/ack、unacked保護retention、owner-only atomic state、symlink拒否、bounded snapshotをfixture化する
+- [ ] prompt、assistant response、file名/内容/digest、conversation/session/job ID、cookie/token、CDP dump、絶対path、生stack/stderrを入力・保存・出力できないprivacy allowlistとnegative fixtureを固定する
+- [ ] macOS、Linux、WSL2、Windows nativeでCLI/version/read-only diagnosticsを動かし、live Chat connectorの期待可否はhost matrixで別管理する。未対応hostを導入失敗や偽greenへ丸めない
+- [ ] `pnpm check`、pack/install smoke、既存Chat/添付/job回帰をgreenにし、version更新・release準備後、npm publishは対象version・影響・rollbackを提示してH承認後だけ行う
+
+#### 6.2 ServerManager/BugHubのserver-first互換面（F）
+
+- [ ] 固定product集合の変更をwire majorとして扱い、Oracleを含むv1を維持したまま`gpt-connector`を含む新major schema・別endpoint・fixture・client/server compatibility matrixを追加する
+- [ ] host profile期待matrix、current/history、dashboard、Discord/daily/weekly、`/ai`、修正先repoを`gpt-connector`へ対応させ、Oracle履歴と既存issue/fingerprintを削除・上書きしない
+- [ ] v1最終Oracle `not_applicable`＋明示resolution、新major最初の`gpt-connector` full snapshot、旧観測の遅着、重複retry、resolve後再発、schema片側停止をcharacterizationする
+- [ ] v1/new-major dual-run中のDB backup/restore、endpoint feature flag、revision attestation、canary、旧major retire条件をランブックへ追加する
+
+#### 6.3 dotagents配線と正典（repo内A、契約はF）
+
+- [ ] `PRODUCT_IDS`、factory scan/reporter、runtime ack、ServerManager adapter、privacy allowlist、fixture、host-product matrixを新majorの`gpt-connector`契約へ更新する。v1 Oracle clientは互換期間だけ独立入口として保持する
+- [ ] `agents-update`を`gpt-connector@latest`へ切り替え、install/verify、CLI prerequisite、clean HOME、macOS/Linux/WSL/Windows入口、post-update scanを更新する
+- [ ] Claude/CodexのMCP登録を`gpt-connector-mcp`へ切り替え、最終server IDを`gpt_connector`へ正本化する。移行期間に`oracle` server IDを使う場合もcommand実体は`gpt-connector-mcp`に限定し、期限とconsumerをfixtureで追跡する
+- [ ] `oracle` skill、`docs/06_oracle-mcp.md`、`docs/02_models.md`、`claude/CLAUDE.md`、AGENTS/README/PLAN、callout hook説明、overview、RAG/図解を`gpt-connector`正典へ移行する。生きた参照をゼロ確認するまで旧文書・wrapper・shim・testsを削除しない
+- [ ] 旧Oracle wrapper/config/profileを`gpt-connector`へ流用せず、専用Chrome、product-owned state、model/effort明示、caller既知slug、timeout後`sessions`回収、暗黙fallback禁止を標準形として固定する
+- [ ] `make ci`、official/legacy install、skill discovery、Claude/Codex MCP read-only diagnostics、factory report v1/new-major fixtureをgreenにする
+
+#### 6.4 shadow、cutover、撤去（H＋F）
+
+- [ ] 代表fixture（添付なし/あり、standard/extended/max、timeout、auth loss、runtime drift、process restart）を全対象hostの期待matrixどおりshadowし、requested/resolved model/effort、terminal回収、archive、privacyを確認する。OracleやAPIへ再送・fallbackしない
+- [ ] hostごとにv1 Oracle最終snapshot→MCP切替→新major `gpt-connector`初回snapshotを順序付きで実行し、BugHub current/history、通知、resolve/reopenを確認する
+- [ ] 全host greenとH承認後だけOracle package、更新対象、MCP登録、wrapper/shim、skill配布を外す。削除前に`rg -a`と利用可能な索引でconsumerを確認し、Oracle履歴・archive/RAGは保持する
+- [ ] rollback drillは新major送信停止、前`gpt-connector` release/MCP設定への復帰、必要時のOracle command一時切戻しを分けて実証する。一時切戻しでOracleを正規コアへ戻したり、自動fallbackを追加したりしない
+- [ ] gpt-connector、dotagents、ServerManagerのfull gate、registry由来install、BugHub canary、全host E2E、独立反証を通し、各repoを独立commit/pushする
+
+### Wave 7 — ServerManager/BugHub自己監視（F）
 
 - [ ] main-server上のdotagents reporterからBugHubを外部probe
   - [x] loopback `/readyz`限定の外部probe CLIとserver profile adapter、SSRF/privacy/contract fixtureを実装
@@ -312,18 +366,19 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
   - [x] Discord成功とBugHub還流成功を別ackにし、片方の失敗をもう片方の成功で消さない。復旧後もBugHub accepted確認までeventを保持する
   - [ ] main-serverとPi5へ配布し、意図的停止canaryでDiscord通知→BugHub accepted→resolve→state削除を実証する
 
-### Wave 7 — 4環境canary rollout（H＋F）
+### Wave 8 — 4環境canary rollout（H＋F）
 
 0. [x] H承認後、repo実装済み・公開版未収録のThroughline、Spotter、aiterm-mcpと、今回追加するCaveatのfactory契約を独立releaseし、npm `latest`・packed install smoke・`--version`・native diagnostics/runtime snapshotを確認する（codex-sidecarはv0.3.6へ収録済み）
    - 2026-07-13: Throughline `0.6.2`（`e6ce6e3` / CI `29238704750`）、Spotter `1.4.23`（`a117a99` / CI `29238199094`）、Caveat `0.16.3`（`8f06d17` / CI `29238199765`）をnpm `latest`、annotated tag、GitHub Releaseへ公開した。
    - aiterm-mcp `0.12.2`（`239e7e4`）はtag CI `29245251184`のTrusted Publishingでnpmへ公開し、Release起点のMCP Registry workflow `29245462227`もgreen。4製品をregistry由来の隔離prefixへinstallし、version、native diagnostics、runtime snapshotを確認した。collectionは既定OFFで、このsmokeから外部送信は発生しない。
+0a. [ ] Wave 6の`gpt-connector`公開版、ServerManagerの新major endpoint、dotagents新major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
 1. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認
 2. [ ] main-server: Hでtoken/config opt-in、scheduler apply、DB backup付きdeploy → FでBugHub自身を含む全9製品とrevision attestationを確認
 3. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認
 4. [ ] FOX Windows native: Hでtoken/config opt-inとTask Scheduler apply → FでNode入口、実火・uninstall・所有者限定ACL、WSLとhost IDを混同しないことを確認
 5. [ ] Hで意図的障害を許可後、Fで全環境のinstalled/latest/compat matrixと意図的1件fail→通知→修復→resolve→再発なしを実証
 
-### Wave 8 — 定常運用と完了
+### Wave 9 — 定常運用と完了
 
 - [x] post-update gateと定期scanの頻度・timeout・通知cooldownを確定
 - [x] 製品追加/削除/第三者化/所有移管の手順をAGENTS/READMEへ正典化
@@ -333,9 +388,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ## 8. 実行経路と役割
 
-- **F（親直轄）**: wire contract、認証、DB migration、severity、所有境界、本番deploy、rollback、公開API後方互換。
-- **A（native委譲）**: 仕様固定後のrepo別diagnostics、adapter、fixture、dashboard、文書の逐語追従。
-- **H（オーナー）**: dirty作業の裁定、秘密/token配置、hook trust、全OSのscheduler実登録/解除、DB backupを伴う本番deploy、意図的障害試験、実端末rollback drill。
+- **F（親直轄）**: wire contractとmajor移行、product ID、認証、DB migration、severity、所有境界、本番deploy、MCP cutover、rollback、公開API後方互換。
+- **A（native委譲）**: 仕様固定後のrepo別diagnostics/runtime store、adapter、fixture、dashboard、文書の逐語追従。
+- **H（オーナー）**: dirty作業の裁定、秘密/token配置、ChatGPTログイン、hook trust、npm publish、全OSのscheduler/MCP実登録・解除、DB backupを伴う本番deploy、意図的障害試験、Oracle最終撤去、実端末rollback drill。
 
 Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative subagentへ委譲する。aiterm/MCP経由で入れ子Codexを起動しない。Claude親で実施する場合は、aitermの永続PTYを対象repoのcwdで使うことはできるが、aitermを使うこと自体を「project native」の条件にはしない。
 
@@ -343,6 +398,8 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 
 - BugHubからの自動修復・自動rollback。
 - 第三者製品のforkや内部実装への追従。
+- Oracle全preset・全CLI・全session metadataのバイト互換、またはOracleと`gpt-connector`の恒久併用。
+- `gpt-connector`失敗時のOracle、OpenAI API、prompt本文展開への自動fallback。
 - 全projectへのCodegraph index/Spotter activationの強制。
 - session本文、prompt、秘密、生DB、生logの中央送信。
 - ServerManagerをdotagentsと並ぶ別工場へ昇格すること。
@@ -356,6 +413,8 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 - 旧DB復元が必要な時はquiesce、cutover後delta export、factory report replay、既存pull/resolve差分の処遇をrunbook化し、単純なbackup上書きでcanary中のデータを失わない。
 - reporterはschedulerから外して停止でき、outboxを保持したまま送信だけ止められること。
 - 製品native diagnosticsは既存CLI挙動を変更せず追加入口に限定すること。
+- Oracleを含むv1 endpointと`gpt-connector`を含む新major endpointをfeature flagで独立停止でき、server-first導入後も旧clientを互換期間中は受理できること。
+- `gpt-connector`は前releaseとMCP command/envへ戻せること。必要時のOracle一時切戻しは手動・期限付きとし、BugHubのOracle履歴を削除せず、`gpt-connector`失敗から自動発動させないこと。
 - 各repo・各waveを独立commitにし、複数repoを一つの履歴操作で巻き戻さないこと。
 
 ## 11. 監査記録
@@ -366,3 +425,10 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 - 採用: lifecycle、offline時刻、enqueue-before-send、host期待matrix、credential lifecycle、通知false成功、rollback中データ、BugHub外通知、OS別scheduler/state、dedupe retention、outbox競合/overflow、runtime error wire、privacy negative gate、runbook drift、Oracle安全入口。
 - 棄却: Oracle doctor不存在、sidecar diagnostics不存在、aiterm Windows非対応、Caveat/Throughline dirty記載誤り、ServerManager wave欠落、image rebuild記載欠落。いずれも実物と合わないため棄却。
 - 親裁定: 既存pull＋新規pushの二経路、第三者非改造、自作製品local error、外部利用者telemetry既定OFFを維持。上記15件を計画へ反映した。
+
+2026-07-13、Oracle→`gpt-connector`確定裁定を受け、親自身で反対仮説を検証してWave 6を追加した。独立refuterは未使用。
+
+- 反証1「既存Oracle adapterを`gpt-connector`へ文字列置換すればよい」: 棄却。`gpt-connector`は自作製品であり、native diagnostics、runtime error store、release、privacy契約まで所有する必要がある。
+- 反証2「固定9製品のv1へoptional `gpt-connector` keyを足せばよい」: 棄却。現行contractはproduct exact keysを検証しており、product集合変更は既存client/server双方の意味を変えるためwire majorである。
+- 反証3「Oracle履歴を削除して同じproduct slotへ上書きすればよい」: 棄却。別製品のversion・issue・fingerprint履歴が混線し、退役・再発・rollbackを検証不能にする。
+- 反証4「製品側を先に公開し、BugHubは後追いでよい」: 棄却。新majorを受理できないserverへclientを先行させるとreport不能になるため、server-first dual-runを維持する。
