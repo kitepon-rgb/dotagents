@@ -37,6 +37,7 @@ function acknowledgements() {
     { product: 'spotter', cursor: 8, command: 'spotter', args: ['diagnostics', 'runtime-errors', 'ack', '8'] },
     { product: 'aiterm-mcp', cursor: 9, command: 'aiterm-runtime-errors', args: ['ack', '--cursor', '9'] },
     { product: 'codex-sidecar', cursor: 10, command: 'codex-sidecar', args: ['factory-errors', '--action', 'ack', '--cursor', '10'] },
+    { product: 'servermanager', cursor: 11, command: 'factory-external-event', args: ['ack', '--cursor', '11', '--json'] },
   ];
 }
 
@@ -85,7 +86,7 @@ async function writeConfig(box, endpoint) {
 }
 
 async function installAckCommands(box, { failOnce = null } = {}) {
-  for (const command of ['throughline', 'spotter', 'aiterm-runtime-errors', 'codex-sidecar']) {
+  for (const command of ['throughline', 'spotter', 'aiterm-runtime-errors', 'codex-sidecar', 'factory-external-event']) {
     const path = join(box.bin, command);
     const failure = command === failOnce
       ? `if [ ! -e "$ACK_FAIL_MARKER" ]; then : > "$ACK_FAIL_MARKER"; exit 17; fi`
@@ -246,7 +247,7 @@ test('enqueueはreportとack metadataを単一private envelopeへatomic保存し
   await absent(box.ackLog);
 });
 
-test('BugHubが同じreport_idをacceptedした後だけ固定4コマンドをackし、全成功後にenvelopeを削除する', async (t) => {
+test('BugHubが同じreport_idをacceptedした後だけ固定5コマンドをackし、全成功後にenvelopeを削除する', async (t) => {
   const box = await sandbox();
   const server = await startServer((req, res) => accepted(res));
   t.after(server.close);
@@ -262,6 +263,7 @@ test('BugHubが同じreport_idをacceptedした後だけ固定4コマンドをac
     'spotter diagnostics runtime-errors ack 8',
     'aiterm-runtime-errors ack --cursor 9',
     'codex-sidecar factory-errors --action ack --cursor 10',
+    'factory-external-event ack --cursor 11 --json',
   ]);
   await absent(reportEntry(box));
   assert.equal(server.received.length, 1);
@@ -294,7 +296,7 @@ test('ack途中失敗は非0でenvelopeを保持し、duplicate再受理後に�
   const server = await startServer((req, res) => accepted(res, { duplicate: requestCount++ > 0 }));
   t.after(server.close);
   await writeConfig(box, server.endpoint);
-  await installAckCommands(box, { failOnce: 'spotter' });
+  await installAckCommands(box, { failOnce: 'factory-external-event' });
   assert.equal((await enqueue(box)).code, 0);
 
   const failed = await flush(box);
@@ -307,17 +309,21 @@ test('ack途中失敗は非0でenvelopeを保持し、duplicate再受理後に�
   assert.deepEqual((await readFile(box.ackLog, 'utf8')).trim().split('\n'), [
     'throughline runtime-errors ack 7 --json',
     'spotter diagnostics runtime-errors ack 8',
+    'aiterm-runtime-errors ack --cursor 9',
+    'codex-sidecar factory-errors --action ack --cursor 10',
+    'factory-external-event ack --cursor 11 --json',
   ]);
 
   const retried = await flush(box);
   assert.equal(retried.code, 0, retried.stderr);
   assert.equal(server.received.length, 2);
   await absent(reportEntry(box));
-  assert.deepEqual((await readFile(box.ackLog, 'utf8')).trim().split('\n').slice(-4), [
+  assert.deepEqual((await readFile(box.ackLog, 'utf8')).trim().split('\n').slice(-5), [
     'throughline runtime-errors ack 7 --json',
     'spotter diagnostics runtime-errors ack 8',
     'aiterm-runtime-errors ack --cursor 9',
     'codex-sidecar factory-errors --action ack --cursor 10',
+    'factory-external-event ack --cursor 11 --json',
   ]);
 });
 

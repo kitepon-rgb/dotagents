@@ -11,6 +11,7 @@
 - host identityはtop-level `host.id / host.profile`で固定し、tokenのserver-side bindingと一致させる。
 - credential fileは所有者限定。POSIXはdirectory `0700`・file `0600`、Windowsは継承ACLを除去して現在userだけにする。
 - 本番BugHubは`FACTORY_INGEST_ENABLED=true`を明示するまでfactory入口を404にする。
+- Pi5からのServerManager outageは、main-server上の`factory-external-event`だけで記録する。任意本文・path・URLは受け取らず、固定`check`/`reason`とcanonical UTCだけを保存する。
 
 ## 1. 送信OFFでconfigを配置
 
@@ -134,6 +135,21 @@ factory-reporter flush --config ~/.config/dotagents/factory-reporter.json
 ```
 
 `preview`は常にnetworkゼロである。`enqueue`と`flush`はOFFならnetworkゼロで、既存outboxを消さない。tokenの存在、scheduler、過去のON状態は送信許可にならない。
+
+### Pi5 external outage event
+
+Pi5の監視がServerManager outageを検知したら、**main-server上**で次の固定イベントを記録する（Pi5から実行する運搬経路は運用側が所有し、dotagentsは新しいschedulerやSSH鍵を作らない）。時刻はUTCミリ秒表記だけを受け付ける。
+
+```bash
+factory-external-event open --check availability --reason unreachable \
+  --observed-at 2026-07-13T00:00:00.000Z --json
+
+# 回復確認後。同じfingerprintのopenが必要で、openより前の時刻では解決できない。
+factory-external-event resolve --check availability --reason unreachable \
+  --observed-at 2026-07-13T00:01:00.000Z --json
+```
+
+stateはPOSIXで`~/.local/state/dotagents/factory-reporter/`（directory `0700`、file/lock `0600`）にあり、symlink・schema改ざん・同時書込みを拒否する。open/resolveは冪等でappend-only sequenceを持ち、同一fingerprintはopen phaseをBugHubが受理してackするまでresolve phaseを送らない。`snapshot --json`と`status --json`は運用確認専用、`ack --cursor N --json`はreporterだけがBugHub accepted後に実行する。reporting OFFまたはack失敗時もstateは保持される。
 
 ### exitと出力の扱い
 

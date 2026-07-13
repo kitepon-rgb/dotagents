@@ -306,9 +306,10 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] BugHub停止中のoutbox保持→復旧後再送を実測
 - [x] readinessをDB query、poll/ingest鮮度、source error、pull/factory通知deliveryまで拡張し、Docker healthcheckとdeploy canaryを`/readyz`へ接続
 - [ ] BugHub停止/readiness failureはBugHubを経由しないPi5→Discord専用bridgeで通知し、復旧後に同じfingerprintをBugHubへ還流
-  - [ ] 専用bridgeは`/readyz`をDocker health retryとは独立に観測し、2連続失敗（最大120秒）で通知する。自動restartは行わず、既存Layer 3の3周期観測・restart責務を奪わない
-  - [ ] `sha256(servermanager:<check_id>:<reason_code>)`（process到達不能は固定`availability:unreachable`）をdurable eventとしてPi5に保存し、dotagents所有の明示connector CLI経由でmain-server reporterへopen/resolveを渡す
-  - [ ] Discord成功とBugHub還流成功を別ackにし、片方の失敗をもう片方の成功で消さない。復旧後もBugHub accepted確認までeventを保持する
+  - [x] 専用bridgeは`/readyz`をDocker health retryとは独立に観測し、2連続失敗（最大120秒）で通知する。自動restartは行わず、既存Layer 3の3周期観測・restart責務を奪わない
+  - [x] `sha256(servermanager:<check_id>:<reason_code>)`（process到達不能は固定`availability:unreachable`）をdurable eventとしてPi5に保存し、dotagents所有の明示connector CLI経由でmain-server reporterへopen/resolveを渡す
+  - [x] Discord成功とBugHub還流成功を別ackにし、片方の失敗をもう片方の成功で消さない。復旧後もBugHub accepted確認までeventを保持する
+  - [ ] main-serverとPi5へ配布し、意図的停止canaryでDiscord通知→BugHub accepted→resolve→state削除を実証する
 
 ### Wave 7 — 4環境canary rollout（H＋F）
 

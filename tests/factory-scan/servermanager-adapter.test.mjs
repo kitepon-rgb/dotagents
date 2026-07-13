@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { test } from 'node:test';
-import { projectServerManagerProbe, serverManagerNative } from '../../lib/factory/scan.mjs';
+import { mergeServerManagerExternal, projectServerManagerProbe, serverManagerNative } from '../../lib/factory/scan.mjs';
 import { validateReport } from '../../lib/factory/contract.mjs';
 
 const OBSERVED = '2026-07-13T00:00:00.000Z';
@@ -117,4 +117,42 @@ test('healthy projectionを含むserver profile完全reportが共通contractを�
     products: { ...Object.fromEntries(ids.map((id) => [id, empty()])), servermanager },
   };
   assert.doesNotThrow(() => validateReport(report));
+});
+
+test('external openは同fingerprintのreadiness checkを再送せずack対象を残し、resolutionは既存を再利用する', () => {
+  const value = diagnostic('not_ready');
+  value.checks[0] = { id: 'database', status: 'fail', reason_code: 'query_failed' };
+  const product = projectServerManagerProbe({ ok: false }, value, OBSERVED);
+  const fp = createHash('sha256').update('servermanager:database:query_failed').digest('hex');
+  const projection = {
+    runtime_errors: [{ fingerprint: fp, status: 'open' }],
+    resolutions: [], acknowledgement: { product: 'servermanager', cursor: 1 },
+  };
+  const merged = mergeServerManagerExternal(product, projection);
+  assert.equal(merged.product.runtime_errors.length, 0);
+  assert.equal(merged.product.checks.filter((check) => check.fingerprint === fp).length, 1);
+  assert.deepEqual(merged.acknowledgement, { product: 'servermanager', cursor: 1 });
+
+  const recovered = projectServerManagerProbe({ ok: true }, diagnostic(), OBSERVED);
+  const resolution = { fingerprint: fp, resolved_at: OBSERVED, reason_code: 'external_recovered' };
+  const reused = mergeServerManagerExternal(recovered, { runtime_errors: [], resolutions: [resolution], acknowledgement: null });
+  assert.equal(reused.product.resolutions.filter((item) => item.fingerprint === fp).length, 1);
+  assert.doesNotThrow(() => validateReport({
+    schema_version: '1.0', report_id: '018f0000-0000-8000-8000-0000000000dd',
+    host_id: 'main-server', host_profile: 'server', platform: { os: 'linux', arch: 'x64' }, report_mode: 'full',
+    observed_at: OBSERVED, created_at: OBSERVED, reporter: { version: '1.0.0', dotagents_revision: '1234567' },
+    products: { ...Object.fromEntries(['caveat', 'throughline', 'spotter', 'codegraph', 'markitdown', 'oracle', 'aiterm-mcp', 'codex-sidecar'].map((id) => [id, { presence_status: 'not_applicable', contract_version: '1.0', checks: [], runtime_errors: [], resolutions: [] }])), servermanager: reused.product },
+  }));
+});
+
+test('external resolutionが現active failと衝突する時はreportへ載せずackもしない', () => {
+  const value = diagnostic('not_ready');
+  value.checks[0] = { id: 'database', status: 'fail', reason_code: 'query_failed' };
+  const fp = createHash('sha256').update('servermanager:database:query_failed').digest('hex');
+  const merged = mergeServerManagerExternal(projectServerManagerProbe({ ok: false }, value, OBSERVED), {
+    runtime_errors: [], resolutions: [{ fingerprint: fp, resolved_at: OBSERVED, reason_code: 'external_recovered' }],
+    acknowledgement: { product: 'servermanager', cursor: 2 },
+  });
+  assert.equal(merged.product.resolutions.some((item) => item.fingerprint === fp), false);
+  assert.equal(merged.acknowledgement, null);
 });

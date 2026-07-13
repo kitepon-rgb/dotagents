@@ -6,6 +6,7 @@ import {
   collectAitermRuntimeErrors,
   collectCodexSidecarRuntimeErrors,
   collectRuntimeErrors,
+  collectServerManagerExternalEvents,
   collectSpotterRuntimeErrors,
   collectThroughlineRuntimeErrors,
 } from '../../lib/factory/runtime-errors.mjs';
@@ -159,6 +160,25 @@ test('各製品のexplicit resolutionをresolutionsへ分離する', async () =>
     resolved_at: NOW,
     reason_code: 'operator_resolved',
   }]);
+});
+
+test('ServerManager external eventは固定CLIとfingerprintだけを受理し、ack metadataへ載せる', async () => {
+  const fp = createHash('sha256').update('servermanager:availability:unreachable').digest('hex');
+  const value = {
+    schema: 'dotagents.external-events.v1',
+    cursor: { high_watermark: 1, acknowledged_through: 0, next: 1 },
+    events: [{ sequence: 1, fingerprint: fp, check: 'availability', reason: 'unreachable', status: 'open', first_seen: NOW, last_seen: NOW, occurrence_count: 1, resolved_at: null }],
+  };
+  const calls = [];
+  const result = await collectServerManagerExternalEvents({ runner: runnerFor(value, calls) });
+  assert.deepEqual(calls[0].command, 'factory-external-event');
+  assert.deepEqual(calls[0].args, ['snapshot', '--json']);
+  assert.deepEqual(result.acknowledgement, { product: 'servermanager', cursor: 1, command: 'factory-external-event', args: ['ack', '--cursor', '1', '--json'] });
+  assert.equal(result.runtime_errors[0].fingerprint, fp);
+  const invalid = structuredClone(value); invalid.events[0].reason = 'delivery_failed'; invalid.events[0].fingerprint = createHash('sha256').update('servermanager:availability:delivery_failed').digest('hex');
+  await assert.rejects(collectServerManagerExternalEvents({ runner: runnerFor(invalid) }), { code: 'E_FACTORY_RUNTIME_ERRORS', reason_code: 'servermanager_event' });
+  const passReason = structuredClone(value); passReason.events[0].check = 'database'; passReason.events[0].reason = 'ready'; passReason.events[0].fingerprint = createHash('sha256').update('servermanager:database:ready').digest('hex');
+  await assert.rejects(collectServerManagerExternalEvents({ runner: runnerFor(passReason) }), { code: 'E_FACTORY_RUNTIME_ERRORS', reason_code: 'servermanager_event' });
 });
 
 test('CLI不在とcollection disabledは安全な空projectionと機械可読statusになる', async () => {

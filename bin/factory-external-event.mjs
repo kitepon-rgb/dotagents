@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+import process from 'node:process';
+import { ack, mutate, snapshot, status } from '../lib/factory/external-events.mjs';
+const out = (v) => process.stdout.write(`${JSON.stringify(v)}\n`);
+try { const [action, ...args] = process.argv.slice(2); let result; if (['open', 'resolve'].includes(action) && args.length === 7 && args[0] === '--check' && args[2] === '--reason' && args[4] === '--observed-at' && args[6] === '--json') result = await mutate(action, args[1], args[3], args[5]); else if (action === 'snapshot' && args.length === 1 && args[0] === '--json') result = await snapshot(); else if (action === 'status' && args.length === 1 && args[0] === '--json') result = await status(); else if (action === 'ack' && args.length === 3 && args[0] === '--cursor' && args[2] === '--json') result = await ack(Number(args[1])); else throw new Error('arguments_invalid'); out(result); } catch (error) { process.stderr.write(`[factory-external-event] ${error?.message || 'failed'}\n`); process.exitCode = 2; }
