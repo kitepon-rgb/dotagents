@@ -34,7 +34,7 @@
 
 | product | Claude親 | Codex親 |
 |---|---|---|
-| Caveat | MCP＋hook required | MCP＋hook required |
+| Caveat | MCP＋4 hooks required | native 3 hooks required（MCP不要） |
 | Throughline | hook/CLI required | hook/skill/CLI required |
 | Spotter | 対象projectで明示install required | 対象projectで明示install required |
 | Codegraph | MCP required | MCP required |

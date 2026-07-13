@@ -33,6 +33,7 @@ function report() {
 
 function acknowledgements() {
   return [
+    { product: 'caveat', cursor: 6, command: 'caveat', args: ['runtime-errors', 'ack', '6', '--json'] },
     { product: 'throughline', cursor: 7, command: 'throughline', args: ['runtime-errors', 'ack', '7', '--json'] },
     { product: 'spotter', cursor: 8, command: 'spotter', args: ['diagnostics', 'runtime-errors', 'ack', '8'] },
     { product: 'aiterm-mcp', cursor: 9, command: 'aiterm-runtime-errors', args: ['ack', '--cursor', '9'] },
@@ -86,14 +87,23 @@ async function writeConfig(box, endpoint) {
 }
 
 async function installAckCommands(box, { failOnce = null } = {}) {
-  for (const command of ['throughline', 'spotter', 'aiterm-runtime-errors', 'codex-sidecar', 'factory-external-event']) {
+  for (const command of ['caveat', 'throughline', 'spotter', 'aiterm-runtime-errors', 'codex-sidecar', 'factory-external-event']) {
     const path = join(box.bin, command);
     const failure = command === failOnce
       ? `if [ ! -e "$ACK_FAIL_MARKER" ]; then : > "$ACK_FAIL_MARKER"; exit 17; fi`
       : '';
+    const response = {
+      caveat: `n="$3"; printf '{"schema":"caveat.runtime_errors.v1","product":"caveat","version":"1.2.3","state_schema_version":"1.0","cursor":{"high_watermark":%s,"acknowledged_through":%s,"next":0},"runtime_errors":[],"resolutions":[],"diagnostics":{"collection":"enabled","status":"ready","total_count":0,"pending_count":0,"truncated":false}}\\n' "$n" "$n"`,
+      throughline: `n="$3"; printf '{"schema":"throughline.runtime_errors.v1","product":"throughline","version":"1.2.3","state_schema_version":"1.0","cursor":{"high_watermark":%s,"acknowledged_through":%s,"next":0},"runtime_errors":[],"resolutions":[],"diagnostics":{"collection":"enabled","status":"ready","total_count":0,"pending_count":0,"truncated":false}}\\n' "$n" "$n"`,
+      spotter: `n="$4"; printf '{"schema":"spotter.runtime_errors.v1","collection":"enabled","records":[],"after_cursor":0,"next_cursor":0,"latest_sequence":%s,"acknowledged_through":%s,"has_more":false}\\n' "$n" "$n"`,
+      'aiterm-runtime-errors': `n="$3"; printf '{"ok":true,"command":"ack","snapshot":{"collection":"enabled","schema_version":"aiterm-mcp.runtime-errors.v1","cursor":%s,"acknowledged_cursor":%s,"records":[]}}\\n' "$n" "$n"`,
+      'codex-sidecar': `n="$5"; printf '{"status":"ok","factoryRuntimeErrors":{"schema_version":"2","cursor":%s,"acknowledged_through":%s,"records":[]}}\\n' "$n" "$n"`,
+      'factory-external-event': `n="$3"; printf '{"ok":true,"acknowledged_through":%s}\\n' "$n"`,
+    }[command];
     await writeFile(path, `#!/bin/sh
 printf '%s %s\n' "${'$'}{0##*/}" "${'$'}*" >> "$ACK_LOG"
 ${failure}
+${response}
 exit 0
 `);
     await chmod(path, 0o755);
@@ -107,7 +117,12 @@ async function script(box, name, body) {
 }
 
 async function installScannerCommands(box) {
-  await script(box, 'caveat', `if [ "$1" = "--version" ]; then echo 'caveat 1.2.3'; else exit 2; fi`);
+  await script(box, 'caveat', `
+if [ "$1" = "factory-diagnostics" ]; then
+  echo '{"schema":"caveat.native_factory_diagnostics.v1","product":"caveat","version":"1.2.3","overall":{"status":"ready"},"database":{"status":"ready","reason_code":"current","schema_version":3,"supported_schema_version":3,"migration_status":"current"},"sync":{"status":"ready","reason_code":"synchronized"},"connectors":{"claude":{"status":"ready","mcp":{"status":"ready","reason_code":"configured"},"hooks":{"user_prompt_submit":{"status":"ready","reason_code":"configured"},"post_tool_use":{"status":"ready","reason_code":"configured"},"post_tool_use_failure":{"status":"ready","reason_code":"configured"},"stop":{"status":"ready","reason_code":"configured"}}},"codex":{"status":"ready","hooks":{"user_prompt_submit":{"status":"ready","reason_code":"configured"},"post_tool_use":{"status":"ready","reason_code":"configured"},"stop":{"status":"ready","reason_code":"configured"}}}}}'
+elif [ "$1" = "runtime-errors" ]; then
+  echo '{"schema":"caveat.runtime_errors.v1","product":"caveat","version":"1.2.3","state_schema_version":"1.0","cursor":{"high_watermark":0,"acknowledged_through":0,"next":0},"runtime_errors":[],"resolutions":[],"diagnostics":{"collection":"enabled","status":"ready","total_count":0,"pending_count":0,"truncated":false}}'
+else exit 2; fi`);
   await script(box, 'codegraph', `if [ "$1" = "--version" ]; then echo 'codegraph 1.4.0'; else echo '{"initialized":false}'; fi`);
   await script(box, 'markitdown', `if [ "$1" = "--version" ]; then echo 'markitdown 0.1.0'; else echo 'converted'; fi`);
   await script(box, 'oracle', `if [ "$1" = "--version" ]; then echo 'oracle 0.16.0'; else echo '{"healthy":true}'; fi`);
@@ -219,7 +234,7 @@ test('factory-scan --ack-outputはreport_id一致sidecarを生成し、report pa
   assert.equal(generatedMetadata.report_id, generatedReport.report_id);
   assert.equal(generatedMetadata.schema_version, '1.0');
   assert.deepEqual(generatedMetadata.acknowledgements.map(({ product }) => product), [
-    'throughline', 'spotter', 'aiterm-mcp', 'codex-sidecar',
+    'caveat', 'throughline', 'spotter', 'aiterm-mcp', 'codex-sidecar',
   ]);
   assert.equal(JSON.stringify(generatedReport).includes('acknowledgement'), false);
   assert.equal((await stat(box.ack)).mode & 0o777, 0o600);
@@ -247,7 +262,7 @@ test('enqueueはreportとack metadataを単一private envelopeへatomic保存し
   await absent(box.ackLog);
 });
 
-test('BugHubが同じreport_idをacceptedした後だけ固定5コマンドをackし、全成功後にenvelopeを削除する', async (t) => {
+test('BugHubが同じreport_idをacceptedした後だけ固定6コマンドをackし、全成功後にenvelopeを削除する', async (t) => {
   const box = await sandbox();
   const server = await startServer((req, res) => accepted(res));
   t.after(server.close);
@@ -259,6 +274,7 @@ test('BugHubが同じreport_idをacceptedした後だけ固定5コマンドをac
   const result = await flush(box);
   assert.equal(result.code, 0, result.stderr);
   assert.deepEqual((await readFile(box.ackLog, 'utf8')).trim().split('\n'), [
+    'caveat runtime-errors ack 6 --json',
     'throughline runtime-errors ack 7 --json',
     'spotter diagnostics runtime-errors ack 8',
     'aiterm-runtime-errors ack --cursor 9',
@@ -296,7 +312,7 @@ test('ack途中失敗は非0でenvelopeを保持し、duplicate再受理後に�
   const server = await startServer((req, res) => accepted(res, { duplicate: requestCount++ > 0 }));
   t.after(server.close);
   await writeConfig(box, server.endpoint);
-  await installAckCommands(box, { failOnce: 'factory-external-event' });
+  await installAckCommands(box, { failOnce: 'caveat' });
   assert.equal((await enqueue(box)).code, 0);
 
   const failed = await flush(box);
@@ -307,18 +323,15 @@ test('ack途中失敗は非0でenvelopeを保持し、duplicate再受理後に�
   assert.deepEqual(JSON.parse(queued.reportBytes), report());
   assert.deepEqual(queued.value.acknowledgements, metadata());
   assert.deepEqual((await readFile(box.ackLog, 'utf8')).trim().split('\n'), [
-    'throughline runtime-errors ack 7 --json',
-    'spotter diagnostics runtime-errors ack 8',
-    'aiterm-runtime-errors ack --cursor 9',
-    'codex-sidecar factory-errors --action ack --cursor 10',
-    'factory-external-event ack --cursor 11 --json',
+    'caveat runtime-errors ack 6 --json',
   ]);
 
   const retried = await flush(box);
   assert.equal(retried.code, 0, retried.stderr);
   assert.equal(server.received.length, 2);
   await absent(reportEntry(box));
-  assert.deepEqual((await readFile(box.ackLog, 'utf8')).trim().split('\n').slice(-5), [
+  assert.deepEqual((await readFile(box.ackLog, 'utf8')).trim().split('\n').slice(-6), [
+    'caveat runtime-errors ack 6 --json',
     'throughline runtime-errors ack 7 --json',
     'spotter diagnostics runtime-errors ack 8',
     'aiterm-runtime-errors ack --cursor 9',

@@ -115,6 +115,7 @@ Claude command の Codex 正規入口は slash command の模造ではなく、�
 3. 第三者化は、製品repoへのinstrumentation・内部state解釈・fork/patchを撤去し、version範囲付きblack-box adapterへ切り替える。追従不能な状態は`unsupported`または`unverified`であり、greenへ丸めない。
 4. 所有移管は、source/state/schemaの所有者、release/update経路、修正先repo、credential責務を更新する。dotagentsが持つのは統合契約であり、製品のsourceやstateを無断で移動しない。基準path・repo移動はこの変更とは別にオーナーの明示承認を取る。
 5. wire schema majorを変える時は [factory reporterランブック](docs/factory-reporter-runbook.md#11-bughub-wire-schema-major互換matrix) のserver-first・別endpoint・dual-run手順を使う。全repoを独立commit/rollback可能にし、各full gateとcanary後にだけ旧majorをretireする。
+6. 自作コア製品はdotagents統括AIの管理対象であり、必要な製品側修正、version更新、release準備、publish、公開後smokeまで担当する。公開前に対象version、変更範囲、互換性、影響、rollbackを提示してH承認を取り、各repoのfull gate→pack/install smoke→独立commit/push/tag→registry publish→`latest`/実CLI確認の順に進める。公開後の不具合は既存versionを黙って上書き・unpublishせず、dist-tag退避または修正版patch releaseで戻す。
 
 ### Codex 9面の対応状況
 

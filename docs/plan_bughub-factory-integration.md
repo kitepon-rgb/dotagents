@@ -20,12 +20,13 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 - [ ] 互換異常は既存BugHubのfingerprint・severity・再発・解決・Discord・`/ai`へ統合される
 - [x] 既存4アプリのpull巡回・重大度・resolve/reopen・dashboard・日次/週次通知に回帰がない
 - [x] 第三者製品をfork、`node_modules`パッチ、内部DB決め打ちで改造していない
-- [ ] 自作製品は機械可読な正規diagnosticsを製品側に持ち、dotagentsが内部状態を勝手に解釈しない
-- [ ] 自作製品をクオ管理端末で実利用した時の構造化errorを、入力本文・秘密・ファイル内容なしでローカル記録し、dotagents reporter経由でBugHubへ集約できる
+- [x] 自作製品は機械可読な正規diagnosticsを製品側に持ち、dotagentsが内部状態を勝手に解釈しない
+- [x] 自作製品をクオ管理端末で実利用した時の構造化errorを、入力本文・秘密・ファイル内容なしでローカル記録し、dotagents reporter経由でBugHubへ集約できる
 - [x] 公開製品の外部利用者からは明示opt-inなしにtelemetryを送らない
 - [ ] BugHub自身をBugHubの自己申告だけで合格させず、main-server上の外部runnerがServerManager/BugHubを検証する
 - [x] 報告不能時は端末ローカルのdotagents所有outboxへ保持し、成功扱いせず、復旧後に冪等再送できる
 - [ ] 更新後contract gateと定期read-only gateがgreenになり、失敗製品・host・検査項目をBugHubとローカルlogで特定できる
+- [ ] 自作製品のfactory diagnostics/runtime error契約が各端末の正規配布版へ収録され、repo HEADだけに存在する未公開実装へ依存していない
 - [ ] 各repoを独立commit・独立rollback可能なwaveで実装し、全remoteへpushして真実を返している
 - [ ] 最終反証、全端末E2E、本番canary、rollback drillを完了し、本計画を`docs/archive/`へ退避している
 
@@ -47,14 +48,14 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 
 | 製品 | 所有 | version取得 | 現行diagnostics候補 | 現状 |
 |---|---|---|---|---|
-| Caveat | 自作・別repo | `caveat --version`（実測0.15.0） | sync、Codex hook、MCP、own DB | repoに別作業のdirty多数。無断着手禁止 |
-| Throughline | 自作・別repo | `throughline --version`（0.6.1） | doctor/status、Codex smoke、state schema | `.agents/`未追跡あり。意図確認後に着手 |
-| Spotter | 自作・別repo | `spotter --version`（1.4.22） | doctor/status/logs、Codex hook diagnostics | clean |
+| Caveat | 自作・別repo | `caveat --version`（release candidate 0.16.3） | native factory diagnostics、runtime error store | ロック解除済み。実装・full gate完了、公開待ち |
+| Throughline | 自作・別repo | `throughline --version`（release candidate 0.6.2） | native factory diagnostics、runtime error store | 実装・full gate完了、公開待ち |
+| Spotter | 自作・別repo | `spotter --version`（release candidate 1.4.23） | native diagnostics、runtime error store | 実装・full gate完了、公開待ち |
 | Codegraph | 第三者 | `codegraph --version`（1.4.1） | 既存indexだけ`status`/read-only query | 本体改造禁止。index自動作成禁止 |
 | MarkItDown | 第三者 | `markitdown --version`（0.1.5） | ローカルfixture変換＋出力byte数 | `uv tool`管理。本体改造禁止 |
 | Oracle | 第三者 | `oracle --version`（0.16.0） | canonical wrapper、`doctor --providers --json` | Chrome/ChatGPT認証依存。consult/statusをhealthに使わない |
-| aiterm-mcp | 自作・別repo | package.json/npm（0.12.1） | MCP initialize、PTY list、vendor前提 | clean。現行CLIはversion出力なし |
-| codex-sidecar | 自作・別repo | CLI/package群（0.3.5） | diagnostics/dry-run、result schema | clean |
+| aiterm-mcp | 自作・別repo | package.json/npm（release candidate 0.12.2） | native diagnostics、runtime error store | 実装・full gate完了、公開待ち |
+| codex-sidecar | 自作・別repo | CLI/package群（0.3.6） | diagnostics/dry-run、result schema | 0.3.6へ公開済み |
 | ServerManager | 自作・別repo | package.json/source commit（2.0.0） | BugHub health/poll/DB/container/Pi5 | clean。BugHubを内包 |
 
 ## 3. ルール変更の裁定
@@ -265,19 +266,19 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 4 — 自作5製品のnative diagnostics（repo別A、契約はF）
 
-- [ ] Caveat: 並行dirty解消後、DB schema/migration/own/sync/hook/MCPの機械可読診断
+- [x] Caveat: DB schema/migration/own sync/Claude MCP・hook/Codex native hookの機械可読診断
 - [x] Throughline: state schema/hook/代表smokeの機械可読診断
 - [x] Spotter: 既存doctor/status/Codex diagnosticsの統合JSONまたはadapter契約
 - [x] aiterm-mcp: versionとMCP/PTY/vendor readinessのread-only診断
 - [x] codex-sidecar: package整合、diagnostics/dry-run、result schema/model policy診断
-- [ ] 各製品で既存error log/診断を棚卸し、共通fieldへ安全に出せるものだけlocal structured error storeへ接続
+- [x] 各製品で既存error log/診断を棚卸し、共通fieldへ安全に出せるものだけlocal structured error storeへ接続
   - [x] Throughline、Spotter、aiterm-mcp、codex-sidecarは、明示opt-in、local store、resolution、cursor/ack、retentionを製品側の公開CLI契約として実装
-  - [ ] Caveatはオーナー指示によるロック中。既存作業へ干渉せず、解除後に別waveで実装
+  - [x] Caveatもロック解除後の独立waveで明示opt-in、local store、resolution、cursor/ack、retentionを実装
 - [x] `collection.enabled`と`reporting.enabled`を分離し、送信が既定OFF、明示ON時だけnetwork I/Oすることをfixtureと文書で固定
 - [x] stderr、生stack、例外オブジェクトの丸投げと、同じ失敗の複数layer計上をnegative fixtureで拒否
-- [ ] 各repoでbaseline green→characterization→実装→full gate→独立commit→push
+- [x] 各repoでbaseline green→characterization→実装→full gate→独立commit→push
   - [x] Throughline、Spotter、aiterm-mcp、codex-sidecarは独立commit・push・full gate・独立反証まで完了
-  - [ ] Caveatはロック解除後に実施
+  - [x] Caveatもbaseline→characterization→実装→full gate→独立commit/pushを完了
 
 ### Wave 5 — BugHub ingestion・表示・通知（F＋A）
 
@@ -285,9 +286,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] v1 full snapshot、check lifecycle、消失だけでは非resolve、producer明示resolve、再観測reopen、host廃止、長期offlineの状態遷移を固定
 - [x] deltaとBugHub側manual resolveをv1非目標とし、将来schema majorの互換設計へ分離
 - [x] check failureを既存issueへhost付きで統合し、明示resolve、再観測reopen、古いoffline観測による巻き戻し拒否を固定
-- [ ] runtime errorのack/cursor/retentionを全自作製品で固定
+- [x] runtime errorのack/cursor/retentionを全自作製品で固定
   - [x] 完了済み4製品はBugHubの同一report受理後だけackし、ack失敗は非0・単一atomic outbox envelope保持・duplicate再受理後再試行とする
-  - [ ] Caveatはロック解除後に製品側storeと接続
+  - [x] Caveatも製品側storeと接続し、同一report受理後だけackする
 - [x] runtime adapter/outbox契約を独立反証し、collection OFF時のqueue drain、二ファイルorphan、ack失敗のfalse successがないことを確認
 - [x] dashboardにhost×product matrix、version履歴、latest/compat/schema状態を追加
 - [x] `/ai`とDiscord/daily/weeklyへ修正先repo・host・product・fingerprintを追加
@@ -313,6 +314,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 7 — 4環境canary rollout（H＋F）
 
+0. [ ] H承認後、repo実装済み・公開版未収録のThroughline、Spotter、aiterm-mcpと、今回追加するCaveatのfactory契約を独立releaseし、npm `latest`・packed install smoke・`--version`・native diagnostics/runtime snapshotを確認する（codex-sidecarはv0.3.6へ収録済み）
 1. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認
 2. [ ] main-server: Hでtoken/config opt-in、scheduler apply、DB backup付きdeploy → FでBugHub自身を含む全9製品とrevision attestationを確認
 3. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認

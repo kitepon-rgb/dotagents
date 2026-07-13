@@ -4,11 +4,13 @@ import { test } from 'node:test';
 
 import {
   collectAitermRuntimeErrors,
+  collectCaveatRuntimeErrors,
   collectCodexSidecarRuntimeErrors,
   collectRuntimeErrors,
   collectServerManagerExternalEvents,
   collectSpotterRuntimeErrors,
   collectThroughlineRuntimeErrors,
+  acknowledgeRuntimeErrors,
 } from '../../lib/factory/runtime-errors.mjs';
 
 const NOW = '2026-07-13T00:00:00.000Z';
@@ -57,7 +59,7 @@ function sequencedRecord(product, overrides = {}) {
   };
 }
 
-test('4製品の公開CLIだけをbounded runnerで呼び、openとack metadataへ固定投影する', async () => {
+test('5製品の公開CLIだけをbounded runnerで呼び、openとack metadataへ固定投影する', async () => {
   const throughlineTemplate = 'Throughline persistence operation failed';
   const throughlineRecord = {
     error_code: 'THROUGHLINE.PERSISTENCE_FAILED',
@@ -72,6 +74,17 @@ test('4製品の公開CLIだけをbounded runnerで呼び、openとack metadata�
     state_schema_version: '1.0',
   };
   const fixtures = [
+    {
+      product: 'caveat', collect: collectCaveatRuntimeErrors,
+      command: 'caveat', args: ['runtime-errors', 'snapshot', '--after-cursor', '0', '--limit', '256', '--json'],
+      ack: ['runtime-errors', 'ack', '3', '--json'],
+      value: {
+        schema: 'caveat.runtime_errors.v1', product: 'caveat', version: '1.2.3', state_schema_version: '1.0',
+        cursor: { high_watermark: 3, acknowledged_through: 0, next: 3 },
+        runtime_errors: [{ ...throughlineRecord, error_code: 'CAVEAT.DATABASE_OPEN_FAILED', component: 'database', message_template: 'Caveat database open failed', fingerprint: nulFingerprint('caveat', 'database', 'CAVEAT.DATABASE_OPEN_FAILED', 'Caveat database open failed') }], resolutions: [],
+        diagnostics: { collection: 'enabled', status: 'ready', total_count: 1, pending_count: 1, truncated: false },
+      },
+    },
     {
       product: 'throughline', collect: collectThroughlineRuntimeErrors,
       command: 'throughline', args: ['runtime-errors', 'snapshot', '--after-cursor', '0', '--limit', '256', '--json'],
@@ -132,6 +145,13 @@ test('4製品の公開CLIだけをbounded runnerで呼び、openとack metadata�
     assert.equal(calls[0].options.timeoutMs, 3_000);
     assert.equal(calls[0].options.maxOutputBytes, 256 * 1024);
   }
+});
+
+test('ackはexit 0だけで成功扱いせず、返却cursorが要求値へ到達したことを検証する', async () => {
+  const bundle = { schema_version: '1.0', report_id: 'r', acknowledgements: [{ product: 'caveat', cursor: 3, command: 'caveat', args: ['runtime-errors', 'ack', '3', '--json'] }] };
+  await assert.rejects(acknowledgeRuntimeErrors(bundle, { runner: async () => ({ ok: true, stdout: '{}\n' }) }), { code: 'E_FACTORY_RUNTIME_ERRORS' });
+  const response = { schema: 'caveat.runtime_errors.v1', product: 'caveat', version: '1.2.3', state_schema_version: '1.0', cursor: { high_watermark: 3, acknowledged_through: 3, next: 0 }, runtime_errors: [], resolutions: [], diagnostics: { collection: 'enabled', status: 'ready', total_count: 0, pending_count: 0, truncated: false } };
+  await acknowledgeRuntimeErrors(bundle, { runner: runnerFor(response) });
 });
 
 test('各製品のexplicit resolutionをresolutionsへ分離する', async () => {
@@ -198,6 +218,14 @@ test('CLI不在とcollection disabledは安全な空projectionと機械可読sta
   }) });
   assert.equal(disabled.status, 'collection_disabled');
   assert.equal(disabled.acknowledgement, null);
+
+  const caveatDisabled = await collectCaveatRuntimeErrors({ runner: runnerFor({
+    schema: 'caveat.runtime_errors.v1', product: 'caveat', version: '1.2.3', state_schema_version: '1.0',
+    cursor: { high_watermark: 0, acknowledged_through: 0, next: 0 }, runtime_errors: [], resolutions: [],
+    diagnostics: { collection: 'disabled', status: 'not_applicable', total_count: 0, pending_count: 0, truncated: false },
+  }) });
+  assert.equal(caveatDisabled.status, 'collection_disabled');
+  assert.equal(caveatDisabled.acknowledgement, null);
 });
 
 test('未知field、生path/log/stack/context、fingerprint改ざんを明示拒否する', async () => {

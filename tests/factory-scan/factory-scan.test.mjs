@@ -71,6 +71,12 @@ elif [ "$1" = "factory-diagnostics" ] && [ "$2" = "--json" ]; then
 else
   exit 2
 fi`);
+  await box.script('caveat', `
+if [ "$1" = "factory-diagnostics" ] && [ "$2" = "--json" ]; then
+  echo '{"schema":"caveat.native_factory_diagnostics.v1","product":"caveat","version":"1.2.3","overall":{"status":"ready"},"database":{"status":"ready","reason_code":"current","schema_version":3,"supported_schema_version":3,"migration_status":"current"},"sync":{"status":"ready","reason_code":"synchronized"},"connectors":{"claude":{"status":"ready","mcp":{"status":"ready","reason_code":"configured"},"hooks":{"user_prompt_submit":{"status":"ready","reason_code":"configured"},"post_tool_use":{"status":"ready","reason_code":"configured"},"post_tool_use_failure":{"status":"ready","reason_code":"configured"},"stop":{"status":"ready","reason_code":"configured"}}},"codex":{"status":"ready","hooks":{"user_prompt_submit":{"status":"ready","reason_code":"configured"},"post_tool_use":{"status":"ready","reason_code":"configured"},"stop":{"status":"ready","reason_code":"configured"}}}}}'
+else
+  exit 2
+fi`);
   await box.script('spotter', `
 if [ "$1" = "--version" ]; then
   echo 'spotter 1.2.3'
@@ -95,12 +101,12 @@ else
 fi`);
 }
 
-function runScanner(box) {
+function runScanner(box, extraEnv = {}) {
   return new Promise((done) => {
     const child = spawn(process.execPath, [
       CLI, '--config', box.config, '--output', box.output, '--cwd', box.root,
     ], {
-      env: { ...process.env, PATH: `${box.bin}:${process.env.PATH}` },
+      env: { ...process.env, PATH: `${box.bin}:${process.env.PATH}`, ...extraEnv },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';
@@ -132,6 +138,10 @@ fi`);
   assert.equal(report.products.codegraph.checks[0].reason_code, 'not_indexed');
   assert.equal(report.products.markitdown.checks[0].status, 'pass');
   assert.equal(report.products.oracle.checks[0].status, 'pass');
+  assert.equal(report.products.caveat.installed_version, '1.2.3');
+  assert.equal(report.products.caveat.state_schema_version, '3');
+  assert.equal(report.products.caveat.migration_status, 'current');
+  assert.equal(report.products.caveat.checks[0].status, 'pass');
   assert.equal(report.products.throughline.checks[0].status, 'pass');
   assert.equal(report.products.throughline.migration_status, 'current');
   assert.equal(report.products.spotter.checks[0].status, 'pass');
@@ -146,6 +156,69 @@ fi`);
     execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim(),
   );
   assert.equal((await stat(box.output)).mode & 0o777, 0o600);
+});
+
+test('Caveat native diagnosticsはexitとの組合せ、DB射影、exact schemaを厳密に検証する', async (t) => {
+  const cases = [
+    ['not_ready', `echo '{"schema":"caveat.native_factory_diagnostics.v1","product":"caveat","version":"1.2.3","overall":{"status":"not_ready"},"database":{"status":"not_ready","reason_code":"migration_failed","schema_version":2,"supported_schema_version":3,"migration_status":"failed"},"sync":{"status":"not_ready","reason_code":"sync_failed"},"connectors":{"claude":{"status":"not_ready","mcp":{"status":"not_ready","reason_code":"missing"},"hooks":{"user_prompt_submit":{"status":"not_ready","reason_code":"missing"},"post_tool_use":{"status":"not_ready","reason_code":"missing"},"post_tool_use_failure":{"status":"not_ready","reason_code":"missing"},"stop":{"status":"not_ready","reason_code":"missing"}}},"codex":{"status":"not_ready","hooks":{"user_prompt_submit":{"status":"not_ready","reason_code":"missing"},"post_tool_use":{"status":"not_ready","reason_code":"missing"},"stop":{"status":"not_ready","reason_code":"missing"}}}}}' ; exit 1`, 'fail'],
+    ['unverified', `echo '{"schema":"caveat.native_factory_diagnostics.v1","product":"caveat","version":"1.2.3","overall":{"status":"unverified"},"database":{"status":"unverified","reason_code":"database_unavailable","schema_version":null,"supported_schema_version":3,"migration_status":"unverified"},"sync":{"status":"unverified","reason_code":"sync_unavailable"},"connectors":{"claude":{"status":"unverified","mcp":{"status":"unverified","reason_code":"unavailable"},"hooks":{"user_prompt_submit":{"status":"unverified","reason_code":"unavailable"},"post_tool_use":{"status":"unverified","reason_code":"unavailable"},"post_tool_use_failure":{"status":"unverified","reason_code":"unavailable"},"stop":{"status":"unverified","reason_code":"unavailable"}}},"codex":{"status":"unverified","hooks":{"user_prompt_submit":{"status":"unverified","reason_code":"unavailable"},"post_tool_use":{"status":"unverified","reason_code":"unavailable"},"stop":{"status":"unverified","reason_code":"unavailable"}}}}}' ; exit 1`, 'unverified'],
+    ['ready_exit_mismatch', `echo '{"schema":"caveat.native_factory_diagnostics.v1","product":"caveat","version":"1.2.3","overall":{"status":"ready"},"database":{"status":"ready","reason_code":"current","schema_version":3,"supported_schema_version":3,"migration_status":"current"},"sync":{"status":"ready","reason_code":"synchronized"},"connectors":{"claude":{"status":"ready","mcp":{"status":"ready","reason_code":"configured"},"hooks":{"user_prompt_submit":{"status":"ready","reason_code":"configured"},"post_tool_use":{"status":"ready","reason_code":"configured"},"post_tool_use_failure":{"status":"ready","reason_code":"configured"},"stop":{"status":"ready","reason_code":"configured"}}},"codex":{"status":"ready","hooks":{"user_prompt_submit":{"status":"ready","reason_code":"configured"},"post_tool_use":{"status":"ready","reason_code":"configured"},"stop":{"status":"ready","reason_code":"configured"}}}}}' ; exit 1`, 'unverified'],
+  ];
+  for (const [name, body, expected] of cases) {
+    const box = await sandbox(t);
+    await installHealthyCommands(box);
+    await box.script('caveat', body);
+    await writeFile(box.config, JSON.stringify(validConfig()));
+    const result = await runScanner(box);
+    assert.equal(result.code, 0, `${name}: ${result.stderr}`);
+    const caveat = JSON.parse(await readFile(box.output, 'utf8')).products.caveat;
+    if (expected === 'fail') {
+      assert.equal(caveat.checks[0].status, 'fail');
+      assert.equal(caveat.compatibility_status, 'incompatible');
+      assert.equal(caveat.state_schema_version, '2');
+      assert.equal(caveat.migration_status, 'failed');
+    } else {
+      assert.equal(caveat.checks[0].status, 'unverified');
+      if (name === 'ready_exit_mismatch') assert.equal(caveat.checks[0].reason_code, 'native_schema_invalid');
+    }
+  }
+});
+
+test('Caveat native diagnosticsのschema drift・追加field・path漏洩をreportへ通さない', async (t) => {
+  for (const [name, mutate] of [
+    ['schema', (value) => { value.schema = 'caveat.native_factory_diagnostics.v2'; }],
+    ['additional_field', (value) => { value.path = '/Users/kite/private'; }],
+    ['nested_path', (value) => { value.connectors.claude.mcp.path = '/Users/kite/private'; }],
+    ['aggregate_mismatch', (value) => { value.connectors.codex.hooks.stop.status = 'not_ready'; }],
+    ['database_ready_mismatch', (value) => { value.database.schema_version = 2; }],
+  ]) {
+    const box = await sandbox(t);
+    await installHealthyCommands(box);
+    const base = { schema: 'caveat.native_factory_diagnostics.v1', product: 'caveat', version: '1.2.3', overall: { status: 'ready' }, database: { status: 'ready', reason_code: 'current', schema_version: 3, supported_schema_version: 3, migration_status: 'current' }, sync: { status: 'ready', reason_code: 'synchronized' }, connectors: { claude: { status: 'ready', mcp: { status: 'ready', reason_code: 'configured' }, hooks: Object.fromEntries(['user_prompt_submit', 'post_tool_use', 'post_tool_use_failure', 'stop'].map((key) => [key, { status: 'ready', reason_code: 'configured' }])) }, codex: { status: 'ready', hooks: Object.fromEntries(['user_prompt_submit', 'post_tool_use', 'stop'].map((key) => [key, { status: 'ready', reason_code: 'configured' }])) } } };
+    mutate(base);
+    await box.script('caveat', `echo '${JSON.stringify(base)}'`);
+    await writeFile(box.config, JSON.stringify(validConfig()));
+    const result = await runScanner(box);
+    assert.equal(result.code, 0, `${name}: ${result.stderr}`);
+    const report = JSON.parse(await readFile(box.output, 'utf8'));
+    assert.deepEqual(report.products.caveat.checks, [{ check_id: 'native_diagnostics', status: 'unverified', reason_code: 'native_schema_invalid' }]);
+    assert.doesNotMatch(JSON.stringify(report), /Users|private|path/);
+  }
+});
+
+test('Caveat CLI不在は壊れた診断出力と区別してmissingへ写像する', async (t) => {
+  const box = await sandbox(t);
+  await installHealthyCommands(box);
+  await rm(join(box.bin, 'caveat'));
+  await box.script('git', "echo '1234567'");
+  await writeFile(box.config, JSON.stringify(validConfig()));
+  const result = await runScanner(box, { PATH: box.bin });
+  assert.equal(result.code, 0, result.stderr);
+  const caveat = JSON.parse(await readFile(box.output, 'utf8')).products.caveat;
+  assert.equal(caveat.presence_status, 'missing');
+  assert.deepEqual(caveat.checks, [{
+    check_id: 'native_diagnostics', status: 'unverified', reason_code: 'cli_unavailable',
+  }]);
 });
 
 test('native diagnosticsの既知not_readyを固定fingerprintのfailへ写像し、生値を出さない', async (t) => {

@@ -14,9 +14,9 @@
 ### `caveat`
 
 - 所有/修正先: 自作 / `kitepon-rgb/Caveat`。version入口: `caveat --version`。
-- diagnostics/state正本: Caveat repoのown DB/schema/migration、sync、hook/MCP。製品側machine-readable入口が確定するまでadapterは接続しない。
-- host/connector: 全4 host required、Claude/Codex MCP＋hook required。
-- 現adapter: presenceとversionのみ。native diagnostics、latest、state/migration、runtime errorは未実装。
+- diagnostics/state正本: `caveat factory-diagnostics --json`（schema `caveat.native_factory_diagnostics.v1`）。Caveat repoのown DB/schema/migration、sync、connectorをread-onlyで返す。公開runtime errorは`caveat runtime-errors snapshot --after-cursor 0 --limit 256 --json`／`ack <cursor> --json`。
+- host/connector: 全4 host required。ClaudeはMCP＋4 hooks、Codexはnative 3 hooks required（Codex MCPは不要）。
+- 現adapter: native JSONをexact allowlistで検証し、`ready`＋exit 0をpass/compatible、`not_ready`＋非0を固定fingerprintのfail/incompatible、`unverified`＋非0・schema不正をunverifiedへ射影する。DB schema/migrationと、明示opt-inされた公開runtime error snapshot/ackを接続済み。
 - 表現/禁止: 診断不能は`unverified`、CLI不在は`missing`。Caveat DB直接queryやhook推測は禁止。
 
 ### `throughline`
