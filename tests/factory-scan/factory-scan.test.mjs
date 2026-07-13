@@ -478,7 +478,7 @@ async function windowsCommandFixture(t) {
   const bin = join(root, 'bin with space');
   await mkdir(bin, { recursive: true });
   t.after(() => rm(root, { recursive: true, force: true }));
-  const npmShim = (entry) => `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n SET "_prog=node"\r\n)\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & set PATHEXT=%PATHEXT:;.JS;=;% & "%_prog%"  "%dp0%\\${entry}" %*\r\n`;
+  const npmShim = (entry, { elsePathext = true, pathext = '%PATHEXT:;.JS;=;%' } = {}) => `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n SET "_prog=node"\r\n${elsePathext ? `  SET PATHEXT=${pathext}\r\n` : ''})\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & ${elsePathext ? '' : 'set PATHEXT=%PATHEXT:;.JS;=;% & '}"%_prog%"  "%dp0%\\${entry}" %*\r\n`;
   return {
     root, bin,
     env: { Path: bin, PathExt: '.CMD;.EXE' },
@@ -488,15 +488,15 @@ async function windowsCommandFixture(t) {
       await writeFile(file, body);
       return file;
     },
-    async cmd(name, entry) {
+    async cmd(name, entry, options) {
       const file = join(bin, `${name}.cmd`);
-      await writeFile(file, npmShim(entry));
+      await writeFile(file, npmShim(entry, options));
       return file;
     },
   };
 }
 
-test('Windows npm .cmdは空白を含むPATHから検証済みNode entrypointへ解決する', async (t) => {
+test('Windows npm .cmd実物variantは空白を含むPathから検証済みNode entrypointへ解決する', async (t) => {
   const box = await windowsCommandFixture(t);
   const entry = await box.entry('safe.js', 'process.exit(0);\n');
   await box.cmd('safe-cli', 'node_modules\\safe-package\\bin\\safe.js');
@@ -514,11 +514,51 @@ test('Windows .exeはPATHEXT順で直接起動し、npm .cmdへはcmd.exeを介�
 
 test('Windows npm .cmdはstdin・cwd・envを保ってNodeで実行する', async (t) => {
   const box = await windowsCommandFixture(t);
-  await box.entry('runner.js', "let input = ''; process.stdin.on('data', (chunk) => { input += chunk; }); process.stdin.on('end', () => process.stdout.write(JSON.stringify({ input, cwd: process.cwd(), marker: process.env.FACTORY_MARKER })));\n");
+  const entry = await box.entry('runner.js', "let input = ''; process.stdin.on('data', (chunk) => { input += chunk; }); process.stdin.on('end', () => process.stdout.write(JSON.stringify({ input, cwd: process.cwd(), marker: process.env.FACTORY_MARKER })));\n");
   await box.cmd('runner', 'node_modules\\safe-package\\bin\\runner.js');
-  const result = await runCommand('runner', [], { cwd: box.root, env: { ...box.env, FACTORY_MARKER: 'kept' }, input: 'stdin-kept', platform: 'win32', windowsPathModule: { ...posix, delimiter: ';' } });
+  const helper = join(box.root, 'success-helper.mjs');
+  await writeFile(helper, `process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({ status: 'ok', command: ${JSON.stringify(process.execPath)}, prefixArgs: [${JSON.stringify(entry)}] })));\n`);
+  const result = await runCommand('runner', [], { cwd: box.root, env: { ...box.env, FACTORY_MARKER: 'kept' }, input: 'stdin-kept', platform: 'win32', windowsPathModule: { ...posix, delimiter: ';' }, windowsHelperPath: helper });
   assert.equal(result.ok, true, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), { input: 'stdin-kept', cwd: await realpath(box.root), marker: 'kept' });
+});
+
+test('Windows command helperの解決もrun開始時からtimeoutへ含め、timeout後にlate spawnしない', async (t) => {
+  const box = await windowsCommandFixture(t);
+  const marker = join(box.root, 'late-spawned');
+  const helper = join(box.root, 'hanging-helper.mjs');
+  await writeFile(helper, `import { writeFile } from 'node:fs/promises'; await new Promise((resolveDelay) => setTimeout(resolveDelay, 80)); await writeFile(${JSON.stringify(marker)}, 'late');\n`);
+  const result = await runCommand('late', [], {
+    env: box.env,
+    platform: 'win32',
+    timeoutMs: 10,
+    windowsHelperPath: helper,
+  });
+  assert.deepEqual({ reason: result.reason, stdout: result.stdout, stderr: result.stderr }, { reason: 'timeout', stdout: '', stderr: '' });
+  await new Promise((resolveDelay) => setTimeout(resolveDelay, 120));
+  await assert.rejects(readFile(marker), { code: 'ENOENT' });
+});
+
+test('Windows command helperの返却schemaとentrypointは親でも検証し、不正値を実行しない', async (t) => {
+  const box = await windowsCommandFixture(t);
+  const marker = join(box.root, 'unexpected-spawn');
+  const helper = join(box.root, 'invalid-helper.mjs');
+  await writeFile(helper, `process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({ command: ${JSON.stringify(process.execPath)}, prefixArgs: [${JSON.stringify(join(box.root, 'outside.js'))}] })));\n`);
+  const result = await runCommand('invalid', [], { env: box.env, platform: 'win32', windowsHelperPath: helper, windowsPathModule: { ...posix, delimiter: ';' } });
+  assert.equal(result.reason, 'spawn');
+  await assert.rejects(readFile(marker), { code: 'ENOENT' });
+});
+
+test('Windows command helperはCLI不在のENOENTだけを閉じたerror schemaで親へ返す', async (t) => {
+  const box = await windowsCommandFixture(t);
+  const result = await runCommand('missing', [], { env: { Path: 'C:\\dotagents-command-missing', PathExt: '.CMD;.EXE' }, platform: 'win32' });
+  assert.equal(result.reason, 'spawn');
+  assert.equal(result.error?.code, 'ENOENT');
+  const invalid = join(box.root, 'unknown-error-helper.mjs');
+  await writeFile(invalid, "process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({ status: 'error', code: 'ESECRET' })));\n");
+  const rejected = await runCommand('unknown', [], { env: box.env, platform: 'win32', windowsHelperPath: invalid, windowsPathModule: { ...posix, delimiter: ';' } });
+  assert.equal(rejected.reason, 'spawn');
+  assert.equal(rejected.error?.code, 'EINVAL');
 });
 
 test('Windows command解決は悪意あるshim・traversal・dynamic command pathをfail-loudする', async (t) => {
@@ -530,6 +570,8 @@ test('Windows command解決は悪意あるshim・traversal・dynamic command pat
   await box.cmd('traversal', 'node_modules\\safe-package\\bin\\..\\..\\..\\escape.js');
   await assert.rejects(resolveWindowsCommand('traversal', { env: box.env, pathModule: { ...posix, delimiter: ';' } }), { code: 'EINVAL' });
   await assert.rejects(resolveWindowsCommand('..\\evil', { env: box.env, pathModule: { ...posix, delimiter: ';' } }), { code: 'EINVAL' });
+  await box.cmd('bad-pathext', 'node_modules\\safe-package\\bin\\safe.js', { pathext: '%PATH%' });
+  await assert.rejects(resolveWindowsCommand('bad-pathext', { env: box.env, pathModule: { ...posix, delimiter: ';' } }), { code: 'EINVAL' });
 });
 
 test('rename失敗時に一時reportを残さない', async (t) => {
