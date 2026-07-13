@@ -279,15 +279,25 @@ test('resolved metadata欠落、非canonical UTC、cursor不整合を明示拒�
   });
 });
 
-test('command failureやmalformed collectionをCLI不在へ偽装しない', async () => {
+test('command failureやmalformed collectionをCLI不在へ偽装せず製品IDを固定診断へ残す', async () => {
   await assert.rejects(collectSpotterRuntimeErrors({
     runner: async () => ({ ok: false, reason: 'exit', code: 1, stdout: '', stderr: '/Users/private/error' }),
-  }), { code: 'E_FACTORY_RUNTIME_ERRORS', reason_code: 'command_failed' });
+  }), {
+    code: 'E_FACTORY_RUNTIME_ERRORS',
+    reason_code: 'command_failed',
+    product_id: 'spotter',
+    message: 'runtime error adapter contract failed: spotter:command_failed',
+  });
 
   await assert.rejects(collectAitermRuntimeErrors({ runner: runnerFor({
     ok: true, command: 'snapshot', snapshot: {
       collection: 'malformed', schema_version: 'aiterm-mcp.runtime-errors.v1', cursor: 0,
       acknowledged_cursor: 0, records: [],
     },
-  }) }), { code: 'E_FACTORY_RUNTIME_ERRORS', reason_code: 'aiterm_collection' });
+  }) }), {
+    code: 'E_FACTORY_RUNTIME_ERRORS',
+    reason_code: 'aiterm_collection',
+    product_id: 'aiterm-mcp',
+    message: 'runtime error adapter contract failed: aiterm-mcp:aiterm_collection',
+  });
 });

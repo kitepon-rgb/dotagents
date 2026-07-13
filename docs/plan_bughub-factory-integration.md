@@ -338,6 +338,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] 実配布CLIで`gpt-connector --help`がChrome/CDP接続より前にusageを表示するよう修正し、read-onlyコマンドが未起動Chromeを理由に誤って`CDP_UNAVAILABLE`へ落ちないことを配布物smokeで固定する
 - [x] `gpt-connector browser start`を製品所有の正規入口にし、true headlessを使わず専用profile・loopback CDPで窓なしcold起動する。background最小化targetを作成して正規PIDだけunhideし、既存Chromeの二重起動を避ける。unit fixtureに加え、macOS cold smokeでCDP `windowState=minimized`、Window Server上の同一PID layer 0画面内windowゼロ、同時start収束、最小化中の実送受信を固定した。`browser show`と再startは同じ実windowの`0→1→0`を固定した
 - [x] runtime error storeの異常終了後に残ったlockを有界・安全に回収し、diagnosticsがstale lockを偽greenにしないcharacterizationと修復を追加する
+- [x] runtime error adapter失敗が、秘密や生stderrを出さずに失敗製品IDと固定reason codeをローカル診断へ残す
 - [ ] macOS、Linux、WSL2、Windows nativeでCLI/version/read-only diagnosticsを動かし、live Chat connectorの期待可否はhost matrixで別管理する。未対応hostを導入失敗や偽greenへ丸めない
 - [ ] `pnpm check`、pack/install smoke、既存Chat/添付/job回帰をgreenにし、version更新・release準備後、npm publishは対象version・影響・rollbackを提示してH承認後だけ行う
 
