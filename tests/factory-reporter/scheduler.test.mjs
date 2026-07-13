@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, test } from 'node:test';
-import { nextCron, removeLegacyArtifacts } from '../../bin/factory-reporter-scheduler.mjs';
+import { nextCron, removeLegacyArtifacts, stableNodePath } from '../../bin/factory-reporter-scheduler.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..', '..');
 const SCHEDULER = join(ROOT, 'bin', 'factory-reporter-scheduler.mjs');
@@ -15,6 +15,13 @@ const CURRENT_PROFILE = process.platform === 'darwin' ? 'mac' : process.platform
 async function sandbox(profile = 'mac', collection = false, reporting = false) { const root = await mkdtemp(join(tmpdir(), 'factory-reporter-scheduler-test-')); roots.push(root); const config = join(root, 'config.json'); const credential = join(root, 'credential'); await writeFile(credential, 'unit-test-token\n', { mode: 0o600 }); await writeFile(config, JSON.stringify({ schema_version: '1.0', host: { id: 'test-host', profile }, collection: { enabled: collection }, reporting: reporting ? { enabled: true, endpoint: 'http://127.0.0.1:1/api/factory/v2/reports', credential_file: credential } : { enabled: false } })); return { root, config, credential, state: join(root, 'state-home', 'dotagents', 'factory-reporter-v2') }; }
 function run(script, args, box, extraEnv = {}) { return new Promise((resolveRun) => { const child = spawn(process.execPath, [script, ...args], { env: { ...process.env, HOME: box.root, USERPROFILE: box.root, LOCALAPPDATA: join(box.root, 'local-app-data'), XDG_CONFIG_HOME: join(box.root, 'config-home'), XDG_STATE_HOME: join(box.root, 'state-home'), ...extraEnv }, stdio: ['ignore', 'pipe', 'pipe'] }); let stdout = ''; let stderr = ''; child.stdout.on('data', (chunk) => { stdout += chunk; }); child.stderr.on('data', (chunk) => { stderr += chunk; }); child.on('close', (code) => { let json = null; for (const line of stdout.trim().split(/\r?\n/u).reverse()) { try { json = JSON.parse(line); break; } catch {} } resolveRun({ code, stderr, json }); }); }); }
 after(async () => { for (const root of roots) await rm(root, { recursive: true, force: true }); });
+
+test('macOS Homebrew Nodeはversioned Cellar pathでなくstable入口をschedulerへ保存する', () => {
+  assert.equal(stableNodePath('darwin', '/opt/homebrew/Cellar/node/26.5.0/bin/node', (path) => path === '/opt/homebrew/bin/node'), '/opt/homebrew/bin/node');
+  assert.equal(stableNodePath('darwin', '/usr/local/Cellar/node/24.1.0/bin/node', (path) => path === '/usr/local/bin/node'), '/usr/local/bin/node');
+  assert.throws(() => stableNodePath('darwin', '/opt/homebrew/Cellar/node/26.5.0/bin/node', () => false), /stable Node/);
+  assert.equal(stableNodePath('linux', '/home/kite/.nvm/versions/node/v24.14.1/bin/node', () => false), '/home/kite/.nvm/versions/node/v24.14.1/bin/node');
+});
 
 test('dry-run/apply併用は順序にかかわらず拒否する', async () => { const box = await sandbox(); for (const flags of [['--dry-run', '--apply'], ['--apply', '--dry-run']]) { const result = await run(SCHEDULER, ['install', ...flags, '--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /併用/); } });
 test('配布symlink経由でもscheduler CLIがmainを実行する', async () => { const box = await sandbox('mac'); const link = join(box.root, 'factory-reporter-scheduler'); await symlink(SCHEDULER, link); const result = await run(link, ['install', '--dry-run', '--platform', 'darwin', '--config', box.config], box); assert.equal(result.code, 0, result.stderr); assert.equal(result.json.ok, true); assert.equal(result.json.dry_run, true); });

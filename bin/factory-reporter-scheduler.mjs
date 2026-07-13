@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { realpathSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { chmod, lstat, mkdir, rm, writeFile } from 'node:fs/promises';
 import { homedir, platform as hostPlatform } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -53,8 +53,17 @@ function parseArgs(argv) {
 }
 
 function platformMatches(profile, target) { return (target === 'darwin' && profile === 'mac') || (target === 'linux' && ['server', 'wsl'].includes(profile)) || (target === 'win32' && profile === 'windows-native'); }
+export function stableNodePath(target, executable = process.execPath, exists = existsSync) {
+  const node = safePath(executable, 'node path');
+  if (target !== 'darwin') return node;
+  const match = node.match(/^(\/opt\/homebrew|\/usr\/local)\/Cellar\/node\/[^/]+\/bin\/node$/u);
+  if (!match) return node;
+  const stable = `${match[1]}/bin/node`;
+  if (!exists(stable)) throw new Error(`Homebrew stable Node入口がありません: ${stable}`);
+  return stable;
+}
 function artifact(target, config, location, wireMajor) {
-  const node = safePath(process.execPath, 'node path'); const runner = join(location.home, '.local', 'bin', wireMajor === 'v1' ? 'factory-reporter-schedule-runner' : 'factory-reporter-v2-schedule-runner'); const log = join(location.state, 'scheduler.log');
+  const node = stableNodePath(target); const runner = join(location.home, '.local', 'bin', wireMajor === 'v1' ? 'factory-reporter-schedule-runner' : 'factory-reporter-v2-schedule-runner'); const log = join(location.state, 'scheduler.log');
   [runner, log, config, location.state].forEach((value) => safePath(value, 'scheduler path'));
   if (target === 'darwin') {
     const file = join(location.home, 'Library', 'LaunchAgents', `${LABEL}.plist`);
