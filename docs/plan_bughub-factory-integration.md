@@ -301,8 +301,8 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] BugHub停止、stale poll、DB migration失敗、image/source不一致をfixture化
   - [x] stale pull、source未設定、DB query/schema mismatch、factory ingest/delivery stale・失敗を`/readyz`の固定reason codeでfixture化
   - [x] process停止・到達不能を外部probeの`unreachable`としてfixture化
-  - [ ] image/source一致はrebuild済み判定と分離し、build時source revisionをOCI labelとread-only readiness fieldへ焼き込み、main-serverのdeploy manifestに保存した期待revisionと外部probeで比較する
-  - [ ] revision欠落・不正・期待値不一致を固定reason codeへ写像し、Docker restartだけでは一致扱いにしないfixtureを追加
+  - [x] image/source一致はrebuild済み判定と分離し、build時source revisionをOCI labelとread-only readiness fieldへ焼き込み、main-serverのdeploy manifestに保存した期待revisionと外部probeで比較する
+  - [x] revision欠落・不正・期待値不一致を固定reason codeへ写像し、Docker restartだけでは一致扱いにしないfixtureを追加
 - [ ] BugHub停止中のoutbox保持→復旧後再送を実測
 - [x] readinessをDB query、poll/ingest鮮度、source error、pull/factory通知deliveryまで拡張し、Docker healthcheckとdeploy canaryを`/readyz`へ接続
 - [ ] BugHub停止/readiness failureはBugHubを経由しないPi5→Discord専用bridgeで通知し、復旧後に同じfingerprintをBugHubへ還流
