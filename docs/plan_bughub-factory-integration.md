@@ -48,13 +48,13 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 
 | 製品 | 所有 | version取得 | 現行diagnostics候補 | 現状 |
 |---|---|---|---|---|
-| Caveat | 自作・別repo | `caveat --version`（release candidate 0.16.3） | native factory diagnostics、runtime error store | ロック解除済み。実装・full gate完了、公開待ち |
-| Throughline | 自作・別repo | `throughline --version`（release candidate 0.6.2） | native factory diagnostics、runtime error store | 実装・full gate完了、公開待ち |
-| Spotter | 自作・別repo | `spotter --version`（release candidate 1.4.23） | native diagnostics、runtime error store | 実装・full gate完了、公開待ち |
+| Caveat | 自作・別repo | `caveat --version`（0.16.3） | native factory diagnostics、runtime error store | 0.16.3公開・registry smoke完了 |
+| Throughline | 自作・別repo | `throughline --version`（0.6.2） | native factory diagnostics、runtime error store | 0.6.2公開・registry smoke完了 |
+| Spotter | 自作・別repo | `spotter --version`（1.4.23） | native diagnostics、runtime error store | 1.4.23公開・registry smoke完了 |
 | Codegraph | 第三者 | `codegraph --version`（1.4.1） | 既存indexだけ`status`/read-only query | 本体改造禁止。index自動作成禁止 |
 | MarkItDown | 第三者 | `markitdown --version`（0.1.5） | ローカルfixture変換＋出力byte数 | `uv tool`管理。本体改造禁止 |
 | Oracle | 第三者 | `oracle --version`（0.16.0） | canonical wrapper、`doctor --providers --json` | Chrome/ChatGPT認証依存。consult/statusをhealthに使わない |
-| aiterm-mcp | 自作・別repo | package.json/npm（release candidate 0.12.2） | native diagnostics、runtime error store | 実装・full gate完了、公開待ち |
+| aiterm-mcp | 自作・別repo | package.json/npm（0.12.2） | native diagnostics、runtime error store | 0.12.2公開・MCP Registry / registry smoke完了 |
 | codex-sidecar | 自作・別repo | CLI/package群（0.3.6） | diagnostics/dry-run、result schema | 0.3.6へ公開済み |
 | ServerManager | 自作・別repo | package.json/source commit（2.0.0） | BugHub health/poll/DB/container/Pi5 | clean。BugHubを内包 |
 
@@ -314,7 +314,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 7 — 4環境canary rollout（H＋F）
 
-0. [ ] H承認後、repo実装済み・公開版未収録のThroughline、Spotter、aiterm-mcpと、今回追加するCaveatのfactory契約を独立releaseし、npm `latest`・packed install smoke・`--version`・native diagnostics/runtime snapshotを確認する（codex-sidecarはv0.3.6へ収録済み）
+0. [x] H承認後、repo実装済み・公開版未収録のThroughline、Spotter、aiterm-mcpと、今回追加するCaveatのfactory契約を独立releaseし、npm `latest`・packed install smoke・`--version`・native diagnostics/runtime snapshotを確認する（codex-sidecarはv0.3.6へ収録済み）
+   - 2026-07-13: Throughline `0.6.2`（`e6ce6e3` / CI `29238704750`）、Spotter `1.4.23`（`a117a99` / CI `29238199094`）、Caveat `0.16.3`（`8f06d17` / CI `29238199765`）をnpm `latest`、annotated tag、GitHub Releaseへ公開した。
+   - aiterm-mcp `0.12.2`（`239e7e4`）はtag CI `29245251184`のTrusted Publishingでnpmへ公開し、Release起点のMCP Registry workflow `29245462227`もgreen。4製品をregistry由来の隔離prefixへinstallし、version、native diagnostics、runtime snapshotを確認した。collectionは既定OFFで、このsmokeから外部送信は発生しない。
 1. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認
 2. [ ] main-server: Hでtoken/config opt-in、scheduler apply、DB backup付きdeploy → FでBugHub自身を含む全9製品とrevision attestationを確認
 3. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認
