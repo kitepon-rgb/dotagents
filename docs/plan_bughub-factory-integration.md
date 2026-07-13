@@ -1,22 +1,24 @@
-# 工場コア9製品 BugHub 統合計画
+# 工場コア9製品＋基盤CLI 3製品 BugHub 統合計画
 
 作成: 2026-07-13  
-状態: 実装中（Wave 0〜5のrepo実装は完了、実環境登録はWave 8へ継続。Oracle→gpt-connector置換をWave 6へ追加し、Wave 7以降を継続中）
+状態: 実装中（Wave 0〜5のrepo実装は完了、実環境登録はWave 8へ継続。Oracle→gpt-connector置換と基盤CLI 3製品追加をWave 6へ収録し、Wave 7以降を継続中）
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 
 ## 0. 目的
 
-dotagents が管理対象とするコア9製品について、全現役端末の導入version、更新結果、正規diagnostics、state/schema/migration、親別connector互換、既知bugをBugHubへ集約する。
+dotagents が管理対象とするコア9製品と基盤toolchain 3製品について、全現役端末の導入version、更新結果、正規diagnostics、state/schema/migration、親別connector互換、既知bugをBugHubへ集約する。
 
 工場そのものはdotagentsである。ServerManagerはdotagentsが管理・連携する中央管理コアで、BugHubはServerManager内部のversion・bug・compatibility統括コンポーネントである。BugHubを独立した第10製品、またはdotagentsと並ぶ別工場へ分離しない。
 
 2026-07-13のオーナー裁定により、ChatGPT second-opinion製品はOracleから自作`gpt-connector`へ置換することを確定した。以後は置換可否を再検討せず、`gpt-connector`をdotagentsの自作コア製品契約へ適合させ、Oracleは履歴を保持したまま退役させる。障害時の一時切戻しは運用rollbackであり、製品選定の再裁定ではない。
 
+同日の追加裁定により、Claude Code CLI、Codex CLI、Grok BuildもBugHubのversion・update・compatibility管理対象にする。ただし、この3製品は工場能力を構成するコア製品ではなく、コアを動かす基盤toolchainとして別区分に置く。したがって工場コアは9製品のまま、置換後wire majorの固定管理集合はコア9＋基盤CLI 3の計12製品とする。
+
 ## 1. 完了条件（本計画がTODOを兼ねる）
 
-- [x] 端末能力8製品とServerManagerについて、製品別のversion・diagnostics・state/schema・migration・互換性契約が有限表になっている
-- [x] 4環境×9製品の期待状態（required / optional / forbidden / unsupported）、期待connector、欠落時severityが一意なmatrixになっている
+- [ ] 端末能力8製品、ServerManager、基盤CLI 3製品について、製品別のversion・diagnostics・state/schema・migration・互換性契約が有限表になっている
+- [ ] 4環境×12管理製品の期待状態（required / optional / forbidden / unsupported）、期待connector、欠落時severityが一意なmatrixになっている
 - [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの4環境が、認証付きでBugHubへ観測結果を報告できる
 - [x] BugHubにhost×productの現在値と履歴があり、installed/latest・contract・schema・update・compatibilityの状態を区別できる
 - [ ] 互換異常は既存BugHubのfingerprint・severity・再発・解決・Discord・`/ai`へ統合される
@@ -25,7 +27,8 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 - [x] 自作製品は機械可読な正規diagnosticsを製品側に持ち、dotagentsが内部状態を勝手に解釈しない
 - [x] 自作製品をクオ管理端末で実利用した時の構造化errorを、入力本文・秘密・ファイル内容なしでローカル記録し、dotagents reporter経由でBugHubへ集約できる
 - [ ] `gpt-connector`がversioned native factory diagnosticsとopt-inのlocal runtime error storeを製品側で所有し、dotagentsが内部stateやChatGPT会話を解析せずBugHubへ投影できる
-- [ ] factory wireをserver-firstの新majorへ移行し、固定9製品集合をOracleから`gpt-connector`へ置換しても旧client、Oracle履歴、resolve/reopen、dashboard、通知が壊れない
+- [ ] factory wireをserver-firstの新majorへ移行し、固定管理集合をv1のコア9から「Oracleを`gpt-connector`へ置換したコア9＋基盤CLI 3」の12製品へ拡張しても、旧client、Oracle履歴、resolve/reopen、dashboard、通知が壊れない
+- [ ] Claude Code CLI、Codex CLI、Grok Buildについて、installed/latest、更新前後version、update成否、対応host、親別互換性をBugHubで追跡し、1製品の更新失敗を他製品の成功で隠さない
 - [ ] 全現役hostで`gpt-connector`の導入・更新・診断・期待connector・MCPをmatrixどおり検証し、Oracleへの暗黙fallbackなしで切替とrollback drillを完了する
 - [x] 公開製品の外部利用者からは明示opt-inなしにtelemetryを送らない
 - [ ] BugHub自身をBugHubの自己申告だけで合格させず、main-server上の外部runnerがServerManager/BugHubを検証する
@@ -62,6 +65,9 @@ dotagents が管理対象とするコア9製品について、全現役端末の
 | aiterm-mcp | 自作・別repo | package.json/npm（0.12.2） | native diagnostics、runtime error store | 0.12.2公開・MCP Registry / registry smoke完了 |
 | codex-sidecar | 自作・別repo | CLI/package群（0.3.6） | diagnostics/dry-run、result schema | 0.3.6へ公開済み |
 | ServerManager | 自作・別repo | package.json/source commit（2.0.0） | BugHub health/poll/DB/container/Pi5 | clean。BugHubを内包 |
+| Claude Code CLI | 第三者・基盤toolchain | `claude --version`（2.1.207） | npm registry latest、hook/settings/親実行互換 | `@anthropic-ai/claude-code@latest`で更新済み。BugHub product未登録 |
+| Codex CLI | 第三者・基盤toolchain | `codex --version`（0.144.1） | npm registry latest、config parser/hooks/native routing互換 | `@openai/codex@latest`更新対象。2026-07-13時点latest 0.144.3、BugHub product未登録 |
+| Grok Build | 第三者・基盤toolchain | `grok --version`（0.2.87 stable） | `grok update --check --json`、aiterm/headless入口互換 | npm外のinternal installer。2026-07-13時点stable latest 0.2.99、週次更新・BugHub productとも未登録 |
 
 ## 3. ルール変更の裁定
 
@@ -119,7 +125,7 @@ reportの必須概念:
 - `created_at`（body確定・enqueue時。再送で変更しない）
 - `X-Factory-Sent-At` HTTP header（送信attemptごと。body hashに含めない）
 - `reporter`（version / dotagents commit）
-- products（schema majorごとに固定した9製品IDをkeyとするobject。同一ID重複を構造的に禁止。v1はOracle、置換後majorは`gpt-connector`を含む）
+- products（schema majorごとに固定した製品IDをkeyとするobject。同一ID重複を構造的に禁止。v1はOracleを含むコア9、置換後majorは`gpt-connector`を含むコア9＋`claude-code`／`codex-cli`／`grok-build`の12製品）
   - `presence_status`（installed / missing / not_applicable / unverified）
   - `installed_version`
   - `latest_version`（取得できる時だけ。不能を推測しない）
@@ -135,7 +141,7 @@ BugHubはtoken→host_idをserver側で固定し、host profile/product期待mat
 
 factory issueの状態遷移は既存pull issueと分けて仕様化する。v1は`report_mode=full`だけを受理し、正常な完全snapshot、producerによる明示resolve、再観測reopen、host廃止、長期offlineを区別し、「reportに無い」だけで解決しない。BugHub側の手動resolveはproducer-authoritative契約と競合するため提供せず、deltaは将来のschema majorで互換matrix・順序・欠落意味を再設計するまで非対応とする。
 
-Oracle→`gpt-connector`は固定product集合の変更なので、v1へoptional keyを足して意味を曖昧にしない。既存のwire major移行ランブックに従い、ServerManagerへ新majorの別endpointをserver-firstで追加し、v1 Oracle clientと新major `gpt-connector` clientをdual-runする。host切替前にv1でOracleを明示`not_applicable`＋必要な`resolutions[]`へ遷移させ、新majorの最初のfull snapshotで`gpt-connector`を観測する。schema間の「消失」だけで自動resolveせず、Oracleの履歴を物理削除しない。
+Oracle→`gpt-connector`と基盤CLI 3製品の追加は固定product集合の変更なので、v1へoptional keyを足して意味を曖昧にしない。既存のwire major移行ランブックに従い、ServerManagerへ新majorの別endpointをserver-firstで追加し、v1 Oracle clientと新major 12製品clientをdual-runする。host切替前にv1でOracleを明示`not_applicable`＋必要な`resolutions[]`へ遷移させ、新majorの最初のfull snapshotで`gpt-connector`と基盤CLI 3製品を観測する。schema間の「消失」だけで自動resolveせず、Oracleの履歴を物理削除しない。
 
 #### 4.1.1 runtime error出力契約の確定順序
 
@@ -184,7 +190,7 @@ Caveat、Throughline、Spotter、gpt-connector、aiterm-mcp、codex-sidecar、Se
 
 ### 5.2 第三者製品
 
-Codegraph、MarkItDownは本体を改造しない。Oracleは退役まで公開入口だけを利用し、新規改造しない。
+Codegraph、MarkItDown、Claude Code CLI、Codex CLI、Grok Buildは本体を改造しない。Oracleは退役まで公開入口だけを利用し、新規改造しない。
 
 - 公開version、公式doctor/status、black-box smoke、安定したexit codeだけを使う。
 - fork、直接patch、postinstall改変、`node_modules`編集、内部DB/schema解析を禁止する。
@@ -205,6 +211,9 @@ Codegraph、MarkItDownは本体を改造しない。Oracleは退役まで公開�
 | aiterm-mcp | package/追加version入口 | MCP initialize、read-only PTY list、依存CLI状態 | Codex親から入れ子Codex起動 |
 | codex-sidecar | 3 npm package | diagnostics/dry-run、result schema、model policy | 実装不要な実agent起動 |
 | ServerManager | package/commit | BugHub外部health、poll鮮度、DB migration、container/source一致、Pi5監視 | BugHubの自己申告だけで合格 |
+| Claude Code CLI | CLI/npm | `claude --version`、npm latest、必須hook/settings契約 | session起動、prompt送信、認証変更、人間向けupdate出力の推測解析 |
+| Codex CLI | CLI/npm | `codex --version`、npm latest、config parser/hooks/native routing契約 | agent実起動、OAuth変更、モデル実行、日付付きversionの恒久pin |
+| Grok Build | self-updating CLI | `grok --version`、`grok update --check --json`、stable channel、aiterm/headless入口契約 | npm packageと誤認、alphaへの自動切替、login/logout、agent実行、人間向け出力解析 |
 
 ### 5.4 実利用時errorの収集境界
 
@@ -301,15 +310,17 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] `/ai`とDiscord/daily/weeklyへ修正先repo・host・product・fingerprintを追加
 - [x] 既存pull sourceとの後方互換testを通す
 
-### Wave 6 — gpt-connector製品適合とOracle置換（F＋repo別A＋H）
+### Wave 6 — gpt-connector製品適合・Oracle置換・基盤CLI 3製品追加（F＋repo別A＋H）
 
 このwaveは`gpt-connector`、dotagents、ServerManagerの3repoを独立commit・独立rollback可能に保つ。挙動不変のcharacterization／adapter追加と、収集開始・wire major・MCP切替・Oracle撤去の挙動修正を混ぜない。
 
 #### 6.0 正本・baseline・契約固定（挙動不変）
 
 - [x] オーナー裁定としてOracle→`gpt-connector`置換を確定し、Oracle継続・併用を選択肢から外す
+- [x] オーナー裁定としてClaude Code CLI、Codex CLI、Grok BuildをBugHubのversion/update/compatibility管理対象へ追加し、コア製品とは別区分に置く
 - [x] `gpt-connector@0.2.0`の通常Chat、正規添付、model/effort、冪等job、terminal回収、read-only diagnostics、Oracle互換`consult`/`sessions`を実ブラウザと配布物で確認する
 - [x] Oracleとの同一prompt＋2添付shadowで、`gpt-connector`成功、Oracle upload timeoutを確認し、Oracleへ自動fallbackしないことを確認する
+- [x] 3 CLIの正規version/update入口を実測する。Claude Code=`@anthropic-ai/claude-code@latest`、Codex=`@openai/codex@latest`、Grok Build=`grok update --stable`／read-only `--check --json`
 - [ ] `gpt-connector` repoの`docs/`へ本waveの製品側TODO正本を作り、既存AI installer作業と書き込み範囲・commitを分離する
 - [ ] 3repoでfetch、origin照合、stash、dirty、baseline full gateを取り、`gpt-connector`の`doctor`／`consult`／`sessions`／MCP tool schemaとdotagents v1 reporterをcharacterizationする
 
@@ -324,26 +335,36 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] macOS、Linux、WSL2、Windows nativeでCLI/version/read-only diagnosticsを動かし、live Chat connectorの期待可否はhost matrixで別管理する。未対応hostを導入失敗や偽greenへ丸めない
 - [ ] `pnpm check`、pack/install smoke、既存Chat/添付/job回帰をgreenにし、version更新・release準備後、npm publishは対象version・影響・rollbackを提示してH承認後だけ行う
 
-#### 6.2 ServerManager/BugHubのserver-first互換面（F）
+#### 6.2 基盤CLI 3製品のversion/update契約（repo内A、契約はF）
 
-- [ ] 固定product集合の変更をwire majorとして扱い、Oracleを含むv1を維持したまま`gpt-connector`を含む新major schema・別endpoint・fixture・client/server compatibility matrixを追加する
-- [ ] host profile期待matrix、current/history、dashboard、Discord/daily/weekly、`/ai`、修正先repoを`gpt-connector`へ対応させ、Oracle履歴と既存issue/fingerprintを削除・上書きしない
-- [ ] v1最終Oracle `not_applicable`＋明示resolution、新major最初の`gpt-connector` full snapshot、旧観測の遅着、重複retry、resolve後再発、schema片側停止をcharacterizationする
+- [ ] product IDを`claude-code`、`codex-cli`、`grok-build`へ固定し、製品表示名、所有者、修正先、version形式、update入口、latest取得、host期待、severityを有限表へ追加する
+- [ ] Claude CodeとCodexは`agents-update`の既存npm `@latest`処理を維持し、更新前version、registry latest、install結果、更新後version、post-update互換gateを製品別に記録する。registry不能・install失敗・version不一致を別reason codeにする
+- [ ] Grok Buildはnpm対象へ入れず、`grok update --check --json`でcurrent/latest/updateAvailable/channel/installer/autoUpdate/errorを検証してから`grok update --stable`を実行し、更新後`grok --version`と再checkを記録する。alpha channelへ自動切替せず、更新不能時はfail-loudにする
+- [ ] 1製品の更新失敗後も残り製品の更新とfactory reportを継続するが、最終exitは非0にし、成功製品だけで全体をgreenへしない。更新logとBugHub observationは同じproduct ID/reason codeへ対応させる
+- [ ] Claude Codeは必須hook/settings、Codexはconfig parser/hooks/native routing、Grok Buildはstable channelとaiterm/headless入口をread-only fixtureで検証する。session/agent起動、prompt送信、login/logout、OAuth変更をhealth checkに使わない
+- [ ] host matrixでClaude Code/Codex/Grok Buildのrequired/optional/unsupportedを個別に決め、optional hostのmissingをissue化せず、required hostのmissing/update failure/compat driftだけを所定severityへ写像する
+- [ ] npm registry JSONとGrok `--check --json`のschema drift、未知version、downgrade、部分更新、更新後CLI消失、PATH shadowをfixture化し、人間向けstdout解析や無根拠なlatest推測を禁止する
+
+#### 6.3 ServerManager/BugHubのserver-first互換面（F）
+
+- [ ] 固定product集合の変更をwire majorとして扱い、Oracleを含むv1コア9を維持したまま、`gpt-connector`を含むコア9＋基盤CLI 3の固定12製品schema・別endpoint・fixture・client/server compatibility matrixを追加する
+- [ ] host profile期待matrix、current/history、dashboard、Discord/daily/weekly、`/ai`、修正先repoを`gpt-connector`と基盤CLI 3製品へ対応させ、Oracle履歴と既存issue/fingerprintを削除・上書きしない
+- [ ] v1最終Oracle `not_applicable`＋明示resolution、新major最初の`gpt-connector`＋基盤CLI 3製品を含む固定12製品full snapshot、旧観測の遅着、重複retry、resolve後再発、schema片側停止をcharacterizationする
 - [ ] v1/new-major dual-run中のDB backup/restore、endpoint feature flag、revision attestation、canary、旧major retire条件をランブックへ追加する
 
-#### 6.3 dotagents配線と正典（repo内A、契約はF）
+#### 6.4 dotagents配線と正典（repo内A、契約はF）
 
-- [ ] `PRODUCT_IDS`、factory scan/reporter、runtime ack、ServerManager adapter、privacy allowlist、fixture、host-product matrixを新majorの`gpt-connector`契約へ更新する。v1 Oracle clientは互換期間だけ独立入口として保持する
-- [ ] `agents-update`を`gpt-connector@latest`へ切り替え、install/verify、CLI prerequisite、clean HOME、macOS/Linux/WSL/Windows入口、post-update scanを更新する
+- [ ] `PRODUCT_IDS`、factory scan/reporter、runtime ack、ServerManager adapter、privacy allowlist、fixture、host-product matrixを新majorの`gpt-connector`＋基盤CLI 3契約へ更新する。v1 Oracle clientは互換期間だけ独立入口として保持する
+- [ ] `agents-update`を`gpt-connector@latest`へ切り替え、Claude Code/Codexの既存npm更新結果とGrok Buildのself-update結果を製品別に投影し、install/verify、CLI prerequisite、clean HOME、macOS/Linux/WSL/Windows入口、post-update scanを更新する
 - [ ] Claude/CodexのMCP登録を`gpt-connector-mcp`へ切り替え、最終server IDを`gpt_connector`へ正本化する。移行期間に`oracle` server IDを使う場合もcommand実体は`gpt-connector-mcp`に限定し、期限とconsumerをfixtureで追跡する
 - [ ] `oracle` skill、`docs/06_oracle-mcp.md`、`docs/02_models.md`、`claude/CLAUDE.md`、AGENTS/README/PLAN、callout hook説明、overview、RAG/図解を`gpt-connector`正典へ移行する。生きた参照をゼロ確認するまで旧文書・wrapper・shim・testsを削除しない
 - [ ] 旧Oracle wrapper/config/profileを`gpt-connector`へ流用せず、専用Chrome、product-owned state、model/effort明示、caller既知slug、timeout後`sessions`回収、暗黙fallback禁止を標準形として固定する
 - [ ] `make ci`、official/legacy install、skill discovery、Claude/Codex MCP read-only diagnostics、factory report v1/new-major fixtureをgreenにする
 
-#### 6.4 shadow、cutover、撤去（H＋F）
+#### 6.5 shadow、cutover、撤去（H＋F）
 
 - [ ] 代表fixture（添付なし/あり、standard/extended/max、timeout、auth loss、runtime drift、process restart）を全対象hostの期待matrixどおりshadowし、requested/resolved model/effort、terminal回収、archive、privacyを確認する。OracleやAPIへ再送・fallbackしない
-- [ ] hostごとにv1 Oracle最終snapshot→MCP切替→新major `gpt-connector`初回snapshotを順序付きで実行し、BugHub current/history、通知、resolve/reopenを確認する
+- [ ] hostごとにv1 Oracle最終snapshot→MCP切替→新major 12製品初回snapshotを順序付きで実行し、`gpt-connector`と基盤CLI 3製品のBugHub current/history、通知、resolve/reopenを確認する
 - [ ] 全host greenとH承認後だけOracle package、更新対象、MCP登録、wrapper/shim、skill配布を外す。削除前に`rg -a`と利用可能な索引でconsumerを確認し、Oracle履歴・archive/RAGは保持する
 - [ ] rollback drillは新major送信停止、前`gpt-connector` release/MCP設定への復帰、必要時のOracle command一時切戻しを分けて実証する。一時切戻しでOracleを正規コアへ戻したり、自動fallbackを追加したりしない
 - [ ] gpt-connector、dotagents、ServerManagerのfull gate、registry由来install、BugHub canary、全host E2E、独立反証を通し、各repoを独立commit/pushする
@@ -371,9 +392,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 0. [x] H承認後、repo実装済み・公開版未収録のThroughline、Spotter、aiterm-mcpと、今回追加するCaveatのfactory契約を独立releaseし、npm `latest`・packed install smoke・`--version`・native diagnostics/runtime snapshotを確認する（codex-sidecarはv0.3.6へ収録済み）
    - 2026-07-13: Throughline `0.6.2`（`e6ce6e3` / CI `29238704750`）、Spotter `1.4.23`（`a117a99` / CI `29238199094`）、Caveat `0.16.3`（`8f06d17` / CI `29238199765`）をnpm `latest`、annotated tag、GitHub Releaseへ公開した。
    - aiterm-mcp `0.12.2`（`239e7e4`）はtag CI `29245251184`のTrusted Publishingでnpmへ公開し、Release起点のMCP Registry workflow `29245462227`もgreen。4製品をregistry由来の隔離prefixへinstallし、version、native diagnostics、runtime snapshotを確認した。collectionは既定OFFで、このsmokeから外部送信は発生しない。
-0a. [ ] Wave 6の`gpt-connector`公開版、ServerManagerの新major endpoint、dotagents新major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
+0a. [ ] Wave 6の`gpt-connector`公開版、基盤CLI 3製品adapter/update契約、ServerManagerの固定12製品new-major endpoint、dotagents new-major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
 1. [ ] Mac: Hでtoken/config opt-inとlaunchd apply → Fでlocal fake→本番BugHub、通知抑制canary、実火・uninstall・state権限を確認
-2. [ ] main-server: Hでtoken/config opt-in、scheduler apply、DB backup付きdeploy → FでBugHub自身を含む全9製品とrevision attestationを確認
+2. [ ] main-server: Hでtoken/config opt-in、scheduler apply、DB backup付きdeploy → FでBugHub自身を含むコア9＋基盤CLI 3の全12管理製品とrevision attestationを確認
 3. [ ] FOX WSL2: Hでtoken/config opt-inとcron apply → Fでread-only scan/outbox/再送・実火・uninstall・state権限を確認
 4. [ ] FOX Windows native: Hでtoken/config opt-inとTask Scheduler apply → FでNode入口、実火・uninstall・所有者限定ACL、WSLとhost IDを混同しないことを確認
 5. [ ] Hで意図的障害を許可後、Fで全環境のinstalled/latest/compat matrixと意図的1件fail→通知→修復→resolve→再発なしを実証
@@ -398,6 +419,8 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 
 - BugHubからの自動修復・自動rollback。
 - 第三者製品のforkや内部実装への追従。
+- Claude Code CLI、Codex CLI、Grok Buildを工場コア製品へ再分類すること。
+- CLI version/update確認のためにsession/agentを起動し、prompt送信、login/logout、OAuth・release channel変更を行うこと。
 - Oracle全preset・全CLI・全session metadataのバイト互換、またはOracleと`gpt-connector`の恒久併用。
 - `gpt-connector`失敗時のOracle、OpenAI API、prompt本文展開への自動fallback。
 - 全projectへのCodegraph index/Spotter activationの強制。
@@ -415,6 +438,7 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 - 製品native diagnosticsは既存CLI挙動を変更せず追加入口に限定すること。
 - Oracleを含むv1 endpointと`gpt-connector`を含む新major endpointをfeature flagで独立停止でき、server-first導入後も旧clientを互換期間中は受理できること。
 - `gpt-connector`は前releaseとMCP command/envへ戻せること。必要時のOracle一時切戻しは手動・期限付きとし、BugHubのOracle履歴を削除せず、`gpt-connector`失敗から自動発動させないこと。
+- Claude Code/Codexは直前の確認済みnpm versionへ明示再installでき、Grok Buildは`grok update --version <version>`で直前stableへ戻せること。rollback後も恒久pinにせず、BugHubへdowngrade理由と再更新待ちを明示すること。
 - 各repo・各waveを独立commitにし、複数repoを一つの履歴操作で巻き戻さないこと。
 
 ## 11. 監査記録
@@ -432,3 +456,6 @@ Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative sub
 - 反証2「固定9製品のv1へoptional `gpt-connector` keyを足せばよい」: 棄却。現行contractはproduct exact keysを検証しており、product集合変更は既存client/server双方の意味を変えるためwire majorである。
 - 反証3「Oracle履歴を削除して同じproduct slotへ上書きすればよい」: 棄却。別製品のversion・issue・fingerprint履歴が混線し、退役・再発・rollbackを検証不能にする。
 - 反証4「製品側を先に公開し、BugHubは後追いでよい」: 棄却。新majorを受理できないserverへclientを先行させるとreport不能になるため、server-first dual-runを維持する。
+- 反証5「Claude Code／Codex／Grok Buildもコア製品へ足してコア12と呼べばよい」: 棄却。3製品は工場能力そのものではなく、その能力を動かす交換可能な基盤toolchainであり、所有境界と変更管理を混同する。
+- 反証6「`agents-update`のlogに名前があればBugHub productは不要」: 棄却。logだけではhost×productのcurrent/history、latest差、互換性、resolve/reopen、通知を一意に管理できない。
+- 反証7「Grok Buildもnpm `@latest`へ入れればよい」: 棄却。実体は`~/.grok/bin/grok`のinternal installerで、正規更新面はmachine-readable checkを備えた`grok update`である。
