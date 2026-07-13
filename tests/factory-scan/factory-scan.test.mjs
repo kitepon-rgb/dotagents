@@ -128,7 +128,9 @@ elif [ "$1" = "doctor" ] && [ "$2" = "--providers" ] && [ "$3" = "--json" ]; the
 else
   exit 2
 fi`);
-  await writeFile(box.config, JSON.stringify(validConfig()));
+  await writeFile(box.config, JSON.stringify(validConfig({
+    host: { id: 'test-host', profile: 'mac' },
+  })));
 
   const result = await runScanner(box);
   assert.equal(result.code, 0, result.stderr);
