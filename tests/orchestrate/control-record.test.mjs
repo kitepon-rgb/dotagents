@@ -27,6 +27,16 @@ async function withRepo(t, fn) {
   return fn(await createGitRepo(base));
 }
 
+async function withFault(point, fn) {
+  const previousNodeEnv = process.env.NODE_ENV; const previousFault = process.env.DOTAGENTS_ORCHESTRATE_TEST_FAULT;
+  process.env.NODE_ENV = "test"; process.env.DOTAGENTS_ORCHESTRATE_TEST_FAULT = point;
+  try { return await fn(); }
+  finally {
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previousNodeEnv;
+    if (previousFault === undefined) delete process.env.DOTAGENTS_ORCHESTRATE_TEST_FAULT; else process.env.DOTAGENTS_ORCHESTRATE_TEST_FAULT = previousFault;
+  }
+}
+
 async function initialized(t, overrides = {}) {
   const base = await makeTempDir();
   t.after(() => cleanupDir(base));
@@ -41,9 +51,10 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v9", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v10", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
-    continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 }, budget: makeBudget(),
+    continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
+    durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
     document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
@@ -579,6 +590,29 @@ test("atomic manifest更新中も並行readerは完全JSONと旧または新revi
   assert.ok(observations.length > 0);
   assert.ok(observations.every((value) => Number.isInteger(value) && value >= result.revision && value <= revision));
   assert.deepEqual(await readdir(join(repo.commonDir, "dotagents", "orchestrate", "controls", CONTROL)), ["manifest.json"]);
+});
+
+test("durability faultはlock残留や偽成功を作らずunknown outcomeを明示する", async (t) => {
+  await withRepo(t, async (repo) => {
+    const init = await api.init({ cwd: repo.root, control_id: "manifest-fault", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+    await withFault("manifest-after-rename", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "manifest-fault", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "committed-but-unknown" }) }), code("COMMIT_OUTCOME_UNKNOWN")));
+    const observed = await api.status({ cwd: repo.root, control_id: "manifest-fault" });
+    assert.equal(observed.record_revision, 1); assert.equal(observed.tasks[0].task_id, "committed-but-unknown");
+  });
+  await withRepo(t, async (repo) => {
+    const init = await api.init({ cwd: repo.root, control_id: "owner-fault", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+    await withFault("owner-publish-after-rename", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "owner-fault", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "never-recorded" }) }), code("IO_FAILURE")));
+    assert.deepEqual(await readdir(join(repo.commonDir, "dotagents", "orchestrate", "lock-owners")), []);
+    await withFault("owner-release-after-unlink", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "owner-fault", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "release-unknown" }) }), code("LOCK_OUTCOME_UNKNOWN")));
+    assert.equal((await api.status({ cwd: repo.root, control_id: "owner-fault" })).tasks[0].task_id, "release-unknown");
+    assert.deepEqual(await readdir(join(repo.commonDir, "dotagents", "orchestrate", "lock-owners")), []);
+  });
+  await withRepo(t, async (repo) => {
+    const input = { cwd: repo.root, control_id: "parent-sync-fault", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() };
+    await withFault("new-control-before-parent-sync", () => assert.rejects(api.init(input), code("IO_FAILURE")));
+    await assert.rejects(access(join(repo.commonDir, "dotagents", "orchestrate", "controls", "parent-sync-fault")));
+    assert.equal((await api.init(input)).manifest.control_id, "parent-sync-fault");
+  });
 });
 
 test("baseline後のscope内変更はcompletedとacceptを通過する", async (t) => {

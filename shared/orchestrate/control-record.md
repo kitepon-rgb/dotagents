@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v9",
+  "schema_version": "dotagents.orchestration-control.v10",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -68,6 +68,12 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
     "predecessor_control_id": null,
     "root_control_id": "elastic-phase1",
     "sequence": 0
+  },
+  "durability": {
+    "protocol_version": "fsync-rename-fsync.v1",
+    "file_sync": "required",
+    "directory_sync": "required",
+    "atomic_rename": "required"
   },
   "budget": {
     "max_worker_runs": 32,
@@ -108,10 +114,11 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v9で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v10で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
-  snapshot、v8はbounded continuation、v9はignored/index fingerprint guardを追加した。旧manifestを
+  snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
+  protocol snapshotを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -571,7 +578,7 @@ Consultationも`planned`ではobservation／decision／terminal evidenceが空�
 
 1. state rootとlockの種類・permission・symlinkを検査する。
 2. random tokenのprivate pending fileを`wx`で作り、完全なowner JSONを書いてfile sync後、
-   `lock-owners/<token>.owner`へatomic renameして公開する。取得走査は完成した`.owner`だけを見る。
+   `lock-owners/<token>.owner`へatomic renameしowner directoryをsyncして公開する。取得走査は完成した`.owner`だけを見る。
    全owner fileを再走査し、自分以外が1件でもあれば、live/deadを問わずfail closedにして
    自分のowner fileだけを削除する。複数contenderが同時作成された場合は全員失敗してよい。
 3. 全active manifestをbounded readし、strict validationする。不正manifestが一つでもあればfail closed。
@@ -580,10 +587,11 @@ Consultationも`planned`ではobservation／decision／terminal evidenceが空�
    statusでactive／archivedを分類する。未知entry、manifest欠損、読取中の1 MiB超過を拒否する。
 4. 対象manifestの`record_revision == expected_revision`を確認する。
 5. Task／assignment重複、全予約済みwriterのscope/worktree競合、合法遷移を再検査する。
-6. mutationを適用し、同一directoryのprivate temp fileへ完全JSONを書いてfile sync後にrenameする。
-7. POSIXはdirectory syncも行う。Windowsでdirectory syncが非対応なら、その事実を成功結果へ
-   `directory_sync=unsupported`として明示し、file sync＋atomic rename契約に限定する。
-8. 自分のtokenとowner file本文が一致する場合だけ、その一意なowner fileを解除する。
+6. 新Controlはcontrol directory作成後に親`controls` directoryをsyncする。mutationを適用し、
+   同一directoryのprivate temp fileへ完全JSONを書いてfile sync後にrenameする。
+7. POSIXはcontrol directoryもsyncする。Windows ACL／directory syncは未検証なので成功へ丸めず
+   `PLATFORM_UNVERIFIED`で停止する。
+8. 自分のtokenとowner file本文が一致する場合だけ、その一意なowner fileをunlinkし、owner directoryをsyncする。
 
 ownerの回収と通常解除は、`O_NOFOLLOW`で開いたfdを`fstat`し、通常file・link count 1を確認して
 bounded readする。unlink直前に再`lstat`し、fdとdev／ino／link countが一致する時だけ削除する。
@@ -591,8 +599,10 @@ PIDはpositive safe integerだけを許し、`process.kill(pid, 0)`成功と`EPE
 deadとする。その他はfail closedにする。
 
 manifest rename後にdirectory sync等が失敗した場合、旧状態へrollbackしたふりをしない。
-対象manifestを再読して期待revisionと内容digestが一致すればcommit成功として返し、確認不能なら
-`COMMIT_OUTCOME_UNKNOWN`でcallerへ`status`による再読を要求する。
+対象manifestを再読して期待revisionと内容digestが一致して見えてもdurabilityは証明できないため、
+`COMMIT_OUTCOME_UNKNOWN`でcallerへ`status`による再読を要求する。lock publish失敗は同一ownerを
+検証して除去し、releaseのunlink後sync失敗は`LOCK_OUTCOME_UNKNOWN`として偽成功にしない。
+manifestの`durability`は固定protocol snapshotであり、filesystemの永続性を意味判定した証明書ではない。
 
 owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 
@@ -703,6 +713,7 @@ APPROVAL_MISMATCH, APPROVAL_EXPIRED,
 ROLE_EFFECT_FORBIDDEN,
 CONTROL_CAPACITY_RESERVED, CONTINUATION_NOT_READY,
 PLATFORM_UNVERIFIED,
+LOCK_OUTCOME_UNKNOWN,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE
 ```

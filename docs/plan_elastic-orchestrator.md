@@ -118,7 +118,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - [x] fingerprintのscope外index guard、ignored成果物拒否、全`GIT_*`除去、fatal UTF-8、
   POSIX owner/mode、Windows未検証時fail closedを実装する。
 - [x] 全manifest scan後にglobal ID、assignment immutable tuple、active writer conflictを再検証する。
-- [ ] owner publication/release、manifest commit、new-control parent directory sync、durability metadata、
+- [x] owner publication/release、manifest commit、new-control parent directory sync、durability metadata、
   `COMMIT_OUTCOME_UNKNOWN`をfault injection付きtestで固定する。
 - [x] `bin/orchestrate-run.mjs`へ実行bitを付け、CLI入力由来のlimit errorをtyped metadataでexit 2へ分類する。
 - [x] 全`GIT_*`環境変数を除去し、`git --no-optional-locks`で`git status`の任意index refreshによる
