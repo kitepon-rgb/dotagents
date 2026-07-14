@@ -54,10 +54,14 @@ def repo_info(cwd):
     return root, hashlib.sha1(root.encode()).hexdigest()[:12], hashlib.sha1(porcelain.encode()).hexdigest(), head, porcelain
 
 
+def session_key(session_id):
+    return hashlib.sha256(session_id.encode("utf-8")).hexdigest()
+
+
 def snapshot_path(session_id, repo_key):
     # Claude 側 todo-gate-hook の *.snapshot と同一 STATE_DIR を共有するが、
     # session_id が別空間のため衝突しない。可読性のため接尾辞だけ変える。
-    return os.path.join(STATE_DIR, f"{session_id}.{repo_key}.codex-snapshot")
+    return os.path.join(STATE_DIR, f"{session_key(session_id)}.{repo_key}.codex-snapshot")
 
 
 def write_snapshot(path, porcelain_hash, head):
@@ -90,10 +94,11 @@ def session_start(data):
     if not all(isinstance(value, str) for value in (session_id, source, cwd)):
         raise ValueError
     os.makedirs(STATE_DIR, exist_ok=True)
+    key = session_key(session_id)
     if source == "compact":
         for suffix in ("codex-onset-info", "codex-placement-info"):
             try:
-                os.unlink(os.path.join(STATE_DIR, f"{session_id}.{suffix}"))
+                os.unlink(os.path.join(STATE_DIR, f"{key}.{suffix}"))
             except FileNotFoundError:
                 pass
     if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
@@ -137,6 +142,7 @@ def pre_tool_use(data):
     tool_input = data.get("tool_input")
     if not isinstance(session_id, str) or not isinstance(tool_input, dict):
         raise ValueError
+    key = session_key(session_id)
 
     if tool_name == "update_plan":
         if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
@@ -148,14 +154,14 @@ def pre_tool_use(data):
         os.makedirs(STATE_DIR, exist_ok=True)
         messages = []
 
-        canon_path = os.path.join(STATE_DIR, f"{session_id}.codex-plan-canon")
+        canon_path = os.path.join(STATE_DIR, f"{key}.codex-plan-canon")
         if not os.path.exists(canon_path):
             open(canon_path, "a", encoding="utf-8").close()
             if len(plan) >= 4:
                 messages.append("INFO: Codex の内蔵プランが作成されました。永続プランの保存先とTODO管理の方針は、グローバル AGENTS.md「計画文書の作法」を参照。内蔵プランはセッション内の補助情報であり、正本の代替になるかは同規約に従います。")
 
         if statuses and all(status == "completed" for status in statuses):
-            done_path = os.path.join(STATE_DIR, f"{session_id}.codex-plan-done")
+            done_path = os.path.join(STATE_DIR, f"{key}.codex-plan-done")
             if not os.path.exists(done_path):
                 open(done_path, "a", encoding="utf-8").close()
                 messages.append("INFO: Codex の内蔵プランが全項目 completed になりました。永続プランの進捗反映と完了文書の扱いは、グローバル AGENTS.md「計画文書の作法」を参照。")
@@ -169,7 +175,7 @@ def pre_tool_use(data):
         if os.environ.get("DOTAGENTS_PLACEMENT_GATE") == "off":
             return
         os.makedirs(STATE_DIR, exist_ok=True)
-        shown = os.path.join(STATE_DIR, f"{session_id}.codex-placement-info")
+        shown = os.path.join(STATE_DIR, f"{key}.codex-placement-info")
         if os.path.exists(shown):
             return
         open(shown, "a", encoding="utf-8").close()
@@ -185,12 +191,13 @@ def user_prompt_submit(data):
     parts = []
     if isinstance(session_id, str) and os.environ.get("DOTAGENTS_ONSET_GATE") != "off":
         os.makedirs(STATE_DIR, exist_ok=True)
-        shown = os.path.join(STATE_DIR, f"{session_id}.codex-onset-info")
+        key = session_key(session_id)
+        shown = os.path.join(STATE_DIR, f"{key}.codex-onset-info")
         if not os.path.exists(shown):
             open(shown, "a", encoding="utf-8").close()
             parts.append(ONSET_CONTEXT)
     if isinstance(session_id, str) and os.environ.get("DOTAGENTS_TODO_GATE") != "off":
-        pending_path = os.path.join(STATE_DIR, f"{session_id}.codex-pending")
+        pending_path = os.path.join(STATE_DIR, f"{session_key(session_id)}.codex-pending")
         if os.path.exists(pending_path):
             try:
                 content = open(pending_path, encoding="utf-8").read().strip()
@@ -217,6 +224,7 @@ def stop(data):
         return
     root, repo_key, porcelain_hash, head, porcelain = repo_info(cwd)
     os.makedirs(STATE_DIR, exist_ok=True)
+    key = session_key(session_id)
     snap = snapshot_path(session_id, repo_key)
     if not os.path.exists(snap):
         write_snapshot(snap, porcelain_hash, head)
@@ -245,7 +253,7 @@ def stop(data):
     gc()
     summary = f"{len(paths)} ファイル/コミット {commits}"
     message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。対象作業の進捗管理方法は、グローバル AGENTS.md「計画文書の作法」を参照。この情報は今回の依頼範囲を広げず、前ターンの応答を再開する指示でもありません。"
-    with open(os.path.join(STATE_DIR, f"{session_id}.codex-pending"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(STATE_DIR, f"{key}.codex-pending"), "w", encoding="utf-8") as handle:
         handle.write(message + "\n")
 
 

@@ -25,6 +25,7 @@ run() {
   return 0
 }
 json() { printf '%s' "$RUN_OUT" | python3 -c 'import json,sys; json.load(sys.stdin)' >/dev/null 2>&1; }
+session_key() { printf '%s' "$1" | python3 -c 'import hashlib,sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'; }
 
 run c1-date-info python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d1","tool_name":"Agent","tool_input":{"model":"x-20202607"}}' && json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *permissionDecision* ]] && pass c1-date-info || fail_case c1-date-info
 run c1-aiterm-info python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d2","tool_name":"mcp__aiterm__codex_agent","tool_input":{}}' && json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *permissionDecision* ]] && pass c1-aiterm-info || fail_case c1-aiterm-info
@@ -160,7 +161,7 @@ printf '%s\n' changed >>"$REPO/source.txt"
 run c3-warn python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
-[ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/t1.todo-pending" ] && pass c3-warn || fail_case c3-warn
+[ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/$(session_key t1).todo-pending" ] && pass c3-warn || fail_case c3-warn
 run c3-active python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":true}
 EOF
@@ -170,7 +171,7 @@ run c4-normal python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' &&
 run c4-silent python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && [ "$RUN_BYTES" -eq 0 ] && pass c4-silent || fail_case c4-silent
 run c4-off env DOTAGENTS_ONSET_GATE=off python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u2"}' && [ "$RUN_BYTES" -eq 0 ] && pass c4-off || fail_case c4-off
 run c4-pending python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"t1"}' && json && [[ "$RUN_OUT" == *'前ターン'* ]] && pass c4-pending || fail_case c4-pending
-[ ! -f "$STATE/dotagents/hooks/t1.todo-pending" ] && pass c4-pending-drained || fail_case c4-pending-drained
+[ ! -f "$STATE/dotagents/hooks/$(session_key t1).todo-pending" ] && pass c4-pending-drained || fail_case c4-pending-drained
 run c4-compact python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
 {"session_id":"u1","source":"compact","cwd":"$HOOK_REPO"}
 EOF
@@ -183,6 +184,33 @@ run c4-compact-todo-off env DOTAGENTS_TODO_GATE=off python3 "$ROOT/bin/todo-gate
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass c4-compact-todo-off || fail_case c4-compact-todo-off
 run c4-rearmed-todo-off python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass c4-rearmed-todo-off || fail_case c4-rearmed-todo-off
+
+# session_id は cache filename に連結しない。絶対path・../・長大入力でも SHA-256 の固定長 key だけを使う。
+TRAVERSAL_SESSION='../outside'
+ABSOLUTE_SESSION="$STATE/outside-absolute"
+LONG_SESSION=$(python3 -c 'print("x" * 10000)')
+for session in "$TRAVERSAL_SESSION" "$ABSOLUTE_SESSION" "$LONG_SESSION"; do
+  key=$(session_key "$session")
+  run c5-onset-session-key python3 "$ROOT/bin/onset-gate-hook.sh" <<EOF
+{"session_id":"$session"}
+EOF
+  json && [ -f "$STATE/dotagents/hooks/$key.onset-info" ] && [ "${#key}" -eq 64 ] && pass c5-onset-session-key || fail_case c5-onset-session-key
+done
+[ ! -e "$STATE/dotagents/outside.onset-info" ] && [ ! -e "$ABSOLUTE_SESSION.onset-info" ] && pass c5-session-key-no-escape || fail_case c5-session-key-no-escape
+
+TRAVERSAL_KEY=$(session_key "$TRAVERSAL_SESSION")
+run c5-delegation-session-key python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"$TRAVERSAL_SESSION","tool_name":"Agent","tool_input":{"model":"x-20202607"}}
+EOF
+json && [ -f "$STATE/dotagents/hooks/$TRAVERSAL_KEY.placement-warn" ] && pass c5-delegation-session-key || fail_case c5-delegation-session-key
+[ ! -e "$STATE/dotagents/outside.placement-warn" ] && pass c5-delegation-no-escape || fail_case c5-delegation-no-escape
+
+TODO_ABSOLUTE_KEY=$(session_key "$ABSOLUTE_SESSION")
+run c5-todo-session-key python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
+{"session_id":"$ABSOLUTE_SESSION","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && find "$STATE/dotagents/hooks" -maxdepth 1 -name "$TODO_ABSOLUTE_KEY.*.snapshot" -type f | grep -q . && pass c5-todo-session-key || fail_case c5-todo-session-key
+[ "$(find "$STATE" -maxdepth 1 -name 'outside-absolute.*.snapshot' -type f | wc -l | tr -d ' ')" -eq 0 ] && pass c5-todo-no-escape || fail_case c5-todo-no-escape
 
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'

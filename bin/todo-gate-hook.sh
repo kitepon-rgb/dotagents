@@ -48,8 +48,12 @@ def repo_info(cwd):
     return root, hashlib.sha1(root.encode()).hexdigest()[:12], hashlib.sha1(porcelain.encode()).hexdigest(), head, porcelain
 
 
+def session_key(session_id):
+    return hashlib.sha256(session_id.encode("utf-8")).hexdigest()
+
+
 def snapshot_path(session_id, repo_key):
-    return os.path.join(STATE_DIR, f"{session_id}.{repo_key}.snapshot")
+    return os.path.join(STATE_DIR, f"{session_key(session_id)}.{repo_key}.snapshot")
 
 
 def write_snapshot(path, porcelain_hash, head):
@@ -82,13 +86,14 @@ def session_start(data):
         raise ValueError
     root, repo_key, porcelain_hash, head, _ = repo_info(cwd)
     os.makedirs(STATE_DIR, exist_ok=True)
+    key = session_key(session_id)
     snap = snapshot_path(session_id, repo_key)
     if not os.path.exists(snap):
         write_snapshot(snap, porcelain_hash, head)
     if source == "compact":
         for suffix in ("placement-warn", "onset-info"):
             try:
-                os.unlink(os.path.join(STATE_DIR, f"{session_id}.{suffix}"))
+                os.unlink(os.path.join(STATE_DIR, f"{key}.{suffix}"))
             except FileNotFoundError:
                 pass
     if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
@@ -157,7 +162,7 @@ def stop(data):
     gc()
     summary = f"{len(paths)} ファイル/コミット {commits}"
     message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。対象作業の進捗管理方法は、グローバル CLAUDE.md / AGENTS.md「計画文書の作法」を参照。この情報は今回の依頼範囲を広げず、前ターンの応答を再開する指示でもありません。"
-    with open(os.path.join(STATE_DIR, f"{session_id}.todo-pending"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(STATE_DIR, f"{session_key(session_id)}.todo-pending"), "w", encoding="utf-8") as handle:
         handle.write(message + "\n")
 
 

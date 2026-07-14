@@ -277,7 +277,7 @@ READMEのhook数、CI正典の`test-orchestrate`漏れ、plan現在地を採用�
   実在・digestをfinalize／archive境界でfail closedにする。
 - [ ] 実dogfoodで再現したaiterm終端証拠の欠落を修復する。`completed` projectionはstrict Worker
   Reportまたはprovider由来terminal evidenceへ拘束し、caller supplied stateだけで成功確定しない。
-- [ ] 実dogfoodで再現したcallout hookのsession path境界を独立修復する。4本のhookで生の
+- [x] 実dogfoodで再現したcallout hookのsession path境界を独立修復する。4本のhookで生の
   `session_id`をpathへ連結せず、owner-owned cache内の固定長digestだけをstate keyに使う。
 - [x] 10件以上のread-only Worker Runを複数Executor・複数lineageで実行し、Dedup→反証→親裁定を通す。
 - [ ] codex-sidecar隔離worktreeと別Executorの競合する代替案を作り、自動mergeせず親が一案を採用する。

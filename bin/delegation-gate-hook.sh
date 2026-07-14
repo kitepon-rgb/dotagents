@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # 前提: Fable級統括が設計・Opus/Sol級の親が日常実行（2026-07 時点）。判定の正は docs/02_models.md
 import datetime
+import hashlib
 import json
 import os
 import sys
@@ -35,6 +36,10 @@ def emit(payload):
     sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
+def session_key(session_id):
+    return hashlib.sha256(session_id.encode("utf-8")).hexdigest()
+
+
 def main():
     raw = sys.stdin.read()
     if os.environ.get("DOTAGENTS_PLACEMENT_GATE") == "off":
@@ -55,7 +60,7 @@ def main():
         model = tool_input.get("model")
         effort_values = [tool_input.get(key) for key in ("reasoning_effort", "effort", "modelReasoningEffort")]
         effort = next((value for value in effort_values if value is not None), None)
-        warn_path = os.path.join(STATE_DIR, f"{session_id}.placement-warn")
+        warn_path = os.path.join(STATE_DIR, f"{session_key(session_id)}.placement-warn")
         if not os.path.exists(warn_path):
             open(warn_path, "a", encoding="utf-8").close()
             gc()

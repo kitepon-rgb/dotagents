@@ -27,6 +27,7 @@ run() {
   return 0
 }
 json() { printf '%s' "$RUN_OUT" | python3 -c 'import json,sys; json.load(sys.stdin)' >/dev/null 2>&1; }
+session_key() { printf '%s' "$1" | python3 -c 'import hashlib,sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'; }
 
 # 対象外サブコマンド／引数なし → 沈黙
 run x0-noargs python3 "$HOOK" <<<'{}' && [ "$RUN_BYTES" -eq 0 ] && pass x0-noargs || fail_case x0-noargs
@@ -109,7 +110,7 @@ printf '%s\n' changed >>"$REPO/source.txt"
 run x4-warn python3 "$HOOK" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
-[ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/t1.codex-pending" ] && pass x4-warn || fail_case x4-warn
+[ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/$(session_key t1).codex-pending" ] && pass x4-warn || fail_case x4-warn
 
 run x4-active python3 "$HOOK" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":true}
@@ -126,7 +127,7 @@ printf '%s\n' new2 >"$REPO/source2.txt"
 run x4-block-1 env DOTAGENTS_TODO_GATE=block python3 "$HOOK" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
-[ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/t1.codex-pending" ] && pass x4-block-1 || fail_case x4-block-1
+[ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/$(session_key t1).codex-pending" ] && pass x4-block-1 || fail_case x4-block-1
 
 # --- X3/X5 user-prompt-submit（セッション1回のINFO ＋ pending drain） ---
 run x35-normal python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
@@ -139,10 +140,10 @@ run x35-off env DOTAGENTS_ONSET_GATE=off python3 "$HOOK" user-prompt-submit <<<'
   && [ "$RUN_BYTES" -eq 0 ] && pass x35-off || fail_case x35-off
 
 mkdir -p "$STATE/dotagents/hooks"
-printf '%s' 'pending-notice-text' >"$STATE/dotagents/hooks/u3.codex-pending"
+printf '%s' 'pending-notice-text' >"$STATE/dotagents/hooks/$(session_key u3).codex-pending"
 run x35-pending python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u3"}' \
   && json && [[ "$RUN_OUT" == *'pending-notice-text'* && "$RUN_OUT" == *'INFO:'* ]] && pass x35-pending || fail_case x35-pending
-[ ! -f "$STATE/dotagents/hooks/u3.codex-pending" ] && pass x35-pending-drained || fail_case x35-pending-drained
+[ ! -f "$STATE/dotagents/hooks/$(session_key u3).codex-pending" ] && pass x35-pending-drained || fail_case x35-pending-drained
 
 run x35-compact python3 "$HOOK" session-start <<EOF
 {"session_id":"u1","source":"compact","cwd":"$HOOK_REPO"}
@@ -152,9 +153,20 @@ run x35-rearmed python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
   && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass x35-rearmed || fail_case x35-rearmed
 
 # TODO gate off なら既存 pending も配送しない
-printf '%s' 'must-stay-pending' >"$STATE/dotagents/hooks/u4.codex-pending"
+printf '%s' 'must-stay-pending' >"$STATE/dotagents/hooks/$(session_key u4).codex-pending"
 run x35-pending-off env DOTAGENTS_TODO_GATE=off DOTAGENTS_ONSET_GATE=off python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u4"}' \
-  && [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/u4.codex-pending" ] && pass x35-pending-off || fail_case x35-pending-off
+  && [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/$(session_key u4).codex-pending" ] && pass x35-pending-off || fail_case x35-pending-off
+
+# 絶対path・../・長大入力でも Codex hook は固定長 digest filename だけを参照する。
+for session in "$STATE/codex-absolute" '../codex-outside' "$(python3 -c 'print("y" * 10000)')"; do
+  key=$(session_key "$session")
+  printf '%s' 'digest-pending' >"$STATE/dotagents/hooks/$key.codex-pending"
+  run x6-session-key python3 "$HOOK" user-prompt-submit <<EOF
+{"session_id":"$session"}
+EOF
+  json && [[ "$RUN_OUT" == *'digest-pending'* ]] && [ ! -e "$STATE/dotagents/hooks/$key.codex-pending" ] && pass x6-session-key || fail_case x6-session-key
+done
+[ ! -e "$STATE/codex-absolute.codex-pending" ] && [ ! -e "$STATE/dotagents/codex-outside.codex-pending" ] && pass x6-session-key-no-escape || fail_case x6-session-key-no-escape
 
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'
