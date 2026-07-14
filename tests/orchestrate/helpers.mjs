@@ -1,5 +1,6 @@
 /** Test-only fixtures for the Control Record contract. */
 import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { chmod, link, lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -18,6 +19,18 @@ export const cleanupDir = (dir) => rm(dir, { recursive: true, force: true });
 export const evidence = (ref, type = "file", overrides = {}) => ({
   type, ref, digest: "e".repeat(64), observed_at: "2026-07-14T00:00:00.000Z", ...overrides,
 });
+
+const canonicalJson = (value) => {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
+  return JSON.stringify(value);
+};
+
+export function taskAdmissionDigest(task) {
+  const snapshot = structuredClone(task);
+  delete snapshot.admission_digest;
+  return createHash("sha256").update(canonicalJson(snapshot)).digest("hex");
+}
 
 export function runGit(cwd, args, extraEnv = {}) {
   return execFileSync("git", args, {
@@ -71,6 +84,14 @@ export function makeTask(overrides = {}) {
   return {
     task_id: "task-001", title: "Control Record contract test", classification: "A", effect: "write",
     doc_ref: "docs/control-record-plan.md",
+    role: "implementer", lane: "behavior-preserving", depends_on: [],
+    required_capabilities: ["workspace.write", "report.structured"], isolation: "dedicated-worktree",
+    context_policy: {
+      share_objective: true, share_current_candidate: false, share_existing_findings: false,
+      share_failed_approaches: false, share_test_results: true,
+    },
+    validation: ["node --test tests/orchestrate/*.test.mjs"],
+    non_goals: ["Executorを自動起動しない"], known_traps: ["runtime stateをdocsへ複製しない"],
     read_scope: [{ kind: "directory", path: "shared/orchestrate" }],
     write_scope: [{ kind: "directory", path: "lib/orchestrate" }],
     approval_ref: null, alternative_group: null, ...overrides,

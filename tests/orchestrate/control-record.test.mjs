@@ -7,7 +7,7 @@ import {
   addLinkedWorktree, cleanupDir, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
   createNonGitDir, createOwnerFixtures, evidence, installSentinelBin, loadControl, makeConsultation, makeTask,
   makeTempDir, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
-  terminalWorkerObservation, completedWorkerObservation, workerObservation, writeJson,
+  taskAdmissionDigest, terminalWorkerObservation, completedWorkerObservation, workerObservation, writeJson,
 } from "./helpers.mjs";
 
 const api = await loadControl();
@@ -78,7 +78,7 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
 test("TaskはF/A/H、scope、approval、global task_id一意性を正しく記録する", async (t) => {
   const { repo, result } = await initialized(t);
   const a = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, task: makeTask() });
-  assert.equal(a.revision, 1); assert.deepEqual((await readPersistedManifest(repo.commonDir, CONTROL)).tasks[0].doc_ref, makeTask().doc_ref); assert.match((await readPersistedManifest(repo.commonDir, CONTROL)).tasks[0].doc_content_oid, /^[0-9a-f]{40}$/);
+  assert.equal(a.revision, 1); assert.deepEqual((await readPersistedManifest(repo.commonDir, CONTROL)).tasks[0].doc_ref, makeTask().doc_ref); assert.match((await readPersistedManifest(repo.commonDir, CONTROL)).tasks[0].admission_digest, /^[0-9a-f]{64}$/);
   assert.deepEqual(await readdir(join(repo.commonDir, "dotagents", "orchestrate", "controls", CONTROL)), ["manifest.json"]);
   const f = makeTask({ task_id: "task-f", classification: "F", effect: "read", write_scope: [] });
   const fRecorded = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: a.revision, task: f });
@@ -121,10 +121,10 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   const taskDocument = join(repo.root, "docs", "control-record-plan.md");
   const originalDocument = await readFile(taskDocument, "utf8");
   await writeFile(taskDocument, `${originalDocument}changed after admission\n`);
-  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: run.revision, worker_run_id: "run-001" }), code("TASK_DOCUMENT_DRIFT"));
-  await writeFile(taskDocument, originalDocument);
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: run.revision, worker_run_id: "run-001" });
   assert.equal(admitted.manifest.worker_runs[0].state, "admitted");
+  assert.equal(admitted.manifest.tasks[0].admission_digest, taskAdmissionDigest(admitted.manifest.tasks[0]));
+  await writeFile(taskDocument, originalDocument);
   assert.equal(admitted.manifest.worker_runs[0].admission.write_reservation, true);
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
   assert.equal(dispatched.manifest.worker_runs[0].state, "dispatched");
@@ -135,6 +135,31 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   const retry = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: failed.revision, worker_run: makeWorkerRun({ worker_run_id: "run-002", workspace_cwd: repo.root }) });
   assert.equal(retry.manifest.worker_runs.at(-1).assignment_id, "assignment-001");
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run_id: "run-001", observation: workerObservation("running") }), code("INVALID_TRANSITION"));
+});
+
+test("Task snapshotは文書全体OIDから独立し、同一Control依存のready gateとcycle検査を持つ", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "dependency-control" });
+  const foundation = await api.taskRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "foundation-task" }) });
+  const dependentTask = makeTask({ task_id: "dependent-task", depends_on: ["foundation-task"] });
+  const dependent = await api.taskRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: foundation.revision, task: dependentTask });
+  assert.equal(dependent.manifest.tasks[1].admission_digest, taskAdmissionDigest(dependent.manifest.tasks[1]));
+  const tampered = structuredClone(dependent.manifest); tampered.tasks[1].title = "digestを更新していない改ざん";
+  assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: dependent.revision, task: makeTask({ task_id: "unknown-dependency", depends_on: ["missing-task"] }) }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: dependent.revision, worker_run: makeWorkerRun({ worker_run_id: "wrong-role-run", task_id: "dependent-task", assignment_id: "wrong-role-assignment", role_ref: "refuter", workspace_cwd: repo.root }) }), code("INVALID_SCHEMA"));
+  const run = await api.workerRunRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: dependent.revision, worker_run: makeWorkerRun({ task_id: "dependent-task", workspace_cwd: repo.root }) });
+  const consultation = await api.consultationRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: run.revision, consultation: makeConsultation({ task_id: "dependent-task" }) });
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, worker_run_id: "run-001" }), code("DEPENDENCY_NOT_READY"));
+  await assert.rejects(api.observeConsultation({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, consultation_id: "consultation-001", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } }), code("DEPENDENCY_NOT_READY"));
+  const finalized = await api.taskFinalizeRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, task_id: "foundation-task", finalization_ref: "docs/foundation-decision.md", recorded_by: "parent" });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: finalized.revision, worker_run_id: "run-001" });
+  const dispatched = await api.observeConsultation({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: admitted.revision, consultation_id: "consultation-001", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "dispatched" } });
+  assert.equal(dispatched.manifest.consultations[0].state, "dispatched");
+  const cycle = structuredClone(dependent.manifest);
+  cycle.tasks[0].depends_on = ["dependent-task"];
+  cycle.tasks[0].admission_digest = taskAdmissionDigest(cycle.tasks[0]);
+  cycle.tasks[1].admission_digest = taskAdmissionDigest(cycle.tasks[1]);
+  assert.throws(() => api.validateManifest(cycle), code("INVALID_SCHEMA"));
 });
 
 test("read-only Workerも正式admissionを通り、証拠つき結果と親検証を保存する", async (t) => {

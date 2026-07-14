@@ -111,7 +111,8 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 Taskは意味と受入条件への参照であり、Executorへ直接結びつけない。一度記録したTaskは不変。
 仕様、scope、成功条件が変わる場合は新しい`task_id`を作る。
 
-以下は保存形である。`taskRecord`入力は`doc_content_oid`を持たず、libraryが計算して追加する。
+以下は保存形である。`taskRecord`入力は`admission_digest`を持たず、libraryがTaskのexactな
+機械契約をcanonical JSONへ変換してSHA-256を計算し、追加する。
 
 ```json
 {
@@ -120,11 +121,26 @@ Taskは意味と受入条件への参照であり、Executorへ直接結びつ�
   "classification": "A",
   "effect": "write",
   "doc_ref": "docs/plan_elastic-orchestrator.md",
-  "doc_content_oid": "0123456789abcdef0123456789abcdef01234567",
+  "role": "implementer",
+  "lane": "behavior-preserving",
+  "depends_on": [],
+  "required_capabilities": ["workspace.write", "report.structured"],
+  "isolation": "dedicated-worktree",
+  "context_policy": {
+    "share_objective": true,
+    "share_current_candidate": false,
+    "share_existing_findings": false,
+    "share_failed_approaches": false,
+    "share_test_results": true
+  },
+  "validation": ["node --test tests/orchestrate/*.test.mjs"],
+  "non_goals": ["Executorを自動起動しない"],
+  "known_traps": ["docs正本をruntime stateへ複製しない"],
   "read_scope": [{ "kind": "directory", "path": "shared/orchestrate" }],
   "write_scope": [{ "kind": "directory", "path": "lib/orchestrate" }],
   "approval_ref": null,
-  "alternative_group": null
+  "alternative_group": null,
+  "admission_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 }
 ```
 
@@ -133,14 +149,24 @@ Taskは意味と受入条件への参照であり、Executorへ直接結びつ�
 - readは`write_scope=[]`。writeは1件以上を必須とする。
 - Hは空でない`approval_ref`を必須とするが、参照の意味判断は親が行う。
 - Fの外部writerを拒否する。Fのwriteは`executor=parent`だけ。
-- `doc_ref`は意味・成功条件・validationの正本への参照である。libraryは記録時に対象fileの現在内容を
-  `git hash-object --no-filters`相当でhashし、`doc_content_oid`として保存する。親が宣言した
-  `classification`、`effect`、scope、`alternative_group`、`approval_ref`はその文書版から得た
-  機械admission snapshotであり、Taskの意味や完了条件の正本ではない。
-- 予約時に文書内容を再hashし、`doc_content_oid`と一致しなければ`TASK_DOCUMENT_DRIFT`で拒否する。
-  意味・scope・成功条件を変える時は文書を更新して新しい`task_id`を作る。
+- `role`はbounded identifier、`lane`は`behavior-preserving | behavior-change | not-applicable`、
+  `isolation`は`none | dedicated-worktree`。role/effectの許可matrixとcapability照合は別gateで扱う。
+- `depends_on`は同じControl内ですでに記録済みのTaskだけを参照する。self、重複、未知Taskを拒否し、
+  保存manifest全体でもcycleを再検査する。Taskは不変かつ過去Taskだけを参照するため、通常のAPIから
+  cycleは生成できない。
+- `required_capabilities`はbounded identifierの集合。`context_policy`はobjective、current candidate、
+  existing findings、failed approaches、test resultsの共有可否をexact booleanで固定する。
+- `validation`は1件以上、`non_goals`と`known_traps`は0件以上のbounded文字列snapshotである。
+  prompt全文、秘密、巨大logを入れない。意味と詳細は`doc_ref`のdocs正本が所有する。
+- `admission_digest`は`admission_digest`自身を除くTask object全体のcanonical JSON SHA-256である。
+  読込時にも再計算し、snapshot改ざんをfail closedにする。
+- libraryはTask記録時に`doc_ref`が安全に取得可能であることだけを確認する。文書全体のOIDは保存せず、
+  admission時にも再hashしない。無関係なdocs追記で既存Taskを停止させず、機械契約を変える場合は
+  文書を更新して新しい`task_id`を作る。
 - `task_id`は同じgit common dirにある全active manifestで一意。再開は新Controlを作らず、
   既存Controlを読む。
+- Workerの`planned -> admitted`とConsultationの`planned -> dispatched`は、全`depends_on`に
+  `task_finalization`が存在する場合だけ許可する。未完了なら`DEPENDENCY_NOT_READY`で拒否する。
 
 ## Scope
 
@@ -175,6 +201,7 @@ result, acceptance
 初回記録は`state=planned`、`executor_observation=result=acceptance=null`だけを受理する。
 `write_mode`はread Taskなら`none`、write Taskなら`direct | isolated-alternative`。
 scopeと`alternative_group`は参照Taskから取得し、Worker入力での上書きを許さない。
+`role_ref`は参照Taskの`role`と完全一致しなければならない。
 libraryは`workspace_cwd`から次のcanonical objectを解決し、保存時はこれに置き換える。
 保存形は`workspace_cwd`を持たず、`workspace`と`baseline_workspace_fingerprint`を持つ。
 後者は初期`planned`では`null`、write Runの`admitted`以降は必須、read Runでは常に`null`とする。
@@ -256,8 +283,10 @@ write Runは`admitted`以降でbaseline必須、read Runは全stateでbaseline `
 予約済みwriterは`admitted | dispatched | running | unknown`である。write Runの`planned -> admitted`時に全Controlを
 横断して競合を検査し、競合があれば状態を変えない。
 
-`admitWorker`はExecutorへ何も送信せず、Task文書digest、workspace identity、scopeを同じlock内で
-再検査する。write Runではさらに全Control競合を検査し、`baseline_workspace_fingerprint`も保存する。
+`admitWorker`はExecutorへ何も送信せず、保存済みTask snapshotのdigest、依存完了、
+workspace identity、scopeを同じlock内で検査する。文書全体のdigestは再検査しない。
+write Runではさらに全Control競合を検査し、
+`baseline_workspace_fingerprint`も保存する。
 `admitted -> dispatched`は、所有Executor上にRunが存在することを、再照会可能なhandleまたは
 idempotency keyと`dispatch_evidence`で確認した観測だけを受理する。
 `admitted -> cancelled`はRunが作成されなかったことを示す空でない`dispatch_attempt_evidence`を
@@ -482,7 +511,7 @@ library errorは`ControlRecordError`で、安定した`code`を持つ。少な�
 ```text
 INVALID_INPUT, INVALID_SCHEMA, INVALID_SCOPE, LIMIT_EXCEEDED,
 NOT_GIT_REPOSITORY, BARE_WRITE_FORBIDDEN, CONTROL_EXISTS, CONTROL_NOT_FOUND,
-REVISION_CONFLICT, RECORD_ARCHIVED, DUPLICATE_ID, INVALID_TRANSITION, TASK_DOCUMENT_DRIFT,
+REVISION_CONFLICT, RECORD_ARCHIVED, DUPLICATE_ID, INVALID_TRANSITION, DEPENDENCY_NOT_READY,
 ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, VERIFICATION_REQUIRED,
 EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,

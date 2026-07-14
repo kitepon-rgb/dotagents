@@ -88,10 +88,10 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   terminal observationへ進める。
 - [x] Taskの`consultation` modeを廃止し、論理TaskのeffectとWorker／ConsultationのRun kindを分離する。
   Critic consultationは同じTaskを参照できるようにする。
-- [ ] Taskへrole、lane、`depends_on`、required capabilities、isolation、context policy、validation、
+- [x] Taskへrole、lane、`depends_on`、required capabilities、isolation、context policy、validation、
   non-goals、known trapsのcanonical snapshot／参照を持たせる。依存は同一Control内の既存Taskだけを
   参照し、cycleと未完了依存のadmissionを拒否する。汎用DAG workflow engineにはしない。
-- [ ] Task文書全体OIDへの結合をやめ、親が固定したcanonical admission snapshotとdigestを保存する。
+- [x] Task文書全体OIDへの結合をやめ、親が固定したcanonical admission snapshotとdigestを保存する。
   意味・成功条件はdocs正本のまま維持する。
 - [ ] boundedなlineage fact（parent/root assignment、provider、model、prompt family、context policy、
   input digest、approach family ref、shared finding refs）を保存し、独立性scoreは作らない。
