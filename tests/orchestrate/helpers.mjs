@@ -53,6 +53,8 @@ const canonicalJson = (value) => {
   return JSON.stringify(value);
 };
 
+export const canonicalDigest = (value) => createHash("sha256").update(canonicalJson(value)).digest("hex");
+
 export function taskAdmissionDigest(task) {
   const snapshot = structuredClone(task);
   delete snapshot.admission_digest;
@@ -63,7 +65,7 @@ export function makeTransitionReceipt(overrides = {}) {
   const receipt = {
     revision: 0, actor_id: "parent-001", operation: "control-init",
     subject: { kind: "control", id: "control-record-contract" },
-    previous_state: null, next_state: "active", evidence: [],
+    previous_state: null, next_state: "active", subject_digest: null, evidence: [],
     recorded_at: "2026-07-14T00:00:00.000Z", previous_receipt_digest: null,
     receipt_digest: "", ...overrides,
   };
@@ -168,7 +170,7 @@ export function makeWorkerRun(overrides = {}) {
     },
     state: "planned", executor_handle: { idempotency_key: "idempotency-001" },
     executor_observation: null, admission: null, dispatch_evidence: [], dispatch_attempt_evidence: [],
-    terminal_evidence: [], result: null, acceptance: null, ...overrides,
+    terminal_evidence: [], result: null, acceptance: null, placement_reservation: null, ...overrides,
   };
 }
 

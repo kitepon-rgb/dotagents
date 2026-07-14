@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v12",
+  "schema_version": "dotagents.orchestration-control.v13",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -168,6 +168,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
   "actor_id": "parent-session-id",
   "operation": "worker-observe",
   "subject": { "kind": "worker-run", "id": "R-001" },
+  "subject_digest": null,
   "previous_state": "admitted",
   "next_state": "dispatched",
   "evidence": [
@@ -184,12 +185,15 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 }
 ```
 
-- operationは`control-init / task-record / registry-observation-record / worker-run-record / consultation-record / worker-admit /
+- operationは`control-init / task-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit /
   worker-observe / consultation-observe / worker-accept / worker-reject / task-finalize /
   control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
   `previous_receipt_digest`へ持ち、read/save時に連番とchainを再計算する。過去receiptの書換え、欠落、
   並べ替えを`INVALID_SCHEMA`で拒否する。
+- `subject_digest`は通常operationでは`null`。`placement-reserve`だけは保存した
+  `placement_reservation` exact objectのcanonical JSON SHA-256を必須とし、candidate digest、Registry
+  参照、評価結果、review Decision、親actor、選択時刻をcreation receiptへ結合する。
 - evidenceを使わない管理mutationは空配列、dispatch／terminal／result／acceptanceはそのmutationで
   検証したtyped descriptorを保存する。内容本体は複製しない。
 - failed mutationはrevisionもreceiptも増やさない。`last_update`は最後のreceiptのactor/timeと一致する。
@@ -344,7 +348,7 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
 - F/A/H、approval digest／expiry、Task dependency、role/effect、required capability、verification stage、
   Budget Envelope、assignment retry、workspace identity／isolation、write mode、全Control横断write conflict、
   Registry expiry／enabled／capacityを検査する。
-- 同じcapacity scopeへ複数snapshotがある場合、`evaluated_at`以前で最大の
+- git common dir配下の全Controlで同じcapacity scopeへ複数snapshotがある場合、`evaluated_at`以前で最大の
   `verification.observed_at`を持つsnapshotだけを現行候補とする。古いIDは`registry-superseded`、
   評価時刻より未来のIDは`registry-not-yet-observed`で拒否する。最新時刻が同じなのに内容が異なる
   snapshotは順序を捏造せず`registry-refresh-ambiguous`として親reviewへ送る。
@@ -361,6 +365,45 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
   `candidate_id`順、reasonは固定codeのunique sortとし、意味的な優劣や多数決を出力しない。
 - `eligible`はdispatchや予約の成立を意味しない。次のmutationで親が同じControl revisionと候補を
   reservation proposalとして明示記録するまで、Executorへ何も送らない。
+
+### Placement reservation proposal
+
+`reservePlacement`は候補をそのまま信じず、global lockと`expected_revision`の下で現在時刻を使って
+同じplacement gateを再実行する。`ineligible`は常に`PLACEMENT_INELIGIBLE`で拒否する。
+`review-required`は親が確認した`type=decision` evidenceを`review_decision`へ渡した場合だけ記録し、
+未指定なら`PLACEMENT_REVIEW_REQUIRED`で拒否する。逆に`eligible`へ不要なreview decisionを添付して
+意味を曖昧にすることも拒否する。
+
+成功時は別の自由形式proposalを作らず、候補を`state=planned`のWorker Runへ原子的にmaterializeする。
+`candidate_id`が`worker_run_id`となり、Workerの`placement_reservation`へ次を保存する。
+
+```json
+{
+  "registry_observation_id": "registry-codex-native-001",
+  "candidate_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "selected_from_revision": 4,
+  "eligibility": "review-required",
+  "review_reasons": ["capacity-review-required"],
+  "review_decision": {
+    "type": "decision",
+    "ref": "docs/placement-decisions/candidate-001.md",
+    "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "observed_at": "2026-07-14T00:10:00.000Z"
+  },
+  "selected_by": "parent-session-id",
+  "selected_at": "2026-07-14T00:10:00.000Z"
+}
+```
+
+candidate digestはmaterialize後のWorkerから再構成したcandidate exact objectのcanonical JSON
+SHA-256。workspaceは解決済みrealpathを使うため、入力時のsymlink表現には依存しない。manifest読込時に
+毎回再計算する。さらに、WorkerへRegistryから転記した`executor`、`workflow_id`、
+`workflow_capabilities`、`execution_verification`は、参照したRegistry observationとexactに一致しなければ
+manifestを拒否する。Registry IDだけを残して派生snapshotを差し替えることはできない。
+`selected_from_revision`はmutation直前revisionであり、dry-run後に別mutationが入れば
+`REVISION_CONFLICT`となる。
+planned Runはcapacity／budget予約として後続placementへ数えるが、write workspace reservationは
+従来どおり`admitWorker`時に再検査して取得する。proposal記録自体はdispatchを行わない。
 
 ## Task declaration
 
@@ -475,13 +518,15 @@ Worker Runは一回のworker割当である。入力schemaはExecutorごとの�
 worker_run_id, task_id, assignment_id, executor, workflow_id, role_ref,
 workflow_capabilities, budget_reservation,
 workspace_cwd, write_mode, operation_digest, execution_verification,
-lineage,
+lineage, placement_reservation,
 state, executor_handle, executor_observation, admission,
 dispatch_evidence, dispatch_attempt_evidence, terminal_evidence,
 result, acceptance
 ```
 
-初回記録は`state=planned`、`executor_observation=result=acceptance=null`だけを受理する。
+手動の初回記録は`placement_reservation=null`、`state=planned`、
+`executor_observation=result=acceptance=null`だけを受理する。non-null reservationは
+`reservePlacement`だけが作り、`workerRunRecord`からの偽装を拒否する。
 `write_mode`はread Taskなら`none`、write Taskなら`direct | isolated-alternative`。
 `operation_digest`は通常Taskでは`null`またはSHA-256、H Taskではapproval snapshotの
 `operation_digest`と完全一致するSHA-256を必須とする。
@@ -795,7 +840,7 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, task-record, registry-observation-record, placement-dry-run, worker-run-record, consultation-record,
+init, status, task-record, registry-observation-record, placement-dry-run, placement-reserve, worker-run-record, consultation-record,
 admit-worker, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, recover-lock, archive
 ```
@@ -832,6 +877,7 @@ status({ cwd, control_id })
 taskRecord({ cwd, control_id, actor_id, expected_revision, task })
 registryObservationRecord({ cwd, control_id, actor_id, expected_revision, observation })
 placementDryRun({ cwd, control_id, task_id, evaluated_at, candidates })
+reservePlacement({ cwd, control_id, actor_id, expected_revision, task_id, candidate, review_decision })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
 consultationRecord({ cwd, control_id, actor_id, expected_revision, consultation })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
