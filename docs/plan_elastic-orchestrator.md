@@ -82,11 +82,11 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 
 ### Phase 1A: Control substrateを監査greenにする
 
-- [ ] 保存manifestへWorker／Consultation／archiveのstate truth tableを強制し、不正な組合せを
+- [x] 保存manifestへWorker／Consultation／archiveのstate truth tableを強制し、不正な組合せを
   read/saveの両方で拒否する。
-- [ ] read-only Workerへwrite予約と分離したadmissionを追加し、`planned`からdispatch／unknown／
+- [x] read-only Workerへwrite予約と分離したadmissionを追加し、`planned`からdispatch／unknown／
   terminal observationへ進める。
-- [ ] Taskの`consultation` modeを廃止し、論理TaskのeffectとWorker／ConsultationのRun kindを分離する。
+- [x] Taskの`consultation` modeを廃止し、論理TaskのeffectとWorker／ConsultationのRun kindを分離する。
   Critic consultationは同じTaskを参照できるようにする。
 - [ ] Taskへrole、lane、`depends_on`、required capabilities、isolation、context policy、validation、
   non-goals、known trapsのcanonical snapshot／参照を持たせる。依存は同一Control内の既存Taskだけを
@@ -95,7 +95,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   意味・成功条件はdocs正本のまま維持する。
 - [ ] boundedなlineage fact（parent/root assignment、provider、model、prompt family、context policy、
   input digest、approach family ref、shared finding refs）を保存し、独立性scoreは作らない。
-- [ ] dispatch／terminal／result／verification evidenceをtyped descriptorとして永続化し、内容本体・
+- [x] dispatch／terminal／result／verification evidenceをtyped descriptorとして永続化し、内容本体・
   prompt・secret・巨大logは保存しない。
 - [ ] 各mutationのactor、operation、subject、previous／next state、evidence descriptorをboundedで
   immutableなtransition receiptとして同じatomic manifestへ保存する。別`events.jsonl`を二重正本にしない。
@@ -291,9 +291,10 @@ dogfoodを縦に通す後続Phaseを同じ完成計画に含める。
 1. 対象projectのdocs TODOを正本とし、Control Recordは`task_id`と文書参照を持つ。
 2. 論理Taskと一回のRunを分離する。同じTaskの再試行は新Run、仕様変更は新Task。
 3. Runは`worker`と`consultation`を区別する。`gpt-connector`はconsultationだけ。
-4. Worker stateは`planned / reserved / dispatched / running / unknown / completed / failed / cancelled`。
-   `reserved`はControl Record上の予約だけが成立し、Executor実在は未確認である。Consultationには
-   `reserved`を設けない。
+4. Worker stateは`planned / admitted / dispatched / running / unknown / completed / failed / cancelled`。
+   `admitted`はControl Record上のadmissionだけが成立し、Executor実在は未確認である。read Runも
+   admissionを通るが、global write reservationを持つのはwrite Runだけである。Consultationには
+   `admitted`を設けない。
    Executor固有raw stateとopaque handleを別に保持し、`completed`と親`accepted/rejected`を分ける。
 5. repo/worktree identity、read/write scope、active writer ownershipを記録する。scopeはrepo相対の
    literal file/directoryだけ。glob、symlink先repo外、repo外writeは拒否する。
@@ -304,7 +305,7 @@ dogfoodを縦に通す後続Phaseを同じ完成計画に含める。
 8. 保存先候補は`<absolute git common dir>/dotagents/orchestrate/controls/<control-id>/manifest.json`。
    working tree、Throughline、各Executor state directoryには置かない。
 9. 親だけが更新する。初期CLIは`init / status / task-record / worker-run-record /
-   consultation-record / reserve-worker / observe / conflict-check / accept / reject /
+   consultation-record / admit-worker / observe / conflict-check / accept / reject /
    task-finalize-record / recover-lock / archive`の手動記録・検証に限定する。
 10. Phase 1AのCoreはdispatch、poll、cancel、retryを行わない。製品全体のadapter、placement、
     campaign、hookは後続PhaseでControl Coreの外側へ追加する。

@@ -91,6 +91,8 @@ assert_link "$OFFICIAL_HOME/.local/bin/factory-external-event" "$ROOT/bin/factor
 [ -x "$OFFICIAL_HOME/.local/bin/factory-external-event" ] || fail 'factory-external-event が実行可能でない'
 HOME="$OFFICIAL_HOME" "$OFFICIAL_HOME/.local/bin/factory-external-event" status --json | grep -Fq '"high_watermark":0' || fail '配布factory-external-eventを直接実行できない'
 assert_link "$OFFICIAL_HOME/.local/bin/factory-scan" "$ROOT/bin/factory-scan.mjs"
+assert_link "$OFFICIAL_HOME/.local/bin/orchestrate-run" "$ROOT/bin/orchestrate-run.mjs"
+[ -x "$OFFICIAL_HOME/.local/bin/orchestrate-run" ] || fail 'orchestrate-run が実行可能でない'
 assert_link "$OFFICIAL_HOME/.local/bin/bughub-external-probe" "$ROOT/bin/bughub-external-probe.mjs"
 [ ! -e "$OFFICIAL_HOME/.codex/skills/orchestrate" ] || fail 'official が legacy skill 面を作った'
 grep -Fq 'model = "keep-me"' "$OFFICIAL_HOME/.codex/config.toml" || fail '既存 config を保持しない'

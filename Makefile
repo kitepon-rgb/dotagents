@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-install test-update test-oracle test-factory-core test-factory-reporter test-factory-scan ci help
+.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-install test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ci help
 
 lint: lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks ## 静的 lint + skill/hook smoke
 
@@ -49,7 +49,10 @@ test-factory-reporter: ## BugHub factory reporter のprivacy/outbox/retry/schedu
 test-factory-scan: ## 工場9製品scanの公開CLI・privacy・platform契約を検証
 	node --test tests/factory-scan/*.test.mjs
 
-ci: lint test-install test-update test-oracle test-factory-core test-factory-reporter test-factory-scan ## ローカル/CI 共通の全ゲート
+test-orchestrate: ## orchestration control record の契約を検証
+	node --test tests/orchestrate/*.test.mjs
+
+ci: lint test-install test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ## ローカル/CI 共通の全ゲート
 
 help: ## タスク一覧
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
