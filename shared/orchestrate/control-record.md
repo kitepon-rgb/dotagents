@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v19",
+  "schema_version": "dotagents.orchestration-control.v20",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -124,7 +124,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v19で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v20で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -133,7 +133,8 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   Control git directory generation、初期workspace digest、Worker記録時fingerprint、v15はTask取消と
   Worker cancel要求の分離、v16はparent-declared campaign gate、v17はsidecar durable workの
   遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent path、
-  v19はapproach family／assignment retry／integration Run上限をBudgetへ追加した。旧manifestを
+  v19はapproach family／assignment retry／integration Run上限をBudget、v20は明示fallback参照を
+  Worker Runへ追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -333,6 +334,7 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
       "registry_observation_id": "registry-codex-native-001",
       "assignment_id": "assignment-001",
       "workspace_cwd": "/project-worktree",
+      "workspace_binding": "fixed",
       "write_mode": "direct",
       "operation_digest": null,
       "budget_reservation": { "wall_time_seconds": 3600, "cost_microusd": 1000000 },
@@ -351,9 +353,10 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
           "share_test_results": true
         },
         "input_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        "approach_family_ref": null,
+        "approach_family_ref": "implementation-primary",
         "shared_finding_refs": []
       },
+      "fallback": null,
       "executor_handle": null
     }
   ]
@@ -672,6 +675,10 @@ Worker Run／Reportが一致しなければ`REPORT_CORRELATION_MISMATCH`で拒�
   retryは同じassignmentを使う。先行Runが`failed | cancelled`、または
   `completed + rejected`になった場合だけ新Runを許可する。`unknown`を含むnonterminal、
   `completed + pending/accepted`が残る間は拒否する。
+- provider障害後に別入口へfallbackする場合も既存Runを書き換えず、新しいWorker Runを作る。
+  新Runの`fallback`は`{ from_worker_run_id, decision_ref }`または`null`で、非null時は同じControl・同じ
+  Taskの`failed` Runとrepo相対の親Decisionを必須にする。参照元Runはfailedのまま保持し、unknownや
+  completedをfallback元へ偽装しない。Delegation Packetにも同じsnapshotを含める。
 - `executor`は`adapter_id / contract_version / instance_id / handle_schema_id`だけを持つexact envelope。
   `workflow_id`はadapter identityと分離する。同じ`codex-sidecar`でも`review`等の同期read-only系と
   durable `work`は異なるworkflow／handle contractであり、adapter名だけからwrite能力を推測しない。

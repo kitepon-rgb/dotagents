@@ -171,7 +171,7 @@ export function makeWorkerRun(overrides = {}) {
       independence_group: "implementation-primary", context_policy: contextPolicy,
       input_digest: "b".repeat(64), approach_family_ref: "implementation-primary", shared_finding_refs: [],
     },
-    state: "planned", executor_handle: { idempotency_key: "A".repeat(22) },
+    state: "planned", executor_handle: { idempotency_key: "A".repeat(22) }, fallback: null,
     workspace_binding: "fixed",
     executor_observation: null, admission: null, cancel_request: null, dispatch_evidence: [], dispatch_attempt_evidence: [],
     terminal_evidence: [], result: null, acceptance: null, placement_reservation: null, ...overrides,
@@ -229,6 +229,7 @@ export function makePlacementCandidate(overrides = {}) {
       input_digest: "c".repeat(64), approach_family_ref: "placement-primary", shared_finding_refs: [],
     },
     executor_handle: { agent_path: "/root/placement_agent_001" },
+    fallback: null,
     ...overrides,
   };
 }

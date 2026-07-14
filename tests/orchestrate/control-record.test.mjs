@@ -70,7 +70,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v19", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v20", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
@@ -808,7 +808,7 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
     assignment_id: run.assignment_id, workspace_cwd: run.workspace.worktree_root_realpath ?? run.workspace.git_dir_realpath,
     workspace_binding: run.workspace_binding.mode,
     write_mode: run.write_mode, operation_digest: run.operation_digest, budget_reservation: run.budget_reservation,
-    lineage: run.lineage, executor_handle: run.executor_handle,
+    lineage: run.lineage, fallback: run.fallback, executor_handle: run.executor_handle,
     recorded_workspace_fingerprint: run.recorded_workspace_fingerprint,
   };
   assert.equal(run.placement_reservation.candidate_digest, canonicalDigest(materializedCandidate));
@@ -1231,6 +1231,12 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   const retry = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: failed.revision, worker_run: makeWorkerRun({ worker_run_id: "run-002", workspace_cwd: repo.root }) });
   assert.equal(retry.manifest.worker_runs.at(-1).assignment_id, "assignment-001");
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run_id: "run-001", observation: workerObservation("running") }), code("INVALID_TRANSITION"));
+  const fallbackRun = makeWorkerRun({ worker_run_id: "run-fallback", assignment_id: "assignment-fallback", workspace_cwd: repo.root, fallback: { from_worker_run_id: "run-001", decision_ref: "docs/fallback-decision.md" }, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "assignment-fallback", approach_family_ref: "fallback-provider" } });
+  const fallback = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run: fallbackRun });
+  assert.deepEqual(fallback.manifest.worker_runs.at(-1).fallback, { from_worker_run_id: "run-001", decision_ref: "docs/fallback-decision.md" });
+  assert.equal(fallback.manifest.worker_runs.find((entry) => entry.worker_run_id === "run-001").state, "failed");
+  const tamperedFallback = structuredClone(fallback.manifest); tamperedFallback.worker_runs.at(-1).fallback.from_worker_run_id = "run-002";
+  assert.throws(() => api.validateManifest(tamperedFallback), code("INVALID_SCHEMA"));
 });
 
 test("実adapter projectionをControl RecordのWorkerとConsultationへ往復できる", async (t) => {
