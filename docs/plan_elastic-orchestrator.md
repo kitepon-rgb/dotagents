@@ -1,6 +1,6 @@
 # Elastic Multi-Agent Orchestrator 完成計画
 
-Status: v1 completion target confirmed by owner (2026-07-14); Phase 4 in progress
+Status: v1 completion target confirmed by owner (2026-07-14); Phase 7 dogfood in progress
 
 ## 目的
 
@@ -246,10 +246,25 @@ hook／installer smoke、Markdown lint、`make lint`、`make ci`、diff checkの
 
 ### Phase 6: 共通化と追加契約
 
-- [ ] Codex／Claude appendixが同じControl Coreを利用し、親固有のdispatch手段だけを分離できることを確認する。
-- [ ] 新Executor fixtureを一つ追加し、core schemaの大改造なしでadapter／handle validator／capabilityを
+- [x] Codex／Claude appendixが同じControl Coreを利用し、親固有のdispatch手段だけを分離できることを確認する。
+- [x] 新Executor fixtureを一つ追加し、core schemaの大改造なしでadapter／handle validator／capabilityを
   登録できることを証明する。
-- [ ] README、overview、installer、verify、skill、CLI help、rollbackを同期する。
+- [x] README、overview、installer、verify、skill、CLI help、rollbackを同期する。
+
+Phase 6のTODO軽量監査は親が各1回だけ行った。共通化ではControl lifecycleと製品中立のDelegation
+Packet／Worker Reportを`shared/orchestrate/`へ一本化し、Codex／Claude skillを親固有appendixへ縮小した。
+Claudeの共有契約参照を`verify-install`でもexact検査し、adapter廃止時は新規admissionを先に止め、
+active／unknown handleのvalidatorを回収完了まで維持するrollback境界を補った。Executor契約registryは
+compile-time immutableで、synthetic fixtureをtestだけから注入し、schema v25、既存manifest、
+`claude-native`／`claude-internal`の意味を変更していない。抽出前の未使用定数だけを除去した。
+
+Phase 6境界の重い監査は2026-07-14に一度だけ実施した。Core Finder、Integration Finder、独立refuter、
+親CriticでP0なし、P1 2件、P2 4件を裁定した。synthetic fixtureがadapter catalogと実Worker validatorを
+通らない点、両skillに残った共有原則の重複、Markdown linkでない単なるpathをverifyが受理する点、
+READMEのhook数、CI正典の`test-orchestrate`漏れ、plan現在地を採用して修復した。syntheticでexternal budget
+注入まで試す案はPhase 6の受入外で、production経路が既存回帰済みのため棄却した。修復後は重監査を
+反復せず、親がfull 103 tests、focused adapter／install／skill tests、`make lint`、diff checkのgreenを確認した。
+修復後の`make ci`も103 testsを含め全体greenで完走した。
 
 ### Phase 7: Dogfood／完成
 

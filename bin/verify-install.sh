@@ -240,7 +240,9 @@ fi
 # Codex の orchestrate は製品固有の実ディレクトリとし、製品中立の共通契約を参照する。
 # Claude 本文の複製や symlink への後退をここで明示的に検出する。
 codex_orchestrate="$REPO/codex/skills/orchestrate"
+claude_orchestrate="$REPO/claude/skills/orchestrate/SKILL.md"
 shared_orchestrate_contract="$REPO/shared/orchestrate/contract.md"
+shared_delegation_contract="$REPO/shared/orchestrate/delegation-contract.md"
 if [ -L "$codex_orchestrate" ] || [ ! -d "$codex_orchestrate" ]; then
   echo "FAIL: $codex_orchestrate は製品固有の実ディレクトリではない（Claude 側への symlink を置かない）"
   fail=1
@@ -250,8 +252,26 @@ elif [ ! -r "$codex_orchestrate/SKILL.md" ]; then
 elif [ ! -r "$shared_orchestrate_contract" ]; then
   echo "FAIL: $shared_orchestrate_contract を読めない"
   fail=1
-elif ! grep -Fq '../../../shared/orchestrate/contract.md' "$codex_orchestrate/SKILL.md"; then
+elif [ ! -r "$shared_delegation_contract" ]; then
+  echo "FAIL: $shared_delegation_contract を読めない"
+  fail=1
+elif ! grep -Fq '](../../../shared/orchestrate/contract.md)' "$codex_orchestrate/SKILL.md"; then
   echo "FAIL: $codex_orchestrate/SKILL.md が共通契約を参照していない"
+  fail=1
+elif ! grep -Fq '](../../../shared/orchestrate/delegation-contract.md)' "$codex_orchestrate/SKILL.md"; then
+  echo "FAIL: $codex_orchestrate/SKILL.md が共有委譲契約を参照していない"
+  fail=1
+elif [ ! -r "$claude_orchestrate" ]; then
+  echo "FAIL: $claude_orchestrate を読めない"
+  fail=1
+elif ! grep -Fq '](../../../shared/orchestrate/contract.md)' "$claude_orchestrate"; then
+  echo "FAIL: $claude_orchestrate が共通契約を参照していない"
+  fail=1
+elif ! grep -Fq '](../../../shared/orchestrate/delegation-contract.md)' "$claude_orchestrate"; then
+  echo "FAIL: $claude_orchestrate が共有委譲契約を参照していない"
+  fail=1
+elif [ -e "$REPO/claude/skills/orchestrate/references/delegation-contract.md" ]; then
+  echo "FAIL: Claude 固有の旧 delegation-contract.md が残っている"
   fail=1
 fi
 

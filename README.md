@@ -73,8 +73,9 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 
 | 種類 | 名前 | 用途 |
 |---|---|---|
-| Claude skill | `orchestrate` | 多エージェント/多モデル統括の標準型（憲法8カ条・委譲契約・Workflow 雛形） |
-| Codex skill | `orchestrate` | 製品中立の共通契約を読み、Codexのnative・外部実行・相談レーンで統括する製品固有入口 |
+| Claude skill | `orchestrate` | 共有Control lifecycle／委譲契約を読み、Claude固有status projectionとWorkflow appendixを使う入口 |
+| Codex skill | `orchestrate` | 共有Control lifecycle／委譲契約を読み、native・外部実行・相談レーンを裁定する製品固有入口 |
+| 共有契約 | `shared/orchestrate/{contract,delegation-contract}.md` | 両skillのuse-not-use、Control lifecycle、製品中立のDelegation Packet／Worker Reportの唯一の正本 |
 | Claude skill | `auto-deploy-on-push` | push 契機の SSH + docker compose 自動デプロイ構築 |
 | Codex skill | `auto-deploy-on-push` | read-only調査とH承認を先行するpush起点デプロイ構築 |
 | Claude agent | `implementer` | 委譲契約焼き込み済みの実装者（安価枠。対応表は docs/02_models.md） |
@@ -189,8 +190,8 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 ./bin/apply-codex-config --dry-run
 ```
 
-既定は公式 user skill 面 `$HOME/.agents/skills`。`--dry-run` は一切書き込まず、routing の必須2キーと
-dotagents 固有 hook 4イベントだけの差分を出す。対象端末への適用を承認した後だけ、次を実行する。
+既定は公式 user skill 面 `$HOME/.agents/skills`。`--dry-run` は一切書き込まず、routing の必須2キー、callout
+4イベント、SessionStartの`orchestrate-advisory-hook` 1件だけの差分を出す。対象端末への適用を承認した後だけ、次を実行する。
 
 ```bash
 ./bin/apply-codex-config --apply
@@ -198,12 +199,12 @@ spotter install -y
 ./bin/verify-install.sh --profile official
 ```
 
-`--apply` は `~/Archives/` に backup を作り、model / effort / permissions / OAuth / trust / 他ツールの
-hook は変更しない。legacy を選ぶのは旧入口の検証時だけで、`--profile legacy` を install / verify の両方へ付ける。
+`--apply` は `~/Archives/` に backup を作り、途中失敗時は config / hooks をtransaction rollbackする。model / effort /
+permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを選ぶのは旧入口の検証時だけで、`--profile legacy`をinstall / verifyの両方へ付ける。
 
 `spotter install -y` はSpotterの正規project-scoped入口である。dotagentsの `.claude/settings.json` と `.spotter/`（どちらも端末ローカル・gitignore）を作り、user-level Codex hook 3本をcanonical化し、Claude/Codex別catalogをseedする。PATH上のThroughlineを絶対実行パスへ解決できる時はauditor contextが既定ONになる。Spotter自身のCLI以外でmarkerやhookを複製・手書きしない。
 
-- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale 実ファイル・反対 skill 面の同名重複・routing / hook 契約不足に加え、工場コア8製品のCLI、Caveat-Private、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalog、gpt-connector を FAIL 行で名指しする。Oracle wrapper は v1 互換・明示 rollback 用の検査として残す。`~/.local/bin` を PATH に通していれば以後は `verify-install --profile official` でも可
+- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale 実ファイル・反対 skill 面の同名重複・共有orchestrate契約の欠落・routing / hook 契約不足に加え、工場コア8製品のCLI、Caveat-Private、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalog、gpt-connector を FAIL 行で名指しする。Oracle wrapper は v1 互換・明示 rollback 用の検査として残す。`~/.local/bin` を PATH に通していれば以後は `verify-install --profile official` でも可
 - **呼びかけ hook の配線**（AGENTS.md 手順5/6）: Claude 側 `settings.json`（C1-C4）は docs/03 の手順で配線する。Codex 側 X1-X5 は `apply-codex-config` が4イベントを限定して冪等正規化する。両方とも trust 承認は別途必要。断片・復旧手順は docs/03・docs/05 が正本
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／SpotterのUserPromptSubmit・Stop eventが記録される／極小タスクを implementer に委譲して契約どおりの報告が返る
 - 新しい Codex セッションで（対話確認）: skill 一覧に `orchestrate` が出る／`spawn_agent` schema に `agent_type` がある／`agent_type=<role>` と `fork_turns="none"` で routing smoke だけを起動／`verify-codex-agent-routing <role> <agent-path>` が green／Spotter 3 hookを `/hooks` でreviewし `spotter.hook_event.v1` が記録される時だけ follow-up task を渡す

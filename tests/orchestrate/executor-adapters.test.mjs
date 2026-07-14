@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { test } from "node:test";
 
 import * as adapters from "../../lib/orchestrate/executor-adapters.mjs";
+import { syntheticAdapterDescriptor } from "./fixtures/executor-contract.mjs";
 
 const code = (expected) => (error) => {
   assert.ok(error instanceof adapters.ExecutorAdapterError); assert.equal(error.code, expected); return true;
@@ -53,6 +54,13 @@ test("lookupはunknown adapter/interface/operationをtyped errorで拒否し、c
   assert.throws(() => adapters.lookupOperation({ adapter_id: "aiterm", contract_version: "v1", interface_id: "interactive-session", operation_id: "missing" }), code("OPERATION_UNKNOWN"));
   const first = adapters.defaultAdapterCatalog(); first[0].interfaces[0].operations[0].tool_name = "tampered";
   assert.equal(adapters.defaultAdapterCatalog()[0].interfaces[0].operations[0].tool_name, "codex_work_start");
+});
+
+test("synthetic adapter descriptorもexact catalog validationとlookupを通る", () => {
+  const catalog = [syntheticAdapterDescriptor];
+  assert.equal(adapters.validateAdapterCatalog(catalog), catalog);
+  assert.equal(adapters.lookupAdapter({ adapter_id: "synthetic", contract_version: "v1" }, catalog).lane, "worker");
+  assert.deepEqual(adapters.lookupOperation({ adapter_id: "synthetic", contract_version: "v1", interface_id: "ticket-work", operation_id: "inspect" }, catalog).operation, { operation_id: "inspect", transport: "host-tool", tool_name: "synthetic_inspect", effect: "observe" });
 });
 
 test("codex-native requestはhost toolを実行せず、routing smokeとgreen照合後のfollowupだけを投影する", () => {

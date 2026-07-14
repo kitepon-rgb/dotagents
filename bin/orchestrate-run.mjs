@@ -57,7 +57,7 @@ async function readInput(path) {
 
 const args = process.argv.slice(2);
 if (args.length === 1 && args[0] === "--help") {
-  process.stdout.write(`${JSON.stringify({ commands: [...commands.keys()], flags: { status: ["--brief"] } })}\n`);
+  process.stdout.write(`${JSON.stringify({ contract_version: "dotagents.orchestrate.control-record.v1", mode: "record-only", external_execution: false, commands: [...commands.keys()], flags: { status: ["--brief"] } })}\n`);
 } else if (!((args.length === 3 && commands.has(args[0]) && args[1] === "--input" && !args[2].startsWith("--"))
   || (args.length === 4 && args[0] === "status" && args[1] === "--brief" && args[2] === "--input" && !args[3].startsWith("--")))) {
   outputError("INVALID_INPUT", "usage: orchestrate-run <command> [--brief] --input <json-file>", 2);

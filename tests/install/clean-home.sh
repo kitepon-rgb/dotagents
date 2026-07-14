@@ -13,7 +13,8 @@ BAD_CODEX_HOME="$(mktemp -d)"
 SYMLINK_CODEX_HOME="$(mktemp -d)"
 SYMLINK_TARGETS="$(mktemp -d)"
 TRANSACTION_CODEX_HOME="$(mktemp -d)"
-trap 'rm -rf "$OFFICIAL_HOME" "$LEGACY_HOME" "$EXTERNAL_CODEX_HOME" "$BAD_CODEX_HOME" "$SYMLINK_CODEX_HOME" "$SYMLINK_TARGETS" "$TRANSACTION_CODEX_HOME"' EXIT
+VERIFY_FIXTURE="$(mktemp -d)"
+trap 'rm -rf "$OFFICIAL_HOME" "$LEGACY_HOME" "$EXTERNAL_CODEX_HOME" "$BAD_CODEX_HOME" "$SYMLINK_CODEX_HOME" "$SYMLINK_TARGETS" "$TRANSACTION_CODEX_HOME" "$VERIFY_FIXTURE"' EXIT
 PYTHON_BIN=python3
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -85,6 +86,20 @@ dry_run="$(apply_config "$OFFICIAL_HOME" --dry-run)"
 [ ! -d "$OFFICIAL_HOME/Archives" ] || fail 'dry-run が backup を作った'
 apply_config "$OFFICIAL_HOME" --apply
 verify "$OFFICIAL_HOME" official
+mkdir -p "$VERIFY_FIXTURE/bin" "$VERIFY_FIXTURE/claude/skills/orchestrate"
+cp "$ROOT/bin/verify-install.sh" "$VERIFY_FIXTURE/bin/verify-install.sh"
+chmod +x "$VERIFY_FIXTURE/bin/verify-install.sh"
+cp "$ROOT/claude/skills/orchestrate/SKILL.md" "$VERIFY_FIXTURE/claude/skills/orchestrate/SKILL.md"
+"$PYTHON_BIN" - "$VERIFY_FIXTURE/claude/skills/orchestrate/SKILL.md" <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+path.write_text(path.read_text(encoding="utf-8").replace("](../../../shared/orchestrate/delegation-contract.md)", "`../../../shared/orchestrate/delegation-contract.md`"), encoding="utf-8")
+PY
+ln -s "$ROOT/codex" "$VERIFY_FIXTURE/codex"
+ln -s "$ROOT/shared" "$VERIFY_FIXTURE/shared"
+verify_fixture_output="$(HOME="$OFFICIAL_HOME" DOTAGENTS_SKIP_FACTORY_CORE=1 "$VERIFY_FIXTURE/bin/verify-install.sh" --profile official 2>&1 || true)"
+printf '%s\n' "$verify_fixture_output" | grep -Fq 'が共有委譲契約を参照していない' || fail 'Claude shared delegation reference の欠落を verify が検出しない'
 mkdir -p "$OFFICIAL_HOME/.claude"
 cat >"$OFFICIAL_HOME/.claude/settings.json" <<'EOF'
 {"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}],"SessionStart":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]},{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]}],"Stop":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}],"UserPromptSubmit":[{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}],"PostToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/plan-gate-hook","timeout":5}]}]}}
@@ -159,6 +174,13 @@ HOME="$OFFICIAL_HOME" "$OFFICIAL_HOME/.local/bin/factory-external-event" status 
 assert_link "$OFFICIAL_HOME/.local/bin/factory-scan" "$ROOT/bin/factory-scan.mjs"
 assert_link "$OFFICIAL_HOME/.local/bin/orchestrate-run" "$ROOT/bin/orchestrate-run.mjs"
 [ -x "$OFFICIAL_HOME/.local/bin/orchestrate-run" ] || fail 'orchestrate-run が実行可能でない'
+help_json="$(node "$OFFICIAL_HOME/.local/bin/orchestrate-run" --help)"
+"$PYTHON_BIN" - "$help_json" <<'PY' || fail 'orchestrate-run help がrecord-only versioned contractを示さない'
+import json
+import sys
+data = json.loads(sys.argv[1])
+raise SystemExit(0 if data.get("contract_version") == "dotagents.orchestrate.control-record.v1" and data.get("mode") == "record-only" and data.get("external_execution") is False and "init" in data.get("commands", []) else 1)
+PY
 assert_link "$OFFICIAL_HOME/.local/bin/orchestrate-advisory-hook" "$ROOT/bin/orchestrate-advisory-hook.sh"
 [ -x "$OFFICIAL_HOME/.local/bin/orchestrate-advisory-hook" ] || fail 'orchestrate-advisory-hook が実行可能でない'
 assert_link "$OFFICIAL_HOME/.local/bin/bughub-external-probe" "$ROOT/bin/bughub-external-probe.mjs"

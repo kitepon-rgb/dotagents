@@ -30,6 +30,19 @@ appendix由来の観測projectionだけを表す。未知adapter/interface/opera
 sidecar recoveryは同じ`codex_work_recover` toolでも、既定のread-only inspectionと
 `confirmNoRunningProcesses=true`を要するquarantine mutationを別operationとして扱う。
 
+CodexのA配置は、親とtightに結合した作業では`codex-native`を既定にする。隔離worktree、durable work、
+vendor固有機能、独立capacityのいずれかが必要かつ適合する時だけ`codex-sidecar`または`aiterm`を選ぶ。
+これは親のdispatch裁定であり、catalogやCLIが自動admission・自動dispatchすることはない。
+
+## Adapter契約の追加・廃止とrollback
+
+adapterの追加、廃止、またはcontract versionの切替では、まず新規admissionを止める。activeまたは`unknown`の
+handleが残る間は、そのhandleを検証・観測・回収するvalidatorを維持し、`unknown`を別terminal stateへ暗黙変換しない。
+全handleが正規入口でterminalまたは明示的なoperator裁定になってから、旧validatorと旧adapterを廃止する。
+
+fixtureだけの追加・削除は、実adapterのmanifest schema migrationを意味しない。manifest schemaを変える時だけ、
+versioned contract、validator、migration、互換fixture、rollback手順を同じwaveで明示する。
+
 ## Codex Sidecar durable work projection
 
 `codexSidecarStartRequest`、`codexSidecarResultRequest`、`codexSidecarCancelRequest`、

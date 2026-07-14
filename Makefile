@@ -12,11 +12,11 @@ lint: lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks #
 lint-sh: ## shellcheck: install.sh + bin/ と tests/ の shell スクリプト（python は lint-py へ）
 	shellcheck install.sh $$(grep -lE '^#!.*sh$$' bin/*.sh tests/**/*.sh)
 
-lint-py: ## bin/ の python script を構文チェック（ast.parse・依存なし）
-	@for f in $$(grep -lE '^#!.*python' bin/*.sh); do python3 -c "import ast,sys; ast.parse(open(sys.argv[1], encoding='utf-8').read())" "$$f" && echo "py-syntax OK: $$f"; done
+lint-py: ## bin/ と lib/orchestrate/ の Python script を構文チェック（py_compile・依存なし）
+	@for f in $$(grep -lE '^#!.*python' bin/*.sh) lib/orchestrate/*.py; do python3 -m py_compile "$$f" && echo "py-syntax OK: $$f"; done
 
-lint-js: ## bin/ の Node.js script を構文チェック
-	@for f in bin/*.mjs; do node --check "$$f"; done
+lint-js: ## bin/ と lib/orchestrate/ の Node.js script を構文チェック
+	@for f in bin/*.mjs lib/orchestrate/*.mjs; do node --check "$$f"; done
 
 lint-md: ## markdownlint（緩い設定・生きた正典のみ / .markdownlint-cli2.jsonc）
 	$(MDLINT)
