@@ -713,5 +713,8 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
   const tooLarge = join(base, "too-large.json"); await writeFile(tooLarge, `${" ".repeat((64 * 1024) + 1)}{}`);
   const oversized = spawnOrchestrate(["status", "--input", tooLarge]);
   assert.equal(oversized.status, 2); assert.equal(JSON.parse(oversized.stderr).code, "LIMIT_EXCEEDED");
+  const invalidUtf8 = join(base, "invalid-utf8.json"); await writeFile(invalidUtf8, Buffer.from([0x7b, 0xff, 0x7d]));
+  const invalidEncoding = spawnOrchestrate(["status", "--input", invalidUtf8]);
+  assert.equal(invalidEncoding.status, 2); assert.equal(JSON.parse(invalidEncoding.stderr).code, "INVALID_INPUT");
   assert.equal(init.manifest.control_id, CONTROL);
 });

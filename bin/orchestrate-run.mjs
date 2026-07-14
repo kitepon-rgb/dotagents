@@ -32,7 +32,9 @@ async function readInput(path) {
     if (offset > 64 * 1024) throw new api.ControlRecordError("LIMIT_EXCEEDED", "input exceeds 64 KiB", { category: "input" });
     const after = await handle.stat(); const finalPath = await lstat(path);
     if (before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size || before.mtimeMs !== after.mtimeMs || after.dev !== finalPath.dev || after.ino !== finalPath.ino || finalPath.isSymbolicLink() || finalPath.nlink !== 1) throw new api.ControlRecordError("INPUT_PATH_UNSAFE", "input changed while reading");
-    let value; try { value = JSON.parse(buffer.subarray(0, offset).toString("utf8")); } catch { throw new api.ControlRecordError("INVALID_INPUT", "input is not valid JSON"); }
+    let decoded;
+    try { decoded = new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, offset)); } catch { throw new api.ControlRecordError("INVALID_INPUT", "input is not valid UTF-8"); }
+    let value; try { value = JSON.parse(decoded); } catch { throw new api.ControlRecordError("INVALID_INPUT", "input is not valid JSON"); }
     if (value === null || typeof value !== "object" || Array.isArray(value)) throw new api.ControlRecordError("INVALID_INPUT", "input JSON must be an object");
     return value;
   } catch (error) {
