@@ -990,6 +990,11 @@ Workerの`completed`と親の`accepted | rejected`を分離する。
   git-dir file ID、worktree rootを
   全面再解決し、記録時identityと不一致なら`WORKSPACE_DRIFT`。HEAD変化はidentityとは分け、
   baseline／completed fingerprint比較で扱う。
+- fixed writerの予約後にHEADが変わった場合、予約HEADが現HEADの祖先で、間の全commit pathが
+  Taskのread/write scopeに非交差、baseline／completedにstaged変更がなく、現indexが現HEADと一致して
+  `assume-unchanged`／`skip-worktree`等の特殊path flagを持たない
+  時だけ比較を続行する。ignored成果物と未commit差分は従来どおり検査する。非祖先、関連scope、
+  staged/index不一致・特殊flag、path列挙不能は`WORKSPACE_DRIFT`。executor-isolatedのbase SHA固定は緩和しない。
 - acceptanceは一度だけで、accepted／rejected間の変更を許さない。
 
 ## Consultation

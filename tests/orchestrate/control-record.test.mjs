@@ -1999,6 +1999,53 @@ test("baseline後のscope内変更はcompletedとacceptを通過する", async (
   assert.equal(accepted.manifest.worker_runs[0].result.workspace_fingerprint.files.find((entry) => entry.path === "README.md").file_mode & 0o777, 0o755);
 });
 
+test("active fixed writer中のTask非交差fast-forward commitはcompletedを通過する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "safe-head-advance" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: result.revision, task: makeTask({
+    task_id: "safe-head-task", read_scope: [{ kind: "file", path: "docs/control-record-plan.md" }], write_scope: [{ kind: "file", path: "README.md" }],
+  }) });
+  const run = await api.workerRunRecord({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "safe-head-task", workspace_cwd: repo.root }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+  await writeFile(join(repo.root, "README.md"), "worker scope change\n");
+  await writeFile(join(repo.root, "docs", "parent-note.md"), "parent-only note\n");
+  runGit(repo.root, ["add", "docs/parent-note.md"]); runGit(repo.root, ["commit", "-q", "-m", "parent non-overlap note", "--", "docs/parent-note.md"]);
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "safe-head-advance" });
+  assert.equal(resumed.blocking_reasons.some((entry) => entry.code === "writer-head-changed"), false);
+  assert.equal(resumed.review_reasons.some((entry) => entry.code === "writer-head-advanced-outside-task-scope"), true);
+  const completed = await api.observeWorker({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() });
+  assert.equal(completed.manifest.worker_runs[0].result.workspace_fingerprint.files.some((entry) => entry.path === "README.md"), true);
+});
+
+test("active fixed writer中にTask read scopeをcommitするとWORKSPACE_DRIFTで拒否する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "unsafe-head-advance" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: result.revision, task: makeTask({
+    task_id: "unsafe-head-task", read_scope: [{ kind: "file", path: "docs/control-record-plan.md" }], write_scope: [{ kind: "file", path: "README.md" }],
+  }) });
+  const run = await api.workerRunRecord({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "unsafe-head-task", workspace_cwd: repo.root }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+  await writeFile(join(repo.root, "README.md"), "worker scope change\n");
+  await writeFile(join(repo.root, "docs", "control-record-plan.md"), "# parent changed task input\n");
+  runGit(repo.root, ["add", "docs/control-record-plan.md"]); runGit(repo.root, ["commit", "-q", "-m", "parent overlaps task read scope", "--", "docs/control-record-plan.md"]);
+  await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() }), code("WORKSPACE_DRIFT"));
+});
+
+test("active fixed writer中のfast-forwardでも特殊index flagはWORKSPACE_DRIFTで拒否する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "flagged-head-advance" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: result.revision, task: makeTask({
+    task_id: "flagged-head-task", read_scope: [{ kind: "file", path: "docs/control-record-plan.md" }], write_scope: [{ kind: "file", path: "README.md" }],
+  }) });
+  const run = await api.workerRunRecord({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "flagged-head-task", workspace_cwd: repo.root }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+  await writeFile(join(repo.root, "docs", "parent-note.md"), "parent-only note\n");
+  runGit(repo.root, ["add", "docs/parent-note.md"]); runGit(repo.root, ["commit", "-q", "-m", "parent non-overlap note", "--", "docs/parent-note.md"]);
+  runGit(repo.root, ["update-index", "--assume-unchanged", "README.md"]);
+  await writeFile(join(repo.root, "README.md"), "hidden worker change\n");
+  await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() }), code("WORKSPACE_DRIFT"));
+});
+
 test("admission後のscope外変更はcompleted観測をWORKSPACE_DRIFTで拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "scope-outside-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "scope-outside-task", write_scope: [{ kind: "directory", path: "lib/orchestrate" }] }) });
