@@ -284,10 +284,10 @@ READMEのhook数、CI正典の`test-orchestrate`漏れ、plan現在地を採用�
   成功へ丸めずopaque＋review-requiredとして再照会対象にする。
 - [x] 10件以上のread-only Worker Runを複数Executor・複数lineageで実行し、Dedup→反証→親裁定を通す。
 - [x] codex-sidecar隔離worktreeと別Executorの競合する代替案を作り、自動mergeせず親が一案を採用する。
-- [ ] Codex nativeの実効最大枠と、aiterm、codex-sidecar、gpt-connector consultationを同時利用し、
+- [x] Codex nativeの実効最大枠と、aiterm、codex-sidecar、gpt-connector consultationを同時利用し、
   全体がnative枠へ制限されないことを示す。
 - [x] 親sessionをThroughline handoffで終了・再開し、active/unknown Run、base SHA、report、Decisionを回収する。
-- [ ] 中規模実装1件と監査1件で全縦切りを通し、既存回帰、敵対的最終監査、knowledge returnを完了する。
+- [x] 中規模実装1件と監査1件で全縦切りを通し、既存回帰、敵対的最終監査、knowledge returnを完了する。
 - [ ] v1受入matrixを全件greenにし、Control-level finalization後に本planを`docs/archive/`へ退避する。
 
 Phase 7再開実証（2026-07-15）: Throughline handoff後の新taskはControl revision 97を
@@ -444,34 +444,34 @@ OpenAI CDC promptの一次資料、現repoと各Executorの実測契約から直
 
 元提案の29条件を削除せず、実製品契約へ合わせて次の検証可能な条件へ修正する。
 
-1. [ ] 工場全体へ固定`max_active_children=3`を置かず、Executorごとの観測capacityを使う。
-2. [ ] Codex nativeだけでなく、全Executor固有のcapacityを`known | unknown`と根拠付きで扱う。
-3. [ ] gpt-connector consultation、aiterm、codex-sidecar、Codex nativeのRun／Consultationを同一Controlで管理できる。
-4. [ ] 3件を超えるTaskとWorker Runを登録・回収でき、最小`depends_on`のcycle／ready gateを検査できる。
-5. [ ] 3件を超える外部Runを同時に管理し、native枠が全体上限にならない。
-6. [ ] workflow単位のcapability、capacity observation、role/effect policyを検査できる。
-7. [ ] read-only Runを複数Executorへelastic fan-outできる。
-8. [ ] 全Executor横断でwrite scope／worktree競合を検出できる。
-9. [ ] 独立worktree上の代替実装を区別し、自動mergeしない。
-10. [ ] provider、model、prompt family、context policy、lineage、approach family参照を記録できる。
-11. [ ] 別process／別Executorというだけで独立監査扱いしない。
-12. [ ] blocked経路は新しい機序・不変量・構成の参照なしに再投入できない。
-13. [ ] Control／Run budgetを設定し、unknown usageを0や無制限に丸めない。
-14. [ ] approach familyごとの投入上限とretry上限を管理できる。
-15. [ ] Finding／Decision／finalizationの意味は親がdocs正本で確定し、Controlは参照とphase gateだけを持つ。
-16. [ ] 子のLedger更新禁止は委譲契約として維持し、lock／revisionで競合更新を拒否する。
-17. [ ] 外部Executor失敗を暗黙fallbackでgreenへ丸めない。
-18. [ ] Executor completedと親accepted/rejectedを区別できる。
-19. [ ] sessionをまたいでTask、Run、opaque handle、transition receipt、取消状態、budget、gateを復元できる。
-20. [ ] H承認参照とpurpose／impact／rollback／operation digestなしにH対象Runをadmitできず、真正性とscopeは親が再確認する。
-21. [ ] high-risk finalizationに親が指定した独立監査参照を要求できる。
-22. [ ] working treeへ一時runtime stateを置かない。
-23. [ ] main／linked worktreeで共通保存先とglobal conflict gateが壊れない。
-24. [ ] 新しいruntime dependencyを原則追加しない。
-25. [ ] install、verify、routing、hooks、既存skills、`make ci`がgreen。
-26. [ ] 新Executorをcoreの大改造なしにversioned adapter／handle schema／capabilityとして追加できる。
-27. [ ] 中規模実装1件と監査1件でoperator-driven縦切りをdogfoodする。
-28. [ ] dogfood結果を正典、RAG、Caveat、testsの正しい所有先へ還流する。
+1. [x] 工場全体へ固定`max_active_children=3`を置かず、Executorごとの観測capacityを使う。
+2. [x] Codex nativeだけでなく、全Executor固有のcapacityを`known | unknown`と根拠付きで扱う。
+3. [x] gpt-connector consultation、aiterm、codex-sidecar、Codex nativeのRun／Consultationを同一Controlで管理できる。
+4. [x] 3件を超えるTaskとWorker Runを登録・回収でき、最小`depends_on`のcycle／ready gateを検査できる。
+5. [x] 3件を超える外部Runを同時に管理し、native枠が全体上限にならない。
+6. [x] workflow単位のcapability、capacity observation、role/effect policyを検査できる。
+7. [x] read-only Runを複数Executorへelastic fan-outできる。
+8. [x] 全Executor横断でwrite scope／worktree競合を検出できる。
+9. [x] 独立worktree上の代替実装を区別し、自動mergeしない。
+10. [x] provider、model、prompt family、context policy、lineage、approach family参照を記録できる。
+11. [x] 別process／別Executorというだけで独立監査扱いしない。
+12. [x] blocked経路は新しい機序・不変量・構成の参照なしに再投入できない。
+13. [x] Control／Run budgetを設定し、unknown usageを0や無制限に丸めない。
+14. [x] approach familyごとの投入上限とretry上限を管理できる。
+15. [x] Finding／Decision／finalizationの意味は親がdocs正本で確定し、Controlは参照とphase gateだけを持つ。
+16. [x] 子のLedger更新禁止は委譲契約として維持し、lock／revisionで競合更新を拒否する。
+17. [x] 外部Executor失敗を暗黙fallbackでgreenへ丸めない。
+18. [x] Executor completedと親accepted/rejectedを区別できる。
+19. [x] sessionをまたいでTask、Run、opaque handle、transition receipt、取消状態、budget、gateを復元できる。
+20. [x] H承認参照とpurpose／impact／rollback／operation digestなしにH対象Runをadmitできず、真正性とscopeは親が再確認する。
+21. [x] high-risk finalizationに親が指定した独立監査参照を要求できる。
+22. [x] working treeへ一時runtime stateを置かない。
+23. [x] main／linked worktreeで共通保存先とglobal conflict gateが壊れない。
+24. [x] 新しいruntime dependencyを原則追加しない。
+25. [x] install、verify、routing、hooks、既存skills、`make ci`がgreen。
+26. [x] 新Executorをcoreの大改造なしにversioned adapter／handle schema／capabilityとして追加できる。
+27. [x] 中規模実装1件と監査1件でoperator-driven縦切りをdogfoodする。
+28. [x] dogfood結果を正典、RAG、Caveat、testsの正しい所有先へ還流する。
 29. [ ] Control-level finalization後、本planを既存規則どおり`docs/archive/`へ退避する。
 
 ## v1完成と将来拡張の境界
