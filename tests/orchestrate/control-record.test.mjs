@@ -6,7 +6,7 @@ import { join } from "node:path";
 import {
   addLinkedWorktree, cleanupDir, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
   createNonGitDir, createOwnerFixtures, evidence, installSentinelBin, loadControl, makeConsultation, makeTask,
-  makeApproval, makeBudget, makeBudgetReservation, makeRegistryObservation, makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
+  makeApproval, makeBudget, makeBudgetReservation, makePlacementCandidate, makeRegistryObservation, makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
   taskAdmissionDigest, terminalWorkerObservation, completedWorkerObservation, workerObservation, writeJson,
 } from "./helpers.mjs";
 
@@ -301,6 +301,300 @@ test("Registry observationは根拠付きtri-stateとcapacityを保存し、将�
     cwd: repo.root, control_id: "registry-secondary", actor_id: "parent-001", expected_revision: second.revision,
     observation: makeRegistryObservation({ registry_observation_id: "registry-codex-native" }),
   }), code("DUPLICATE_ID"));
+});
+
+test("Placement dry-runはRegistry由来の候補をcanonical順で評価し、状態を変更しない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "placement-control", budget: makeBudget({ max_wall_time_seconds: 3600, max_cost_microusd: 1000000 }) });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "placement-control", actor_id: "parent-001", expected_revision: result.revision,
+    task: makeTask({ task_id: "placement-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const observedAt = "2026-07-14T00:00:00.000Z";
+  const capacity = (overrides = {}) => ({
+    admission: { value: "true", evidence: evidence("docs/placement-admission.md") },
+    hard_inflight_limit: { knowledge: "known", value: 2, evidence: evidence("docs/placement-hard.md") },
+    soft_inflight_limit: { knowledge: "known", value: 2, evidence: evidence("docs/placement-soft.md") },
+    observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/placement-observed.md") },
+    ...overrides,
+  });
+  const observation = (registry_observation_id, overrides = {}) => makeRegistryObservation({
+    registry_observation_id,
+    executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: registry_observation_id, handle_schema_id: "codex-native.agent-id.v1" },
+    capacity: capacity(), ...overrides,
+  });
+  const inputs = [
+    observation("placement-eligible"),
+    observation("placement-admission-unknown", { capacity: capacity({ admission: { value: "unknown", evidence: null } }) }),
+    observation("placement-soft-exhausted", { capacity: capacity({ soft_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/placement-soft-low.md") }, observed_inflight: { knowledge: "known", value: 1, evidence: evidence("docs/placement-observed-one.md") } }) }),
+    observation("placement-disabled", { enabled: { value: "false", evidence: evidence("docs/placement-disabled.md") } }),
+    observation("placement-enabled-unknown", { enabled: { value: "unknown", evidence: null } }),
+    observation("placement-expired", { expires_at: "2026-07-14T00:15:00.000Z" }),
+    observation("placement-adapter-unknown", { executor: { adapter_id: "future-adapter", contract_version: "v1", instance_id: "future", handle_schema_id: "future.handle.v1" }, workflow_id: "future-workflow" }),
+    observation("placement-verification-insufficient", { verification: { stage: "installed", observed_version: "test-version", observed_at: observedAt, evidence: evidence("docs/placement-installed.md") } }),
+    observation("placement-capability-missing", { workflow_capabilities: [{ capability_id: "workspace.read", value: "true", evidence: evidence("docs/placement-read.md") }] }),
+    observation("placement-hard-exhausted", { capacity: capacity({ observed_inflight: { knowledge: "known", value: 2, evidence: evidence("docs/placement-observed-full.md") } }) }),
+  ];
+  let revision = task.revision;
+  for (const entry of inputs) {
+    const recorded = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-control", actor_id: "parent-001", expected_revision: revision, observation: entry });
+    revision = recorded.revision;
+  }
+  const candidate = (candidate_id, registry_observation_id, overrides = {}) => makePlacementCandidate({ candidate_id, registry_observation_id, workspace_cwd: repo.root, ...overrides });
+  const output = await api.placementDryRun({
+    cwd: repo.root, control_id: "placement-control", task_id: "placement-task", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: [
+      candidate("z-budget-unknown", "placement-eligible", { budget_reservation: makeBudgetReservation({ wall_time_seconds: null }) }),
+      candidate("y-budget-exceeded", "placement-eligible", { budget_reservation: makeBudgetReservation({ wall_time_seconds: 3601 }) }),
+      candidate("x-hard-exhausted", "placement-hard-exhausted"), candidate("w-capability", "placement-capability-missing"),
+      candidate("v-verification", "placement-verification-insufficient"), candidate("u-adapter", "placement-adapter-unknown"),
+      candidate("t-expired", "placement-expired"), candidate("s-enabled-unknown", "placement-enabled-unknown"),
+      candidate("r-disabled", "placement-disabled"), candidate("q-soft-review", "placement-soft-exhausted"),
+      candidate("p-admission-review", "placement-admission-unknown"), candidate("o-registry-missing", "placement-missing"),
+      candidate("a-eligible", "placement-eligible"),
+    ],
+  });
+  assert.deepEqual(output, {
+    control_id: "placement-control", control_revision: revision, task_id: "placement-task", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: output.candidates,
+  });
+  assert.deepEqual(output.candidates.map((entry) => entry.candidate_id), [...output.candidates.map((entry) => entry.candidate_id)].sort());
+  const resultById = new Map(output.candidates.map((entry) => [entry.candidate_id, entry]));
+  assert.deepEqual(resultById.get("a-eligible"), { candidate_id: "a-eligible", registry_observation_id: "placement-eligible", eligibility: "eligible", reasons: [] });
+  for (const [candidateId, eligibility, reason] of [
+    ["p-admission-review", "review-required", "capacity-review-required"], ["q-soft-review", "review-required", "capacity-review-required"],
+    ["r-disabled", "ineligible", "enabled-false"], ["s-enabled-unknown", "ineligible", "enabled-unknown"],
+    ["t-expired", "ineligible", "registry-expired"], ["u-adapter", "ineligible", "adapter-unknown"], ["o-registry-missing", "ineligible", "registry-missing"],
+    ["v-verification", "ineligible", "verification-insufficient"], ["w-capability", "ineligible", "capability-mismatch"],
+    ["x-hard-exhausted", "ineligible", "capacity-hard-exhausted"], ["y-budget-exceeded", "ineligible", "budget-exceeded"], ["z-budget-unknown", "ineligible", "budget-unknown"],
+  ]) {
+    assert.equal(resultById.get(candidateId).eligibility, eligibility);
+    assert.ok(resultById.get(candidateId).reasons.includes(reason));
+  }
+  assert.equal((await api.status({ cwd: repo.root, control_id: "placement-control" })).record_revision, revision);
+  const foundation = await api.taskRecord({
+    cwd: repo.root, control_id: "placement-control", actor_id: "parent-001", expected_revision: revision,
+    task: makeTask({ task_id: "placement-foundation", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const blocked = await api.taskRecord({
+    cwd: repo.root, control_id: "placement-control", actor_id: "parent-001", expected_revision: foundation.revision,
+    task: makeTask({ task_id: "placement-blocked", effect: "read", write_scope: [], isolation: "none", depends_on: ["placement-foundation"], required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const blockedPlacement = await api.placementDryRun({
+    cwd: repo.root, control_id: "placement-control", task_id: "placement-blocked", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: [candidate("blocked-dependency", "placement-eligible")],
+  });
+  assert.deepEqual(blockedPlacement.candidates, [{ candidate_id: "blocked-dependency", registry_observation_id: "placement-eligible", eligibility: "ineligible", reasons: ["dependency-not-ready"] }]);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "placement-control" })).record_revision, blocked.revision);
+  await assert.rejects(api.placementDryRun({
+    cwd: repo.root, control_id: "placement-control", task_id: "placement-task", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: [candidate("duplicate", "placement-eligible"), candidate("duplicate", "placement-eligible")],
+  }), code("INVALID_INPUT"));
+  await assert.rejects(api.placementDryRun({
+    cwd: repo.root, control_id: "placement-control", task_id: "placement-task", evaluated_at: "2026-07-14T00:30:00Z",
+    candidates: [candidate("malformed-time", "placement-eligible")],
+  }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.placementDryRun({
+    cwd: repo.root, control_id: "placement-control", task_id: "placement-task", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: [{ ...candidate("unknown-field", "placement-eligible"), unexpected: true }],
+  }), code("INVALID_SCHEMA"));
+});
+
+test("Placement dry-runは同一executor/workflowのadmitted予約をRegistry observed_inflightへ合成する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "placement-capacity-reservation" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "placement-capacity-reservation", actor_id: "parent-001", expected_revision: result.revision,
+    task: makeTask({ task_id: "capacity-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const workerCapabilities = makeWorkerRun().workflow_capabilities;
+  const observation = makeRegistryObservation({
+    registry_observation_id: "capacity-registry", workflow_capabilities: workerCapabilities,
+    capacity: {
+      admission: { value: "true", evidence: evidence("docs/capacity-admission.md") },
+      hard_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/capacity-hard.md") },
+      soft_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/capacity-soft.md") },
+      observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/capacity-observed.md") },
+    },
+  });
+  const observed = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "placement-capacity-reservation", actor_id: "parent-001", expected_revision: task.revision, observation,
+  });
+  const recorded = await api.workerRunRecord({
+    cwd: repo.root, control_id: "placement-capacity-reservation", actor_id: "parent-001", expected_revision: observed.revision,
+    worker_run: makeWorkerRun({
+      worker_run_id: "capacity-existing-run", task_id: "capacity-task", assignment_id: "capacity-existing-assignment",
+      executor: observation.executor, workflow_id: observation.workflow_id, workflow_capabilities: workerCapabilities,
+      write_mode: "none", workspace_cwd: repo.root, executor_handle: { agent_id: "capacity-existing-agent" },
+      lineage: { ...makeWorkerRun().lineage, root_assignment_id: "capacity-existing-assignment" },
+    }),
+  });
+  const admitted = await api.admitWorker({
+    cwd: repo.root, control_id: "placement-capacity-reservation", actor_id: "parent-001", expected_revision: recorded.revision, worker_run_id: "capacity-existing-run",
+  });
+  const placement = await api.placementDryRun({
+    cwd: repo.root, control_id: "placement-capacity-reservation", task_id: "capacity-task", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: [makePlacementCandidate({
+      candidate_id: "capacity-new-candidate", registry_observation_id: "capacity-registry", workspace_cwd: repo.root,
+      executor_handle: { agent_id: "capacity-new-agent" },
+    })],
+  });
+  assert.deepEqual(placement.candidates, [{
+    candidate_id: "capacity-new-candidate", registry_observation_id: "capacity-registry", eligibility: "ineligible", reasons: ["capacity-hard-exhausted"],
+  }]);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "placement-capacity-reservation" })).record_revision, admitted.revision);
+  const sameTimestamp = await api.observeWorker({
+    cwd: repo.root, control_id: "placement-capacity-reservation", actor_id: "parent-001", expected_revision: admitted.revision,
+    worker_run_id: "capacity-existing-run", observation: workerObservation("dispatched", {
+      source: "codex-native", observed_at: "2026-07-14T00:00:00.000Z",
+    }),
+  });
+  const ambiguousPlacement = await api.placementDryRun({
+    cwd: repo.root, control_id: "placement-capacity-reservation", task_id: "capacity-task", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: [makePlacementCandidate({
+      candidate_id: "capacity-ambiguous-candidate", registry_observation_id: "capacity-registry", workspace_cwd: repo.root,
+      executor_handle: { agent_id: "capacity-ambiguous-agent" },
+    })],
+  });
+  assert.deepEqual(ambiguousPlacement.candidates, [{
+    candidate_id: "capacity-ambiguous-candidate", registry_observation_id: "capacity-registry", eligibility: "review-required", reasons: ["capacity-review-required"],
+  }]);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "placement-capacity-reservation" })).record_revision, sameTimestamp.revision);
+});
+
+test("Placement dry-runはF/H・workspace・global write conflictを実行せずに拒否する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "placement-policy-control" });
+  const capabilities = makeWorkerRun().workflow_capabilities;
+  const capacity = {
+    admission: { value: "true", evidence: evidence("docs/policy-admission.md") },
+    hard_inflight_limit: { knowledge: "known", value: 8, evidence: evidence("docs/policy-hard.md") },
+    soft_inflight_limit: { knowledge: "known", value: 8, evidence: evidence("docs/policy-soft.md") },
+    observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/policy-observed.md") },
+  };
+  const nativeRegistry = makeRegistryObservation({ registry_observation_id: "policy-native", workflow_capabilities: capabilities, capacity });
+  const parentRegistry = makeRegistryObservation({
+    registry_observation_id: "policy-parent", workflow_capabilities: capabilities, capacity,
+    executor: { adapter_id: "parent", contract_version: "v1", instance_id: "parent-session", handle_schema_id: "parent.correlation.v1" }, workflow_id: "direct",
+  });
+  let revision = result.revision;
+  for (const observation of [nativeRegistry, parentRegistry]) {
+    const recorded = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent-001", expected_revision: revision, observation });
+    revision = recorded.revision;
+  }
+  const writeTask = (task_id, overrides = {}) => makeTask({
+    task_id, effect: "write", isolation: "none", required_capabilities: ["report.structured", "workspace.write"],
+    write_scope: [{ kind: "directory", path: "docs" }], ...overrides,
+  });
+  for (const entry of [
+    writeTask("placement-f-write", { classification: "F" }),
+    writeTask("placement-h-write", { classification: "H", approval: makeApproval({ expires_at: "2099-07-14T00:00:00.000Z" }) }),
+    writeTask("placement-dedicated-write", { isolation: "dedicated-worktree" }),
+    writeTask("placement-conflict-write"),
+  ]) {
+    const recorded = await api.taskRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent-001", expected_revision: revision, task: entry });
+    revision = recorded.revision;
+  }
+  const candidate = (candidate_id, registry_observation_id, overrides = {}) => makePlacementCandidate({
+    candidate_id, registry_observation_id, workspace_cwd: repo.root, write_mode: "direct", ...overrides,
+  });
+  const evaluate = (task_id, candidates) => api.placementDryRun({
+    cwd: repo.root, control_id: "placement-policy-control", task_id, evaluated_at: "2026-07-14T00:30:00.000Z", candidates,
+  });
+  const f = await evaluate("placement-f-write", [
+    candidate("f-external", "policy-native", { executor_handle: { agent_id: "f-external-agent" } }),
+    candidate("f-parent", "policy-parent", { executor_handle: { correlation_id: "f-parent-correlation" } }),
+  ]);
+  assert.deepEqual(f.candidates, [
+    { candidate_id: "f-external", registry_observation_id: "policy-native", eligibility: "ineligible", reasons: ["policy-forbidden"] },
+    { candidate_id: "f-parent", registry_observation_id: "policy-parent", eligibility: "eligible", reasons: [] },
+  ]);
+  const h = await evaluate("placement-h-write", [candidate("h-mismatch", "policy-native", { executor_handle: { agent_id: "h-agent" } })]);
+  assert.deepEqual(h.candidates, [{ candidate_id: "h-mismatch", registry_observation_id: "policy-native", eligibility: "ineligible", reasons: ["policy-forbidden"] }]);
+  const dedicated = await evaluate("placement-dedicated-write", [candidate("dedicated-main", "policy-native", { executor_handle: { agent_id: "dedicated-agent" } })]);
+  assert.deepEqual(dedicated.candidates, [{ candidate_id: "dedicated-main", registry_observation_id: "policy-native", eligibility: "ineligible", reasons: ["workspace-invalid"] }]);
+  const existing = await api.workerRunRecord({
+    cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent-001", expected_revision: revision,
+    worker_run: makeWorkerRun({
+      worker_run_id: "placement-conflict-existing", task_id: "placement-conflict-write", assignment_id: "placement-conflict-existing-assignment",
+      executor: nativeRegistry.executor, workflow_id: nativeRegistry.workflow_id, workflow_capabilities: capabilities,
+      workspace_cwd: repo.root, executor_handle: { agent_id: "placement-conflict-existing-agent" },
+      lineage: { ...makeWorkerRun().lineage, root_assignment_id: "placement-conflict-existing-assignment" },
+    }),
+  });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent-001", expected_revision: existing.revision, worker_run_id: "placement-conflict-existing" });
+  const conflict = await evaluate("placement-conflict-write", [candidate("conflict-new", "policy-native", { executor_handle: { agent_id: "conflict-new-agent" } })]);
+  assert.deepEqual(conflict.candidates, [{ candidate_id: "conflict-new", registry_observation_id: "policy-native", eligibility: "ineligible", reasons: ["write-conflict"] }]);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "placement-policy-control" })).record_revision, admitted.revision);
+});
+
+test("Placement dry-runは古いRegistry snapshotをsupersedeし、同時刻の競合snapshotをreviewへ送る", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "placement-refresh-control" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "placement-refresh-control", actor_id: "parent-001", expected_revision: result.revision,
+    task: makeTask({ task_id: "refresh-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const capacity = {
+    admission: { value: "true", evidence: evidence("docs/refresh-admission.md") },
+    hard_inflight_limit: { knowledge: "known", value: 2, evidence: evidence("docs/refresh-hard.md") },
+    soft_inflight_limit: { knowledge: "known", value: 2, evidence: evidence("docs/refresh-soft.md") },
+    observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/refresh-observed.md") },
+  };
+  const old = makeRegistryObservation({ registry_observation_id: "refresh-old", capacity, verification: { stage: "execution-verified", observed_version: "old", observed_at: "2026-07-14T00:00:00.000Z", evidence: evidence("docs/refresh-old.md") }, expires_at: "2026-07-14T02:00:00.000Z" });
+  const freshDisabled = makeRegistryObservation({ registry_observation_id: "refresh-disabled", capacity, enabled: { value: "false", evidence: evidence("docs/refresh-disabled.md") }, verification: { stage: "execution-verified", observed_version: "fresh", observed_at: "2026-07-14T00:10:00.000Z", evidence: evidence("docs/refresh-fresh.md") }, expires_at: "2026-07-14T02:00:00.000Z" });
+  const oldRecorded = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-refresh-control", actor_id: "parent-001", expected_revision: task.revision, observation: old });
+  const freshRecorded = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-refresh-control", actor_id: "parent-001", expected_revision: oldRecorded.revision, observation: freshDisabled });
+  const candidate = (candidate_id, registry_observation_id) => makePlacementCandidate({ candidate_id, registry_observation_id, workspace_cwd: repo.root });
+  const output = await api.placementDryRun({
+    cwd: repo.root, control_id: "placement-refresh-control", task_id: "refresh-task", evaluated_at: "2026-07-14T00:20:00.000Z",
+    candidates: [candidate("old-candidate", "refresh-old"), candidate("fresh-candidate", "refresh-disabled")],
+  });
+  assert.deepEqual(output.candidates, [
+    { candidate_id: "fresh-candidate", registry_observation_id: "refresh-disabled", eligibility: "ineligible", reasons: ["enabled-false"] },
+    { candidate_id: "old-candidate", registry_observation_id: "refresh-old", eligibility: "ineligible", reasons: ["registry-superseded"] },
+  ]);
+  const tied = makeRegistryObservation({ registry_observation_id: "refresh-tied", capacity: { ...capacity, hard_inflight_limit: { knowledge: "known", value: 3, evidence: evidence("docs/refresh-tied-hard.md") } }, verification: { stage: "execution-verified", observed_version: "tied", observed_at: "2026-07-14T00:10:00.000Z", evidence: evidence("docs/refresh-tied.md") }, expires_at: "2026-07-14T02:00:00.000Z" });
+  const tiedRecorded = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-refresh-control", actor_id: "parent-001", expected_revision: freshRecorded.revision, observation: tied });
+  const ambiguous = await api.placementDryRun({
+    cwd: repo.root, control_id: "placement-refresh-control", task_id: "refresh-task", evaluated_at: "2026-07-14T00:20:00.000Z", candidates: [candidate("tied-candidate", "refresh-tied")],
+  });
+  assert.deepEqual(ambiguous.candidates, [{ candidate_id: "tied-candidate", registry_observation_id: "refresh-tied", eligibility: "review-required", reasons: ["registry-refresh-ambiguous"] }]);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "placement-refresh-control" })).record_revision, tiedRecorded.revision);
+});
+
+test("Placement dry-runはRegistry観測済みのRun heartbeatをcapacityへ二重加算しない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "placement-heartbeat-control" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: result.revision,
+    task: makeTask({ task_id: "heartbeat-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const capabilities = makeWorkerRun().workflow_capabilities;
+  const recorded = await api.workerRunRecord({
+    cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "heartbeat-run", task_id: "heartbeat-task", assignment_id: "heartbeat-assignment", workflow_capabilities: capabilities, write_mode: "none", workspace_cwd: repo.root, executor_handle: { idempotency_key: "heartbeat-key" }, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "heartbeat-assignment" } }),
+  });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: recorded.revision, worker_run_id: "heartbeat-run" });
+  const dispatched = await api.observeWorker({
+    cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: admitted.revision, worker_run_id: "heartbeat-run",
+    observation: workerObservation("dispatched", { observed_at: "2026-07-14T00:00:00.000Z", dispatch_evidence: [evidence("docs/heartbeat-dispatch.md", "file", { observed_at: "2026-07-14T00:00:00.000Z" })] }),
+  });
+  const registry = makeRegistryObservation({
+    registry_observation_id: "heartbeat-registry", executor: makeWorkerRun().executor, workflow_id: makeWorkerRun().workflow_id, workflow_capabilities: capabilities,
+    capacity: {
+      admission: { value: "true", evidence: evidence("docs/heartbeat-admission.md", "file", { observed_at: "2026-07-14T00:10:00.000Z" }) },
+      hard_inflight_limit: { knowledge: "known", value: 2, evidence: evidence("docs/heartbeat-hard.md", "file", { observed_at: "2026-07-14T00:10:00.000Z" }) },
+      soft_inflight_limit: { knowledge: "known", value: 2, evidence: evidence("docs/heartbeat-soft.md", "file", { observed_at: "2026-07-14T00:10:00.000Z" }) },
+      observed_inflight: { knowledge: "known", value: 1, evidence: evidence("docs/heartbeat-observed.md", "file", { observed_at: "2026-07-14T00:10:00.000Z" }) },
+    }, verification: { stage: "execution-verified", observed_version: "test-version", observed_at: "2026-07-14T00:10:00.000Z", evidence: evidence("docs/heartbeat-verification.md", "file", { observed_at: "2026-07-14T00:10:00.000Z" }) }, expires_at: "2026-07-14T02:00:00.000Z",
+  });
+  const observed = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: dispatched.revision, observation: registry });
+  const running = await api.observeWorker({
+    cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: observed.revision, worker_run_id: "heartbeat-run",
+    observation: workerObservation("running", { observed_at: "2026-07-14T00:20:00.000Z", source: "codex-sidecar" }),
+  });
+  const output = await api.placementDryRun({
+    cwd: repo.root, control_id: "placement-heartbeat-control", task_id: "heartbeat-task", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: [makePlacementCandidate({ candidate_id: "heartbeat-candidate", registry_observation_id: "heartbeat-registry", workspace_cwd: repo.root, executor_handle: { idempotency_key: "heartbeat-candidate-key" } })],
+  });
+  assert.deepEqual(output.candidates, [{ candidate_id: "heartbeat-candidate", registry_observation_id: "heartbeat-registry", eligibility: "eligible", reasons: [] }]);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "placement-heartbeat-control" })).record_revision, running.revision);
 });
 
 test("WorkerとConsultationは分離され、同一read Taskを参照でき、gpt executorを拒否する", async (t) => {
@@ -933,7 +1227,14 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
     observation: makeRegistryObservation({ registry_observation_id: "registry-cli" }),
   });
   const cliRegistry = spawnOrchestrate(["registry-observation-record", "--input", cliRegistryInput], { env: protectedEnv });
-  assert.equal(cliRegistry.status, 0); assert.equal(JSON.parse(cliRegistry.stdout).command, "registry-observation-record");
+  assert.equal(cliRegistry.status, 0); const cliRegistryResult = JSON.parse(cliRegistry.stdout).result;
+  assert.equal(cliRegistryResult.manifest.registry_observations.at(-1).registry_observation_id, "registry-cli");
+  const cliPlacementInput = join(base, "cli-placement.json"); await writeJson(cliPlacementInput, {
+    cwd: repo.root, control_id: cliControl, task_id: "cli-task", evaluated_at: "2026-07-14T00:30:00.000Z",
+    candidates: [makePlacementCandidate({ candidate_id: "cli-placement", registry_observation_id: "registry-cli", workspace_cwd: repo.root, write_mode: "direct" })],
+  });
+  const cliPlacement = spawnOrchestrate(["placement-dry-run", "--input", cliPlacementInput], { env: protectedEnv });
+  assert.equal(cliPlacement.status, 0); assert.equal(JSON.parse(cliPlacement.stdout).command, "placement-dry-run");
   await assert.rejects(access(sentinel.log));
   for (const args of [["unknown", "--input", input], ["status", "--input", input, "--input", input], ["status", "extra", "--input", input]]) {
     const output = spawnOrchestrate(args); assert.equal(output.status, 2); assert.equal(JSON.parse(output.stderr).code, "INVALID_INPUT");

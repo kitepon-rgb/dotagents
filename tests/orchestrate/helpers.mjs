@@ -201,6 +201,31 @@ export function makeRegistryObservation(overrides = {}) {
   };
 }
 
+export function makePlacementCandidate(overrides = {}) {
+  const assignmentId = overrides.assignment_id ?? "placement-assignment-001";
+  return {
+    candidate_id: "placement-candidate-001",
+    registry_observation_id: "registry-placement-001",
+    assignment_id: assignmentId,
+    workspace_cwd: "/workspace-is-resolved-by-library",
+    write_mode: "none",
+    operation_digest: null,
+    budget_reservation: makeBudgetReservation(),
+    lineage: {
+      parent_worker_run_id: null, root_assignment_id: assignmentId,
+      provider: "openai", model: "gpt-5.6-terra", prompt_family: "implementation-v1",
+      independence_group: "placement-primary",
+      context_policy: {
+        share_objective: true, share_current_candidate: false, share_existing_findings: false,
+        share_failed_approaches: false, share_test_results: true,
+      },
+      input_digest: "c".repeat(64), approach_family_ref: null, shared_finding_refs: [],
+    },
+    executor_handle: { agent_id: "placement-agent-001" },
+    ...overrides,
+  };
+}
+
 export function makeConsultation(overrides = {}) {
   return {
     consultation_id: "consultation-001", task_id: "consultation-task", assignment_id: "consultation-assignment",

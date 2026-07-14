@@ -287,9 +287,80 @@ Registryは各製品の正本や自動discovery engineではなく、親が確�
 - `verification`はWorker Runと同じstage集合を使うが、観測時点の事実であり、製品のcredential、
   session、rate-limit stateを所有しない。全evidenceの時刻は`verification.observed_at`以下、
   `expires_at`はそれより後のcanonical UTCとする。
+- capacity snapshotのscopeはexactなexecutor envelope（adapter／contract／instance／handle schema）と
+  `workflow_id`の組である。provider／account全体の別rate limitを暗黙に同じ値へ畳み込まない。
 - 未知adapterも観測として保存できるが、既知contractやdispatch許可へ昇格しない。
   `gpt-connector`は親直轄Consultation専用なのでWorker Registryへ記録せず、
   `EXECUTOR_FORBIDDEN`で拒否する。
+
+## Deterministic placement dry-run
+
+`placementDryRun`はTaskと親が列挙した候補を現在のControl／Registry snapshotへ照合する
+read-only判定である。候補を自動生成・score・dispatchせず、manifest／receiptを変更しない。
+global mutation lockで一貫した全Control snapshotを読み、callerが渡したcanonical `evaluated_at`を
+expiry判定に使うため、同じsnapshotと入力から同じ結果を返す。
+
+```json
+{
+  "cwd": "/project",
+  "control_id": "elastic-phase1",
+  "task_id": "T-001",
+  "evaluated_at": "2026-07-14T00:10:00.000Z",
+  "candidates": [
+    {
+      "candidate_id": "candidate-001",
+      "registry_observation_id": "registry-codex-native-001",
+      "assignment_id": "assignment-001",
+      "workspace_cwd": "/project-worktree",
+      "write_mode": "direct",
+      "operation_digest": null,
+      "budget_reservation": { "wall_time_seconds": 3600, "cost_microusd": 1000000 },
+      "lineage": {
+        "parent_worker_run_id": null,
+        "root_assignment_id": "assignment-001",
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "prompt_family": "implementation-v1",
+        "independence_group": "implementation-primary",
+        "context_policy": {
+          "share_objective": true,
+          "share_current_candidate": false,
+          "share_existing_findings": false,
+          "share_failed_approaches": false,
+          "share_test_results": true
+        },
+        "input_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "approach_family_ref": null,
+        "shared_finding_refs": []
+      },
+      "executor_handle": null
+    }
+  ]
+}
+```
+
+- executor envelope、workflow、capabilities、verificationは候補の自己申告でなく、参照した
+  immutable Registry observationから導出する。roleとcontext policyはTask snapshotへ照合する。
+- F/A/H、approval digest／expiry、Task dependency、role/effect、required capability、verification stage、
+  Budget Envelope、assignment retry、workspace identity／isolation、write mode、全Control横断write conflict、
+  Registry expiry／enabled／capacityを検査する。
+- 同じcapacity scopeへ複数snapshotがある場合、`evaluated_at`以前で最大の
+  `verification.observed_at`を持つsnapshotだけを現行候補とする。古いIDは`registry-superseded`、
+  評価時刻より未来のIDは`registry-not-yet-observed`で拒否する。最新時刻が同じなのに内容が異なる
+  snapshotは順序を捏造せず`registry-refresh-ambiguous`として親reviewへ送る。
+- capacity admissionがunknown、hard limitまたはobserved inflightがunknown、既知soft limit到達は
+  `review-required`。enabled unknown、hard limit到達、unknown adapter、verification不足その他hard gateは
+  `ineligible`。全hard gateを満たしreview理由もなければ`eligible`。
+- capacityの比較値はRegistryの`observed_inflight`だけにしない。同じexecutor envelope／workflowへ
+  記録済みの`planned`／`admitted` Runを予約として加え、`dispatched`／`running`／`unknown` Runは
+  不変のdispatch evidence frontierがinflight evidenceの観測後にあるものだけを加える。heartbeatで
+  上書きされる現在のexecutor observation時刻は使わない。これにより外部runtime側への反映前の予約を
+  見落とさず、観測時点ですでに数えたactive Runを二重加算しない。両evidenceの観測時刻が同一で
+  前後関係を確定できない場合は`review-required`とする。
+- 返却は`control_id / control_revision / task_id / evaluated_at / candidates`。候補は
+  `candidate_id`順、reasonは固定codeのunique sortとし、意味的な優劣や多数決を出力しない。
+- `eligible`はdispatchや予約の成立を意味しない。次のmutationで親が同じControl revisionと候補を
+  reservation proposalとして明示記録するまで、Executorへ何も送らない。
 
 ## Task declaration
 
@@ -724,7 +795,7 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, task-record, registry-observation-record, worker-run-record, consultation-record,
+init, status, task-record, registry-observation-record, placement-dry-run, worker-run-record, consultation-record,
 admit-worker, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, recover-lock, archive
 ```
@@ -760,6 +831,7 @@ init({ cwd, control_id, objective_ref, actor_id, document_refs, budget, predeces
 status({ cwd, control_id })
 taskRecord({ cwd, control_id, actor_id, expected_revision, task })
 registryObservationRecord({ cwd, control_id, actor_id, expected_revision, observation })
+placementDryRun({ cwd, control_id, task_id, evaluated_at, candidates })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
 consultationRecord({ cwd, control_id, actor_id, expected_revision, consultation })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })

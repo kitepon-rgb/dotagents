@@ -131,7 +131,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 
 - [x] read-only Executor Registry observationを実装する。能力・capacityは`true | false | unknown`、
   根拠、version、観測時刻、expiry、verification stageを持ち、製品stateの正本にはしない。
-- [ ] Task要件、F/A/H snapshot、capability、budget、lineage、write/worktree conflictを照合する
+- [x] Task要件、F/A/H snapshot、capability、budget、lineage、write/worktree conflictを照合する
   deterministic dry-run placementを実装する。自動scoreや意味的順位付けはしない。
 - [ ] 親が候補を選び、reservation proposalをControlへ記録してから手動dispatchできるようにする。
 - [ ] `status --brief`、`resume-check`、unresolved／unknown／uncollected一覧を実装し、HEAD、dirty、

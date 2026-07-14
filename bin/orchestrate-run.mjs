@@ -8,6 +8,7 @@ import * as api from "../lib/orchestrate/control-record.mjs";
 const commands = new Map([
   ["init", api.init], ["status", api.status], ["task-record", api.taskRecord],
   ["registry-observation-record", api.registryObservationRecord],
+  ["placement-dry-run", api.placementDryRun],
   ["worker-run-record", api.workerRunRecord], ["consultation-record", api.consultationRecord],
   ["admit-worker", api.admitWorker], ["observe-worker", api.observeWorker],
   ["observe-consultation", api.observeConsultation], ["conflict-check", api.conflictCheck],
