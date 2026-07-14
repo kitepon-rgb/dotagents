@@ -22,3 +22,4 @@
 - [codex/subagent-thread-limits.md](codex/subagent-thread-limits.md) — Codex subagentの公開設定 `agents.max_threads`（既定6）／`max_depth`（既定1）と、Desktopセッション側の低い実効上限を分離。旧「max_threadsは起動エラー」説を公式仕様で訂正（2026-07-13・確度はclaim別）
 - [codex/raw/openai-subagents-2026-07-13.md](codex/raw/openai-subagents-2026-07-13.md) — OpenAI公式 Subagents 文書のverbatim保存（2026-07-13）
 - [macos-launchd-local-network/apple-tn3179-launchd.md](macos-launchd-local-network/apple-tn3179-launchd.md) — macOS 15+のLaunchAgentはTerminal/SSH子と異なりLANがLocal Network Privacyで遮断される。Apple公式のresponsible code要件、短命alert既知問題、管理端末向けCIDR許可と再起動条件、Mac実機再現（2026-07-14・確度高）
+- [orchestration/openai-cdc-prompt-concepts.md](orchestration/openai-cdc-prompt-concepts.md) — OpenAI CDC promptの動的fan-out、approach family、独立context、blocked再開条件、敵対監査、完全性gateを抽出し、dotagents固有のF/A/H・worktree・Executor stateへ適応（2026-07-14・確度高）
