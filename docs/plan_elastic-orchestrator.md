@@ -143,7 +143,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - [x] 親が候補を選び、reservation proposalをControlへ記録してから手動dispatchできるようにする。
 - [x] `status --brief`、`resume-check`、unresolved／unknown／uncollected一覧を実装し、HEAD、dirty、
   worktree generation、opaque handle、evidence retentionを再確認する。
-- [ ] Task cancellationと個別Run cancellationを別operation／stateとして実装し、Task取消が
+- [x] Task cancellationと個別Run cancellationを別operation／stateとして実装し、Task取消が
   Executor上のRunを自動cancelしたふりをしない。Run cancel要求とterminal観測も分離する。
 - [ ] TaskからExecutor別Delegation Packetとstrict Worker Report templateを生成し、report importを検証する。
 - [ ] parent-declared campaign gate（members、all-terminal、audit-required、parent-release）を実装する。

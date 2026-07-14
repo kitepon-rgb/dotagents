@@ -169,7 +169,7 @@ export function makeWorkerRun(overrides = {}) {
       input_digest: "b".repeat(64), approach_family_ref: null, shared_finding_refs: [],
     },
     state: "planned", executor_handle: { idempotency_key: "idempotency-001" },
-    executor_observation: null, admission: null, dispatch_evidence: [], dispatch_attempt_evidence: [],
+    executor_observation: null, admission: null, cancel_request: null, dispatch_evidence: [], dispatch_attempt_evidence: [],
     terminal_evidence: [], result: null, acceptance: null, placement_reservation: null, ...overrides,
   };
 }
@@ -314,7 +314,7 @@ export async function installSentinelBin(base) {
   const bin = join(base, "sentinel-bin");
   const log = join(base, "forbidden-execution.log");
   await mkdir(bin);
-  for (const command of ["curl", "wget", "gpt-connector", "codex", "claude", "aiterm-mcp"]) {
+  for (const command of ["curl", "wget", "gpt-connector", "codex", "claude", "aiterm-mcp", "codex-sidecar", "codex-sidecar-mcp", "kill", "pkill"]) {
     const script = join(bin, command);
     await writeFile(script, `#!/bin/sh\necho ${command} >> '${log}'\nexit 97\n`, { mode: 0o700 });
     await chmod(script, 0o700);

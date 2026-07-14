@@ -6,13 +6,13 @@ import process from "node:process";
 import * as api from "../lib/orchestrate/control-record.mjs";
 
 const commands = new Map([
-  ["init", api.init], ["status", api.status], ["task-record", api.taskRecord],
+  ["init", api.init], ["status", api.status], ["task-record", api.taskRecord], ["task-cancel-record", api.taskCancelRecord],
   ["registry-observation-record", api.registryObservationRecord],
   ["placement-dry-run", api.placementDryRun],
   ["placement-reserve", api.reservePlacement],
   ["resume-check", api.resumeCheck],
   ["worker-run-record", api.workerRunRecord], ["consultation-record", api.consultationRecord],
-  ["admit-worker", api.admitWorker], ["observe-worker", api.observeWorker],
+  ["admit-worker", api.admitWorker], ["worker-cancel-request", api.requestWorkerCancel], ["observe-worker", api.observeWorker],
   ["observe-consultation", api.observeConsultation], ["conflict-check", api.conflictCheck],
   ["accept", api.accept], ["reject", api.reject], ["task-finalize-record", api.taskFinalizeRecord],
   ["control-finalize", api.finalizeControl], ["recover-lock", api.recoverLock], ["archive", api.archive],

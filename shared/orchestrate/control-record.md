@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v14",
+  "schema_version": "dotagents.orchestration-control.v15",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -93,6 +93,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   "document_refs": ["docs/plan_elastic-orchestrator.md"],
   "registry_observations": [],
   "tasks": [],
+  "task_cancellations": [],
   "worker_runs": [],
   "consultations": [],
   "task_finalizations": [],
@@ -119,13 +120,14 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v14で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v15で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
   protocol snapshot、v11はchanged fileのmode fingerprintとControl総数commit gate、v12は
   Executor Registry observation、v13はplacement reservationとsubject digest、v14はresume用の
-  Control git directory generation、初期workspace digest、Worker記録時fingerprintを追加した。旧manifestを
+  Control git directory generation、初期workspace digest、Worker記録時fingerprint、v15はTask取消と
+  Worker cancel要求の分離を追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -193,7 +195,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 }
 ```
 
-- operationは`control-init / task-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit /
+- operationは`control-init / task-record / task-cancel-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit / worker-cancel-request /
   worker-observe / consultation-observe / worker-accept / worker-reject / task-finalize /
   control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
@@ -415,10 +417,13 @@ planned Runはcapacity／budget予約として後続placementへ数えるが、w
 
 ### Brief status and resume check
 
-`status --brief`はmanifest全体を複製せず、次だけを親の再開用に固定shapeで返す。
+`status --brief`は`dotagents.orchestration-status-brief.v2`としてmanifest全体を複製せず、
+次だけを親の再開用に固定shapeで返す。`resumeCheck`はこのbriefを含むため
+`dotagents.orchestration-resume-check.v2`とする。
 
 - Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation件数
-- nonterminal WorkerのExecutor envelope、workflow、opaque handle、最終観測
+- Task取消件数、取消済みTask ID、未terminalのcancel要求済みWorker ID
+- nonterminal WorkerのExecutor envelope、workflow、opaque handle、最終観測、cancel要求snapshot
 - nonterminal Consultationのconnector、slug、model／effort、最終観測
 - finalization未記録Task、completed未受入Worker、Control finalization未完
 - stateが`unknown`のRun／Consultationと、値がunknownのRegistry field
@@ -510,7 +515,20 @@ Taskは意味と受入条件への参照であり、Executorへ直接結びつ�
 
 `expires_at`は`null`または`approved_at`より後のcanonical UTCとする。Worker Runは
 `operation_digest`を持ち、H Taskでは完全一致しないRunを`APPROVAL_MISMATCH`、期限切れを
-`APPROVAL_EXPIRED`としてadmission前に拒否する。
+  `APPROVAL_EXPIRED`としてadmission前に拒否する。
+
+### Task cancellation
+
+`taskCancelRecord`はTaskの論理的な取消Decisionを記録する。入力は`task_id`と
+`type=decision`のtyped evidenceを必須とし、保存時に`cancelled_from_revision / cancelled_by /
+cancelled_at`を追加する。Task本体はimmutableのまま、取消記録を`task_cancellations`へ1件だけ追加する。
+
+- 取消後は新しいplacement reservation、Worker Run、Consultation、planned Workerのadmission、
+  planned Consultationのdispatchを拒否する。
+- 取消時点で存在するWorker／Consultationのstate、opaque handle、write reservationを変更しない。
+  Task取消だけでExecutor上の処理をcancelled扱いにせず、既存Runは所有Executorの観測で閉じる。
+- finalized Taskの取消、同一Taskの重複取消を拒否する。Task取消DecisionはWorker個別のcancel要求を
+  代替せず、既存Runを止める場合はRunごとに`requestWorkerCancel`を記録する。
 
 - Fの外部writerを拒否する。Fのwriteは`executor=parent`だけ。
 - `role_effect_policy`は`dotagents.role-effect.v1`のexact snapshotとし、`sorter | refuter | verifier`の
@@ -565,7 +583,7 @@ worker_run_id, task_id, assignment_id, executor, workflow_id, role_ref,
 workflow_capabilities, budget_reservation,
 workspace_cwd, write_mode, operation_digest, execution_verification,
 lineage, placement_reservation,
-state, executor_handle, executor_observation, admission,
+state, executor_handle, executor_observation, admission, cancel_request,
 dispatch_evidence, dispatch_attempt_evidence, terminal_evidence,
 result, acceptance
 ```
@@ -575,7 +593,7 @@ result, acceptance
 `recorded_workspace_fingerprint`はworktreeで必須、bareで`null`であり、resume時のdirty/content差を検出する。
 write Taskではplanned段階からTaskのwrite scopeをfingerprint guardへ渡し、ignored成果物も記録時との差へ含める。
 手動の初回記録は`placement_reservation=null`、`state=planned`、
-`executor_observation=result=acceptance=null`だけを受理する。non-null reservationは
+`executor_observation=cancel_request=result=acceptance=null`だけを受理する。non-null reservationは
 `reservePlacement`だけが作り、`workerRunRecord`からの偽装を拒否する。
 `write_mode`はread Taskなら`none`、write Taskなら`direct | isolated-alternative`。
 `operation_digest`は通常Taskでは`null`またはSHA-256、H Taskではapproval snapshotの
@@ -703,6 +721,12 @@ unknown -> running | completed | failed | cancelled
 通り、write Runだけが同じtransactionでworkspace baselineとglobal write reservationを取得する。
 CLIは実際のdispatch、poll、cancel、retryを行わない。
 
+`requestWorkerCancel`は`admitted | dispatched | running | unknown`のWorkerへ親のcancel Decisionを
+記録するだけで、Worker stateを変更しない。既存のnon-null Executor handleをexact snapshotとして
+`cancel_request`へ束縛し、同じRunの重複要求、planned／terminal Runへの要求を拒否する。このoperationは
+adapterのcancel API、signal、network、process操作を実行しない。親または後続adapterが所有Executorへ
+要求を伝えた後も、Control上のterminal確定には別の`observeWorker`とExecutor由来evidenceが必要である。
+
 保存manifestはread時とmutation後のsave前に次のtruth tableを満たすことを必須とする。
 
 | state | admission | observation | result | acceptance | evidence |
@@ -713,7 +737,7 @@ CLIは実際のdispatch、poll、cancel、retryを行わない。
 | `running / unknown` | 必須 | 必須 | `null` | `null` | dispatchのみ1件以上 |
 | `completed` | 必須 | 必須 | 必須 | 任意 | dispatchは1件以上、terminal／attemptは空 |
 | `failed` | 必須 | 必須 | `null` | `null` | dispatchとterminalが1件以上、attemptは空 |
-| `cancelled` | 経路依存 | 必須 | `null` | `null` | planned取消は全空、admitted取消はattemptのみ、dispatch後取消はdispatch＋terminal |
+| `cancelled` | 経路依存 | 必須 | `null` | `null` | planned取消は全空、要求なしadmitted取消はattempt、cancel要求後はterminal、dispatch後はdispatch＋terminal |
 
 write Runは`admitted`以降でbaseline必須、read Runは全stateでbaseline `null`。
 `acceptance`は`completed`だけが持てる。表と矛盾する保存stateは、たとえJSON shapeが正しくても
@@ -729,8 +753,10 @@ write Runではさらに全Control競合を検査し、
 `baseline_workspace_fingerprint`も保存する。
 `admitted -> dispatched`は、所有Executor上にRunが存在することを、再照会可能なhandleまたは
 idempotency keyと`dispatch_evidence`で確認した観測だけを受理する。
-`admitted -> cancelled`はRunが作成されなかったことを示す空でない`dispatch_attempt_evidence`を
-必須とする。予約後の実在確認に使えるhandle／idempotency keyを持てない入口はwriterへ使えない。
+cancel要求がない`admitted -> cancelled`はRunが作成されなかったことを示す空でない
+`dispatch_attempt_evidence`を必須とする。cancel要求済みの`admitted -> cancelled`は、要求したという
+事実だけでterminalへ進めず、所有Executorが取消を確認した`terminal_evidence`を必須とする。
+予約後の実在確認に使えるhandle／idempotency keyを持てない入口はwriterへ使えない。
 
 `executor_observation`は`source`、`observed_version`、`observed_at`、`raw_state`を持つ。
 raw outputやpromptは保存しない。`completed`には親が確認可能な64桁SHA-256
@@ -749,8 +775,8 @@ result?, terminal_evidence?
 ```
 
 handleがある場合はExecutor別shapeに適合し、既存handleと矛盾してはならない。`dispatched`は
-空でない`dispatch_evidence`、`admitted -> cancelled`は空でない
-`dispatch_attempt_evidence`を必須とする。`completed`の
+空でない`dispatch_evidence`、cancel要求のない`admitted -> cancelled`は空でない
+`dispatch_attempt_evidence`、cancel要求後の取消確定は空でない`terminal_evidence`を必須とする。`completed`の
 `result`は`{ result_digest, evidence }`だけを持つ。write Runではlibraryが
 `workspace_fingerprint`を計算してresultへ追加する。`failed | cancelled`はresultを持たず、
 dispatch後なら空でない`terminal_evidence`を必須とする。他stateでterminal evidenceや
@@ -890,8 +916,8 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, task-record, registry-observation-record, placement-dry-run, placement-reserve, worker-run-record, consultation-record,
-admit-worker, observe-worker, observe-consultation, conflict-check,
+init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, worker-run-record, consultation-record,
+admit-worker, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, recover-lock, archive
 ```
 
@@ -928,12 +954,14 @@ status({ cwd, control_id })
 statusBrief({ cwd, control_id })
 resumeCheck({ cwd, control_id })
 taskRecord({ cwd, control_id, actor_id, expected_revision, task })
+taskCancelRecord({ cwd, control_id, actor_id, expected_revision, task_id, decision })
 registryObservationRecord({ cwd, control_id, actor_id, expected_revision, observation })
 placementDryRun({ cwd, control_id, task_id, evaluated_at, candidates })
 reservePlacement({ cwd, control_id, actor_id, expected_revision, task_id, candidate, review_decision })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
 consultationRecord({ cwd, control_id, actor_id, expected_revision, consultation })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
+requestWorkerCancel({ cwd, control_id, actor_id, expected_revision, worker_run_id, decision })
 observeWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id, observation })
 observeConsultation({ cwd, control_id, actor_id, expected_revision, consultation_id, observation })
 conflictCheck({ cwd, control_id, proposed_worker_run? })

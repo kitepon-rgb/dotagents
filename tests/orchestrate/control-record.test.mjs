@@ -52,12 +52,12 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v14", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v15", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
-    document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], registry_observations: [], task_finalizations: [], control_finalization: null,
+    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], registry_observations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
   assert.deepEqual(api.validateManifest(manifest), manifest);
@@ -845,6 +845,71 @@ test("WorkerとConsultationは分離され、同一read Taskを参照でき、gp
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: failed.revision, worker_run: makeWorkerRun({ executor: { adapter_id: "gpt-connector", contract_version: "v1", instance_id: "chat", handle_schema_id: "gpt-connector.slug.v1" } }) }), code("EXECUTOR_FORBIDDEN"));
 });
 
+test("Task取消とWorker cancel requestは既存実行を変えず、証拠付きの終端だけを許す", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "cancel-control" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "cancel-task", effect: "read", write_scope: [] }) });
+  const run = await api.workerRunRecord({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "cancel-run", task_id: "cancel-task", assignment_id: "cancel-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "cancel-assignment" } }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "cancel-run" });
+  const decision = evidence("docs/cancel-decision.md", "decision");
+  const cancelledTask = await api.taskCancelRecord({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: admitted.revision, task_id: "cancel-task", decision });
+  assert.equal(cancelledTask.manifest.worker_runs[0].state, "admitted");
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: cancelledTask.revision, worker_run_id: "cancel-run" }), code("INVALID_TRANSITION"));
+  const requested = await api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: cancelledTask.revision, worker_run_id: "cancel-run", decision });
+  assert.equal(requested.manifest.worker_runs[0].state, "admitted");
+  assert.deepEqual(requested.manifest.worker_runs[0].cancel_request.executor_handle, { idempotency_key: "idempotency-001" });
+  await assert.rejects(api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: requested.revision, worker_run_id: "cancel-run", decision }), code("DUPLICATE_ID"));
+  await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: requested.revision, worker_run_id: "cancel-run", observation: workerObservation("cancelled") }), code("EVIDENCE_REQUIRED"));
+  const terminal = await api.observeWorker({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: requested.revision, worker_run_id: "cancel-run", observation: terminalWorkerObservation("cancelled") });
+  assert.equal(terminal.manifest.worker_runs[0].state, "cancelled");
+  const brief = await api.statusBrief({ cwd: repo.root, control_id: "cancel-control" });
+  assert.equal(brief.active.worker_runs.length, 0);
+});
+
+test("Task取消は既存Consultationを変えず新規dispatchだけを拒否し、active Runのterminal観測を許す", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "cancel-active-control" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "cancel-active-task", effect: "read", write_scope: [] }) });
+  const plannedConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: task.revision, consultation: makeConsultation({ consultation_id: "cancel-planned-consultation", task_id: "cancel-active-task", assignment_id: "cancel-planned-consultation-assignment" }) });
+  const activeConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: plannedConsultation.revision, consultation: makeConsultation({ consultation_id: "cancel-active-consultation", task_id: "cancel-active-task", assignment_id: "cancel-active-consultation-assignment", slug: "cancel-active-slug" }) });
+  const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: activeConsultation.revision, consultation_id: "cancel-active-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
+  const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: consultationDispatched.revision, worker_run: makeWorkerRun({ worker_run_id: "cancel-active-run", task_id: "cancel-active-task", assignment_id: "cancel-active-worker-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "cancel-active-worker-assignment" } }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "cancel-active-run" });
+  const workerDispatched = await api.observeWorker({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "cancel-active-run", observation: workerObservation("dispatched") });
+  const cancelled = await api.taskCancelRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: workerDispatched.revision, task_id: "cancel-active-task", decision: evidence("docs/cancel-active-decision.md", "decision") });
+  assert.equal(cancelled.manifest.consultations.find((entry) => entry.consultation_id === "cancel-planned-consultation").state, "planned");
+  assert.equal(cancelled.manifest.consultations.find((entry) => entry.consultation_id === "cancel-active-consultation").state, "dispatched");
+  assert.equal(cancelled.manifest.worker_runs[0].state, "dispatched");
+  await assert.rejects(api.observeConsultation({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: cancelled.revision, consultation_id: "cancel-planned-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "dispatched" } }), code("TASK_CANCELLED"));
+  const consultationTerminal = await api.observeConsultation({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: cancelled.revision, consultation_id: "cancel-active-consultation", observation: { state: "failed", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:03:00.000Z", raw_state: "failed", terminal_evidence: [evidence("docs/cancel-active-consultation-terminal.md", "executor-receipt")] } });
+  const workerTerminal = await api.observeWorker({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: consultationTerminal.revision, worker_run_id: "cancel-active-run", observation: terminalWorkerObservation("failed") });
+  assert.equal(workerTerminal.manifest.consultations.find((entry) => entry.consultation_id === "cancel-active-consultation").state, "failed");
+  assert.equal(workerTerminal.manifest.worker_runs[0].state, "failed");
+});
+
+test("Worker cancel requestはplannedとterminalを拒否し、取消record相関の改竄をfail closedにする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "cancel-schema-control" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "cancel-schema-task", effect: "read", write_scope: [] }) });
+  const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "cancel-schema-run", task_id: "cancel-schema-task", assignment_id: "cancel-schema-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "cancel-schema-assignment" } }) });
+  const decision = evidence("docs/cancel-schema-decision.md", "decision");
+  await assert.rejects(api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "cancel-schema-run", decision }), code("INVALID_TRANSITION"));
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "cancel-schema-run" });
+  const cancelledTask = await api.taskCancelRecord({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: admitted.revision, task_id: "cancel-schema-task", decision });
+  for (const mutate of [
+    (manifest) => { manifest.task_cancellations[0].cancelled_from_revision += 1; },
+    (manifest) => { manifest.task_cancellations[0].cancelled_by = "attacker"; },
+    (manifest) => { manifest.task_cancellations[0].decision = evidence("docs/forged-decision.md", "decision"); },
+  ]) {
+    const tampered = structuredClone(cancelledTask.manifest); mutate(tampered);
+    assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+  }
+  const requested = await api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: cancelledTask.revision, worker_run_id: "cancel-schema-run", decision });
+  const strayReceipt = structuredClone(requested.manifest); strayReceipt.worker_runs[0].cancel_request = null;
+  assert.throws(() => api.validateManifest(strayReceipt), code("INVALID_SCHEMA"));
+  const handleMismatch = structuredClone(requested.manifest); handleMismatch.worker_runs[0].cancel_request.executor_handle = { idempotency_key: "forged-handle" };
+  assert.throws(() => api.validateManifest(handleMismatch), code("INVALID_SCHEMA"));
+  const terminal = await api.observeWorker({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: requested.revision, worker_run_id: "cancel-schema-run", observation: terminalWorkerObservation("cancelled") });
+  await assert.rejects(api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: terminal.revision, worker_run_id: "cancel-schema-run", decision }), code("INVALID_TRANSITION"));
+});
+
 test("Executor envelopeはworkflowとhandle schemaを分離し、未知adapterをstatus限定で保持する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "executor-envelope-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [], required_capabilities: ["workspace.read", "report.structured"] }) });
@@ -1476,6 +1541,14 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
   });
   const cliReserve = spawnOrchestrate(["placement-reserve", "--input", cliReserveInput], { env: protectedEnv });
   assert.equal(cliReserve.status, 1); assert.equal(JSON.parse(cliReserve.stderr).code, "PLACEMENT_INELIGIBLE");
+  const cliWorkerCancelInput = join(base, "cli-worker-cancel.json"); await writeJson(cliWorkerCancelInput, { cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliRegistryResult.revision, worker_run_id: "cli-run", decision: evidence("docs/cli-worker-cancel.md", "decision") });
+  const cliWorkerCancel = spawnOrchestrate(["worker-cancel-request", "--input", cliWorkerCancelInput], { env: protectedEnv });
+  assert.equal(cliWorkerCancel.status, 0); const cliWorkerCancelResult = JSON.parse(cliWorkerCancel.stdout).result;
+  assert.equal(cliWorkerCancelResult.manifest.worker_runs[0].state, "admitted");
+  const cliTaskCancelInput = join(base, "cli-task-cancel.json"); await writeJson(cliTaskCancelInput, { cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliWorkerCancelResult.revision, task_id: "cli-task", decision: evidence("docs/cli-task-cancel.md", "decision") });
+  const cliTaskCancel = spawnOrchestrate(["task-cancel-record", "--input", cliTaskCancelInput], { env: protectedEnv });
+  assert.equal(cliTaskCancel.status, 0); const cliTaskCancelResult = JSON.parse(cliTaskCancel.stdout).result;
+  assert.deepEqual(cliTaskCancelResult.manifest.task_cancellations.map((entry) => entry.task_id), ["cli-task"]);
   await assert.rejects(access(sentinel.log));
   for (const args of [["unknown", "--input", input], ["status", "--input", input, "--input", input], ["status", "extra", "--input", input], ["status", "--brief", "--bogus", input]]) {
     const output = spawnOrchestrate(args); assert.equal(output.status, 2); assert.equal(JSON.parse(output.stderr).code, "INVALID_INPUT");
