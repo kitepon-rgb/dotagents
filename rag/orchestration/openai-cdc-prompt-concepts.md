@@ -23,3 +23,15 @@
   機械化する。
 - 完成条件は「多数のagentを動かしたこと」ではなく、対象タスクの受入条件、証拠、反証、
   統合、回帰、knowledge returnが揃ったこととする。
+
+## Elastic Orchestrator v1 dogfoodで得た実測補足
+
+- Control上の`running`時刻ではなく、各providerが返した開始・終了時刻の重複で同時capacityを判定する。
+- native枠を満たした実時間帯にexternal execution／consultationが開始できることを別々に示し、
+  MCP callerの待機時間や後追いrecordを実行時間へ数えない。
+- unsupported model、login-required、timeoutはtyped failure／unknownのまま保持し、暗黙fallbackで
+  capacity成功へ変換しない。
+- mutableなDecision pathへ新しい裁定を追記する時、既存receiptの旧digestは失われ得る。保持確認は
+  同一path・同一hashのgit履歴に限定し、以後の裁定は新しい不変文書へ分ける。
+- session handoffはControlやExecutor stateの保存先ではない。Control IDとcaller-known handleを渡し、
+  新しい親が所有Executorへ同じhandleで再照会するための経路に限定する。

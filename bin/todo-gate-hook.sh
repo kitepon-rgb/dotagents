@@ -7,19 +7,23 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 for stream in (sys.stdin, sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
         stream.reconfigure(encoding="utf-8")
 
-STATE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "dotagents", "hooks")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib" / "orchestrate"))
+from hook_state import safe_append, safe_exists, safe_mtime, safe_read, safe_touch, safe_unlink, safe_write, state_dir
+
+STATE_DIR = state_dir()
+if STATE_DIR is None:
+    raise SystemExit(0)
 
 
 def error_log():
     try:
-        os.makedirs(STATE_DIR, exist_ok=True)
-        with open(os.path.join(STATE_DIR, "errors.log"), "a", encoding="utf-8") as handle:
-            handle.write(f"{datetime.datetime.now().isoformat()} todo-gate-hook parse-fail\n")
+        safe_append(os.path.join(STATE_DIR, "errors.log"), f"{datetime.datetime.now().isoformat()} todo-gate-hook parse-fail\n")
     except Exception:
         pass
 
@@ -35,8 +39,8 @@ def gc():
     try:
         cutoff = time.time() - 7 * 24 * 60 * 60
         for entry in os.scandir(STATE_DIR):
-            if entry.is_file() and entry.stat().st_mtime < cutoff:
-                os.unlink(entry.path)
+            if entry.is_file(follow_symlinks=False) and entry.stat(follow_symlinks=False).st_mtime < cutoff:
+                safe_unlink(entry.path)
     except Exception:
         pass
 
@@ -57,8 +61,7 @@ def snapshot_path(session_id, repo_key):
 
 
 def write_snapshot(path, porcelain_hash, head):
-    with open(path, "w", encoding="utf-8") as handle:
-        handle.write(f"{porcelain_hash}\n{head}\n")
+    safe_write(path, f"{porcelain_hash}\n{head}\n")
 
 
 def plan_files(root):
@@ -85,23 +88,23 @@ def session_start(data):
     if not all(isinstance(value, str) for value in (session_id, source, cwd)):
         raise ValueError
     root, repo_key, porcelain_hash, head, _ = repo_info(cwd)
-    os.makedirs(STATE_DIR, exist_ok=True)
     key = session_key(session_id)
     snap = snapshot_path(session_id, repo_key)
-    if not os.path.exists(snap):
+    if not safe_exists(snap):
         write_snapshot(snap, porcelain_hash, head)
     if source == "compact":
         for suffix in ("placement-warn", "onset-info"):
             try:
-                os.unlink(os.path.join(STATE_DIR, f"{key}.{suffix}"))
-            except FileNotFoundError:
+                safe_unlink(os.path.join(STATE_DIR, f"{key}.{suffix}"))
+            except OSError:
                 pass
     if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
         return
     if source not in ("startup", "clear"):
         return
     stocktake = os.path.join(STATE_DIR, f"{repo_key}.stocktake")
-    if os.path.exists(stocktake) and time.time() - os.path.getmtime(stocktake) < 24 * 60 * 60:
+    stocktake_mtime = safe_mtime(stocktake)
+    if stocktake_mtime is not None and time.time() - stocktake_mtime < 24 * 60 * 60:
         return
     entries, complete = [], []
     for name in plan_files(root):
@@ -120,7 +123,8 @@ def session_start(data):
     if archived:
         fragments.append("全消化済みで archive 未退避: " + "・".join(archived))
     gc()
-    open(stocktake, "a", encoding="utf-8").close()
+    if not safe_touch(stocktake):
+        return
     sys.stdout.write("INFO: docs/ のプラン状況: " + "・".join(fragments) + "。プランの維持・完了処理の方針は、グローバル CLAUDE.md / AGENTS.md「計画文書の作法」を参照。この一覧は現在の依頼範囲を変更しません。\n")
 
 
@@ -133,14 +137,13 @@ def stop(data):
     if data.get("stop_hook_active") is True:
         return
     root, repo_key, porcelain_hash, head, porcelain = repo_info(cwd)
-    os.makedirs(STATE_DIR, exist_ok=True)
     snap = snapshot_path(session_id, repo_key)
-    if not os.path.exists(snap):
+    if not safe_exists(snap):
         write_snapshot(snap, porcelain_hash, head)
         return
     try:
-        old_porcelain, old_head = open(snap, encoding="utf-8").read().splitlines()[:2]
-    except Exception:
+        old_porcelain, old_head = (safe_read(snap) or "").splitlines()[:2]
+    except ValueError:
         write_snapshot(snap, porcelain_hash, head)
         return
     if old_porcelain == porcelain_hash and old_head == head:
@@ -162,8 +165,7 @@ def stop(data):
     gc()
     summary = f"{len(paths)} ファイル/コミット {commits}"
     message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。対象作業の進捗管理方法は、グローバル CLAUDE.md / AGENTS.md「計画文書の作法」を参照。この情報は今回の依頼範囲を広げず、前ターンの応答を再開する指示でもありません。"
-    with open(os.path.join(STATE_DIR, f"{session_key(session_id)}.todo-pending"), "w", encoding="utf-8") as handle:
-        handle.write(message + "\n")
+    safe_write(os.path.join(STATE_DIR, f"{session_key(session_id)}.todo-pending"), message + "\n")
 
 
 def main():

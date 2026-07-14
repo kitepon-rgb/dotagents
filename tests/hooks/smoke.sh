@@ -149,6 +149,25 @@ run advisory-cache-symlink env XDG_CACHE_HOME="$STATE/cache-link" "$ADVISORY" <<
 {"session_id":"advisory-cache-symlink","cwd":"$HOOK_REPO"}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass advisory-cache-symlink || fail_case advisory-cache-symlink
+
+# 4本のcallout hookも、cache rootがsymlinkならfail closedで無出力にする。
+run c1-cache-symlink env XDG_CACHE_HOME="$STATE/cache-link" python3 "$ROOT/bin/delegation-gate-hook.sh" <<'EOF'
+{"session_id":"unsafe-delegation","tool_name":"Agent","tool_input":{}}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass c1-cache-symlink || fail_case c1-cache-symlink
+run c2-cache-symlink env XDG_CACHE_HOME="$STATE/cache-link" python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
+{"session_id":"unsafe-todo","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass c2-cache-symlink || fail_case c2-cache-symlink
+run c4-cache-symlink env XDG_CACHE_HOME="$STATE/cache-link" python3 "$ROOT/bin/onset-gate-hook.sh" <<'EOF'
+{"session_id":"unsafe-onset"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass c4-cache-symlink || fail_case c4-cache-symlink
+run codex-cache-symlink env XDG_CACHE_HOME="$STATE/cache-link" python3 "$ROOT/bin/codex-callout-hook.sh" user-prompt-submit <<'EOF'
+{"session_id":"unsafe-codex"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass codex-cache-symlink || fail_case codex-cache-symlink
+
 run c2-stocktake python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
 {"session_id":"t1","source":"startup","cwd":"$HOOK_REPO"}
 EOF
@@ -170,6 +189,11 @@ EOF
 run c4-normal python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass c4-normal || fail_case c4-normal
 run c4-silent python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && [ "$RUN_BYTES" -eq 0 ] && pass c4-silent || fail_case c4-silent
 run c4-off env DOTAGENTS_ONSET_GATE=off python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u2"}' && [ "$RUN_BYTES" -eq 0 ] && pass c4-off || fail_case c4-off
+printf '%s\n' keep >"$STATE/cache-file-target"
+FILE_SYMLINK_KEY=$(session_key unsafe-file-marker)
+ln -s "$STATE/cache-file-target" "$STATE/dotagents/hooks/$FILE_SYMLINK_KEY.onset-info"
+run c4-cache-file-symlink python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"unsafe-file-marker"}'
+[ "$RUN_BYTES" -eq 0 ] && [ "$(cat "$STATE/cache-file-target")" = keep ] && pass c4-cache-file-symlink || fail_case c4-cache-file-symlink
 run c4-pending python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"t1"}' && json && [[ "$RUN_OUT" == *'前ターン'* ]] && pass c4-pending || fail_case c4-pending
 [ ! -f "$STATE/dotagents/hooks/$(session_key t1).todo-pending" ] && pass c4-pending-drained || fail_case c4-pending-drained
 run c4-compact python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF

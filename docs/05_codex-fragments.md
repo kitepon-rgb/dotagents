@@ -3,7 +3,7 @@
 <!-- 前提: GPT-5.6 世代（2026-07 時点）。defaults の正は docs/02_models.md。本ファイルの体裁・構成は
      docs/03_settings-fragments.md（Claude Code settings.json の推奨断片カタログ）を踏襲する -->
 
-`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベントだけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
+`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベント、SessionStart advisory 1件だけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
 
 ## 1. 親既定モデル×エフォート（オーナー領分・情報提供のみ）
 

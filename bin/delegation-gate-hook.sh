@@ -5,19 +5,23 @@ import hashlib
 import json
 import os
 import sys
+from pathlib import Path
 
 for stream in (sys.stdin, sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
         stream.reconfigure(encoding="utf-8")
 
-STATE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "dotagents", "hooks")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib" / "orchestrate"))
+from hook_state import safe_append, safe_exists, safe_touch, safe_unlink, state_dir
+
+STATE_DIR = state_dir()
+if STATE_DIR is None:
+    raise SystemExit(0)
 
 
 def error_log(name):
     try:
-        os.makedirs(STATE_DIR, exist_ok=True)
-        with open(os.path.join(STATE_DIR, "errors.log"), "a", encoding="utf-8") as handle:
-            handle.write(f"{datetime.datetime.now().isoformat()} {name} parse-fail\n")
+        safe_append(os.path.join(STATE_DIR, "errors.log"), f"{datetime.datetime.now().isoformat()} {name} parse-fail\n")
     except Exception:
         pass
 
@@ -26,8 +30,8 @@ def gc():
     try:
         cutoff = datetime.datetime.now().timestamp() - 7 * 24 * 60 * 60
         for entry in os.scandir(STATE_DIR):
-            if entry.is_file() and entry.stat().st_mtime < cutoff:
-                os.unlink(entry.path)
+            if entry.is_file(follow_symlinks=False) and entry.stat(follow_symlinks=False).st_mtime < cutoff:
+                safe_unlink(entry.path)
     except Exception:
         pass
 
@@ -56,13 +60,11 @@ def main():
         return
 
     try:
-        os.makedirs(STATE_DIR, exist_ok=True)
         model = tool_input.get("model")
         effort_values = [tool_input.get(key) for key in ("reasoning_effort", "effort", "modelReasoningEffort")]
         effort = next((value for value in effort_values if value is not None), None)
         warn_path = os.path.join(STATE_DIR, f"{session_key(session_id)}.placement-warn")
-        if not os.path.exists(warn_path):
-            open(warn_path, "a", encoding="utf-8").close()
+        if not safe_exists(warn_path) and safe_touch(warn_path):
             gc()
             shown_model = str(model) if model not in (None, "") else "省略"
             shown_effort = str(effort) if effort not in (None, "") else "未指定"

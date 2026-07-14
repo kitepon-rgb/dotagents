@@ -90,7 +90,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `factory-reporter.mjs` | 明示opt-inされた工場reportを検証・outbox保存・BugHubへ冪等送信 |
 | bin | `factory-external-event.mjs` | Pi5等の外部監視結果をmain-serverの所有者限定stateへ固定ServerManager eventとしてappend-only記録し、BugHub受理後だけack |
 | bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
-| bin | `apply-codex-config.sh` | routing 2キーと dotagents hook 4イベントだけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
+| bin | `apply-codex-config.sh` | routing 2キー、dotagents callout hook 4イベント、SessionStart advisory 1件だけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
 | 工場コア | Caveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar（dotagents 外） | 罠知識／セッション継続／未使用ツール監査／コード構造理解／資料変換／ChatGPT相談／PTY・外部枠／Claude・Codex親からの隔離Codex実行を担う必須8製品。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理する。Oracleは互換・rollback専用 |
 | 中央管理コア | ServerManager（dotagents 外） | dotagentsが管理・連携する第9製品。内部のBugHubをversion・bug・compatibility結果の統括に使う。BugHubを独立した第10製品へ分離しない |
@@ -191,7 +191,7 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 ```
 
 既定は公式 user skill 面 `$HOME/.agents/skills`。`--dry-run` は一切書き込まず、routing の必須2キー、callout
-4イベント、SessionStartの`orchestrate-advisory-hook` 1件だけの差分を出す。対象端末への適用を承認した後だけ、次を実行する。
+callout hook 4イベント、SessionStartの`orchestrate-advisory-hook` 1件だけの差分を出す。対象端末への適用を承認した後だけ、次を実行する。
 
 ```bash
 ./bin/apply-codex-config --apply

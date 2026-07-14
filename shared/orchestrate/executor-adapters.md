@@ -91,7 +91,9 @@ verification_ref`を持ち、そのcanonical payloadを`verification_digest`が�
 `projectCodexNativeObservation`はagent path、状態（`created`、`running`、`completed`、`failed`、`unknown`、
 `interrupted`）、green routing receipt、report参照、evidence参照だけをboundedに投影する。Controlへ渡す
 handleは`{agent_path}`であり、Controlの`codex-native.agent-path.v1`と同じshapeである。raw prompt、
-raw log、shell commandやhost tool実行結果の任意payloadはschema外として拒否する。
+raw log、shell commandやhost tool実行結果の任意payloadはschema外として拒否する。`completed`は空でない
+strict Worker Report参照を要求し、`buildWorkerControlObservation`はcaller提供resultによる直接成功化を
+`WORKER_REPORT_IMPORT_REQUIRED`で拒否する。成功の記録は後続のstrict Worker Report importだけが行う。
 
 ## aiterm interactive-session packet / projection
 

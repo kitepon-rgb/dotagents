@@ -85,6 +85,9 @@ test("codex-native observationはboundedなagent状態とrouting/report/evidence
   assert.deepEqual(projected, { schema_version: "dotagents.codex-native.observation.v1", executor_handle: { agent_path: "/root/routing_smoke" }, status: "completed", routing_receipt: routing, report_ref: "reports/agent_001.md", evidence_refs: ["tests/orchestrate/executor-adapters.test.mjs"] });
   assert.throws(() => adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "running", routing_receipt: null, report_ref: null, evidence_refs: [], raw_prompt: "secret" }), code("INVALID_SCHEMA"));
   assert.throws(() => adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "running", routing_receipt: null, report_ref: null, evidence_refs: ["same", "same"] }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.buildWorkerControlObservation({ projection: projected, observed_version: "gpt-5.6-terra", observed_at: "2026-07-14T00:00:00.000Z", result: { arbitrary: "caller supplied" } }), code("WORKER_REPORT_IMPORT_REQUIRED"));
+  const withoutReport = adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "completed", routing_receipt: routing, report_ref: null, evidence_refs: [] });
+  assert.throws(() => adapters.buildWorkerControlObservation({ projection: withoutReport, observed_version: "gpt-5.6-terra", observed_at: "2026-07-14T00:00:00.000Z", result: { arbitrary: "caller supplied" } }), code("EVIDENCE_REQUIRED"));
 });
 
 test("aiterm requestは実tool schemaに従う同一sessionの対話packetだけを純粋に投影する", () => {

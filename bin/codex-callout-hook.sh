@@ -7,21 +7,25 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 for stream in (sys.stdin, sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
         stream.reconfigure(encoding="utf-8")
 
-STATE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "dotagents", "hooks")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib" / "orchestrate"))
+from hook_state import safe_append, safe_exists, safe_mtime, safe_read, safe_touch, safe_unlink, safe_write, state_dir
+
+STATE_DIR = state_dir()
+if STATE_DIR is None:
+    raise SystemExit(0)
 
 ONSET_CONTEXT = "INFO: このセッションで実装・委譲・複数工程の作業を行う場合の進め方は、グローバル AGENTS.md の「計画文書の作法」「モデルとエフォート」および orchestrate skill を参照。会話・調査・小さな単発修正には追加対応不要。このINFO自体は、新しい作業・文書作成・委譲・依頼範囲の拡張を要求しません。"
 
 
 def error_log(name):
     try:
-        os.makedirs(STATE_DIR, exist_ok=True)
-        with open(os.path.join(STATE_DIR, "errors.log"), "a", encoding="utf-8") as handle:
-            handle.write(f"{datetime.datetime.now().isoformat()} {name} parse-fail\n")
+        safe_append(os.path.join(STATE_DIR, "errors.log"), f"{datetime.datetime.now().isoformat()} {name} parse-fail\n")
     except Exception:
         pass
 
@@ -30,8 +34,8 @@ def gc():
     try:
         cutoff = time.time() - 7 * 24 * 60 * 60
         for entry in os.scandir(STATE_DIR):
-            if entry.is_file() and entry.stat().st_mtime < cutoff:
-                os.unlink(entry.path)
+            if entry.is_file(follow_symlinks=False) and entry.stat(follow_symlinks=False).st_mtime < cutoff:
+                safe_unlink(entry.path)
     except Exception:
         pass
 
@@ -65,8 +69,7 @@ def snapshot_path(session_id, repo_key):
 
 
 def write_snapshot(path, porcelain_hash, head):
-    with open(path, "w", encoding="utf-8") as handle:
-        handle.write(f"{porcelain_hash}\n{head}\n")
+    safe_write(path, f"{porcelain_hash}\n{head}\n")
 
 
 def plan_files(root):
@@ -93,25 +96,25 @@ def session_start(data):
     session_id, source, cwd = data.get("session_id"), data.get("source"), data.get("cwd")
     if not all(isinstance(value, str) for value in (session_id, source, cwd)):
         raise ValueError
-    os.makedirs(STATE_DIR, exist_ok=True)
     key = session_key(session_id)
     if source == "compact":
         for suffix in ("codex-onset-info", "codex-placement-info"):
             try:
-                os.unlink(os.path.join(STATE_DIR, f"{key}.{suffix}"))
-            except FileNotFoundError:
+                safe_unlink(os.path.join(STATE_DIR, f"{key}.{suffix}"))
+            except OSError:
                 pass
     if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
         return
     root, repo_key, porcelain_hash, head, _ = repo_info(cwd)
     snap = snapshot_path(session_id, repo_key)
-    if not os.path.exists(snap):
+    if not safe_exists(snap):
         write_snapshot(snap, porcelain_hash, head)
     if source not in ("startup", "clear"):
         return
     # stocktake はリポキーのみ＝Claude 側 C2 と意図的に共有（同一リポの棚卸し表示を統合抑制）
     stocktake = os.path.join(STATE_DIR, f"{repo_key}.stocktake")
-    if os.path.exists(stocktake) and time.time() - os.path.getmtime(stocktake) < 24 * 60 * 60:
+    stocktake_mtime = safe_mtime(stocktake)
+    if stocktake_mtime is not None and time.time() - stocktake_mtime < 24 * 60 * 60:
         return
     entries, complete = [], []
     for name in plan_files(root):
@@ -130,7 +133,8 @@ def session_start(data):
     if archived:
         fragments.append("全消化済みで archive 未退避: " + "・".join(archived))
     gc()
-    open(stocktake, "a", encoding="utf-8").close()
+    if not safe_touch(stocktake):
+        return
     message = "INFO: docs/ のプラン状況: " + "・".join(fragments) + "。プランの維持・完了処理の方針は、グローバル AGENTS.md「計画文書の作法」を参照。この一覧は現在の依頼範囲を変更しません。"
     emit({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": message}})
 
@@ -151,19 +155,16 @@ def pre_tool_use(data):
         if not isinstance(plan, list):
             return
         statuses = [item.get("status") for item in plan if isinstance(item, dict)]
-        os.makedirs(STATE_DIR, exist_ok=True)
         messages = []
 
         canon_path = os.path.join(STATE_DIR, f"{key}.codex-plan-canon")
-        if not os.path.exists(canon_path):
-            open(canon_path, "a", encoding="utf-8").close()
+        if not safe_exists(canon_path) and safe_touch(canon_path):
             if len(plan) >= 4:
                 messages.append("INFO: Codex の内蔵プランが作成されました。永続プランの保存先とTODO管理の方針は、グローバル AGENTS.md「計画文書の作法」を参照。内蔵プランはセッション内の補助情報であり、正本の代替になるかは同規約に従います。")
 
         if statuses and all(status == "completed" for status in statuses):
             done_path = os.path.join(STATE_DIR, f"{key}.codex-plan-done")
-            if not os.path.exists(done_path):
-                open(done_path, "a", encoding="utf-8").close()
+            if not safe_exists(done_path) and safe_touch(done_path):
                 messages.append("INFO: Codex の内蔵プランが全項目 completed になりました。永続プランの進捗反映と完了文書の扱いは、グローバル AGENTS.md「計画文書の作法」を参照。")
 
         if messages:
@@ -174,11 +175,11 @@ def pre_tool_use(data):
     if tool_name == "spawn_agent":
         if os.environ.get("DOTAGENTS_PLACEMENT_GATE") == "off":
             return
-        os.makedirs(STATE_DIR, exist_ok=True)
         shown = os.path.join(STATE_DIR, f"{key}.codex-placement-info")
-        if os.path.exists(shown):
+        if safe_exists(shown):
             return
-        open(shown, "a", encoding="utf-8").close()
+        if not safe_touch(shown):
+            return
         gc()
         message = "INFO: このセッションで最初のネイティブ委譲を検出しました。配置・routing・委譲契約の基準は、グローバル AGENTS.md「モデルとエフォート」および docs/02_models.md を参照。このINFO自体は追加の委譲や依頼範囲の拡張を要求しません。"
         emit({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": message}})
@@ -190,23 +191,15 @@ def user_prompt_submit(data):
     session_id = data.get("session_id")
     parts = []
     if isinstance(session_id, str) and os.environ.get("DOTAGENTS_ONSET_GATE") != "off":
-        os.makedirs(STATE_DIR, exist_ok=True)
         key = session_key(session_id)
         shown = os.path.join(STATE_DIR, f"{key}.codex-onset-info")
-        if not os.path.exists(shown):
-            open(shown, "a", encoding="utf-8").close()
+        if not safe_exists(shown) and safe_touch(shown):
             parts.append(ONSET_CONTEXT)
     if isinstance(session_id, str) and os.environ.get("DOTAGENTS_TODO_GATE") != "off":
         pending_path = os.path.join(STATE_DIR, f"{session_key(session_id)}.codex-pending")
-        if os.path.exists(pending_path):
-            try:
-                content = open(pending_path, encoding="utf-8").read().strip()
-            except Exception:
-                content = ""
-            try:
-                os.unlink(pending_path)
-            except Exception:
-                pass
+        if safe_exists(pending_path):
+            content = (safe_read(pending_path) or "").strip()
+            safe_unlink(pending_path)
             if content:
                 parts.append(content)
     if parts:
@@ -223,15 +216,14 @@ def stop(data):
     if data.get("stop_hook_active") is True:
         return
     root, repo_key, porcelain_hash, head, porcelain = repo_info(cwd)
-    os.makedirs(STATE_DIR, exist_ok=True)
     key = session_key(session_id)
     snap = snapshot_path(session_id, repo_key)
-    if not os.path.exists(snap):
+    if not safe_exists(snap):
         write_snapshot(snap, porcelain_hash, head)
         return
     try:
-        old_porcelain, old_head = open(snap, encoding="utf-8").read().splitlines()[:2]
-    except Exception:
+        old_porcelain, old_head = (safe_read(snap) or "").splitlines()[:2]
+    except ValueError:
         write_snapshot(snap, porcelain_hash, head)
         return
     if old_porcelain == porcelain_hash and old_head == head:
@@ -253,8 +245,7 @@ def stop(data):
     gc()
     summary = f"{len(paths)} ファイル/コミット {commits}"
     message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。対象作業の進捗管理方法は、グローバル AGENTS.md「計画文書の作法」を参照。この情報は今回の依頼範囲を広げず、前ターンの応答を再開する指示でもありません。"
-    with open(os.path.join(STATE_DIR, f"{key}.codex-pending"), "w", encoding="utf-8") as handle:
-        handle.write(message + "\n")
+    safe_write(os.path.join(STATE_DIR, f"{key}.codex-pending"), message + "\n")
 
 
 def main():
