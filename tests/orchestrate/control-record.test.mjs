@@ -825,6 +825,17 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
   assert.equal(reviewed.manifest.worker_runs.at(-1).placement_reservation.review_decision.type, "decision");
 });
 
+test("手動Worker記録もdedicated-worktree isolationを回避できない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "manual-isolation-control" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "manual-isolation-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const run = (workspace_cwd) => makeWorkerRun({ worker_run_id: "manual-isolation-worker", task_id: "manual-isolation-task", assignment_id: "manual-isolation-assignment", workspace_cwd, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "manual-isolation-assignment" } });
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: task.revision, worker_run: run(repo.root) }), code("WORKSPACE_DRIFT"));
+  const linked = await addLinkedWorktree(repo, "manual-isolation-linked");
+  const recorded = await api.workerRunRecord({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: task.revision, worker_run: run(linked.root) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: recorded.revision, worker_run_id: "manual-isolation-worker" });
+  assert.equal(admitted.manifest.worker_runs[0].state, "admitted");
+});
+
 test("WorkerとConsultationは分離され、同一read Taskを参照でき、gpt executorを拒否する", async (t) => {
   const { repo, result } = await initialized(t);
   const ctask = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, task: makeTask({ task_id: "consultation-task", effect: "read", write_scope: [] }) });

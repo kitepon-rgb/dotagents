@@ -127,7 +127,7 @@ export function makeTask(overrides = {}) {
     task_id: "task-001", title: "Control Record contract test", classification: "A", effect: "write",
     doc_ref: "docs/control-record-plan.md",
     role: "implementer", lane: "behavior-preserving", depends_on: [],
-    required_capabilities: ["workspace.write", "report.structured"], isolation: "dedicated-worktree",
+    required_capabilities: ["workspace.write", "report.structured"], isolation: "none",
     context_policy: {
       share_objective: true, share_current_candidate: false, share_existing_findings: false,
       share_failed_approaches: false, share_test_results: true,
