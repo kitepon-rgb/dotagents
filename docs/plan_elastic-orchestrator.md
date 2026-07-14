@@ -105,7 +105,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   同一能力へ丸めない。
 - [x] 最小Budget Envelope（Run／Consultation／外部Run／wall time／costの上限とunknown）を持つ。
   自動価格最適化は行わない。
-- [ ] Control-level finalizationにobjective、受入matrix、最終監査、回帰、knowledge returnの参照を
+- [x] Control-level finalizationにobjective、受入matrix、最終監査、回帰、knowledge returnの参照を
   必須化し、個別Task finalizationだけでarchiveできないようにする。
 - [ ] H Taskはpurpose、impact、rollback、対象operation digest、承認参照、承認／失効時刻のsnapshotを
   必須にし、対象外operationへ流用できないようadmissionで照合する。真正性の最終確認は親が保持する。

@@ -48,7 +48,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v4",
+  "schema_version": "dotagents.orchestration-control.v5",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -74,6 +74,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   "worker_runs": [],
   "consultations": [],
   "task_finalizations": [],
+  "control_finalization": null,
   "transition_receipts": [
     {
       "revision": 0,
@@ -95,13 +96,14 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v4で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v5で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
-  Envelopeを追加した。旧manifestを黙って書き換えず、明示migrationが実装されるまでは
+  Envelope、v5はControl-level finalizationを追加した。旧manifestを黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
   `expected_revision`と現在値の一致を必須とする。
-- `status`は`active | archived`。archived manifestは更新不可。
+- `status`は`active | archived`。Control-level finalization後はarchive以外のmutationを拒否し、
+  archived manifestは更新不可。
 - `transition_receipts`はrevision 0の`control-init`から始まり、成功したmanifest mutationごとに
   1件だけ同じatomic更新へ追加する。件数は常に`record_revision + 1`である。
 - `document_refs`はrepo相対参照だけ。prompt、output、secret、credential、環境変数、巨大log、
@@ -161,7 +163,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 
 - operationは`control-init / task-record / worker-run-record / consultation-record / worker-admit /
   worker-observe / consultation-observe / worker-accept / worker-reject / task-finalize /
-  control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
+  control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
   `previous_receipt_digest`へ持ち、read/save時に連番とchainを再計算する。過去receiptの書換え、欠落、
   並べ替えを`INVALID_SCHEMA`で拒否する。
@@ -592,9 +594,12 @@ accept, reject, task-finalize-record, recover-lock, archive
 - nonterminal集合はWorkerが`planned | admitted | dispatched | running | unknown`、Consultationが
   `planned | dispatched | running | unknown`。予約済みwriterはWorkerの
   `admitted | dispatched | running | unknown`と定義する。
-- `archive`はnonterminalが0、completed Workerが全件accepted/rejected、completed Consultationが
-  全件`decision_ref`を持ち、全Taskが後述のterminal parent decisionを持つ場合だけ許可する。
-  archive後はread-only。
+- `finalizeControl`はnonterminalが0、completed Workerが全件accepted/rejected、completed Consultationが
+  全件`decision_ref`を持ち、全Taskが後述のterminal parent decisionを持つ場合だけ許可する。さらに
+  objective（初期宣言を固定参照）、受入matrix、1件以上の最終監査evidence、1件以上の回帰evidence、
+  1件以上のknowledge return参照、`type=decision`の親最終Decisionをexact objectとして保存する。
+- `archive`は上記Control-level finalizationが存在する場合だけ許可する。個別Task finalizationだけでは
+  archiveできない。Control-level finalization後はarchive以外を拒否し、archive後はread-only。
 
 ## Library APIとerror code
 
@@ -618,6 +623,9 @@ reject({ cwd, control_id, actor_id, expected_revision, worker_run_id,
          result_digest, verification_evidence, decision_note, decided_by })
 taskFinalizeRecord({ cwd, control_id, actor_id, expected_revision, task_id,
                      finalization_ref, recorded_by })
+finalizeControl({ cwd, control_id, actor_id, expected_revision,
+                  acceptance_matrix_ref, final_audit_evidence, regression_evidence,
+                  knowledge_return_refs, parent_decision, finalized_by })
 recoverLock({ cwd, expected_token })
 archive({ cwd, control_id, actor_id, expected_revision })
 fingerprintWorkspace({ cwd })
@@ -644,6 +652,7 @@ REVISION_CONFLICT, RECORD_ARCHIVED, DUPLICATE_ID, INVALID_TRANSITION, DEPENDENCY
 ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, ADAPTER_UNKNOWN, CAPABILITY_MISMATCH,
 VERIFICATION_REQUIRED, BUDGET_UNKNOWN, BUDGET_EXCEEDED,
 EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
+FINALIZATION_NOT_READY, CONTROL_FINALIZED,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE
 ```

@@ -11,7 +11,7 @@ const commands = new Map([
   ["admit-worker", api.admitWorker], ["observe-worker", api.observeWorker],
   ["observe-consultation", api.observeConsultation], ["conflict-check", api.conflictCheck],
   ["accept", api.accept], ["reject", api.reject], ["task-finalize-record", api.taskFinalizeRecord],
-  ["recover-lock", api.recoverLock], ["archive", api.archive],
+  ["control-finalize", api.finalizeControl], ["recover-lock", api.recoverLock], ["archive", api.archive],
 ]);
 
 function outputError(code, message, exitCode) {

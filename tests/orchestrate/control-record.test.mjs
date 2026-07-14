@@ -41,9 +41,9 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v4", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v5", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" }, budget: makeBudget(),
-    document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [],
+    document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
   assert.deepEqual(api.validateManifest(manifest), manifest);
@@ -565,7 +565,7 @@ test("malformed manifestまたはcontrols未知entryが次mutationをfail-closed
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "blocked-by-manifest" }) }), code("INVALID_SCHEMA"));
 });
 
-test("accept/reject/task finalization/archiveは状態・fingerprint・atomic manifestを検査する", async (t) => {
+test("accept/reject/task finalization/control finalization/archiveは状態・証拠・atomic manifestを検査する", async (t) => {
   const { repo, result } = await initialized(t);
   const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask() });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ workspace_cwd: repo.root }) });
@@ -577,11 +577,41 @@ test("accept/reject/task finalization/archiveは状態・fingerprint・atomic ma
   assert.equal(accepted.manifest.transition_receipts.at(-1).operation, "worker-accept");
   assert.deepEqual(accepted.manifest.transition_receipts.at(-1).evidence, [evidence("docs/verify.md")]);
   const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: accepted.revision, task_id: "task-001", finalization_ref: "docs/decision.md", recorded_by: "parent" });
-  const archived = await api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision });
+  await assert.rejects(api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision }), code("ARCHIVE_NOT_READY"));
+  const finalized = await api.finalizeControl({
+    cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision,
+    acceptance_matrix_ref: "docs/acceptance-matrix.md",
+    final_audit_evidence: [evidence("docs/final-audit.md")],
+    regression_evidence: [evidence("docs/regression.md", "command")],
+    knowledge_return_refs: ["docs/knowledge-return.md"],
+    parent_decision: evidence("docs/final-decision.md", "decision"),
+    finalized_by: "parent",
+  });
+  assert.equal(finalized.manifest.control_finalization.objective_ref, "docs/control-record-plan.md");
+  assert.equal(finalized.manifest.transition_receipts.at(-1).operation, "control-finalize");
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: finalized.revision, task: makeTask({ task_id: "late-task" }) }), code("CONTROL_FINALIZED"));
+  const archived = await api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: finalized.revision });
   assert.equal(archived.manifest.status, "archived");
   assert.equal(archived.manifest.transition_receipts.at(-1).operation, "control-archive");
   assert.deepEqual(await readPersistedManifest(repo.commonDir, CONTROL), archived.manifest);
   await assert.rejects(api.reject({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: archived.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/verify.md")], decision_note: "late", decided_by: "parent" }), code("RECORD_ARCHIVED"));
+});
+
+test("control finalizationはTask完了と監査・回帰・knowledge return・親Decisionを必須にする", async (t) => {
+  const { repo, result } = await initialized(t);
+  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ effect: "read", write_scope: [] }) });
+  const base = {
+    cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision,
+    acceptance_matrix_ref: "docs/acceptance-matrix.md", final_audit_evidence: [evidence("docs/final-audit.md")],
+    regression_evidence: [evidence("npm-test", "command")], knowledge_return_refs: ["docs/knowledge-return.md"],
+    parent_decision: evidence("docs/final-decision.md", "decision"), finalized_by: "parent",
+  };
+  await assert.rejects(api.finalizeControl(base), code("FINALIZATION_NOT_READY"));
+  const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision, task_id: "task-001", finalization_ref: "docs/decision.md", recorded_by: "parent" });
+  await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, final_audit_evidence: [] }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, regression_evidence: [] }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, knowledge_return_refs: [] }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, parent_decision: evidence("docs/not-a-decision.md") }), code("INVALID_SCHEMA"));
 });
 
 test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLIはstrict input JSONだけを受理する", async (t) => {
