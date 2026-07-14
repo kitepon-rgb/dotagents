@@ -48,7 +48,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v1",
+  "schema_version": "dotagents.orchestration-control.v2",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -88,7 +88,9 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`はv1で固定し、暗黙migrationしない。
+- `schema_version`は現在v2で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+  versioned envelopeとworkflow参照へ置き換えた。v1 manifestを黙って書き換えず、明示migrationが
+  実装されるまでは`INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
   `expected_revision`と現在値の一致を必須とする。
 - `status`は`active | archived`。archived manifestは更新不可。
@@ -248,7 +250,7 @@ Worker Runは一回のworker割当である。入力schemaはExecutorごとの�
 記録入力は次のexact fieldを持つ。`workspace_cwd`は既存directoryへの明示入力であり、保存しない。
 
 ```text
-worker_run_id, task_id, assignment_id, executor, role_ref,
+worker_run_id, task_id, assignment_id, executor, workflow_id, role_ref,
 workspace_cwd, write_mode, execution_verification,
 lineage,
 state, executor_handle, executor_observation, admission,
@@ -291,13 +293,20 @@ Workerのcommon dirはControlのcommon dirと一致しなければならない�
   retryは同じassignmentを使う。先行Runが`failed | cancelled`、または
   `completed + rejected`になった場合だけ新Runを許可する。`unknown`を含むnonterminal、
   `completed + pending/accepted`が残る間は拒否する。
-- `executor`は`parent | codex-native | codex-sidecar | aiterm | claude-native`。
-- handleはExecutor別のexact shapeとする。
-  - parent: `{ "correlation_id": "..." }`
-  - codex-native: `{ "agent_id": "..." }`または予約時の`null`
-  - codex-sidecar: `{ "idempotency_key": "..." }`
-  - aiterm: `{ "session_id": "...", "agent_kind": "codex|grok|composer" }`または予約時の`null`
-  - claude-native: `{ "session_id": "..." }`または予約時の`null`
+- `executor`は`adapter_id / contract_version / instance_id / handle_schema_id`だけを持つexact envelope。
+  `workflow_id`はadapter identityと分離する。同じ`codex-sidecar`でも`review`等の同期read-only系と
+  durable `work`は異なるworkflow／handle contractであり、adapter名だけからwrite能力を推測しない。
+- 現在の既知handle schemaは次のとおり。既知の組合せはexact shapeで検証する。
+  - `parent.correlation.v1`: `{ "correlation_id": "..." }`
+  - `codex-native.agent-id.v1`: `{ "agent_id": "..." }`または予約時の`null`
+  - `codex-sidecar.idempotency-key.v1`: `{ "idempotency_key": "..." }`
+  - `codex-sidecar.synchronous.v1`: durable handleを持たず`null`
+  - `aiterm.session.v1`: `{ "session_id": "...", "agent_kind": "codex|grok|composer" }`または予約時の`null`
+  - `claude-native.session.v1`: `{ "session_id": "..." }`または予約時の`null`
+- 未知のadapter／contract／workflow／handle schemaを含むmanifestは、bounded opaque handleとして
+  structural validationを通し、`status`のJSON出力で回収できる。一方、そのControlへのmutationと
+  新規Worker記録は`ADAPTER_UNKNOWN`でfail closedにする。未知handleを解釈、補完、dispatchしない。
+  `gpt-connector`はenvelope化しても`EXECUTOR_FORBIDDEN`であり、Consultationだけを使う。
 - `execution_verification`は`stage`、`observed_version`、`observed_at`、`evidence`だけを持つ。
   stageは`unverified | installed | registered | verified | execution-verified`。parent以外のRunは
   `verified`以上、外部writeは`execution-verified`だけを許可する。未知入口はwriterへ配置しない。
@@ -598,7 +607,7 @@ library errorは`ControlRecordError`で、安定した`code`を持つ。少な�
 INVALID_INPUT, INVALID_SCHEMA, INVALID_SCOPE, LIMIT_EXCEEDED,
 NOT_GIT_REPOSITORY, BARE_WRITE_FORBIDDEN, CONTROL_EXISTS, CONTROL_NOT_FOUND,
 REVISION_CONFLICT, RECORD_ARCHIVED, DUPLICATE_ID, INVALID_TRANSITION, DEPENDENCY_NOT_READY,
-ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, VERIFICATION_REQUIRED,
+ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, ADAPTER_UNKNOWN, VERIFICATION_REQUIRED,
 EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE

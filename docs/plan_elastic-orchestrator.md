@@ -99,7 +99,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   prompt・secret・巨大logは保存しない。
 - [x] 各mutationのactor、operation、subject、previous／next state、evidence descriptorをboundedで
   immutableなtransition receiptとして同じatomic manifestへ保存する。別`events.jsonl`を二重正本にしない。
-- [ ] Executorを固定enumからversioned `adapter_id / contract_version / instance_id / handle_schema_id`
+- [x] Executorを固定enumからversioned `adapter_id / contract_version / instance_id / handle_schema_id`
   envelopeへ移し、未知adapterのdispatchはfail closed、read-only status/exportは可能にする。
 - [ ] workflow単位のcapabilityを表現し、codex-sidecarのread-only同期workflowとdurable writerを
   同一能力へ丸めない。

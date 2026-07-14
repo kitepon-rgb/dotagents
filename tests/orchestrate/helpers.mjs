@@ -118,7 +118,11 @@ export function makeWorkerRun(overrides = {}) {
   };
   return {
     worker_run_id: "run-001", task_id: "task-001", assignment_id: "assignment-001",
-    executor: "codex-sidecar", role_ref: "implementer", workspace_cwd: "/workspace-is-resolved-by-library",
+    executor: {
+      adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default",
+      handle_schema_id: "codex-sidecar.idempotency-key.v1",
+    },
+    workflow_id: "work", role_ref: "implementer", workspace_cwd: "/workspace-is-resolved-by-library",
     write_mode: "direct",
     execution_verification: { stage: "execution-verified", observed_version: "test-version", observed_at: "2026-07-14T00:00:00.000Z", evidence: evidence("docs/execution-proof.md") },
     lineage: {

@@ -41,7 +41,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v1", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v2", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [],
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
@@ -111,7 +111,54 @@ test("WorkerとConsultationは分離され、同一read Taskを参照でき、gp
   const failed = await api.observeConsultation({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: secondDispatched.revision, consultation_id: "consultation-failed", observation: { state: "failed", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:04:00.000Z", raw_state: "failed", terminal_evidence: failedEvidence } });
   assert.deepEqual(failed.manifest.consultations[1].terminal_evidence, failedEvidence);
   await assert.rejects(api.consultationRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: failed.revision, consultation: makeConsultation({ consultation_id: "bad-consultation", workspace: { kind: "worktree" } }) }), code("INVALID_SCHEMA"));
-  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: failed.revision, worker_run: makeWorkerRun({ executor: "gpt-connector" }) }), code("EXECUTOR_FORBIDDEN"));
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: failed.revision, worker_run: makeWorkerRun({ executor: { adapter_id: "gpt-connector", contract_version: "v1", instance_id: "chat", handle_schema_id: "gpt-connector.slug.v1" } }) }), code("EXECUTOR_FORBIDDEN"));
+});
+
+test("Executor envelopeはworkflowとhandle schemaを分離し、未知adapterをstatus限定で保持する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "executor-envelope-control" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [] }) });
+  const known = await api.workerRunRecord({
+    cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({
+      task_id: "executor-task", write_mode: "none", workspace_cwd: repo.root, workflow_id: "review", executor_handle: null,
+      executor: { adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.synchronous.v1" },
+    }),
+  });
+  assert.deepEqual(known.manifest.worker_runs[0].executor, {
+    adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default",
+    handle_schema_id: "codex-sidecar.synchronous.v1",
+  });
+  assert.equal(known.manifest.worker_runs[0].workflow_id, "review");
+
+  const persisted = await readPersistedManifest(repo.commonDir, "executor-envelope-control");
+  persisted.worker_runs[0].executor = {
+    adapter_id: "future-adapter", contract_version: "v9", instance_id: "future-instance",
+    handle_schema_id: "future.handle.v3",
+  };
+  persisted.worker_runs[0].workflow_id = "future-workflow";
+  persisted.worker_runs[0].executor_handle = { opaque_id: "future-handle", generation: 3 };
+  const statePath = join(repo.commonDir, "dotagents", "orchestrate", "controls", "executor-envelope-control", "manifest.json");
+  await writeFile(statePath, `${JSON.stringify(persisted)}\n`, { mode: 0o600 });
+
+  const readable = await api.status({ cwd: repo.root, control_id: "executor-envelope-control" });
+  assert.equal(readable.worker_runs[0].executor.adapter_id, "future-adapter");
+  assert.deepEqual(readable.worker_runs[0].executor_handle, { opaque_id: "future-handle", generation: 3 });
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: readable.record_revision, task: makeTask({ task_id: "must-not-mutate" }) }), code("ADAPTER_UNKNOWN"));
+});
+
+test("未知または矛盾したExecutor契約は新規Runへ使えない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "executor-rejection-control" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-rejection-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [] }) });
+  const unknown = makeWorkerRun({
+    task_id: "executor-task", write_mode: "none", workspace_cwd: repo.root, workflow_id: "future-workflow", executor_handle: null,
+    executor: { adapter_id: "future-adapter", contract_version: "v1", instance_id: "future", handle_schema_id: "future.handle.v1" },
+  });
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "executor-rejection-control", actor_id: "parent", expected_revision: task.revision, worker_run: unknown }), code("ADAPTER_UNKNOWN"));
+  const mismatch = makeWorkerRun({
+    task_id: "executor-task", write_mode: "none", workspace_cwd: repo.root, workflow_id: "review", executor_handle: null,
+    executor: { adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.idempotency-key.v1" },
+  });
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "executor-rejection-control", actor_id: "parent", expected_revision: task.revision, worker_run: mismatch }), code("ADAPTER_UNKNOWN"));
 });
 
 test("Worker state遷移・evidence・retry reservationをrevision連鎖で保存する", async (t) => {
