@@ -109,7 +109,11 @@ sessionの`pty_read(screen=true, wait=false)`を返すだけで、timeoutをfail
 
 `projectAitermLaunchObservation`はsession作成を`running`としてだけ表し、agent起動・batch exit status・
 terminal成功を捏造しない。`projectAitermObservation`はhandle、`running / completed / failed / unknown /
-interrupted`、report/evidence参照だけをboundedに保持する。raw terminal、log、secret、任意のhost resultは
+interrupted`、report/evidence参照だけをboundedに保持する。`completed`は空でないstrict Worker Reportの
+`report_ref`と、aiterm正規入口でterminalを確認したprovider由来evidence参照を1件以上必須とする。
+ただしこのprojectionやcaller提供の任意`result`だけではControlの成功を確定しない。
+`buildWorkerControlObservation`はaitermの`completed`を`WORKER_REPORT_IMPORT_REQUIRED`で拒否し、
+後続のstrict Worker Report importだけが成功を記録する。raw terminal、log、secret、任意のhost resultは
 schema外として拒否する。adapterはPTY/MCPを実行せず、aitermが保証しないread-only強制やworktree隔離も
 主張しない。
 

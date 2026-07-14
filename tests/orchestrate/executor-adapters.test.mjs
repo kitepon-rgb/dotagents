@@ -104,6 +104,15 @@ test("aiterm observationはsession相関とboundedな状態・参照だけを残
   const handle = { session_id: "aiterm_agent_001", agent_kind: "composer" };
   assert.deepEqual(adapters.projectAitermLaunchObservation({ ...handle, workspace_cwd: "/workspace/source" }), { schema_version: "dotagents.aiterm.observation.v1", executor_handle: handle, workspace_cwd: "/workspace/source", state: "running", terminal: null });
   assert.deepEqual(adapters.projectAitermObservation({ handle, status: "unknown", report_ref: null, evidence_refs: ["docs/aiterm-timeout.md"] }), { schema_version: "dotagents.aiterm.observation.v1", executor_handle: handle, state: "unknown", report_ref: null, evidence_refs: ["docs/aiterm-timeout.md"] });
+  assert.deepEqual(adapters.projectAitermObservation({ handle, status: "running", report_ref: null, evidence_refs: [] }).state, "running");
+  assert.deepEqual(adapters.projectAitermObservation({ handle, status: "failed", report_ref: null, evidence_refs: [] }).state, "failed");
+  const completed = adapters.projectAitermObservation({ handle, status: "completed", report_ref: "reports/aiterm-worker.md", evidence_refs: ["aiterm:pty-read:terminal"] });
+  assert.equal(completed.state, "completed");
+  assert.throws(() => adapters.projectAitermObservation({ handle, status: "completed", report_ref: null, evidence_refs: ["aiterm:pty-read:terminal"] }), code("EVIDENCE_REQUIRED"));
+  assert.throws(() => adapters.projectAitermObservation({ handle, status: "completed", report_ref: "reports/aiterm-worker.md", evidence_refs: [] }), code("EVIDENCE_REQUIRED"));
+  assert.throws(() => adapters.buildWorkerControlObservation({ projection: completed, observed_version: "aiterm", observed_at: "2026-07-14T00:00:00.000Z", result: { arbitrary: "caller supplied" } }), code("WORKER_REPORT_IMPORT_REQUIRED"));
+  assert.deepEqual(adapters.buildWorkerControlObservation({ projection: adapters.projectAitermObservation({ handle, status: "running", report_ref: null, evidence_refs: [] }), observed_version: "aiterm", observed_at: "2026-07-14T00:00:00.000Z" }).state, "running");
+  assert.deepEqual(adapters.buildWorkerControlObservation({ projection: adapters.projectAitermObservation({ handle, status: "failed", report_ref: null, evidence_refs: [] }), observed_version: "aiterm", observed_at: "2026-07-14T00:00:00.000Z", terminal_evidence: [{ provider: "aiterm" }] }).state, "failed");
   assert.throws(() => adapters.projectAitermObservation({ handle, status: "completed", report_ref: null, evidence_refs: [], raw_terminal: "must not persist" }), code("INVALID_SCHEMA"));
   assert.throws(() => adapters.projectAitermObservation({ handle, status: "timeout", report_ref: null, evidence_refs: [] }), code("INVALID_SCHEMA"));
 });
