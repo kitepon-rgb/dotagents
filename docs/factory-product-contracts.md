@@ -71,17 +71,17 @@
 
 - 所有/修正先: 自作 / `kitepon-rgb/aiterm-mcp`。version入口: native MCP `diagnostics` responseのpackage version。
 - diagnostics/state正本: stdio MCP initialize後のread-only `diagnostics` tool（schema `aiterm-mcp.factory-diagnostics.v1`）。PTY一覧は件数だけ、vendor依存は実行可能性だけを返す。
-- host/connector: 全4 host required。Claude MCP、CodexはGrok/Composer用MCPのみ。
+- host/connector: 全4 host required。Claude MCP、CodexはCodex/Grok/Composer用MCP required。
 - 現adapter: stdio MCP initialize→`diagnostics`と、明示opt-inされた公開runtime error snapshot/ackを接続済み。tmux不能やschema driftは`unverified`、native `not_ready`は固定fingerprintのfailへ写像する。診断toolは次回製品releaseまで現行registry版0.12.1には未収録。
-- 禁止: PTY/agent起動をhealth扱い、Codex親から入れ子Codex。native Windowsの`agent_done`非対応は`unsupported`。
+- 禁止: PTY/agent起動をhealth扱い。native Windowsの`agent_done`非対応は`unsupported`。Codex親の外部実行はexecution-verified後に限り、task/session回収契約へ従う。
 
 ### `codex-sidecar`
 
 - 所有/修正先: 自作 / `kitepon-rgb/codex-sidecar`。version入口: `codex-sidecar factory-diagnostics --project <scan cwd>` の `factoryReadiness.packageVersions.packages.cli`。
 - diagnostics/state正本: `factory-diagnostics` の read-only JSON（top-level `status`、`factoryReadiness.schemaVersion="1"`、`overall`、`packageVersions.status`と3 package version整合、result schema/workflow/preset/model policy/read-only dry-run readiness）。`ready`は`status:ok`かつexit 0、`not_ready`/`unverified`は`status:failed`かつ非0。`unverified`はpackage情報を省略した最小shapeも正規。実agent/Codexを起動しない。
-- host/connector: 全4 host required。Claude MCP required、Codex親connectorはforbidden。
+- host/connector: 全4 host required。Claude/Codex MCP required。Codex親ではnative枠外の隔離実行に使う。
 - 現adapter: native JSONをschema allowlistで検証し、`ready`をpass/compatible、`not_ready`を固定fingerprintのfail/incompatible、`unverified`・schema不正・CLI不在をunverifiedへ射影する。installed versionは整合済みのCLI package versionだけを採用し、明示opt-inされた公開runtime error snapshot/ackも接続済み。
-- 表現/禁止: raw output、absolute path、prompt/context/file内容、preset名、token/env/log/result本文をreportへ転記しない。実agent起動をhealth扱い、Codex親connector登録は禁止。
+- 表現/禁止: raw output、absolute path、prompt/context/file内容、preset名、token/env/log/result本文をreportへ転記しない。実agent起動をhealth扱いにしない。外部writerはexecution-verifiedかつ専用worktreeを原則とし、子のgit/H/秘密操作を禁止する。
 
 ### `servermanager`
 

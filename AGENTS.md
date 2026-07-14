@@ -24,6 +24,7 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 - **BugHubは独立した第10製品ではなく、ServerManager内部のコンポーネント**。既存の読み取り専用集約、報告元アプリによる重大度決定、`resolve` / `reopen`、`/ai`という契約を守り、8製品のversion・bug・compatibility結果を統括する連携先として活用する。
 - 各製品は自身のソース・状態・schema・migration・正規診断を所有する。dotagentsはそれらを複製せず統合契約を所有し、ServerManager/BugHubはdotagentsの代わりに工場方針を決めたり製品状態を直接書き換えたりしない。
 - オーナーは、dotagentsの統括AIが**自作コア製品**の正規repoへ必要な修正を行い、version更新、release準備、publish、公開後smokeまで管理することを明示許可している。これは責務範囲の恒久裁定であり、第三者製品のfork/patch許可や、本番deploy・credential・意図的障害・registry publish等のH操作に対する目的/影響/rollback説明と実行時承認を省略するものではない。各製品repoの正典・release gate・独立履歴を守る。
+- **Codex外部エージェント限界突破（オーナー恒久裁定 2026-07-14）**: native Codexの同時枠上限（親を含む）を工場全体の上限にしない。Codex親は`codex-sidecar`とaitermのCodex/Grok/Composerを外部実行レーンとして積極利用し、入れ子Codexを起動してよい。`gpt_connector`は相談レーンであり実装workerではない。task/sessionの一意化、timeout後の回収、writerのworktree隔離、子のgit/H/秘密操作禁止、親のdiff/test受入、installed→registered→verified→execution-verifiedの段階契約は[Codex憲法](codex/AGENTS.md)を正とする。
 - コア製品を正規入口で実利用中に再現した欠陥は、元依頼と無関係な大掃除へ広げない限り、所有repoの`docs/`正本TODOへ追加して修正へ寄り道してよい。影響と本筋との関係を報告し、repoごとの独立gate・独立commitを守って修正後は本筋へ戻る。publish・本番deploy・credential/login・意図的障害試験はこの裁定に含めず、Hとして別途説明・承認する。
 - コア製品の追加・削除・第三者化・所有移管は、単なる一覧編集ではない。[README.md](README.md) の「工場コア製品の変更管理」に従い、製品契約、host/connector matrix、更新経路、adapter、BugHub schema/期待matrix、fixture、rollbackを同じ独立waveで更新する。第三者化後はfork・内部patchを止めて公開入口だけを使い、削除時も履歴を消さず、移行中の旧clientでは`not_applicable`へ遷移させてBugHub履歴を保持する。source repoの移動・改名は別途オーナー承認が必要であり、管理区分の変更をその承認の代用にしない。
 

@@ -62,8 +62,17 @@ assert_order "$ROOT/codex/skills/orchestrate/SKILL.md" \
   'verify-codex-agent-routing' \
   'follow-up で実作業を渡す'
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" '呼び出し側が手指定しない'
-contains "$ROOT/codex/skills/orchestrate/SKILL.md" '入れ子の Codex を起動しない'
+contains "$ROOT/codex/skills/orchestrate/SKILL.md" '入れ子のCodexを起動してよい'
+contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'execution-verified'
+contains "$ROOT/codex/skills/orchestrate/SKILL.md" '同一taskを重複起動しない'
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" '親が統合と最終検証を担う'
+contains "$ROOT/codex/AGENTS.md" '① native＝'
+contains "$ROOT/codex/AGENTS.md" '② external execution＝'
+contains "$ROOT/codex/AGENTS.md" '③ consultation＝'
+contains "$ROOT/codex/AGENTS.md" 'commit / push / branch切替 / merge / rebase / reset / stash'
+contains "$ROOT/codex/AGENTS.md" '秘密・token・cookie・OAuth・private key'
+contains "$ROOT/codex/AGENTS.md" 'installed（CLI存在）→ registered（親へconnector登録）→ verified（read-only疎通）→ execution-verified'
+contains "$ROOT/docs/05_codex-fragments.md" 'codex mcp add codex-sidecar -- codex-sidecar-mcp'
 if rg -qi 'Workflow' "$ROOT/codex/skills/orchestrate/SKILL.md"; then
   fail 'Codex orchestrate が Claude 専用 Workflow を実行入口としている'
 fi

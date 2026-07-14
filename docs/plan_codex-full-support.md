@@ -7,7 +7,7 @@
 
 dotagents を全端末の**開発工場そのもの**として、Claude Code と Codex のどちらを親にしても同じ工場原則・主要 workflow・委譲品質・端末再現性を得られる状態にする。ServerManagerをdotagentsと並ぶ別の工場またはcontrol planeとは定義しない。
 
-工場のコア管理対象は、端末能力を担う **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Codegraph（コード構造理解）／MarkItDown（外部資料変換）／gpt-connector（独立したChatGPT consultation）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude親からのCodex実行）** の8製品と、中央の運用管理を担う **ServerManager** の計9製品とする。gpt-connector は MCP ID `gpt_connector`、command `gpt-connector-mcp`、専用Chrome、product-owned state、caller既知slug、model+effort明示、timeout後sessionsを正規契約とし、Oracle・APIへの暗黙fallbackを許さない。Oracleはv1互換または手動rollback時だけ扱う。**BugHubは独立した第10製品ではなくServerManager内部のバグ・version・互換性統括コンポーネント**である。dotagentsは各製品のソースと状態を所有せず、正規導入・更新・親別配線・互換検証・代表E2E・上流更新追従、およびServerManager/BugHubへの結果連携を所有する。
+工場のコア管理対象は、端末能力を担う **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Codegraph（コード構造理解）／MarkItDown（外部資料変換）／gpt-connector（独立したChatGPT consultation）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude/Codex親からの隔離Codex実行）** の8製品と、中央の運用管理を担う **ServerManager** の計9製品とする。gpt-connector は MCP ID `gpt_connector`、command `gpt-connector-mcp`、専用Chrome、product-owned state、caller既知slug、model+effort明示、timeout後sessionsを正規契約とし、Oracle・APIへの暗黙fallbackを許さない。Oracleはv1互換または手動rollback時だけ扱う。**BugHubは独立した第10製品ではなくServerManager内部のバグ・version・互換性統括コンポーネント**である。dotagentsは各製品のソースと状態を所有せず、正規導入・更新・親別配線・互換検証・代表E2E・上流更新追従、およびServerManager/BugHubへの結果連携を所有する。
 
 「全対応」はファイル数の左右対称ではなく**能力対称**を指す。製品固有機能は無理に移植せず、`対応 / 製品固有 / 非採用（理由）` のいずれかを明記できれば閉じる。
 
@@ -62,7 +62,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 5. **公式面を既定、legacy は明示互換**: `$HOME/.agents/skills` を既定にする。古い入口だけ explicit legacy profile を使い、同じ入口へ両面を常設しない。dotagents 所有の旧 symlink を外す時は dry-run・backup・H承認を必須にし、他の local skill は触らない。
 6. **端末設定は狭く扱う**: model、permissions、OAuth、hook trust を自動変更しない。自動適用は routing 必須2キーと dotagents 固有 hook entry の追加だけ。
 7. **一波一責務**: 各 wave は独立 commit、フルゲート、個別 revert が可能な単位にする。
-8. **工場コア8製品の所有権と統合責務を分ける**: 製品ソース・Caveatのown・Throughlineの状態・Spotterの状態/hook等は各製品自身に管理させる。dotagentsは再実装・複製せず、導入・NPM/`uv tool`週次更新・親別配線・互換fixture・代表E2E・上流更新追従を所有する。Spotterは対象projectごとの明示installに限定し、Codex親からsidecar/aiterm経由の入れ子Codexを禁止する。
+8. **工場コア8製品の所有権と統合責務を分ける**: 製品ソース・Caveatのown・Throughlineの状態・Spotterの状態/hook等は各製品自身に管理させる。dotagentsは再実装・複製せず、導入・NPM/`uv tool`週次更新・親別配線・互換fixture・代表E2E・上流更新追従を所有する。Spotterは対象projectごとの明示installに限定する。**2026-07-14 supersession**: Codex親のsidecar/aiterm経由の入れ子Codex禁止は撤回し、native枠外のexternal executionとして積極利用する。
 9. **工場と管理製品を混同しない**: 工場そのものはdotagents。ServerManagerはdotagentsが管理・連携する中央管理コアであり、BugHubはその内部コンポーネント。ServerManager/BugHubをdotagentsと並ぶ別工場・別control planeとして扱わない。
 
 ## 5. Workflow 対応表
@@ -116,7 +116,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 - [x] model、permissions、既存他tool hooks、OAuth、trust は変更せず、診断＋H手順に残す
 - [x] 親別 MCP matrix を作成
   - Claude 親: codex-sidecar、aiterm、caveat、codegraph、gpt_connector
-  - Codex 親: native subagents、aiterm（Grok/Composer用）、caveat、codegraph、gpt_connector/OpenAI Docs
+  - Codex 親: native subagents、codex-sidecar、aiterm（Codex/Grok/Composer用）、caveat、codegraph、gpt_connector/OpenAI Docs（2026-07-14 supersession）
 - [x] `codex mcp` の登録・list・疎通、STDIO env closed-mode、必須/任意/親で禁止をランブック化
 - [ ] Throughline/codex-thread-handoff-smoke の代表 capture/restore/handoff を実測（本体改造・sessions同期はしない。capture/handoff は成功、restore は上流 mismatch で未達）
 - [ ] 工場コア8製品を onboarding・README・親別matrix・`verify-install` に必須化し、Spotter project契約とCodegraph／MarkItDown／gpt-connector／aiterm／sidecar代表疎通を検証する

@@ -171,12 +171,14 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 
 ## 10. MCP の親別 matrix と登録 / 疎通
 
-MCP は親に応じて入口を分ける。Codex 親から入れ子 Codex を起動しないことは性能だけでなく、native routing・並列数・usage 制御の契約である。
+MCP は親に応じて入口を分ける。Codex親はnative枠だけを工場全体の上限にせず、外部実行レーンで入れ子CodexとGrok/Composerを併用する（オーナー恒久裁定 2026-07-14）。
 
 | 親 | core | 任意 / 認証依存 | 禁止 / 非採用 |
 |---|---|---|---|
 | Claude Code | `codex-sidecar`、`aiterm`、`gpt_connector`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | — |
-| Codex | native subagents、`aiterm`（Grok / Composerのみ）、`gpt_connector`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | `codex-sidecar`、`aiterm` の `codex_agent`（入れ子 Codex） |
+| Codex | native subagents、`codex-sidecar`、`aiterm`（Codex / Grok / Composer）、`gpt_connector`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | — |
+
+利用可能性はinstalled（CLI存在）→registered（親へconnector登録）→verified（read-only疎通）→execution-verified（実タスク完遂と回収）で区別する。外部writerに使うのはexecution-verifiedだけ。timeoutは状態不明として同じtask IDのsession/jobを回収し、稼働中の重複起動をしない。
 
 登録前は read-only に現在値を確認する。
 
@@ -191,6 +193,7 @@ codex mcp get caveat --json
 codex mcp add caveat -- caveat mcp-server
 codex mcp add codegraph -- codegraph serve --mcp
 codex mcp add aiterm -- aiterm-mcp
+codex mcp add codex-sidecar -- codex-sidecar-mcp
 codex mcp add gpt_connector -- gpt-connector-mcp
 ```
 

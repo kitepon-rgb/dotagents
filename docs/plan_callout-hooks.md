@@ -126,7 +126,7 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 
 ### 規範側の同時修正（hook が空振りしないための地ならし）
 
-- **codex/AGENTS.md の委譲レジーム変更（オーナー裁定 2026-07-12: (b) を採択）**: 現行の「委譲はユーザー明示許可制・親直既定」（L58/L61/L65 周辺）を廃し、Claude 側と対称の**着手ゲート**へ書き換える——コードを書く前に F/A/H ラベル＋配置1行宣言、**既定は A＝ネイティブ子への委譲**（`~/.codex/agents/*.toml` の role をそのまま使う・02_models.md 決定表準拠）、親直するなら理由1行を要正当化。**変えないもの**: ①proactive 自動委譲は引き続き OFF（ultra 封印と同根＝「規範上の委譲既定」と「モデルの自動スポーン機能」は別物） ②ネイティブ委譲一択（aiterm/MCP 経由の入れ子 codex 禁止） ③`verify-codex-agent-routing` green までは handshake-only spawn の規律。**注意**: parity 対象5章の外なので verify-constitution-parity は壊れないが、これは**憲法差分＝契約クリティカル（F・統括直轄）**。差分単独のコミットに分け、push 前にオーナーが diff を目視レビューする工程を必須にする。OpenAI 枠の使用量増はオーナー了承済みの帰結として明記。
+- **codex/AGENTS.md の委譲レジーム変更（オーナー裁定 2026-07-12: (b) を採択）**: 現行の「委譲はユーザー明示許可制・親直既定」（L58/L61/L65 周辺）を廃し、Claude 側と対称の**着手ゲート**へ書き換える——コードを書く前に F/A/H ラベル＋配置1行宣言、**既定は A＝ネイティブ子への委譲**（`~/.codex/agents/*.toml` の role をそのまま使う・02_models.md 決定表準拠）、親直するなら理由1行を要正当化。proactive 自動委譲は引き続き OFF（ultra 封印と同根＝「規範上の委譲既定」と「モデルの自動スポーン機能」は別物）、`verify-codex-agent-routing` green までは handshake-only spawn の規律を維持する。**2026-07-14 supersession**: 当時の「ネイティブ委譲一択・aiterm/MCP経由の入れ子Codex禁止」だけはオーナー恒久裁定で撤回し、native／external execution／consultationの三レーンへ更新した。**注意**: parity 対象5章の外なので verify-constitution-parity は壊れないが、これは**憲法差分＝契約クリティカル（F・統括直轄）**。差分単独のコミットに分け、push 前にオーナーが diff を目視レビューする工程を必須にする。OpenAI 枠の使用量増はオーナー了承済みの帰結として明記。
 - bin/plan-gate-hook.sh L9 の stale ポインタ（`docs/plan_plan-gate-hook.md` → 実体は `docs/archive/2026-07_plan-gate-hook.md`）を相乗り修正。
 - プローブで hot-reload 矛盾（caveat「再起動必要」vs docs/03「ライブ反映」vs 公式「file watcher」）を決着させ、負けた側の正典を更新。
 

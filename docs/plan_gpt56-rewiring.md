@@ -28,7 +28,7 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 
 ## 決定表（docs/02_models.md へ収容済みが正。ここは要旨）
 
-役割→〔ティア×effort×入口〕を Claude／Codex／xAI／OpenAI-ChatGPT（gpt-connector）の4レーンで規定。要点: 実装物量の第一選択は **Terra×medium（codex_work / implementer.toml）と Composer 2.5**（並列）、並列 finder は **grok-4.5**、実読不要の純推論・独立視点は **`mcp__gpt_connector__consult`**（相談であり委譲ではない。caller既知slug、model+effort明示、専用Chrome、product-owned state、timeout後sessions）、反証・裁定は**旗艦×high か Claude 主モデル**。Oracle・APIの暗黙fallbackは禁止し、Oracleはv1互換／手動rollbackに限定する。**入口は呼び手で決まる**: Codex 親の子はネイティブ委譲一択（aiterm/MCP 経由の入れ子 codex 禁止）。
+役割→〔ティア×effort×入口〕を Claude／Codex／xAI／OpenAI-ChatGPT（gpt-connector）の4レーンで規定。要点: 実装物量の第一選択は **Terra×medium（codex_work / implementer.toml）と Composer 2.5**（並列）、並列 finder は **grok-4.5**、実読不要の純推論・独立視点は **`mcp__gpt_connector__consult`**（相談であり委譲ではない。caller既知slug、model+effort明示、専用Chrome、product-owned state、timeout後sessions）、反証・裁定は**旗艦×high か Claude 主モデル**。Oracle・APIの暗黙fallbackは禁止し、Oracleはv1互換／手動rollbackに限定する。**2026-07-14 supersession**: Codex親の子をnative一択とした旧決定は撤回し、native／external execution（codex-sidecar・aiterm Codex/Grok/Composer）／consultation（gpt-connector）の三レーンを使う。
 
 ## 実装チェックリスト
 
@@ -67,7 +67,7 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
   親 permission profile で上書きする 0.144.1 の仕様／文書不一致を解消する
 - [x] **憲法過剰圧縮の是正（2026-07-11）**: Codex 固有差分の分離時に共通原則まで削った問題を解消する
   - [x] `claude/CLAUDE.md` を基準に人格・応対・五原則・調査・計画・権限・大規模変更・git・報告を `codex/AGENTS.md` へ復元
-  - [x] 差分を Codex のモデル配置・ネイティブ委譲・shell 入口・push 制約に限定
+  - [x] 差分を Codex のモデル配置・委譲レーン・shell 入口・push 制約に限定（2026-07-14にnative／external execution／consultationへ拡張）
   - [x] CLAUDE 側の「短い専用憲法がよい」という誤方針を撤回
   - [x] README 追従、diff 監査、lint・install・verify、新規セッション実読確認
 - [ ] 他端末波及（下記チェックリスト）

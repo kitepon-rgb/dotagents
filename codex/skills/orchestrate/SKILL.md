@@ -1,19 +1,21 @@
 ---
 name: orchestrate
-description: 複数フェーズ・複数担当の大規模実装、監査、移行を Codex ネイティブ委譲で安全に統括する時に使う。
+description: 複数フェーズ・複数担当の大規模実装、監査、移行を Codex のnative・外部実行・相談レーンで安全に統括する時に使う。
 ---
 
 # Orchestrate
 
 まず [共通契約](../../../shared/orchestrate/contract.md) を全文読む。F/A/H、反証、安全網、レーン分離、統括ゲートは同契約が正本である。
 
-## Codex native appendix
+## Codex appendix
 
 - A の委譲は Codex ネイティブ子を使う。`agent_type=<role>` と `fork_turns="none"` を指定し、最初の spawn は routing smoke のみとする。
 - `verify-codex-agent-routing <role> <agent-path>` が role・model・effort・developer instructions の一致を確認してから、同じ子へ follow-up で実作業を渡す。
 - `implementer` は仕様固定の実装・テスト、`refuter` は読み取り専用の敵対的検証、`sorter` は読み取り専用の分類・抽出を担う。model と effort は role TOML によって決まり、呼び出し側が手指定しない。
-- 親 Codex から aiterm や MCP を経由して入れ子の Codex を起動しない。ネイティブ委譲の並列性、深さ、使用量の制御を維持する。
-- 共有 worktree では担当ごとに非交差の書き込み範囲を割り当てる。子にブランチ切替・commit・他者変更の revert をさせず、親が統合と最終検証を担う。
+- native枠は工場全体の上限ではない。native枠が埋まった時、または隔離・独立枠・役割適合で有利な時は、external executionとして`codex-sidecar`またはaitermの`codex_agent` / `grok_agent` / `composer_agent`を積極利用する。Codex親から入れ子のCodexを起動してよい（オーナー恒久裁定 2026-07-14）。
+- `gpt_connector` はconsultation専用であり、実装・shell・テストを担うworkerとして扱わない。timeout後は同じslugをsessionsで回収し、重複送信しない。
+- 外部子にはtask ID、repo/cwd、read/write範囲、成功条件、検証を明示する。共有worktreeはread-only、writerは専用worktreeを原則とし、共有writerは明示した非交差範囲だけに限定する。子にbranch切替・commit・push・merge・rebase・reset・stash・他者変更のrevert・H操作・秘密の読取/転記をさせない。
+- timeoutは失敗でなく状態不明。session/jobを回収し、同一taskを重複起動しない。installed / registered / verified / execution-verifiedを区別し、writerにはexecution-verifiedの入口だけを使う。親が統合と最終検証を担うため、実diff・範囲・検証を自ら確認する。
 
 ## 実行順
 

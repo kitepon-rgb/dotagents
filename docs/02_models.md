@@ -1,6 +1,6 @@
 # 02_models — 役割→モデル×エフォートの決定表（唯一の参照点）
 
-<!-- 前提: 2026-07-11 更新（GPT-5.6 / Grok 4.5 世代）。バージョン固定禁止（PLAN 原則9）。モデル名をこの表以外＋公認例外（codex/agents/*.toml・.codex-sidecar.yml）に書き散らさない -->
+<!-- 前提: 2026-07-14 更新（GPT-5.6 / Grok 4.5 世代）。バージョン固定禁止（PLAN 原則9）。モデル名をこの表以外＋公認例外（codex/agents/*.toml・.codex-sidecar.yml）に書き散らさない -->
 
 方針: skill・agents・委譲契約・スクリプトは**役割名**でモデルを指し、具体名への解決はこの表だけが担う。世代交代時は**この1枚＋公認例外2種を更新して push すれば全端末が追従**する。更新トリガーはオーナーの宣言（PLAN 原則6）。
 
@@ -42,9 +42,11 @@
 | 軽作業・分類・抽出 | `haiku`×low（次善） | 軽量=`gpt-5.6-luna`×low・sorter 定義 / codex_generate | composer 可 | — |
 | 第三者レビュー | — | 旗艦×medium・codex_review（契約クリティカル差分は high） | — | 差分を貼れる規模なら併用可 |
 
-**入口は呼び手で決まる**: 上の Codex/xAI レーン入口（sidecar MCP・aiterm の *_agent）は**親が Claude の時**の入口。**親が Codex の時は、子はネイティブ委譲（`~/.codex/agents/*.toml`）一択**——aiterm や MCP 経由で入れ子の codex を起動しない（遅い・壊れやすい・並列/深さ/使用量制御に乗らない）。
+**Codex親の入口は三レーン**（オーナー恒久裁定 2026-07-14）: ①native subagent、②external execution（codex-sidecar、aitermのCodex/Grok/Composer）、③consultation（gpt-connector）。nativeの同時枠上限を工場全体の上限にせず、Codex親から入れ子Codexを起動してよい。nativeはrepo密結合の通常作業、sidecarは隔離した非対話作業、aitermは対話・永続PTY・別vendor枠、gpt-connectorは相談専用として使い分ける。
 
-**入口の既知の事実（2026-07-11）**:
+外部子にはtask ID・repo/cwd・read/write範囲・成功条件・検証を渡し、共有worktreeはread-only、writerは専用worktreeを原則とする。timeoutは状態不明としてsession/jobを回収し、重複起動しない。子のgit操作・H操作・秘密取扱いを禁止し、親が実diffとテストで受け入れる。入口状態はinstalled→registered→verified→execution-verifiedを区別し、writerはexecution-verifiedだけを使う。
+
+**入口の既知の事実（2026-07-14）**:
 
 - **Codex ネイティブ子（GPT-5.6 Sol/Terra の MultiAgent V2）**: 0.144.1 は既定で `agent_type/model/effort` を `spawn_agent` schema から隠すため、`~/.codex/config.toml` の `[features.multi_agent_v2]` に `hide_spawn_agent_metadata=false`＋`tool_namespace="agents"` が全端末必須。`task_name` は role でなくタスクパス。custom role は `agent_type=<role>`＋`fork_turns="none"` で handshake-only spawn し、`verify-codex-agent-routing` green 後にだけ本作業を follow-up する。現行 spawn 応答は実効設定を返さない。
 - **ネイティブ子 sandbox の別論点**: role の `sandbox_mode` 適用後、親 turn の permission profile が再適用されて上書きされる（0.144.1 source と V1 implementer rollout で実測）。routing verifier は実効sandboxを常に表示するが、role/model/effort誤配線の判定とは分離する。sandbox一致まで要求する検証では `CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` を使う。

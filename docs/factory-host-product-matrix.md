@@ -33,7 +33,7 @@
 
 ## 親別connector matrix
 
-製品導入とconnector有効化を混同しない。CLIはrequiredでも、親の依存方向に反するconnectorはforbiddenになりうる。
+製品導入とconnector有効化を混同しない。外部実行connectorはinstalled / registered / verified / execution-verifiedを区別し、writer利用はexecution-verifiedだけに限る。
 
 | product | Claude親 | Codex親 |
 |---|---|---|
@@ -43,11 +43,11 @@
 | Codegraph | MCP required | MCP required |
 | MarkItDown | CLI required | CLI required |
 | gpt-connector | MCP `gpt_connector` required。専用Chrome非対応hostはconnectorだけunsupported | MCP `gpt_connector` required。timeout後は sessions 回収 |
-| aiterm-mcp | MCP required | Grok/Composer用MCP required。入れ子Codexは禁止 |
-| codex-sidecar | MCP required | connector forbidden。Codex native subagentを使う |
+| aiterm-mcp | MCP required | Codex/Grok/Composer用MCP required。native枠外の外部実行に使う |
+| codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う |
 | ServerManager | connector not_applicable | connector not_applicable |
 
-Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。gpt-connectorは専用Chrome、product-owned state、明示model/effort、caller既知slugを必須とし、timeout時は sessions で回収する。Oracleはv1互換・手動rollback専用で、通常matrixには含めない。
+Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。Codex親はnative枠を工場全体の上限とせず、codex-sidecarとaitermの外部実行を積極利用する。gpt-connectorは相談専用で、専用Chrome、product-owned state、明示model/effort、caller既知slugを必須とし、timeout時は sessions で回収する。Oracleはv1互換・手動rollback専用で、通常matrixには含めない。
 
 ## 2026-07-13 実測baseline
 

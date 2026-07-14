@@ -5,7 +5,7 @@
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 
-進捗（2026-07-14）: `gpt-connector`製品側はcommit `9856ea9`、ServerManager/BugHub側はcommit `009d349`、dotagents側はcommit `2b8c83c`まで独立収容した。dotagentsはv2固定12製品schema/scanner/reporter、基盤CLI更新台帳、host別Oracle退役、正典/MCP切替、配布CLIまで実装し、実`gpt-connector` consultで`gpt-5-6-thinking`＋`min`の成功とfactory diagnostics greenを確認した。固定負座標が複数displayで画面内へclampされる欠陥は、窓なしcold起動→background最小化target→正規PIDだけunhideする製品launcherへ置換した。新規Chrome PIDを約10ms間隔で15秒監視して画面内layer 0 window最大0、同時startの`started`/`already_ready`収束、`hidden=false`、CDP `minimized`、最小化中のmodels・実Chat成功、`show`→`start`の画面内window `0→1→0`を実測し、このMacのglobal CLIへsource installした。残件はregistry公開・全host配布、新規sessionでのMCP surface再読込、deploy/canary/rollback等のHと全端末E2Eである。
+進捗（2026-07-14）: `gpt-connector`製品側はrelease commit `8c5d03b`（npm `0.3.1`）、ServerManager/BugHub側はcommit `71ed5c9`、dotagents側はcommit `bf5ef00`まで独立収容・pushした。dotagentsはv2固定12製品schema/scanner/reporter、基盤CLI更新台帳、host別Oracle退役、正典/MCP切替、配布CLIまで実装し、実`gpt-connector` consultで`gpt-5-6-thinking`＋`min`の成功とfactory diagnostics greenを確認した。固定負座標が複数displayで画面内へclampされる欠陥は、窓なしcold起動→background最小化target→正規PIDだけunhideする製品launcherへ置換し、npm `0.3.1`公開・registry install・最小化中の実Chatまで完了した。main-serverとFOX WSL2のv2 rollout、Pi5 bridgeの正常系canary、Codex Sidecar `0.3.7`のWindows npm shim修正・公開も完了。残件はFOX Windows native再送、Mac再起動後のlaunchd canary、Oracle rollback drill、意図的障害canary、全端末E2Eである。
 
 ## 0. 目的
 
@@ -59,13 +59,13 @@ dotagents が管理対象とするコア9製品と基盤toolchain 3製品につ�
 | 製品 | 所有 | version取得 | 現行diagnostics候補 | 現状 |
 |---|---|---|---|---|
 | Caveat | 自作・別repo | `caveat --version`（0.16.3） | native factory diagnostics、runtime error store | 0.16.3公開・registry smoke完了 |
-| Throughline | 自作・別repo | `throughline --version`（0.6.2） | native factory diagnostics、runtime error store | 0.6.2公開・registry smoke完了 |
+| Throughline | 自作・別repo | `throughline --version`（0.6.3） | native factory diagnostics、runtime error store | 0.6.3公開・public CI 9/9・registry smoke完了 |
 | Spotter | 自作・別repo | `spotter --version`（1.4.23） | native diagnostics、runtime error store | 1.4.23公開・registry smoke完了 |
 | Codegraph | 第三者 | `codegraph --version`（1.4.1） | 既存indexだけ`status`/read-only query | 本体改造禁止。index自動作成禁止 |
 | MarkItDown | 第三者 | `markitdown --version`（0.1.5） | ローカルfixture変換＋出力byte数 | `uv tool`管理。本体改造禁止 |
-| gpt-connector | 自作・別repo | `gpt-connector --version`（0.2.0） | 現行`doctor`、追加するnative factory diagnostics/runtime error store | 0.2.0公開済み。通常Chat、正規添付、model/effort、冪等job、再起動後回収、read-only診断は成立。factory契約と全host適合は未実装 |
+| gpt-connector | 自作・別repo | `gpt-connector --version`（0.3.1） | native factory diagnostics、runtime error store | 0.3.1公開・registry smoke完了。通常Chat、正規添付、model/effort、冪等job、再起動後回収、offscreen起動、read-only診断が成立 |
 | aiterm-mcp | 自作・別repo | package.json/npm（0.12.2） | native diagnostics、runtime error store | 0.12.2公開・MCP Registry / registry smoke完了 |
-| codex-sidecar | 自作・別repo | CLI/package群（0.3.6） | diagnostics/dry-run、result schema | 0.3.6へ公開済み |
+| codex-sidecar | 自作・別repo | CLI/package群（0.3.7） | diagnostics/dry-run、result schema | 0.3.7公開・CI・registry install smoke完了。Windows npm `.cmd`診断修正を収録 |
 | ServerManager | 自作・別repo | package.json/source commit（2.0.0） | BugHub health/poll/DB/container/Pi5 | clean。BugHubを内包 |
 | Claude Code CLI | 第三者・基盤toolchain | `claude --version`（2.1.207） | npm registry latest、hook/settings/親実行互換 | `@anthropic-ai/claude-code@latest`で更新済み。BugHub product未登録 |
 | Codex CLI | 第三者・基盤toolchain | `codex --version`（0.144.1） | npm registry latest、config parser/hooks/native routing互換 | `@openai/codex@latest`更新対象。2026-07-13時点latest 0.144.3、BugHub product未登録 |
@@ -321,6 +321,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] オーナー裁定としてOracle→`gpt-connector`置換を確定し、Oracle継続・併用を選択肢から外す
 - [x] オーナー裁定としてClaude Code CLI、Codex CLI、Grok BuildをBugHubのversion/update/compatibility管理対象へ追加し、コア製品とは別区分に置く
 - [x] 工場コア製品を正規入口で実利用中に再現した欠陥は、所有repoの正本TODOへ追加し、独立gate・独立commitで修正してから本筋へ戻ることをオーナー恒久裁定として固定する。単なる気づきや大掃除へ拡張せず、publish・本番deploy・credential/login・意図的障害試験は引き続きHとする
+- [x] オーナー裁定として、Codex親はnative同時実行上限（親を含む4枠）を全体上限とせず、external executionとして`codex-sidecar`とaiterm上のCodex/Grok/Composerを積極利用する。限界突破目的の入れ子Codexを許可し、旧「Codex親はnative一択・aiterm/MCP経由の入れ子Codex禁止」を撤回する。`gpt-connector`はconsultation専用でworkerには数えない
 - [x] `gpt-connector@0.2.0`の通常Chat、正規添付、model/effort、冪等job、terminal回収、read-only diagnostics、Oracle互換`consult`/`sessions`を実ブラウザと配布物で確認する
 - [x] Oracleとの同一prompt＋2添付shadowで、`gpt-connector`成功、Oracle upload timeoutを確認し、Oracleへ自動fallbackしないことを確認する
 - [x] 3 CLIの正規version/update入口を実測する。Claude Code=`@anthropic-ai/claude-code@latest`、Codex=`@openai/codex@latest`、Grok Build=`grok update --stable`／read-only `--check --json`
@@ -374,6 +375,10 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] 旧Oracle wrapper/config/profileを`gpt-connector`へ流用せず、専用Chrome、product-owned state、model/effort明示、caller既知slug、timeout後`sessions`回収、暗黙fallback禁止を標準形として固定する
 - [x] `make ci`、official/legacy install、skill discovery、factory report v1/new-major fixtureをgreenにする
 - [ ] 新規Claude/Codex sessionで`gpt_connector` MCP surfaceを再読込し、両親からread-only diagnosticsをgreenにする（現在のCodex sessionは起動時cacheに旧Oracle surfaceが残るため再起動後に実施）
+- [ ] Codex親の委譲をnative／外部実行／相談の3レーンへ正典化し、外部子のtask ID・timeout回収・writer worktree隔離・git操作禁止・秘密/H非委譲・親受入れgateを`codex/AGENTS.md`、`orchestrate`、モデル表、Codex断片、host/product契約へ同期する
+- [ ] Codex親の`codex-sidecar`／aiterm connectorをsupportedとして導入・検証面へ配線し、installed→registered→verified→execution-verifiedを区別する。aitermのGrok/Composer各2回、別Codex、codex-sidecar、gpt-connectorの回収smokeを通すまでwriter利用をgreenにしない
+  - [x] このMacのCodex親へ`codex-sidecar` 0.3.7をH承認下で登録し、MCP initialize、12 toolの`tools/list`、factory diagnostics `overall=ready`を確認してverifiedまで上げた。現sessionのtool面は起動時固定のためexecution-verifiedは新規sessionへ残す
+  - [x] 同じMacで配布CLIの`codex-sidecar review`を明示Terra×medium・read-onlyで完遂し、三レーン正典diffを独立レビューした。read-only external executionはexecution-verified、writerは`codex_work`未実証として未verifiedに分離する
 
 #### 6.5 shadow、cutover、撤去（H＋F）
 
@@ -421,17 +426,21 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 1i. [x] FOX Windows nativeでnpm `.cmd` shimをNodeの直接spawnが解決できず導入済み製品を`missing`へ誤投影する欠陥を、固定CLI・引数非再解釈・timeout/output上限を保つ共通command runnerで直し、12製品matrixを実機再送する
 1j. [x] `agents-update`が追加する`/usr/local/bin`でWSLの正規npm global CLIをshadowし、Claude Code更新後versionを旧入口から読む欠陥を直す。検証済み`npm prefix -g`のbinを更新・version確認の同一入口にし、PATH shadowをfixtureと実host ledgerで閉じる
 1k. [ ] registry公開版のThroughline／Spotter／aiterm-mcp／codex-sidecar native diagnosticsとdotagents v2 adapterのschema driftを、製品側正本とexact validatorを保ったまま同期し、main-serverのCaveat診断とGrok Build導入状態も分離して全host post-update gateをgreenにする
+   - [ ] aiterm-mcpのmanaged `GROK_HOME`でOAuth承認結果が一時homeへ取り残される欠陥を、Grok公式 `GROK_AUTH_PATH` 経路へ置換して修正・releaseし、Grok/Composer各2回の連続起動で再承認なしと`agent_done`を実証する（正本: aiterm-mcp `docs/14_grok-auth-path-plan.md`）
 1m. [ ] Throughline factory diagnosticsのCodex hook集約をdoctorの実状態と一致させ、main-serverの正規hook導入、Macのhandoff readiness、FOX WSL2の`events=ready`なのにsummary=`unverified`となるproducer矛盾を製品repoのcharacterization→修正→patch releaseで閉じる
 1n. [x] Windows共通command runnerのnpm shim解決を実物cmd-shim variantへ追従し、PATH／shimのfilesystem解決も5秒全体deadline内のkill可能helperへ隔離して、UNC・late spawn・悪意あるshimをfail-loudに拒否する
 1o. [x] native diagnosticsを単一overall checkへ潰さずThroughline／Spotter／aiterm-mcpのcomponent別checkへ安全に投影し、report/BugHubでは`unverified`を保持する。gateはdefault-denyのまま、Spotterの人手trust、Throughlineのadvisory evidence/Claude connector、headless aitermのPTY観測不能という完全tupleだけをnonblockingにする
 1p. [ ] Windows実機でtoolchain ledger、v2 schedule runner、Task Scheduler control artifactが旧`[IO.*]::SetAccessControl` ACL入口で失敗する欠陥を、reporter本体と同じ`Set-Acl -LiteralPath`系current-SID-only契約へ統一する。ACL済みtemporary ledgerのrename後に再適用して「更新済みなのに非0」となる窓をなくし、PowerShell失敗は秘密・絶対pathを出さない固定reasonでfail-loudにする。ledger生成→post-update scan/gate/enqueue/flush→scheduler dry-run/applyを実機で再確認する
 1q. [ ] FOX Windows nativeの現行npm global `.cmd` shimが`_prog`行を2スペース字下げする実形を、旧1スペース形と同じbounded helperのexact allowlistへ追加する。あわせて`PATHEXT`の許可外拡張子は実行せず後続候補へ進めるが、実行許可は`.exe`と検証済みnpm `.cmd`だけ、悪意あるshim拒否、5秒全体deadline、Node entrypointの`node_modules`内実在・realpath検証を維持し、実機12製品scan/post-update gateを再送する
-1r. [ ] Codex Sidecar 0.3.6の`factory-diagnostics`がWindowsで`spawn("codex-sidecar-mcp")`を直呼びし、実際のMCP initializeは成功するのにnpm `.cmd` shimを解決できず`packageVersions=unverified`へ誤投影する欠陥を製品側で根治する。固定command・引数非再解釈・timeout・出力上限・fail-loudを維持したWindows回帰test、pack/install smoke、releaseを通し、FOX Windows nativeの実配布版で12製品scan→post-update gate→enqueue/flush→Task Scheduler dry-run/applyを再送する
-1s. [ ] Macの対話shellではBugHubへHTTP 200なのにuser launchd配下だけLocal Network Privacyで遮断される実機差を、Apple TN3179の管理端末向けCIDR例外で解消する。現在の実経路`en5`（USB Ethernet）だけを対象にsystem domainの`AllowedEthernetLocalNetworkAddresses`へ`192.168.1.2/32`を追加し、Wi-Fi側は変更しない。再起動後にlaunchd childの実送信canaryを通し、rollbackは対象entry削除＋再起動とする
+1r. [ ] Codex SidecarのWindows npm `.cmd`診断修正を実配布版でFOX Windows nativeへ反映し、12製品scan→post-update gate→enqueue/flush→Task Scheduler dry-run/applyを再送する
+   - [x] 0.3.6の`factory-diagnostics`が`spawn("codex-sidecar-mcp")`を直呼びし、MCP initialize可能なのに`packageVersions=unverified`へ誤投影する欠陥を製品側で根治した。固定command・引数非再解釈・timeout・出力上限・fail-loudを維持したWindows回帰test、pack/install smoke、独立反証を通し、Codex Sidecar 3 packageをnpm `0.3.7`、tag `v0.3.7`、global CLI `0.3.7`へ公開・検証した
+   - [ ] FOX Windows nativeの実配布版で12製品scan→post-update gate→enqueue/flush→Task Scheduler dry-run/applyを再送する
+1s. [ ] Macの対話shellではBugHubへHTTP 200なのにuser launchd配下だけLocal Network Privacyで遮断される実機差を、Apple TN3179の管理端末向けCIDR例外で解消する。現在の実経路`en5`（USB Ethernet）だけを対象に、root所有のCurrentUser defaults domainをLocal Network Privacyがsystem-wide設定として特別に消費する契約どおり、`AllowedEthernetLocalNetworkAddresses`へ`192.168.1.2/32`を追加し、Wi-Fi側は変更しない。再起動後にlaunchd childの実送信canaryを通し、rollbackは対象entry削除＋再起動とする
+   - [x] `sudo defaults write`後、`/var/root/Library/Preferences/com.apple.network.local-network.plist`のarray値を管理者権限で実読し、`/Library/Preferences`と通常user domainが不存在であるAppleの特殊保存契約を独立反証込みで確認した。残りはMac再起動後の非root launchd child canary
 2. [ ] Mac: Hでtoken/config opt-in → Fでscheduler未登録のままlocal fake→本番BugHubへmanual scan/preview/enqueue/flushし、accepted/current/history/通知抑制/ACK/outbox drainを確認 → launchd dry-run/apply → scheduled run・uninstall・state権限を確認。host切替は`retire-oracle`→v1最終`not_applicable`→v2初回full snapshotの順にする
 2a. [ ] Mac canaryでv2 scheduler停止（outbox保持）→host別Oracle復帰→v1送信→Oracle再退役と最終`not_applicable`受理→v2復帰を実証し、同一issue/historyを二重化しないことを確認してからWindows schedulerと障害演習へ進む
 3. [x] main-server client: Hでtoken/config opt-in → Fでscheduler未登録のmanual v2受理、BugHub自身を含むコア9＋基盤CLI 3の全12管理製品とrevision attestationを確認 → cron dry-run/apply → scheduled runを確認
-4. [ ] FOX WSL2: Hでtoken/config opt-in → Fでscheduler未登録のread-only scan/preview/enqueue/flush、outbox/再送を確認 → cron dry-run/apply → 実火・uninstall・state権限を確認
+4. [x] FOX WSL2: Hでtoken/config opt-in → Fでscheduler未登録のread-only scan/preview/enqueue/flush、outbox/再送を確認 → cron dry-run/apply → 実火・uninstall・state権限を確認（`fox-wsl`直SSHのbanner timeoutは未解決の別blockerとして残し、Windows hostの正規`wsl.exe -d Ubuntu-26.04`入口でrolloutを実施）
 5. [ ] FOX Windows native: Hでtoken/config opt-in → Fでscheduler未登録のmanual scan/preview/enqueue/flush、Node入口、所有者限定ACL、WSLとhost IDを混同しないことを確認 → Task Scheduler dry-run/apply → 実火・uninstallを確認
 6a. [ ] H承認済みの意図的障害としてmain-serverのBugHub containerだけをhealthy tick直後から最長45秒停止し、既存アプリ本体・DBを変更しない。natural 60秒tickerで未trigger observation 1件までに留まること、停止中のreporter非0/outbox保持、`docker compose up -d bughub`と`/readyz`での復旧、復旧後flush、次のhealthy tickで未trigger stateが消えることを確認し、Discord・external-event・BugHub issueを誤openしないtransient吸収を実証する
 6b. [ ] fixed 60秒ticker＋2連続failureの契約を変えず、open→resolve E2Eは別の隔離canaryとして実施する。Pi5 bridgeの公開`run(deps)`で本番stateをtemporary fileへ差し替え、2 synthetic observations（natural 2周期とは称さない）だけtransport failureを注入し、Discordは実module、connectorは実SSHへ委譲する。main-serverの`factory-external-event`とmanual v2 reporterも専用`XDG_STATE_HOME`へ隔離し、固定`servermanager/availability/unreachable`（high、同一fingerprint）のopen→BugHub accepted/ACKを確認する。復旧は実`/readyz`の200/readyだけを入力し、Discord success→同fingerprint resolve/ACK→isolated bridge state消去→次回本番scheduled full snapshotでreopenしないことと全環境のinstalled/latest/compat matrixを確認する
@@ -450,7 +459,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - **A（native委譲）**: 仕様固定後のrepo別diagnostics/runtime store、adapter、fixture、dashboard、文書の逐語追従。
 - **H（オーナー）**: dirty作業の裁定、秘密/token配置、ChatGPTログイン、hook trust、npm publish、全OSのscheduler/MCP実登録・解除、DB backupを伴う本番deploy、意図的障害試験、Oracle最終撤去、実端末rollback drill。
 
-Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読んでnative subagentへ委譲する。aiterm/MCP経由で入れ子Codexを起動しない。Claude親で実施する場合は、aitermの永続PTYを対象repoのcwdで使うことはできるが、aitermを使うこと自体を「project native」の条件にはしない。
+Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読む。native subagentを基本線としつつ、native枠上限を工場全体の上限にせず、execution-verifiedなcodex-sidecarとaitermのCodex/Grok/Composerを外部実行に積極利用する。外部子はtask/session一意化、writerのworktree隔離、git/H/秘密操作禁止、親のdiff/test受入を守る。Claude親で実施する場合も、aitermを使うこと自体を「project native」の条件にはしない。
 
 ## 9. 非目標
 
