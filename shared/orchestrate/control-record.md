@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v18",
+  "schema_version": "dotagents.orchestration-control.v19",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -83,7 +83,10 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
     "max_consultations": 16,
     "max_external_runs": 24,
     "max_wall_time_seconds": 86400,
-    "max_cost_microusd": 100000000
+    "max_cost_microusd": 100000000,
+    "max_runs_per_approach_family": 16,
+    "max_retries_per_assignment": 3,
+    "max_integration_runs": 8
   },
   "role_effect_policy": {
     "policy_version": "dotagents.role-effect.v1",
@@ -121,7 +124,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v18で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v19で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -129,8 +132,8 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   Executor Registry observation、v13はplacement reservationとsubject digest、v14はresume用の
   Control git directory generation、初期workspace digest、Worker記録時fingerprint、v15はTask取消と
   Worker cancel要求の分離、v16はparent-declared campaign gate、v17はsidecar durable workの
-  遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent pathを
-  追加した。旧manifestを
+  遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent path、
+  v19はapproach family／assignment retry／integration Run上限をBudgetへ追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -697,7 +700,8 @@ Worker Run／Reportが一致しなければ`REPORT_CORRELATION_MISMATCH`で拒�
 ## Budget Envelope
 
 Controlの`budget`は`max_worker_runs / max_consultations / max_external_runs /
-max_wall_time_seconds / max_cost_microusd`だけを持つ。件数上限は既知の非負整数を必須とする。
+max_wall_time_seconds / max_cost_microusd / max_runs_per_approach_family /
+max_retries_per_assignment / max_integration_runs`だけを持つ。件数上限は既知の非負整数を必須とする。
 wall timeとcost上限は非負整数または`null=unknown`である。costは浮動小数を避けるため1 USDの
 100万分の1を1 microusdとして保存する。
 
@@ -705,6 +709,10 @@ wall timeとcost上限は非負整数または`null=unknown`である。costは�
   external Runは`parent`と`codex-native`以外のWorkerであり、`gpt-connector` Consultationを混ぜない。
 - wall timeとcostは、Worker／Consultationの全予約上限を合算する。failed／cancelled／retryも記録済み
   Runとして消費し、黙ってbudgetを返却しない。
+- approach family上限は同じ非null `lineage.approach_family_ref`の全Run、retry上限は初回を除く同じ
+  assignmentのRun、integration上限はroleが`integrator`のTaskを参照する全Runを数える。placementは
+  `approach-family-limit / retry-limit / integration-capacity-exhausted`をhard reasonとして返す。
+  approach familyがnullの候補は`approach-family-unknown`でineligibleにし、無制限へ丸めない。
 - `null`を0、未使用、無制限へ丸めない。read-only `status`はunknownを保持して読めるが、Control上限
   または新規予約がunknownのままRun／Consultationを追加するmutationは`BUDGET_UNKNOWN`で拒否する。
 - 既知上限を件数または安全整数の合計が超えた場合は`BUDGET_EXCEEDED`。価格推測、自動最適化、

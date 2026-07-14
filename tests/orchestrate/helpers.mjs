@@ -26,6 +26,9 @@ export const makeBudget = (overrides = {}) => ({
   max_external_runs: 24,
   max_wall_time_seconds: 86400,
   max_cost_microusd: 100000000,
+  max_runs_per_approach_family: 16,
+  max_retries_per_assignment: 3,
+  max_integration_runs: 8,
   ...overrides,
 });
 
@@ -166,7 +169,7 @@ export function makeWorkerRun(overrides = {}) {
       parent_worker_run_id: null, root_assignment_id: overrides.assignment_id ?? "assignment-001",
       provider: "openai", model: "gpt-5.6-terra", prompt_family: "implementation-v1",
       independence_group: "implementation-primary", context_policy: contextPolicy,
-      input_digest: "b".repeat(64), approach_family_ref: null, shared_finding_refs: [],
+      input_digest: "b".repeat(64), approach_family_ref: "implementation-primary", shared_finding_refs: [],
     },
     state: "planned", executor_handle: { idempotency_key: "A".repeat(22) },
     workspace_binding: "fixed",
@@ -223,7 +226,7 @@ export function makePlacementCandidate(overrides = {}) {
         share_objective: true, share_current_candidate: false, share_existing_findings: false,
         share_failed_approaches: false, share_test_results: true,
       },
-      input_digest: "c".repeat(64), approach_family_ref: null, shared_finding_refs: [],
+      input_digest: "c".repeat(64), approach_family_ref: "placement-primary", shared_finding_refs: [],
     },
     executor_handle: { agent_path: "/root/placement_agent_001" },
     ...overrides,

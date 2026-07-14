@@ -182,7 +182,7 @@ Markdown lint、`make ci`のgreenで採用指摘を閉じた。live provider dis
 
 ### Phase 3: Placementとadmission
 
-- [ ] Registry observation、Budget Envelope、approach family上限、retry上限、integration capacityから
+- [x] Registry observation、Budget Envelope、approach family上限、retry上限、integration capacityから
   eligible／ineligible候補と決定論的理由を返す。
 - [ ] capacity unknownを無制限扱いせず、soft limit超過を親reviewへ送る。
 - [ ] read-only低リスクでもv1は親release後だけdispatchする。F write、H、高リスクwriteは自動dispatchしない。
