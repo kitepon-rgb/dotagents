@@ -139,7 +139,8 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   v19はapproach family／assignment retry／integration Run上限をBudget、v20は明示fallback参照を
   Worker Runへ追加し、v21はmanual Worker生成identity／fallbackのreceipt digest束縛を追加し、v22は固定順の
   phase gateを追加し、v23はdocs artifactのID／digest／status projection、v24はapproach family governance、
-  v25はCampaign宣言とmanual Worker lineageのreceipt束縛およびFinding共有境界を追加した。旧manifestを
+  v25はCampaign宣言とmanual Worker lineageのreceipt束縛およびFinding共有境界を追加した。同じv1完成前の
+  v25契約でTask／Control finalizationのsubject digest、文書evidence、Campaign親裁定境界をfail closedにした。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -220,7 +221,8 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
   `worker-run-record`も作成時のWorker／Task／assignment identityとfallback宣言をdigestへ結合し、
   fallback元RunとDecision参照を含む生成関係の妥当な値への差替えを拒否する。
   `worker-workspace-bind`はprovider binding digest、`phase-gate-record`はworkflow／risk／behavior lane
-  宣言のdigestを結合する。
+  宣言のdigestを結合する。`task-finalize`はTask finalization exact object、`control-finalize`はControl
+  finalization exact objectをsubject digestへ結合し、actor、時刻、文書evidenceとの相関も検証する。
 - evidenceを使わない管理mutationは空配列、dispatch／terminal／result／acceptanceはそのmutationで
   検証したtyped descriptorを保存する。内容本体は複製しない。
 - failed mutationはrevisionもreceiptも増やさない。`last_update`は最後のreceiptのactor/timeと一致する。
@@ -915,7 +917,8 @@ declared_from_revision, declared_by, declared_at, release
   `placement-reserve`を`PLACEMENT_INELIGIBLE`、既存planned Workerのadmissionとplanned
   Consultationのdispatchを`CAMPAIGN_NOT_RELEASED`で拒否する。既存active memberのterminal観測は
   妨げず、release後も後続Runを自動dispatch／admitしない。
-- `campaign-release`は全member terminalを同じrevisionで再確認する。`audit_required=true`では1件以上の
+- `campaign-release`は全member terminalを同じrevisionで再確認し、`completed` Workerは親の
+  `accepted | rejected`裁定が済むまでreleaseしない。`audit_required=true`では1件以上の
   typed audit evidenceと、常に`type=decision`の親Decisionを必須とする。releaseは一度だけで、親actor、
   revision、時刻、evidenceをreceiptへ結合する。未release Campaignが一件でもあればControl finalizationを
   拒否する。
@@ -933,7 +936,7 @@ completeやfinalize可能とは扱わない。
 - `phase-gate-record`は`risk: standard | high`と既存Taskと同じ`behavior_lane:
   behavior-preserving | behavior-change`を固定し、9 stepをすべて`pending`で作る。
 - `phase-gate-advance`は現在のpending stepだけを一回進める。飛越、後退、重複、任意phase名を拒否する。
-  `baseline`はevidence 1件以上、`design`と`complete`は`type=decision`必須である。
+  `baseline`と`knowledge_return`はevidence 1件以上、`design`と`complete`は`type=decision`必須である。
 - `risk=high`の`safety_net`は`completed`かつevidence 1件以上。`standard`だけが
   `not-required`を選べ、その省略にもDecisionが要る。`behavior-preserving`は
   `behavior_change=not-applicable`＋Decision、`behavior-change`は`completed`＋Decisionを要求する。
@@ -1148,6 +1151,9 @@ accept, reject, task-finalize-record, control-finalize, recover-lock, archive
   持つ場合だけ許可する。さらに
   objective（初期宣言を固定参照）、受入matrix、1件以上の最終監査evidence、1件以上の回帰evidence、
   1件以上のknowledge return参照、`type=decision`の親最終Decisionをexact objectとして保存する。
+  受入matrix、最終監査、回帰、knowledge return、親Decisionはrepo内の実在する通常fileに限定し、
+  finalize時にSHA-256を再計算する。matrix／knowledgeの生成descriptorを含む全要素をfinalize receiptへ
+  固定順で結合し、archive直前にも全Task／Control finalization文書を再hashする。
 - `archive`は上記Control-level finalizationが存在する場合だけ許可する。個別Task finalizationだけでは
   archiveできない。Control-level finalization後はarchive以外を拒否し、archive後はread-only。
 
@@ -1231,11 +1237,12 @@ library errorは`ControlRecordError`で、安定した`code`を持つ。少な�
 INVALID_INPUT, INVALID_SCHEMA, INVALID_SCOPE, LIMIT_EXCEEDED,
 NOT_GIT_REPOSITORY, BARE_WRITE_FORBIDDEN, CONTROL_EXISTS, CONTROL_NOT_FOUND,
 REVISION_CONFLICT, RECORD_ARCHIVED, DUPLICATE_ID, INVALID_TRANSITION, DEPENDENCY_NOT_READY,
-CAMPAIGN_NOT_RELEASED, CAMPAIGN_NOT_TERMINAL,
+CAMPAIGN_NOT_RELEASED, CAMPAIGN_NOT_READY,
 ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, ADAPTER_UNKNOWN, CAPABILITY_MISMATCH,
 VERIFICATION_REQUIRED, BUDGET_UNKNOWN, BUDGET_EXCEEDED,
-EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
+EVIDENCE_REQUIRED, EVIDENCE_UNAVAILABLE, EVIDENCE_DIGEST_MISMATCH, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 FINALIZATION_NOT_READY, CONTROL_FINALIZED,
+TASK_FINALIZED,
 APPROVAL_MISMATCH, APPROVAL_EXPIRED,
 ROLE_EFFECT_FORBIDDEN,
 CONTROL_CAPACITY_RESERVED, CONTROL_CAPACITY_REACHED, CONTINUATION_NOT_READY,
@@ -1256,8 +1263,10 @@ STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FA
 task_id, finalization_ref, recorded_by, recorded_at
 ```
 
-- `finalization_ref`の意味・outcome・reasonはdocsが所有し、Control Recordは解釈しない。
-- 一つのTaskへ参照は1件だけ。全Taskに参照がなければarchiveできない。
+- `finalization_ref`の意味・outcome・reasonはdocsが所有し、Control Recordは解釈しない。ただし実在と
+  SHA-256をfinalize時に検証し、`type=decision` evidenceとrecord exact objectをimmutable receiptへ結合する。
+- 一つのTaskへ参照は1件だけ。取消済みTask、nonterminal Run／Consultation、親未裁定completed Workerを
+  持つTaskはfinalizeできない。finalize後は新規Worker／Consultationを追加できない。
 
 archive判定は次のtruth tableを満たす時だけ`active -> archived`へ一度だけ進める。
 
@@ -1266,7 +1275,7 @@ archive判定は次のtruth tableを満たす時だけ`active -> archived`へ一
 | Worker | nonterminalが0。`completed`はacceptance必須。`failed/cancelled`はacceptance不要 |
 | Consultation | nonterminalが0。`completed`は`decision_ref`必須。`failed`はdecision ref不要 |
 | Campaign | 全件が親release済み。audit-required Campaignはaudit evidenceと親Decision必須 |
-| Task | 全Taskにdocs正本上のfinalization参照が1件あり、対応Run／Consultationが全件terminal |
+| Task | 全Taskにdocs正本上のfinalization参照が1件あり、対応Run／Consultationが全件terminal、completed Workerは親裁定済み |
 | Manifest | statusが`active` |
 
 unknown、planned、admitted、未release Campaign、finalization参照なしTask、completed未受入Worker、

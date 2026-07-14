@@ -271,7 +271,7 @@ READMEのhook数、CI正典の`test-orchestrate`漏れ、plan現在地を採用�
 - [x] 実dogfoodで再現した同期sidecar Workerのhandle不成立を修復する。予約時のnullableとactive時の
   handle必須性を分離し、同期workflowはpacket／Task／Run／assignment digestで相関して、durable handleを
   捏造せずstrict report importまで縦に通す。
-- [ ] 実dogfoodで再現したfinalization整合性を修復する。Task finalizationは対象Run／Consultationの
+- [x] 実dogfoodで再現したfinalization整合性を修復する。Task finalizationは対象Run／Consultationの
   終端・親裁定・非取消を検証し、Task／Control finalizationをimmutable receiptへ完全拘束する。
   Campaign releaseはcompleted Workerの親裁定を待ち、matrix／最終監査／回帰／knowledge returnの
   実在・digestをfinalize／archive境界でfail closedにする。

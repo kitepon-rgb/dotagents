@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { access, chmod, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { test } from "node:test";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import {
   addLinkedWorktree, canonicalDigest, cleanupDir, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
@@ -78,11 +78,39 @@ async function completePhaseGate(repo, controlId, revision, { risk = "standard",
       : phase === "behavior_change" && behaviorLane === "behavior-preserving" ? "not-applicable" : "completed";
     result = await api.phaseGateAdvance({
       cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision,
-      phase, state, evidence: phase === "baseline" || (phase === "safety_net" && risk === "high") ? [evidence(`docs/phase-${phase}.md`)] : [],
+      phase, state, evidence: phase === "baseline" || phase === "knowledge_return" || (phase === "safety_net" && risk === "high") ? [evidence(`docs/phase-${phase}.md`)] : [],
       decision: decisionRequired ? evidence(`docs/phase-${phase}-decision.md`, "decision") : null,
     });
   }
   return result;
+}
+
+async function materializeDocumentEvidence(repo, descriptor) {
+  if (!["file", "decision"].includes(descriptor.type)) return descriptor;
+  const content = `# evidence for ${descriptor.ref}\n`;
+  const path = join(repo.root, ...descriptor.ref.split("/"));
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, content);
+  return { ...descriptor, digest: createHash("sha256").update(content).digest("hex") };
+}
+
+async function materializeFinalizationInput(repo, input) {
+  const result = structuredClone(input);
+  for (const ref of [result.acceptance_matrix_ref, ...result.knowledge_return_refs]) {
+    const path = join(repo.root, ...ref.split("/"));
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, `# finalization document ${ref}\n`);
+  }
+  result.final_audit_evidence = await Promise.all(result.final_audit_evidence.map((entry) => materializeDocumentEvidence(repo, entry)));
+  result.regression_evidence = await Promise.all(result.regression_evidence.map((entry) => materializeDocumentEvidence(repo, entry)));
+  result.parent_decision = await materializeDocumentEvidence(repo, result.parent_decision);
+  return result;
+}
+
+async function materializeTaskDecision(repo, ref) {
+  const path = join(repo.root, ...ref.split("/"));
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, `# task decision ${ref}\n`);
 }
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
@@ -255,10 +283,10 @@ test("advisory snapshotのlatest Registryはarchived Controlの新しいsnapshot
     observation: makeRegistryObservation({ registry_observation_id: "archived-only-unhealthy", workflow_id: "archived-only", expires_at: "2026-07-14T00:15:00.000Z" }),
   });
   const phase = await completePhaseGate(repo, "advisory-archived-registry", archivedOnly.revision);
-  const finalized = await api.finalizeControl({
+  const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
     cwd: repo.root, control_id: "advisory-archived-registry", actor_id: "parent", expected_revision: phase.revision,
-    acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")], regression_evidence: [evidence("tests", "command")], knowledge_return_refs: ["docs/knowledge.md"], parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
-  });
+    acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")], regression_evidence: [evidence("docs/regression.md")], knowledge_return_refs: ["docs/knowledge.md"], parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
+  }));
   const archived = await api.archive({ cwd: repo.root, control_id: "advisory-archived-registry", actor_id: "parent", expected_revision: finalized.revision });
   const successor = await api.init({ cwd: repo.root, control_id: "advisory-active-registry", predecessor_control_id: "advisory-archived-registry", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const stale = await api.registryObservationRecord({
@@ -445,17 +473,17 @@ test("receipt capacityは閉鎖用slotを予約し、archive済みControlから�
   await assert.rejects(api.finalizeControl({
     cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253,
     acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")],
-    regression_evidence: [evidence("tests", "command")], knowledge_return_refs: ["docs/knowledge.md"],
+    regression_evidence: [evidence("docs/regression.md")], knowledge_return_refs: ["docs/knowledge.md"],
     parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
   }), code("FINALIZATION_NOT_READY"));
   const archivalRoot = await api.init({ cwd: repo.root, control_id: "capacity-archival-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const phaseComplete = await completePhaseGate(repo, "capacity-archival-root", archivalRoot.revision);
-  const finalized = await api.finalizeControl({
+  const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
     cwd: repo.root, control_id: "capacity-archival-root", actor_id: "parent", expected_revision: phaseComplete.revision,
     acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")],
-    regression_evidence: [evidence("tests", "command")], knowledge_return_refs: ["docs/knowledge.md"],
+    regression_evidence: [evidence("docs/regression.md")], knowledge_return_refs: ["docs/knowledge.md"],
     parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
-  });
+  }));
   const archived = await api.archive({ cwd: repo.root, control_id: "capacity-archival-root", actor_id: "parent", expected_revision: finalized.revision });
   const successor = await api.init({ cwd: repo.root, control_id: "capacity-successor", predecessor_control_id: "capacity-archival-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   assert.deepEqual(successor.manifest.continuation, { predecessor_control_id: "capacity-archival-root", root_control_id: "capacity-archival-root", sequence: 1 });
@@ -1561,6 +1589,7 @@ test("Task snapshotは文書全体OIDから独立し、同一Control依存のrea
   const consultation = await api.consultationRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: run.revision, consultation: makeConsultation({ task_id: "dependent-task" }) });
   await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, worker_run_id: "run-001" }), code("DEPENDENCY_NOT_READY"));
   await assert.rejects(api.observeConsultation({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, consultation_id: "consultation-001", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } }), code("DEPENDENCY_NOT_READY"));
+  await materializeTaskDecision(repo, "docs/foundation-decision.md");
   const finalized = await api.taskFinalizeRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, task_id: "foundation-task", finalization_ref: "docs/foundation-decision.md", recorded_by: "parent" });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: finalized.revision, worker_run_id: "run-001" });
   const dispatched = await api.observeConsultation({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: admitted.revision, consultation_id: "consultation-001", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "dispatched" } });
@@ -2065,6 +2094,44 @@ test("malformed manifestまたはcontrols未知entryが次mutationをfail-closed
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "blocked-by-manifest" }) }), code("INVALID_SCHEMA"));
 });
 
+test("Task finalizationはactive child・未裁定・取消を拒否しdecision receiptへ完全拘束する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "task-finalization-boundary" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "finalization-task", effect: "read", write_scope: [] }) });
+  const run = await api.workerRunRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "finalization-run", task_id: "finalization-task", assignment_id: "finalization-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "finalization-assignment" } }) });
+  const finalize = (expected_revision) => api.taskFinalizeRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision, task_id: "finalization-task", finalization_ref: "docs/task-finalization-decision.md", recorded_by: "parent" });
+  await assert.rejects(finalize(run.revision), code("FINALIZATION_NOT_READY"));
+  const workerCancelled = await api.observeWorker({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: run.revision, worker_run_id: "finalization-run", observation: workerObservation("cancelled") });
+  const consultation = await api.consultationRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: workerCancelled.revision, consultation: makeConsultation({ consultation_id: "finalization-consultation", task_id: "finalization-task", assignment_id: "finalization-consultation-assignment" }) });
+  await assert.rejects(finalize(consultation.revision), code("FINALIZATION_NOT_READY"));
+  const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: consultation.revision, consultation_id: "finalization-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "test", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
+  const consultationFailed = await api.observeConsultation({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: consultationDispatched.revision, consultation_id: "finalization-consultation", observation: { state: "failed", source: "gpt-connector", observed_version: "test", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "failed", terminal_evidence: [evidence("consultation-terminal", "executor-receipt")] } });
+  const pendingRun = await api.workerRunRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: consultationFailed.revision, worker_run: makeWorkerRun({ worker_run_id: "pending-acceptance-run", task_id: "finalization-task", assignment_id: "pending-acceptance-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "pending-acceptance-assignment" } }) });
+  const pendingAdmitted = await api.admitWorker({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: pendingRun.revision, worker_run_id: "pending-acceptance-run" });
+  const pendingDispatched = await api.observeWorker({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: pendingAdmitted.revision, worker_run_id: "pending-acceptance-run", observation: workerObservation("dispatched") });
+  const pendingCompleted = await api.observeWorker({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: pendingDispatched.revision, worker_run_id: "pending-acceptance-run", observation: completedWorkerObservation() });
+  await assert.rejects(finalize(pendingCompleted.revision), code("FINALIZATION_NOT_READY"));
+  const pendingAccepted = await api.accept({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: pendingCompleted.revision, worker_run_id: "pending-acceptance-run", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/pending-acceptance-decision.md", "decision")], decision_note: "parent decided", decided_by: "parent" });
+  await assert.rejects(finalize(pendingAccepted.revision), code("EVIDENCE_UNAVAILABLE"));
+  await materializeTaskDecision(repo, "docs/task-finalization-decision.md");
+  const finalized = await finalize(pendingAccepted.revision);
+  const receipt = finalized.manifest.transition_receipts.at(-1);
+  assert.equal(receipt.operation, "task-finalize"); assert.equal(receipt.subject_digest.length, 64);
+  assert.equal(receipt.evidence[0].ref, "docs/task-finalization-decision.md");
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: finalized.revision, worker_run: makeWorkerRun({ worker_run_id: "late-finalized-run", task_id: "finalization-task", assignment_id: "late-finalized-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "late-finalized-assignment" } }) }), code("TASK_FINALIZED"));
+  await assert.rejects(api.consultationRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: finalized.revision, consultation: makeConsultation({ consultation_id: "late-finalized-consultation", task_id: "finalization-task", assignment_id: "late-finalized-consultation-assignment" }) }), code("TASK_FINALIZED"));
+  const tamperedRecord = structuredClone(finalized.manifest); tamperedRecord.task_finalizations[0].finalization_ref = "docs/other.md";
+  assert.throws(() => api.validateManifest(tamperedRecord), code("INVALID_SCHEMA"));
+  const stray = structuredClone(finalized.manifest); const previous = stray.transition_receipts.at(-1);
+  const strayReceipt = makeTransitionReceipt({ revision: stray.record_revision + 1, actor_id: "parent", operation: "task-finalize", subject: { kind: "task-finalization", id: "stray-task" }, subject_digest: "f".repeat(64), previous_state: "unfinalized", next_state: "finalized", evidence: [evidence("docs/stray.md", "decision")], recorded_at: "2026-07-14T01:00:00.000Z", previous_receipt_digest: previous.receipt_digest });
+  stray.transition_receipts.push(strayReceipt); stray.record_revision += 1; stray.last_update = { actor_id: "parent", updated_at: strayReceipt.recorded_at };
+  assert.throws(() => api.validateManifest(stray), code("INVALID_SCHEMA"));
+
+  const cancelledControl = await api.init({ cwd: repo.root, control_id: "cancelled-task-finalization", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const cancelledTask = await api.taskRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelledControl.revision, task: makeTask({ task_id: "cancelled-finalization-task", effect: "read", write_scope: [] }) });
+  const cancelled = await api.taskCancelRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelledTask.revision, task_id: "cancelled-finalization-task", decision: evidence("docs/cancelled-task.md", "decision") });
+  await assert.rejects(api.taskFinalizeRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelled.revision, task_id: "cancelled-finalization-task", finalization_ref: "docs/task-finalization-decision.md", recorded_by: "parent" }), code("INVALID_TRANSITION"));
+});
+
 test("accept/reject/task finalization/control finalization/archiveは状態・証拠・atomic manifestを検査する", async (t) => {
   const { repo, result } = await initialized(t);
   const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask() });
@@ -2076,21 +2143,33 @@ test("accept/reject/task finalization/control finalization/archiveは状態・�
   assert.equal(accepted.manifest.worker_runs[0].acceptance.decision, "accepted");
   assert.equal(accepted.manifest.transition_receipts.at(-1).operation, "worker-accept");
   assert.deepEqual(accepted.manifest.transition_receipts.at(-1).evidence, [evidence("docs/verify.md")]);
+  await materializeTaskDecision(repo, "docs/decision.md");
   const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: accepted.revision, task_id: "task-001", finalization_ref: "docs/decision.md", recorded_by: "parent" });
   await assert.rejects(api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision }), code("ARCHIVE_NOT_READY"));
   const phaseComplete = await completePhaseGate(repo, CONTROL, decided.revision);
-  const finalized = await api.finalizeControl({
+  const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
     cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: phaseComplete.revision,
     acceptance_matrix_ref: "docs/acceptance-matrix.md",
     final_audit_evidence: [evidence("docs/final-audit.md")],
-    regression_evidence: [evidence("docs/regression.md", "command")],
+    regression_evidence: [evidence("docs/regression.md")],
     knowledge_return_refs: ["docs/knowledge-return.md"],
     parent_decision: evidence("docs/final-decision.md", "decision"),
     finalized_by: "parent",
-  });
+  }));
   assert.equal(finalized.manifest.control_finalization.objective_ref, "docs/control-record-plan.md");
-  assert.equal(finalized.manifest.transition_receipts.at(-1).operation, "control-finalize");
+  const finalReceipt = finalized.manifest.transition_receipts.at(-1);
+  assert.equal(finalReceipt.operation, "control-finalize"); assert.equal(finalReceipt.subject_digest.length, 64);
+  assert.equal(finalReceipt.evidence[0].ref, "docs/acceptance-matrix.md");
+  assert.ok(finalReceipt.evidence.some((entry) => entry.ref === "docs/knowledge-return.md"));
+  const tamperedFinalization = structuredClone(finalized.manifest); tamperedFinalization.control_finalization.knowledge_return_refs[0] = "docs/other-knowledge.md";
+  assert.throws(() => api.validateManifest(tamperedFinalization), code("INVALID_SCHEMA"));
+  const tamperedReceipt = structuredClone(finalized.manifest); tamperedReceipt.transition_receipts[tamperedReceipt.transition_receipts.length - 1] = makeTransitionReceipt({ ...tamperedReceipt.transition_receipts.at(-1), subject_digest: "f".repeat(64) });
+  assert.throws(() => api.validateManifest(tamperedReceipt), code("INVALID_SCHEMA"));
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: finalized.revision, task: makeTask({ task_id: "late-task" }) }), code("CONTROL_FINALIZED"));
+  const knowledgePath = join(repo.root, "docs", "knowledge-return.md"); const originalKnowledge = await readFile(knowledgePath, "utf8");
+  await writeFile(knowledgePath, `${originalKnowledge}tampered\n`);
+  await assert.rejects(api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: finalized.revision }), code("EVIDENCE_DIGEST_MISMATCH"));
+  await writeFile(knowledgePath, originalKnowledge);
   const archived = await api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: finalized.revision });
   assert.equal(archived.manifest.status, "archived");
   assert.equal(archived.manifest.transition_receipts.at(-1).operation, "control-archive");
@@ -2108,11 +2187,27 @@ test("control finalizationはTask完了と監査・回帰・knowledge return・�
     parent_decision: evidence("docs/final-decision.md", "decision"), finalized_by: "parent",
   };
   await assert.rejects(api.finalizeControl(base), code("FINALIZATION_NOT_READY"));
+  await materializeTaskDecision(repo, "docs/decision.md");
   const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision, task_id: "task-001", finalization_ref: "docs/decision.md", recorded_by: "parent" });
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, final_audit_evidence: [] }), code("INVALID_SCHEMA"));
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, regression_evidence: [] }), code("INVALID_SCHEMA"));
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, knowledge_return_refs: [] }), code("INVALID_SCHEMA"));
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, parent_decision: evidence("docs/not-a-decision.md") }), code("INVALID_SCHEMA"));
+});
+
+test("control finalizationはmatrix・監査・回帰・knowledgeの実在とdigestをfinalize境界で検査する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "finalization-evidence-boundary" });
+  const phaseComplete = await completePhaseGate(repo, "finalization-evidence-boundary", result.revision);
+  const input = {
+    cwd: repo.root, control_id: "finalization-evidence-boundary", actor_id: "parent", expected_revision: phaseComplete.revision,
+    acceptance_matrix_ref: "docs/matrix-evidence.md", final_audit_evidence: [evidence("docs/audit-evidence.md")],
+    regression_evidence: [evidence("docs/regression-evidence.md")], knowledge_return_refs: ["docs/knowledge-evidence.md"],
+    parent_decision: evidence("docs/finalization-parent-decision.md", "decision"), finalized_by: "parent",
+  };
+  await assert.rejects(api.finalizeControl(input), code("EVIDENCE_UNAVAILABLE"));
+  const prepared = await materializeFinalizationInput(repo, input);
+  await assert.rejects(api.finalizeControl({ ...prepared, final_audit_evidence: [{ ...prepared.final_audit_evidence[0], digest: "f".repeat(64) }] }), code("EVIDENCE_DIGEST_MISMATCH"));
+  await assert.rejects(api.finalizeControl({ ...prepared, regression_evidence: [evidence("node --test", "command")] }), code("EVIDENCE_REQUIRED"));
 });
 
 test("control finalizationは全campaignの明示的な親releaseを必須にする", async (t) => {
@@ -2121,12 +2216,13 @@ test("control finalizationは全campaignの明示的な親releaseを必須にす
   const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-finalization-worker", task_id: "campaign-finalization-task", assignment_id: "campaign-finalization-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-finalization-assignment" } }) });
   const cancelled = await api.observeWorker({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "campaign-finalization-worker", observation: workerObservation("cancelled") });
   const campaign = await api.campaignRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: cancelled.revision, campaign: { campaign_id: "campaign-finalization-gate", campaign_type: "final-audit", members: [{ kind: "worker-run", id: "campaign-finalization-worker" }], gated_task_ids: ["campaign-finalization-task"], audit_required: false } });
+  await materializeTaskDecision(repo, "docs/campaign-finalization-decision.md");
   const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: campaign.revision, task_id: "campaign-finalization-task", finalization_ref: "docs/campaign-finalization-decision.md", recorded_by: "parent" });
-  const finalization = (expected_revision) => ({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision, acceptance_matrix_ref: "docs/campaign-acceptance.md", final_audit_evidence: [evidence("docs/campaign-final-audit.md")], regression_evidence: [evidence("campaign-regression", "command")], knowledge_return_refs: ["docs/campaign-knowledge.md"], parent_decision: evidence("docs/campaign-final-decision.md", "decision"), finalized_by: "parent" });
+  const finalization = (expected_revision) => ({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision, acceptance_matrix_ref: "docs/campaign-acceptance.md", final_audit_evidence: [evidence("docs/campaign-final-audit.md")], regression_evidence: [evidence("docs/campaign-regression.md")], knowledge_return_refs: ["docs/campaign-knowledge.md"], parent_decision: evidence("docs/campaign-final-decision.md", "decision"), finalized_by: "parent" });
   await assert.rejects(api.finalizeControl(finalization(decided.revision)), code("FINALIZATION_NOT_READY"));
   const released = await api.releaseCampaign({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: decided.revision, campaign_id: "campaign-finalization-gate", audit_evidence: [], decision: evidence("docs/campaign-release-decision.md", "decision") });
   const phaseComplete = await completePhaseGate(repo, "campaign-finalization", released.revision);
-  const finalized = await api.finalizeControl(finalization(phaseComplete.revision));
+  const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, finalization(phaseComplete.revision)));
   assert.equal(finalized.manifest.control_finalization.finalized_by, "parent");
 });
 
@@ -2237,13 +2333,15 @@ test("parent-declared campaign gateは全member terminal・audit・親releaseま
   await assert.rejects(api.reservePlacement({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, task_id: "campaign-gated-task", candidate: makePlacementCandidate({ candidate_id: "campaign-reservation", registry_observation_id: "campaign-registry", workspace_cwd: repo.root, assignment_id: "campaign-reservation-assignment", executor_handle: { idempotency_key: "R".repeat(22) }, lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "campaign-reservation-assignment" } }), review_decision: null }), code("PLACEMENT_INELIGIBLE"));
   await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, worker_run_id: "campaign-gated-worker" }), code("CAMPAIGN_NOT_RELEASED"));
   await assert.rejects(api.observeConsultation({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, consultation_id: "campaign-gated-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "dispatched" } }), code("CAMPAIGN_NOT_RELEASED"));
-  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") }), code("CAMPAIGN_NOT_TERMINAL"));
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") }), code("CAMPAIGN_NOT_READY"));
   const workerCompleted = await api.observeWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, worker_run_id: "campaign-member-worker", observation: completedWorkerObservation() });
-  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: workerCompleted.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") }), code("CAMPAIGN_NOT_TERMINAL"));
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: workerCompleted.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") }), code("CAMPAIGN_NOT_READY"));
   const consultationFailed = await api.observeConsultation({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: workerCompleted.revision, consultation_id: "campaign-member-consultation", observation: { state: "failed", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:03:00.000Z", raw_state: "failed", terminal_evidence: [evidence("docs/campaign-consultation-terminal.md", "executor-receipt")] } });
-  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationFailed.revision, campaign_id: "campaign-gate", audit_evidence: [], decision: evidence("docs/campaign-release.md", "decision") }), code("EVIDENCE_REQUIRED"));
-  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationFailed.revision, campaign_id: "campaign-gate", audit_evidence: Array.from({ length: 256 }, (_, index) => evidence(`docs/campaign-audit-${index}.md`)), decision: evidence("docs/campaign-release.md", "decision") }), code("LIMIT_EXCEEDED"));
-  const released = await api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationFailed.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") });
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationFailed.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") }), code("CAMPAIGN_NOT_READY"));
+  const memberAccepted = await api.accept({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationFailed.revision, worker_run_id: "campaign-member-worker", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/campaign-worker-accept.md", "decision")], decision_note: "campaign member result verified", decided_by: "parent" });
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberAccepted.revision, campaign_id: "campaign-gate", audit_evidence: [], decision: evidence("docs/campaign-release.md", "decision") }), code("EVIDENCE_REQUIRED"));
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberAccepted.revision, campaign_id: "campaign-gate", audit_evidence: Array.from({ length: 256 }, (_, index) => evidence(`docs/campaign-audit-${index}.md`)), decision: evidence("docs/campaign-release.md", "decision") }), code("LIMIT_EXCEEDED"));
+  const released = await api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberAccepted.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") });
   assert.equal(released.manifest.worker_runs.find((entry) => entry.worker_run_id === "campaign-gated-worker").state, "planned");
   assert.equal(released.manifest.consultations.find((entry) => entry.consultation_id === "campaign-gated-consultation").state, "planned");
   const status = await api.campaignStatus({ cwd: repo.root, control_id: "campaign-control", campaign_id: "campaign-gate" });
@@ -2358,6 +2456,14 @@ test("固定phase gateはhigh risk behavior-changeとbehavior-preservingを明�
   const preserved = await completePhaseGate(repo, "phase-preserving", preserving.revision);
   assert.equal(preserved.manifest.phase_gate.phases.find((entry) => entry.phase === "safety_net").state, "not-required");
   assert.equal(preserved.manifest.phase_gate.phases.find((entry) => entry.phase === "behavior_change").state, "not-applicable");
+  const knowledgeBoundary = await api.init({ cwd: repo.root, control_id: "phase-knowledge-evidence", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  let boundary = await api.phaseGateRecord({ cwd: repo.root, control_id: "phase-knowledge-evidence", actor_id: "parent", expected_revision: knowledgeBoundary.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  for (const phase of ["baseline", "discovery", "design", "safety_net", "implementation", "behavior_change", "integration"]) {
+    const state = phase === "safety_net" ? "not-required" : phase === "behavior_change" ? "not-applicable" : "completed";
+    const decision = ["design", "safety_net", "behavior_change"].includes(phase) ? evidence(`docs/${phase}-decision.md`, "decision") : null;
+    boundary = await api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-knowledge-evidence", actor_id: "parent", expected_revision: boundary.revision, phase, state, evidence: phase === "baseline" ? [evidence("docs/baseline-evidence.md")] : [], decision });
+  }
+  await assert.rejects(api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-knowledge-evidence", actor_id: "parent", expected_revision: boundary.revision, phase: "knowledge_return", state: "completed", evidence: [], decision: null }), code("INVALID_SCHEMA"));
 });
 
 test("phase gateは不足・順序逸脱・receipt改竄・未complete finalizationをfail closedにする", async (t) => {
