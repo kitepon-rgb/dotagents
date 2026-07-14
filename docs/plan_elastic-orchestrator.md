@@ -93,7 +93,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   参照し、cycleと未完了依存のadmissionを拒否する。汎用DAG workflow engineにはしない。
 - [x] Task文書全体OIDへの結合をやめ、親が固定したcanonical admission snapshotとdigestを保存する。
   意味・成功条件はdocs正本のまま維持する。
-- [ ] boundedなlineage fact（parent/root assignment、provider、model、prompt family、context policy、
+- [x] boundedなlineage fact（parent/root assignment、provider、model、prompt family、context policy、
   input digest、approach family ref、shared finding refs）を保存し、独立性scoreは作らない。
 - [x] dispatch／terminal／result／verification evidenceをtyped descriptorとして永続化し、内容本体・
   prompt・secret・巨大logは保存しない。

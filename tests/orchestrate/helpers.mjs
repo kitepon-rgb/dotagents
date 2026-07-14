@@ -99,11 +99,21 @@ export function makeTask(overrides = {}) {
 }
 
 export function makeWorkerRun(overrides = {}) {
+  const contextPolicy = {
+    share_objective: true, share_current_candidate: false, share_existing_findings: false,
+    share_failed_approaches: false, share_test_results: true,
+  };
   return {
     worker_run_id: "run-001", task_id: "task-001", assignment_id: "assignment-001",
     executor: "codex-sidecar", role_ref: "implementer", workspace_cwd: "/workspace-is-resolved-by-library",
     write_mode: "direct",
     execution_verification: { stage: "execution-verified", observed_version: "test-version", observed_at: "2026-07-14T00:00:00.000Z", evidence: evidence("docs/execution-proof.md") },
+    lineage: {
+      parent_worker_run_id: null, root_assignment_id: overrides.assignment_id ?? "assignment-001",
+      provider: "openai", model: "gpt-5.6-terra", prompt_family: "implementation-v1",
+      independence_group: "implementation-primary", context_policy: contextPolicy,
+      input_digest: "b".repeat(64), approach_family_ref: null, shared_finding_refs: [],
+    },
     state: "planned", executor_handle: { idempotency_key: "idempotency-001" },
     executor_observation: null, admission: null, dispatch_evidence: [], dispatch_attempt_evidence: [],
     terminal_evidence: [], result: null, acceptance: null, ...overrides,

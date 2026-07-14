@@ -162,6 +162,29 @@ test("Task snapshotは文書全体OIDから独立し、同一Control依存のrea
   assert.throws(() => api.validateManifest(cycle), code("INVALID_SCHEMA"));
 });
 
+test("Worker lineageは親子・root assignment・context・入力digestを事実として保存する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "lineage-control" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "lineage-task" }) });
+  const root = await api.workerRunRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "lineage-task", workspace_cwd: repo.root }) });
+  assert.equal(root.manifest.worker_runs[0].lineage.root_assignment_id, "assignment-001");
+  const childLineage = {
+    ...structuredClone(root.manifest.worker_runs[0].lineage),
+    parent_worker_run_id: "run-001", root_assignment_id: "assignment-001",
+    prompt_family: "refutation-v1", independence_group: "independent-refutation",
+    input_digest: "c".repeat(64), approach_family_ref: "minimal-change",
+    shared_finding_refs: ["docs/findings/auth-boundary.md"],
+  };
+  const child = await api.workerRunRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: root.revision, worker_run: makeWorkerRun({ worker_run_id: "run-child", task_id: "lineage-task", assignment_id: "assignment-child", workspace_cwd: repo.root, lineage: childLineage }) });
+  assert.deepEqual(child.manifest.worker_runs[1].lineage, childLineage);
+  const unknownParent = { ...childLineage, parent_worker_run_id: "missing-run" };
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: child.revision, worker_run: makeWorkerRun({ worker_run_id: "unknown-parent-run", task_id: "lineage-task", assignment_id: "unknown-parent-assignment", workspace_cwd: repo.root, lineage: unknownParent }) }), code("INVALID_SCHEMA"));
+  const wrongContext = structuredClone(childLineage); wrongContext.parent_worker_run_id = null; wrongContext.root_assignment_id = "wrong-context-assignment"; wrongContext.context_policy.share_existing_findings = true;
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: child.revision, worker_run: makeWorkerRun({ worker_run_id: "wrong-context-run", task_id: "lineage-task", assignment_id: "wrong-context-assignment", workspace_cwd: repo.root, lineage: wrongContext }) }), code("INVALID_SCHEMA"));
+  const cycle = structuredClone(child.manifest);
+  cycle.worker_runs[0].lineage.parent_worker_run_id = "run-child";
+  assert.throws(() => api.validateManifest(cycle), code("INVALID_SCHEMA"));
+});
+
 test("read-only Workerも正式admissionを通り、証拠つき結果と親検証を保存する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "read-admission-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "read-admission-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "read-task", effect: "read", write_scope: [] }) });

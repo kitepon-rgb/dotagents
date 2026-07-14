@@ -193,6 +193,7 @@ Worker Runは一回のworker割当である。入力schemaはExecutorごとの�
 ```text
 worker_run_id, task_id, assignment_id, executor, role_ref,
 workspace_cwd, write_mode, execution_verification,
+lineage,
 state, executor_handle, executor_observation, admission,
 dispatch_evidence, dispatch_attempt_evidence, terminal_evidence,
 result, acceptance
@@ -244,6 +245,34 @@ Workerのcommon dirはControlのcommon dirと一致しなければならない�
   stageは`unverified | installed | registered | verified | execution-verified`。parent以外のRunは
   `verified`以上、外部writeは`execution-verified`だけを許可する。未知入口はwriterへ配置しない。
 - workspace identityはlibraryがgitから解決し、入力の自己申告値をそのまま保存しない。
+- `lineage`は次のexact objectとし、独立性scoreや票数を保存しない。
+
+  ```json
+  {
+    "parent_worker_run_id": null,
+    "root_assignment_id": "assignment-001",
+    "provider": "openai",
+    "model": "gpt-5.6-terra",
+    "prompt_family": "implementation-v1",
+    "independence_group": "implementation-primary",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": false,
+      "share_existing_findings": false,
+      "share_failed_approaches": false,
+      "share_test_results": true
+    },
+    "input_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "approach_family_ref": null,
+    "shared_finding_refs": []
+  }
+  ```
+
+  provider／modelは未解決なら文字列`unknown`を明示し、空や推測値で埋めない。root Runは
+  `parent_worker_run_id=null`かつ`root_assignment_id=assignment_id`。子Runは同じControl内ですでに
+  記録済みのparent Workerを参照し、root assignmentを継承する。`context_policy`はTask snapshotと
+  完全一致する。`input_digest`は親が渡すpacket／入力構成のSHA-256であり、内容本体は保存しない。
+  `approach_family_ref`はbounded identifierまたは`null`、Finding参照はrepo相対pathである。
 - 同一worktreeはscopeが非交差でも予約済みwriterを最大1件とする。workspace全体fingerprintを
   共有するため、Phase 1では同一worktree並行writeを許可しない。別worktreeの重複scopeは、双方が
   `write_mode=isolated-alternative`かつ同じ非空`alternative_group`の場合だけ許可する。
