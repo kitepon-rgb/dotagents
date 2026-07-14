@@ -41,8 +41,9 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v7", record_revision: 0, control_id: CONTROL, status: "active",
-    declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" }, budget: makeBudget(),
+    schema_version: "dotagents.orchestration-control.v8", record_revision: 0, control_id: CONTROL, status: "active",
+    declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
+    continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
     document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
@@ -78,6 +79,34 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
   assert.match(status.transition_receipts[0].receipt_digest, /^[0-9a-f]{64}$/);
   await assert.rejects(api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTROL_EXISTS"));
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: 1, task: makeTask() }), code("REVISION_CONFLICT"));
+});
+
+test("receipt capacityは閉鎖用slotを予約し、archive済みControlからだけ後継へ継続する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "capacity-root" });
+  const manifest = structuredClone(result.manifest);
+  for (let revision = 1; revision <= 253; revision++) {
+    const previous = manifest.transition_receipts.at(-1);
+    manifest.transition_receipts.push(makeTransitionReceipt({
+      revision, operation: "task-record", subject: { kind: "task", id: `synthetic-${revision}` },
+      previous_state: null, next_state: "recorded", previous_receipt_digest: previous.receipt_digest,
+    }));
+  }
+  manifest.record_revision = 253;
+  manifest.last_update = { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" };
+  await writeJson(join(repo.commonDir, "dotagents", "orchestrate", "controls", "capacity-root", "manifest.json"), manifest);
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253, task: makeTask({ task_id: "would-poison" }) }), code("CONTROL_CAPACITY_RESERVED"));
+  await assert.rejects(api.init({ cwd: repo.root, control_id: "too-early", predecessor_control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTINUATION_NOT_READY"));
+  const finalized = await api.finalizeControl({
+    cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253,
+    acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")],
+    regression_evidence: [evidence("tests", "command")], knowledge_return_refs: ["docs/knowledge.md"],
+    parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
+  });
+  const archived = await api.archive({ cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: finalized.revision });
+  assert.equal(archived.manifest.transition_receipts.length, 256);
+  const successor = await api.init({ cwd: repo.root, control_id: "capacity-successor", predecessor_control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  assert.deepEqual(successor.manifest.continuation, { predecessor_control_id: "capacity-root", root_control_id: "capacity-root", sequence: 1 });
+  await assert.rejects(api.init({ cwd: repo.root, control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTROL_EXISTS"));
 });
 
 test("TaskはF/A/H、scope、approval、global task_id一意性を正しく記録する", async (t) => {

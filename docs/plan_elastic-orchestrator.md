@@ -111,7 +111,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   必須にし、対象外operationへ流用できないようadmissionで照合する。真正性の最終確認は親が保持する。
 - [x] role/effect policyをsnapshotし、sorter／refuter／verifierのwrite、未承認integrator write、
   Fの外部writeを拒否する。roleの意味正本は既存agent／skill文書のままにする。
-- [ ] bounded Control continuation／retentionを設計し、256件到達後のpoison、archived ID永久予約、
+- [x] bounded Control continuation／retentionを設計し、256件到達後のpoison、archived ID永久予約、
   active global conflict見落としを防ぐ。
 - [ ] 同一worktreeは安全な帰属機構が完成するまで単一writerを維持する。別worktreeの代替案は
   `isolated-alternative`として明示する。

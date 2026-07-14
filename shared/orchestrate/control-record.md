@@ -49,7 +49,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v7",
+  "schema_version": "dotagents.orchestration-control.v8",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -62,6 +62,11 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
     "initial_dirty": false,
     "created_at": "2026-07-14T00:00:00.000Z",
     "created_by": "parent-session-id"
+  },
+  "continuation": {
+    "predecessor_control_id": null,
+    "root_control_id": "elastic-phase1",
+    "sequence": 0
   },
   "budget": {
     "max_worker_runs": 32,
@@ -102,10 +107,10 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v7で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v8で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
-  snapshotを追加した。旧manifestを
+  snapshot、v8はbounded continuationを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -180,8 +185,12 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 - failed mutationはrevisionもreceiptも増やさない。`last_update`は最後のreceiptのactor/timeと一致する。
 - `recover-lock`はControl manifest mutationではなく、特定Controlを選ばないlock-owner保守操作なので
   receipt対象外。lock token、owner body、PID、file identityの検証結果がその操作の返却契約である。
-- 256件を超える継続方法は後続のbounded continuation／retention契約で解決する。上限到達を成功へ
-  丸めたり、古いreceiptを黙って削除したりしない。
+- receiptは256件を上限とし、各mutationのcommit前に、全nonterminal Run／Consultationのterminal化、
+  completed Workerの親Decision、未finalize Task、Control finalization、archiveに必要な最悪receipt数を
+  予約する。閉鎖slotを侵食する拡張は`CONTROL_CAPACITY_RESERVED`で拒否し、古いreceiptを削除しない。
+- archive済みControlだけを`predecessor_control_id`へ指定して後継Controlをinitできる。後継は同じ
+  objective、root ID、単調増加sequenceを持ち、Task／Run IDは新規にする。predecessor manifestは
+  chain検証とID予約のため保持し、archived IDを再利用しない。
 
 ## Task declaration
 
@@ -643,7 +652,7 @@ accept, reject, task-finalize-record, recover-lock, archive
 `cwd`を必須とする。
 
 ```text
-init({ cwd, control_id, objective_ref, actor_id, document_refs, budget })
+init({ cwd, control_id, objective_ref, actor_id, document_refs, budget, predecessor_control_id? })
 status({ cwd, control_id })
 taskRecord({ cwd, control_id, actor_id, expected_revision, task })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
@@ -690,6 +699,7 @@ EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 FINALIZATION_NOT_READY, CONTROL_FINALIZED,
 APPROVAL_MISMATCH, APPROVAL_EXPIRED,
 ROLE_EFFECT_FORBIDDEN,
+CONTROL_CAPACITY_RESERVED, CONTINUATION_NOT_READY,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE
 ```
