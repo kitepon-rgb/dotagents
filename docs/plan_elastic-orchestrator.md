@@ -157,7 +157,7 @@ CLI列挙の`control-finalize`欠落だけをP3の正典同期漏れとして採
 
 ### Phase 2: Executor adapters
 
-- [ ] 共通coreへ一枚岩lifecycleを強制せず、能力別optional interfaceを定義する。
+- [x] 共通coreへ一枚岩lifecycleを強制せず、能力別optional interfaceを定義する。
 - [ ] codex-sidecar: durable `work`のdispatch／observe／collect／recoverと隔離worktreeを実装する。
 - [ ] Codex native: routing smoke済みhandle、follow-up、interrupt、親host tool呼出しのpacket／observation
   projectionを実装する。Node CLIがhost内部APIを持つふりをしない。
