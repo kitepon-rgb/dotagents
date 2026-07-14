@@ -68,17 +68,35 @@ async function initialized(t, overrides = {}) {
   return { repo, result };
 }
 
+async function completePhaseGate(repo, controlId, revision, { risk = "standard", behaviorLane = "behavior-preserving" } = {}) {
+  let result = await api.phaseGateRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: revision, risk, behavior_lane: behaviorLane });
+  for (const phase of ["baseline", "discovery", "design", "safety_net", "implementation", "behavior_change", "integration", "knowledge_return", "complete"]) {
+    const decisionRequired = ["design", "complete"].includes(phase)
+      || (phase === "safety_net" && risk === "standard")
+      || phase === "behavior_change";
+    const state = phase === "safety_net" && risk === "standard" ? "not-required"
+      : phase === "behavior_change" && behaviorLane === "behavior-preserving" ? "not-applicable" : "completed";
+    result = await api.phaseGateAdvance({
+      cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision,
+      phase, state, evidence: phase === "baseline" || (phase === "safety_net" && risk === "high") ? [evidence(`docs/phase-${phase}.md`)] : [],
+      decision: decisionRequired ? evidence(`docs/phase-${phase}-decision.md`, "decision") : null,
+    });
+  }
+  return result;
+}
+
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v21", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v22", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
-    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], campaigns: [], registry_observations: [], task_finalizations: [], control_finalization: null,
+    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], campaigns: [], phase_gate: null, registry_observations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
   assert.deepEqual(api.validateManifest(manifest), manifest);
+  assert.throws(() => api.validateManifest({ ...manifest, schema_version: "dotagents.orchestration-control.v21" }), code("INVALID_SCHEMA"));
   assert.throws(() => api.validateManifest({ ...manifest, prompt: "must never persist" }), code("INVALID_SCHEMA"));
   assert.deepEqual(api.normalizeScope({ kind: "directory", path: "lib/orchestrate" }), { kind: "directory", path: "lib/orchestrate" });
   for (const path of ["../escape", "/absolute", "a\\b", ".", "a/*", "a/../b"]) assert.throws(() => api.normalizeScope({ kind: "directory", path }), code("INVALID_SCOPE"));
@@ -271,17 +289,25 @@ test("receipt capacityは閉鎖用slotを予約し、archive済みControlから�
   manifest.last_update = { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" };
   await writeJson(join(repo.commonDir, "dotagents", "orchestrate", "controls", "capacity-root", "manifest.json"), manifest);
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253, task: makeTask({ task_id: "would-poison" }) }), code("CONTROL_CAPACITY_RESERVED"));
+  await assert.rejects(api.phaseGateRecord({ cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253, risk: "standard", behavior_lane: "behavior-preserving" }), code("CONTROL_CAPACITY_RESERVED"));
   await assert.rejects(api.init({ cwd: repo.root, control_id: "too-early", predecessor_control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTINUATION_NOT_READY"));
-  const finalized = await api.finalizeControl({
+  await assert.rejects(api.finalizeControl({
     cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253,
     acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")],
     regression_evidence: [evidence("tests", "command")], knowledge_return_refs: ["docs/knowledge.md"],
     parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
+  }), code("FINALIZATION_NOT_READY"));
+  const archivalRoot = await api.init({ cwd: repo.root, control_id: "capacity-archival-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const phaseComplete = await completePhaseGate(repo, "capacity-archival-root", archivalRoot.revision);
+  const finalized = await api.finalizeControl({
+    cwd: repo.root, control_id: "capacity-archival-root", actor_id: "parent", expected_revision: phaseComplete.revision,
+    acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")],
+    regression_evidence: [evidence("tests", "command")], knowledge_return_refs: ["docs/knowledge.md"],
+    parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
   });
-  const archived = await api.archive({ cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: finalized.revision });
-  assert.equal(archived.manifest.transition_receipts.length, 256);
-  const successor = await api.init({ cwd: repo.root, control_id: "capacity-successor", predecessor_control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  assert.deepEqual(successor.manifest.continuation, { predecessor_control_id: "capacity-root", root_control_id: "capacity-root", sequence: 1 });
+  const archived = await api.archive({ cwd: repo.root, control_id: "capacity-archival-root", actor_id: "parent", expected_revision: finalized.revision });
+  const successor = await api.init({ cwd: repo.root, control_id: "capacity-successor", predecessor_control_id: "capacity-archival-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  assert.deepEqual(successor.manifest.continuation, { predecessor_control_id: "capacity-archival-root", root_control_id: "capacity-archival-root", sequence: 1 });
   await assert.rejects(api.init({ cwd: repo.root, control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTROL_EXISTS"));
 });
 
@@ -1687,8 +1713,9 @@ test("accept/reject/task finalization/control finalization/archiveは状態・�
   assert.deepEqual(accepted.manifest.transition_receipts.at(-1).evidence, [evidence("docs/verify.md")]);
   const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: accepted.revision, task_id: "task-001", finalization_ref: "docs/decision.md", recorded_by: "parent" });
   await assert.rejects(api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision }), code("ARCHIVE_NOT_READY"));
+  const phaseComplete = await completePhaseGate(repo, CONTROL, decided.revision);
   const finalized = await api.finalizeControl({
-    cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision,
+    cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: phaseComplete.revision,
     acceptance_matrix_ref: "docs/acceptance-matrix.md",
     final_audit_evidence: [evidence("docs/final-audit.md")],
     regression_evidence: [evidence("docs/regression.md", "command")],
@@ -1733,7 +1760,8 @@ test("control finalizationは全campaignの明示的な親releaseを必須にす
   const finalization = (expected_revision) => ({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision, acceptance_matrix_ref: "docs/campaign-acceptance.md", final_audit_evidence: [evidence("docs/campaign-final-audit.md")], regression_evidence: [evidence("campaign-regression", "command")], knowledge_return_refs: ["docs/campaign-knowledge.md"], parent_decision: evidence("docs/campaign-final-decision.md", "decision"), finalized_by: "parent" });
   await assert.rejects(api.finalizeControl(finalization(decided.revision)), code("FINALIZATION_NOT_READY"));
   const released = await api.releaseCampaign({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: decided.revision, campaign_id: "campaign-finalization-gate", audit_evidence: [], decision: evidence("docs/campaign-release-decision.md", "decision") });
-  const finalized = await api.finalizeControl(finalization(released.revision));
+  const phaseComplete = await completePhaseGate(repo, "campaign-finalization", released.revision);
+  const finalized = await api.finalizeControl(finalization(phaseComplete.revision));
   assert.equal(finalized.manifest.control_finalization.finalized_by, "parent");
 });
 
@@ -1947,4 +1975,49 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
   const invalidEncoding = spawnOrchestrate(["status", "--input", invalidUtf8]);
   assert.equal(invalidEncoding.status, 2); assert.equal(JSON.parse(invalidEncoding.stderr).code, "INVALID_INPUT");
   assert.equal(init.manifest.control_id, CONTROL);
+});
+
+test("固定phase gateはhigh risk behavior-changeとbehavior-preservingを明示順で閉じる", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "phase-high" });
+  const high = await completePhaseGate(repo, "phase-high", result.revision, { risk: "high", behaviorLane: "behavior-change" });
+  assert.equal(high.manifest.phase_gate.phases.find((entry) => entry.phase === "safety_net").state, "completed");
+  assert.equal(high.manifest.phase_gate.phases.find((entry) => entry.phase === "behavior_change").state, "completed");
+  assert.equal(high.manifest.transition_receipts.filter((entry) => entry.operation === "phase-gate-advance").length, 9);
+  const status = await api.phaseGateStatus({ cwd: repo.root, control_id: "phase-high" });
+  assert.equal(status.complete, true); assert.equal(status.current_phase, null);
+  const brief = await api.statusBrief({ cwd: repo.root, control_id: "phase-high" });
+  assert.deepEqual(brief.phase_gate, { configured: true, risk: "high", behavior_lane: "behavior-change", current_phase: null, complete: true });
+  const preserving = await api.init({ cwd: repo.root, control_id: "phase-preserving", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const preserved = await completePhaseGate(repo, "phase-preserving", preserving.revision);
+  assert.equal(preserved.manifest.phase_gate.phases.find((entry) => entry.phase === "safety_net").state, "not-required");
+  assert.equal(preserved.manifest.phase_gate.phases.find((entry) => entry.phase === "behavior_change").state, "not-applicable");
+});
+
+test("phase gateは不足・順序逸脱・receipt改竄・未complete finalizationをfail closedにする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "phase-negative" });
+  await assert.rejects(api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: result.revision, phase: "baseline", state: "completed", evidence: [evidence("docs/baseline.md")], decision: null }), code("PHASE_GATE_NOT_RECORDED"));
+  const recorded = await api.phaseGateRecord({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: result.revision, risk: "high", behavior_lane: "behavior-preserving" });
+  const tamperedDeclaration = structuredClone(recorded.manifest); tamperedDeclaration.phase_gate.risk = "standard";
+  assert.throws(() => api.validateManifest(tamperedDeclaration), code("INVALID_SCHEMA"));
+  await assert.rejects(api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: recorded.revision, phase: "discovery", state: "completed", evidence: [], decision: null }), code("PHASE_ORDER_INVALID"));
+  await assert.rejects(api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: recorded.revision, phase: "baseline", state: "completed", evidence: [], decision: null }), code("INVALID_SCHEMA"));
+  const baseline = await api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: recorded.revision, phase: "baseline", state: "completed", evidence: [evidence("docs/baseline.md")], decision: null });
+  const discovery = await api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: baseline.revision, phase: "discovery", state: "completed", evidence: [], decision: null });
+  await assert.rejects(api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: discovery.revision, phase: "design", state: "completed", evidence: [], decision: null }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.finalizeControl({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: discovery.revision, acceptance_matrix_ref: "docs/a.md", final_audit_evidence: [evidence("docs/audit.md")], regression_evidence: [evidence("test", "command")], knowledge_return_refs: ["docs/knowledge.md"], parent_decision: evidence("docs/final.md", "decision"), finalized_by: "parent" }), code("FINALIZATION_NOT_READY"));
+  const tampered = structuredClone(discovery.manifest); tampered.transition_receipts.at(-1).next_state = "not-required";
+  assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+});
+
+test("phase gate CLIはrecord/advance/statusだけを行い外部providerを起動しない", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
+  const init = await api.init({ cwd: repo.root, control_id: "phase-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` };
+  const recordInput = join(base, "phase-record.json"); await writeJson(recordInput, { cwd: repo.root, control_id: "phase-cli", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const recorded = spawnOrchestrate(["phase-gate-record", "--input", recordInput], { env }); assert.equal(recorded.status, 0); const recordResult = JSON.parse(recorded.stdout).result;
+  const advanceInput = join(base, "phase-advance.json"); await writeJson(advanceInput, { cwd: repo.root, control_id: "phase-cli", actor_id: "parent", expected_revision: recordResult.revision, phase: "baseline", state: "completed", evidence: [evidence("docs/phase-cli-baseline.md")], decision: null });
+  const advanced = spawnOrchestrate(["phase-gate-advance", "--input", advanceInput], { env }); assert.equal(advanced.status, 0);
+  const statusInput = join(base, "phase-status.json"); await writeJson(statusInput, { cwd: repo.root, control_id: "phase-cli" });
+  const status = spawnOrchestrate(["phase-gate-status", "--input", statusInput], { env }); assert.equal(status.status, 0); assert.equal(JSON.parse(status.stdout).result.current_phase, "discovery");
+  await assert.rejects(access(sentinel.log));
 });

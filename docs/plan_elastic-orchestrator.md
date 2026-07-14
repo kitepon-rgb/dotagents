@@ -201,7 +201,7 @@ provider cancel commandは実行していない。
 ### Phase 4: Campaign／Barrier
 
 - [x] Discovery、Refutation、Design、Implementation、Final Audit campaignを親宣言gateとして表現する。
-- [ ] `baseline → discovery → design → safety_net → implementation → behavior_change? → integration →
+- [x] `baseline → discovery → design → safety_net → implementation → behavior_change? → integration →
   knowledge_return → complete`のphase gateを実装する。baseline evidence、design Decision、
   高リスク時のsafety-net evidence、behavior-preserving／behavior-change laneの整合を形式検査する。
 - [ ] Finding／Approach／Gap／Decisionの意味はdocs artifactが正本とし、ControlはID、digest、参照、

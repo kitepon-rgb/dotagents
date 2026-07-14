@@ -100,6 +100,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   "worker_runs": [],
   "consultations": [],
   "campaigns": [],
+  "phase_gate": null,
   "task_finalizations": [],
   "control_finalization": null,
   "transition_receipts": [
@@ -124,7 +125,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v21で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v22で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -134,7 +135,8 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   Worker cancel要求の分離、v16はparent-declared campaign gate、v17はsidecar durable workの
   遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent path、
   v19はapproach family／assignment retry／integration Run上限をBudget、v20は明示fallback参照を
-  Worker Runへ追加し、v21はmanual Worker生成identity／fallbackのreceipt digest束縛を追加した。旧manifestを
+  Worker Runへ追加し、v21はmanual Worker生成identity／fallbackのreceipt digest束縛を追加し、v22は固定順の
+  phase gateを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -204,7 +206,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 
 - operationは`control-init / task-record / task-cancel-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit / worker-workspace-bind / worker-cancel-request /
   worker-report-import /
-  worker-observe / consultation-observe / campaign-record / campaign-release / worker-accept / worker-reject / task-finalize /
+  worker-observe / consultation-observe / campaign-record / campaign-release / phase-gate-record / phase-gate-advance / worker-accept / worker-reject / task-finalize /
   control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
   `previous_receipt_digest`へ持ち、read/save時に連番とchainを再計算する。過去receiptの書換え、欠落、
@@ -214,14 +216,15 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
   参照、評価結果、review Decision、親actor、選択時刻をcreation receiptへ結合する。manual
   `worker-run-record`も作成時のWorker／Task／assignment identityとfallback宣言をdigestへ結合し、
   fallback元RunとDecision参照を含む生成関係の妥当な値への差替えを拒否する。
-  `worker-workspace-bind`はprovider binding digestを結合する。
+  `worker-workspace-bind`はprovider binding digest、`phase-gate-record`はworkflow／risk／behavior lane
+  宣言のdigestを結合する。
 - evidenceを使わない管理mutationは空配列、dispatch／terminal／result／acceptanceはそのmutationで
   検証したtyped descriptorを保存する。内容本体は複製しない。
 - failed mutationはrevisionもreceiptも増やさない。`last_update`は最後のreceiptのactor/timeと一致する。
 - `recover-lock`はControl manifest mutationではなく、特定Controlを選ばないlock-owner保守操作なので
   receipt対象外。lock token、owner body、PID、file identityの検証結果がその操作の返却契約である。
 - receiptは256件を上限とし、各mutationのcommit前に、全nonterminal Run／Consultationのterminal化、
-  completed Workerの親Decision、未release Campaign、未finalize Task、Control finalization、archiveに必要な最悪receipt数を
+  completed Workerの親Decision、未release Campaign、未完了phase gate、未finalize Task、Control finalization、archiveに必要な最悪receipt数を
   予約する。閉鎖slotを侵食する拡張は`CONTROL_CAPACITY_RESERVED`で拒否し、古いreceiptを削除しない。
 - archive済みControlだけを`predecessor_control_id`へ指定して後継Controlをinitできる。後継は同じ
   objective、root ID、単調増加sequenceを持ち、Task／Run IDは新規にする。predecessor manifestは
@@ -435,9 +438,9 @@ placement eligibilityを主張する操作ではない。Registry評価済みと
 
 ### Brief status and resume check
 
-`status --brief`は`dotagents.orchestration-status-brief.v3`としてmanifest全体を複製せず、
+`status --brief`は`dotagents.orchestration-status-brief.v4`としてmanifest全体を複製せず、
 次だけを親の再開用に固定shapeで返す。`resumeCheck`はこのbriefを含むため
-`dotagents.orchestration-resume-check.v2`とする。
+`dotagents.orchestration-resume-check.v3`とする。
 
 - Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation／Campaign件数
 - Task取消件数、取消済みTask ID、未terminalのcancel要求済みWorker ID
@@ -907,6 +910,25 @@ declared_from_revision, declared_by, declared_at, release
   拒否する。
 - record／status／releaseはprovider command、network、process、cancel、dispatchを実行しない。
 
+## Fixed Control phase gate
+
+Campaignとは別に、Controlは高々一つの親宣言phase gateを持てる。これは汎用workflow engineではなく、
+`baseline → discovery → design → safety_net → implementation → behavior_change → integration → knowledge_return → complete`
+だけをこの順で明示記録するControl stateである。未recordの`phase_gate: null`はactive Controlとして読めるが、
+completeやfinalize可能とは扱わない。
+
+- `phase-gate-record`は`risk: standard | high`と既存Taskと同じ`behavior_lane:
+  behavior-preserving | behavior-change`を固定し、9 stepをすべて`pending`で作る。
+- `phase-gate-advance`は現在のpending stepだけを一回進める。飛越、後退、重複、任意phase名を拒否する。
+  `baseline`はevidence 1件以上、`design`と`complete`は`type=decision`必須である。
+- `risk=high`の`safety_net`は`completed`かつevidence 1件以上。`standard`だけが
+  `not-required`を選べ、その省略にもDecisionが要る。`behavior-preserving`は
+  `behavior_change=not-applicable`＋Decision、`behavior-change`は`completed`＋Decisionを要求する。
+- Finding／Approach／Gap／Decision本文はdocs artifactが所有する。Controlはtyped evidence descriptor、
+  digest、状態だけを保存する。record／advance／statusは外部process、network、dispatchを起動しない。
+- 各record/advanceは同一manifestのreceiptへ厳密に対応し、receipt capacityは未完了stepすべてを
+  閉鎖予約へ含める。v21 manifestは暗黙migrationもcomplete変換もせず`INVALID_SCHEMA`で停止する。
+
 ### Acceptance
 
 Workerの`completed`と親の`accepted | rejected`を分離する。
@@ -1040,7 +1062,7 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release,
+init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance,
 admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
@@ -1091,6 +1113,10 @@ campaignRecord({ cwd, control_id, actor_id, expected_revision, campaign })
 campaignStatus({ cwd, control_id, campaign_id })
 releaseCampaign({ cwd, control_id, actor_id, expected_revision, campaign_id,
                   audit_evidence, decision })
+phaseGateRecord({ cwd, control_id, actor_id, expected_revision, risk, behavior_lane })
+phaseGateStatus({ cwd, control_id })
+phaseGateAdvance({ cwd, control_id, actor_id, expected_revision,
+                  phase, state, evidence, decision })
 delegationPacketForWorker({ cwd, control_id, worker_run_id })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
 bindWorkerWorkspace({ cwd, control_id, actor_id, expected_revision, worker_run_id,
