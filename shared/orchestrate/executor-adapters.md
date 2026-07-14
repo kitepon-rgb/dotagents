@@ -116,3 +116,23 @@ Worker capacity、実行票、worker reportには変換しない。
 APIやExecutor state複製を前提にしないことを明記しているため、request／dispatch／cancel／follow-up packet、
 host tool名、capacity、execution-verified、Worker成功をこのadapterは表現しない。raw prompt、log、secretや
 任意payloadはstrict schema外として拒否する。
+
+## Adapter-specific typed failure matrix
+
+`lookupAdapterFailureSupport`と`projectAdapterFailure`は製品固有の失敗を共通lifecycleへ押し込まず、
+型付きの最小projectionだけを返す。credentialとrate limitは製品所有のままとし、秘密・account quota・
+raw messageをControlへ複製しない。未知code、余計field、非適用familyは拒否する。
+
+| Adapter | credential-missing | rate-limited | timeout | non-zero-exit | malformed-report | workspace-missing | unsupported-capability | timeout recovery |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `codex-sidecar` | 可 | 可 | 可 | 可 | 可 | 可 | 可 | 同一idempotency keyの`result` |
+| `codex-native` | 不適用 | 不適用 | 可 | 不適用 | 不適用 | 不適用 | 可 | 確認済み再照会toolなし |
+| `aiterm` | 可 | 可 | 可 | 不適用（batch exitを保証しない） | 不適用 | 可 | 可 | 同一sessionの`pty_read` |
+| `gpt-connector` | 可 | 可 | 可 | 不適用 | 可（ConsultSnapshot） | 不適用 | 可 | 同一slugの`sessions` |
+| `claude-internal` | 不適用 | 不適用 | 不適用 | 不適用 | 不適用 | 不適用 | 可 | なし |
+
+`ADAPTER_TIMEOUT`はterminal failedへ丸めず、`state="unknown"`とadapter固有のrecovery operationだけを
+残す。既存の`codexSidecarResultRequest`、`aitermTimeoutRecoveryRequest`、
+`gptConnectorTimeoutRecoveryRequest`が同一handleを実際の製品入口へ渡す。`ADAPTER_NON_ZERO_EXIT`、
+`ADAPTER_MALFORMED_REPORT`、`ADAPTER_WORKSPACE_MISSING`、その他の適用されたfailureは`failed`であり、
+成功を主張しない。

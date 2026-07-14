@@ -169,7 +169,7 @@ CLI列挙の`control-finalize`欠落だけをP3の正典同期漏れとして採
   model/effort、timeout後回収を実装する。
 - [x] Claude internal: Claude appendixから同じControl schemaへprojectionし、Codex親から未確認の
   直接dispatchを実装済みに見せない。
-- [ ] adapterごとにcredential不足、rate limit、timeout、non-zero／malformed report、workspace消失、
+- [x] adapterごとにcredential不足、rate limit、timeout、non-zero／malformed report、workspace消失、
   unsupported capabilityをtyped failureとして検証する。
 
 ### Phase 3: Placementとadmission

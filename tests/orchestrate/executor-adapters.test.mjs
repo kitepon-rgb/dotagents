@@ -129,6 +129,32 @@ test("claude-internalはappendix由来のunknown projectionだけを提供し、
   assert.throws(() => adapters.projectClaudeInternalAppendixObservation({ observed_at: "2026-07-14" }), code("INVALID_SCHEMA"));
 });
 
+test("adapter別failure matrixは適用可否を固定し、timeoutだけをunknown/recoveryへ投影する", () => {
+  const families = ["credential-missing", "rate-limited", "timeout", "non-zero-exit", "malformed-report", "workspace-missing", "unsupported-capability"];
+  const supported = {
+    "codex-sidecar": new Set(families), "codex-native": new Set(["timeout", "unsupported-capability"]),
+    aiterm: new Set(["credential-missing", "rate-limited", "timeout", "workspace-missing", "unsupported-capability"]),
+    "gpt-connector": new Set(["credential-missing", "rate-limited", "timeout", "malformed-report", "unsupported-capability"]),
+    "claude-internal": new Set(["unsupported-capability"]),
+  };
+  const codeFor = { "credential-missing": "ADAPTER_CREDENTIAL_MISSING", "rate-limited": "ADAPTER_RATE_LIMITED", timeout: "ADAPTER_TIMEOUT", "non-zero-exit": "ADAPTER_NON_ZERO_EXIT", "malformed-report": "ADAPTER_MALFORMED_REPORT", "workspace-missing": "ADAPTER_WORKSPACE_MISSING", "unsupported-capability": "ADAPTER_UNSUPPORTED_CAPABILITY" };
+  for (const [adapterId, applicable] of Object.entries(supported)) for (const family of families) {
+    const support = adapters.lookupAdapterFailureSupport({ adapter_id: adapterId, failure_family: family });
+    assert.equal(support.applicable, applicable.has(family), `${adapterId}/${family}`);
+    const failureCode = codeFor[family];
+    if (!applicable.has(family)) assert.throws(() => adapters.projectAdapterFailure({ adapter_id: adapterId, failure_code: failureCode }), code("FAILURE_UNSUPPORTED"));
+    else {
+      const projected = adapters.projectAdapterFailure({ adapter_id: adapterId, failure_code: failureCode });
+      assert.equal(projected.state, family === "timeout" ? "unknown" : "failed");
+      assert.equal(projected.recovery_operation, family === "timeout" ? support.timeout_recovery_operation : null);
+    }
+  }
+  assert.throws(() => adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", failure_family: "nonzero" }), code("FAILURE_FAMILY_UNKNOWN"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", failure_code: "RATE_LIMITED" }), code("FAILURE_CODE_UNKNOWN"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", failure_code: "ADAPTER_RATE_LIMITED", raw_message: "secret" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", failure_code: "A".repeat(129) }), code("INVALID_SCHEMA"));
+});
+
 test("codex-sidecar requestは実tool schemaの固定値とcaller handleを純粋に投影する", () => {
   const handle = { idempotency_key: "A".repeat(22) };
   const start = adapters.codexSidecarStartRequest({ projectRoot: "/workspace/source", handle, baseRef: "a".repeat(40), prompt: "Delegation Packetに従って実装する", allowedPaths: ["lib/orchestrate"], denyPaths: [".env"], turnTimeoutMs: 60000 });
