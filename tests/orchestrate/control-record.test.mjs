@@ -52,7 +52,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v16", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v17", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
@@ -112,7 +112,7 @@ test("status briefとresume checkはopaque状態・workspace drift・evidence re
   const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: consultation.revision, consultation_id: "brief-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
   const unknown = await api.observeConsultation({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: consultationDispatched.revision, consultation_id: "brief-consultation", observation: { state: "unknown", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "unknown" } });
   const brief = await api.statusBrief({ cwd: repo.root, control_id: "brief-state-control" });
-  assert.equal(brief.active.worker_runs[0].executor_handle.idempotency_key, "idempotency-001");
+  assert.equal(brief.active.worker_runs[0].executor_handle.idempotency_key, "A".repeat(22));
   assert.equal(brief.active.consultations[0].slug, "known-session-slug");
   assert.deepEqual(brief.unknown.consultation_ids, ["brief-consultation"]);
   assert.ok(brief.unknown.registry_observations[0].fields.includes("capacity:hard_inflight_limit"));
@@ -704,7 +704,7 @@ test("Placement dry-runはRegistry観測済みのRun heartbeatをcapacityへ二�
   const capabilities = makeWorkerRun().workflow_capabilities;
   const recorded = await api.workerRunRecord({
     cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: task.revision,
-    worker_run: makeWorkerRun({ worker_run_id: "heartbeat-run", task_id: "heartbeat-task", assignment_id: "heartbeat-assignment", workflow_capabilities: capabilities, write_mode: "none", workspace_cwd: repo.root, executor_handle: { idempotency_key: "heartbeat-key" }, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "heartbeat-assignment" } }),
+    worker_run: makeWorkerRun({ worker_run_id: "heartbeat-run", task_id: "heartbeat-task", assignment_id: "heartbeat-assignment", workflow_capabilities: capabilities, write_mode: "none", workspace_cwd: repo.root, executor_handle: { idempotency_key: "H".repeat(22) }, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "heartbeat-assignment" } }),
   });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: recorded.revision, worker_run_id: "heartbeat-run" });
   const dispatched = await api.observeWorker({
@@ -727,7 +727,7 @@ test("Placement dry-runはRegistry観測済みのRun heartbeatをcapacityへ二�
   });
   const output = await api.placementDryRun({
     cwd: repo.root, control_id: "placement-heartbeat-control", task_id: "heartbeat-task", evaluated_at: "2026-07-14T00:30:00.000Z",
-    candidates: [makePlacementCandidate({ candidate_id: "heartbeat-candidate", registry_observation_id: "heartbeat-registry", workspace_cwd: repo.root, executor_handle: { idempotency_key: "heartbeat-candidate-key" } })],
+    candidates: [makePlacementCandidate({ candidate_id: "heartbeat-candidate", registry_observation_id: "heartbeat-registry", workspace_cwd: repo.root, executor_handle: { idempotency_key: "C".repeat(22) } })],
   });
   assert.deepEqual(output.candidates, [{ candidate_id: "heartbeat-candidate", registry_observation_id: "heartbeat-registry", eligibility: "eligible", reasons: [] }]);
   assert.equal((await api.status({ cwd: repo.root, control_id: "placement-heartbeat-control" })).record_revision, running.revision);
@@ -766,6 +766,7 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
   const materializedCandidate = {
     candidate_id: run.worker_run_id, registry_observation_id: run.placement_reservation.registry_observation_id,
     assignment_id: run.assignment_id, workspace_cwd: run.workspace.worktree_root_realpath ?? run.workspace.git_dir_realpath,
+    workspace_binding: run.workspace_binding.mode,
     write_mode: run.write_mode, operation_digest: run.operation_digest, budget_reservation: run.budget_reservation,
     lineage: run.lineage, executor_handle: run.executor_handle,
     recorded_workspace_fingerprint: run.recorded_workspace_fingerprint,
@@ -836,6 +837,90 @@ test("手動Worker記録もdedicated-worktree isolationを回避できない", a
   assert.equal(admitted.manifest.worker_runs[0].state, "admitted");
 });
 
+test("sidecar durable workはsource予約と実行worktree bindingを分離してreportとacceptを検証する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "sidecar-binding-control" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "sidecar-binding-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }),
+  });
+  await writeFile(join(repo.root, "LOCAL.md"), "source-only dirty state\n");
+  const recorded = await api.workerRunRecord({
+    cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ task_id: "sidecar-binding-task", workspace_cwd: repo.root, workspace_binding: "executor-isolated" }),
+  });
+  let run = recorded.manifest.worker_runs[0];
+  assert.equal(run.workspace.worktree_root_realpath, repo.root);
+  assert.deepEqual(run.workspace_binding, {
+    mode: "executor-isolated", schema_version: "codex-sidecar.delayed-worktree.v1", base_sha: repo.baseSha, preserve_worktree: true,
+    execution_workspace: null, bound_from_revision: null, binding_evidence: [], bound_by: null, bound_at: null,
+  });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: recorded.revision, worker_run_id: "run-001" });
+  assert.equal(admitted.manifest.worker_runs[0].baseline_workspace_fingerprint, null);
+  const packet = await api.delegationPacketForWorker({ cwd: repo.root, control_id: "sidecar-binding-control", worker_run_id: "run-001" });
+  assert.equal(packet.workspace.worktree_root_realpath, repo.root); assert.equal(packet.workspace_binding.mode, "executor-isolated");
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+  await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() }), code("INVALID_TRANSITION"));
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "sidecar-binding-control" });
+  assert.notEqual(resumed.outcome, "ready");
+  assert.ok(resumed.review_reasons.some((entry) => entry.code === "worker-execution-workspace-unbound"));
+
+  const otherBase = await makeTempDir("sidecar-other-"); t.after(() => cleanupDir(otherBase)); const other = await createGitRepo(otherBase);
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: other.root, binding_evidence: [evidence("sidecar-result-other", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: repo.root, binding_evidence: [evidence("sidecar-result-source", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
+  const wrongHead = await addLinkedWorktree(repo, "sidecar-wrong-head"); await writeFile(join(wrongHead.root, "README.md"), "wrong head\n"); runGit(wrongHead.root, ["add", "README.md"]); runGit(wrongHead.root, ["commit", "-q", "-m", "wrong head"]);
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: wrongHead.root, binding_evidence: [evidence("sidecar-result-wrong-head", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
+  const missing = await addLinkedWorktree(repo, "sidecar-missing"); runGit(repo.root, ["worktree", "remove", "--force", missing.root]);
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: missing.root, binding_evidence: [evidence("sidecar-result-missing", "executor-receipt")] }), code("IO_FAILURE"));
+  const good = await addLinkedWorktree(repo, "sidecar-good"); const linkPath = join((await makeTempDir("sidecar-link-")), "workspace-link"); t.after(() => cleanupDir(join(linkPath, ".."))); await symlink(good.root, linkPath);
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: linkPath, binding_evidence: [evidence("sidecar-result-link", "executor-receipt")] }), code("STATE_PATH_UNSAFE"));
+  const bindingEvidence = [evidence("sidecar-result-good", "executor-receipt")];
+  const bound = await api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: good.root, binding_evidence: bindingEvidence });
+  run = bound.manifest.worker_runs[0];
+  assert.equal(run.state, "dispatched"); assert.equal(run.workspace_binding.execution_workspace.worktree_root_realpath, good.root);
+  assert.equal(bound.manifest.transition_receipts.at(-1).operation, "worker-workspace-bind");
+  const forged = structuredClone(bound.manifest); forged.worker_runs[0].workspace_binding.binding_evidence[0].ref = "tampered";
+  assert.throws(() => api.validateManifest(forged), code("INVALID_SCHEMA"));
+
+  await writeFile(join(good.root, "README.md"), "sidecar output\n");
+  const report = {
+    schema_version: "dotagents.worker-report.v1", control_id: "sidecar-binding-control", task_id: "sidecar-binding-task", worker_run_id: "run-001", assignment_id: "assignment-001", packet_digest: packet.packet_digest,
+    executor_handle: { idempotency_key: "A".repeat(22) }, observed_state: "completed", status: "completed", result_digest: "a".repeat(64), evidence: [evidence("docs/sidecar-result.md")],
+    validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }], changed_paths: ["README.md"], claims: ["sidecar-binding"],
+  };
+  const imported = await api.importWorkerReport({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: bound.revision, worker_run_id: "run-001", report });
+  assert.equal(imported.manifest.worker_runs[0].state, "completed");
+  const accepted = await api.accept({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: imported.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/sidecar-accept.md", "decision")], decision_note: "bound workspace verified", decided_by: "parent" });
+  assert.equal(accepted.manifest.worker_runs[0].acceptance.decision, "accepted");
+});
+
+test("worker-workspace-bind CLIはrecordだけを行い外部providerやcancel commandを実行しない", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
+  const init = await api.init({ cwd: repo.root, control_id: "sidecar-bind-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "sidecar-bind-cli-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const recorded = await api.workerRunRecord({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "sidecar-bind-cli-task", workspace_cwd: repo.root, workspace_binding: "executor-isolated" }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: recorded.revision, worker_run_id: "run-001" });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+  const linked = await addLinkedWorktree(repo, "sidecar-bind-cli-worktree"); const input = join(base, "sidecar-bind.json");
+  await writeJson(input, { cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: linked.root, binding_evidence: [evidence("sidecar-cli-result", "executor-receipt")] });
+  const invoked = spawnOrchestrate(["worker-workspace-bind", "--input", input], { env: { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` } });
+  assert.equal(invoked.status, 0, invoked.stderr); assert.equal(JSON.parse(invoked.stdout).result.manifest.worker_runs[0].workspace_binding.execution_workspace.worktree_root_realpath, linked.root);
+  await assert.rejects(access(sentinel.log));
+});
+
+test("未bind sidecar writerもscope予約を保持し、failed terminalはbindingなしで観測できる", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "sidecar-unbound-reservation" });
+  const firstTask = await api.taskRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "sidecar-unbound-first", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const firstRun = await api.workerRunRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: firstTask.revision, worker_run: makeWorkerRun({ task_id: "sidecar-unbound-first", workspace_cwd: repo.root, workspace_binding: "executor-isolated" }) });
+  const firstAdmitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: firstRun.revision, worker_run_id: "run-001" });
+  const overlappingTask = await api.taskRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: firstAdmitted.revision, task: makeTask({ task_id: "sidecar-unbound-overlap", isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const overlappingRun = await api.workerRunRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: overlappingTask.revision, worker_run: makeWorkerRun({ worker_run_id: "sidecar-overlap-run", task_id: "sidecar-unbound-overlap", assignment_id: "sidecar-overlap-assignment", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "sidecar-overlap-assignment" } }) });
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: overlappingRun.revision, worker_run_id: "sidecar-overlap-run" }), code("WRITE_CONFLICT"));
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: overlappingRun.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+  const failed = await api.observeWorker({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: terminalWorkerObservation("failed") });
+  assert.equal(failed.manifest.worker_runs.find((entry) => entry.worker_run_id === "run-001").state, "failed");
+  assert.equal(failed.manifest.worker_runs.find((entry) => entry.worker_run_id === "run-001").workspace_binding.execution_workspace, null);
+});
+
 test("WorkerとConsultationは分離され、同一read Taskを参照でき、gpt executorを拒否する", async (t) => {
   const { repo, result } = await initialized(t);
   const ctask = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, task: makeTask({ task_id: "consultation-task", effect: "read", write_scope: [] }) });
@@ -867,7 +952,7 @@ test("Task取消とWorker cancel requestは既存実行を変えず、証拠付�
   await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: cancelledTask.revision, worker_run_id: "cancel-run" }), code("INVALID_TRANSITION"));
   const requested = await api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: cancelledTask.revision, worker_run_id: "cancel-run", decision });
   assert.equal(requested.manifest.worker_runs[0].state, "admitted");
-  assert.deepEqual(requested.manifest.worker_runs[0].cancel_request.executor_handle, { idempotency_key: "idempotency-001" });
+  assert.deepEqual(requested.manifest.worker_runs[0].cancel_request.executor_handle, { idempotency_key: "A".repeat(22) });
   await assert.rejects(api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: requested.revision, worker_run_id: "cancel-run", decision }), code("DUPLICATE_ID"));
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: requested.revision, worker_run_id: "cancel-run", observation: workerObservation("cancelled") }), code("EVIDENCE_REQUIRED"));
   const terminal = await api.observeWorker({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: requested.revision, worker_run_id: "cancel-run", observation: terminalWorkerObservation("cancelled") });
@@ -915,7 +1000,7 @@ test("Worker cancel requestはplannedとterminalを拒否し、取消record相�
   const requested = await api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: cancelledTask.revision, worker_run_id: "cancel-schema-run", decision });
   const strayReceipt = structuredClone(requested.manifest); strayReceipt.worker_runs[0].cancel_request = null;
   assert.throws(() => api.validateManifest(strayReceipt), code("INVALID_SCHEMA"));
-  const handleMismatch = structuredClone(requested.manifest); handleMismatch.worker_runs[0].cancel_request.executor_handle = { idempotency_key: "forged-handle" };
+  const handleMismatch = structuredClone(requested.manifest); handleMismatch.worker_runs[0].cancel_request.executor_handle = { idempotency_key: "F".repeat(22) };
   assert.throws(() => api.validateManifest(handleMismatch), code("INVALID_SCHEMA"));
   const terminal = await api.observeWorker({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: requested.revision, worker_run_id: "cancel-schema-run", observation: terminalWorkerObservation("cancelled") });
   await assert.rejects(api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: terminal.revision, worker_run_id: "cancel-schema-run", decision }), code("INVALID_TRANSITION"));
@@ -1536,11 +1621,11 @@ test("Delegation Packetとstrict Worker Report importは相関・scope・親acce
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "packet-worker", observation: workerObservation("dispatched") });
   const report = {
     schema_version: "dotagents.worker-report.v1", control_id: "packet-control", task_id: "packet-task", worker_run_id: "packet-worker", assignment_id: "packet-assignment", packet_digest: plannedPacket.packet_digest,
-    executor_handle: { idempotency_key: "idempotency-001" }, observed_state: "completed", status: "completed", result_digest: "d".repeat(64),
+    executor_handle: { idempotency_key: "A".repeat(22) }, observed_state: "completed", status: "completed", result_digest: "d".repeat(64),
     evidence: [evidence("docs/packet-result.md")], validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }], changed_paths: [], claims: ["packet-report-import"],
   };
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, packet_digest: "a".repeat(64) } }), code("REPORT_CORRELATION_MISMATCH"));
-  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, executor_handle: { idempotency_key: "wrong-handle" } } }), code("REPORT_CORRELATION_MISMATCH"));
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, executor_handle: { idempotency_key: "W".repeat(22) } } }), code("REPORT_CORRELATION_MISMATCH"));
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [] } }), code("VALIDATION_INCOMPLETE"));
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [{ ...report.validation_results[0], outcome: "unknown" }] } }), code("VALIDATION_INCOMPLETE"));
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [{ ...report.validation_results[0], outcome: "failed" }] } }), code("REPORT_NONZERO"));
@@ -1566,7 +1651,7 @@ test("Delegation Packet/report import CLIは外部Executorを起動しない", a
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "packet-cli-worker", observation: workerObservation("dispatched") });
   const reportInput = join(base, "packet-report-input.json"); await writeJson(reportInput, { cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-cli-worker", report: {
     schema_version: "dotagents.worker-report.v1", control_id: "packet-cli", task_id: "packet-cli-task", worker_run_id: "packet-cli-worker", assignment_id: "packet-cli-assignment", packet_digest: packet.packet_digest,
-    executor_handle: { idempotency_key: "idempotency-001" }, observed_state: "completed", status: "completed", result_digest: "e".repeat(64), evidence: [evidence("docs/packet-cli-result.md")], validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }], changed_paths: [], claims: [],
+    executor_handle: { idempotency_key: "A".repeat(22) }, observed_state: "completed", status: "completed", result_digest: "e".repeat(64), evidence: [evidence("docs/packet-cli-result.md")], validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }], changed_paths: [], claims: [],
   } });
   const imported = spawnOrchestrate(["worker-report-import", "--input", reportInput], { env });
   assert.equal(imported.status, 0); assert.equal(JSON.parse(imported.stdout).result.manifest.worker_runs[0].acceptance, null);
@@ -1597,7 +1682,7 @@ test("parent-declared campaign gateは全member terminal・audit・親releaseま
   } });
   const blockedPlacement = await api.placementDryRun({ cwd: repo.root, control_id: "campaign-control", task_id: "campaign-gated-task", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [makePlacementCandidate({ candidate_id: "campaign-placement", registry_observation_id: "campaign-registry", workspace_cwd: repo.root })] });
   assert.deepEqual(blockedPlacement.candidates[0].reasons, ["campaign-not-released"]);
-  await assert.rejects(api.reservePlacement({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, task_id: "campaign-gated-task", candidate: makePlacementCandidate({ candidate_id: "campaign-reservation", registry_observation_id: "campaign-registry", workspace_cwd: repo.root, assignment_id: "campaign-reservation-assignment", executor_handle: { idempotency_key: "campaign-reservation-key" }, lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "campaign-reservation-assignment" } }), review_decision: null }), code("PLACEMENT_INELIGIBLE"));
+  await assert.rejects(api.reservePlacement({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, task_id: "campaign-gated-task", candidate: makePlacementCandidate({ candidate_id: "campaign-reservation", registry_observation_id: "campaign-registry", workspace_cwd: repo.root, assignment_id: "campaign-reservation-assignment", executor_handle: { idempotency_key: "R".repeat(22) }, lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "campaign-reservation-assignment" } }), review_decision: null }), code("PLACEMENT_INELIGIBLE"));
   await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, worker_run_id: "campaign-gated-worker" }), code("CAMPAIGN_NOT_RELEASED"));
   await assert.rejects(api.observeConsultation({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, consultation_id: "campaign-gated-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "dispatched" } }), code("CAMPAIGN_NOT_RELEASED"));
   await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") }), code("CAMPAIGN_NOT_TERMINAL"));

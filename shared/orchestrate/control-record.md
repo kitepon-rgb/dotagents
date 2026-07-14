@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v16",
+  "schema_version": "dotagents.orchestration-control.v17",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -121,14 +121,15 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v16で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v17で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
   protocol snapshot、v11はchanged fileのmode fingerprintとControl総数commit gate、v12は
   Executor Registry observation、v13はplacement reservationとsubject digest、v14はresume用の
   Control git directory generation、初期workspace digest、Worker記録時fingerprint、v15はTask取消と
-  Worker cancel要求の分離、v16はparent-declared campaign gateを追加した。旧manifestを
+  Worker cancel要求の分離、v16はparent-declared campaign gate、v17はsidecar durable workの
+  遅延execution-worktree bindingを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -196,7 +197,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 }
 ```
 
-- operationは`control-init / task-record / task-cancel-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit / worker-cancel-request /
+- operationは`control-init / task-record / task-cancel-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit / worker-workspace-bind / worker-cancel-request /
   worker-report-import /
   worker-observe / consultation-observe / campaign-record / campaign-release / worker-accept / worker-reject / task-finalize /
   control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
@@ -584,7 +585,7 @@ Worker Runは一回のworker割当である。入力schemaはExecutorごとの�
 ```text
 worker_run_id, task_id, assignment_id, executor, workflow_id, role_ref,
 workflow_capabilities, budget_reservation,
-workspace_cwd, write_mode, operation_digest, execution_verification,
+workspace_cwd, workspace_binding, write_mode, operation_digest, execution_verification,
 lineage, placement_reservation,
 state, executor_handle, executor_observation, admission, cancel_request,
 dispatch_evidence, dispatch_attempt_evidence, terminal_evidence,
@@ -605,7 +606,7 @@ scopeと`alternative_group`は参照Taskから取得し、Worker入力での上�
 `role_ref`は参照Taskの`role`と完全一致しなければならない。
 libraryは`workspace_cwd`から次のcanonical objectを解決し、保存時はこれに置き換える。
 保存形は`workspace_cwd`を持たず、`workspace`と`baseline_workspace_fingerprint`を持つ。
-後者は初期`planned`では`null`、write Runの`admitted`以降は必須、read Runでは常に`null`とする。
+後者は初期`planned`では`null`、通常write Runの`admitted`以降は必須、read Runでは常に`null`とする。
 `admission`は初期`planned`では`null`、`admitted`以降は
 `{ admitted_by, admitted_at, write_reservation }`を持つ。read Runは`write_reservation=false`、
 write Runは`true`であり、後者だけがglobal writer reservationを保持する。
@@ -630,6 +631,36 @@ bareでは`worktree_root_realpath`と両HEADを`null`にする。
 `head_at_reservation`は`planned -> admitted`のwrite admission時に同じlock内で再取得する。
 Workerのcommon dirはControlのcommon dirと一致しなければならない。
 
+`workspace_binding`入力は`fixed | executor-isolated`である。`fixed`は従来どおり上記`workspace`を
+実行先とする。`executor-isolated`は`codex-sidecar/v1/work`のwrite RunかつTask
+`isolation=dedicated-worktree`だけに許可し、上記`workspace`をsource／予約元として保持したまま、
+保存時に次の遅延bindingへ変換する。sourceのdirtyは実行worktreeへ移らないが、固定`base_sha`と
+Task snapshotで入力を確定するため一律拒否しない。
+
+```json
+{
+  "workspace_binding": {
+    "mode": "executor-isolated",
+    "schema_version": "codex-sidecar.delayed-worktree.v1",
+    "base_sha": "0123456789abcdef0123456789abcdef01234567",
+    "preserve_worktree": true,
+    "execution_workspace": null,
+    "bound_from_revision": null,
+    "binding_evidence": [],
+    "bound_by": null,
+    "bound_at": null
+  }
+}
+```
+
+遅延Runも`admitted`からglobal write reservationを保持するが、実行worktreeがまだ存在しないため
+source fingerprintをbaselineへ偽装せず`baseline_workspace_fingerprint=null`を維持する。
+親がterminal sidecar resultの`worktreePath`を回収した後、record-only
+`worker-workspace-bind`で実pathとevidenceを記録する。bindはactive Runだけに一度許可し、symlink、
+source自身、別common dir、別HEAD、非worktreeを拒否する。実worktreeはsourceと同じcommon dir、
+異なるroot、`HEAD=base_sha`、`preserve_worktree=true`でなければならない。ControlやCLIはworktreeを
+生成・削除せず、sidecar commandも実行しない。
+
 - `assignment_id`は一つの論理割当を表す。同じTaskへ独立fan-outする時は別assignmentを使う。
   retryは同じassignmentを使う。先行Runが`failed | cancelled`、または
   `completed + rejected`になった場合だけ新Runを許可する。`unknown`を含むnonterminal、
@@ -640,7 +671,8 @@ Workerのcommon dirはControlのcommon dirと一致しなければならない�
 - 現在の既知handle schemaは次のとおり。既知の組合せはexact shapeで検証する。
   - `parent.correlation.v1`: `{ "correlation_id": "..." }`
   - `codex-native.agent-id.v1`: `{ "agent_id": "..." }`または予約時の`null`
-  - `codex-sidecar.idempotency-key.v1`: `{ "idempotency_key": "..." }`
+  - `codex-sidecar.idempotency-key.v1`: `{ "idempotency_key": "..." }`。keyは製品契約どおり
+    22〜128文字のbase64urlまたはUUID。
   - `codex-sidecar.synchronous.v1`: durable handleを持たず`null`
   - `aiterm.session.v1`: `{ "session_id": "...", "agent_kind": "codex|grok|composer" }`または予約時の`null`
   - `claude-native.session.v1`: `{ "session_id": "..." }`または予約時の`null`
@@ -753,7 +785,8 @@ write Runは`admitted`以降でbaseline必須、read Runは全stateでbaseline `
 `admitWorker`はExecutorへ何も送信せず、保存済みTask snapshotのdigest、依存完了、
 workspace identity、scopeを同じlock内で検査する。文書全体のdigestは再検査しない。
 write Runではさらに全Control競合を検査し、
-`baseline_workspace_fingerprint`も保存する。
+通常bindingなら`baseline_workspace_fingerprint`も保存する。遅延bindingはscope reservationだけを
+同じ時点で確立し、未bindでも重複scope writerを阻止する。
 `admitted -> dispatched`は、所有Executor上にRunが存在することを、再照会可能なhandleまたは
 idempotency keyと`dispatch_evidence`で確認した観測だけを受理する。
 cancel要求がない`admitted -> cancelled`はRunが作成されなかったことを示す空でない
@@ -786,6 +819,12 @@ dispatch後なら空でない`terminal_evidence`を必須とする。他stateで
 resultを持てない。各evidence配列はWorker直下へ累積保存し、保存する`executor_observation`は
 source/version/time/raw_stateだけである。
 
+遅延bindingのwrite Runは、bind済みexecution workspaceなしに`completed`へ進めない。bind後は
+execution workspaceのHEAD、identity、scopeと現在fingerprintを検査する。source workspaceを実行先に
+見せない。`failed | cancelled`は成果受入を伴わないため、未bindでも所有Executorのterminal evidenceで
+確定できる。resume時の未bind active Runは失敗や成功へ丸めず、同じopaque handleの再照会を
+`review-required`として要求する。
+
 ### Delegation Packet と Worker Report
 
 `delegation-packet`は、`planned | admitted` Workerから生成する純粋・record-only出力である。
@@ -793,7 +832,7 @@ terminal Run、取消済みTask、未知／forbidden Executor（`gpt-connector`�
 生成はdispatch、process起動、network、製品stateの読書きを行わない。
 
 - packet schemaは`dotagents.delegation-packet.v1`。Task canonical snapshot、Worker/assignment ID、
-  Executor envelopeとworkflow、git由来workspace、read/write scope、classification/effect/role、
+  Executor envelopeとworkflow、git由来source workspaceとworkspace binding、read/write scope、classification/effect/role、
   capability・budget reservation、lineage/context policy、validation参照、non-goals、known traps、
   report schema IDを含む。`packet_digest`はこのimmutable projectionのSHA-256である。
 - packetはprompt全文、raw log、secret、巨大output、Executor製品内部stateを保存・出力しない。
@@ -807,7 +846,7 @@ terminal Run、取消済みTask、未知／forbidden Executor（`gpt-connector`�
   `passed`でなければならない。空・`unknown`は必須validationを満たさず、`failed`は`REPORT_NONZERO`として
   拒否する。status/observed stateは現在`completed`のみである。
 - `worker-report-import`はactive（`dispatched | running | unknown`）Runだけを`completed`へ観測する。
-  packet/Task/Run/assignment/Executor handle/digestを再相関し、write Runでは実workspace fingerprintと
+  packet/Task/Run/assignment/Executor handle/digestを再相関し、write Runでは実execution workspace fingerprintと
   reportのchanged pathsをscope内かつ一致するものだけにする。取消済みTaskでも既存active Runのterminal
   観測は許すが、planned/admittedからの新規実行は許さない。import receiptはtyped evidenceを持つ。
 - importは親acceptではない。`acceptance`は`null`のままで、親の検証後に既存`accept`または`reject`を
@@ -973,7 +1012,7 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 
 ```text
 init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release,
-admit-worker, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
+admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
 
@@ -1025,6 +1064,8 @@ releaseCampaign({ cwd, control_id, actor_id, expected_revision, campaign_id,
                   audit_evidence, decision })
 delegationPacketForWorker({ cwd, control_id, worker_run_id })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
+bindWorkerWorkspace({ cwd, control_id, actor_id, expected_revision, worker_run_id,
+                      workspace_cwd, binding_evidence })
 requestWorkerCancel({ cwd, control_id, actor_id, expected_revision, worker_run_id, decision })
 observeWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id, observation })
 importWorkerReport({ cwd, control_id, actor_id, expected_revision, worker_run_id, report })

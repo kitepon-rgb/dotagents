@@ -168,7 +168,8 @@ export function makeWorkerRun(overrides = {}) {
       independence_group: "implementation-primary", context_policy: contextPolicy,
       input_digest: "b".repeat(64), approach_family_ref: null, shared_finding_refs: [],
     },
-    state: "planned", executor_handle: { idempotency_key: "idempotency-001" },
+    state: "planned", executor_handle: { idempotency_key: "A".repeat(22) },
+    workspace_binding: "fixed",
     executor_observation: null, admission: null, cancel_request: null, dispatch_evidence: [], dispatch_attempt_evidence: [],
     terminal_evidence: [], result: null, acceptance: null, placement_reservation: null, ...overrides,
   };
@@ -210,6 +211,7 @@ export function makePlacementCandidate(overrides = {}) {
     registry_observation_id: "registry-placement-001",
     assignment_id: assignmentId,
     workspace_cwd: "/workspace-is-resolved-by-library",
+    workspace_binding: "fixed",
     write_mode: "none",
     operation_digest: null,
     budget_reservation: makeBudgetReservation(),

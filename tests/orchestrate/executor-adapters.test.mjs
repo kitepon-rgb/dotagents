@@ -40,3 +40,30 @@ test("lookupはunknown adapter/interface/operationをtyped errorで拒否し、c
   const first = adapters.defaultAdapterCatalog(); first[0].interfaces[0].operations[0].tool_name = "tampered";
   assert.equal(adapters.defaultAdapterCatalog()[0].interfaces[0].operations[0].tool_name, "codex_work_start");
 });
+
+test("codex-sidecar requestは実tool schemaの固定値とcaller handleを純粋に投影する", () => {
+  const handle = { idempotency_key: "A".repeat(22) };
+  const start = adapters.codexSidecarStartRequest({ projectRoot: "/workspace/source", handle, baseRef: "a".repeat(40), prompt: "Delegation Packetに従って実装する", allowedPaths: ["lib/orchestrate"], denyPaths: [".env"], turnTimeoutMs: 60000 });
+  assert.deepEqual(start, {
+    schema_version: "dotagents.codex-sidecar.request.v1", operation_id: "start", tool_name: "codex_work_start",
+    arguments: { projectRoot: "/workspace/source", idempotencyKey: "A".repeat(22), baseRef: "a".repeat(40), prompt: "Delegation Packetに従って実装する", allowedPaths: ["lib/orchestrate"], denyPaths: [".env"], turnTimeoutMs: 60000, interruptOnTimeout: true, allowWork: true, preserveWorktree: true },
+  });
+  assert.deepEqual(adapters.codexSidecarResultRequest({ projectRoot: "/workspace/source", handle }).arguments, { projectRoot: "/workspace/source", idempotencyKey: "A".repeat(22) });
+  assert.deepEqual(adapters.codexSidecarCancelRequest({ projectRoot: "/workspace/source", handle }).arguments, { projectRoot: "/workspace/source", idempotencyKey: "A".repeat(22) });
+  assert.deepEqual(adapters.codexSidecarRecoveryInspectionRequest({ projectRoot: "/workspace/source", handle }).arguments, { projectRoot: "/workspace/source", idempotencyKey: "A".repeat(22) });
+  assert.throws(() => adapters.codexSidecarQuarantineRequest({ projectRoot: "/workspace/source", handle, confirmNoRunningProcesses: false }), code("QUARANTINE_CONFIRMATION_REQUIRED"));
+  assert.deepEqual(adapters.codexSidecarQuarantineRequest({ projectRoot: "/workspace/source", handle, confirmNoRunningProcesses: true }).arguments, { projectRoot: "/workspace/source", idempotencyKey: "A".repeat(22), action: "quarantine", confirmNoRunningProcesses: true });
+  assert.throws(() => adapters.codexSidecarStartRequest({ projectRoot: "relative", handle, baseRef: "a".repeat(40), prompt: "x", allowedPaths: ["lib"], denyPaths: [], turnTimeoutMs: 1 }), code("INVALID_SCHEMA"));
+});
+
+test("codex-sidecar observationはunknownと非成功terminalをcompletedへ昇格しない", () => {
+  const handle = { idempotency_key: "A".repeat(22) }; const runId = "b".repeat(64);
+  const result = (status, overrides = {}) => ({ status, workflow: "work", summary: "summary", confidence: { level: "high" }, recommendedNextAction: "review", changedFiles: ["lib/x.mjs"], worktreePath: "/workspace/worktree", worktreePreserved: true, ...overrides });
+  const completed = adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_terminal", runId, state: "completed", result: result("ok"), cleanup: "not-requested" } });
+  assert.equal(completed.state, "completed"); assert.match(completed.terminal.result_digest, /^[a-f0-9]{64}$/);
+  assert.equal(adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_interrupted", runId, state: "orphaned", error: { code: "RUN_ORPHANED", message: "lost" }, processGroup: "unknown", salvageAllowed: false, terminal: false } }).state, "unknown");
+  for (const status of ["partial", "failed", "refused", "dry-run"]) assert.equal(adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_terminal", runId, state: "completed", result: result(status), cleanup: "not-requested" } }).state, "failed");
+  assert.equal(adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_pending", runId, state: "running", phase: "worker", pollAfterMs: 1000 } }).state, "running");
+  assert.throws(() => adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_terminal", runId, state: "completed", result: result("ok", { worktreePreserved: false }), cleanup: "completed" } }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_terminal", runId, state: "completed", result: result("ok", { changedFiles: ["../escape"] }), cleanup: "not-requested" } }), code("INVALID_SCHEMA"));
+});

@@ -15,7 +15,7 @@ const commands = new Map([
   ["campaign-record", api.campaignRecord], ["campaign-status", api.campaignStatus], ["campaign-release", api.releaseCampaign],
   ["resume-check", api.resumeCheck],
   ["worker-run-record", api.workerRunRecord], ["consultation-record", api.consultationRecord],
-  ["admit-worker", api.admitWorker], ["worker-cancel-request", api.requestWorkerCancel], ["observe-worker", api.observeWorker],
+  ["admit-worker", api.admitWorker], ["worker-workspace-bind", api.bindWorkerWorkspace], ["worker-cancel-request", api.requestWorkerCancel], ["observe-worker", api.observeWorker],
   ["observe-consultation", api.observeConsultation], ["conflict-check", api.conflictCheck],
   ["accept", api.accept], ["reject", api.reject], ["task-finalize-record", api.taskFinalizeRecord],
   ["control-finalize", api.finalizeControl], ["recover-lock", api.recoverLock], ["archive", api.archive],

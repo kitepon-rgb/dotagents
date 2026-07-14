@@ -29,3 +29,24 @@ versionedかつ純粋なcatalogである。schemaは`dotagents.executor-adapter.
 appendix由来の観測projectionだけを表す。未知adapter/interface/operationはtyped errorでfail closedにする。
 sidecar recoveryは同じ`codex_work_recover` toolでも、既定のread-only inspectionと
 `confirmNoRunningProcesses=true`を要するquarantine mutationを別operationとして扱う。
+
+## Codex Sidecar durable work projection
+
+`codexSidecarStartRequest`、`codexSidecarResultRequest`、`codexSidecarCancelRequest`、
+`codexSidecarRecoveryInspectionRequest`、`codexSidecarQuarantineRequest`は、host tool invocation
+requestを返す純粋関数である。start requestはsource workspaceを`projectRoot`へ渡し、
+caller固定の22〜128文字base64urlまたはUUIDの`idempotencyKey`、commit SHAの`baseRef`、
+Task scope由来の`allowedPaths / denyPaths`、`allowWork=true`、`preserveWorktree=true`を必須にする。
+sidecar固有のstructured resultを架空のWorker Report schemaで上書きせず、親がterminal projectionと
+Controlのstrict Worker Report importを相関する。これらの関数はMCPを呼ばず、Control Recordの
+worktree bindも行わない。result／cancel／recoverは製品契約どおり毎回
+`projectRoot + idempotencyKey`で同じdurable Runを参照する。
+
+`projectCodexSidecarObservation`はboundedなprovider observationをControlに渡せる形へ投影する。
+caller所有のidempotency keyと、実provider unionの`run_handle`、`run_pending`、`run_terminal`、
+`run_interrupted`、`run_error`を相関し、run ID、terminal worktree path、changed files、canonical result
+digestだけをbounded projectionへ残す。`interrupted / orphaned / run_error`は`unknown`、resultの
+`partial / failed / refused / dry-run`は`failed`であり、`completed`へ昇格しない。成功は
+`run_terminal.state=completed`、`result.status=ok`、`worktreePreserved=true`、worktree path有りを
+すべて必須とする。recoverはactionを省略したread-only inspection、quarantineは
+`action=quarantine`と明示`confirmNoRunningProcesses=true`を別requestとして要求する。
