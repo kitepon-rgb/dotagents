@@ -185,7 +185,7 @@ Markdown lint、`make ci`のgreenで採用指摘を閉じた。live provider dis
 - [x] Registry observation、Budget Envelope、approach family上限、retry上限、integration capacityから
   eligible／ineligible候補と決定論的理由を返す。
 - [x] capacity unknownを無制限扱いせず、soft limit超過を親reviewへ送る。
-- [ ] read-only低リスクでもv1は親release後だけdispatchする。F write、H、高リスクwriteは自動dispatchしない。
+- [x] read-only低リスクでもv1は親release後だけdispatchする。F write、H、高リスクwriteは自動dispatchしない。
 - [ ] provider障害時のfallbackは新しいRun／Decision参照として明示し、元失敗をgreenへ丸めない。
 
 ### Phase 4: Campaign／Barrier
