@@ -39,6 +39,8 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 
 共通契約のフェーズに沿って、監査は L1 Workflow、設計は L2 Agent (Plan)、仕様固定の実装は L3/L4 の `codex-sidecar` または Claude Agent/Workflow を使う。各入口の model/effort は次節と `docs/02_models.md` に従う。
 
+監査頻度は共通契約どおり、TODO完了候補ごとの軽量監査と、Phase完了時の重い独立監査に分ける。細かな編集ごとにWorkflowやrefuterを起動せず、TODO監査で再現した修正は統括が関連testで閉じる。複数視点・独立反証・Criticを伴う高コストな監査はPhase境界へ集約する。
+
 ## アンチパターン（実被弾済み）
 
 - 反証なしで監査結果を実装へ（→ 危険な大改造が混入する）

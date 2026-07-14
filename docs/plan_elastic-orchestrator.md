@@ -22,6 +22,13 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - 共通契約、依存方向、state所有、F/A/H、finalizationの最終裁定: `F`。親直轄。
 - credential / login、publish / deploy、本番外部状態変更、意図的障害試験: `H`。
 
+## 監査頻度のオーナー裁定（2026-07-14）
+
+- 細かな変更単位では監査を起動しない。
+- TODOを完了候補にした時、親がdiff、受け入れ条件、関連test、未検証範囲を1回監査する。
+- Phaseの全TODOと通常gateが完了した時、複数視点・独立反証・Critic・親裁定を含む重い監査を1回行う。
+- P0/P1相当の再現問題を除き、同じTODOへ独立監査を反復しない。修正確認は親が再現手順と関連testで閉じる。
+
 ## 監査対象
 
 - `shared/orchestrate/contract.md`
