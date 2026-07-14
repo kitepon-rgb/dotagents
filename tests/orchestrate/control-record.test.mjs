@@ -1316,6 +1316,59 @@ test("Executor envelopeはworkflowとhandle schemaを分離し、未知adapter�
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: readable.record_revision, task: makeTask({ task_id: "must-not-mutate" }) }), code("ADAPTER_UNKNOWN"));
 });
 
+test("同期sidecarはdurable handleを捏造せずdispatchからstrict report importまで相関する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "sidecar-synchronous-report" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "sidecar-synchronous-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const capabilities = [
+    { capability_id: "readonly.enforceable", value: "true", evidence: evidence("docs/execution-proof.md") },
+    { capability_id: "report.structured", value: "true", evidence: evidence("docs/execution-proof.md") },
+    { capability_id: "workspace.read", value: "true", evidence: evidence("docs/execution-proof.md") },
+    { capability_id: "workspace.write", value: "false", evidence: evidence("docs/execution-proof.md") },
+  ];
+  const recorded = await api.workerRunRecord({
+    cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({
+      worker_run_id: "sidecar-synchronous-run", task_id: "sidecar-synchronous-task", assignment_id: "sidecar-synchronous-assignment",
+      write_mode: "none", workspace_cwd: repo.root, workflow_id: "review", executor_handle: null,
+      executor: { adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.synchronous.v1" },
+      workflow_capabilities: capabilities,
+      lineage: { ...makeWorkerRun().lineage, root_assignment_id: "sidecar-synchronous-assignment" },
+    }),
+  });
+  const packet = await api.delegationPacketForWorker({ cwd: repo.root, control_id: "sidecar-synchronous-report", worker_run_id: "sidecar-synchronous-run" });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: recorded.revision, worker_run_id: "sidecar-synchronous-run" });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "sidecar-synchronous-run", observation: workerObservation("dispatched", { executor_handle: null }) });
+  assert.equal(dispatched.manifest.worker_runs[0].executor_handle, null);
+  const report = {
+    schema_version: "dotagents.worker-report.v1", control_id: "sidecar-synchronous-report", task_id: "sidecar-synchronous-task",
+    worker_run_id: "sidecar-synchronous-run", assignment_id: "sidecar-synchronous-assignment", packet_digest: packet.packet_digest,
+    executor_handle: null, observed_state: "completed", status: "completed", result_digest: "c".repeat(64),
+    evidence: [evidence("docs/sidecar-synchronous-result.md")],
+    validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }],
+    changed_paths: [], claims: ["同期workflowの結果をpacket digestで相関した"],
+  };
+  const imported = await api.importWorkerReport({ cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "sidecar-synchronous-run", report });
+  assert.equal(imported.manifest.worker_runs[0].state, "completed");
+  assert.equal(imported.manifest.worker_runs[0].executor_handle, null);
+  const accepted = await api.accept({ cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: imported.revision, worker_run_id: "sidecar-synchronous-run", result_digest: report.result_digest, verification_evidence: [evidence("docs/sidecar-synchronous-accept.md", "decision")], decision_note: "packetとassignmentの相関を確認", decided_by: "parent" });
+  assert.equal(accepted.manifest.worker_runs[0].acceptance.decision, "accepted");
+
+  const nativeRecorded = await api.workerRunRecord({
+    cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: accepted.revision,
+    worker_run: makeWorkerRun({
+      worker_run_id: "native-handle-required-run", task_id: "sidecar-synchronous-task", assignment_id: "native-handle-required-assignment",
+      write_mode: "none", workspace_cwd: repo.root, workflow_id: "native-subagent", executor_handle: null,
+      executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "native", handle_schema_id: "codex-native.agent-path.v1" },
+      lineage: { ...makeWorkerRun().lineage, root_assignment_id: "native-handle-required-assignment" },
+    }),
+  });
+  const nativeAdmitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: nativeRecorded.revision, worker_run_id: "native-handle-required-run" });
+  await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: nativeAdmitted.revision, worker_run_id: "native-handle-required-run", observation: workerObservation("dispatched") }), code("EVIDENCE_REQUIRED"));
+});
+
 test("未知または矛盾したExecutor契約は新規Runへ使えない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "executor-rejection-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-rejection-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [] }) });

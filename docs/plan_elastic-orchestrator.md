@@ -268,6 +268,9 @@ READMEのhook数、CI正典の`test-orchestrate`漏れ、plan現在地を採用�
 
 ### Phase 7: Dogfood／完成
 
+- [x] 実dogfoodで再現した同期sidecar Workerのhandle不成立を修復する。予約時のnullableとactive時の
+  handle必須性を分離し、同期workflowはpacket／Task／Run／assignment digestで相関して、durable handleを
+  捏造せずstrict report importまで縦に通す。
 - [ ] 10件以上のread-only Worker Runを複数Executor・複数lineageで実行し、Dedup→反証→親裁定を通す。
 - [ ] codex-sidecar隔離worktreeと別Executorの競合する代替案を作り、自動mergeせず親が一案を採用する。
 - [ ] Codex nativeの実効最大枠と、aiterm、codex-sidecar、gpt-connector consultationを同時利用し、

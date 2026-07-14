@@ -701,7 +701,7 @@ Worker Run／Reportが一致しなければ`REPORT_CORRELATION_MISMATCH`で拒�
   - `codex-native.agent-path.v1`: `{ "agent_path": "/root/<task>" }`または予約時の`null`
   - `codex-sidecar.idempotency-key.v1`: `{ "idempotency_key": "..." }`。keyは製品契約どおり
     22〜128文字のbase64urlまたはUUID。
-  - `codex-sidecar.synchronous.v1`: durable handleを持たず`null`
+  - `codex-sidecar.synchronous.v1`: durable handleを持たず、予約・active・reportを通して`null`
   - `aiterm.session.v1`: `{ "session_id": "...", "agent_kind": "codex|grok|composer" }`または予約時の`null`
   - `claude-native.session.v1`: `{ "session_id": "..." }`または予約時の`null`
 - 未知のadapter／contract／workflow／handle schemaを含むmanifestは、bounded opaque handleとして
@@ -715,6 +715,9 @@ Worker Run／Reportが一致しなければ`REPORT_CORRELATION_MISMATCH`で拒�
 - `codex-sidecar`の同期read-only workflow（`auditor / explore / generate / opinion / review /
   risk-check`）は`workspace.write=false`かつ`readonly.enforceable=true`を必須とする。durable `work`は
   `workspace.write=true`かつ`workspace.isolated=true`を必須とし、adapter名だけから能力を合成しない。
+  同期workflowは製品側に再照会可能なdurable handleがないため、handleを捏造せず`null`のまま
+  dispatch／report importを許す。Task／Run／assignment IDとDelegation Packet digestを完全一致させて
+  結果を相関する。他の予約時nullableな契約はdispatch以降にtyped handleを必須とする。
 - `budget_reservation`は`wall_time_seconds / cost_microusd`のexact object。各値は非負整数
   （wall timeの既知値は1以上）または`null=unknown`であり、actual usageや請求額を捏造しない。
 
@@ -848,7 +851,8 @@ result?, terminal_evidence?
 ```
 
 handleがある場合はExecutor別shapeに適合し、既存handleと矛盾してはならない。`dispatched`は
-空でない`dispatch_evidence`、cancel要求のない`admitted -> cancelled`は空でない
+空でない`dispatch_evidence`を必須とし、同期sidecar以外は契約上のactive handleも必須とする。
+cancel要求のない`admitted -> cancelled`は空でない
 `dispatch_attempt_evidence`、cancel要求後の取消確定は空でない`terminal_evidence`を必須とする。`completed`の
 `result`は`{ result_digest, evidence }`だけを持つ。write Runではlibraryが
 `workspace_fingerprint`を計算してresultへ追加する。`failed | cancelled`はresultを持たず、
@@ -883,7 +887,8 @@ terminal Run、取消済みTask、未知／forbidden Executor（`gpt-connector`�
   `passed`でなければならない。空・`unknown`は必須validationを満たさず、`failed`は`REPORT_NONZERO`として
   拒否する。status/observed stateは現在`completed`のみである。
 - `worker-report-import`はactive（`dispatched | running | unknown`）Runだけを`completed`へ観測する。
-  packet/Task/Run/assignment/Executor handle/digestを再相関し、write Runでは実execution workspace fingerprintと
+  packet/Task/Run/assignment/Executor handle/digestを再相関する。同期sidecarだけは両側のhandleが`null`で
+  あることを確認し、packet digestを含む残りの相関項目を省略しない。write Runでは実execution workspace fingerprintと
   reportのchanged pathsをscope内かつ一致するものだけにする。取消済みTaskでも既存active Runのterminal
   観測は許すが、planned/admittedからの新規実行は許さない。import receiptはtyped evidenceを持つ。
 - importは親acceptではない。`acceptance`は`null`のままで、親の検証後に既存`accept`または`reject`を
