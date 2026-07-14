@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v11",
+  "schema_version": "dotagents.orchestration-control.v12",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -88,6 +88,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
     "approval_required_write_roles": ["integrator"]
   },
   "document_refs": ["docs/plan_elastic-orchestrator.md"],
+  "registry_observations": [],
   "tasks": [],
   "worker_runs": [],
   "consultations": [],
@@ -114,11 +115,12 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v11で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v12で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
-  protocol snapshot、v11はchanged fileのmode fingerprintとControl総数commit gateを追加した。旧manifestを
+  protocol snapshot、v11はchanged fileのmode fingerprintとControl総数commit gate、v12は
+  Executor Registry observationを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -182,7 +184,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 }
 ```
 
-- operationは`control-init / task-record / worker-run-record / consultation-record / worker-admit /
+- operationは`control-init / task-record / registry-observation-record / worker-run-record / consultation-record / worker-admit /
   worker-observe / consultation-observe / worker-accept / worker-reject / task-finalize /
   control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
@@ -203,6 +205,91 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
   新規initはcommit前に`CONTROL_CAPACITY_REACHED`で拒否し、257件目を作って既存Controlの
   global mutationを自己poisonしない。恒久retentionを拡張する場合は、ID予約とglobal conflictを
   欠落させない別schema／index契約を先に設計する。
+
+## Executor Registry observation
+
+Registryは各製品の正本や自動discovery engineではなく、親が確認したExecutor workflowの
+期限付きread-only観測snapshotである。更新時は既存entryを書き換えず、新しい
+`registry_observation_id`を発行する。IDはgit common dirの全Controlで一意とする。
+
+```json
+{
+  "registry_observation_id": "registry-codex-native-001",
+  "executor": {
+    "adapter_id": "codex-native",
+    "contract_version": "v1",
+    "instance_id": "current-parent",
+    "handle_schema_id": "codex-native.agent-id.v1"
+  },
+  "workflow_id": "native-subagent",
+  "enabled": {
+    "value": "true",
+    "evidence": {
+      "type": "command",
+      "ref": "verify-codex-agent-routing refuter /root/refuter-smoke",
+      "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "observed_at": "2026-07-14T00:00:00.000Z"
+    }
+  },
+  "workflow_capabilities": [
+    {
+      "capability_id": "workspace.read",
+      "value": "true",
+      "evidence": {
+        "type": "file",
+        "ref": "docs/02_models.md",
+        "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "observed_at": "2026-07-14T00:00:00.000Z"
+      }
+    }
+  ],
+  "capacity": {
+    "admission": { "value": "true", "evidence": {
+      "type": "command",
+      "ref": "native routing smoke",
+      "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "observed_at": "2026-07-14T00:00:00.000Z"
+    } },
+    "hard_inflight_limit": { "knowledge": "unknown", "value": null, "evidence": null },
+    "soft_inflight_limit": { "knowledge": "known", "value": 3, "evidence": {
+      "type": "file",
+      "ref": "docs/02_models.md",
+      "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "observed_at": "2026-07-14T00:00:00.000Z"
+    } },
+    "observed_inflight": { "knowledge": "known", "value": 1, "evidence": {
+      "type": "command",
+      "ref": "native agent list",
+      "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "observed_at": "2026-07-14T00:00:00.000Z"
+    } }
+  },
+  "verification": {
+    "stage": "verified",
+    "observed_version": "host-runtime",
+    "observed_at": "2026-07-14T00:00:00.000Z",
+    "evidence": {
+      "type": "command",
+      "ref": "verify-codex-agent-routing refuter /root/refuter-smoke",
+      "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "observed_at": "2026-07-14T00:00:00.000Z"
+    }
+  },
+  "expires_at": "2026-07-15T00:00:00.000Z"
+}
+```
+
+- `enabled`と`capacity.admission`は`true | false | unknown`。known valueはtyped evidenceを必須とし、
+  `unknown`は根拠があれば保持できるが、利用可能扱いしない。
+- capacity数値は`knowledge=known | unknown`。knownは非負safe integerとevidence、unknownは
+  `value=null`を必須とし、unknownの根拠evidenceは任意で保持できる。hard／soft limitのknown値は1以上、observed inflightは
+  0以上とし、両limitがknownならsoftはhardを超えられない。`null`は無限を意味しない。
+- `verification`はWorker Runと同じstage集合を使うが、観測時点の事実であり、製品のcredential、
+  session、rate-limit stateを所有しない。全evidenceの時刻は`verification.observed_at`以下、
+  `expires_at`はそれより後のcanonical UTCとする。
+- 未知adapterも観測として保存できるが、既知contractやdispatch許可へ昇格しない。
+  `gpt-connector`は親直轄Consultation専用なのでWorker Registryへ記録せず、
+  `EXECUTOR_FORBIDDEN`で拒否する。
 
 ## Task declaration
 
@@ -637,7 +724,7 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, task-record, worker-run-record, consultation-record,
+init, status, task-record, registry-observation-record, worker-run-record, consultation-record,
 admit-worker, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, recover-lock, archive
 ```
@@ -672,6 +759,7 @@ accept, reject, task-finalize-record, recover-lock, archive
 init({ cwd, control_id, objective_ref, actor_id, document_refs, budget, predecessor_control_id? })
 status({ cwd, control_id })
 taskRecord({ cwd, control_id, actor_id, expected_revision, task })
+registryObservationRecord({ cwd, control_id, actor_id, expected_revision, observation })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
 consultationRecord({ cwd, control_id, actor_id, expected_revision, consultation })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
@@ -716,7 +804,7 @@ EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 FINALIZATION_NOT_READY, CONTROL_FINALIZED,
 APPROVAL_MISMATCH, APPROVAL_EXPIRED,
 ROLE_EFFECT_FORBIDDEN,
-CONTROL_CAPACITY_RESERVED, CONTINUATION_NOT_READY,
+CONTROL_CAPACITY_RESERVED, CONTROL_CAPACITY_REACHED, CONTINUATION_NOT_READY,
 PLATFORM_UNVERIFIED,
 LOCK_OUTCOME_UNKNOWN,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
@@ -752,7 +840,7 @@ completed未裁定Consultationのいずれかが
 
 ## MVP非目標
 
-- Executor Registry、scheduler、score、capacity allocation、campaign、barrier、DAG、retry DSL。
+- dynamic discovery、scheduler、score、capacity allocation、campaign、barrier、DAG、retry DSL。
 - adapter共通interface、自動dispatch/poll/cancel/follow-up。
 - Finding／Decision／Approval engine、独立性score、多数決、quorum。
 - append-only event log、SQLite、汎用migration framework、hook統合、daemon、Web UI。

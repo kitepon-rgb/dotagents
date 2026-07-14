@@ -172,6 +172,35 @@ export function makeWorkerRun(overrides = {}) {
   };
 }
 
+export function makeRegistryObservation(overrides = {}) {
+  const verification = {
+    stage: "execution-verified", observed_version: "test-version", observed_at: "2026-07-14T00:00:00.000Z",
+    evidence: evidence("docs/registry-verification.md"),
+  };
+  return {
+    registry_observation_id: "registry-observation-001",
+    executor: {
+      adapter_id: "codex-native", contract_version: "v1", instance_id: "native-subagent",
+      handle_schema_id: "codex-native.agent-id.v1",
+    },
+    workflow_id: "native-subagent",
+    enabled: { value: "true", evidence: evidence("docs/registry-enabled.md") },
+    workflow_capabilities: [
+      { capability_id: "report.structured", value: "true", evidence: evidence("docs/registry-capabilities.md") },
+      { capability_id: "workspace.read", value: "true", evidence: evidence("docs/registry-capabilities.md") },
+    ],
+    capacity: {
+      admission: { value: "unknown", evidence: null },
+      hard_inflight_limit: { knowledge: "unknown", value: null, evidence: null },
+      soft_inflight_limit: { knowledge: "unknown", value: null, evidence: null },
+      observed_inflight: { knowledge: "unknown", value: null, evidence: null },
+    },
+    verification,
+    expires_at: "2026-07-14T01:00:00.000Z",
+    ...overrides,
+  };
+}
+
 export function makeConsultation(overrides = {}) {
   return {
     consultation_id: "consultation-001", task_id: "consultation-task", assignment_id: "consultation-assignment",

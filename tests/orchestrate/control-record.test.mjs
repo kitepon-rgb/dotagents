@@ -6,7 +6,7 @@ import { join } from "node:path";
 import {
   addLinkedWorktree, cleanupDir, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
   createNonGitDir, createOwnerFixtures, evidence, installSentinelBin, loadControl, makeConsultation, makeTask,
-  makeApproval, makeBudget, makeBudgetReservation, makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
+  makeApproval, makeBudget, makeBudgetReservation, makeRegistryObservation, makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
   taskAdmissionDigest, terminalWorkerObservation, completedWorkerObservation, workerObservation, writeJson,
 } from "./helpers.mjs";
 
@@ -51,12 +51,12 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v11", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v12", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
-    document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [], control_finalization: null,
+    document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], registry_observations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
   assert.deepEqual(api.validateManifest(manifest), manifest);
@@ -217,6 +217,90 @@ test("role/effect policy snapshotはread-only roleと未承認integrator write�
   });
   assert.equal(allowed.manifest.tasks[0].role, "integrator");
   assert.deepEqual(allowed.manifest.role_effect_policy.read_only_roles, ["refuter", "sorter", "verifier"]);
+});
+
+test("Registry observationは根拠付きtri-stateとcapacityを保存し、将来adapterをdispatch許可へ昇格させない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "registry-primary" });
+  const codexNative = makeRegistryObservation({ registry_observation_id: "registry-codex-native" });
+  const nativeRecorded = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "registry-primary", actor_id: "parent-001", expected_revision: result.revision, observation: codexNative,
+  });
+  assert.deepEqual(nativeRecorded.manifest.registry_observations, [codexNative]);
+  assert.deepEqual(nativeRecorded.manifest.transition_receipts.at(-1).subject, { kind: "registry-observation", id: "registry-codex-native" });
+  assert.equal(nativeRecorded.manifest.transition_receipts.at(-1).operation, "registry-observation-record");
+
+  const sidecar = makeRegistryObservation({
+    registry_observation_id: "registry-sidecar", executor: {
+      adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.idempotency-key.v1",
+    },
+    workflow_id: "work",
+    enabled: { value: "false", evidence: evidence("docs/sidecar-disabled.md") },
+    capacity: {
+      admission: { value: "false", evidence: evidence("docs/sidecar-admission.md") },
+      hard_inflight_limit: { knowledge: "known", value: 3, evidence: evidence("docs/sidecar-hard-limit.md") },
+      soft_inflight_limit: { knowledge: "known", value: 2, evidence: evidence("docs/sidecar-soft-limit.md") },
+      observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/sidecar-observed.md") },
+    },
+  });
+  const sidecarRecorded = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "registry-primary", actor_id: "parent-001", expected_revision: nativeRecorded.revision, observation: sidecar,
+  });
+  assert.equal(sidecarRecorded.manifest.registry_observations[1].capacity.soft_inflight_limit.value, 2);
+
+  const aiterm = makeRegistryObservation({
+    registry_observation_id: "registry-aiterm", executor: {
+      adapter_id: "aiterm", contract_version: "v1", instance_id: "local-default", handle_schema_id: "aiterm.session.v1",
+    },
+    workflow_id: "interactive-session",
+  });
+  const aitermRecorded = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "registry-primary", actor_id: "parent-001", expected_revision: sidecarRecorded.revision, observation: aiterm,
+  });
+  assert.equal(aitermRecorded.manifest.registry_observations.length, 3);
+
+  const future = makeRegistryObservation({
+    registry_observation_id: "registry-future", executor: {
+      adapter_id: "future-adapter", contract_version: "v9", instance_id: "future-instance", handle_schema_id: "future.handle.v1",
+    },
+    workflow_id: "future-workflow", enabled: { value: "unknown", evidence: null },
+    capacity: {
+      ...codexNative.capacity,
+      hard_inflight_limit: { knowledge: "unknown", value: null, evidence: evidence("docs/future-capacity-unknown.md") },
+    },
+  });
+  let futureRecorded = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "registry-primary", actor_id: "parent-001", expected_revision: aitermRecorded.revision, observation: future,
+  });
+  assert.equal(futureRecorded.manifest.registry_observations.at(-1).executor.adapter_id, "future-adapter");
+  const futureRefresh = makeRegistryObservation({ ...future, registry_observation_id: "registry-future-refresh", expires_at: "2026-07-14T02:00:00.000Z" });
+  futureRecorded = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "registry-primary", actor_id: "parent-001", expected_revision: futureRecorded.revision, observation: futureRefresh,
+  });
+  assert.equal(futureRecorded.manifest.registry_observations.at(-1).registry_observation_id, "registry-future-refresh");
+  await assert.rejects(api.workerRunRecord({
+    cwd: repo.root, control_id: "registry-primary", actor_id: "parent-001", expected_revision: futureRecorded.revision,
+    worker_run: makeWorkerRun({ executor: future.executor, workflow_id: future.workflow_id }),
+  }), code("ADAPTER_UNKNOWN"));
+
+  const invalid = async (registry_observation_id, overrides, expected = "INVALID_SCHEMA") => {
+    await assert.rejects(api.registryObservationRecord({
+      cwd: repo.root, control_id: "registry-primary", actor_id: "parent-001", expected_revision: futureRecorded.revision,
+      observation: makeRegistryObservation({ registry_observation_id, ...overrides }),
+    }), code(expected));
+  };
+  await invalid("registry-missing-known-evidence", { enabled: { value: "true", evidence: null } });
+  await invalid("registry-unknown-with-value", { capacity: { ...codexNative.capacity, observed_inflight: { knowledge: "unknown", value: 0, evidence: null } } });
+  await invalid("registry-soft-over-hard", { capacity: { ...sidecar.capacity, soft_inflight_limit: { knowledge: "known", value: 4, evidence: evidence("docs/too-soft.md") } } });
+  await invalid("registry-expiry-before-verification", { expires_at: "2026-07-13T23:59:59.000Z" });
+  await invalid("registry-future-evidence", { enabled: { value: "true", evidence: evidence("docs/future-evidence.md", "file", { observed_at: "2026-07-14T00:00:01.000Z" }) } });
+  await invalid("registry-gpt-connector", { executor: { adapter_id: "gpt-connector", contract_version: "v1", instance_id: "chat", handle_schema_id: "gpt-connector.slug.v1" } }, "EXECUTOR_FORBIDDEN");
+  await invalid("registry-unknown-field", { unexpected: true });
+
+  const second = await api.init({ cwd: repo.root, control_id: "registry-secondary", objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  await assert.rejects(api.registryObservationRecord({
+    cwd: repo.root, control_id: "registry-secondary", actor_id: "parent-001", expected_revision: second.revision,
+    observation: makeRegistryObservation({ registry_observation_id: "registry-codex-native" }),
+  }), code("DUPLICATE_ID"));
 });
 
 test("WorkerとConsultationは分離され、同一read Taskを参照でき、gpt executorを拒否する", async (t) => {
@@ -842,7 +926,14 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
   assert.equal(cliRun.status, 0); const cliRunResult = JSON.parse(cliRun.stdout).result;
   const cliAdmitInput = join(base, "cli-admit.json"); await writeJson(cliAdmitInput, { cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliRunResult.revision, worker_run_id: "cli-run" });
   const cliAdmit = spawnOrchestrate(["admit-worker", "--input", cliAdmitInput], { env: protectedEnv });
-  assert.equal(cliAdmit.status, 0); assert.equal(JSON.parse(cliAdmit.stdout).result.manifest.worker_runs[0].state, "admitted");
+  assert.equal(cliAdmit.status, 0); const cliAdmitResult = JSON.parse(cliAdmit.stdout).result;
+  assert.equal(cliAdmitResult.manifest.worker_runs[0].state, "admitted");
+  const cliRegistryInput = join(base, "cli-registry-observation.json"); await writeJson(cliRegistryInput, {
+    cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliAdmitResult.revision,
+    observation: makeRegistryObservation({ registry_observation_id: "registry-cli" }),
+  });
+  const cliRegistry = spawnOrchestrate(["registry-observation-record", "--input", cliRegistryInput], { env: protectedEnv });
+  assert.equal(cliRegistry.status, 0); assert.equal(JSON.parse(cliRegistry.stdout).command, "registry-observation-record");
   await assert.rejects(access(sentinel.log));
   for (const args of [["unknown", "--input", input], ["status", "--input", input, "--input", input], ["status", "extra", "--input", input]]) {
     const output = spawnOrchestrate(args); assert.equal(output.status, 2); assert.equal(JSON.parse(output.stderr).code, "INVALID_INPUT");

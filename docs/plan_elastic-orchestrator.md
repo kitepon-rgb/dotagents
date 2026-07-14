@@ -129,7 +129,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 
 ### Phase 1B: Operator-driven vertical slice
 
-- [ ] read-only Executor Registry observationを実装する。能力・capacityは`true | false | unknown`、
+- [x] read-only Executor Registry observationを実装する。能力・capacityは`true | false | unknown`、
   根拠、version、観測時刻、expiry、verification stageを持ち、製品stateの正本にはしない。
 - [ ] Task要件、F/A/H snapshot、capability、budget、lineage、write/worktree conflictを照合する
   deterministic dry-run placementを実装する。自動scoreや意味的順位付けはしない。
