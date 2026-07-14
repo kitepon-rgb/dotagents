@@ -87,12 +87,12 @@ async function completePhaseGate(repo, controlId, revision, { risk = "standard",
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v23", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v24", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
-    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], campaigns: [], phase_gate: null, artifacts: [], registry_observations: [], task_finalizations: [], control_finalization: null,
+    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], campaigns: [], phase_gate: null, artifacts: [], family_governance: [], registry_observations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
   assert.deepEqual(api.validateManifest(manifest), manifest);
@@ -135,6 +135,7 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
 test("status briefとresume checkはopaque状態・workspace drift・evidence retentionを要約する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "brief-control" });
   const ready = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });
+  assert.equal(ready.schema_version, "dotagents.orchestration-resume-check.v5");
   assert.equal(ready.outcome, "ready");
   await writeFile(join(repo.root, "docs", "resume-dirty.md"), "dirty\n");
   const changed = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });
@@ -151,6 +152,7 @@ test("status briefとresume checkはopaque状態・workspace drift・evidence re
   const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: consultation.revision, consultation_id: "brief-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
   const unknown = await api.observeConsultation({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: consultationDispatched.revision, consultation_id: "brief-consultation", observation: { state: "unknown", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "unknown" } });
   const brief = await api.statusBrief({ cwd: repo.root, control_id: "brief-state-control" });
+  assert.equal(brief.schema_version, "dotagents.orchestration-status-brief.v6");
   assert.equal(brief.active.worker_runs[0].executor_handle.idempotency_key, "A".repeat(22));
   assert.equal(brief.active.consultations[0].slug, "known-session-slug");
   assert.deepEqual(brief.unknown.consultation_ids, ["brief-consultation"]);
@@ -1433,6 +1435,84 @@ test("artifact CLIはrecord/status更新/参照だけを行い外部providerを�
   const updated = spawnOrchestrate(["artifact-status-record", "--input", updateInput], { env }); assert.equal(updated.status, 0);
   const statusInput = join(base, "artifact-status.json"); await writeJson(statusInput, { cwd: repo.root, control_id: "artifact-cli", artifact_id: "cli-artifact" });
   const status = spawnOrchestrate(["artifact-status", "--input", statusInput], { env }); assert.equal(status.status, 0); assert.equal(JSON.parse(status.stdout).result.status, "closed");
+  await assert.rejects(access(sentinel.log));
+});
+
+test("governed approach familyはblock/reopenで新規入口だけを止め、artifact根拠とcontext policyを検査する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "family-governance" });
+  const artifacts = [
+    ["family-decision-block", "decision", "# block\n"], ["family-basis-approach", "approach", "# approach\n"],
+    ["family-decision-reopen", "decision", "# reopen\n"], ["family-basis-gap", "gap", "# gap\n"],
+  ];
+  let revision = result.revision;
+  for (const [artifact_id, artifact_kind, body] of artifacts) {
+    const artifact_ref = `docs/${artifact_id}.md`; await writeFile(join(repo.root, artifact_ref), body);
+    const recorded = await api.artifactRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: revision, artifact: { artifact_id, artifact_kind, artifact_ref, artifact_digest: createHash("sha256").update(body).digest("hex"), status: "current" } });
+    revision = recorded.revision;
+  }
+  const policy = makeWorkerRun().lineage.context_policy;
+  const governed = await api.approachFamilyGovernanceRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: revision, approach_family_ref: "implementation-primary", context_policy: policy });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: governed.revision, task: makeTask({ task_id: "family-task", effect: "read", write_scope: [], isolation: "none" }) });
+  const registry = await api.registryObservationRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: task.revision, observation: makeRegistryObservation({ registry_observation_id: "family-registry" }) });
+  const existing = await api.workerRunRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: registry.revision, worker_run: makeWorkerRun({ worker_run_id: "family-existing", task_id: "family-task", assignment_id: "family-existing-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "family-existing-assignment", approach_family_ref: "implementation-primary" } }) });
+  const admittedRun = await api.workerRunRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: existing.revision, worker_run: makeWorkerRun({ worker_run_id: "family-admitted", task_id: "family-task", assignment_id: "family-admitted-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "family-admitted-assignment", approach_family_ref: "implementation-primary" } }) });
+  const admittedExisting = await api.admitWorker({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: admittedRun.revision, worker_run_id: "family-admitted" });
+  const runningRun = await api.workerRunRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: admittedExisting.revision, worker_run: makeWorkerRun({ worker_run_id: "family-running", task_id: "family-task", assignment_id: "family-running-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "family-running-assignment", approach_family_ref: "implementation-primary" } }) });
+  const runningAdmitted = await api.admitWorker({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: runningRun.revision, worker_run_id: "family-running" });
+  const runningDispatched = await api.observeWorker({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: runningAdmitted.revision, worker_run_id: "family-running", observation: workerObservation("dispatched") });
+  const runningExisting = await api.observeWorker({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: runningDispatched.revision, worker_run_id: "family-running", observation: workerObservation("running") });
+  const blocked = await api.approachFamilyBlock({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: runningExisting.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "family-decision-block", basis_artifact_ids: ["family-basis-approach"] });
+  assert.deepEqual(blocked.manifest.worker_runs.map((run) => run.state), ["planned", "admitted", "running"]);
+  assert.ok(blocked.manifest.worker_runs.every((run) => run.cancel_request === null));
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: blocked.revision, worker_run_id: "family-existing" }), code("APPROACH_FAMILY_BLOCKED"));
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: blocked.revision, worker_run: makeWorkerRun({ worker_run_id: "family-blocked", task_id: "family-task", assignment_id: "family-blocked-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "family-blocked-assignment", approach_family_ref: "implementation-primary" } }) }), code("APPROACH_FAMILY_BLOCKED"));
+  const placement = await api.placementDryRun({ cwd: repo.root, control_id: "family-governance", task_id: "family-task", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [makePlacementCandidate({ candidate_id: "family-placement", registry_observation_id: "family-registry", assignment_id: "family-placement-assignment", workspace_cwd: repo.root, lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "family-placement-assignment", approach_family_ref: "implementation-primary" } })] });
+  assert.ok(placement.candidates[0].reasons.includes("approach-family-blocked"));
+  await assert.rejects(api.approachFamilyReopen({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: blocked.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "family-decision-reopen", basis_artifact_ids: ["family-basis-approach"] }), code("REOPEN_BASIS_NOT_NEW"));
+  const reopened = await api.approachFamilyReopen({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: blocked.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "family-decision-reopen", basis_artifact_ids: ["family-basis-gap"] });
+  const status = await api.approachFamilyStatus({ cwd: repo.root, control_id: "family-governance", approach_family_ref: "implementation-primary" }); assert.equal(status.state, "reopened");
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: reopened.revision, worker_run_id: "family-existing" }); assert.equal(admitted.manifest.worker_runs[0].state, "admitted");
+  await assert.rejects(api.approachFamilyBlock({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: admitted.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "family-decision-block", basis_artifact_ids: ["family-basis-approach"] }), code("FAMILY_CYCLE_EXHAUSTED"));
+  const tampered = structuredClone(admitted.manifest); tampered.family_governance[0].block.basis_artifact_ids = ["family-basis-gap"]; assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+});
+
+test("approach family governanceのcontext mismatchとartifact kind不足をfail closedにする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "family-negative" });
+  const body = "# finding\n"; await writeFile(join(repo.root, "docs/family-finding.md"), body);
+  const artifact = await api.artifactRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: result.revision, artifact: { artifact_id: "family-finding", artifact_kind: "finding", artifact_ref: "docs/family-finding.md", artifact_digest: createHash("sha256").update(body).digest("hex"), status: "current" } });
+  const governedPolicy = makeWorkerRun().lineage.context_policy;
+  const family = await api.approachFamilyGovernanceRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: artifact.revision, approach_family_ref: "implementation-primary", context_policy: governedPolicy });
+  await assert.rejects(api.approachFamilyBlock({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: family.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "family-finding", basis_artifact_ids: ["family-finding"] }), code("ARTIFACT_INVALID"));
+  const mismatchedPolicy = { ...governedPolicy, share_existing_findings: !governedPolicy.share_existing_findings };
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: family.revision, task: makeTask({ task_id: "family-negative-task", effect: "read", write_scope: [], isolation: "none", context_policy: mismatchedPolicy }) });
+  const mismatch = { ...makeWorkerRun().lineage, root_assignment_id: "family-negative-assignment", approach_family_ref: "implementation-primary", context_policy: mismatchedPolicy };
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "family-negative-worker", task_id: "family-negative-task", assignment_id: "family-negative-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: mismatch }) }), code("CONTEXT_POLICY_MISMATCH"));
+});
+
+test("approach family CLIはrecord/block/reopen/statusだけを行い外部providerを起動しない", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
+  const init = await api.init({ cwd: repo.root, control_id: "family-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const artifactSpecs = [
+    ["cli-family-block-decision", "decision", "# block decision\n"], ["cli-family-approach", "approach", "# approach\n"],
+    ["cli-family-reopen-decision", "decision", "# reopen decision\n"], ["cli-family-gap", "gap", "# gap\n"],
+  ];
+  let revision = init.revision;
+  for (const [artifact_id, artifact_kind, body] of artifactSpecs) {
+    const artifact_ref = `docs/${artifact_id}.md`; await writeFile(join(repo.root, artifact_ref), body);
+    const recordedArtifact = await api.artifactRecord({ cwd: repo.root, control_id: "family-cli", actor_id: "parent", expected_revision: revision, artifact: { artifact_id, artifact_kind, artifact_ref, artifact_digest: createHash("sha256").update(body).digest("hex"), status: "current" } });
+    revision = recordedArtifact.revision;
+  }
+  const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` }; const policy = makeWorkerRun().lineage.context_policy;
+  const recordInput = join(base, "family-record.json"); await writeJson(recordInput, { cwd: repo.root, control_id: "family-cli", actor_id: "parent", expected_revision: revision, approach_family_ref: "implementation-primary", context_policy: policy });
+  const recorded = spawnOrchestrate(["approach-family-record", "--input", recordInput], { env }); assert.equal(recorded.status, 0);
+  const recordResult = JSON.parse(recorded.stdout).result;
+  const blockInput = join(base, "family-block.json"); await writeJson(blockInput, { cwd: repo.root, control_id: "family-cli", actor_id: "parent", expected_revision: recordResult.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "cli-family-block-decision", basis_artifact_ids: ["cli-family-approach"] });
+  const blocked = spawnOrchestrate(["approach-family-block", "--input", blockInput], { env }); assert.equal(blocked.status, 0);
+  const blockResult = JSON.parse(blocked.stdout).result;
+  const reopenInput = join(base, "family-reopen.json"); await writeJson(reopenInput, { cwd: repo.root, control_id: "family-cli", actor_id: "parent", expected_revision: blockResult.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "cli-family-reopen-decision", basis_artifact_ids: ["cli-family-gap"] });
+  const reopened = spawnOrchestrate(["approach-family-reopen", "--input", reopenInput], { env }); assert.equal(reopened.status, 0);
+  const statusInput = join(base, "family-status.json"); await writeJson(statusInput, { cwd: repo.root, control_id: "family-cli", approach_family_ref: "implementation-primary" });
+  const status = spawnOrchestrate(["approach-family-status", "--input", statusInput], { env }); assert.equal(status.status, 0); assert.equal(JSON.parse(status.stdout).result.state, "reopened");
   await assert.rejects(access(sentinel.log));
 });
 

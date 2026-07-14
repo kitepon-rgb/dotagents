@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v23",
+  "schema_version": "dotagents.orchestration-control.v24",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -102,6 +102,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   "campaigns": [],
   "phase_gate": null,
   "artifacts": [],
+  "family_governance": [],
   "task_finalizations": [],
   "control_finalization": null,
   "transition_receipts": [
@@ -126,7 +127,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v23で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v24で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -137,7 +138,8 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent path、
   v19はapproach family／assignment retry／integration Run上限をBudget、v20は明示fallback参照を
   Worker Runへ追加し、v21はmanual Worker生成identity／fallbackのreceipt digest束縛を追加し、v22は固定順の
-  phase gateを追加し、v23はdocs artifactのID／digest／status projectionを追加した。旧manifestを
+  phase gateを追加し、v23はdocs artifactのID／digest／status projection、v24はapproach family governanceを
+  追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -439,9 +441,9 @@ placement eligibilityを主張する操作ではない。Registry評価済みと
 
 ### Brief status and resume check
 
-`status --brief`は`dotagents.orchestration-status-brief.v5`としてmanifest全体を複製せず、
+`status --brief`は`dotagents.orchestration-status-brief.v6`としてmanifest全体を複製せず、
 次だけを親の再開用に固定shapeで返す。`resumeCheck`はこのbriefを含むため
-`dotagents.orchestration-resume-check.v4`とする。
+`dotagents.orchestration-resume-check.v5`とする。
 
 - Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation／Campaign件数
 - Task取消件数、取消済みTask ID、未terminalのcancel要求済みWorker ID
@@ -731,7 +733,8 @@ wall timeとcost上限は非負整数または`null=unknown`である。costは�
 - approach family上限は同じ非null `lineage.approach_family_ref`の全Run、retry上限は初回を除く同じ
   assignmentのRun、integration上限はroleが`integrator`のTaskを参照する全Runを、いずれも当該
   Control内だけで数える。別Controlの履歴は当該Controlが所有するBudgetを消費しない。placementは
-  `approach-family-limit / retry-limit / integration-capacity-exhausted`をhard reasonとして返す。
+  `approach-family-limit / approach-family-blocked / approach-family-context-mismatch / retry-limit /
+  integration-capacity-exhausted`をhard reasonとして返す。
   approach familyがnullの候補は`approach-family-unknown`でineligibleにし、無制限へ丸めない。
 - `null`を0、未使用、無制限へ丸めない。read-only `status`はunknownを保持して読めるが、Control上限
   または新規予約がunknownのままRun／Consultationを追加するmutationは`BUDGET_UNKNOWN`で拒否する。
@@ -768,7 +771,8 @@ wall timeとcost上限は非負整数または`null=unknown`である。costは�
   `parent_worker_run_id=null`かつ`root_assignment_id=assignment_id`。子Runは同じControl内ですでに
   記録済みのparent Workerを参照し、root assignmentを継承する。`context_policy`はTask snapshotと
   完全一致する。`input_digest`は親が渡すpacket／入力構成のSHA-256であり、内容本体は保存しない。
-  `approach_family_ref`はbounded identifierまたは`null`、Finding参照はrepo相対pathである。
+  `approach_family_ref`はbounded identifierまたは`null`、`shared_artifact_ids`は同一Controlの
+  finding artifact ID参照である。
 - 同一worktreeはscopeが非交差でも予約済みwriterを最大1件とする。workspace全体fingerprintを
   共有するため、Phase 1では同一worktree並行writeを許可しない。別worktreeの重複scopeは、双方が
   `write_mode=isolated-alternative`かつ同じ非空`alternative_group`の場合だけ許可する。
@@ -1067,12 +1071,26 @@ record時とstatus更新時に安全なbounded readでSHA-256を再計算し、p
 非regular fileを拒否する。refとdigestは不変で、内容更新は新IDで記録する。本文、severity、票数、
 semantic dedup、関連候補は保存しない。`shared_artifact_ids`は同一Controlのfindingだけを参照できる。
 
+## Approach family governance
+
+親が明示recordしたfamilyだけへ、既存Budgetの`max_runs_per_approach_family`に加えてblock/reopen gateを
+適用する。未登録familyはこの追加gate上では既存互換であり、blockは既存Run stateを変更せずcancelも行わない。
+
+- recordは`approach_family_ref`と既存exact `context_policy`をsnapshotする。placement candidate、manual
+  Worker record、planned Worker admissionはRun lineageのpolicyと完全一致しなければ拒否する。
+- blockは`kind=decision`の親Decision artifact IDと、`approach | gap | decision`のbasis artifact IDを
+  1件以上要求する。block後は同familyの新規placement、manual Worker record、admissionを拒否する。
+- reopenは親Decisionと、block時basisに含まれない新しいbasis artifact IDを1件以上要求する。semanticな
+  新規性、dedup、票数、本文の裁定は親が保持する。再blockは許可せず、一回のblock→reopen cycleに限定する。
+- record/block/reopenはtyped receiptのsubject digestへsnapshotを結合する。artifact本文を複製せず、
+  artifact ID／kind／document digestの実在性だけを検査する。
+
 ## CLI境界
 
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record,
+init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
 admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
@@ -1130,6 +1148,13 @@ phaseGateAdvance({ cwd, control_id, actor_id, expected_revision,
 artifactRecord({ cwd, control_id, actor_id, expected_revision, artifact })
 artifactStatus({ cwd, control_id, artifact_id })
 artifactStatusRecord({ cwd, control_id, actor_id, expected_revision, artifact_id, status })
+approachFamilyGovernanceRecord({ cwd, control_id, actor_id, expected_revision,
+                                 approach_family_ref, context_policy })
+approachFamilyStatus({ cwd, control_id, approach_family_ref })
+approachFamilyBlock({ cwd, control_id, actor_id, expected_revision,
+                     approach_family_ref, decision_artifact_id, basis_artifact_ids })
+approachFamilyReopen({ cwd, control_id, actor_id, expected_revision,
+                      approach_family_ref, decision_artifact_id, basis_artifact_ids })
 delegationPacketForWorker({ cwd, control_id, worker_run_id })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
 bindWorkerWorkspace({ cwd, control_id, actor_id, expected_revision, worker_run_id,
