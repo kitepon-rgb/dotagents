@@ -36,7 +36,7 @@ frontmatter_is_name_and_description_only() {
   ' "$1" || fail "$1 の frontmatter は name/description だけではない"
 }
 
-for skill in orchestrate audit-gauntlet auto-deploy-on-push; do
+for skill in orchestrate auto-deploy-on-push; do
   file="$ROOT/codex/skills/$skill/SKILL.md"
   [ -f "$file" ] || fail "$file がない"
   frontmatter_is_name_and_description_only "$file"
@@ -76,16 +76,6 @@ contains "$ROOT/docs/05_codex-fragments.md" 'codex mcp add codex-sidecar -- code
 if rg -qi 'Workflow' "$ROOT/codex/skills/orchestrate/SKILL.md"; then
   fail 'Codex orchestrate が Claude 専用 Workflow を実行入口としている'
 fi
-
-audit="$ROOT/codex/skills/audit-gauntlet/SKILL.md"
-assert_order "$audit" \
-  'Find を複数視点' \
-  'Dedup で重複を統合' \
-  'existence（事実として実在するか）と value（直す価値と変更リスクがあるか）の独立2票' \
-  'Critic に既出の言い換えでない盲点' \
-  '親が採用・棄却を裁定する'
-contains "$audit" '疑わしければ棄却する'
-contains "$audit" '件数遷移'
 
 deploy="$ROOT/codex/skills/auto-deploy-on-push/SKILL.md"
 assert_order "$deploy" \

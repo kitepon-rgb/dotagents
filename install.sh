@@ -46,6 +46,22 @@ link_one() {
   echo "linked: $dst -> $src"
 }
 
+remove_retired_link() {
+  local path="$1" expected_target="$2"
+  [ -L "$path" ] || return 0
+  if [ "$(readlink "$path")" = "$expected_target" ]; then
+    rm "$path"
+    echo "removed retired link: $path"
+  fi
+}
+
+# 廃止済みの dotagents 所有入口だけを除去する。実ファイルや別所有者の
+# symlink は触らず、旧 official / legacy の双方に残る dangling link を防ぐ。
+remove_retired_link "$HOME/.claude/skills/audit-gauntlet" "$HERE/claude/skills/audit-gauntlet"
+remove_retired_link "$HOME/.claude/commands/audit-gauntlet.md" "$HERE/claude/commands/audit-gauntlet.md"
+remove_retired_link "$HOME/.agents/skills/audit-gauntlet" "$HERE/codex/skills/audit-gauntlet"
+remove_retired_link "$HOME/.codex/skills/audit-gauntlet" "$HERE/codex/skills/audit-gauntlet"
+
 # Claude
 mkdir -p "$HOME/.claude/skills" "$HOME/.claude/commands" "$HOME/.claude/agents"
 # global CLAUDE.md (canonical copy lives in this repo; terminals must remove any

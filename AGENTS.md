@@ -78,22 +78,14 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 
 ```yaml
 ---
-name: audit-gauntlet
-description: 計画書・仕様書・設計書を 3 段関門で磨き込む。「磨いて」「叩いて」と頼まれた時に使う。
+name: auto-deploy-on-push
+description: GitHub push 起点のデプロイを安全に検討する時に使う。
 ---
 ```
 
 ### Command の frontmatter
 
 `description` 必須、`argument-hint` は任意。`$ARGUMENTS` でコマンド引数を本文に差し込める (`claude/commands/polish-github.md` 参照)。
-
-### Command を Skill の薄いラッパとして提供するパターン
-
-スラッシュコマンド本文と skill 本文が完全に同じになるなら、コマンド側を skill の `SKILL.md` への相対 symlink にして二重管理を避ける。実例:
-
-```
-claude/commands/audit-gauntlet.md -> ../skills/audit-gauntlet/SKILL.md
-```
 
 ## 含めないもの (リポジトリに置かない)
 

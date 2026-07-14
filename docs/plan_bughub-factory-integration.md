@@ -243,7 +243,8 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 
 ### Wave 0 — 正本・baseline・dirty整理（挙動不変）
 
-- [x] 本計画をaudit-gauntletで監査し、採用指摘だけ反映
+- [x] 当時はaudit-gauntletの指摘を反映したが、同skillは2026-07-14に過大結果のため廃止された。
+  この監査結果は現在の完了根拠として扱わず、本計画を再変更する際は実ファイルとテストから再検証する。
 - [x] 9製品とdotagents/ServerManagerでfetch→origin照合→stash→dirtyを記録
 - [x] Caveatの並行dirtyはオーナー/作業sessionの完了までロックし、収容・破棄を勝手に行わない
 - [x] Throughline `.agents/` の所有意図を確認し、無関係なら触らず作業範囲を分離

@@ -1,1 +1,0 @@
-../skills/audit-gauntlet/SKILL.md
