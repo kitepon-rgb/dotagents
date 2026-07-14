@@ -167,7 +167,7 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
 test("status briefとresume checkはopaque状態・workspace drift・evidence retentionを要約する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "brief-control" });
   const ready = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });
-  assert.equal(ready.schema_version, "dotagents.orchestration-resume-check.v5");
+  assert.equal(ready.schema_version, "dotagents.orchestration-resume-check.v6");
   assert.equal(ready.outcome, "ready");
   await writeFile(join(repo.root, "docs", "resume-dirty.md"), "dirty\n");
   const changed = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });
@@ -363,6 +363,31 @@ test("resume checkはfile evidenceのretentionを検証し、opaque evidenceを�
   const unsafe = await api.resumeCheck({ cwd: repo.root, control_id: "retention-control" });
   assert.equal(unsafe.outcome, "blocked"); assert.ok(unsafe.blocking_reasons.some((entry) => entry.code === "evidence-unsafe"));
   assert.equal(worker.revision, 2);
+});
+
+test("resume checkは旧decision digestをgit履歴で保持しlegacy provider decision refをreviewへ送る", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base, "retention-history");
+  const decisionRef = "docs/versioned-decision.md"; const oldBody = "old immutable decision\n"; const newBody = "new immutable decision\n";
+  await writeFile(join(repo.root, decisionRef), oldBody); runGit(repo.root, ["add", decisionRef]); runGit(repo.root, ["commit", "-q", "-m", "record old decision"]);
+  const historical = { type: "decision", ref: decisionRef, digest: createHash("sha256").update(oldBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
+  const legacy = { type: "decision", ref: "native:/root/legacy-agent:parent-review", digest: "f".repeat(64), observed_at: "2026-07-14T00:00:00.000Z" };
+  const init = await api.init({ cwd: repo.root, control_id: "retention-history-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "retention-history-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "retention-history-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const template = makeWorkerRun(); const capabilities = template.workflow_capabilities.map((entry) => ({ ...entry, evidence: historical }));
+  await api.workerRunRecord({
+    cwd: repo.root, control_id: "retention-history-control", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "retention-history-worker", task_id: "retention-history-task", assignment_id: "retention-history-assignment", write_mode: "none", workspace_cwd: repo.root, workflow_capabilities: capabilities, execution_verification: { ...template.execution_verification, evidence: legacy }, lineage: { ...template.lineage, root_assignment_id: "retention-history-assignment" } }),
+  });
+  await writeFile(join(repo.root, decisionRef), newBody);
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "retention-history-control" });
+  assert.equal(resumed.outcome, "review-required");
+  assert.ok(resumed.review_reasons.some((entry) => entry.code === "evidence-legacy-decision-ref" && entry.subject_id === legacy.ref));
+  assert.deepEqual(resumed.evidence_retention.local.find((entry) => entry.ref === decisionRef), {
+    type: "decision", ref: decisionRef, digest: historical.digest, status: "retained-history",
+    observed_digest: createHash("sha256").update(newBody).digest("hex"), error_code: "RETAINED_IN_GIT_HISTORY",
+  });
+  assert.deepEqual(resumed.evidence_retention.opaque.find((entry) => entry.ref === legacy.ref), { type: "decision", ref: legacy.ref, digest: legacy.digest });
+  assert.equal(resumed.blocking_reasons.some((entry) => entry.subject_id === decisionRef || entry.subject_id === legacy.ref), false);
 });
 
 test("resume checkは予約中writerのHEAD移動をblockedにする", async (t) => {

@@ -279,13 +279,22 @@ READMEのhook数、CI正典の`test-orchestrate`漏れ、plan現在地を採用�
   Reportまたはprovider由来terminal evidenceへ拘束し、caller supplied stateだけで成功確定しない。
 - [x] 実dogfoodで再現したcallout hookのsession path境界を独立修復する。4本のhookで生の
   `session_id`をpathへ連結せず、owner-owned cache内の固定長digestだけをstate keyに使う。
+- [x] 実handoffで再現したevidence retention境界を修復する。同一pathの旧decision digestは
+  git履歴の同一path・同一digestで厳密に保持確認し、legacy provider URI型decision refは
+  成功へ丸めずopaque＋review-requiredとして再照会対象にする。
 - [x] 10件以上のread-only Worker Runを複数Executor・複数lineageで実行し、Dedup→反証→親裁定を通す。
-- [ ] codex-sidecar隔離worktreeと別Executorの競合する代替案を作り、自動mergeせず親が一案を採用する。
+- [x] codex-sidecar隔離worktreeと別Executorの競合する代替案を作り、自動mergeせず親が一案を採用する。
 - [ ] Codex nativeの実効最大枠と、aiterm、codex-sidecar、gpt-connector consultationを同時利用し、
   全体がnative枠へ制限されないことを示す。
-- [ ] 親sessionをThroughline handoffで終了・再開し、active/unknown Run、base SHA、report、Decisionを回収する。
+- [x] 親sessionをThroughline handoffで終了・再開し、active/unknown Run、base SHA、report、Decisionを回収する。
 - [ ] 中規模実装1件と監査1件で全縦切りを通し、既存回帰、敵対的最終監査、knowledge returnを完了する。
 - [ ] v1受入matrixを全件greenにし、Control-level finalization後に本planを`docs/archive/`へ退避する。
+
+Phase 7再開実証（2026-07-15）: Throughline handoff後の新taskはControl revision 97を
+`resume-check`で復元し、同じopaque handleからsidecar terminal resultとnative rollout reportを回収した。
+両案は同一base SHAの別worktreeで同じ文書を作り、自動mergeせず、親がdiff・29行・lint・未検証範囲を
+比較してnative案だけを採用した。Control revision 102で両strict reportと親accept/rejectを記録済み。
+詳細な不変証拠とdigestは`docs/elastic-orchestrator-v1-dogfood-decision.md`を正本とする。
 
 ## v1非目標
 

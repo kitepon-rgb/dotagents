@@ -445,7 +445,7 @@ placement eligibilityを主張する操作ではない。Registry評価済みと
 
 `status --brief`は`dotagents.orchestration-status-brief.v6`としてmanifest全体を複製せず、
 次だけを親の再開用に固定shapeで返す。`resumeCheck`はこのbriefを含むため
-`dotagents.orchestration-resume-check.v5`とする。
+`dotagents.orchestration-resume-check.v6`とする。
 
 - Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation／Campaign件数
 - Task取消件数、取消済みTask ID、未terminalのcancel要求済みWorker ID
@@ -477,9 +477,13 @@ review_reasons
 - `dispatched | running | unknown`のWorker／Consultationは、opaque handleまたはconnector slugを一覧へ戻し、
   所有Executorへの再照会が必要なため`review-required`とする。timeoutをfailedへ変換しない。
 - `file | decision` evidenceはproject rootの非symlink regular fileを合計64 MiBまで再hashする。欠損、
-  digest不一致、unsafe path、hash上限超過、読取中driftは`blocked`。bareでworktree内容を
+  digest不一致、unsafe path、hash上限超過、読取中driftは`blocked`。同じdecision pathの現内容が
+  変わっていても、最大256 commitのgit履歴に同一path・regular blob・同一SHA-256が残る時だけ
+  `retained-history`として保持し、任意の別pathやhash不一致へfallbackしない。bareでworktree内容を
   検証できないlocal evidenceだけは`review-required`。
-  `command | url | executor-receipt`は内容を複製せずtype/ref/digestだけをopaque一覧へ返す。
+- `command | url | executor-receipt`は内容を複製せずtype/ref/digestだけをopaque一覧へ返す。v1 dogfood以前に
+  provider URI（`native:`等）を誤って`decision`と記録したlegacy descriptorも内容をlocal fileと推測せず
+  opaqueへ分離し、`evidence-legacy-decision-ref`として`review-required`にする。成功やretainedへ丸めない。
 - `resumeCheck`は観測を更新せず、readyを捏造しない。親が所有Executorへ再照会し、既存のobserve operationで
   新しい事実を記録する。各製品のsession/job state、report、credentialをControlへ複製しない。
 
