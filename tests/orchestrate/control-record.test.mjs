@@ -2288,10 +2288,16 @@ test("Delegation Packetとstrict Worker Report importは相関・scope・親acce
   });
   const plannedPacket = await api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" });
   assert.equal(plannedPacket.schema_version, "dotagents.delegation-packet.v1"); assert.equal(plannedPacket.report_template.schema_id, "dotagents.worker-report.v1");
+  await assert.rejects(api.recoverDelegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" }), code("INVALID_TRANSITION"));
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "packet-worker" });
   const admittedPacket = await api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" });
   assert.equal(admittedPacket.packet_digest, plannedPacket.packet_digest);
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "packet-worker", observation: workerObservation("dispatched") });
+  const recoveredPacket = await api.recoverDelegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" });
+  assert.equal(recoveredPacket.packet_digest, plannedPacket.packet_digest);
+  assert.equal(recoveredPacket.worker.state, "dispatched");
+  assert.equal(recoveredPacket.record_revision, dispatched.revision);
+  await assert.rejects(api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" }), code("INVALID_TRANSITION"));
   const report = {
     schema_version: "dotagents.worker-report.v1", control_id: "packet-control", task_id: "packet-task", worker_run_id: "packet-worker", assignment_id: "packet-assignment", packet_digest: plannedPacket.packet_digest,
     executor_handle: { idempotency_key: "A".repeat(22) }, observed_state: "completed", status: "completed", result_digest: "d".repeat(64),
@@ -2305,11 +2311,14 @@ test("Delegation Packetとstrict Worker Report importは相関・scope・親acce
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, status: "failed" } }), code("INVALID_SCHEMA"));
   const cancelled = await api.taskCancelRecord({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, task_id: "packet-task", decision: evidence("docs/packet-cancel.md", "decision") });
   await assert.rejects(api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" }), code("TASK_CANCELLED"));
+  const cancelledTaskRecovery = await api.recoverDelegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" });
+  assert.equal(cancelledTaskRecovery.packet_digest, plannedPacket.packet_digest);
   const imported = await api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: cancelled.revision, worker_run_id: "packet-worker", report });
   assert.equal(imported.manifest.worker_runs[0].state, "completed"); assert.equal(imported.manifest.worker_runs[0].acceptance, null);
   assert.equal(imported.manifest.transition_receipts.at(-1).operation, "worker-report-import");
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: imported.revision, worker_run_id: "packet-worker", report: { ...report, raw_log: "forbidden" } }), code("INVALID_SCHEMA"));
   await assert.rejects(api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" }), code("TASK_CANCELLED"));
+  await assert.rejects(api.recoverDelegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" }), code("INVALID_TRANSITION"));
 });
 
 test("Delegation Packet/report import CLIは外部Executorを起動しない", async (t) => {
@@ -2322,6 +2331,9 @@ test("Delegation Packet/report import CLIは外部Executorを起動しない", a
   assert.equal(packetOutput.status, 0); const packet = JSON.parse(packetOutput.stdout).result;
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "packet-cli-worker" });
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "packet-cli-worker", observation: workerObservation("dispatched") });
+  const recoveredOutput = spawnOrchestrate(["delegation-packet-recover", "--input", input], { env });
+  assert.equal(recoveredOutput.status, 0);
+  assert.equal(JSON.parse(recoveredOutput.stdout).result.packet_digest, packet.packet_digest);
   const reportInput = join(base, "packet-report-input.json"); await writeJson(reportInput, { cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-cli-worker", report: {
     schema_version: "dotagents.worker-report.v1", control_id: "packet-cli", task_id: "packet-cli-task", worker_run_id: "packet-cli-worker", assignment_id: "packet-cli-assignment", packet_digest: packet.packet_digest,
     executor_handle: { idempotency_key: "A".repeat(22) }, observed_state: "completed", status: "completed", result_digest: "e".repeat(64), evidence: [evidence("docs/packet-cli-result.md")], validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }], changed_paths: [], claims: [],

@@ -875,8 +875,11 @@ execution workspaceのHEAD、identity、scopeと現在fingerprintを検査する
 ### Delegation Packet と Worker Report
 
 `delegation-packet`は、`planned | admitted` Workerから生成する純粋・record-only出力である。
-terminal Run、取消済みTask、未知／forbidden Executor（`gpt-connector`を含む）はfail closedにする。
-生成はdispatch、process起動、network、製品stateの読書きを行わない。
+`delegation-packet-recover`は、packet保存漏れから同一Runを再dispatchせず相関情報を回収するため、
+`dispatched | running | unknown` Workerだけから同じprojectionを再構成する専用read-only出力である。
+前者は取消済みTask、両者は対象外state、未知／forbidden Executor（`gpt-connector`を含む）を
+fail closedにする。後者は既にactiveなRunのterminal report相関を保つため、取消済みTaskでも回収を
+許す。どちらもdispatch、process起動、network、製品stateの読書きを行わない。
 
 - packet schemaは`dotagents.delegation-packet.v1`。Task canonical snapshot、Worker/assignment ID、
   Executor envelopeとworkflow、git由来source workspaceとworkspace binding、read/write scope、classification/effect/role、
@@ -1131,7 +1134,7 @@ Registry由来のcapacity warning、`truncated`だけを持つ。各配列はcan
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, advisory-snapshot, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
+init, status, status --brief, resume-check, advisory-snapshot, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, delegation-packet-recover, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
 admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
@@ -1201,6 +1204,7 @@ approachFamilyBlock({ cwd, control_id, actor_id, expected_revision,
 approachFamilyReopen({ cwd, control_id, actor_id, expected_revision,
                       approach_family_ref, decision_artifact_id, basis_artifact_ids })
 delegationPacketForWorker({ cwd, control_id, worker_run_id })
+recoverDelegationPacketForWorker({ cwd, control_id, worker_run_id })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
 bindWorkerWorkspace({ cwd, control_id, actor_id, expected_revision, worker_run_id,
                       workspace_cwd, provider_binding, binding_evidence })

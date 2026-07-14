@@ -71,6 +71,16 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 - [x] `PLAN.md`の個別残件を本書へ移管し、憲章と実行TODOを分離する。
 - [x] 子計画を削除せず、詳細受入台帳として本書へ従属させる。
 
+### 常設割込ゲート — 正規運用で再現した工場欠陥
+
+コア製品、ServerManager/BugHub、dotagentsのorchestration・installer・hook・adapterなどを
+正規入口で実利用中に再現した欠陥または運用不能な摩擦は、発見時点で本筋を保持して所有repoの
+`docs/`正本TODOへ登録する。独立gate・独立commitで根治してから、必ず保持位置へ戻る。
+第三者製品、H操作、権限外の変更は修理済みにせず、TODO登録後に承認・所有者対応を待つ。
+
+- [x] Decision証拠を可変plan/TODOからwave専用の不変ADRへ分離する規約を、リポ正典へ固定する。
+- [x] active RunのDelegation Packetを再dispatchなしで回収できるread-only公開入口を追加する。
+
 ### Phase O1 — Throughline completed-turn feed（NOW）
 
 - [ ] Claude receiptとCodex `task_complete`から、rollback検知可能なhost-neutral completed chainを完成する。

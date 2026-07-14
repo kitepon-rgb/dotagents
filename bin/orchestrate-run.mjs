@@ -12,6 +12,7 @@ const commands = new Map([
   ["advisory-snapshot", api.advisorySnapshot],
   ["placement-reserve", api.reservePlacement],
   ["delegation-packet", api.delegationPacketForWorker],
+  ["delegation-packet-recover", api.recoverDelegationPacketForWorker],
   ["worker-report-import", api.importWorkerReport],
   ["campaign-record", api.campaignRecord], ["campaign-status", api.campaignStatus], ["campaign-release", api.releaseCampaign],
   ["artifact-record", api.artifactRecord], ["artifact-status", api.artifactStatus], ["artifact-status-record", api.artifactStatusRecord],
