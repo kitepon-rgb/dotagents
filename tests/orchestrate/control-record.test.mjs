@@ -6,7 +6,7 @@ import { join } from "node:path";
 import {
   addLinkedWorktree, cleanupDir, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
   createNonGitDir, createOwnerFixtures, evidence, installSentinelBin, loadControl, makeConsultation, makeTask,
-  makeBudget, makeBudgetReservation, makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
+  makeApproval, makeBudget, makeBudgetReservation, makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
   taskAdmissionDigest, terminalWorkerObservation, completedWorkerObservation, workerObservation, writeJson,
 } from "./helpers.mjs";
 
@@ -41,7 +41,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v5", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v6", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" }, budget: makeBudget(),
     document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
@@ -87,11 +87,41 @@ test("TaskはF/A/H、scope、approval、global task_id一意性を正しく記�
   const f = makeTask({ task_id: "task-f", classification: "F", effect: "read", write_scope: [] });
   const fRecorded = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: a.revision, task: f });
   assert.equal(fRecorded.manifest.tasks.at(-1).classification, "F");
-  const h = makeTask({ task_id: "task-h", classification: "H", effect: "read", write_scope: [], approval_ref: "docs/approval.md" });
+  const h = makeTask({ task_id: "task-h", classification: "H", effect: "read", write_scope: [], approval: makeApproval() });
   const hRecorded = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: fRecorded.revision, task: h });
-  assert.equal(hRecorded.manifest.tasks.at(-1).approval_ref, "docs/approval.md");
-  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: hRecorded.revision, task: makeTask({ task_id: "bad-h", classification: "H", approval_ref: null }) }), code("INVALID_SCHEMA"));
+  assert.equal(hRecorded.manifest.tasks.at(-1).approval.approval_ref, "docs/approval.md");
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: hRecorded.revision, task: makeTask({ task_id: "bad-h", classification: "H", approval: null }) }), code("INVALID_SCHEMA"));
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: hRecorded.revision, task: makeTask() }), code("DUPLICATE_ID"));
+});
+
+test("H Task admissionはapproval snapshotのoperation digestと有効期限を照合する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "approval-control" });
+  const approval = makeApproval();
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "h-task", classification: "H", effect: "read", write_scope: [], approval }),
+  });
+  const wrong = await api.workerRunRecord({
+    cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "h-wrong", assignment_id: "h-wrong", task_id: "h-task", write_mode: "none", operation_digest: "f".repeat(64), workspace_cwd: repo.root }),
+  });
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: wrong.revision, worker_run_id: "h-wrong" }), code("APPROVAL_MISMATCH"));
+  const right = await api.workerRunRecord({
+    cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: wrong.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "h-right", assignment_id: "h-right", task_id: "h-task", write_mode: "none", operation_digest: approval.operation_digest, workspace_cwd: repo.root }),
+  });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: right.revision, worker_run_id: "h-right" });
+  assert.equal(admitted.manifest.worker_runs.find((run) => run.worker_run_id === "h-right").state, "admitted");
+
+  const expiredTask = await api.taskRecord({
+    cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: admitted.revision,
+    task: makeTask({ task_id: "h-expired-task", classification: "H", effect: "read", write_scope: [], approval: makeApproval({ approved_at: "2020-01-01T00:00:00.000Z", expires_at: "2020-01-02T00:00:00.000Z" }) }),
+  });
+  const expiredRun = await api.workerRunRecord({
+    cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: expiredTask.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "h-expired", assignment_id: "h-expired", task_id: "h-expired-task", write_mode: "none", operation_digest: "d".repeat(64), workspace_cwd: repo.root }),
+  });
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: expiredRun.revision, worker_run_id: "h-expired" }), code("APPROVAL_EXPIRED"));
 });
 
 test("WorkerとConsultationは分離され、同一read Taskを参照でき、gpt executorを拒否する", async (t) => {

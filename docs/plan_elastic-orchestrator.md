@@ -107,7 +107,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   自動価格最適化は行わない。
 - [x] Control-level finalizationにobjective、受入matrix、最終監査、回帰、knowledge returnの参照を
   必須化し、個別Task finalizationだけでarchiveできないようにする。
-- [ ] H Taskはpurpose、impact、rollback、対象operation digest、承認参照、承認／失効時刻のsnapshotを
+- [x] H Taskはpurpose、impact、rollback、対象operation digest、承認参照、承認／失効時刻のsnapshotを
   必須にし、対象外operationへ流用できないようadmissionで照合する。真正性の最終確認は親が保持する。
 - [ ] role/effect policyをsnapshotし、sorter／refuter／verifierのwrite、未承認integrator write、
   Fの外部writeを拒否する。roleの意味正本は既存agent／skill文書のままにする。

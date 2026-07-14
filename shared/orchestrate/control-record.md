@@ -11,8 +11,9 @@ Control Recordが所有するのは、親が宣言したTask参照、Worker Run�
 
 - Taskの目的・TODO・仕様・Finding・Decisionは対象projectの`docs/`とgit履歴が正本。
 - session、job、認証、cancel、retry、worktree lifecycle、migrationは各Executor製品が正本。
-- H承認はオーナーとの会話が正本。`approval_ref`は親が確認した承認への参照であり、
-  CLIが承認の意味や真正性を判定したことを表さない。
+- H承認はオーナーとの会話が正本。approval snapshotは親が確認した承認のpurpose、impact、
+  rollback、対象operation digest、有効期間への参照であり、CLIが承認の意味や真正性を
+  判定したことを表さない。
 - `executor_observation`は観測cacheであり、Executorの現在状態ではない。再開時はopaque handleで
   所有製品へ再照会し、親が新しい観測を記録する。
 - CLIは親を認証しない。子にCLI更新をさせないことは統括契約で強制し、`actor_id`は監査用の
@@ -48,7 +49,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v5",
+  "schema_version": "dotagents.orchestration-control.v6",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -96,9 +97,10 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v5で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v6で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
-  Envelope、v5はControl-level finalizationを追加した。旧manifestを黙って書き換えず、明示migrationが実装されるまでは
+  Envelope、v5はControl-level finalization、v6はH approval snapshotを追加した。旧manifestを
+  黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
   `expected_revision`と現在値の一致を必須とする。
@@ -207,7 +209,7 @@ Taskは意味と受入条件への参照であり、Executorへ直接結びつ�
   "known_traps": ["docs正本をruntime stateへ複製しない"],
   "read_scope": [{ "kind": "directory", "path": "shared/orchestrate" }],
   "write_scope": [{ "kind": "directory", "path": "lib/orchestrate" }],
-  "approval_ref": null,
+  "approval": null,
   "alternative_group": null,
   "admission_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 }
@@ -216,7 +218,26 @@ Taskは意味と受入条件への参照であり、Executorへ直接結びつ�
 - `classification`は`F | A | H`、`effect`は`read | write`。Task自体へWorker／Consultationの
   実行laneを焼き込まない。同じTaskを独立WorkerとCritic Consultationの双方が参照できる。
 - readは`write_scope=[]`。writeは1件以上を必須とする。
-- Hは空でない`approval_ref`を必須とするが、参照の意味判断は親が行う。
+- Hは次のexact approval snapshotを必須とし、H以外では`null`を必須とする。親が承認の真正性と
+  意味を確認し、Controlは対象operation digestと有効期限だけをadmission時に照合する。
+
+```json
+{
+  "approval_ref": "docs/approval.md",
+  "purpose": "対象操作の目的",
+  "impact": "外部状態への影響",
+  "rollback": "失敗時の戻し方",
+  "operation_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "approved_by": "owner",
+  "approved_at": "2026-07-14T00:00:00.000Z",
+  "expires_at": "2026-07-15T00:00:00.000Z"
+}
+```
+
+`expires_at`は`null`または`approved_at`より後のcanonical UTCとする。Worker Runは
+`operation_digest`を持ち、H Taskでは完全一致しないRunを`APPROVAL_MISMATCH`、期限切れを
+`APPROVAL_EXPIRED`としてadmission前に拒否する。
+
 - Fの外部writerを拒否する。Fのwriteは`executor=parent`だけ。
 - `role`はbounded identifier、`lane`は`behavior-preserving | behavior-change | not-applicable`、
   `isolation`は`none | dedicated-worktree`。role/effectの許可matrixとcapability照合は別gateで扱う。
@@ -262,7 +283,7 @@ Worker Runは一回のworker割当である。入力schemaはExecutorごとの�
 ```text
 worker_run_id, task_id, assignment_id, executor, workflow_id, role_ref,
 workflow_capabilities, budget_reservation,
-workspace_cwd, write_mode, execution_verification,
+workspace_cwd, write_mode, operation_digest, execution_verification,
 lineage,
 state, executor_handle, executor_observation, admission,
 dispatch_evidence, dispatch_attempt_evidence, terminal_evidence,
@@ -271,6 +292,8 @@ result, acceptance
 
 初回記録は`state=planned`、`executor_observation=result=acceptance=null`だけを受理する。
 `write_mode`はread Taskなら`none`、write Taskなら`direct | isolated-alternative`。
+`operation_digest`は通常Taskでは`null`またはSHA-256、H Taskではapproval snapshotの
+`operation_digest`と完全一致するSHA-256を必須とする。
 scopeと`alternative_group`は参照Taskから取得し、Worker入力での上書きを許さない。
 `role_ref`は参照Taskの`role`と完全一致しなければならない。
 libraryは`workspace_cwd`から次のcanonical objectを解決し、保存時はこれに置き換える。
@@ -653,6 +676,7 @@ ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, ADAPTER_UNKNOWN, CAPABILI
 VERIFICATION_REQUIRED, BUDGET_UNKNOWN, BUDGET_EXCEEDED,
 EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 FINALIZATION_NOT_READY, CONTROL_FINALIZED,
+APPROVAL_MISMATCH, APPROVAL_EXPIRED,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE
 ```

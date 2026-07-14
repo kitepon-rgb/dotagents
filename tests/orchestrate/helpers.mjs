@@ -35,6 +35,18 @@ export const makeBudgetReservation = (overrides = {}) => ({
   ...overrides,
 });
 
+export const makeApproval = (overrides = {}) => ({
+  approval_ref: "docs/approval.md",
+  purpose: "承認対象操作を実行する",
+  impact: "外部状態が変更される",
+  rollback: "直前状態へ復元する",
+  operation_digest: "d".repeat(64),
+  approved_by: "owner",
+  approved_at: "2026-07-14T00:00:00.000Z",
+  expires_at: "2099-07-14T00:00:00.000Z",
+  ...overrides,
+});
+
 const canonicalJson = (value) => {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
@@ -122,7 +134,7 @@ export function makeTask(overrides = {}) {
     non_goals: ["Executorを自動起動しない"], known_traps: ["runtime stateをdocsへ複製しない"],
     read_scope: [{ kind: "directory", path: "shared/orchestrate" }],
     write_scope: [{ kind: "directory", path: "lib/orchestrate" }],
-    approval_ref: null, alternative_group: null, ...overrides,
+    approval: null, alternative_group: null, ...overrides,
   };
 }
 
@@ -146,7 +158,7 @@ export function makeWorkerRun(overrides = {}) {
       { capability_id: "workspace.write", value: "true", evidence: evidence("docs/execution-proof.md") },
     ],
     budget_reservation: makeBudgetReservation(),
-    write_mode: "direct",
+    write_mode: "direct", operation_digest: null,
     execution_verification: { stage: "execution-verified", observed_version: "test-version", observed_at: "2026-07-14T00:00:00.000Z", evidence: evidence("docs/execution-proof.md") },
     lineage: {
       parent_worker_run_id: null, root_assignment_id: overrides.assignment_id ?? "assignment-001",
