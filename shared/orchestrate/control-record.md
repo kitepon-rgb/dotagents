@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v21",
+  "schema_version": "dotagents.orchestration-control.v23",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -101,6 +101,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   "consultations": [],
   "campaigns": [],
   "phase_gate": null,
+  "artifacts": [],
   "task_finalizations": [],
   "control_finalization": null,
   "transition_receipts": [
@@ -125,7 +126,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v22で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v23で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -136,7 +137,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent path、
   v19はapproach family／assignment retry／integration Run上限をBudget、v20は明示fallback参照を
   Worker Runへ追加し、v21はmanual Worker生成identity／fallbackのreceipt digest束縛を追加し、v22は固定順の
-  phase gateを追加した。旧manifestを
+  phase gateを追加し、v23はdocs artifactのID／digest／status projectionを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -360,7 +361,7 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
         },
         "input_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
         "approach_family_ref": "implementation-primary",
-        "shared_finding_refs": []
+        "shared_artifact_ids": []
       },
       "fallback": null,
       "executor_handle": null
@@ -438,9 +439,9 @@ placement eligibilityを主張する操作ではない。Registry評価済みと
 
 ### Brief status and resume check
 
-`status --brief`は`dotagents.orchestration-status-brief.v4`としてmanifest全体を複製せず、
+`status --brief`は`dotagents.orchestration-status-brief.v5`としてmanifest全体を複製せず、
 次だけを親の再開用に固定shapeで返す。`resumeCheck`はこのbriefを含むため
-`dotagents.orchestration-resume-check.v3`とする。
+`dotagents.orchestration-resume-check.v4`とする。
 
 - Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation／Campaign件数
 - Task取消件数、取消済みTask ID、未terminalのcancel要求済みWorker ID
@@ -759,7 +760,7 @@ wall timeとcost上限は非負整数または`null=unknown`である。costは�
     },
     "input_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     "approach_family_ref": null,
-    "shared_finding_refs": []
+    "shared_artifact_ids": []
   }
   ```
 
@@ -1057,12 +1058,21 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 - UUID tokenは再利用しない。recoveryは固定lock pathをcheck→unlinkせず、観測した一意owner file
   だけを削除するため、新ownerを消すABAを起こさない。
 
+## Docs artifact projection
+
+Finding／Approach／Gap／Decisionの意味と本文はdocs artifactが正本であり、Controlは
+`artifact_id / artifact_kind / artifact_ref / artifact_digest / status`だけを持つ。kindは
+`finding | approach | gap | decision`、statusは親が明示する`current | closed | superseded`である。
+record時とstatus更新時に安全なbounded readでSHA-256を再計算し、path・digestの不一致、欠落、symlink、
+非regular fileを拒否する。refとdigestは不変で、内容更新は新IDで記録する。本文、severity、票数、
+semantic dedup、関連候補は保存しない。`shared_artifact_ids`は同一Controlのfindingだけを参照できる。
+
 ## CLI境界
 
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance,
+init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record,
 admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
@@ -1117,6 +1127,9 @@ phaseGateRecord({ cwd, control_id, actor_id, expected_revision, risk, behavior_l
 phaseGateStatus({ cwd, control_id })
 phaseGateAdvance({ cwd, control_id, actor_id, expected_revision,
                   phase, state, evidence, decision })
+artifactRecord({ cwd, control_id, actor_id, expected_revision, artifact })
+artifactStatus({ cwd, control_id, artifact_id })
+artifactStatusRecord({ cwd, control_id, actor_id, expected_revision, artifact_id, status })
 delegationPacketForWorker({ cwd, control_id, worker_run_id })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
 bindWorkerWorkspace({ cwd, control_id, actor_id, expected_revision, worker_run_id,

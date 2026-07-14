@@ -101,7 +101,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - [x] Task文書全体OIDへの結合をやめ、親が固定したcanonical admission snapshotとdigestを保存する。
   意味・成功条件はdocs正本のまま維持する。
 - [x] boundedなlineage fact（parent/root assignment、provider、model、prompt family、context policy、
-  input digest、approach family ref、shared finding refs）を保存し、独立性scoreは作らない。
+  input digest、approach family ref、shared artifact IDs）を保存し、独立性scoreは作らない。
 - [x] dispatch／terminal／result／verification evidenceをtyped descriptorとして永続化し、内容本体・
   prompt・secret・巨大logは保存しない。
 - [x] 各mutationのactor、operation、subject、previous／next state、evidence descriptorをboundedで
@@ -204,7 +204,7 @@ provider cancel commandは実行していない。
 - [x] `baseline → discovery → design → safety_net → implementation → behavior_change? → integration →
   knowledge_return → complete`のphase gateを実装する。baseline evidence、design Decision、
   高リスク時のsafety-net evidence、behavior-preserving／behavior-change laneの整合を形式検査する。
-- [ ] Finding／Approach／Gap／Decisionの意味はdocs artifactが正本とし、ControlはID、digest、参照、
+- [x] Finding／Approach／Gap／Decisionの意味はdocs artifactが正本とし、ControlはID、digest、参照、
   status projectionだけを持つ。
 - [ ] approach family上限、blocked/reopen条件、context sharing policyを記録し、同一系列の言い換え投入を抑える。
 - [ ] Dedup／独立性充足／Findingの実在性・価値は親AIが裁定し、コードは票数で正しさを決めない。

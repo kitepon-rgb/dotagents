@@ -87,12 +87,12 @@ async function completePhaseGate(repo, controlId, revision, { risk = "standard",
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v22", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v23", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
-    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], campaigns: [], phase_gate: null, registry_observations: [], task_finalizations: [], control_finalization: null,
+    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], campaigns: [], phase_gate: null, artifacts: [], registry_observations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
   assert.deepEqual(api.validateManifest(manifest), manifest);
@@ -113,7 +113,10 @@ test("すべてのI/O APIはcwdを必須にし、non-gitを拒否してbareをre
   assert.equal(bareControl.manifest.declaration.project_root_realpath, null);
   const read = await api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareControl.revision, task: makeTask({ task_id: "bare-read", effect: "read", write_scope: [] }) });
   assert.equal(read.manifest.tasks[0].effect, "read");
-  await assert.rejects(api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: read.revision, task: makeTask() }), code("BARE_WRITE_FORBIDDEN"));
+  const bareArtifactDigest = createHash("sha256").update("# Control Record fixture plan\n").digest("hex");
+  const bareArtifact = await api.artifactRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: read.revision, artifact: { artifact_id: "bare-artifact", artifact_kind: "decision", artifact_ref: "docs/control-record-plan.md", artifact_digest: bareArtifactDigest, status: "current" } });
+  assert.equal(bareArtifact.manifest.artifacts[0].artifact_digest, bareArtifactDigest);
+  await assert.rejects(api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareArtifact.revision, task: makeTask() }), code("BARE_WRITE_FORBIDDEN"));
 });
 
 test("init/status はgit由来のdeclarationを保存し、重複controlとrevision競合を拒否する", async (t) => {
@@ -1378,7 +1381,7 @@ test("Worker lineageは親子・root assignment・context・入力digestを事�
     parent_worker_run_id: "run-001", root_assignment_id: "assignment-001",
     prompt_family: "refutation-v1", independence_group: "independent-refutation",
     input_digest: "c".repeat(64), approach_family_ref: "minimal-change",
-    shared_finding_refs: ["docs/findings/auth-boundary.md"],
+    shared_artifact_ids: [],
   };
   const child = await api.workerRunRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: root.revision, worker_run: makeWorkerRun({ worker_run_id: "run-child", task_id: "lineage-task", assignment_id: "assignment-child", workspace_cwd: repo.root, lineage: childLineage }) });
   assert.deepEqual(child.manifest.worker_runs[1].lineage, childLineage);
@@ -1389,6 +1392,48 @@ test("Worker lineageは親子・root assignment・context・入力digestを事�
   const cycle = structuredClone(child.manifest);
   cycle.worker_runs[0].lineage.parent_worker_run_id = "run-child";
   assert.throws(() => api.validateManifest(cycle), code("INVALID_SCHEMA"));
+});
+
+test("docs artifactは4種別のdigest付き投影だけを記録し、親status更新と改竄検出を行う", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "artifact-control" });
+  const ref = "docs/artifact.md"; await writeFile(join(repo.root, ref), "# artifact\n"); const digest = createHash("sha256").update("# artifact\n").digest("hex");
+  let revision = result.revision;
+  for (const artifact_kind of ["finding", "approach", "gap", "decision"]) {
+    const recorded = await api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: `artifact-${artifact_kind}`, artifact_kind, artifact_ref: ref, artifact_digest: digest, status: "current" } });
+    revision = recorded.revision;
+  }
+  await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-outside-docs", artifact_kind: "finding", artifact_ref: "README.md", artifact_digest: digest, status: "current" } }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-forged-metadata", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current", recorded_by: "forged" } }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-missing", artifact_kind: "finding", artifact_ref: "docs/missing-artifact.md", artifact_digest: digest, status: "current" } }), code("ARTIFACT_UNAVAILABLE"));
+  const linkRef = "docs/artifact-link.md"; await symlink("artifact.md", join(repo.root, linkRef));
+  await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-link", artifact_kind: "finding", artifact_ref: linkRef, artifact_digest: digest, status: "current" } }), code("STATE_PATH_UNSAFE"));
+  await rm(join(repo.root, linkRef));
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "artifact-task", effect: "read", write_scope: [] }) });
+  const nonFindingLineage = { ...makeWorkerRun().lineage, root_assignment_id: "artifact-worker-invalid-assignment", shared_artifact_ids: ["artifact-approach"] };
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "artifact-worker-invalid", task_id: "artifact-task", assignment_id: "artifact-worker-invalid-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: nonFindingLineage }) }), code("INVALID_SCHEMA"));
+  const findingLineage = { ...makeWorkerRun().lineage, root_assignment_id: "artifact-worker-assignment", shared_artifact_ids: ["artifact-finding"] };
+  const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "artifact-worker", task_id: "artifact-task", assignment_id: "artifact-worker-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: findingLineage }) });
+  const closed = await api.artifactStatusRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: worker.revision, artifact_id: "artifact-finding", status: "closed" });
+  assert.equal((await api.artifactStatus({ cwd: repo.root, control_id: "artifact-control", artifact_id: "artifact-finding" })).status, "closed");
+  assert.equal((await api.statusBrief({ cwd: repo.root, control_id: "artifact-control" })).artifacts.length, 4);
+  const tampered = structuredClone(closed.manifest); tampered.artifacts[0].artifact_digest = "a".repeat(64); assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+  await writeFile(join(repo.root, ref), "# changed\n");
+  await assert.rejects(api.artifactStatusRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: closed.revision, artifact_id: "artifact-approach", status: "closed" }), code("ARTIFACT_DIGEST_MISMATCH"));
+  assert.equal((await api.resumeCheck({ cwd: repo.root, control_id: "artifact-control" })).outcome, "blocked");
+});
+
+test("artifact CLIはrecord/status更新/参照だけを行い外部providerを起動しない", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
+  const init = await api.init({ cwd: repo.root, control_id: "artifact-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const body = "# CLI artifact\n"; const ref = "docs/cli-artifact.md"; await writeFile(join(repo.root, ref), body); const digest = createHash("sha256").update(body).digest("hex");
+  const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` };
+  const recordInput = join(base, "artifact-record.json"); await writeJson(recordInput, { cwd: repo.root, control_id: "artifact-cli", actor_id: "parent", expected_revision: init.revision, artifact: { artifact_id: "cli-artifact", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
+  const recorded = spawnOrchestrate(["artifact-record", "--input", recordInput], { env }); assert.equal(recorded.status, 0); const recordResult = JSON.parse(recorded.stdout).result;
+  const updateInput = join(base, "artifact-update.json"); await writeJson(updateInput, { cwd: repo.root, control_id: "artifact-cli", actor_id: "parent", expected_revision: recordResult.revision, artifact_id: "cli-artifact", status: "closed" });
+  const updated = spawnOrchestrate(["artifact-status-record", "--input", updateInput], { env }); assert.equal(updated.status, 0);
+  const statusInput = join(base, "artifact-status.json"); await writeJson(statusInput, { cwd: repo.root, control_id: "artifact-cli", artifact_id: "cli-artifact" });
+  const status = spawnOrchestrate(["artifact-status", "--input", statusInput], { env }); assert.equal(status.status, 0); assert.equal(JSON.parse(status.stdout).result.status, "closed");
+  await assert.rejects(access(sentinel.log));
 });
 
 test("read-only Workerも正式admissionを通り、証拠つき結果と親検証を保存する", async (t) => {
