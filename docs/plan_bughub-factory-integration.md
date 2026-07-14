@@ -379,7 +379,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [ ] Codex親の`codex-sidecar`／aiterm connectorをsupportedとして導入・検証面へ配線し、installed→registered→verified→execution-verifiedを区別する。aitermのGrok/Composer各2回、別Codex、codex-sidecar、gpt-connectorの回収smokeを通すまでwriter利用をgreenにしない
   - [x] このMacのCodex親へ`codex-sidecar` 0.3.7をH承認下で登録し、MCP initialize、12 toolの`tools/list`、factory diagnostics `overall=ready`を確認してverifiedまで上げた。現sessionのtool面は起動時固定のためexecution-verifiedは新規sessionへ残す
   - [x] 同じMacで配布CLIの`codex-sidecar review`を明示Terra×medium・read-onlyで完遂し、三レーン正典diffを独立レビューした。read-only external executionはexecution-verified、writerは`codex_work`未実証として未verifiedに分離する
-  - [x] aitermの配布0.12.2で別CodexをTerra×medium・read-only診断へ起動し、`agent_done`とtranscript回収後にcloseした。続けて0.12.3隔離tgzから実Grok/Composerを各2回起動し、4/4で期待応答・`agent_done`・再認証要求なし・closeを確認した
+  - [x] aitermの配布0.12.2で別CodexをTerra×medium・read-only診断へ起動し、`agent_done`とtranscript回収後にcloseした。0.12.3隔離tgzから実Grok/Composerを各2回起動して4/4を確認し、公開npm 0.12.3の隔離install後もGrok/Composerを各1回、期待応答・`agent_done`・再認証要求なし・closeまで通した
 
 #### 6.5 shadow、cutover、撤去（H＋F）
 
@@ -427,9 +427,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 1i. [x] FOX Windows nativeでnpm `.cmd` shimをNodeの直接spawnが解決できず導入済み製品を`missing`へ誤投影する欠陥を、固定CLI・引数非再解釈・timeout/output上限を保つ共通command runnerで直し、12製品matrixを実機再送する
 1j. [x] `agents-update`が追加する`/usr/local/bin`でWSLの正規npm global CLIをshadowし、Claude Code更新後versionを旧入口から読む欠陥を直す。検証済み`npm prefix -g`のbinを更新・version確認の同一入口にし、PATH shadowをfixtureと実host ledgerで閉じる
 1k. [ ] registry公開版のThroughline／Spotter／aiterm-mcp／codex-sidecar native diagnosticsとdotagents v2 adapterのschema driftを、製品側正本とexact validatorを保ったまま同期し、main-serverのCaveat診断とGrok Build導入状態も分離して全host post-update gateをgreenにする
-   - [ ] aiterm-mcpのmanaged `GROK_HOME`でOAuth承認結果が一時homeへ取り残される欠陥を、Grok公式 `GROK_AUTH_PATH` 経路へ置換してreleaseする（正本: aiterm-mcp `docs/14_grok-auth-path-plan.md`）
-     - [x] 製品repoでruntime-store高競合/hostile-input修正`c1a2623`とauth/0.12.3 RC`ab11eb7`を独立commitし、全234/234、4並列×12 contention、tgz隔離MCP、Grok/Composer各2回の再認証なし`agent_done`、最終refuter P0/P1なしまで確認した
-     - [ ] push、tag、npm publish、MCP Registry、公開版smoke、BugHub台帳同期をH承認後に実施する
+   - [x] aiterm-mcpのmanaged `GROK_HOME`でOAuth承認結果が一時homeへ取り残される欠陥を、Grok公式 `GROK_AUTH_PATH` 経路へ置換してreleaseする（正本: aiterm-mcp `docs/14_grok-auth-path-plan.md`）
+     - [x] 製品repoでruntime-store高競合/hostile-input修正`c1a2623`、auth経路`ab11eb7`、長文PTY送信`42cf4af`、chunk直列化とstale-lock fail-closed`5c6b79a`を独立commitした。ローカル240/240、長文・別process送信10連続、tgz隔離MCP、Grok/Composer各2回の再認証なし`agent_done`、旧8-process条件の再反証P0/P1なしまで確認した
+     - [x] `v0.12.3`を`52264c3`へ固定し、tag CI `29300067245`の8 test jobとTrusted Publishingをgreenにした。npm 0.12.3、GitHub Release、MCP Registry workflow `29300266525`、Registry `isLatest=true`、公開版MCP 10 tools＋Grok/Composer実smokeを確認。Mac正規CLIを0.12.3へ更新し、v1 reporterでBugHubへ送信後、`mac-kite/aiterm-mcp`が0.12.3・installed・compatible、outbox 0・ACK failure 0であることをreadbackした
 1m. [ ] Throughline factory diagnosticsのCodex hook集約をdoctorの実状態と一致させ、main-serverの正規hook導入、Macのhandoff readiness、FOX WSL2の`events=ready`なのにsummary=`unverified`となるproducer矛盾を製品repoのcharacterization→修正→patch releaseで閉じる
 1n. [x] Windows共通command runnerのnpm shim解決を実物cmd-shim variantへ追従し、PATH／shimのfilesystem解決も5秒全体deadline内のkill可能helperへ隔離して、UNC・late spawn・悪意あるshimをfail-loudに拒否する
 1o. [x] native diagnosticsを単一overall checkへ潰さずThroughline／Spotter／aiterm-mcpのcomponent別checkへ安全に投影し、report/BugHubでは`unverified`を保持する。gateはdefault-denyのまま、Spotterの人手trust、Throughlineのadvisory evidence/Claude connector、headless aitermのPTY観測不能という完全tupleだけをnonblockingにする
