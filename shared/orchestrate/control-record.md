@@ -264,6 +264,9 @@ Taskは意味と受入条件への参照であり、Executorへ直接結びつ�
   文書を更新して新しい`task_id`を作る。
 - `task_id`は同じgit common dirにある全active manifestで一意。再開は新Controlを作らず、
   既存Controlを読む。
+- 全manifest scanと各mutationのcommit直前に、Task／Worker Run／Consultation IDのglobal一意性、
+  assignmentの`kind + task_id` immutable tuple、予約中writerのworktree／scope競合を再検証する。
+  admission時だけの検査に依存せず、保存済みControl間の矛盾は`INVALID_SCHEMA`でfail closedにする。
 - Workerの`planned -> admitted`とConsultationの`planned -> dispatched`は、全`depends_on`に
   `task_finalization`が存在する場合だけ許可する。未完了なら`DEPENDENCY_NOT_READY`で拒否する。
 

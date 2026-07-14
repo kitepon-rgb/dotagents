@@ -452,6 +452,23 @@ test("linked worktree共通dirでglobal lockとwrite競合を直列化し、non-
   assert.equal(later.manifest.tasks.at(-1).task_id, "non-overlap");
 });
 
+test("全manifest scanはassignment immutable tupleをControl横断で再検証する", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base); const linked = await addLinkedWorktree(repo, "assignment-linked");
+  const first = await api.init({ cwd: repo.root, control_id: "assignment-one", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const second = await api.init({ cwd: linked.root, control_id: "assignment-two", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const taskOne = await api.taskRecord({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: first.revision, task: makeTask({ task_id: "assignment-task-one", effect: "read", write_scope: [] }) });
+  const run = await api.workerRunRecord({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: taskOne.revision, worker_run: makeWorkerRun({ worker_run_id: "assignment-run-one", assignment_id: "shared-assignment", task_id: "assignment-task-one", write_mode: "none", workspace_cwd: repo.root }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: run.revision, worker_run_id: "assignment-run-one" });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "assignment-run-one", observation: workerObservation("dispatched") });
+  await api.observeWorker({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "assignment-run-one", observation: terminalWorkerObservation() });
+  const taskTwo = await api.taskRecord({ cwd: linked.root, control_id: "assignment-two", actor_id: "parent", expected_revision: second.revision, task: makeTask({ task_id: "assignment-task-two", effect: "read", write_scope: [] }) });
+  await assert.rejects(api.workerRunRecord({
+    cwd: linked.root, control_id: "assignment-two", actor_id: "parent", expected_revision: taskTwo.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "assignment-run-two", assignment_id: "shared-assignment", task_id: "assignment-task-two", write_mode: "none", workspace_cwd: linked.root }),
+  }), code("INVALID_SCHEMA"));
+});
+
 test("同一worktreeはscopeが非交差でも予約済みwrite Runを一件だけにする", async (t) => {
   const { repo, result } = await initialized(t);
   const firstTask = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "same-wt-a", write_scope: [{ kind: "directory", path: "lib" }] }) });
