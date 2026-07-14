@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { access, chmod, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { test } from "node:test";
 import { join } from "node:path";
 
@@ -41,7 +41,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v8", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v9", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
@@ -79,6 +79,17 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
   assert.match(status.transition_receipts[0].receipt_digest, /^[0-9a-f]{64}$/);
   await assert.rejects(api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTROL_EXISTS"));
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: 1, task: makeTask() }), code("REVISION_CONFLICT"));
+});
+
+test("Control stateはPOSIX owner-only modeをread時にも強制する", async (t) => {
+  if (process.platform === "win32") return;
+  const { repo } = await initialized(t, { control_id: "mode-control" });
+  const controlDir = join(repo.commonDir, "dotagents", "orchestrate", "controls", "mode-control");
+  const manifestPath = join(controlDir, "manifest.json");
+  await chmod(manifestPath, 0o644);
+  await assert.rejects(api.status({ cwd: repo.root, control_id: "mode-control" }), code("STATE_PATH_UNSAFE"));
+  await chmod(manifestPath, 0o600); await chmod(controlDir, 0o755);
+  await assert.rejects(api.status({ cwd: repo.root, control_id: "mode-control" }), code("STATE_PATH_UNSAFE"));
 });
 
 test("receipt capacityは閉鎖用slotを予約し、archive済みControlからだけ後継へ継続する", async (t) => {
@@ -606,6 +617,29 @@ test("completed後accept前のworkspace変更はacceptをWORKSPACE_DRIFTで拒�
   await assert.rejects(api.accept({ cwd: repo.root, control_id: "accept-drift-control", actor_id: "parent", expected_revision: completed.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/verify.md")], decision_note: "changed after complete", decided_by: "parent" }), code("WORKSPACE_DRIFT"));
 });
 
+test("writer fingerprintはindex変更と宣言scope内のignored成果物を拒否する", async (t) => {
+  await withRepo(t, async (repo) => {
+    await writeFile(join(repo.root, ".gitignore"), "ignored-output.log\n");
+    runGit(repo.root, ["add", ".gitignore"]); runGit(repo.root, ["commit", "-q", "-m", "ignore fixture"]);
+    const init = await api.init({ cwd: repo.root, control_id: "ignored-guard", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+    const task = await api.taskRecord({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "ignored-task", write_scope: [{ kind: "file", path: "ignored-output.log" }] }) });
+    const run = await api.workerRunRecord({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "ignored-task", workspace_cwd: repo.root }) });
+    const admitted = await api.admitWorker({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
+    const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+    await writeFile(join(repo.root, "ignored-output.log"), "must be observed\n");
+    await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() }), code("WORKSPACE_DRIFT"));
+  });
+  await withRepo(t, async (repo) => {
+    const init = await api.init({ cwd: repo.root, control_id: "index-guard", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+    const task = await api.taskRecord({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "index-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
+    const run = await api.workerRunRecord({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "index-task", workspace_cwd: repo.root }) });
+    const admitted = await api.admitWorker({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
+    const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+    runGit(repo.root, ["update-index", "--assume-unchanged", "README.md"]);
+    await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() }), code("WORKSPACE_DRIFT"));
+  });
+});
+
 test("lock owner recoveryはexact JSON、live/dead/malformed/link/token mismatchを区別する", async (t) => {
   const { repo } = await initialized(t);
   const owners = await createOwnerFixtures(repo.commonDir);
@@ -658,7 +692,9 @@ test("malformed manifestまたはcontrols未知entryが次mutationをfail-closed
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "blocked-by-entry" }) }), code("STATE_PATH_UNSAFE"));
   await rm(join(repo.commonDir, "dotagents", "orchestrate", "controls", "unknown-file"));
   await mkdir(paths, { recursive: true });
+  await chmod(paths, 0o700);
   await writeFile(join(paths, "manifest.json"), "{not json");
+  await chmod(join(paths, "manifest.json"), 0o600);
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "blocked-by-manifest" }) }), code("INVALID_SCHEMA"));
 });
 

@@ -113,9 +113,9 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   Fの外部writeを拒否する。roleの意味正本は既存agent／skill文書のままにする。
 - [x] bounded Control continuation／retentionを設計し、256件到達後のpoison、archived ID永久予約、
   active global conflict見落としを防ぐ。
-- [ ] 同一worktreeは安全な帰属機構が完成するまで単一writerを維持する。別worktreeの代替案は
+- [x] 同一worktreeは安全な帰属機構が完成するまで単一writerを維持する。別worktreeの代替案は
   `isolated-alternative`として明示する。
-- [ ] fingerprintのscope外index guard、ignored成果物拒否、全`GIT_*`除去、fatal UTF-8、
+- [x] fingerprintのscope外index guard、ignored成果物拒否、全`GIT_*`除去、fatal UTF-8、
   POSIX owner/mode、Windows未検証時fail closedを実装する。
 - [x] 全manifest scan後にglobal ID、assignment immutable tuple、active writer conflictを再検証する。
 - [ ] owner publication/release、manifest commit、new-control parent directory sync、durability metadata、

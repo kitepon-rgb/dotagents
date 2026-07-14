@@ -41,7 +41,8 @@ git repositoryだけをMVP対象とする。
   bare repository root、unborn HEADの`base_sha`は`null`、`initial_dirty`は`false`とする。
 - non-gitの暗黙fallbackは行わない。MVPでは明示エラーにする。
 - state root、`controls`、control directory、manifest、lock ownerのsymlinkを拒否する。
-- directoryはPOSIXで`0700`、fileは`0600`。Windowsは既存factory CLIと同じowner-only ACLを使う。
+- directoryはPOSIXで`0700`、fileは`0600`とし、read/save時にowner UIDとmodeを検証する。
+  Windows owner-only ACLは未検証のため、現v1は`PLATFORM_UNVERIFIED`でfail closedにする。
 
 ## Manifest
 
@@ -49,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v8",
+  "schema_version": "dotagents.orchestration-control.v9",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -107,10 +108,10 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v8で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v9で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
-  snapshot、v8はbounded continuationを追加した。旧manifestを
+  snapshot、v8はbounded continuation、v9はignored/index fingerprint guardを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -522,8 +523,9 @@ Workerの`completed`と親の`accepted | rejected`を分離する。
 - 各fileは`O_NOFOLLOW`で開き、読取前後の`fstat`とpathの再`lstat`でsize／mtime／dev／ino、
   regular file、link count、root containmentを再確認する。このfingerprintは協調的writerによる
   driftの検出であり、外部processを停止するsnapshotや敵対的filesystemへの完全な隔離ではない。
-- Git ignored fileはfingerprint保証の対象外とする。Phase 1のwrite Runはignored pathを成果物にできず、
-  親はignored成果物へ依存するRunをacceptしてはならない。
+- writerではTask write scopeを`scope_guard`として渡し、同scope内のignored regular fileもboundedで
+  列挙・stream hashする。baseline後のindex bytes変更、ignored file集合／内容変更はscope内であっても
+  `WORKSPACE_DRIFT`で拒否し、git操作や不可視成果物へ依存するRunをacceptしない。
 - `admitted`、completed観測、acceptの各時点でworkspace kind、common dir、git dir、
   git-dir file ID、worktree rootを
   全面再解決し、記録時identityと不一致なら`WORKSPACE_DRIFT`。HEAD変化はidentityとは分け、
@@ -700,6 +702,7 @@ FINALIZATION_NOT_READY, CONTROL_FINALIZED,
 APPROVAL_MISMATCH, APPROVAL_EXPIRED,
 ROLE_EFFECT_FORBIDDEN,
 CONTROL_CAPACITY_RESERVED, CONTINUATION_NOT_READY,
+PLATFORM_UNVERIFIED,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE
 ```
