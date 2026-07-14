@@ -67,3 +67,22 @@ spawn packetは`agent_type`を必須にし、`fork_turns="none"`と固定のhand
 `projectCodexNativeObservation`はagent path、状態（`created`、`running`、`completed`、`failed`、`unknown`、
 `interrupted`）、green routing verification、report参照、evidence参照だけをboundedに投影する。raw prompt、
 raw log、shell commandやhost tool実行結果の任意payloadはschema外として拒否する。
+
+## aiterm interactive-session packet / projection
+
+配布済みaitermの一次source（`dist/index.js`）に従い、`aitermAgentStartRequest`は
+`codex_agent`、`grok_agent`、`composer_agent`の実schemaへ、prompt、`cwd`、`session_name`、model、
+`agent_done`を投影する。Codexだけが対話TUIで`reasoning_effort`を受け、Grok/Composerは同値を
+起動前エラーにする実装のため、adapterも拒否する。起動後の`session_id / agent_kind / workspace_cwd`は
+opaque handleとして相関し、別sessionへfollow-upしない。
+
+`aitermFollowupRequest`は同じhandleの`session_id`へ`pty_send`を作り、`wait="agent_done"`、
+`enter=true`、`screen=true`、`raw=false`を固定する。timeout後の`aitermTimeoutRecoveryRequest`は同じ
+sessionの`pty_read(screen=true, wait=false)`を返すだけで、timeoutをfailedやcompletedへ昇格しない。
+`aitermKeyRequest`、`aitermCloseRequest`、`aitermListRequest`も同様に純粋なrequestである。
+
+`projectAitermLaunchObservation`はsession作成を`running`としてだけ表し、agent起動・batch exit status・
+terminal成功を捏造しない。`projectAitermObservation`はhandle、`running / completed / failed / unknown /
+interrupted`、report/evidence参照だけをboundedに保持する。raw terminal、log、secret、任意のhost resultは
+schema外として拒否する。adapterはPTY/MCPを実行せず、aitermが保証しないread-only強制やworktree隔離も
+主張しない。
