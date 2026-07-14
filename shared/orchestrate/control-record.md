@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v13",
+  "schema_version": "dotagents.orchestration-control.v14",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -59,8 +59,11 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
     "project_root_realpath": "/project",
     "common_dir_realpath": "/project/.git",
     "git_dir_realpath": "/project/.git",
+    "git_dir_file_id": "16777234:12345678",
     "base_sha": "0123456789abcdef0123456789abcdef01234567",
     "initial_dirty": false,
+    "initial_status_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "initial_workspace_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     "created_at": "2026-07-14T00:00:00.000Z",
     "created_by": "parent-session-id"
   },
@@ -100,6 +103,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
       "actor_id": "parent-session-id",
       "operation": "control-init",
       "subject": { "kind": "control", "id": "elastic-phase1" },
+      "subject_digest": null,
       "previous_state": null,
       "next_state": "active",
       "evidence": [],
@@ -115,12 +119,13 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v12で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v14で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
   protocol snapshot、v11はchanged fileのmode fingerprintとControl総数commit gate、v12は
-  Executor Registry observationを追加した。旧manifestを
+  Executor Registry observation、v13はplacement reservationとsubject digest、v14はresume用の
+  Control git directory generation、初期workspace digest、Worker記録時fingerprintを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -132,6 +137,9 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 - `document_refs`はrepo相対参照だけ。prompt、output、secret、credential、環境変数、巨大log、
   Executor内部stateを保存しない。
 - 通常repositoryでは`project_root_realpath`と`base_sha`は文字列、bareでは上記のとおり`null`を許す。
+  `git_dir_file_id`はgit directoryのdevice/inode generation、`initial_status_digest`はinit時の
+  porcelain v2 status bytes、`initial_workspace_digest`はHEAD、index、status、変更file内容を含む
+  bounded fingerprintのSHA-256である。bareでは両digestを`null`とする。
 - ID／slug／role／model／raw stateは128文字、文書・証拠参照とrepo相対pathは1024文字、
   title／reason／decision noteは4096文字、各配列は256件を上限とする。
 - `control_id`、Task／Run／assignment／consultation IDはASCIIの
@@ -397,13 +405,51 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
 
 candidate digestはmaterialize後のWorkerから再構成したcandidate exact objectのcanonical JSON
 SHA-256。workspaceは解決済みrealpathを使うため、入力時のsymlink表現には依存しない。manifest読込時に
-毎回再計算する。さらに、WorkerへRegistryから転記した`executor`、`workflow_id`、
+毎回再計算し、記録時workspace fingerprintも同じdigestへ含める。さらに、WorkerへRegistryから転記した`executor`、`workflow_id`、
 `workflow_capabilities`、`execution_verification`は、参照したRegistry observationとexactに一致しなければ
 manifestを拒否する。Registry IDだけを残して派生snapshotを差し替えることはできない。
 `selected_from_revision`はmutation直前revisionであり、dry-run後に別mutationが入れば
 `REVISION_CONFLICT`となる。
 planned Runはcapacity／budget予約として後続placementへ数えるが、write workspace reservationは
 従来どおり`admitWorker`時に再検査して取得する。proposal記録自体はdispatchを行わない。
+
+### Brief status and resume check
+
+`status --brief`はmanifest全体を複製せず、次だけを親の再開用に固定shapeで返す。
+
+- Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation件数
+- nonterminal WorkerのExecutor envelope、workflow、opaque handle、最終観測
+- nonterminal Consultationのconnector、slug、model／effort、最終観測
+- finalization未記録Task、completed未受入Worker、Control finalization未完
+- stateが`unknown`のRun／Consultationと、値がunknownのRegistry field
+- `dispatched | running | unknown`で所有Executorから未回収のRun／Consultation
+
+`resumeCheck`はread-onlyでglobal lockを取り、全manifestの整合を再検証してから次を返す。
+
+```text
+outcome = ready | review-required | blocked
+brief
+current_workspace
+evidence_retention
+blocking_reasons
+review_reasons
+```
+
+- Controlのproject/common/git directory realpathとgit directory generationを再照合する。generation変更は
+  `blocked`。HEAD、dirty boolean、porcelain status digest、bounded workspace fingerprintのinit時との差は
+  `review-required`。dirtyのまま同じpathの内容だけが変わる場合もfingerprint差として見落とさない。
+- nonterminal Workerのworkspace identity/generationを再解決する。予約中writerのHEAD変更、workspace消失、
+  generation変更は`blocked`。全worktree Workerは記録時のbounded fingerprintを持ち、read／planned Workerの
+  内容差は`review-required`。予約中writerのscope外差分、index／HEAD／ignored output driftは`blocked`、
+  scope内の作業途中は`review-required`。read Worker等のHEAD変更も親reviewへ送る。
+- `dispatched | running | unknown`のWorker／Consultationは、opaque handleまたはconnector slugを一覧へ戻し、
+  所有Executorへの再照会が必要なため`review-required`とする。timeoutをfailedへ変換しない。
+- `file | decision` evidenceはproject rootの非symlink regular fileを合計64 MiBまで再hashする。欠損、
+  digest不一致、unsafe path、hash上限超過、読取中driftは`blocked`。bareでworktree内容を
+  検証できないlocal evidenceだけは`review-required`。
+  `command | url | executor-receipt`は内容を複製せずtype/ref/digestだけをopaque一覧へ返す。
+- `resumeCheck`は観測を更新せず、readyを捏造しない。親が所有Executorへ再照会し、既存のobserve operationで
+  新しい事実を記録する。各製品のsession/job state、report、credentialをControlへ複製しない。
 
 ## Task declaration
 
@@ -524,6 +570,10 @@ dispatch_evidence, dispatch_attempt_evidence, terminal_evidence,
 result, acceptance
 ```
 
+手動入力の初回記録は`workspace_cwd`を受け取り、保存時に`workspace`、
+`recorded_workspace_fingerprint`、`baseline_workspace_fingerprint=null`へ変換する。
+`recorded_workspace_fingerprint`はworktreeで必須、bareで`null`であり、resume時のdirty/content差を検出する。
+write Taskではplanned段階からTaskのwrite scopeをfingerprint guardへ渡し、ignored成果物も記録時との差へ含める。
 手動の初回記録は`placement_reservation=null`、`state=planned`、
 `executor_observation=result=acceptance=null`だけを受理する。non-null reservationは
 `reservePlacement`だけが作り、`workerRunRecord`からの偽装を拒否する。
@@ -840,13 +890,14 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, task-record, registry-observation-record, placement-dry-run, placement-reserve, worker-run-record, consultation-record,
+init, status, status --brief, resume-check, task-record, registry-observation-record, placement-dry-run, placement-reserve, worker-run-record, consultation-record,
 admit-worker, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, recover-lock, archive
 ```
 
 - mutation commandは`actor_id`と`expected_revision`を必須とする（init／recover-lockを除く）。
-- CLIは`orchestrate-run <command> --input <json-file>`だけを受理する。`--help`以外の
+- CLIは`orchestrate-run <command> --input <json-file>`と
+  `orchestrate-run status --brief --input <json-file>`だけを受理する。`--help`以外の
   positional、未知option、重複option、余剰引数をexit 2で拒否する。input fileは各APIの
   object引数そのもので、64 KiB以下の通常fileかつsymlinkでないことを必須とする。
 - 成功時はstdoutへ`{ "ok": true, "command": "...", "result": ... }`を1行だけ出す。
@@ -874,6 +925,8 @@ accept, reject, task-finalize-record, recover-lock, archive
 ```text
 init({ cwd, control_id, objective_ref, actor_id, document_refs, budget, predecessor_control_id? })
 status({ cwd, control_id })
+statusBrief({ cwd, control_id })
+resumeCheck({ cwd, control_id })
 taskRecord({ cwd, control_id, actor_id, expected_revision, task })
 registryObservationRecord({ cwd, control_id, actor_id, expected_revision, observation })
 placementDryRun({ cwd, control_id, task_id, evaluated_at, candidates })

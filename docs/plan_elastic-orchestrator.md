@@ -134,7 +134,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - [x] Task要件、F/A/H snapshot、capability、budget、lineage、write/worktree conflictを照合する
   deterministic dry-run placementを実装する。自動scoreや意味的順位付けはしない。
 - [x] 親が候補を選び、reservation proposalをControlへ記録してから手動dispatchできるようにする。
-- [ ] `status --brief`、`resume-check`、unresolved／unknown／uncollected一覧を実装し、HEAD、dirty、
+- [x] `status --brief`、`resume-check`、unresolved／unknown／uncollected一覧を実装し、HEAD、dirty、
   worktree generation、opaque handle、evidence retentionを再確認する。
 - [ ] Task cancellationと個別Run cancellationを別operation／stateとして実装し、Task取消が
   Executor上のRunを自動cancelしたふりをしない。Run cancel要求とterminal観測も分離する。

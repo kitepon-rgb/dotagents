@@ -10,6 +10,7 @@ const commands = new Map([
   ["registry-observation-record", api.registryObservationRecord],
   ["placement-dry-run", api.placementDryRun],
   ["placement-reserve", api.reservePlacement],
+  ["resume-check", api.resumeCheck],
   ["worker-run-record", api.workerRunRecord], ["consultation-record", api.consultationRecord],
   ["admit-worker", api.admitWorker], ["observe-worker", api.observeWorker],
   ["observe-consultation", api.observeConsultation], ["conflict-check", api.conflictCheck],
@@ -49,13 +50,14 @@ async function readInput(path) {
 
 const args = process.argv.slice(2);
 if (args.length === 1 && args[0] === "--help") {
-  process.stdout.write(`${JSON.stringify({ commands: [...commands.keys()] })}\n`);
-} else if (args.length !== 3 || !commands.has(args[0]) || args[1] !== "--input" || args[2].startsWith("--")) {
-  outputError("INVALID_INPUT", "usage: orchestrate-run <command> --input <json-file>", 2);
+  process.stdout.write(`${JSON.stringify({ commands: [...commands.keys()], flags: { status: ["--brief"] } })}\n`);
+} else if (!((args.length === 3 && commands.has(args[0]) && args[1] === "--input" && !args[2].startsWith("--"))
+  || (args.length === 4 && args[0] === "status" && args[1] === "--brief" && args[2] === "--input" && !args[3].startsWith("--")))) {
+  outputError("INVALID_INPUT", "usage: orchestrate-run <command> [--brief] --input <json-file>", 2);
 } else {
-  const command = args[0];
+  const brief = args.length === 4; const command = brief ? "status --brief" : args[0];
   try {
-    const input = await readInput(args[2]); const result = await commands.get(command)(input);
+    const input = await readInput(brief ? args[3] : args[2]); const result = await (brief ? api.statusBrief : commands.get(command))(input);
     process.stdout.write(`${JSON.stringify({ ok: true, command, result })}\n`);
   } catch (error) {
     if (error instanceof api.ControlRecordError) {

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { access, chmod, mkdir, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { test } from "node:test";
 import { join } from "node:path";
@@ -51,8 +52,8 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v13", record_revision: 0, control_id: CONTROL, status: "active",
-    declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
+    schema_version: "dotagents.orchestration-control.v14", record_revision: 0, control_id: CONTROL, status: "active",
+    declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
@@ -90,6 +91,141 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
   assert.match(status.transition_receipts[0].receipt_digest, /^[0-9a-f]{64}$/);
   await assert.rejects(api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTROL_EXISTS"));
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: 1, task: makeTask() }), code("REVISION_CONFLICT"));
+});
+
+test("status briefとresume checkはopaque状態・workspace drift・evidence retentionを要約する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "brief-control" });
+  const ready = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });
+  assert.equal(ready.outcome, "ready");
+  await writeFile(join(repo.root, "docs", "resume-dirty.md"), "dirty\n");
+  const changed = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });
+  assert.equal(changed.outcome, "review-required");
+  assert.ok(changed.review_reasons.some((entry) => entry.code === "control-dirty-state-changed"));
+
+  const statusControl = await api.init({ cwd: repo.root, control_id: "brief-state-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: statusControl.revision, task: makeTask({ task_id: "brief-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const registry = await api.registryObservationRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: task.revision, observation: makeRegistryObservation({ registry_observation_id: "brief-registry" }) });
+  const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: registry.revision, worker_run: makeWorkerRun({ worker_run_id: "brief-worker", task_id: "brief-task", assignment_id: "brief-worker-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "brief-worker-assignment" } }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: worker.revision, worker_run_id: "brief-worker" });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: admitted.revision, worker_run_id: "brief-worker", observation: workerObservation("dispatched") });
+  const consultation = await api.consultationRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: dispatched.revision, consultation: makeConsultation({ consultation_id: "brief-consultation", task_id: "brief-task", assignment_id: "brief-consultation-assignment" }) });
+  const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: consultation.revision, consultation_id: "brief-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
+  const unknown = await api.observeConsultation({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: consultationDispatched.revision, consultation_id: "brief-consultation", observation: { state: "unknown", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "unknown" } });
+  const brief = await api.statusBrief({ cwd: repo.root, control_id: "brief-state-control" });
+  assert.equal(brief.active.worker_runs[0].executor_handle.idempotency_key, "idempotency-001");
+  assert.equal(brief.active.consultations[0].slug, "known-session-slug");
+  assert.deepEqual(brief.unknown.consultation_ids, ["brief-consultation"]);
+  assert.ok(brief.unknown.registry_observations[0].fields.includes("capacity:hard_inflight_limit"));
+  assert.deepEqual(brief.uncollected.worker_run_ids, ["brief-worker"]);
+  assert.deepEqual(brief.uncollected.consultation_ids, ["brief-consultation"]);
+  assert.equal(unknown.revision, brief.record_revision);
+});
+
+test("resume checkはfile evidenceのretentionを検証し、opaque evidenceを内容複製せず列挙する", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base);
+  const proofPath = join(repo.root, "docs", "retained-proof.md"); const proofBody = "retained evidence\n";
+  await writeFile(proofPath, proofBody);
+  const proof = { type: "file", ref: "docs/retained-proof.md", digest: createHash("sha256").update(proofBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
+  const opaque = { type: "executor-receipt", ref: "connector:codex-sidecar:retention", digest: "f".repeat(64), observed_at: "2026-07-14T00:00:00.000Z" };
+  const init = await api.init({ cwd: repo.root, control_id: "retention-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "retention-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "retention-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const template = makeWorkerRun(); const capabilities = template.workflow_capabilities.map((entry) => ({ ...entry, evidence: proof }));
+  const worker = await api.workerRunRecord({
+    cwd: repo.root, control_id: "retention-control", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "retention-worker", task_id: "retention-task", assignment_id: "retention-assignment", write_mode: "none", workspace_cwd: repo.root, workflow_capabilities: capabilities, execution_verification: { ...template.execution_verification, evidence: opaque }, lineage: { ...template.lineage, root_assignment_id: "retention-assignment" } }),
+  });
+  const retained = await api.resumeCheck({ cwd: repo.root, control_id: "retention-control" });
+  assert.equal(retained.outcome, "ready");
+  assert.deepEqual(retained.evidence_retention.local, [{ type: "file", ref: proof.ref, digest: proof.digest, status: "retained", observed_digest: proof.digest, error_code: null }]);
+  assert.deepEqual(retained.evidence_retention.opaque, [{ type: "executor-receipt", ref: opaque.ref, digest: opaque.digest }]);
+  await writeFile(proofPath, "changed evidence\n");
+  const mismatch = await api.resumeCheck({ cwd: repo.root, control_id: "retention-control" });
+  assert.equal(mismatch.outcome, "blocked"); assert.ok(mismatch.blocking_reasons.some((entry) => entry.code === "evidence-digest-mismatch"));
+  await rm(proofPath);
+  const missing = await api.resumeCheck({ cwd: repo.root, control_id: "retention-control" });
+  assert.equal(missing.outcome, "blocked"); assert.ok(missing.blocking_reasons.some((entry) => entry.code === "evidence-missing"));
+  await symlink("../README.md", proofPath);
+  const unsafe = await api.resumeCheck({ cwd: repo.root, control_id: "retention-control" });
+  assert.equal(unsafe.outcome, "blocked"); assert.ok(unsafe.blocking_reasons.some((entry) => entry.code === "evidence-unsafe"));
+  assert.equal(worker.revision, 2);
+});
+
+test("resume checkは予約中writerのHEAD移動をblockedにする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "resume-writer-head" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "resume-writer-head", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "resume-writer-task", isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }),
+  });
+  const run = await api.workerRunRecord({
+    cwd: repo.root, control_id: "resume-writer-head", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ task_id: "resume-writer-task", workspace_cwd: repo.root }),
+  });
+  await api.admitWorker({ cwd: repo.root, control_id: "resume-writer-head", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
+  await writeFile(join(repo.root, "README.md"), "writer moved HEAD\n");
+  runGit(repo.root, ["add", "README.md"]); runGit(repo.root, ["commit", "-q", "-m", "move writer head"]);
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "resume-writer-head" });
+  assert.equal(resumed.outcome, "blocked");
+  assert.ok(resumed.blocking_reasons.some((entry) => entry.code === "writer-head-changed" && entry.subject_id === "run-001"));
+});
+
+test("resume checkは予約中writerのignored成果物driftをblockedにする", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base);
+  await writeFile(join(repo.root, ".gitignore"), "build/\n");
+  runGit(repo.root, ["add", ".gitignore"]); runGit(repo.root, ["commit", "-q", "-m", "ignore build"]);
+  const init = await api.init({ cwd: repo.root, control_id: "resume-writer-ignored", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "resume-writer-ignored", actor_id: "parent", expected_revision: init.revision,
+    task: makeTask({ task_id: "resume-writer-ignored-task", isolation: "none", write_scope: [{ kind: "directory", path: "build" }] }),
+  });
+  const run = await api.workerRunRecord({
+    cwd: repo.root, control_id: "resume-writer-ignored", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ task_id: "resume-writer-ignored-task", workspace_cwd: repo.root }),
+  });
+  await api.admitWorker({ cwd: repo.root, control_id: "resume-writer-ignored", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
+  await mkdir(join(repo.root, "build")); await writeFile(join(repo.root, "build", "out.txt"), "ignored output\n");
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "resume-writer-ignored" });
+  assert.equal(resumed.outcome, "blocked");
+  assert.ok(resumed.blocking_reasons.some((entry) => entry.code === "writer-workspace-drift" && entry.subject_id === "run-001"));
+});
+
+test("resume checkはplanned writerのignored成果物差をreviewへ送る", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base);
+  await writeFile(join(repo.root, ".gitignore"), "build/\n");
+  runGit(repo.root, ["add", ".gitignore"]); runGit(repo.root, ["commit", "-q", "-m", "ignore planned build"]);
+  const init = await api.init({ cwd: repo.root, control_id: "resume-planned-ignored", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "resume-planned-ignored", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "resume-planned-ignored-task", isolation: "none", write_scope: [{ kind: "directory", path: "build" }] }) });
+  const template = makeWorkerRun(); const opaque = evidence("resume-planned-ignored", "executor-receipt");
+  await api.workerRunRecord({ cwd: repo.root, control_id: "resume-planned-ignored", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "resume-planned-ignored-task", workspace_cwd: repo.root, workflow_capabilities: template.workflow_capabilities.map((entry) => ({ ...entry, evidence: opaque })), execution_verification: { ...template.execution_verification, evidence: opaque } }) });
+  await mkdir(join(repo.root, "build")); await writeFile(join(repo.root, "build", "out.txt"), "planned ignored output\n");
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "resume-planned-ignored" });
+  assert.equal(resumed.outcome, "review-required");
+  assert.ok(resumed.review_reasons.some((entry) => entry.code === "worker-workspace-content-changed" && entry.subject_id === "run-001"));
+});
+
+test("resume checkはlinked worktree上のplanned Worker内容変更をreviewへ送る", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base);
+  const proofBody = "worker evidence\n"; await writeFile(join(repo.root, "docs", "execution-proof.md"), proofBody);
+  runGit(repo.root, ["add", "docs/execution-proof.md"]); runGit(repo.root, ["commit", "-q", "-m", "add worker evidence"]);
+  const linked = await addLinkedWorktree(repo, "resume-read-worker");
+  const proof = { type: "file", ref: "docs/execution-proof.md", digest: createHash("sha256").update(proofBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
+  const init = await api.init({ cwd: repo.root, control_id: "resume-read-worker", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "resume-read-worker", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "resume-read-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }) });
+  const template = makeWorkerRun();
+  await api.workerRunRecord({
+    cwd: repo.root, control_id: "resume-read-worker", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({
+      worker_run_id: "resume-read-run", task_id: "resume-read-task", assignment_id: "resume-read-assignment",
+      workspace_cwd: linked.root, write_mode: "none",
+      workflow_capabilities: template.workflow_capabilities.map((entry) => ({ ...entry, evidence: proof })),
+      execution_verification: { ...template.execution_verification, evidence: proof },
+      lineage: { ...template.lineage, root_assignment_id: "resume-read-assignment" },
+    }),
+  });
+  assert.equal((await api.resumeCheck({ cwd: repo.root, control_id: "resume-read-worker" })).outcome, "ready");
+  await writeFile(join(linked.root, "README.md"), "linked worker changed\n");
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "resume-read-worker" });
+  assert.equal(resumed.outcome, "review-required");
+  assert.ok(resumed.review_reasons.some((entry) => entry.code === "worker-workspace-content-changed" && entry.subject_id === "resume-read-run"));
 });
 
 test("Control stateはPOSIX owner-only modeをread時にも強制する", async (t) => {
@@ -632,6 +768,7 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
     assignment_id: run.assignment_id, workspace_cwd: run.workspace.worktree_root_realpath ?? run.workspace.git_dir_realpath,
     write_mode: run.write_mode, operation_digest: run.operation_digest, budget_reservation: run.budget_reservation,
     lineage: run.lineage, executor_handle: run.executor_handle,
+    recorded_workspace_fingerprint: run.recorded_workspace_fingerprint,
   };
   assert.equal(run.placement_reservation.candidate_digest, canonicalDigest(materializedCandidate));
   const receipt = first.manifest.transition_receipts.at(-1);
@@ -1065,6 +1202,9 @@ test("linked worktreeをremove/re-addした実identity driftはadmission時に�
   const readdedGitDir = runGit(linked.root, ["rev-parse", "--path-format=absolute", "--git-dir"]);
   const readdedStat = await (await import("node:fs/promises")).stat(readdedGitDir);
   assert.notEqual(`${readdedStat.dev}:${readdedStat.ino}`, recordedFileId);
+  const resume = await api.resumeCheck({ cwd: main.root, control_id: "identity-control" });
+  assert.equal(resume.outcome, "blocked");
+  assert.ok(resume.blocking_reasons.some((entry) => entry.code === "worker-worktree-generation-changed" && entry.subject_id === "run-001"));
   await assert.rejects(api.admitWorker({ cwd: main.root, control_id: "identity-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" }), code("WORKSPACE_DRIFT"));
 });
 
@@ -1299,6 +1439,10 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
   const protectedEnv = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` };
   const ok = spawnOrchestrate(["status", "--input", input], { env: protectedEnv });
   assert.equal(ok.status, 0); assert.deepEqual(JSON.parse(ok.stdout), { ok: true, command: "status", result: await api.status({ cwd: repo.root, control_id: CONTROL }) });
+  const brief = spawnOrchestrate(["status", "--brief", "--input", input], { env: protectedEnv });
+  assert.equal(brief.status, 0); assert.equal(JSON.parse(brief.stdout).command, "status --brief");
+  const resume = spawnOrchestrate(["resume-check", "--input", input], { env: protectedEnv });
+  assert.equal(resume.status, 0); assert.equal(JSON.parse(resume.stdout).command, "resume-check");
   const cliControl = "cli-record-only";
   const cliInitInput = join(base, "cli-init.json"); await writeJson(cliInitInput, { cwd: repo.root, control_id: cliControl, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const cliInit = spawnOrchestrate(["init", "--input", cliInitInput], { env: protectedEnv });
@@ -1333,7 +1477,7 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
   const cliReserve = spawnOrchestrate(["placement-reserve", "--input", cliReserveInput], { env: protectedEnv });
   assert.equal(cliReserve.status, 1); assert.equal(JSON.parse(cliReserve.stderr).code, "PLACEMENT_INELIGIBLE");
   await assert.rejects(access(sentinel.log));
-  for (const args of [["unknown", "--input", input], ["status", "--input", input, "--input", input], ["status", "extra", "--input", input]]) {
+  for (const args of [["unknown", "--input", input], ["status", "--input", input, "--input", input], ["status", "extra", "--input", input], ["status", "--brief", "--bogus", input]]) {
     const output = spawnOrchestrate(args); assert.equal(output.status, 2); assert.equal(JSON.parse(output.stderr).code, "INVALID_INPUT");
   }
   const linkedInput = join(base, "linked-input.json"); await symlink(input, linkedInput);
