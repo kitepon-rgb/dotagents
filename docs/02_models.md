@@ -29,6 +29,14 @@
 
 ## 決定表（役割→ティア×effort×入口。既定は写すだけ・外れる方を要正当化）
 
+### provider配置の三原則
+
+- **Observerは親と同じprovider family**: Codex親にはCodex、Claude親にはClaudeを置く。同じアプリのUXと近い思考様式による伴走が目的であり、継続的な反証役として扱わない。
+- **親の相談役は原則として異なるprovider**: Codex親はClaude主モデル、Claude親はCodex旗艦を第一候補にし、provider固有の盲点を補う。相談役はWorkerやObserverへ混ぜない。
+- **一般Workerは適格候補間でrate-aware配置**: role、能力、独立性、F/A/Hを満たす候補だけを残し、各providerの残quotaとresetまでの残時間から算出する日割り余裕をplacement判断に使う。Observer、相談役、F作業は自動均衡対象外とする。
+
+rate-aware selectorは[Observer完成・工場編入・Elastic配置改善計画](plan_observer-factory-integration.md)の実装完了までは未提供である。quota取得不能・stale・矛盾時に架空値や暗黙fallbackで配置を成功扱いしてはならない。
+
 | 役割 | Claude レーン | Codex レーン | xAI レーン | ChatGPT レーン |
 |---|---|---|---|---|
 | 統括・会話（親） | **オーナー指定** | **オーナー指定**（旗艦単体・proactive OFF を推奨） | — | — |

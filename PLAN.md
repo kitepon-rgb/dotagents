@@ -49,6 +49,7 @@ dotagents は**開発工場そのもの**。全プロジェクトに共通して
 
 ## 残件（TODO を兼ねる。キャンペーンからの引き継ぎ・2026-07-05 転記）
 
+- [ ] ObserverをClaude／Codex両hostで完成させ、第10コア製品として工場wire v3へ編入し、相談役の異社配置と一般Workerのrate-aware Elastic配置を実装する: [docs/plan_observer-factory-integration.md](docs/plan_observer-factory-integration.md)
 - [ ] GitHub 側のみのリポ 20+件の終活裁定（全端末掃引完了→着手可能）。判断材料（オーナー裁定 2026-06-03）: LiveTR-rubberband・QuoLabo・SmartClaude・codex-link は死亡宣言→非公開化済み・磨かない（codex-link のみ 2026-07-04 に「現役ブランチ」へ裁定更新済み＝新しい裁定が優先）。非公開リポ約30件は非公開のまま
 - [ ] P4 昇格キューの消化: [docs/queue_memory-promotion.md](docs/queue_memory-promotion.md)（各リポの次の作業セッションで。全行消化で同ファイル削除）
 - [ ] npm Publishing access の 2FA/トークン禁止締め（任意・オーナー画面操作）
