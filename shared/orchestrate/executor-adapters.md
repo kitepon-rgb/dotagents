@@ -86,3 +86,23 @@ terminal成功を捏造しない。`projectAitermObservation`はhandle、`runnin
 interrupted`、report/evidence参照だけをboundedに保持する。raw terminal、log、secret、任意のhost resultは
 schema外として拒否する。adapterはPTY/MCPを実行せず、aitermが保証しないread-only強制やworktree隔離も
 主張しない。
+
+## gpt-connector consultation packet / projection
+
+配布済み`gpt-connector`の一次source（`dist/src/contract.js`、`dist/src/mcp-server.js`）に従い、
+`gptConnectorConsultRequest`はstrictな`consult` schemaへprompt、caller既知のslug、model、effort、
+`keepOpen=false`、`dryRun=false`を投影する。製品schemaではmodel/effortはoptionalだが、このadapterは
+オーナー契約どおり両方を必須にする。files／workspaceRootを受け付けないため、添付やworkspace読取を
+暗黙に開始しない。未知slugの推測・置換、Oracle／OpenAI API／prompt再送へのfallbackは持たない。
+
+`gptConnectorSessionsRequest`と`gptConnectorTimeoutRecoveryRequest`は、ともに同じcaller既知slugだけを
+`sessions`へ渡す純粋requestである。caller timeoutは`projectGptConnectorTimeoutObservation`で`unknown`
+として保持し、failedへ昇格しない。MCPの実呼出し、login、送信、添付、MCP登録をこのadapterは行わない。
+
+`projectGptConnectorObservation`の入力は実 `ConsultSnapshot` のstrict shape、すなわち
+`slug / state / createdAt / updatedAt / result / error`をそのまま検証する。成功resultは
+`text / status / endTurn=true / resolvedModel / resolvedEffort / sessionId? / attachments / archived`、
+failureは`code / message / retry / partialUpload?`の実shapeを要求する。成功時はresolved model／effort、
+session ID、archive状態だけを残し、回答本文・attachment names・MIME typeを捨てる。失敗時もcodeとretry
+だけを残し、error message、raw prompt、raw log、secretはprojectionに残さない。これはConsultationであり、
+Worker capacity、実行票、worker reportには変換しない。

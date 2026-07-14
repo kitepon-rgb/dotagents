@@ -94,6 +94,30 @@ test("aiterm observationはsession相関とboundedな状態・参照だけを残
   assert.throws(() => adapters.projectAitermObservation({ handle, status: "timeout", report_ref: null, evidence_refs: [] }), code("INVALID_SCHEMA"));
 });
 
+test("gpt-connectorはConsultation専用のconsult/sessions packetをcaller既知slugへ純粋に投影する", () => {
+  const consult = adapters.gptConnectorConsultRequest({ prompt: "Review this design.", model: "gpt-5.6", effort: "high", slug: "design-review-001" });
+  assert.deepEqual(consult, { schema_version: "dotagents.gpt-connector.request.v1", operation_id: "consult", tool_name: "consult", arguments: { prompt: "Review this design.", model: "gpt-5.6", effort: "high", slug: "design-review-001", keepOpen: false, dryRun: false } });
+  assert.deepEqual(adapters.gptConnectorSessionsRequest({ slug: "design-review-001" }).arguments, { slug: "design-review-001" });
+  assert.deepEqual(adapters.gptConnectorTimeoutRecoveryRequest({ slug: "design-review-001" }).arguments, { slug: "design-review-001" });
+  assert.throws(() => adapters.gptConnectorConsultRequest({ prompt: "Review this design.", model: "gpt-5.6", effort: "high", slug: "unknown slug" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.gptConnectorConsultRequest({ prompt: "Review this design.", model: "gpt-5.6", slug: "design-review-001" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.gptConnectorConsultRequest({ prompt: "Review this design.", model: "gpt-5.6", effort: "high", slug: "design-review-001", files: ["secret.txt"] }), code("INVALID_SCHEMA"));
+});
+
+test("gpt-connector observationはraw answerを保持せず、timeoutをunknownとして同一slugへ回収する", () => {
+  const timestamps = { createdAt: "2026-07-14T00:00:00.000Z", updatedAt: "2026-07-14T00:01:00.000Z" };
+  const active = { slug: "design-review-001", state: "running", ...timestamps, result: null, error: null };
+  assert.deepEqual(adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: active }), { schema_version: "dotagents.gpt-connector.observation.v1", consultation_handle: { slug: "design-review-001" }, state: "running", raw_status: "running", terminal: null });
+  const succeeded = { slug: "design-review-001", state: "succeeded", ...timestamps, result: { text: "raw answer is accepted then discarded", status: "finished", endTurn: true, resolvedModel: "gpt-5.6", resolvedEffort: "high", sessionId: "123e4567-e89b-12d3-a456-426614174000", attachments: { count: 1, names: ["private.txt"], mimeTypes: ["text/plain"], readBack: "confirmed", retention: "unknown", cleanup: "deleted" }, archived: true }, error: null };
+  assert.deepEqual(adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: succeeded }), { schema_version: "dotagents.gpt-connector.observation.v1", consultation_handle: { slug: "design-review-001" }, state: "completed", raw_status: "succeeded", terminal: { resolved_model: "gpt-5.6", resolved_effort: "high", session_id: "123e4567-e89b-12d3-a456-426614174000", archived: true } });
+  const failed = { slug: "design-review-001", state: "failed", ...timestamps, result: null, error: { code: "AUTH_REQUIRED", message: "raw error message is discarded", retry: "after_auth", partialUpload: { count: 1, cleanup: "failed" } } };
+  assert.deepEqual(adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: failed }), { schema_version: "dotagents.gpt-connector.observation.v1", consultation_handle: { slug: "design-review-001" }, state: "failed", raw_status: "failed", terminal: { error_code: "AUTH_REQUIRED", retry: "after_auth" } });
+  assert.deepEqual(adapters.projectGptConnectorTimeoutObservation({ slug: "design-review-001" }), { schema_version: "dotagents.gpt-connector.observation.v1", consultation_handle: { slug: "design-review-001" }, state: "unknown", raw_status: "caller_timeout", terminal: null });
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "other-slug", provider: succeeded }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...succeeded, extra: "not in ConsultSnapshot" } }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...failed, error: { ...failed.error, extra: "not in ConsultFailure" } } }), code("INVALID_SCHEMA"));
+});
+
 test("codex-sidecar requestは実tool schemaの固定値とcaller handleを純粋に投影する", () => {
   const handle = { idempotency_key: "A".repeat(22) };
   const start = adapters.codexSidecarStartRequest({ projectRoot: "/workspace/source", handle, baseRef: "a".repeat(40), prompt: "Delegation Packetに従って実装する", allowedPaths: ["lib/orchestrate"], denyPaths: [".env"], turnTimeoutMs: 60000 });

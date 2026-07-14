@@ -165,7 +165,7 @@ CLI列挙の`control-finalize`欠落だけをP3の正典同期漏れとして採
   projectionを実装する。Node CLIがhost内部APIを持つふりをしない。
 - [x] aiterm: Codex／Grok／Composerのsession ID、agent kind、workspace、interactive follow-up、
   timeout後の同session回収を実装する。read-only強制やexit statusを捏造しない。
-- [ ] gpt-connector: Worker adapterではなくConsultation adapterとして`consult / sessions`、既知slug、
+- [x] gpt-connector: Worker adapterではなくConsultation adapterとして`consult / sessions`、既知slug、
   model/effort、timeout後回収を実装する。
 - [ ] Claude internal: Claude appendixから同じControl schemaへprojectionし、Codex親から未確認の
   直接dispatchを実装済みに見せない。
