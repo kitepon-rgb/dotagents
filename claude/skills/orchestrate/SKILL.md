@@ -11,9 +11,26 @@ description: 多エージェント/多モデル統括の標準型（2026-07 Nove
 
 **中核思想: 品質は「モデルの賢さ」ではなく「構造」から出す。** 並列多視点・敵対的検証・安全網・委譲契約という構造が本体であり、統括モデルが替わっても構造は再現できる。統括（このセッションの主モデル）は裁定・契約クリティカル・ゲートに知能を集中し、物量は安価な知能に配る。
 
+## 使う時・使わない時
+
+複数Phaseまたは複数担当をまたぎ、resume、複数Executorの配置、競合・予算・監査・知識還流を一つの作業として管理する時に使う。対象projectの`docs/`にある生きた計画/TODOが正本であることを最初に確認する。
+
+単一ファイル数十行程度の非クリティカル修正、単純な質問・読取・局所診断には、Control Recordを強制しない。ただし、既存active Controlに属する作業はこの除外にしない。
+
+## Control Recordの最小lifecycle
+
+1. docs正本を確認してからControlを`init`し、Taskを`task-record`、Worker RunまたはConsultationをそれぞれ`worker-run-record`または`consultation-record`で記録する。
+2. Registry observationを記録し、`placement-dry-run`で候補を出す。親が候補を選び、`placement-reserve`でreservation proposalとして固定してから、親自身がExecutor固有入口でdispatchする。自動dispatchやExecutor stateの複製はしない。
+3. 観測・報告を回収して記録し、親がaccept/rejectを裁定する。`status --brief`でunresolved/unknown/uncollectedを確認し、timeoutや中断後は`resume-check`と同一handleで回収する。Task取消とRun cancel要求は別に記録し、外部側でcancel済みと推測しない。
+4. 受入済みTaskを`task-finalize-record`、Controlを`control-finalize`でfinalizeし、検証・再発防止に有用な知識を正本へ還流してから`archive`する。
+
+Delegation Packet/Worker Report importとparent-declared campaign gateは現時点で未実装である。report/campaignを自動化済みとして扱わず、必要な親の判断・release・記録を省略しない。
+
 ## Claude appendix（既存の運用詳細）
 
 以下の憲法・配置・フェーズ・アンチパターンは、Claude の Workflow / Agent / codex-sidecar / aiterm を使う場合の具体的な入口である。共通原則の二重管理はせず、製品中立の判断は上の共通契約に従う。
+
+Claudeでは親がWorkflow / Agentまたは外部のcodex-sidecar / aitermという固有入口でdispatchし、各入口のhandleを同じControlへ観測として投影する。Claude内部の共通dispatch APIやExecutor state複製を前提にしない。
 
 ## Claude 固有の運用
 

@@ -148,7 +148,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - [ ] TaskからExecutor別Delegation Packetとstrict Worker Report templateを生成し、report importを検証する。
 - [ ] parent-declared campaign gate（members、all-terminal、audit-required、parent-release）を実装する。
   gateは後続Runを自動起動せず、未充足reservationを拒否するだけにする。
-- [ ] `orchestrate` skillへ使用条件、小タスク除外、init→record→place→observe→resume→finalize→archiveの
+- [x] `orchestrate` skillへ使用条件、小タスク除外、init→record→place→observe→resume→finalize→archiveの
   最小lifecycleを追加する。
 
 ### Phase 2: Executor adapters
