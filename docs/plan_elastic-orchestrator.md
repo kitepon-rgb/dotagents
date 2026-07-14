@@ -167,7 +167,7 @@ CLI列挙の`control-finalize`欠落だけをP3の正典同期漏れとして採
   timeout後の同session回収を実装する。read-only強制やexit statusを捏造しない。
 - [x] gpt-connector: Worker adapterではなくConsultation adapterとして`consult / sessions`、既知slug、
   model/effort、timeout後回収を実装する。
-- [ ] Claude internal: Claude appendixから同じControl schemaへprojectionし、Codex親から未確認の
+- [x] Claude internal: Claude appendixから同じControl schemaへprojectionし、Codex親から未確認の
   直接dispatchを実装済みに見せない。
 - [ ] adapterごとにcredential不足、rate limit、timeout、non-zero／malformed report、workspace消失、
   unsupported capabilityをtyped failureとして検証する。

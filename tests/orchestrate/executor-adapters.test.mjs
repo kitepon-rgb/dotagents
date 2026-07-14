@@ -118,6 +118,17 @@ test("gpt-connector observationはraw answerを保持せず、timeoutをunknown�
   assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...failed, error: { ...failed.error, extra: "not in ConsultFailure" } } }), code("INVALID_SCHEMA"));
 });
 
+test("claude-internalはappendix由来のunknown projectionだけを提供し、未確認dispatchを発明しない", () => {
+  assert.deepEqual(adapters.projectClaudeInternalAppendixObservation({ observed_at: "2026-07-14T00:00:00.000Z" }), {
+    schema_version: "dotagents.claude-internal.observation.v1", adapter_id: "claude-internal",
+    appendix_ref: "claude/skills/orchestrate/SKILL.md", observed_at: "2026-07-14T00:00:00.000Z",
+    state: "unknown", executor_handle: null, terminal: null,
+  });
+  assert.throws(() => adapters.projectClaudeInternalAppendixObservation({ observed_at: "2026-07-14T00:00:00.000Z", raw_prompt: "secret" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectClaudeInternalAppendixObservation({ observed_at: "not-a-timestamp" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectClaudeInternalAppendixObservation({ observed_at: "2026-07-14" }), code("INVALID_SCHEMA"));
+});
+
 test("codex-sidecar requestは実tool schemaの固定値とcaller handleを純粋に投影する", () => {
   const handle = { idempotency_key: "A".repeat(22) };
   const start = adapters.codexSidecarStartRequest({ projectRoot: "/workspace/source", handle, baseRef: "a".repeat(40), prompt: "Delegation Packetに従って実装する", allowedPaths: ["lib/orchestrate"], denyPaths: [".env"], turnTimeoutMs: 60000 });

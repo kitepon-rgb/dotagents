@@ -106,3 +106,13 @@ failureは`code / message / retry / partialUpload?`の実shapeを要求する。
 session ID、archive状態だけを残し、回答本文・attachment names・MIME typeを捨てる。失敗時もcodeとretry
 だけを残し、error message、raw prompt、raw log、secretはprojectionに残さない。これはConsultationであり、
 Worker capacity、実行票、worker reportには変換しない。
+
+## Claude internal appendix projection
+
+`claude-internal`はcatalogどおり`host-projection` laneかつ`projection-only` restrictionを維持する。
+`projectClaudeInternalAppendixObservation`はClaude appendix
+（`claude/skills/orchestrate/SKILL.md`）由来であること、canonical ISO UTCの観測時刻、`unknown`状態、handleなし、terminalなし
+だけを同じControl向けのbounded projectionへ残す。appendixはClaude親が固有入口でdispatchし、共通dispatch
+APIやExecutor state複製を前提にしないことを明記しているため、request／dispatch／cancel／follow-up packet、
+host tool名、capacity、execution-verified、Worker成功をこのadapterは表現しない。raw prompt、log、secretや
+任意payloadはstrict schema外として拒否する。
