@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v15",
+  "schema_version": "dotagents.orchestration-control.v16",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -96,6 +96,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   "task_cancellations": [],
   "worker_runs": [],
   "consultations": [],
+  "campaigns": [],
   "task_finalizations": [],
   "control_finalization": null,
   "transition_receipts": [
@@ -120,14 +121,14 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v15で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v16で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
   protocol snapshot、v11はchanged fileのmode fingerprintとControl総数commit gate、v12は
   Executor Registry observation、v13はplacement reservationとsubject digest、v14はresume用の
   Control git directory generation、初期workspace digest、Worker記録時fingerprint、v15はTask取消と
-  Worker cancel要求の分離を追加した。旧manifestを
+  Worker cancel要求の分離、v16はparent-declared campaign gateを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -197,7 +198,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 
 - operationは`control-init / task-record / task-cancel-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit / worker-cancel-request /
   worker-report-import /
-  worker-observe / consultation-observe / worker-accept / worker-reject / task-finalize /
+  worker-observe / consultation-observe / campaign-record / campaign-release / worker-accept / worker-reject / task-finalize /
   control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
   `previous_receipt_digest`へ持ち、read/save時に連番とchainを再計算する。過去receiptの書換え、欠落、
@@ -211,7 +212,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 - `recover-lock`はControl manifest mutationではなく、特定Controlを選ばないlock-owner保守操作なので
   receipt対象外。lock token、owner body、PID、file identityの検証結果がその操作の返却契約である。
 - receiptは256件を上限とし、各mutationのcommit前に、全nonterminal Run／Consultationのterminal化、
-  completed Workerの親Decision、未finalize Task、Control finalization、archiveに必要な最悪receipt数を
+  completed Workerの親Decision、未release Campaign、未finalize Task、Control finalization、archiveに必要な最悪receipt数を
   予約する。閉鎖slotを侵食する拡張は`CONTROL_CAPACITY_RESERVED`で拒否し、古いreceiptを削除しない。
 - archive済みControlだけを`predecessor_control_id`へ指定して後継Controlをinitできる。後継は同じ
   objective、root ID、単調増加sequenceを持ち、Task／Run IDは新規にする。predecessor manifestは
@@ -418,15 +419,16 @@ planned Runはcapacity／budget予約として後続placementへ数えるが、w
 
 ### Brief status and resume check
 
-`status --brief`は`dotagents.orchestration-status-brief.v2`としてmanifest全体を複製せず、
+`status --brief`は`dotagents.orchestration-status-brief.v3`としてmanifest全体を複製せず、
 次だけを親の再開用に固定shapeで返す。`resumeCheck`はこのbriefを含むため
 `dotagents.orchestration-resume-check.v2`とする。
 
-- Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation件数
+- Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation／Campaign件数
 - Task取消件数、取消済みTask ID、未terminalのcancel要求済みWorker ID
 - nonterminal WorkerのExecutor envelope、workflow、opaque handle、最終観測、cancel要求snapshot
 - nonterminal Consultationのconnector、slug、model／effort、最終観測
 - finalization未記録Task、completed未受入Worker、Control finalization未完
+- Campaignごとのtype、all-terminal、audit-required、release有無と、未release Campaign ID
 - stateが`unknown`のRun／Consultationと、値がunknownのRegistry field
 - `dispatched | running | unknown`で所有Executorから未回収のRun／Consultation
 
@@ -811,6 +813,32 @@ terminal Run、取消済みTask、未知／forbidden Executor（`gpt-connector`�
 - importは親acceptではない。`acceptance`は`null`のままで、親の検証後に既存`accept`または`reject`を
   別revisionで記録する。
 
+## Parent-declared campaign gate
+
+Campaignは親が既存Run群をまとめ、後続Taskの開始条件を宣言するbounded gateである。scheduler、
+barrier daemon、quorumではなく、Control上の参照と親releaseだけを所有する。
+
+```text
+campaign_id, campaign_type, members, gated_task_ids, audit_required,
+declared_from_revision, declared_by, declared_at, release
+```
+
+- `campaign_type`は`discovery | refutation | design | implementation | final-audit`。`members`は同じ
+  Controlに既存の`worker-run`または`consultation` IDを1件以上、`gated_task_ids`は同じControlの
+  Task IDを1件以上持つ。重複・未知参照と、git common dir内のCampaign ID重複を拒否する。
+- `campaign-status`は各memberの現在state、`all_terminal`、audit要否、releaseをmanifestから導出する
+  read-only projectionである。Workerは`completed | failed | cancelled`、Consultationは
+  `completed | failed`だけをterminalとし、別の集約stateを保存しない。
+- 未release CampaignがgateするTaskは、`placement-dry-run`を`campaign-not-released`、
+  `placement-reserve`を`PLACEMENT_INELIGIBLE`、既存planned Workerのadmissionとplanned
+  Consultationのdispatchを`CAMPAIGN_NOT_RELEASED`で拒否する。既存active memberのterminal観測は
+  妨げず、release後も後続Runを自動dispatch／admitしない。
+- `campaign-release`は全member terminalを同じrevisionで再確認する。`audit_required=true`では1件以上の
+  typed audit evidenceと、常に`type=decision`の親Decisionを必須とする。releaseは一度だけで、親actor、
+  revision、時刻、evidenceをreceiptへ結合する。未release Campaignが一件でもあればControl finalizationを
+  拒否する。
+- record／status／releaseはprovider command、network、process、cancel、dispatchを実行しない。
+
 ### Acceptance
 
 Workerの`completed`と親の`accepted | rejected`を分離する。
@@ -944,7 +972,7 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record,
+init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release,
 admit-worker, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, recover-lock, archive
 ```
@@ -964,7 +992,8 @@ accept, reject, task-finalize-record, recover-lock, archive
   `planned | dispatched | running | unknown`。予約済みwriterはWorkerの
   `admitted | dispatched | running | unknown`と定義する。
 - `finalizeControl`はnonterminalが0、completed Workerが全件accepted/rejected、completed Consultationが
-  全件`decision_ref`を持ち、全Taskが後述のterminal parent decisionを持つ場合だけ許可する。さらに
+  全件`decision_ref`を持ち、全Campaignが親release済みで、全Taskが後述のterminal parent decisionを
+  持つ場合だけ許可する。さらに
   objective（初期宣言を固定参照）、受入matrix、1件以上の最終監査evidence、1件以上の回帰evidence、
   1件以上のknowledge return参照、`type=decision`の親最終Decisionをexact objectとして保存する。
 - `archive`は上記Control-level finalizationが存在する場合だけ許可する。個別Task finalizationだけでは
@@ -990,6 +1019,10 @@ placementDryRun({ cwd, control_id, task_id, evaluated_at, candidates })
 reservePlacement({ cwd, control_id, actor_id, expected_revision, task_id, candidate, review_decision })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
 consultationRecord({ cwd, control_id, actor_id, expected_revision, consultation })
+campaignRecord({ cwd, control_id, actor_id, expected_revision, campaign })
+campaignStatus({ cwd, control_id, campaign_id })
+releaseCampaign({ cwd, control_id, actor_id, expected_revision, campaign_id,
+                  audit_evidence, decision })
 delegationPacketForWorker({ cwd, control_id, worker_run_id })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
 requestWorkerCancel({ cwd, control_id, actor_id, expected_revision, worker_run_id, decision })
@@ -1029,6 +1062,7 @@ library errorは`ControlRecordError`で、安定した`code`を持つ。少な�
 INVALID_INPUT, INVALID_SCHEMA, INVALID_SCOPE, LIMIT_EXCEEDED,
 NOT_GIT_REPOSITORY, BARE_WRITE_FORBIDDEN, CONTROL_EXISTS, CONTROL_NOT_FOUND,
 REVISION_CONFLICT, RECORD_ARCHIVED, DUPLICATE_ID, INVALID_TRANSITION, DEPENDENCY_NOT_READY,
+CAMPAIGN_NOT_RELEASED, CAMPAIGN_NOT_TERMINAL,
 ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, ADAPTER_UNKNOWN, CAPABILITY_MISMATCH,
 VERIFICATION_REQUIRED, BUDGET_UNKNOWN, BUDGET_EXCEEDED,
 EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
@@ -1062,16 +1096,17 @@ archive判定は次のtruth tableを満たす時だけ`active -> archived`へ一
 |---|---|
 | Worker | nonterminalが0。`completed`はacceptance必須。`failed/cancelled`はacceptance不要 |
 | Consultation | nonterminalが0。`completed`は`decision_ref`必須。`failed`はdecision ref不要 |
+| Campaign | 全件が親release済み。audit-required Campaignはaudit evidenceと親Decision必須 |
 | Task | 全Taskにdocs正本上のfinalization参照が1件あり、対応Run／Consultationが全件terminal |
 | Manifest | statusが`active` |
 
-unknown、planned、admitted、finalization参照なしTask、completed未受入Worker、
+unknown、planned、admitted、未release Campaign、finalization参照なしTask、completed未受入Worker、
 completed未裁定Consultationのいずれかが
 一件でもあれば`ARCHIVE_NOT_READY`で拒否する。
 
 ## MVP非目標
 
-- dynamic discovery、scheduler、score、capacity allocation、campaign、barrier、DAG、retry DSL。
+- dynamic discovery、scheduler、score、capacity allocation、daemon型barrier、DAG、retry DSL。
 - adapter共通interface、自動dispatch/poll/cancel/follow-up。
 - Finding／Decision／Approval engine、独立性score、多数決、quorum。
 - append-only event log、SQLite、汎用migration framework、hook統合、daemon、Web UI。

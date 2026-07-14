@@ -52,12 +52,12 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v15", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v16", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
     role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
-    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], registry_observations: [], task_finalizations: [], control_finalization: null,
+    document_refs: ["docs/control-record-plan.md"], tasks: [], task_cancellations: [], worker_runs: [], consultations: [], campaigns: [], registry_observations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
   assert.deepEqual(api.validateManifest(manifest), manifest);
@@ -1496,6 +1496,20 @@ test("control finalizationはTask完了と監査・回帰・knowledge return・�
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, parent_decision: evidence("docs/not-a-decision.md") }), code("INVALID_SCHEMA"));
 });
 
+test("control finalizationは全campaignの明示的な親releaseを必須にする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "campaign-finalization" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "campaign-finalization-task", effect: "read", write_scope: [], isolation: "none" }) });
+  const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-finalization-worker", task_id: "campaign-finalization-task", assignment_id: "campaign-finalization-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-finalization-assignment" } }) });
+  const cancelled = await api.observeWorker({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "campaign-finalization-worker", observation: workerObservation("cancelled") });
+  const campaign = await api.campaignRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: cancelled.revision, campaign: { campaign_id: "campaign-finalization-gate", campaign_type: "final-audit", members: [{ kind: "worker-run", id: "campaign-finalization-worker" }], gated_task_ids: ["campaign-finalization-task"], audit_required: false } });
+  const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: campaign.revision, task_id: "campaign-finalization-task", finalization_ref: "docs/campaign-finalization-decision.md", recorded_by: "parent" });
+  const finalization = (expected_revision) => ({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision, acceptance_matrix_ref: "docs/campaign-acceptance.md", final_audit_evidence: [evidence("docs/campaign-final-audit.md")], regression_evidence: [evidence("campaign-regression", "command")], knowledge_return_refs: ["docs/campaign-knowledge.md"], parent_decision: evidence("docs/campaign-final-decision.md", "decision"), finalized_by: "parent" });
+  await assert.rejects(api.finalizeControl(finalization(decided.revision)), code("FINALIZATION_NOT_READY"));
+  const released = await api.releaseCampaign({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: decided.revision, campaign_id: "campaign-finalization-gate", audit_evidence: [], decision: evidence("docs/campaign-release-decision.md", "decision") });
+  const finalized = await api.finalizeControl(finalization(released.revision));
+  assert.equal(finalized.manifest.control_finalization.finalized_by, "parent");
+});
+
 test("Delegation Packetとstrict Worker Report importは相関・scope・親accept分離を強制する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "packet-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "packet-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
@@ -1545,6 +1559,71 @@ test("Delegation Packet/report import CLIは外部Executorを起動しない", a
   } });
   const imported = spawnOrchestrate(["worker-report-import", "--input", reportInput], { env });
   assert.equal(imported.status, 0); assert.equal(JSON.parse(imported.stdout).result.manifest.worker_runs[0].acceptance, null);
+  await assert.rejects(access(sentinel.log));
+});
+
+test("parent-declared campaign gateは全member terminal・audit・親releaseまで後続reservationを拒否する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "campaign-control" });
+  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "campaign-member-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const gatedTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberTask.revision, task: makeTask({ task_id: "campaign-gated-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }) });
+  const memberWorker = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: gatedTask.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-member-worker", task_id: "campaign-member-task", assignment_id: "campaign-member-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-member-assignment" } }) });
+  const memberAdmitted = await api.admitWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberWorker.revision, worker_run_id: "campaign-member-worker" });
+  const memberDispatched = await api.observeWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberAdmitted.revision, worker_run_id: "campaign-member-worker", observation: workerObservation("dispatched") });
+  const memberConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberDispatched.revision, consultation: makeConsultation({ consultation_id: "campaign-member-consultation", task_id: "campaign-member-task", assignment_id: "campaign-member-consultation-assignment" }) });
+  const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberConsultation.revision, consultation_id: "campaign-member-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
+  const gatedWorker = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationDispatched.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-gated-worker", task_id: "campaign-gated-task", assignment_id: "campaign-gated-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-gated-assignment" } }) });
+  const gatedConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: gatedWorker.revision, consultation: makeConsultation({ consultation_id: "campaign-gated-consultation", task_id: "campaign-gated-task", assignment_id: "campaign-gated-consultation-assignment" }) });
+  const registry = await api.registryObservationRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: gatedConsultation.revision, observation: makeRegistryObservation({ registry_observation_id: "campaign-registry", capacity: {
+    admission: { value: "true", evidence: evidence("docs/campaign-admission.md") },
+    hard_inflight_limit: { knowledge: "known", value: 4, evidence: evidence("docs/campaign-hard.md") },
+    soft_inflight_limit: { knowledge: "known", value: 4, evidence: evidence("docs/campaign-soft.md") },
+    observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/campaign-inflight.md") },
+  } }) });
+  const declared = await api.campaignRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: registry.revision, campaign: {
+    campaign_id: "campaign-gate", campaign_type: "implementation", audit_required: true,
+    members: [{ kind: "worker-run", id: "campaign-member-worker" }, { kind: "consultation", id: "campaign-member-consultation" }],
+    gated_task_ids: ["campaign-gated-task"],
+  } });
+  const blockedPlacement = await api.placementDryRun({ cwd: repo.root, control_id: "campaign-control", task_id: "campaign-gated-task", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [makePlacementCandidate({ candidate_id: "campaign-placement", registry_observation_id: "campaign-registry", workspace_cwd: repo.root })] });
+  assert.deepEqual(blockedPlacement.candidates[0].reasons, ["campaign-not-released"]);
+  await assert.rejects(api.reservePlacement({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, task_id: "campaign-gated-task", candidate: makePlacementCandidate({ candidate_id: "campaign-reservation", registry_observation_id: "campaign-registry", workspace_cwd: repo.root, assignment_id: "campaign-reservation-assignment", executor_handle: { idempotency_key: "campaign-reservation-key" }, lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "campaign-reservation-assignment" } }), review_decision: null }), code("PLACEMENT_INELIGIBLE"));
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, worker_run_id: "campaign-gated-worker" }), code("CAMPAIGN_NOT_RELEASED"));
+  await assert.rejects(api.observeConsultation({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, consultation_id: "campaign-gated-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "dispatched" } }), code("CAMPAIGN_NOT_RELEASED"));
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") }), code("CAMPAIGN_NOT_TERMINAL"));
+  const workerCompleted = await api.observeWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: declared.revision, worker_run_id: "campaign-member-worker", observation: completedWorkerObservation() });
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: workerCompleted.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") }), code("CAMPAIGN_NOT_TERMINAL"));
+  const consultationFailed = await api.observeConsultation({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: workerCompleted.revision, consultation_id: "campaign-member-consultation", observation: { state: "failed", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:03:00.000Z", raw_state: "failed", terminal_evidence: [evidence("docs/campaign-consultation-terminal.md", "executor-receipt")] } });
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationFailed.revision, campaign_id: "campaign-gate", audit_evidence: [], decision: evidence("docs/campaign-release.md", "decision") }), code("EVIDENCE_REQUIRED"));
+  await assert.rejects(api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationFailed.revision, campaign_id: "campaign-gate", audit_evidence: Array.from({ length: 256 }, (_, index) => evidence(`docs/campaign-audit-${index}.md`)), decision: evidence("docs/campaign-release.md", "decision") }), code("LIMIT_EXCEEDED"));
+  const released = await api.releaseCampaign({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: consultationFailed.revision, campaign_id: "campaign-gate", audit_evidence: [evidence("docs/campaign-audit.md")], decision: evidence("docs/campaign-release.md", "decision") });
+  assert.equal(released.manifest.worker_runs.find((entry) => entry.worker_run_id === "campaign-gated-worker").state, "planned");
+  assert.equal(released.manifest.consultations.find((entry) => entry.consultation_id === "campaign-gated-consultation").state, "planned");
+  const status = await api.campaignStatus({ cwd: repo.root, control_id: "campaign-control", campaign_id: "campaign-gate" });
+  assert.equal(status.all_terminal, true); assert.equal(status.released, true); assert.equal(status.members.length, 2);
+  const eligiblePlacement = await api.placementDryRun({ cwd: repo.root, control_id: "campaign-control", task_id: "campaign-gated-task", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [makePlacementCandidate({ candidate_id: "campaign-placement", registry_observation_id: "campaign-registry", workspace_cwd: repo.root })] });
+  assert.equal(eligiblePlacement.candidates[0].eligibility, "eligible");
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: released.revision, worker_run_id: "campaign-gated-worker" });
+  const dispatched = await api.observeConsultation({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: admitted.revision, consultation_id: "campaign-gated-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:04:00.000Z", raw_state: "dispatched" } });
+  assert.equal(dispatched.manifest.consultations.find((entry) => entry.consultation_id === "campaign-gated-consultation").state, "dispatched");
+  const tampered = structuredClone(released.manifest); tampered.campaigns[0].release.released_by = "attacker";
+  assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+});
+
+test("campaign CLIはrecord/status/releaseだけを行い外部Executorを起動しない", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
+  const init = await api.init({ cwd: repo.root, control_id: "campaign-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "campaign-cli-member", effect: "read", write_scope: [] }) });
+  const gatedTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: memberTask.revision, task: makeTask({ task_id: "campaign-cli-gated", effect: "read", write_scope: [] }) });
+  const member = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: gatedTask.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-cli-worker", task_id: "campaign-cli-member", assignment_id: "campaign-cli-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-cli-assignment" } }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: member.revision, worker_run_id: "campaign-cli-worker" });
+  const terminal = await api.observeWorker({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "campaign-cli-worker", observation: workerObservation("cancelled", { dispatch_attempt_evidence: [evidence("docs/campaign-cli-no-dispatch.md", "executor-receipt")] }) });
+  const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` };
+  const recordInput = join(base, "campaign-record.json"); await writeJson(recordInput, { cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: terminal.revision, campaign: { campaign_id: "campaign-cli-gate", campaign_type: "discovery", members: [{ kind: "worker-run", id: "campaign-cli-worker" }], gated_task_ids: ["campaign-cli-gated"], audit_required: false } });
+  const recorded = spawnOrchestrate(["campaign-record", "--input", recordInput], { env }); assert.equal(recorded.status, 0); const recordedResult = JSON.parse(recorded.stdout).result;
+  const statusInput = join(base, "campaign-status.json"); await writeJson(statusInput, { cwd: repo.root, control_id: "campaign-cli", campaign_id: "campaign-cli-gate" });
+  const status = spawnOrchestrate(["campaign-status", "--input", statusInput], { env }); assert.equal(status.status, 0); assert.equal(JSON.parse(status.stdout).result.all_terminal, true);
+  const releaseInput = join(base, "campaign-release.json"); await writeJson(releaseInput, { cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: recordedResult.revision, campaign_id: "campaign-cli-gate", audit_evidence: [], decision: evidence("docs/campaign-cli-release.md", "decision") });
+  const released = spawnOrchestrate(["campaign-release", "--input", releaseInput], { env }); assert.equal(released.status, 0); assert.equal(JSON.parse(released.stdout).result.manifest.campaigns[0].release.released_by, "parent");
   await assert.rejects(access(sentinel.log));
 });
 
