@@ -88,6 +88,27 @@ if ! jq -e '.hooks.SessionStart[]?.hooks[]?.command | select(.=="~/.local/bin/to
 fi
 ```
 
+#### Orchestrate advisory（SessionStart・読み取り専用）
+
+active Control、unknown／未回収Run、write conflict、H参照不足、capacity警告だけを、該当時に短い
+INFOとして表示する。state変更、H認証、executor/provider/network/cancelは行わず、CLI不在・非git・
+timeout・不正snapshot・unsafe cacheでは沈黙する。hookは固定absolute Pythonを`-I`で起動し、親の
+`PYTHONPATH`等を解釈しない。既存SessionStart entryを変更せず、次の1件だけ追加する。
+
+```bash
+S=~/.claude/settings.json
+if ! jq -e --arg home "$HOME" '[.hooks.SessionStart[]?.hooks[]? | select(.type=="command" and .timeout==5 and (.command=="~/.local/bin/orchestrate-advisory-hook" or .command==($home+"/.local/bin/orchestrate-advisory-hook"))] | length == 1' "$S" >/dev/null; then
+  cp "$S" "$S.bak-orchestrate-advisory"
+  tmp=$(mktemp)
+  jq '.hooks.SessionStart += [{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]}]' "$S" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
+fi
+```
+
+`DOTAGENTS_ORCHESTRATE_ADVISORY=off`で無効化できる。成功表示後だけsession×repo単位で一度だけ表示し、
+hook自身のcache markerは7日後に掃除する。cache baseと`dotagents/hooks`はowner directoryかつsymlink
+でないことを検査し、不適合時は作成・変更せず沈黙する。
+
 #### C3 プラン更新忘れ（Stop・rolling baseline で毎ターン判定）
 
 このターンで dirty/コミットの差分があるのに `docs/plan_*.md` が動いていなければ INFO を pending に保存する。Stop 自体には注入せず、次の自然な UserPromptSubmit で C4 が1回だけ配送する（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `stop` サブコマンド）。

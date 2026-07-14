@@ -351,15 +351,15 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
     print(f"FAIL: {path} の JSON パース失敗: {exc}")
     raise SystemExit(1)
 
-required = {
-    "PreToolUse": "delegation-gate-hook",
-    "SessionStart": "todo-gate-hook session-start",
-    "Stop": "todo-gate-hook stop",
-    "UserPromptSubmit": "onset-gate-hook",
-    "PostToolUse": "plan-gate-hook",
-}
+required = (
+    ("PreToolUse", "delegation-gate-hook"),
+    ("SessionStart", "todo-gate-hook session-start"),
+    ("Stop", "todo-gate-hook stop"),
+    ("UserPromptSubmit", "onset-gate-hook"),
+    ("PostToolUse", "plan-gate-hook"),
+)
 missing = []
-for event, required_command in required.items():
+for event, required_command in required:
     commands = (
         hook.get("command", "")
         for entry in data.get("hooks", {}).get(event, [])
@@ -375,6 +375,27 @@ for event, required_command in required.items():
 
 if missing:
     print("FAIL: Claude Code 必須 hook が欠落: " + "、".join(missing))
+    raise SystemExit(1)
+
+home = Path(os.environ["HOME"]).expanduser().resolve()
+advisory = (home / ".local/bin/orchestrate-advisory-hook").resolve(strict=False)
+relevant = []
+canonical = []
+for entry in data.get("hooks", {}).get("SessionStart", []):
+    if not isinstance(entry, dict):
+        continue
+    for hook in entry.get("hooks", []):
+        if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
+            continue
+        command = hook["command"]
+        normalized = Path(str(home) + command[1:] if command.startswith("~/") else command).expanduser().resolve(strict=False)
+        if "orchestrate-advisory-hook" in command:
+            relevant.append(hook)
+        if normalized == advisory:
+            canonical.append(hook)
+expected = {"type": "command", "command": None, "timeout": 5}
+if len(relevant) != 1 or len(canonical) != 1 or set(canonical[0]) != {"type", "command", "timeout"} or canonical[0].get("type") != expected["type"] or canonical[0].get("timeout") != expected["timeout"]:
+    print("FAIL: Claude SessionStart の orchestrate-advisory-hook は canonical command / type=command / timeout=5 の1件である必要がある")
     raise SystemExit(1)
 PY
 then
@@ -428,6 +449,33 @@ if missing:
     raise SystemExit(1)
 PY
 then
+  fail=1
+fi
+
+# Orchestrate advisory はSessionStartへ一件だけの追加INFOであり、既存calloutとは別entryで保持する。
+if [ -f "$codex_hooks" ] && ! python3 - "$codex_hooks" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+try:
+    data = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+    raise SystemExit(1)
+path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/orchestrate-advisory-hook")
+expected = {"type": "command", "command": path, "timeoutSec": 5, "async": False, "statusMessage": None}
+matches = [
+    hook
+    for entry in data.get("hooks", {}).get("SessionStart", [])
+    if isinstance(entry, dict)
+    for hook in entry.get("hooks", [])
+    if isinstance(hook, dict) and hook.get("command") == path
+]
+raise SystemExit(0 if matches == [expected] else 1)
+PY
+then
+  echo "FAIL: Codex SessionStart に orchestrate-advisory-hook の正規 entry がない"
   fail=1
 fi
 

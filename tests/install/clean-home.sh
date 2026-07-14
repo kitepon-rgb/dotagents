@@ -85,6 +85,72 @@ dry_run="$(apply_config "$OFFICIAL_HOME" --dry-run)"
 [ ! -d "$OFFICIAL_HOME/Archives" ] || fail 'dry-run が backup を作った'
 apply_config "$OFFICIAL_HOME" --apply
 verify "$OFFICIAL_HOME" official
+mkdir -p "$OFFICIAL_HOME/.claude"
+cat >"$OFFICIAL_HOME/.claude/settings.json" <<'EOF'
+{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}],"SessionStart":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]},{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]}],"Stop":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}],"UserPromptSubmit":[{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}],"PostToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/plan-gate-hook","timeout":5}]}]}}
+EOF
+verify "$OFFICIAL_HOME" official
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+data["hooks"]["SessionStart"][1]["hooks"][0]["unexpected"] = True
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if verify "$OFFICIAL_HOME" official >/dev/null 2>&1; then fail 'Claude advisory hook の余計な field を verify が見逃した'; fi
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+del data["hooks"]["SessionStart"][1]["hooks"][0]["unexpected"]
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+verify "$OFFICIAL_HOME" official
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+data["hooks"]["SessionStart"].append({"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]})
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if verify "$OFFICIAL_HOME" official >/dev/null 2>&1; then fail 'Claude advisory duplicate を verify が見逃した'; fi
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+data["hooks"]["SessionStart"] = data["hooks"]["SessionStart"][:2]
+data["hooks"]["SessionStart"][1]["hooks"][0]["command"] = "echo ~/.local/bin/orchestrate-advisory-hook"
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if verify "$OFFICIAL_HOME" official >/dev/null 2>&1; then fail 'Claude advisory echo/stale command を verify が見逃した'; fi
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" "$OFFICIAL_HOME" <<'PY'
+import json
+import sys
+from pathlib import Path
+path, home = sys.argv[1:]
+data = json.load(open(path, encoding="utf-8"))
+hook = data["hooks"]["SessionStart"][1]["hooks"][0]
+hook["command"] = str(Path(home).resolve() / ".local/bin/orchestrate-advisory-hook")
+hook["timeout"] = 4
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if verify "$OFFICIAL_HOME" official >/dev/null 2>&1; then fail 'Claude advisory stale timeout を verify が見逃した'; fi
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" "$OFFICIAL_HOME" <<'PY'
+import json
+import sys
+from pathlib import Path
+path, home = sys.argv[1:]
+data = json.load(open(path, encoding="utf-8"))
+hook = data["hooks"]["SessionStart"][1]["hooks"][0]
+hook["command"] = str(Path(home).resolve() / ".local/bin/orchestrate-advisory-hook")
+hook["timeout"] = 5
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+verify "$OFFICIAL_HOME" official
 assert_link "$OFFICIAL_HOME/.agents/skills/orchestrate" "$ROOT/codex/skills/orchestrate"
 assert_link "$OFFICIAL_HOME/.local/bin/factory-reporter" "$ROOT/bin/factory-reporter.mjs"
 assert_link "$OFFICIAL_HOME/.local/bin/factory-external-event" "$ROOT/bin/factory-external-event.mjs"
@@ -93,6 +159,8 @@ HOME="$OFFICIAL_HOME" "$OFFICIAL_HOME/.local/bin/factory-external-event" status 
 assert_link "$OFFICIAL_HOME/.local/bin/factory-scan" "$ROOT/bin/factory-scan.mjs"
 assert_link "$OFFICIAL_HOME/.local/bin/orchestrate-run" "$ROOT/bin/orchestrate-run.mjs"
 [ -x "$OFFICIAL_HOME/.local/bin/orchestrate-run" ] || fail 'orchestrate-run が実行可能でない'
+assert_link "$OFFICIAL_HOME/.local/bin/orchestrate-advisory-hook" "$ROOT/bin/orchestrate-advisory-hook.sh"
+[ -x "$OFFICIAL_HOME/.local/bin/orchestrate-advisory-hook" ] || fail 'orchestrate-advisory-hook が実行可能でない'
 assert_link "$OFFICIAL_HOME/.local/bin/bughub-external-probe" "$ROOT/bin/bughub-external-probe.mjs"
 [ ! -e "$OFFICIAL_HOME/.codex/skills/orchestrate" ] || fail 'official が legacy skill 面を作った'
 grep -Fq 'model = "keep-me"' "$OFFICIAL_HOME/.codex/config.toml" || fail '既存 config を保持しない'
@@ -102,6 +170,16 @@ if grep -Eq '^[[:space:]]*codex_hooks[[:space:]]*=' "$OFFICIAL_HOME/.codex/confi
 fi
 grep -Fq '/custom/keep stop' "$OFFICIAL_HOME/.codex/hooks.json" || fail '既存 hook を保持しない'
 assert_stop_count "$OFFICIAL_HOME/.codex/hooks.json" || fail '~ 表記の callout hook を重複追加した'
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'SessionStart advisory hook を正規設定しない'
+import json
+import sys
+from pathlib import Path
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+path = str(Path(sys.argv[2]).resolve() / ".local/bin/orchestrate-advisory-hook")
+expected = {"type":"command", "command":path, "timeoutSec":5, "async":False, "statusMessage":None}
+hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command") == path]
+raise SystemExit(0 if hooks == [expected] else 1)
+PY
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" <<'PY' || fail 'matcher group から callout hook を分離しない'
 import json
 import sys

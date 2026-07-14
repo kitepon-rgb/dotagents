@@ -1092,12 +1092,34 @@ Controlは票数、quorum、severity、semantic score、independence scalarをtr
 - record/block/reopenはtyped receiptのsubject digestへsnapshotを結合する。artifact本文を複製せず、
   artifact ID／kind／document digestの実在性だけを検査する。
 
+## Advisory snapshot
+
+`advisorySnapshot({ cwd, evaluated_at })`はactive Controlだけを横断するread-only projectionであり、
+manifestやreceiptを更新せず、provider／network／cancelを実行しない。Controlがまだ一件もなければ
+空snapshotを正常に返す。出力は`orchestrate.advisory-snapshot.v1`の
+`active_control_ids`、unknown／uncollected Run ID、write conflict、機械判定可能なH参照不足、latest
+Registry由来のcapacity warning、`truncated`だけを持つ。各配列はcanonical sortかつ256件上限である。
+
+- unknownとuncollectedは`status --brief`と同じstate意味論を使う。
+- write conflictはtask-cancel済みを除くplanned writerをcandidateとして、既存reserved writerとの
+  既存scope/worktree conflictだけを示す。reserved同士やplanned同士は警告へ重複しない。
+- H Taskへの`consultation-record`は、Consultation専用operation digest契約がv1に存在しないため
+  `CONSULTATION_OPERATION_CONTRACT_MISSING`でfail-closedする。legacy/tamperのH Consultationも
+  planned→dispatchedを同じ理由で拒否する。read互換として既存のnonterminal H Consultationは
+  `consultation-operation-contract-missing`を出す。
+- H gapはplanned/admitted Worker、または既存nonterminal ConsultationがあるH Taskのexpired approvalと、
+  planned/admitted Workerのoperation digest null/mismatchだけを示し、terminal/historyだけの期限切れや
+  承認の真正性は裁定しない。
+- capacity warningはexecutor/workflow scopeごとのevaluated時点latest Registryから、ambiguous、expired、
+  admission unknown、limit unknown、soft/hard reachedだけを示す。latest/supersedeの選定はarchivedを含む
+  全manifest、reservationはactive ControlのRunだけを用いる。
+
 ## CLI境界
 
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
+init, status, status --brief, resume-check, advisory-snapshot, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
 admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
@@ -1136,6 +1158,7 @@ accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 init({ cwd, control_id, objective_ref, actor_id, document_refs, budget, predecessor_control_id? })
 status({ cwd, control_id })
 statusBrief({ cwd, control_id })
+advisorySnapshot({ cwd, evaluated_at })
 resumeCheck({ cwd, control_id })
 taskRecord({ cwd, control_id, actor_id, expected_revision, task })
 taskCancelRecord({ cwd, control_id, actor_id, expected_revision, task_id, decision })

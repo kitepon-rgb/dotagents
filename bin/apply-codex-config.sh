@@ -32,6 +32,7 @@ HOOKS = {
     "UserPromptSubmit": ("user-prompt-submit", 5),
     "Stop": ("stop", 10),
 }
+ADVISORY_HOOK = ("SessionStart", 5)
 
 
 def parse_args() -> argparse.Namespace:
@@ -155,6 +156,16 @@ def is_callout_command(command: object, hook_path: Path, subcommand: str, home: 
     return Path(executable).expanduser().resolve(strict=False) == hook_path.expanduser().resolve(strict=False)
 
 
+def is_advisory_command(command: object, hook_path: Path, home: Path) -> bool:
+    if not isinstance(command, str):
+        return False
+    if len(command) >= 2 and command[0] == command[-1] and command[0] in ("'", '"'):
+        command = command[1:-1]
+    if command == "~" or command.startswith("~/"):
+        command = str(home) + command[1:]
+    return Path(command).expanduser().resolve(strict=False) == hook_path.expanduser().resolve(strict=False)
+
+
 def update_hooks(data: dict, home: Path) -> dict:
     hook_path = home / ".local/bin/codex-callout-hook"
     for event, (subcommand, timeout) in HOOKS.items():
@@ -188,6 +199,34 @@ def update_hooks(data: dict, home: Path) -> dict:
                 normalized.append(copied)
         normalized.append({"hooks": [canonical]})
         data["hooks"][event] = normalized
+    event, timeout = ADVISORY_HOOK
+    hook_path = home / ".local/bin/orchestrate-advisory-hook"
+    entries = data["hooks"].setdefault(event, [])
+    if not isinstance(entries, list):
+        raise ValueError(f"hooks.{event} は配列である必要がある")
+    canonical = {
+        "type": "command",
+        "command": str(hook_path),
+        "timeoutSec": timeout,
+        "async": False,
+        "statusMessage": None,
+    }
+    normalized = []
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("hooks"), list):
+            normalized.append(entry)
+            continue
+        hooks = [hook for hook in entry["hooks"] if not (isinstance(hook, dict) and is_advisory_command(hook.get("command"), hook_path, home))]
+        if hooks:
+            copied = dict(entry)
+            copied["hooks"] = hooks
+            normalized.append(copied)
+        elif set(entry) != {"hooks"}:
+            copied = dict(entry)
+            copied["hooks"] = []
+            normalized.append(copied)
+    normalized.append({"hooks": [canonical]})
+    data["hooks"][event] = normalized
     return data
 
 

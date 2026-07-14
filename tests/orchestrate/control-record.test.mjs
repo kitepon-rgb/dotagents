@@ -166,6 +166,148 @@ test("status briefとresume checkはopaque状態・workspace drift・evidence re
   assert.equal(unknown.revision, brief.record_revision);
 });
 
+test("advisory snapshotはControl不在を空として返し、active状態をmutationなしでcanonical投影する", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const emptyRepo = await createGitRepo(base, "advisory-empty");
+  assert.deepEqual(await api.advisorySnapshot({ cwd: emptyRepo.root, evaluated_at: "2026-07-14T00:30:00.000Z" }), {
+    schema_version: "orchestrate.advisory-snapshot.v1", evaluated_at: "2026-07-14T00:30:00.000Z", active_control_ids: [],
+    unknown: { worker_run_ids: [], consultation_ids: [] }, uncollected: { worker_run_ids: [], consultation_ids: [] }, write_conflicts: [], h_reference_gaps: [], capacity_warnings: [], truncated: false,
+  });
+  const repo = await createGitRepo(base, "advisory-active");
+  const init = await api.init({ cwd: repo.root, control_id: "advisory-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const approval = makeApproval({ approved_at: "2019-01-01T00:00:00.000Z", expires_at: "2020-01-02T00:00:00.000Z" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "advisory-h-task", classification: "H", effect: "read", write_scope: [], approval }) });
+  const hWorker = await api.workerRunRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "advisory-h-worker", task_id: "advisory-h-task", assignment_id: "advisory-h-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "advisory-h-assignment" } }) });
+  const oldRegistry = await api.registryObservationRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: hWorker.revision, observation: makeRegistryObservation({ registry_observation_id: "advisory-registry-old", expires_at: "2026-07-14T00:15:00.000Z" }) });
+  const registry = await api.registryObservationRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: oldRegistry.revision, observation: makeRegistryObservation({ registry_observation_id: "advisory-registry", expires_at: "2026-07-14T00:15:00.000Z", verification: { ...makeRegistryObservation().verification, observed_at: "2026-07-14T00:10:00.000Z", evidence: { ...makeRegistryObservation().verification.evidence, observed_at: "2026-07-14T00:10:00.000Z" } } }) });
+  const before = await api.status({ cwd: repo.root, control_id: "advisory-control" });
+  const snapshot = await api.advisorySnapshot({ cwd: repo.root, evaluated_at: "2026-07-14T00:30:00.000Z" });
+  assert.deepEqual(snapshot.active_control_ids, ["advisory-control"]);
+  assert.deepEqual(snapshot.h_reference_gaps, [{ task_id: "advisory-h-task", reason: "approval-expired" }, { task_id: "advisory-h-task", reason: "operation-digest-missing" }]);
+  assert.deepEqual(snapshot.capacity_warnings, [
+    { registry_observation_id: "advisory-registry", reason: "admission-unknown" }, { registry_observation_id: "advisory-registry", reason: "expired" }, { registry_observation_id: "advisory-registry", reason: "limit-unknown" },
+  ]);
+  assert.equal(snapshot.truncated, false); assert.deepEqual(await api.status({ cwd: repo.root, control_id: "advisory-control" }), before); assert.equal(registry.revision, before.record_revision);
+});
+
+test("advisory snapshot CLIは外部providerを起動せずmanifestを更新しない", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
+  const init = await api.init({ cwd: repo.root, control_id: "advisory-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const input = join(base, "advisory-input.json"); await writeJson(input, { cwd: repo.root, evaluated_at: "2026-07-14T00:30:00.000Z" });
+  const output = spawnOrchestrate(["advisory-snapshot", "--input", input], { env: { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` } });
+  assert.equal(output.status, 0); assert.deepEqual(JSON.parse(output.stdout).result.active_control_ids, ["advisory-cli"]);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "advisory-cli" })).record_revision, init.revision); await assert.rejects(access(sentinel.log));
+});
+
+test("advisory snapshotはunknown/uncollectedをsortし、planned writerだけの競合とterminal Hを高精度に扱う", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "advisory-precision" });
+  let revision = result.revision;
+  const readTask = await api.taskRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "advisory-read", effect: "read", write_scope: [], isolation: "none" }) }); revision = readTask.revision;
+  for (const worker_run_id of ["z-unknown-worker", "a-unknown-worker"]) {
+    const assignment_id = `${worker_run_id}-assignment`;
+    const recorded = await api.workerRunRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: revision, worker_run: makeWorkerRun({ worker_run_id, task_id: "advisory-read", assignment_id, write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: assignment_id } }) });
+    const admitted = await api.admitWorker({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: recorded.revision, worker_run_id });
+    const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: admitted.revision, worker_run_id, observation: workerObservation("dispatched") });
+    const unknown = await api.observeWorker({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id, observation: workerObservation("unknown") }); revision = unknown.revision;
+  }
+  for (const consultation_id of ["z-unknown-consultation", "a-unknown-consultation"]) {
+    const recorded = await api.consultationRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: revision, consultation: makeConsultation({ consultation_id, task_id: "advisory-read", assignment_id: `${consultation_id}-assignment` }) });
+    const dispatched = await api.observeConsultation({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: recorded.revision, consultation_id, observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
+    const unknown = await api.observeConsultation({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: dispatched.revision, consultation_id, observation: { state: "unknown", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "unknown" } }); revision = unknown.revision;
+  }
+  const writeTask = await api.taskRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "advisory-write-active" }) });
+  const active = await api.workerRunRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: writeTask.revision, worker_run: makeWorkerRun({ worker_run_id: "advisory-write-active-worker", task_id: "advisory-write-active", assignment_id: "advisory-write-active-assignment", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "advisory-write-active-assignment" } }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: active.revision, worker_run_id: "advisory-write-active-worker" });
+  const plannedTask = await api.taskRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: admitted.revision, task: makeTask({ task_id: "advisory-write-planned" }) });
+  const planned = await api.workerRunRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: plannedTask.revision, worker_run: makeWorkerRun({ worker_run_id: "advisory-write-planned-worker", task_id: "advisory-write-planned", assignment_id: "advisory-write-planned-assignment", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "advisory-write-planned-assignment" } }) });
+  const terminalApproval = makeApproval({ expires_at: "2027-07-14T00:00:00.000Z" });
+  const hTask = await api.taskRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: planned.revision, task: makeTask({ task_id: "advisory-terminal-h", classification: "H", effect: "read", write_scope: [], approval: terminalApproval }) });
+  const hWorker = await api.workerRunRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: hTask.revision, worker_run: makeWorkerRun({ worker_run_id: "advisory-terminal-h-worker", task_id: "advisory-terminal-h", assignment_id: "advisory-terminal-h-assignment", write_mode: "none", operation_digest: terminalApproval.operation_digest, workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "advisory-terminal-h-assignment" } }) });
+  const hAdmitted = await api.admitWorker({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: hWorker.revision, worker_run_id: "advisory-terminal-h-worker" });
+  const hDispatched = await api.observeWorker({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: hAdmitted.revision, worker_run_id: "advisory-terminal-h-worker", observation: workerObservation("dispatched") });
+  await api.observeWorker({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: hDispatched.revision, worker_run_id: "advisory-terminal-h-worker", observation: terminalWorkerObservation("failed") });
+  const snapshot = await api.advisorySnapshot({ cwd: repo.root, evaluated_at: "2028-07-14T00:30:00.000Z" });
+  assert.deepEqual(snapshot.unknown, { worker_run_ids: ["a-unknown-worker", "z-unknown-worker"], consultation_ids: ["a-unknown-consultation", "z-unknown-consultation"] });
+  assert.deepEqual(snapshot.uncollected, { worker_run_ids: ["a-unknown-worker", "z-unknown-worker"], consultation_ids: ["a-unknown-consultation", "z-unknown-consultation"] });
+  assert.deepEqual(snapshot.write_conflicts, [{ control_id: "advisory-precision", worker_run_id: "advisory-write-planned-worker", reason: "same-worktree-writer" }]);
+  assert.ok(!snapshot.h_reference_gaps.some((entry) => entry.task_id === "advisory-terminal-h" && entry.reason === "approval-expired"));
+});
+
+test("H TaskのConsultationはoperation digest契約不在をfail-closedする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "h-consultation-contract" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "h-consultation-contract", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "h-consultation-task", classification: "H", effect: "read", write_scope: [], approval: makeApproval() }),
+  });
+  await assert.rejects(api.consultationRecord({
+    cwd: repo.root, control_id: "h-consultation-contract", actor_id: "parent", expected_revision: task.revision,
+    consultation: makeConsultation({ consultation_id: "h-consultation", task_id: "h-consultation-task", assignment_id: "h-consultation-assignment" }),
+  }), code("CONSULTATION_OPERATION_CONTRACT_MISSING"));
+});
+
+test("advisory snapshotのlatest Registryはarchived Controlの新しいsnapshotでsupersedeする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "advisory-archived-registry" });
+  const oldRegistry = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "advisory-archived-registry", actor_id: "parent", expected_revision: result.revision,
+    observation: makeRegistryObservation({ registry_observation_id: "archived-newer-healthy", expires_at: "2027-07-14T00:00:00.000Z", capacity: { admission: { value: "true", evidence: evidence("docs/healthy-admission.md") }, hard_inflight_limit: { knowledge: "known", value: 10, evidence: evidence("docs/healthy-hard.md") }, soft_inflight_limit: { knowledge: "known", value: 8, evidence: evidence("docs/healthy-soft.md") }, observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/healthy-observed.md") } }, verification: { ...makeRegistryObservation().verification, observed_at: "2026-07-14T00:20:00.000Z", evidence: { ...makeRegistryObservation().verification.evidence, observed_at: "2026-07-14T00:20:00.000Z" } } }),
+  });
+  const archivedOnly = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "advisory-archived-registry", actor_id: "parent", expected_revision: oldRegistry.revision,
+    observation: makeRegistryObservation({ registry_observation_id: "archived-only-unhealthy", workflow_id: "archived-only", expires_at: "2026-07-14T00:15:00.000Z" }),
+  });
+  const phase = await completePhaseGate(repo, "advisory-archived-registry", archivedOnly.revision);
+  const finalized = await api.finalizeControl({
+    cwd: repo.root, control_id: "advisory-archived-registry", actor_id: "parent", expected_revision: phase.revision,
+    acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")], regression_evidence: [evidence("tests", "command")], knowledge_return_refs: ["docs/knowledge.md"], parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
+  });
+  const archived = await api.archive({ cwd: repo.root, control_id: "advisory-archived-registry", actor_id: "parent", expected_revision: finalized.revision });
+  const successor = await api.init({ cwd: repo.root, control_id: "advisory-active-registry", predecessor_control_id: "advisory-archived-registry", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const stale = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "advisory-active-registry", actor_id: "parent", expected_revision: successor.revision,
+    observation: makeRegistryObservation({ registry_observation_id: "active-old-expired", expires_at: "2026-07-14T00:15:00.000Z", verification: { ...makeRegistryObservation().verification, observed_at: "2026-07-14T00:10:00.000Z", evidence: { ...makeRegistryObservation().verification.evidence, observed_at: "2026-07-14T00:10:00.000Z" } } }),
+  });
+  const snapshot = await api.advisorySnapshot({ cwd: repo.root, evaluated_at: "2026-07-14T00:30:00.000Z" });
+  assert.deepEqual(snapshot.active_control_ids, ["advisory-active-registry"]);
+  assert.deepEqual(snapshot.capacity_warnings, []);
+  assert.equal(stale.revision, 1); assert.equal(archived.manifest.status, "archived");
+});
+
+test("advisory snapshotは257 planned/reserved capacity fixtureを1.5秒未満で索引評価する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "advisory-density", budget: makeBudget({ max_worker_runs: 300, max_external_runs: 300, max_wall_time_seconds: 2_000_000, max_cost_microusd: 2_000_000_000, max_runs_per_approach_family: 300 }) });
+  let revision = result.revision;
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "advisory-density", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "density-write", isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }) }); revision = task.revision;
+  const workerTemplate = makeWorkerRun();
+  const capacityEvidence = evidence("docs/density-capacity.md", "command", { observed_at: "2026-07-14T00:00:00.000Z" });
+  const registry = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "advisory-density", actor_id: "parent", expected_revision: revision,
+    observation: makeRegistryObservation({ registry_observation_id: "density-registry", executor: workerTemplate.executor, workflow_id: workerTemplate.workflow_id, workflow_capabilities: workerTemplate.workflow_capabilities, capacity: { admission: { value: "true", evidence: capacityEvidence }, hard_inflight_limit: { knowledge: "known", value: 300, evidence: capacityEvidence }, soft_inflight_limit: { knowledge: "known", value: 250, evidence: capacityEvidence }, observed_inflight: { knowledge: "known", value: 0, evidence: capacityEvidence } } }),
+  }); revision = registry.revision;
+  const reserved = await api.workerRunRecord({ cwd: repo.root, control_id: "advisory-density", actor_id: "parent", expected_revision: revision, worker_run: makeWorkerRun({ worker_run_id: "density-reserved", task_id: "density-write", assignment_id: "density-reserved-assignment", workspace_cwd: repo.root, lineage: { ...workerTemplate.lineage, root_assignment_id: "density-reserved-assignment" } }) });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "advisory-density", actor_id: "parent", expected_revision: reserved.revision, worker_run_id: "density-reserved" }); revision = admitted.revision;
+  // 1 controlは256 receiptsのうち閉鎖用133件を予約するため、実在fixtureを3 Controlへ分散する。
+  for (let index = 0; index < 118; index++) {
+    const id = `density-planned-${String(index).padStart(3, "0")}`;
+    const recorded = await api.workerRunRecord({ cwd: repo.root, control_id: "advisory-density", actor_id: "parent", expected_revision: revision, worker_run: makeWorkerRun({ worker_run_id: id, task_id: "density-write", assignment_id: `${id}-assignment`, workspace_cwd: repo.root, lineage: { ...workerTemplate.lineage, root_assignment_id: `${id}-assignment` } }) });
+    revision = recorded.revision;
+  }
+  const recordPlanned = async (control_id, task_id, count) => {
+    const initializedControl = await api.init({ cwd: repo.root, control_id, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget({ max_worker_runs: 300, max_external_runs: 300, max_wall_time_seconds: 2_000_000, max_cost_microusd: 2_000_000_000, max_runs_per_approach_family: 300 }) });
+    let current = (await api.taskRecord({ cwd: repo.root, control_id, actor_id: "parent", expected_revision: initializedControl.revision, task: makeTask({ task_id, isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }) })).revision;
+    for (let index = 0; index < count; index++) {
+      const id = `${control_id}-planned-${String(index).padStart(3, "0")}`;
+      current = (await api.workerRunRecord({ cwd: repo.root, control_id, actor_id: "parent", expected_revision: current, worker_run: makeWorkerRun({ worker_run_id: id, task_id, assignment_id: `${id}-assignment`, workspace_cwd: repo.root, lineage: { ...workerTemplate.lineage, root_assignment_id: `${id}-assignment` } }) })).revision;
+    }
+  };
+  await recordPlanned("advisory-density-two", "density-write-two", 120);
+  await recordPlanned("advisory-density-three", "density-write-three", 19);
+  const startedAt = performance.now();
+  const snapshot = await api.advisorySnapshot({ cwd: repo.root, evaluated_at: "2026-07-14T00:30:00.000Z" });
+  const elapsed = performance.now() - startedAt;
+  assert.ok(elapsed < 1_500, `advisory snapshot took ${elapsed}ms`);
+  assert.equal(snapshot.truncated, true);
+  assert.equal(snapshot.write_conflicts.length, 256);
+  assert.deepEqual(snapshot.capacity_warnings, [{ registry_observation_id: "density-registry", reason: "soft-reached" }]);
+});
+
 test("resume checkはfile evidenceのretentionを検証し、opaque evidenceを内容複製せず列挙する", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base);
   const proofPath = join(repo.root, "docs", "retained-proof.md"); const proofBody = "retained evidence\n";

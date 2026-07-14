@@ -9,6 +9,7 @@ const commands = new Map([
   ["init", api.init], ["status", api.status], ["task-record", api.taskRecord], ["task-cancel-record", api.taskCancelRecord],
   ["registry-observation-record", api.registryObservationRecord],
   ["placement-dry-run", api.placementDryRun],
+  ["advisory-snapshot", api.advisorySnapshot],
   ["placement-reserve", api.reservePlacement],
   ["delegation-packet", api.delegationPacketForWorker],
   ["worker-report-import", api.importWorkerReport],

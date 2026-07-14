@@ -115,12 +115,12 @@ codex --profile work
 ./bin/apply-codex-config --dry-run
 ```
 
-差分は次の **7項目だけ**。model / effort / permissions / OAuth / trust / MCP / 既存他ツールの hook は対象外で、触れない。
+差分は次の **8項目だけ**。model / effort / permissions / OAuth / trust / MCP / 既存他ツールの hook は対象外で、触れない。
 
 | 対象 | 許可する変更 |
 |---|---|
 | `config.toml` | `[features.multi_agent_v2]` の `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"`。旧`[features].codex_hooks`があれば現行`hooks`へ移行し、両方あれば現行値を保持して旧キーだけ除去 |
-| `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handler を各1件の canonical entry に正規化 |
+| `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handlerを各1件、およびSessionStartの`orchestrate-advisory-hook`を1件のcanonical entryに正規化 |
 
 `--apply` は端末設定を書き換えるので、dry-run の差分を確認し、対象端末への適用承認を得てからだけ実行する。
 
@@ -161,7 +161,20 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 
 各 command は `$HOME/.local/bin/codex-callout-hook <subcommand>` という展開済み絶対パスで、matcher のない専用 entry に1件だけ置く。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
 
-`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話 Codex で trust を承認し、新規 session で X1 から実火確認する。`verify-install` は4イベントが canonical entry 1件ずつであることを検証する。
+`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話 Codex で trust を承認し、新規 session で X1 から実火確認する。`verify-install` は4イベントのcalloutとSessionStartの`orchestrate-advisory-hook`が各1件のcanonical entryであることを検証する。
+
+### Orchestrate advisory（SessionStart）
+
+`orchestrate-advisory-hook`は同じSessionStartに別entryとして追加する。hookの起動元配布dirにあるinstalled
+`orchestrate-run`、またはresolve済みsource配布dirにある`orchestrate-run.mjs`だけを、host側hook timeoutは5秒、
+hook全体は3秒、CLIは2秒以下・64KiB上限でshellなしに呼ぶ。wrapperは固定absolute Pythonを`-I`で起動し、sourceの`lib/orchestrate/advisory-hook.py`を
+固定参照する。coreは固定absolute git/nodeだけを使い、childにはHOME/TMPDIR/LANG/LC_*と必要なsystem PATHだけを
+渡す。対象repo内のCLI、親PATH、`GIT_*`、`NODE_OPTIONS`、`PYTHON*`等の環境汚染を自動実行へ使わない。active Control、unknown／未回収Run、
+write conflict、H参照不足、capacity警告だけを最大6節・各3件までのINFOへ整形する。状態変更、認証、
+executor/provider/network/cancelを行わない。非git、CLI不在、timeout、失敗、不正JSON、schema不一致は
+stdout/stderr 0byte・exit 0で沈黙する。`DOTAGENTS_ORCHESTRATE_ADVISORY=off`で無効化でき、成功表示後だけ
+session×repoで一度表示するcache markerを置き、7日後にGCする。cache baseと`dotagents/hooks`がowner-owned
+directoryかつsymlinkでないことを先に確認し、不適合ならcacheを作成・変更せず沈黙する。
 
 ### Spotter Codex hook（工場コア・Spotter所有）
 

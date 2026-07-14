@@ -219,9 +219,30 @@ closed／superseded Findingの共有禁止、final-audit種別へのaudit常時�
 
 ### Phase 5: Advisory hooks
 
-- [ ] dogfoodで高精度に取得できたactive Control、unknown Run、未回収report、write conflict、H参照不足、
+- [x] dogfoodで高精度に取得できたactive Control、unknown Run、未回収report、write conflict、H参照不足、
   capacity警告だけを短く注入する。
-- [ ] hookをstate machine本体やH認証にせず、誤検出時はhard failへfallbackせずadvisoryへ戻す。
+- [x] hookをstate machine本体やH認証にせず、誤検出時はhard failへfallbackせずadvisoryへ戻す。
+
+Phase 5のTODO軽量監査は親が各1回だけ行った。Core監査では、保存時global gateによりreserved writer同士の
+競合は先にfail-closedとなり、当初の`write_conflicts`が有効stateで実質空になる問題を採用した。task取消済みを
+除くplanned writerをcandidateとして既存reservationとの競合を入場前に示すよう修復し、terminal Hの過期限を
+誤警告しない高精度境界、latest Registry、canonical sortを回帰した。Hook監査では、対象repo内の
+`bin/orchestrate-run.mjs`をglobal SessionStartから自動実行し得るP1を採用し、hook自身のinstalled/source
+siblingだけへ実行元を限定した。全`GIT_*`除去、cache GCの所有prefix限定、悪性repo CLI・provider sentinel、
+timeout／不正schema／出力超過のsilent fallbackを回帰した。同じTODOへの独立監査は反復していない。
+
+2026-07-14の隔離temp repo実dogfoodでは、正規Control Coreへactive Control、unknown Worker／Consultation、
+同じ未回収Run、planned writer対reserved writerの競合、planned H Workerのoperation digest不足、unknown capacityを
+記録し、正規`advisory-snapshot`から6信号を取得した。正規hookは最大6節のINFOへ投影し、同session 2回目は
+0 byte、manifest revisionは16のまま、外部provider／network／cancel sentinelは未実行だった。257件の
+planned／reserved／capacity fixtureでは、各配列を256件へboundして`truncated=true`を返し、索引評価の
+実測が1.5秒未満であることを回帰した。
+
+Phase 5境界の重い監査は2026-07-14に一度だけ実施した。複数視点Finderは再現指摘なし、独立refuterと
+親CriticからP0なし、P1 4件、P2 3件を採用した。親環境からの任意コード注入、外側timeout不整合、
+最大stateでの二次走査、H Consultationのoperation契約迂回、archived Controlを含むlatest Registry、
+cache symlink、Claude hookの部分一致検証を修復した。修復後は独立監査を反復せず、親が関連98 tests、
+hook／installer smoke、Markdown lint、`make lint`、`make ci`、diff checkのgreenを確認した。
 
 ### Phase 6: 共通化と追加契約
 
