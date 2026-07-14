@@ -5,6 +5,8 @@
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 
+> 実行順と全体状態の親正本は[開発工場 統合マスター計画](plan_factory-master.md)。本書は固定12製品wire v2と全host rolloutの詳細受入TODOを所有するが、単独では着手順を決めない。
+
 進捗（2026-07-14）: `gpt-connector`製品側はrelease commit `8c5d03b`（npm `0.3.1`）、ServerManager/BugHub側はcommit `71ed5c9`、dotagents側はcommit `bf5ef00`まで独立収容・pushした。dotagentsはv2固定12製品schema/scanner/reporter、基盤CLI更新台帳、host別Oracle退役、正典/MCP切替、配布CLIまで実装し、実`gpt-connector` consultで`gpt-5-6-thinking`＋`min`の成功とfactory diagnostics greenを確認した。固定負座標が複数displayで画面内へclampされる欠陥は、窓なしcold起動→background最小化target→正規PIDだけunhideする製品launcherへ置換し、npm `0.3.1`公開・registry install・最小化中の実Chatまで完了した。main-serverとFOX WSL2のv2 rollout、Pi5 bridgeの正常系canary、Codex Sidecar `0.3.7`のWindows npm shim修正・公開も完了。残件はFOX Windows native再送、Mac再起動後のlaunchd canary、Oracle rollback drill、意図的障害canary、全端末E2Eである。
 
 2026-07-15裁定: 本計画のwire v2固定12製品は残件を含めて契約を変更せず完遂する。Observerの第10コア製品編入は[後続のwire v3計画](plan_observer-factory-integration.md)で固定13製品として扱い、本計画へ後付けしない。

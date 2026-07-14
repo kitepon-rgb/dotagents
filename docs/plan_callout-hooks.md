@@ -1,5 +1,7 @@
 # 呼びかけ Hook 群 — 配置ゲート・TODO ゲートの工場組み込み（設計・計画）
 
+> 実行順と全体状態の親正本は[開発工場 統合マスター計画](plan_factory-master.md)。残る他端末実火はCodex全対応Wave 3と同じhost receiptで閉じ、本書単独で端末rolloutを反復しない。
+
 <!-- 前提: Fable級統括が設計・Opus/Sol級の親が日常実行（2026-07 時点）。本書が正本＝消化チェックは本書で行う。判定の正は docs/02_models.md -->
 
 ## Context（なぜやるか）

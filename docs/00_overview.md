@@ -9,6 +9,7 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | 文書 | 役割 |
 |---|---|
 | [../PLAN.md](../PLAN.md) | **憲章（聖典 v4）**。趣旨・原則1〜10・文書の作法・定常運用・残件 |
+| [plan_factory-master.md](plan_factory-master.md) | **進行中作業の唯一の親TODO**。現在地・並行レーン・合流条件・全端末展開順 |
 | [01_project-layout.md](01_project-layout.md) | 全プロジェクト共通のフォルダ構成標準 |
 | [02_models.md](02_models.md) | 役割→現行モデル対応の唯一の参照点 |
 | [03_settings-fragments.md](03_settings-fragments.md) | .claude/settings.json の生成手順・断片 |
@@ -18,7 +19,7 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | [06_oracle-mcp.md](06_oracle-mcp.md) | Oracleの互換・手動rollback記録（新規導入の正本ではない） |
 | [../shared/orchestrate/contract.md](../shared/orchestrate/contract.md) | 両親共通のorchestrate use-not-use・Control lifecycle・統括ゲート |
 | [../shared/orchestrate/delegation-contract.md](../shared/orchestrate/delegation-contract.md) | 製品中立のDelegation Packet／Worker Reportと統括側受入契約 |
-| `plan_*.md` | 進行中プラン（TODO 兼務。完遂で `YYYY-MM_` 接頭辞にして archive へ） |
+| `plan_*.md` | 進行中の子計画（詳細TODO・受入条件。マスターの実行順に従い、完遂で `YYYY-MM_` 接頭辞にして archive へ） |
 | [queue_memory-promotion.md](queue_memory-promotion.md) | 端末メモリ→リポ正典への昇格待ち行列（全行消化で削除） |
 | [adr/](adr/) | このリポ自身の構造決定の記録 |
 | [archive/](archive/) | 役目を終えた文書（Fable 期キャンペーンの計画 v3・消化台帳一式） |

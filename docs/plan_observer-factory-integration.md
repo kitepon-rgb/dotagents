@@ -6,6 +6,8 @@
 
 **対象repo:** dotagents / Observer / Throughline / ServerManager
 
+> 実行順と全体状態の親正本は[開発工場 統合マスター計画](plan_factory-master.md)。本書はObserver／Elastic／wire v3の詳細受入TODOを所有するが、単独では着手順を決めない。
+
 **関連計画:**
 
 - Observer repo: `docs/plan_observer.md`

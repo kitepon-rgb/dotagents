@@ -47,18 +47,9 @@ dotagents は**開発工場そのもの**。全プロジェクトに共通して
 - **月次**: メモリ棚卸し（orchestrate references の bulk-curation）＋ rag/ Lint（原則10-④）。
 - **世代交代時**: オーナーが宣言 → 02_models.md の解決例列を更新して push → `grep -rn "前提:"` で旧世代前提の資産を原則6で再検討（手順の正は 02_models.md）。
 
-## 残件（TODO を兼ねる。キャンペーンからの引き継ぎ・2026-07-05 転記）
+## 残件
 
-- [ ] ObserverをClaude／Codex両hostで完成させ、第10コア製品として工場wire v3へ編入し、相談役の異社配置と一般Workerのrate-aware Elastic配置を実装する: [docs/plan_observer-factory-integration.md](docs/plan_observer-factory-integration.md)
-- [ ] GitHub 側のみのリポ 20+件の終活裁定（全端末掃引完了→着手可能）。判断材料（オーナー裁定 2026-06-03）: LiveTR-rubberband・QuoLabo・SmartClaude・codex-link は死亡宣言→非公開化済み・磨かない（codex-link のみ 2026-07-04 に「現役ブランチ」へ裁定更新済み＝新しい裁定が優先）。非公開リポ約30件は非公開のまま
-- [ ] P4 昇格キューの消化: [docs/queue_memory-promotion.md](docs/queue_memory-promotion.md)（各リポの次の作業セッションで。全行消化で同ファイル削除）
-- [ ] npm Publishing access の 2FA/トークン禁止締め（任意・オーナー画面操作）
-- [ ] Novel(forklore) 統合済みブランチ削除（ロック解除後・A）
-- [ ] Codex セッションでのスキル一覧目視確認（旧 P0-11 残。symlink はファイルシステムレベル検証済み）
-- [ ] permission allowlist 横展開（fewer-permission-prompts を主要リポへ。オーナー確認後）
-- [ ] この Mac の端末メモリ→リポ昇格の実施確認（旧 P4 昇格原則。実施記録なし）
-- [ ] Throughline `.agents/`・WebAICoding `.playwright-mcp/` の .gitignore 追記（旧 P5 実施漏れ・2026-07-05 実測確認）
-- [ ] SmartClaude-UpdateTools の agents-update 統合裁定（任意・FOX Windows）
+- [ ] [開発工場 統合マスター計画](docs/plan_factory-master.md)を完遂する。Observer／Elastic／BugHub wire／Codex全端末展開と旧キャンペーン残件の実行順・現在地・合流条件は同計画だけを正とし、本憲章へ個別TODOを重複させない。
 
 ## 経緯
 
