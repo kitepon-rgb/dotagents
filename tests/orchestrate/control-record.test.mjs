@@ -1516,6 +1516,21 @@ test("approach family CLIはrecord/block/reopen/statusだけを行い外部provi
   await assert.rejects(access(sentinel.log));
 });
 
+test("DedupとFinding価値は親が裁定し票数・severity・独立性scoreをschemaへ持ち込めない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "parent-semantic-verdict" });
+  const body = "# semantic finding\n"; const artifact_ref = "docs/semantic-finding.md"; await writeFile(join(repo.root, artifact_ref), body);
+  const baseArtifact = { artifact_id: "semantic-finding", artifact_kind: "finding", artifact_ref, artifact_digest: createHash("sha256").update(body).digest("hex"), status: "current" };
+  for (const forbidden of [{ severity: "critical" }, { votes: 3 }, { quorum: 2 }, { semantic_dedup_score: 0.95 }]) {
+    await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: result.revision, artifact: { ...baseArtifact, ...forbidden } }), code("INVALID_SCHEMA"));
+  }
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "semantic-task", effect: "read", write_scope: [] }) });
+  const scoredLineage = { ...makeWorkerRun().lineage, root_assignment_id: "semantic-assignment", independence_score: 1 };
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "semantic-worker", task_id: "semantic-task", assignment_id: "semantic-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: scoredLineage }) }), code("INVALID_SCHEMA"));
+  for (const forbidden of [{ quorum: 2 }, { semantic_dedup_score: 0.95 }]) {
+    await assert.rejects(api.approachFamilyGovernanceRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: task.revision, approach_family_ref: "semantic-family", context_policy: makeWorkerRun().lineage.context_policy, ...forbidden }), code("INVALID_INPUT"));
+  }
+});
+
 test("read-only Workerも正式admissionを通り、証拠つき結果と親検証を保存する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "read-admission-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "read-admission-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "read-task", effect: "read", write_scope: [] }) });

@@ -207,7 +207,7 @@ provider cancel commandは実行していない。
 - [x] Finding／Approach／Gap／Decisionの意味はdocs artifactが正本とし、ControlはID、digest、参照、
   status projectionだけを持つ。
 - [x] approach family上限、blocked/reopen条件、context sharing policyを記録し、同一系列の言い換え投入を抑える。
-- [ ] Dedup／独立性充足／Findingの実在性・価値は親AIが裁定し、コードは票数で正しさを決めない。
+- [x] Dedup／独立性充足／Findingの実在性・価値は親AIが裁定し、コードは票数で正しさを決めない。
 
 ### Phase 5: Advisory hooks
 

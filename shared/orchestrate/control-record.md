@@ -1070,6 +1070,8 @@ Finding／Approach／Gap／Decisionの意味と本文はdocs artifactが正本�
 record時とstatus更新時に安全なbounded readでSHA-256を再計算し、path・digestの不一致、欠落、symlink、
 非regular fileを拒否する。refとdigestは不変で、内容更新は新IDで記録する。本文、severity、票数、
 semantic dedup、関連候補は保存しない。`shared_artifact_ids`は同一Controlのfindingだけを参照できる。
+Findingの実在性・価値、semantic dedup、独立性の充足は親AIがdocs正本と実証を読んで裁定する。
+Controlは票数、quorum、severity、semantic score、independence scalarをtruthとして受理しない。
 
 ## Approach family governance
 
