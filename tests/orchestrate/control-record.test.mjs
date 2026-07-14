@@ -87,7 +87,7 @@ async function completePhaseGate(repo, controlId, revision, { risk = "standard",
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v24", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v25", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
@@ -106,7 +106,9 @@ test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを�
 
 test("すべてのI/O APIはcwdを必須にし、non-gitを拒否してbareをread-onlyとして初期化する", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
-  const nonGit = await createNonGitDir(base); const source = await createGitRepo(base, "bare-source"); const bare = await createBareRepo(base, source);
+  const nonGit = await createNonGitDir(base); const source = await createGitRepo(base, "bare-source");
+  await symlink("control-record-plan.md", join(source.root, "docs", "bare-link.md")); runGit(source.root, ["add", "docs/bare-link.md"]); runGit(source.root, ["commit", "-q", "-m", "add bare symlink fixture"]);
+  const bare = await createBareRepo(base, source);
   await assert.rejects(api.init({ control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"], budget: makeBudget() }), code("INVALID_INPUT"));
   await assert.rejects(api.init({ cwd: nonGit, control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"], budget: makeBudget() }), code("NOT_GIT_REPOSITORY"));
   const bareControl = await api.init({ cwd: bare.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
@@ -116,6 +118,8 @@ test("すべてのI/O APIはcwdを必須にし、non-gitを拒否してbareをre
   const bareArtifactDigest = createHash("sha256").update("# Control Record fixture plan\n").digest("hex");
   const bareArtifact = await api.artifactRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: read.revision, artifact: { artifact_id: "bare-artifact", artifact_kind: "decision", artifact_ref: "docs/control-record-plan.md", artifact_digest: bareArtifactDigest, status: "current" } });
   assert.equal(bareArtifact.manifest.artifacts[0].artifact_digest, bareArtifactDigest);
+  const bareLinkDigest = createHash("sha256").update("control-record-plan.md").digest("hex");
+  await assert.rejects(api.artifactRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareArtifact.revision, artifact: { artifact_id: "bare-link", artifact_kind: "decision", artifact_ref: "docs/bare-link.md", artifact_digest: bareLinkDigest, status: "current" } }), code("STATE_PATH_UNSAFE"));
   await assert.rejects(api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareArtifact.revision, task: makeTask() }), code("BARE_WRITE_FORBIDDEN"));
 });
 
@@ -1410,10 +1414,11 @@ test("docs artifactは4種別のdigest付き投影だけを記録し、親status
   const linkRef = "docs/artifact-link.md"; await symlink("artifact.md", join(repo.root, linkRef));
   await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-link", artifact_kind: "finding", artifact_ref: linkRef, artifact_digest: digest, status: "current" } }), code("STATE_PATH_UNSAFE"));
   await rm(join(repo.root, linkRef));
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "artifact-task", effect: "read", write_scope: [] }) });
-  const nonFindingLineage = { ...makeWorkerRun().lineage, root_assignment_id: "artifact-worker-invalid-assignment", shared_artifact_ids: ["artifact-approach"] };
+  const sharingPolicy = { ...makeWorkerRun().lineage.context_policy, share_existing_findings: true };
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "artifact-task", effect: "read", write_scope: [], context_policy: sharingPolicy }) });
+  const nonFindingLineage = { ...makeWorkerRun().lineage, root_assignment_id: "artifact-worker-invalid-assignment", context_policy: sharingPolicy, shared_artifact_ids: ["artifact-approach"] };
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "artifact-worker-invalid", task_id: "artifact-task", assignment_id: "artifact-worker-invalid-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: nonFindingLineage }) }), code("INVALID_SCHEMA"));
-  const findingLineage = { ...makeWorkerRun().lineage, root_assignment_id: "artifact-worker-assignment", shared_artifact_ids: ["artifact-finding"] };
+  const findingLineage = { ...makeWorkerRun().lineage, root_assignment_id: "artifact-worker-assignment", context_policy: sharingPolicy, shared_artifact_ids: ["artifact-finding"] };
   const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "artifact-worker", task_id: "artifact-task", assignment_id: "artifact-worker-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: findingLineage }) });
   const closed = await api.artifactStatusRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: worker.revision, artifact_id: "artifact-finding", status: "closed" });
   assert.equal((await api.artifactStatus({ cwd: repo.root, control_id: "artifact-control", artifact_id: "artifact-finding" })).status, "closed");
@@ -1422,6 +1427,31 @@ test("docs artifactは4種別のdigest付き投影だけを記録し、親status
   await writeFile(join(repo.root, ref), "# changed\n");
   await assert.rejects(api.artifactStatusRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: closed.revision, artifact_id: "artifact-approach", status: "closed" }), code("ARTIFACT_DIGEST_MISMATCH"));
   assert.equal((await api.resumeCheck({ cwd: repo.root, control_id: "artifact-control" })).outcome, "blocked");
+});
+
+test("Finding共有はcontext policyと現行digestを実行境界で検査しlineageをreceiptへ束縛する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "finding-share-boundary" });
+  const ref = "docs/shared-finding.md"; const body = "# shared finding\n"; await writeFile(join(repo.root, ref), body); const digest = createHash("sha256").update(body).digest("hex");
+  const first = await api.artifactRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: result.revision, artifact: { artifact_id: "shared-finding-a", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
+  const second = await api.artifactRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: first.revision, artifact: { artifact_id: "shared-finding-b", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
+  const sharingPolicy = { ...makeWorkerRun().lineage.context_policy, share_existing_findings: true };
+  const sharingTask = await api.taskRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: second.revision, task: makeTask({ task_id: "finding-share-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"], context_policy: sharingPolicy }) });
+  const registry = await api.registryObservationRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: sharingTask.revision, observation: makeRegistryObservation({ registry_observation_id: "finding-share-registry" }) });
+  const sharedLineage = { ...makeWorkerRun().lineage, root_assignment_id: "finding-share-assignment", context_policy: sharingPolicy, shared_artifact_ids: ["shared-finding-a"] };
+  const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: registry.revision, worker_run: makeWorkerRun({ worker_run_id: "finding-share-worker", task_id: "finding-share-task", assignment_id: "finding-share-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: sharedLineage }) });
+  const noShareTask = await api.taskRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: worker.revision, task: makeTask({ task_id: "finding-no-share-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const forbiddenLineage = { ...makeWorkerRun().lineage, root_assignment_id: "finding-no-share-assignment", shared_artifact_ids: ["shared-finding-a"] };
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: noShareTask.revision, worker_run: makeWorkerRun({ worker_run_id: "finding-no-share-worker", task_id: "finding-no-share-task", assignment_id: "finding-no-share-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: forbiddenLineage }) }), code("INVALID_SCHEMA"));
+  const forbiddenPlacement = await api.placementDryRun({ cwd: repo.root, control_id: "finding-share-boundary", task_id: "finding-no-share-task", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [makePlacementCandidate({ candidate_id: "finding-no-share-placement", registry_observation_id: "finding-share-registry", assignment_id: "finding-no-share-placement-assignment", workspace_cwd: repo.root, lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "finding-no-share-placement-assignment", shared_artifact_ids: ["shared-finding-a"] } })] });
+  assert.deepEqual(forbiddenPlacement.candidates[0].reasons, ["candidate-invalid"]);
+  const tampered = structuredClone(noShareTask.manifest); tampered.worker_runs[0].lineage.shared_artifact_ids = ["shared-finding-b"]; assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+  await writeFile(join(repo.root, ref), "# changed finding\n");
+  const staleLineage = { ...sharedLineage, root_assignment_id: "finding-stale-assignment" };
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: noShareTask.revision, worker_run: makeWorkerRun({ worker_run_id: "finding-stale-worker", task_id: "finding-share-task", assignment_id: "finding-stale-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: staleLineage }) }), code("ARTIFACT_DIGEST_MISMATCH"));
+  const stalePlacement = await api.placementDryRun({ cwd: repo.root, control_id: "finding-share-boundary", task_id: "finding-share-task", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [makePlacementCandidate({ candidate_id: "finding-stale-placement", registry_observation_id: "finding-share-registry", assignment_id: "finding-stale-placement-assignment", workspace_cwd: repo.root, lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "finding-stale-placement-assignment", context_policy: sharingPolicy, shared_artifact_ids: ["shared-finding-a"] } })] });
+  assert.ok(stalePlacement.candidates[0].reasons.includes("artifact-digest-mismatch"));
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: noShareTask.revision, worker_run_id: "finding-share-worker" }), code("ARTIFACT_DIGEST_MISMATCH"));
+  await assert.rejects(api.delegationPacketForWorker({ cwd: repo.root, control_id: "finding-share-boundary", worker_run_id: "finding-share-worker" }), code("ARTIFACT_DIGEST_MISMATCH"));
 });
 
 test("artifact CLIはrecord/status更新/参照だけを行い外部providerを起動しない", async (t) => {
@@ -1929,6 +1959,8 @@ test("campaign_typeは5つの親宣言phaseだけを受理し、改竄・未知�
   await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: gatedWorker.revision, worker_run_id: "campaign-phase-gated-worker" }), code("CAMPAIGN_NOT_RELEASED"));
   const tampered = structuredClone(gatedWorker.manifest); tampered.campaigns[0].campaign_type = "generic";
   assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+  const validToValidTamper = structuredClone(gatedWorker.manifest); validToValidTamper.campaigns[0].audit_required = true;
+  assert.throws(() => api.validateManifest(validToValidTamper), code("INVALID_SCHEMA"));
 });
 
 test("Delegation Packetとstrict Worker Report importは相関・scope・親accept分離を強制する", async (t) => {

@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v24",
+  "schema_version": "dotagents.orchestration-control.v25",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -127,7 +127,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v24で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v25で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -138,8 +138,8 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent path、
   v19はapproach family／assignment retry／integration Run上限をBudget、v20は明示fallback参照を
   Worker Runへ追加し、v21はmanual Worker生成identity／fallbackのreceipt digest束縛を追加し、v22は固定順の
-  phase gateを追加し、v23はdocs artifactのID／digest／status projection、v24はapproach family governanceを
-  追加した。旧manifestを
+  phase gateを追加し、v23はdocs artifactのID／digest／status projection、v24はapproach family governance、
+  v25はCampaign宣言とmanual Worker lineageのreceipt束縛およびFinding共有境界を追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -772,7 +772,8 @@ wall timeとcost上限は非負整数または`null=unknown`である。costは�
   記録済みのparent Workerを参照し、root assignmentを継承する。`context_policy`はTask snapshotと
   完全一致する。`input_digest`は親が渡すpacket／入力構成のSHA-256であり、内容本体は保存しない。
   `approach_family_ref`はbounded identifierまたは`null`、`shared_artifact_ids`は同一Controlの
-  finding artifact ID参照である。
+  finding artifact ID参照である。非空の共有IDは`share_existing_findings=true`の場合だけ許し、
+  manual Workerの生成receiptはlineage全体をdigestへ束縛する。
 - 同一worktreeはscopeが非交差でも予約済みwriterを最大1件とする。workspace全体fingerprintを
   共有するため、Phase 1では同一worktree並行writeを許可しない。別worktreeの重複scopeは、双方が
   `write_mode=isolated-alternative`かつ同じ非空`alternative_group`の場合だけ許可する。
@@ -913,6 +914,8 @@ declared_from_revision, declared_by, declared_at, release
   typed audit evidenceと、常に`type=decision`の親Decisionを必須とする。releaseは一度だけで、親actor、
   revision、時刻、evidenceをreceiptへ結合する。未release Campaignが一件でもあればControl finalizationを
   拒否する。
+- Campaign宣言のtype、members、gated Task、audit要否はcreation receiptのsubject digestへ結合し、
+  schema上有効な別値への差替えも拒否する。
 - record／status／releaseはprovider command、network、process、cancel、dispatchを実行しない。
 
 ## Fixed Control phase gate
@@ -1070,6 +1073,8 @@ Finding／Approach／Gap／Decisionの意味と本文はdocs artifactが正本�
 record時とstatus更新時に安全なbounded readでSHA-256を再計算し、path・digestの不一致、欠落、symlink、
 非regular fileを拒否する。refとdigestは不変で、内容更新は新IDで記録する。本文、severity、票数、
 semantic dedup、関連候補は保存しない。`shared_artifact_ids`は同一Controlのfindingだけを参照できる。
+新規placement／manual Worker record、planned admission、Delegation Packet生成では参照先本文のdigestを
+再検証する。bare repositoryでもtree modeを確認し、regular blob以外を受理しない。
 Findingの実在性・価値、semantic dedup、独立性の充足は親AIがdocs正本と実証を読んで裁定する。
 Controlは票数、quorum、severity、semantic score、independence scalarをtruthとして受理しない。
 

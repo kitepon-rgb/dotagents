@@ -209,6 +209,14 @@ provider cancel commandは実行していない。
 - [x] approach family上限、blocked/reopen条件、context sharing policyを記録し、同一系列の言い換え投入を抑える。
 - [x] Dedup／独立性充足／Findingの実在性・価値は親AIが裁定し、コードは票数で正しさを決めない。
 
+Phase 4境界の重い監査は2026-07-14に一度だけ実施した。複数視点Finder、独立refuter、親Criticで
+Campaign／phase gate／docs artifact／family governance／semantic裁定境界を横断し、P0なし、P1/P2の
+再現5件を採用した。`share_existing_findings`と共有IDの矛盾、Campaign宣言とmanual Worker lineageの
+receipt未束縛、変更済みFinding digestの新規実行利用、bare symlink blob受理をschema v25と回帰で修復した。
+closed／superseded Findingの共有禁止、final-audit種別へのaudit常時強制、後継Controlへのblocked family
+自動継承は現仕様に根拠がないため棄却した。修復後は独立監査を反復せず、親が関連92 tests、lint、
+`make ci`、diff checkのgreenを確認した。外部Executor、network、provider cancel commandは実行していない。
+
 ### Phase 5: Advisory hooks
 
 - [ ] dogfoodで高精度に取得できたactive Control、unknown Run、未回収report、write conflict、H参照不足、
