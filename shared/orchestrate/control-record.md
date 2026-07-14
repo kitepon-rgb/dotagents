@@ -49,7 +49,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v6",
+  "schema_version": "dotagents.orchestration-control.v7",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -69,6 +69,11 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
     "max_external_runs": 24,
     "max_wall_time_seconds": 86400,
     "max_cost_microusd": 100000000
+  },
+  "role_effect_policy": {
+    "policy_version": "dotagents.role-effect.v1",
+    "read_only_roles": ["refuter", "sorter", "verifier"],
+    "approval_required_write_roles": ["integrator"]
   },
   "document_refs": ["docs/plan_elastic-orchestrator.md"],
   "tasks": [],
@@ -97,9 +102,10 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v6で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v7で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
-  Envelope、v5はControl-level finalization、v6はH approval snapshotを追加した。旧manifestを
+  Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
+  snapshotを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -239,6 +245,9 @@ Taskは意味と受入条件への参照であり、Executorへ直接結びつ�
 `APPROVAL_EXPIRED`としてadmission前に拒否する。
 
 - Fの外部writerを拒否する。Fのwriteは`executor=parent`だけ。
+- `role_effect_policy`は`dotagents.role-effect.v1`のexact snapshotとし、`sorter | refuter | verifier`の
+  writeを拒否する。`integrator`のwriteはH approval snapshotを持つTaskだけ許可する。roleの意味正本は
+  既存agent／skill文書であり、Controlはこの最小effect gateだけを所有する。
 - `role`はbounded identifier、`lane`は`behavior-preserving | behavior-change | not-applicable`、
   `isolation`は`none | dedicated-worktree`。role/effectの許可matrixとcapability照合は別gateで扱う。
 - `depends_on`は同じControl内ですでに記録済みのTaskだけを参照する。self、重複、未知Taskを拒否し、
@@ -677,6 +686,7 @@ VERIFICATION_REQUIRED, BUDGET_UNKNOWN, BUDGET_EXCEEDED,
 EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 FINALIZATION_NOT_READY, CONTROL_FINALIZED,
 APPROVAL_MISMATCH, APPROVAL_EXPIRED,
+ROLE_EFFECT_FORBIDDEN,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE
 ```

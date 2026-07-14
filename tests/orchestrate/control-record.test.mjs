@@ -41,8 +41,9 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v6", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v7", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" }, budget: makeBudget(),
+    role_effect_policy: { policy_version: "dotagents.role-effect.v1", read_only_roles: ["refuter", "sorter", "verifier"], approval_required_write_roles: ["integrator"] },
     document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [], control_finalization: null,
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
@@ -122,6 +123,26 @@ test("H Task admissionはapproval snapshotのoperation digestと有効期限を�
     worker_run: makeWorkerRun({ worker_run_id: "h-expired", assignment_id: "h-expired", task_id: "h-expired-task", write_mode: "none", operation_digest: "d".repeat(64), workspace_cwd: repo.root }),
   });
   await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: expiredRun.revision, worker_run_id: "h-expired" }), code("APPROVAL_EXPIRED"));
+});
+
+test("role/effect policy snapshotはread-only roleと未承認integrator writeを拒否する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "role-effect-control" });
+  for (const role of ["sorter", "refuter", "verifier"]) {
+    await assert.rejects(api.taskRecord({
+      cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: result.revision,
+      task: makeTask({ task_id: `${role}-write`, role }),
+    }), code("ROLE_EFFECT_FORBIDDEN"));
+  }
+  await assert.rejects(api.taskRecord({
+    cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "integrator-write", role: "integrator" }),
+  }), code("ROLE_EFFECT_FORBIDDEN"));
+  const allowed = await api.taskRecord({
+    cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "integrator-h-write", role: "integrator", classification: "H", approval: makeApproval() }),
+  });
+  assert.equal(allowed.manifest.tasks[0].role, "integrator");
+  assert.deepEqual(allowed.manifest.role_effect_policy.read_only_roles, ["refuter", "sorter", "verifier"]);
 });
 
 test("WorkerとConsultationは分離され、同一read Taskを参照でき、gpt executorを拒否する", async (t) => {
