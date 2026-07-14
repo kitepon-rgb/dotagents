@@ -161,7 +161,7 @@ CLI列挙の`control-finalize`欠落だけをP3の正典同期漏れとして採
 - [x] 手動`worker-run-record → admit-worker`でもTask isolationを検査し、placementを経由しない
   `dedicated-worktree`回避を拒否する。
 - [x] codex-sidecar: durable `work`のdispatch／observe／collect／recoverと隔離worktreeを実装する。
-- [ ] Codex native: routing smoke済みhandle、follow-up、interrupt、親host tool呼出しのpacket／observation
+- [x] Codex native: routing smoke済みhandle、follow-up、interrupt、親host tool呼出しのpacket／observation
   projectionを実装する。Node CLIがhost内部APIを持つふりをしない。
 - [ ] aiterm: Codex／Grok／Composerのsession ID、agent kind、workspace、interactive follow-up、
   timeout後の同session回収を実装する。read-only強制やexit statusを捏造しない。

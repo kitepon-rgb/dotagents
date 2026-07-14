@@ -50,3 +50,20 @@ digestだけをbounded projectionへ残す。`interrupted / orphaned / run_error
 `run_terminal.state=completed`、`result.status=ok`、`worktreePreserved=true`、worktree path有りを
 すべて必須とする。recoverはactionを省略したread-only inspection、quarantineは
 `action=quarantine`と明示`confirmNoRunningProcesses=true`を別requestとして要求する。
+
+## Codex native host-tool packet / projection
+
+`codexNativeSpawnRequest`、`codexNativeFollowupRequest`、`codexNativeInterruptRequest`は、parentが
+host toolへ渡す invocation packet を返す純粋関数である。Node CLIは`spawn_agent`、`followup_task`、
+`interrupt_agent`を呼ばない。`gpt-connector`やaitermなど別laneへ変換することもない。
+
+spawn packetは`agent_type`を必須にし、`fork_turns="none"`と固定のhandshake-only messageを使う。
+このmessageは本作業を含めず、agent path・role認識・待機可否の報告だけを求める。followup packetは
+既存の`agent_path`とtaskだけを渡すが、その生成前にrouting verificationの`expected`と`observed`が
+`agent_path / agent_role / model / effort / developer_instructions`の全項目で一致し、`status="green"`で
+あること、およびfollow-up対象がその`agent_path`と一致することを厳密に確認する。host tool引数は
+実schemaどおり`target`へ同じpathを渡す。interrupt packetも既存の`agent_path`を`target`にする。
+
+`projectCodexNativeObservation`はagent path、状態（`created`、`running`、`completed`、`failed`、`unknown`、
+`interrupted`）、green routing verification、report参照、evidence参照だけをboundedに投影する。raw prompt、
+raw log、shell commandやhost tool実行結果の任意payloadはschema外として拒否する。

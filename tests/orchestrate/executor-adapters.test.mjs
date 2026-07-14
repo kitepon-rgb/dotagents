@@ -41,6 +41,38 @@ test("lookupはunknown adapter/interface/operationをtyped errorで拒否し、c
   assert.equal(adapters.defaultAdapterCatalog()[0].interfaces[0].operations[0].tool_name, "codex_work_start");
 });
 
+test("codex-native requestはhost toolを実行せず、routing smokeとgreen照合後のfollowupだけを投影する", () => {
+  const spawn = adapters.codexNativeSpawnRequest({ agent_type: "implementer", task_name: "routing_smoke" });
+  assert.deepEqual(spawn, {
+    schema_version: "dotagents.codex-native.request.v1", operation_id: "spawn", tool_name: "spawn_agent",
+    arguments: { agent_type: "implementer", fork_turns: "none", message: "Routing smoke only. Do not perform work. Report your agent path, role recognition, and readiness to wait.", task_name: "routing_smoke" },
+  });
+  assert.equal(spawn.arguments.message.includes("implement the task"), false);
+  const routing = {
+    status: "green",
+    expected: { agent_path: "/root/routing_smoke", agent_role: "implementer", model: "gpt-5.6-terra", effort: "medium", developer_instructions: "implementation only" },
+    observed: { agent_path: "/root/routing_smoke", agent_role: "implementer", model: "gpt-5.6-terra", effort: "medium", developer_instructions: "implementation only" },
+  };
+  assert.deepEqual(adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "Implement the bounded adapter packet.", routing_verification: routing }).arguments, { target: "/root/routing_smoke", message: "Implement the bounded adapter packet." });
+  assert.deepEqual(adapters.codexNativeInterruptRequest({ agent_path: "/root/routing_smoke" }).arguments, { target: "/root/routing_smoke" });
+  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "must not dispatch", routing_verification: { ...routing, status: "pending" } }), code("ROUTING_VERIFICATION_REQUIRED"));
+  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "must not dispatch", routing_verification: { ...routing, observed: { ...routing.observed, effort: "high" } } }), code("ROUTING_VERIFICATION_MISMATCH"));
+  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/other", task: "must not dispatch", routing_verification: routing }), code("ROUTING_VERIFICATION_MISMATCH"));
+  assert.throws(() => adapters.codexNativeSpawnRequest({ agent_type: "implementer", task_name: "routing_smoke", message: "task" }), code("INVALID_SCHEMA"));
+});
+
+test("codex-native observationはboundedなagent状態とrouting/report/evidence参照だけを投影する", () => {
+  const routing = {
+    status: "green",
+    expected: { agent_path: "/root/routing_smoke", agent_role: "implementer", model: "gpt-5.6-terra", effort: "medium", developer_instructions: "implementation only" },
+    observed: { agent_path: "/root/routing_smoke", agent_role: "implementer", model: "gpt-5.6-terra", effort: "medium", developer_instructions: "implementation only" },
+  };
+  const projected = adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "completed", routing_verification: routing, report_ref: "reports/agent_001.md", evidence_refs: ["tests/orchestrate/executor-adapters.test.mjs"] });
+  assert.deepEqual(projected, { schema_version: "dotagents.codex-native.observation.v1", agent_path: "/root/routing_smoke", status: "completed", routing_verification: routing, report_ref: "reports/agent_001.md", evidence_refs: ["tests/orchestrate/executor-adapters.test.mjs"] });
+  assert.throws(() => adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "running", routing_verification: null, report_ref: null, evidence_refs: [], raw_prompt: "secret" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "running", routing_verification: null, report_ref: null, evidence_refs: ["same", "same"] }), code("INVALID_SCHEMA"));
+});
+
 test("codex-sidecar requestは実tool schemaの固定値とcaller handleを純粋に投影する", () => {
   const handle = { idempotency_key: "A".repeat(22) };
   const start = adapters.codexSidecarStartRequest({ projectRoot: "/workspace/source", handle, baseRef: "a".repeat(40), prompt: "Delegation Packetに従って実装する", allowedPaths: ["lib/orchestrate"], denyPaths: [".env"], turnTimeoutMs: 60000 });
