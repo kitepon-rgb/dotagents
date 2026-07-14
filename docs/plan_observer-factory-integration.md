@@ -97,7 +97,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [x] dotagents、Observer、Throughline、ServerManagerのbaselineと既存dirty所有を再確認し、変更waveごとのpathspecを固定する。
   - dotagents: Observer関連は`PLAN.md`、`docs/02_models.md`、`docs/plan_bughub-factory-integration.md`、本計画。WSL relay RAGと`tmp/pdfs`は別作業として分離する。
   - Observer: 全24ファイルが初回commit前だった。秘密候補とstage後whitespaceを検査・修正し、16 testとsyntaxをgreenにしてbaseline commit `7b699c8`へ固定した。remoteは未設定。
-  - Throughline: Observer計画と索引だけがdirty。既存full testは615 pass／1 skip。source変更は既存holdを維持する。
+  - Throughline: Observer計画と索引だけがdirtyだった。既存full testは615 pass／0 fail／1 skip。2026-07-15のオーナーGOでsource holdを解除し、この同一baselineをPhase 1で再利用して実装を開始した。
   - ServerManager: BugHub restart loop復旧commit `08d47ca`／`776a7c1`を独立push・deploy済み。本計画のwire v3までは追加変更しない。
 - [x] 4 repoそれぞれにactive planを参照する独立Controlを初期化し、cross-repo receiptの保存形式を本計画へ固定する。
   - dotagents: `observer-factory-20260715` → `docs/plan_observer-factory-integration.md`
@@ -136,7 +136,8 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 1: Throughline両host completed-turn feed
 
-- [ ] Throughline側正本TODOをCodex専用からClaude／Codex共通契約へ更新する。
+- [x] Throughline側正本TODOをCodex専用からClaude／Codex共通契約へ更新する。
+  - `docs/14_observer_completed_turn_feed_plan.md`、ADR 0002／0003へClaude Stop receipt、Codex `task_complete`、completed pair chain、host-neutral cursor境界を固定した。Claude receipt実装はThroughline commit `b585e98`、cursor裁定は`682fed2`。
 - [ ] host-neutral cursorへparent identity、host固有の完了証拠、active lease／epochを束縛する。project pathだけで親を選ばず、複数履歴と複数active leaseを区別する。
 - [ ] Codexは`task_complete`、ClaudeはPhase 0で実証した完了証拠だけを採用し、mtimeや進行中projectionを完了扱いしない。
 - [ ] snapshot／delta／thread switch／host switch／resync／projection pending／paginationをblack-box固定する。
@@ -235,4 +236,4 @@ Dogfood記録（2026-07-15）:
 | Throughline | 対象CLI testを`node --import ./src/test-env.mjs --test <files>`で実行 | `npm test` |
 | ServerManager | `npm --prefix bughub test`と対象bridge／scanner test | `npm test` |
 
-各変更前にbaselineを取り、focused gate→repo full gate→親diff確認の順で受け入れる。Hを要する実host／deploy／rollback drillはテストgreen後に別gateで実施する。
+大規模Phase開始時にbaselineを1回取り、同一HEAD・同一workspace digestなら再利用する。実装中はfocused、TODO完了候補はrelated、repo full gateはPhase完了時に1回だけ行い、親diff確認と重複実行を避ける。Hを要する実host／deploy／rollback drillはテストgreen後に別gateで実施する。
