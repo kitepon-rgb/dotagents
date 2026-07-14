@@ -41,7 +41,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v2", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v3", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [],
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
@@ -116,12 +116,18 @@ test("WorkerとConsultationは分離され、同一read Taskを参照でき、gp
 
 test("Executor envelopeはworkflowとhandle schemaを分離し、未知adapterをstatus限定で保持する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "executor-envelope-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [] }) });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [], required_capabilities: ["workspace.read", "report.structured"] }) });
   const known = await api.workerRunRecord({
     cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: task.revision,
     worker_run: makeWorkerRun({
       task_id: "executor-task", write_mode: "none", workspace_cwd: repo.root, workflow_id: "review", executor_handle: null,
       executor: { adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.synchronous.v1" },
+      workflow_capabilities: [
+        { capability_id: "readonly.enforceable", value: "true", evidence: evidence("docs/execution-proof.md") },
+        { capability_id: "report.structured", value: "true", evidence: evidence("docs/execution-proof.md") },
+        { capability_id: "workspace.read", value: "true", evidence: evidence("docs/execution-proof.md") },
+        { capability_id: "workspace.write", value: "false", evidence: evidence("docs/execution-proof.md") },
+      ],
     }),
   });
   assert.deepEqual(known.manifest.worker_runs[0].executor, {
@@ -159,6 +165,46 @@ test("未知または矛盾したExecutor契約は新規Runへ使えない", asy
     executor: { adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.idempotency-key.v1" },
   });
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "executor-rejection-control", actor_id: "parent", expected_revision: task.revision, worker_run: mismatch }), code("ADAPTER_UNKNOWN"));
+});
+
+test("workflow capability snapshotはTask要件とsidecarのread/write境界をfail-closedにする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "workflow-capability-control" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "review-task", effect: "read", write_scope: [], required_capabilities: ["workspace.read", "report.structured"] }),
+  });
+  const reviewCapabilities = [
+    { capability_id: "readonly.enforceable", value: "true", evidence: evidence("docs/execution-proof.md") },
+    { capability_id: "report.structured", value: "true", evidence: evidence("docs/execution-proof.md") },
+    { capability_id: "workspace.read", value: "true", evidence: evidence("docs/execution-proof.md") },
+    { capability_id: "workspace.write", value: "false", evidence: evidence("docs/execution-proof.md") },
+  ];
+  const review = makeWorkerRun({
+    task_id: "review-task", write_mode: "none", workspace_cwd: repo.root, workflow_id: "review", executor_handle: null,
+    executor: { adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.synchronous.v1" },
+    workflow_capabilities: reviewCapabilities,
+  });
+  const recorded = await api.workerRunRecord({ cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: task.revision, worker_run: review });
+  assert.equal(recorded.manifest.worker_runs[0].workflow_capabilities.find((entry) => entry.capability_id === "workspace.write").value, "false");
+
+  const forgedWrite = structuredClone(review);
+  forgedWrite.worker_run_id = "forged-write"; forgedWrite.assignment_id = "forged-write";
+  forgedWrite.lineage.root_assignment_id = "forged-write";
+  forgedWrite.workflow_capabilities.find((entry) => entry.capability_id === "workspace.write").value = "true";
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: recorded.revision, worker_run: forgedWrite }), code("CAPABILITY_MISMATCH"));
+
+  const unknownRequired = structuredClone(review);
+  unknownRequired.worker_run_id = "unknown-required"; unknownRequired.assignment_id = "unknown-required";
+  unknownRequired.lineage.root_assignment_id = "unknown-required";
+  unknownRequired.workflow_capabilities.find((entry) => entry.capability_id === "report.structured").value = "unknown";
+  unknownRequired.workflow_capabilities.find((entry) => entry.capability_id === "report.structured").evidence = null;
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: recorded.revision, worker_run: unknownRequired }), code("CAPABILITY_MISMATCH"));
+
+  const missingEvidence = structuredClone(review);
+  missingEvidence.worker_run_id = "missing-evidence"; missingEvidence.assignment_id = "missing-evidence";
+  missingEvidence.lineage.root_assignment_id = "missing-evidence";
+  missingEvidence.workflow_capabilities[0].evidence = null;
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: recorded.revision, worker_run: missingEvidence }), code("INVALID_SCHEMA"));
 });
 
 test("Worker state遷移・evidence・retry reservationをrevision連鎖で保存する", async (t) => {

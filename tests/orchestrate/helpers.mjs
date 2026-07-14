@@ -123,6 +123,13 @@ export function makeWorkerRun(overrides = {}) {
       handle_schema_id: "codex-sidecar.idempotency-key.v1",
     },
     workflow_id: "work", role_ref: "implementer", workspace_cwd: "/workspace-is-resolved-by-library",
+    workflow_capabilities: [
+      { capability_id: "readonly.enforceable", value: "false", evidence: evidence("docs/execution-proof.md") },
+      { capability_id: "report.structured", value: "true", evidence: evidence("docs/execution-proof.md") },
+      { capability_id: "workspace.isolated", value: "true", evidence: evidence("docs/execution-proof.md") },
+      { capability_id: "workspace.read", value: "true", evidence: evidence("docs/execution-proof.md") },
+      { capability_id: "workspace.write", value: "true", evidence: evidence("docs/execution-proof.md") },
+    ],
     write_mode: "direct",
     execution_verification: { stage: "execution-verified", observed_version: "test-version", observed_at: "2026-07-14T00:00:00.000Z", evidence: evidence("docs/execution-proof.md") },
     lineage: {

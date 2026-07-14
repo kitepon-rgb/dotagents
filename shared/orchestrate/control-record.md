@@ -48,7 +48,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v2",
+  "schema_version": "dotagents.orchestration-control.v3",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -88,9 +88,9 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v2で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
-  versioned envelopeとworkflow参照へ置き換えた。v1 manifestを黙って書き換えず、明示migrationが
-  実装されるまでは`INVALID_SCHEMA`で停止する。
+- `schema_version`は現在v3で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+  versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshotを追加した。
+  旧manifestを黙って書き換えず、明示migrationが実装されるまでは`INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
   `expected_revision`と現在値の一致を必須とする。
 - `status`は`active | archived`。archived manifestは更新不可。
@@ -251,6 +251,7 @@ Worker Runは一回のworker割当である。入力schemaはExecutorごとの�
 
 ```text
 worker_run_id, task_id, assignment_id, executor, workflow_id, role_ref,
+workflow_capabilities,
 workspace_cwd, write_mode, execution_verification,
 lineage,
 state, executor_handle, executor_observation, admission,
@@ -307,6 +308,13 @@ Workerのcommon dirはControlのcommon dirと一致しなければならない�
   structural validationを通し、`status`のJSON出力で回収できる。一方、そのControlへのmutationと
   新規Worker記録は`ADAPTER_UNKNOWN`でfail closedにする。未知handleを解釈、補完、dispatchしない。
   `gpt-connector`はenvelope化しても`EXECUTOR_FORBIDDEN`であり、Consultationだけを使う。
+- `workflow_capabilities`は`capability_id / value / evidence`のcanonical sort済み配列。
+  `value`は文字列`true | false | unknown`で、`true/false`はtyped evidenceを必須とし、`unknown`を
+  0、false、無制限、対応済みへ丸めない。Taskの`required_capabilities`は全て`true`の場合だけ満たす。
+  capability IDの重複と非canonical順序を拒否する。
+- `codex-sidecar`の同期read-only workflow（`auditor / explore / generate / opinion / review /
+  risk-check`）は`workspace.write=false`かつ`readonly.enforceable=true`を必須とする。durable `work`は
+  `workspace.write=true`かつ`workspace.isolated=true`を必須とし、adapter名だけから能力を合成しない。
 - `execution_verification`は`stage`、`observed_version`、`observed_at`、`evidence`だけを持つ。
   stageは`unverified | installed | registered | verified | execution-verified`。parent以外のRunは
   `verified`以上、外部writeは`execution-verified`だけを許可する。未知入口はwriterへ配置しない。
@@ -607,7 +615,8 @@ library errorは`ControlRecordError`で、安定した`code`を持つ。少な�
 INVALID_INPUT, INVALID_SCHEMA, INVALID_SCOPE, LIMIT_EXCEEDED,
 NOT_GIT_REPOSITORY, BARE_WRITE_FORBIDDEN, CONTROL_EXISTS, CONTROL_NOT_FOUND,
 REVISION_CONFLICT, RECORD_ARCHIVED, DUPLICATE_ID, INVALID_TRANSITION, DEPENDENCY_NOT_READY,
-ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, ADAPTER_UNKNOWN, VERIFICATION_REQUIRED,
+ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, ADAPTER_UNKNOWN, CAPABILITY_MISMATCH,
+VERIFICATION_REQUIRED,
 EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE

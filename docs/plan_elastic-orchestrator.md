@@ -101,7 +101,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   immutableなtransition receiptとして同じatomic manifestへ保存する。別`events.jsonl`を二重正本にしない。
 - [x] Executorを固定enumからversioned `adapter_id / contract_version / instance_id / handle_schema_id`
   envelopeへ移し、未知adapterのdispatchはfail closed、read-only status/exportは可能にする。
-- [ ] workflow単位のcapabilityを表現し、codex-sidecarのread-only同期workflowとdurable writerを
+- [x] workflow単位のcapabilityを表現し、codex-sidecarのread-only同期workflowとdurable writerを
   同一能力へ丸めない。
 - [ ] 最小Budget Envelope（Run／Consultation／外部Run／wall time／costの上限とunknown）を持つ。
   自動価格最適化は行わない。
