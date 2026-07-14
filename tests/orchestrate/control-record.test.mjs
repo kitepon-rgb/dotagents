@@ -12,6 +12,7 @@ import {
 } from "./helpers.mjs";
 
 const api = await loadControl();
+const adapters = await import("../../lib/orchestrate/executor-adapters.mjs");
 const CONTROL = "control-record-contract";
 
 function code(expected) {
@@ -20,6 +21,23 @@ function code(expected) {
     assert.equal(error.code, expected);
     return true;
   };
+}
+
+function sidecarProviderBinding(worktreePath, overrides = {}) {
+  return {
+    schema_version: "dotagents.codex-sidecar.workspace-binding.v1",
+    executor_handle: { idempotency_key: "A".repeat(22) }, provider_run_id: "b".repeat(64),
+    worktree_path: worktreePath, observed_state: "completed", result_digest: "a".repeat(64), ...overrides,
+  };
+}
+
+function nativeRoutingReceipt(agentPath) {
+  const receipt = {
+    status: "green", verifier: "verify-codex-agent-routing", agent_path: agentPath, agent_role: "implementer",
+    model: "gpt-5.6-terra", effort: "medium", developer_instructions: "applied", verified_at: "2026-07-14T00:00:00.000Z",
+    verification_ref: `verify-codex-agent-routing implementer ${agentPath}`,
+  };
+  return { ...receipt, verification_digest: canonicalDigest(receipt) };
 }
 
 async function withRepo(t, fn) {
@@ -52,7 +70,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v17", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v18", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
@@ -455,7 +473,7 @@ test("Placement dry-runはRegistry由来の候補をcanonical順で評価し、�
   });
   const observation = (registry_observation_id, overrides = {}) => makeRegistryObservation({
     registry_observation_id,
-    executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: registry_observation_id, handle_schema_id: "codex-native.agent-id.v1" },
+    executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: registry_observation_id, handle_schema_id: "codex-native.agent-path.v1" },
     capacity: capacity(), ...overrides,
   });
   const inputs = [
@@ -559,7 +577,7 @@ test("Placement dry-runは同一executor/workflowのadmitted予約をRegistry ob
     worker_run: makeWorkerRun({
       worker_run_id: "capacity-existing-run", task_id: "capacity-task", assignment_id: "capacity-existing-assignment",
       executor: observation.executor, workflow_id: observation.workflow_id, workflow_capabilities: workerCapabilities,
-      write_mode: "none", workspace_cwd: repo.root, executor_handle: { agent_id: "capacity-existing-agent" },
+      write_mode: "none", workspace_cwd: repo.root, executor_handle: { agent_path: "/root/capacity_existing_agent" },
       lineage: { ...makeWorkerRun().lineage, root_assignment_id: "capacity-existing-assignment" },
     }),
   });
@@ -570,7 +588,7 @@ test("Placement dry-runは同一executor/workflowのadmitted予約をRegistry ob
     cwd: repo.root, control_id: "placement-capacity-reservation", task_id: "capacity-task", evaluated_at: "2026-07-14T00:30:00.000Z",
     candidates: [makePlacementCandidate({
       candidate_id: "capacity-new-candidate", registry_observation_id: "capacity-registry", workspace_cwd: repo.root,
-      executor_handle: { agent_id: "capacity-new-agent" },
+      executor_handle: { agent_path: "/root/capacity_new_agent" },
     })],
   });
   assert.deepEqual(placement.candidates, [{
@@ -587,7 +605,7 @@ test("Placement dry-runは同一executor/workflowのadmitted予約をRegistry ob
     cwd: repo.root, control_id: "placement-capacity-reservation", task_id: "capacity-task", evaluated_at: "2026-07-14T00:30:00.000Z",
     candidates: [makePlacementCandidate({
       candidate_id: "capacity-ambiguous-candidate", registry_observation_id: "capacity-registry", workspace_cwd: repo.root,
-      executor_handle: { agent_id: "capacity-ambiguous-agent" },
+      executor_handle: { agent_path: "/root/capacity_ambiguous_agent" },
     })],
   });
   assert.deepEqual(ambiguousPlacement.candidates, [{
@@ -635,28 +653,28 @@ test("Placement dry-runはF/H・workspace・global write conflictを実行せず
     cwd: repo.root, control_id: "placement-policy-control", task_id, evaluated_at: "2026-07-14T00:30:00.000Z", candidates,
   });
   const f = await evaluate("placement-f-write", [
-    candidate("f-external", "policy-native", { executor_handle: { agent_id: "f-external-agent" } }),
+    candidate("f-external", "policy-native", { executor_handle: { agent_path: "/root/f_external_agent" } }),
     candidate("f-parent", "policy-parent", { executor_handle: { correlation_id: "f-parent-correlation" } }),
   ]);
   assert.deepEqual(f.candidates, [
     { candidate_id: "f-external", registry_observation_id: "policy-native", eligibility: "ineligible", reasons: ["policy-forbidden"] },
     { candidate_id: "f-parent", registry_observation_id: "policy-parent", eligibility: "eligible", reasons: [] },
   ]);
-  const h = await evaluate("placement-h-write", [candidate("h-mismatch", "policy-native", { executor_handle: { agent_id: "h-agent" } })]);
+  const h = await evaluate("placement-h-write", [candidate("h-mismatch", "policy-native", { executor_handle: { agent_path: "/root/h_agent" } })]);
   assert.deepEqual(h.candidates, [{ candidate_id: "h-mismatch", registry_observation_id: "policy-native", eligibility: "ineligible", reasons: ["policy-forbidden"] }]);
-  const dedicated = await evaluate("placement-dedicated-write", [candidate("dedicated-main", "policy-native", { executor_handle: { agent_id: "dedicated-agent" } })]);
+  const dedicated = await evaluate("placement-dedicated-write", [candidate("dedicated-main", "policy-native", { executor_handle: { agent_path: "/root/dedicated_agent" } })]);
   assert.deepEqual(dedicated.candidates, [{ candidate_id: "dedicated-main", registry_observation_id: "policy-native", eligibility: "ineligible", reasons: ["workspace-invalid"] }]);
   const existing = await api.workerRunRecord({
     cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent-001", expected_revision: revision,
     worker_run: makeWorkerRun({
       worker_run_id: "placement-conflict-existing", task_id: "placement-conflict-write", assignment_id: "placement-conflict-existing-assignment",
       executor: nativeRegistry.executor, workflow_id: nativeRegistry.workflow_id, workflow_capabilities: capabilities,
-      workspace_cwd: repo.root, executor_handle: { agent_id: "placement-conflict-existing-agent" },
+      workspace_cwd: repo.root, executor_handle: { agent_path: "/root/placement_conflict_existing_agent" },
       lineage: { ...makeWorkerRun().lineage, root_assignment_id: "placement-conflict-existing-assignment" },
     }),
   });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent-001", expected_revision: existing.revision, worker_run_id: "placement-conflict-existing" });
-  const conflict = await evaluate("placement-conflict-write", [candidate("conflict-new", "policy-native", { executor_handle: { agent_id: "conflict-new-agent" } })]);
+  const conflict = await evaluate("placement-conflict-write", [candidate("conflict-new", "policy-native", { executor_handle: { agent_path: "/root/conflict_new_agent" } })]);
   assert.deepEqual(conflict.candidates, [{ candidate_id: "conflict-new", registry_observation_id: "policy-native", eligibility: "ineligible", reasons: ["write-conflict"] }]);
   assert.equal((await api.status({ cwd: repo.root, control_id: "placement-policy-control" })).record_revision, admitted.revision);
 });
@@ -740,7 +758,7 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
     task: makeTask({ task_id: "reserve-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const registry = makeRegistryObservation({
-    registry_observation_id: "reserve-registry", executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "reserve-instance", handle_schema_id: "codex-native.agent-id.v1" },
+    registry_observation_id: "reserve-registry", executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "reserve-instance", handle_schema_id: "codex-native.agent-path.v1" },
     expires_at: "2099-07-14T00:00:00.000Z",
     capacity: {
       admission: { value: "true", evidence: evidence("docs/reserve-admission.md") },
@@ -750,7 +768,7 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
     },
   });
   const observed = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-reserve-control", actor_id: "parent-001", expected_revision: task.revision, observation: registry });
-  const candidate = (candidate_id) => makePlacementCandidate({ candidate_id, registry_observation_id: "reserve-registry", workspace_cwd: repo.root, executor_handle: { agent_id: `${candidate_id}-agent` } });
+  const candidate = (candidate_id) => makePlacementCandidate({ candidate_id, registry_observation_id: "reserve-registry", workspace_cwd: repo.root, executor_handle: { agent_path: `/root/${candidate_id.replaceAll("-", "_")}_agent` } });
   const first = await api.reservePlacement({
     cwd: repo.root, control_id: "placement-reserve-control", actor_id: "parent-001", expected_revision: observed.revision,
     task_id: "reserve-task", candidate: candidate("reserve-first"), review_decision: null,
@@ -805,13 +823,13 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
   });
   const reviewObservedAt = "2020-07-14T00:00:00.000Z";
   const reviewRegistry = makeRegistryObservation({
-    registry_observation_id: "reserve-review-registry", executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "reserve-review-instance", handle_schema_id: "codex-native.agent-id.v1" },
+    registry_observation_id: "reserve-review-registry", executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "reserve-review-instance", handle_schema_id: "codex-native.agent-path.v1" },
     enabled: { value: "true", evidence: evidence("docs/reserve-review-enabled.md", "file", { observed_at: reviewObservedAt }) },
     workflow_capabilities: makeRegistryObservation().workflow_capabilities.map((entry) => ({ ...entry, evidence: evidence("docs/reserve-review-capabilities.md", "file", { observed_at: reviewObservedAt }) })),
     verification: { stage: "execution-verified", observed_version: "test-version", observed_at: reviewObservedAt, evidence: evidence("docs/reserve-review-verification.md", "file", { observed_at: reviewObservedAt }) }, expires_at: "2099-07-14T00:00:00.000Z",
   });
   const reviewObserved = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-reserve-review", actor_id: "parent-001", expected_revision: reviewTask.revision, observation: reviewRegistry });
-  const reviewCandidate = makePlacementCandidate({ candidate_id: "reserve-review", registry_observation_id: "reserve-review-registry", assignment_id: "reserve-review-assignment", workspace_cwd: repo.root, executor_handle: { agent_id: "reserve-review-agent" } });
+  const reviewCandidate = makePlacementCandidate({ candidate_id: "reserve-review", registry_observation_id: "reserve-review-registry", assignment_id: "reserve-review-assignment", workspace_cwd: repo.root, executor_handle: { agent_path: "/root/reserve_review_agent" } });
   const reviewDryRun = await api.placementDryRun({ cwd: repo.root, control_id: "placement-reserve-review", task_id: "reserve-review-task", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [reviewCandidate] });
   assert.deepEqual(reviewDryRun.candidates[0], { candidate_id: "reserve-review", registry_observation_id: "reserve-review-registry", eligibility: "review-required", reasons: ["capacity-review-required"] });
   await assert.rejects(api.reservePlacement({
@@ -852,7 +870,7 @@ test("sidecar durable workはsource予約と実行worktree bindingを分離し�
   assert.equal(run.workspace.worktree_root_realpath, repo.root);
   assert.deepEqual(run.workspace_binding, {
     mode: "executor-isolated", schema_version: "codex-sidecar.delayed-worktree.v1", base_sha: repo.baseSha, preserve_worktree: true,
-    execution_workspace: null, bound_from_revision: null, binding_evidence: [], bound_by: null, bound_at: null,
+    execution_workspace: null, provider_binding: null, bound_from_revision: null, binding_evidence: [], bound_by: null, bound_at: null,
   });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: recorded.revision, worker_run_id: "run-001" });
   assert.equal(admitted.manifest.worker_runs[0].baseline_workspace_fingerprint, null);
@@ -865,21 +883,27 @@ test("sidecar durable workはsource予約と実行worktree bindingを分離し�
   assert.ok(resumed.review_reasons.some((entry) => entry.code === "worker-execution-workspace-unbound"));
 
   const otherBase = await makeTempDir("sidecar-other-"); t.after(() => cleanupDir(otherBase)); const other = await createGitRepo(otherBase);
-  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: other.root, binding_evidence: [evidence("sidecar-result-other", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
-  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: repo.root, binding_evidence: [evidence("sidecar-result-source", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: other.root, provider_binding: sidecarProviderBinding(other.root), binding_evidence: [evidence("sidecar-result-other", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: repo.root, provider_binding: sidecarProviderBinding(repo.root), binding_evidence: [evidence("sidecar-result-source", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
   const wrongHead = await addLinkedWorktree(repo, "sidecar-wrong-head"); await writeFile(join(wrongHead.root, "README.md"), "wrong head\n"); runGit(wrongHead.root, ["add", "README.md"]); runGit(wrongHead.root, ["commit", "-q", "-m", "wrong head"]);
-  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: wrongHead.root, binding_evidence: [evidence("sidecar-result-wrong-head", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: wrongHead.root, provider_binding: sidecarProviderBinding(wrongHead.root), binding_evidence: [evidence("sidecar-result-wrong-head", "executor-receipt")] }), code("WORKSPACE_DRIFT"));
   const missing = await addLinkedWorktree(repo, "sidecar-missing"); runGit(repo.root, ["worktree", "remove", "--force", missing.root]);
-  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: missing.root, binding_evidence: [evidence("sidecar-result-missing", "executor-receipt")] }), code("IO_FAILURE"));
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: missing.root, provider_binding: sidecarProviderBinding(missing.root), binding_evidence: [evidence("sidecar-result-missing", "executor-receipt")] }), code("IO_FAILURE"));
   const good = await addLinkedWorktree(repo, "sidecar-good"); const linkPath = join((await makeTempDir("sidecar-link-")), "workspace-link"); t.after(() => cleanupDir(join(linkPath, ".."))); await symlink(good.root, linkPath);
-  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: linkPath, binding_evidence: [evidence("sidecar-result-link", "executor-receipt")] }), code("STATE_PATH_UNSAFE"));
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: linkPath, provider_binding: sidecarProviderBinding(linkPath), binding_evidence: [evidence("sidecar-result-link", "executor-receipt")] }), code("STATE_PATH_UNSAFE"));
   const bindingEvidence = [evidence("sidecar-result-good", "executor-receipt")];
-  const bound = await api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: good.root, binding_evidence: bindingEvidence });
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: good.root, provider_binding: sidecarProviderBinding(repo.root), binding_evidence: bindingEvidence }), code("REPORT_CORRELATION_MISMATCH"));
+  await assert.rejects(api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: good.root, provider_binding: sidecarProviderBinding(good.root, { executor_handle: { idempotency_key: "B".repeat(22) } }), binding_evidence: bindingEvidence }), code("REPORT_CORRELATION_MISMATCH"));
+  const providerBinding = sidecarProviderBinding(good.root);
+  const bound = await api.bindWorkerWorkspace({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: good.root, provider_binding: providerBinding, binding_evidence: bindingEvidence });
   run = bound.manifest.worker_runs[0];
   assert.equal(run.state, "dispatched"); assert.equal(run.workspace_binding.execution_workspace.worktree_root_realpath, good.root);
+  assert.deepEqual(run.workspace_binding.provider_binding, providerBinding);
   assert.equal(bound.manifest.transition_receipts.at(-1).operation, "worker-workspace-bind");
   const forged = structuredClone(bound.manifest); forged.worker_runs[0].workspace_binding.binding_evidence[0].ref = "tampered";
   assert.throws(() => api.validateManifest(forged), code("INVALID_SCHEMA"));
+  const forgedProvider = structuredClone(bound.manifest); forgedProvider.worker_runs[0].workspace_binding.provider_binding.result_digest = "d".repeat(64);
+  assert.throws(() => api.validateManifest(forgedProvider), code("INVALID_SCHEMA"));
 
   await writeFile(join(good.root, "README.md"), "sidecar output\n");
   const report = {
@@ -887,6 +911,7 @@ test("sidecar durable workはsource予約と実行worktree bindingを分離し�
     executor_handle: { idempotency_key: "A".repeat(22) }, observed_state: "completed", status: "completed", result_digest: "a".repeat(64), evidence: [evidence("docs/sidecar-result.md")],
     validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }], changed_paths: ["README.md"], claims: ["sidecar-binding"],
   };
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: bound.revision, worker_run_id: "run-001", report: { ...report, result_digest: "c".repeat(64) } }), code("REPORT_CORRELATION_MISMATCH"));
   const imported = await api.importWorkerReport({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: bound.revision, worker_run_id: "run-001", report });
   assert.equal(imported.manifest.worker_runs[0].state, "completed");
   const accepted = await api.accept({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: imported.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/sidecar-accept.md", "decision")], decision_note: "bound workspace verified", decided_by: "parent" });
@@ -901,7 +926,7 @@ test("worker-workspace-bind CLIはrecordだけを行い外部providerやcancel c
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: recorded.revision, worker_run_id: "run-001" });
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
   const linked = await addLinkedWorktree(repo, "sidecar-bind-cli-worktree"); const input = join(base, "sidecar-bind.json");
-  await writeJson(input, { cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: linked.root, binding_evidence: [evidence("sidecar-cli-result", "executor-receipt")] });
+  await writeJson(input, { cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", workspace_cwd: linked.root, provider_binding: sidecarProviderBinding(linked.root), binding_evidence: [evidence("sidecar-cli-result", "executor-receipt")] });
   const invoked = spawnOrchestrate(["worker-workspace-bind", "--input", input], { env: { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` } });
   assert.equal(invoked.status, 0, invoked.stderr); assert.equal(JSON.parse(invoked.stdout).result.manifest.worker_runs[0].workspace_binding.execution_workspace.worktree_root_realpath, linked.root);
   await assert.rejects(access(sentinel.log));
@@ -1184,6 +1209,32 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   const retry = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: failed.revision, worker_run: makeWorkerRun({ worker_run_id: "run-002", workspace_cwd: repo.root }) });
   assert.equal(retry.manifest.worker_runs.at(-1).assignment_id, "assignment-001");
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run_id: "run-001", observation: workerObservation("running") }), code("INVALID_TRANSITION"));
+});
+
+test("実adapter projectionをControl RecordのWorkerとConsultationへ往復できる", async (t) => {
+  const controlId = "adapter-roundtrip-control"; const agentPath = "/root/adapter_roundtrip_agent";
+  const { repo, result } = await initialized(t, { control_id: controlId });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "adapter-roundtrip-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const workerRun = makeWorkerRun({
+    worker_run_id: "adapter-roundtrip-worker", task_id: "adapter-roundtrip-task", assignment_id: "adapter-roundtrip-worker-assignment",
+    executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "native-subagent", handle_schema_id: "codex-native.agent-path.v1" },
+    workflow_id: "native-subagent", write_mode: "none", workspace_cwd: repo.root, executor_handle: { agent_path: agentPath },
+    lineage: { ...makeWorkerRun().lineage, root_assignment_id: "adapter-roundtrip-worker-assignment" },
+  });
+  const recorded = await api.workerRunRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: task.revision, worker_run: workerRun });
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: recorded.revision, worker_run_id: "adapter-roundtrip-worker" });
+  const nativeProjection = adapters.projectCodexNativeObservation({ agent_path: agentPath, status: "created", routing_receipt: nativeRoutingReceipt(agentPath), report_ref: null, evidence_refs: [] });
+  const dispatchEvidence = [evidence("native-routing-receipt", "executor-receipt")];
+  const workerObservationValue = adapters.buildWorkerControlObservation({ projection: nativeProjection, observed_version: "gpt-5.6-terra", observed_at: "2026-07-14T00:01:00.000Z", dispatch_evidence: dispatchEvidence });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "adapter-roundtrip-worker", observation: workerObservationValue });
+  assert.equal(dispatched.manifest.worker_runs[0].state, "dispatched"); assert.deepEqual(dispatched.manifest.worker_runs[0].executor_handle, { agent_path: agentPath });
+
+  const consultation = await api.consultationRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: dispatched.revision, consultation: makeConsultation({ consultation_id: "adapter-roundtrip-consultation", task_id: "adapter-roundtrip-task", assignment_id: "adapter-roundtrip-consultation-assignment", slug: "adapter-roundtrip-consultation" }) });
+  const timestamps = { createdAt: "2026-07-14T00:01:00.000Z", updatedAt: "2026-07-14T00:02:00.000Z" };
+  const consultProjection = adapters.projectGptConnectorObservation({ slug: "adapter-roundtrip-consultation", provider: { slug: "adapter-roundtrip-consultation", state: "queued", ...timestamps, result: null, error: null } });
+  const consultationObservation = adapters.buildConsultationControlObservation({ projection: consultProjection, observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z" });
+  const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: consultation.revision, consultation_id: "adapter-roundtrip-consultation", observation: consultationObservation });
+  assert.equal(consultationDispatched.manifest.consultations[0].state, "dispatched");
 });
 
 test("Task snapshotは文書全体OIDから独立し、同一Control依存のready gateとcycle検査を持つ", async (t) => {

@@ -1,6 +1,6 @@
 # Elastic Multi-Agent Orchestrator 完成計画
 
-Status: v1 completion target confirmed by owner (2026-07-14); Phase 1B in progress
+Status: v1 completion target confirmed by owner (2026-07-14); Phase 3 in progress
 
 ## 目的
 
@@ -171,6 +171,14 @@ CLI列挙の`control-finalize`欠落だけをP3の正典同期漏れとして採
   直接dispatchを実装済みに見せない。
 - [x] adapterごとにcredential不足、rate limit、timeout、non-zero／malformed report、workspace消失、
   unsupported capabilityをtyped failureとして検証する。
+
+Phase gate（2026-07-14）: 2視点のFind、独立refuterのexistence/value反証とCritic、親裁定を1回実施した。
+初回はControlとadapterのhandle shape不一致、自己申告routing照合、sidecar cancel/recovery union欠落、
+遅延worktree bindingの相関不足、根拠のないfailure分類、aiterm transport誤記をP1/P2として採用しredとした。
+修復ではControl schema v18のprovider binding、canonical native agent path、verifier receipt digest、aitermの
+workspace metadata分離、gpt初回dispatch、sidecar実union、実provider code限定failure matrix、Control exact
+observation bridgeを追加した。同じPhaseへの独立監査は反復せず、親が実Control往復を含む関連79 tests、
+Markdown lint、`make ci`のgreenで採用指摘を閉じた。live provider dispatchはPhase 7 dogfoodで検証する。
 
 ### Phase 3: Placementとadmission
 

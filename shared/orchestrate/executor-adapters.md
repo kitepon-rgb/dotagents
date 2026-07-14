@@ -51,6 +51,16 @@ digestだけをbounded projectionへ残す。`interrupted / orphaned / run_error
 すべて必須とする。recoverはactionを省略したread-only inspection、quarantineは
 `action=quarantine`と明示`confirmNoRunningProcesses=true`を別requestとして要求する。
 
+成功terminalのsidecar projectionは、Control bind用の`workspace_binding_candidate`も返す。これは
+`executor_handle / provider_run_id / worktree_path / observed_state=completed / result_digest`だけを持ち、
+raw run directoryやprovider logを複製しない。
+
+cancelとrecoveryの戻り値はresult unionへ混ぜない。`projectCodexSidecarCancelObservation`は実際の
+`run_cancel_ack`を検証するが、`accepted`や`terminal=true`だけでRunを`cancelled`へ確定せず、同一Runの
+result再観測が必要な`unknown`として残す。`projectCodexSidecarRecoveryObservation`は実際の
+`work_recovery_inspection`と内包されたstatusのrun ID一致を検証し、`runDirectory`は保存せずoutcomeと
+quarantine publicationだけを残す。
+
 ## Codex native host-tool packet / projection
 
 `codexNativeSpawnRequest`、`codexNativeFollowupRequest`、`codexNativeInterruptRequest`は、parentが
@@ -59,13 +69,15 @@ host toolへ渡す invocation packet を返す純粋関数である。Node CLI�
 
 spawn packetは`agent_type`を必須にし、`fork_turns="none"`と固定のhandshake-only messageを使う。
 このmessageは本作業を含めず、agent path・role認識・待機可否の報告だけを求める。followup packetは
-既存の`agent_path`とtaskだけを渡すが、その生成前にrouting verificationの`expected`と`observed`が
-`agent_path / agent_role / model / effort / developer_instructions`の全項目で一致し、`status="green"`で
-あること、およびfollow-up対象がその`agent_path`と一致することを厳密に確認する。host tool引数は
+既存の`agent_path`とtaskだけを渡すが、その生成前に`verify-codex-agent-routing`が発行したgreen receiptを
+要求する。receiptは`agent_path / agent_role / model / effort / developer_instructions=applied / verified_at /
+verification_ref`を持ち、そのcanonical payloadを`verification_digest`が拘束する。follow-up対象はreceiptの
+`agent_path`と一致しなければならない。host tool引数は
 実schemaどおり`target`へ同じpathを渡す。interrupt packetも既存の`agent_path`を`target`にする。
 
 `projectCodexNativeObservation`はagent path、状態（`created`、`running`、`completed`、`failed`、`unknown`、
-`interrupted`）、green routing verification、report参照、evidence参照だけをboundedに投影する。raw prompt、
+`interrupted`）、green routing receipt、report参照、evidence参照だけをboundedに投影する。Controlへ渡す
+handleは`{agent_path}`であり、Controlの`codex-native.agent-path.v1`と同じshapeである。raw prompt、
 raw log、shell commandやhost tool実行結果の任意payloadはschema外として拒否する。
 
 ## aiterm interactive-session packet / projection
@@ -73,8 +85,9 @@ raw log、shell commandやhost tool実行結果の任意payloadはschema外と�
 配布済みaitermの一次source（`dist/index.js`）に従い、`aitermAgentStartRequest`は
 `codex_agent`、`grok_agent`、`composer_agent`の実schemaへ、prompt、`cwd`、`session_name`、model、
 `agent_done`を投影する。Codexだけが対話TUIで`reasoning_effort`を受け、Grok/Composerは同値を
-起動前エラーにする実装のため、adapterも拒否する。起動後の`session_id / agent_kind / workspace_cwd`は
-opaque handleとして相関し、別sessionへfollow-upしない。
+起動前エラーにする実装のため、adapterも拒否する。起動後のopaque handleはControl契約と同じ
+`session_id / agent_kind`だけで相関し、`workspace_cwd`はlaunch observationのmetadataとして分離する。
+別sessionへfollow-upしない。
 
 `aitermFollowupRequest`は同じhandleの`session_id`へ`pty_send`を作り、`wait="agent_done"`、
 `enter=true`、`screen=true`、`raw=false`を固定する。timeout後の`aitermTimeoutRecoveryRequest`は同じ
@@ -107,6 +120,10 @@ session ID、archive状態だけを残し、回答本文・attachment names・MI
 だけを残し、error message、raw prompt、raw log、secretはprojectionに残さない。これはConsultationであり、
 Worker capacity、実行票、worker reportには変換しない。
 
+`queued / uploading / submitted`はControlの初回遷移に使える`dispatched`、`running`だけを`running`へ
+投影する。`buildConsultationControlObservation`はこのprojectionをControl Recordが受理するexact shapeへ
+変換し、completed時のDecision参照とfailed時のterminal evidenceを混同しない。
+
 ## Claude internal appendix projection
 
 `claude-internal`はcatalogどおり`host-projection` laneかつ`projection-only` restrictionを維持する。
@@ -119,20 +136,30 @@ host tool名、capacity、execution-verified、Worker成功をこのadapterは�
 
 ## Adapter-specific typed failure matrix
 
-`lookupAdapterFailureSupport`と`projectAdapterFailure`は製品固有の失敗を共通lifecycleへ押し込まず、
-型付きの最小projectionだけを返す。credentialとrate limitは製品所有のままとし、秘密・account quota・
-raw messageをControlへ複製しない。未知code、余計field、非適用familyは拒否する。
+`lookupAdapterFailureSupport`、`projectAdapterFailure`、`projectAdapterCallerTimeout`は製品固有の失敗を
+共通lifecycleへ押し込まず、型付きの最小projectionだけを返す。supportは`mapped / caller-event /
+unknown / not-applicable`と根拠を返す。credentialとrate limitは製品所有のままとし、秘密・account quota・
+raw messageをControlへ複製しない。providerが公開していないcodeをcallerが自己申告する入口は持たない。
 
 | Adapter | credential-missing | rate-limited | timeout | non-zero-exit | malformed-report | workspace-missing | unsupported-capability | timeout recovery |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `codex-sidecar` | 可 | 可 | 可 | 可 | 可 | 可 | 可 | 同一idempotency keyの`result` |
-| `codex-native` | 不適用 | 不適用 | 可 | 不適用 | 不適用 | 不適用 | 可 | 確認済み再照会toolなし |
-| `aiterm` | 可 | 可 | 可 | 不適用（batch exitを保証しない） | 不適用 | 可 | 可 | 同一sessionの`pty_read` |
-| `gpt-connector` | 可 | 可 | 可 | 不適用 | 可（ConsultSnapshot） | 不適用 | 可 | 同一slugの`sessions` |
-| `claude-internal` | 不適用 | 不適用 | 不適用 | 不適用 | 不適用 | 不適用 | 可 | なし |
+| `codex-sidecar` | mapped | unknown | mapped | unknown | mapped | unknown | mapped | 同一idempotency keyの`result` |
+| `codex-native` | unknown | unknown | caller-event | not-applicable | caller-event | unknown | caller-event | 確認済み再照会toolなし |
+| `aiterm` | unknown | unknown | caller-event | unknown | caller-event | unknown | unknown | 同一sessionの`pty_read` |
+| `gpt-connector` | mapped | unknown | mapped/caller recovery | not-applicable | caller-event | not-applicable | mapped | 同一slugの`sessions` |
+| `claude-internal` | not-applicable | not-applicable | not-applicable | not-applicable | not-applicable | not-applicable | caller-event | なし |
 
-`ADAPTER_TIMEOUT`はterminal failedへ丸めず、`state="unknown"`とadapter固有のrecovery operationだけを
-残す。既存の`codexSidecarResultRequest`、`aitermTimeoutRecoveryRequest`、
-`gptConnectorTimeoutRecoveryRequest`が同一handleを実際の製品入口へ渡す。`ADAPTER_NON_ZERO_EXIT`、
-`ADAPTER_MALFORMED_REPORT`、`ADAPTER_WORKSPACE_MISSING`、その他の適用されたfailureは`failed`であり、
-成功を主張しない。
+caller timeoutはterminal failedへ丸めず、`state="unknown"`とadapter固有のrecovery operationだけを
+残す。providerがterminal failureとして返した`UPLOAD_TIMEOUT`はfailedのまま保持する。既存の`codexSidecarResultRequest`、`aitermTimeoutRecoveryRequest`、
+`gptConnectorTimeoutRecoveryRequest`が同一handleを実際の製品入口へ渡す。`ADAPTER_NON_ZERO_EXIT`や
+`ADAPTER_RATE_LIMITED`のような架空の共通codeは受理せず、実provider codeがないfamilyは`unknown`のまま
+成功も失敗も主張しない。
+
+## Control Record bridge
+
+`buildWorkerControlObservation`と`buildConsultationControlObservation`はadapter projectionをControl Recordの
+exact observation payloadへ変換する純粋関数である。Workerは`executor_handle`を同じshapeのまま渡し、
+dispatched／completed／failed・cancelledの証拠fieldを状態ごとに一つだけ要求する。sidecar completedでは
+Control result digestとprovider result digestの一致も要求する。Consultationはgpt-connector専用で、
+completedのDecision参照とfailedのterminal evidenceを分離する。どちらもfilesystem、network、host toolを
+実行しない。

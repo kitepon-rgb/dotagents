@@ -1,10 +1,24 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { test } from "node:test";
 
 import * as adapters from "../../lib/orchestrate/executor-adapters.mjs";
 
 const code = (expected) => (error) => {
   assert.ok(error instanceof adapters.ExecutorAdapterError); assert.equal(error.code, expected); return true;
+};
+
+const canonicalJson = (value) => Array.isArray(value) ? `[${value.map(canonicalJson).join(",")}]`
+  : value !== null && typeof value === "object" ? `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`
+    : JSON.stringify(value);
+const routingReceipt = (overrides = {}) => {
+  const receipt = {
+    status: "green", verifier: "verify-codex-agent-routing", agent_path: "/root/routing_smoke", agent_role: "implementer",
+    model: "gpt-5.6-terra", effort: "medium", developer_instructions: "applied", verified_at: "2026-07-14T00:00:00.000Z",
+    verification_ref: "verify-codex-agent-routing implementer /root/routing_smoke", ...overrides,
+  };
+  receipt.verification_digest = createHash("sha256").update(canonicalJson(receipt)).digest("hex");
+  return receipt;
 };
 
 test("default catalogは製品固有のoptional operationだけを公開する", () => {
@@ -48,35 +62,27 @@ test("codex-native requestはhost toolを実行せず、routing smokeとgreen照
     arguments: { agent_type: "implementer", fork_turns: "none", message: "Routing smoke only. Do not perform work. Report your agent path, role recognition, and readiness to wait.", task_name: "routing_smoke" },
   });
   assert.equal(spawn.arguments.message.includes("implement the task"), false);
-  const routing = {
-    status: "green",
-    expected: { agent_path: "/root/routing_smoke", agent_role: "implementer", model: "gpt-5.6-terra", effort: "medium", developer_instructions: "implementation only" },
-    observed: { agent_path: "/root/routing_smoke", agent_role: "implementer", model: "gpt-5.6-terra", effort: "medium", developer_instructions: "implementation only" },
-  };
-  assert.deepEqual(adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "Implement the bounded adapter packet.", routing_verification: routing }).arguments, { target: "/root/routing_smoke", message: "Implement the bounded adapter packet." });
+  const routing = routingReceipt();
+  assert.deepEqual(adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "Implement the bounded adapter packet.", routing_receipt: routing }).arguments, { target: "/root/routing_smoke", message: "Implement the bounded adapter packet." });
   assert.deepEqual(adapters.codexNativeInterruptRequest({ agent_path: "/root/routing_smoke" }).arguments, { target: "/root/routing_smoke" });
-  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "must not dispatch", routing_verification: { ...routing, status: "pending" } }), code("ROUTING_VERIFICATION_REQUIRED"));
-  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "must not dispatch", routing_verification: { ...routing, observed: { ...routing.observed, effort: "high" } } }), code("ROUTING_VERIFICATION_MISMATCH"));
-  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/other", task: "must not dispatch", routing_verification: routing }), code("ROUTING_VERIFICATION_MISMATCH"));
+  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "must not dispatch", routing_receipt: routingReceipt({ status: "pending" }) }), code("ROUTING_VERIFICATION_REQUIRED"));
+  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/routing_smoke", task: "must not dispatch", routing_receipt: { ...routing, effort: "high" } }), code("ROUTING_VERIFICATION_MISMATCH"));
+  assert.throws(() => adapters.codexNativeFollowupRequest({ agent_path: "/root/other", task: "must not dispatch", routing_receipt: routing }), code("ROUTING_VERIFICATION_MISMATCH"));
   assert.throws(() => adapters.codexNativeSpawnRequest({ agent_type: "implementer", task_name: "routing_smoke", message: "task" }), code("INVALID_SCHEMA"));
 });
 
 test("codex-native observationはboundedなagent状態とrouting/report/evidence参照だけを投影する", () => {
-  const routing = {
-    status: "green",
-    expected: { agent_path: "/root/routing_smoke", agent_role: "implementer", model: "gpt-5.6-terra", effort: "medium", developer_instructions: "implementation only" },
-    observed: { agent_path: "/root/routing_smoke", agent_role: "implementer", model: "gpt-5.6-terra", effort: "medium", developer_instructions: "implementation only" },
-  };
-  const projected = adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "completed", routing_verification: routing, report_ref: "reports/agent_001.md", evidence_refs: ["tests/orchestrate/executor-adapters.test.mjs"] });
-  assert.deepEqual(projected, { schema_version: "dotagents.codex-native.observation.v1", agent_path: "/root/routing_smoke", status: "completed", routing_verification: routing, report_ref: "reports/agent_001.md", evidence_refs: ["tests/orchestrate/executor-adapters.test.mjs"] });
-  assert.throws(() => adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "running", routing_verification: null, report_ref: null, evidence_refs: [], raw_prompt: "secret" }), code("INVALID_SCHEMA"));
-  assert.throws(() => adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "running", routing_verification: null, report_ref: null, evidence_refs: ["same", "same"] }), code("INVALID_SCHEMA"));
+  const routing = routingReceipt();
+  const projected = adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "completed", routing_receipt: routing, report_ref: "reports/agent_001.md", evidence_refs: ["tests/orchestrate/executor-adapters.test.mjs"] });
+  assert.deepEqual(projected, { schema_version: "dotagents.codex-native.observation.v1", executor_handle: { agent_path: "/root/routing_smoke" }, status: "completed", routing_receipt: routing, report_ref: "reports/agent_001.md", evidence_refs: ["tests/orchestrate/executor-adapters.test.mjs"] });
+  assert.throws(() => adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "running", routing_receipt: null, report_ref: null, evidence_refs: [], raw_prompt: "secret" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "running", routing_receipt: null, report_ref: null, evidence_refs: ["same", "same"] }), code("INVALID_SCHEMA"));
 });
 
 test("aiterm requestは実tool schemaに従う同一sessionの対話packetだけを純粋に投影する", () => {
   const start = adapters.aitermAgentStartRequest({ agent_kind: "codex", prompt: "Implement the bounded adapter.", workspace_cwd: "/workspace/source", agent_done: true, model: "gpt-5.6-terra", reasoning_effort: "medium", session_name: "aiterm_agent_001" });
   assert.deepEqual(start, { schema_version: "dotagents.aiterm.request.v1", operation_id: "codex_agent", tool_name: "codex_agent", arguments: { prompt: "Implement the bounded adapter.", cwd: "/workspace/source", agent_done: true, model: "gpt-5.6-terra", reasoning_effort: "medium", session_name: "aiterm_agent_001" } });
-  const handle = { session_id: "aiterm_agent_001", agent_kind: "codex", workspace_cwd: "/workspace/source" };
+  const handle = { session_id: "aiterm_agent_001", agent_kind: "codex" };
   assert.deepEqual(adapters.aitermFollowupRequest({ handle, task: "Run focused tests.", timeout: 120 }).arguments, { session_id: "aiterm_agent_001", text: "Run focused tests.", enter: true, wait: "agent_done", timeout: 120, screen: true, mark: false, force: false, rtk: false, raw: false });
   assert.deepEqual(adapters.aitermTimeoutRecoveryRequest({ handle }).arguments, { session_id: "aiterm_agent_001", wait: false, screen: true, full: false, raw: false, rtk: false, agent_transcript: false });
   assert.deepEqual(adapters.aitermKeyRequest({ handle, key: "C-c" }).arguments, { session_id: "aiterm_agent_001", key: "C-c" });
@@ -87,8 +93,8 @@ test("aiterm requestは実tool schemaに従う同一sessionの対話packetだけ
 });
 
 test("aiterm observationはsession相関とboundedな状態・参照だけを残しterminal成功を捏造しない", () => {
-  const handle = { session_id: "aiterm_agent_001", agent_kind: "composer", workspace_cwd: "/workspace/source" };
-  assert.deepEqual(adapters.projectAitermLaunchObservation(handle), { schema_version: "dotagents.aiterm.observation.v1", executor_handle: handle, state: "running", terminal: null });
+  const handle = { session_id: "aiterm_agent_001", agent_kind: "composer" };
+  assert.deepEqual(adapters.projectAitermLaunchObservation({ ...handle, workspace_cwd: "/workspace/source" }), { schema_version: "dotagents.aiterm.observation.v1", executor_handle: handle, workspace_cwd: "/workspace/source", state: "running", terminal: null });
   assert.deepEqual(adapters.projectAitermObservation({ handle, status: "unknown", report_ref: null, evidence_refs: ["docs/aiterm-timeout.md"] }), { schema_version: "dotagents.aiterm.observation.v1", executor_handle: handle, state: "unknown", report_ref: null, evidence_refs: ["docs/aiterm-timeout.md"] });
   assert.throws(() => adapters.projectAitermObservation({ handle, status: "completed", report_ref: null, evidence_refs: [], raw_terminal: "must not persist" }), code("INVALID_SCHEMA"));
   assert.throws(() => adapters.projectAitermObservation({ handle, status: "timeout", report_ref: null, evidence_refs: [] }), code("INVALID_SCHEMA"));
@@ -106,6 +112,8 @@ test("gpt-connectorはConsultation専用のconsult/sessions packetをcaller既�
 
 test("gpt-connector observationはraw answerを保持せず、timeoutをunknownとして同一slugへ回収する", () => {
   const timestamps = { createdAt: "2026-07-14T00:00:00.000Z", updatedAt: "2026-07-14T00:01:00.000Z" };
+  const queued = { slug: "design-review-001", state: "queued", ...timestamps, result: null, error: null };
+  assert.equal(adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: queued }).state, "dispatched");
   const active = { slug: "design-review-001", state: "running", ...timestamps, result: null, error: null };
   assert.deepEqual(adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: active }), { schema_version: "dotagents.gpt-connector.observation.v1", consultation_handle: { slug: "design-review-001" }, state: "running", raw_status: "running", terminal: null });
   const succeeded = { slug: "design-review-001", state: "succeeded", ...timestamps, result: { text: "raw answer is accepted then discarded", status: "finished", endTurn: true, resolvedModel: "gpt-5.6", resolvedEffort: "high", sessionId: "123e4567-e89b-12d3-a456-426614174000", attachments: { count: 1, names: ["private.txt"], mimeTypes: ["text/plain"], readBack: "confirmed", retention: "unknown", cleanup: "deleted" }, archived: true }, error: null };
@@ -129,30 +137,32 @@ test("claude-internalはappendix由来のunknown projectionだけを提供し、
   assert.throws(() => adapters.projectClaudeInternalAppendixObservation({ observed_at: "2026-07-14" }), code("INVALID_SCHEMA"));
 });
 
-test("adapter別failure matrixは適用可否を固定し、timeoutだけをunknown/recoveryへ投影する", () => {
+test("adapter別failure matrixは実provider code・caller event・unknownを区別する", () => {
   const families = ["credential-missing", "rate-limited", "timeout", "non-zero-exit", "malformed-report", "workspace-missing", "unsupported-capability"];
-  const supported = {
-    "codex-sidecar": new Set(families), "codex-native": new Set(["timeout", "unsupported-capability"]),
-    aiterm: new Set(["credential-missing", "rate-limited", "timeout", "workspace-missing", "unsupported-capability"]),
-    "gpt-connector": new Set(["credential-missing", "rate-limited", "timeout", "malformed-report", "unsupported-capability"]),
-    "claude-internal": new Set(["unsupported-capability"]),
-  };
-  const codeFor = { "credential-missing": "ADAPTER_CREDENTIAL_MISSING", "rate-limited": "ADAPTER_RATE_LIMITED", timeout: "ADAPTER_TIMEOUT", "non-zero-exit": "ADAPTER_NON_ZERO_EXIT", "malformed-report": "ADAPTER_MALFORMED_REPORT", "workspace-missing": "ADAPTER_WORKSPACE_MISSING", "unsupported-capability": "ADAPTER_UNSUPPORTED_CAPABILITY" };
-  for (const [adapterId, applicable] of Object.entries(supported)) for (const family of families) {
+  for (const adapterId of ["codex-sidecar", "codex-native", "aiterm", "gpt-connector", "claude-internal"]) for (const family of families) {
     const support = adapters.lookupAdapterFailureSupport({ adapter_id: adapterId, failure_family: family });
-    assert.equal(support.applicable, applicable.has(family), `${adapterId}/${family}`);
-    const failureCode = codeFor[family];
-    if (!applicable.has(family)) assert.throws(() => adapters.projectAdapterFailure({ adapter_id: adapterId, failure_code: failureCode }), code("FAILURE_UNSUPPORTED"));
-    else {
-      const projected = adapters.projectAdapterFailure({ adapter_id: adapterId, failure_code: failureCode });
-      assert.equal(projected.state, family === "timeout" ? "unknown" : "failed");
-      assert.equal(projected.recovery_operation, family === "timeout" ? support.timeout_recovery_operation : null);
-    }
+    assert.ok(["mapped", "caller-event", "unknown", "not-applicable"].includes(support.status), `${adapterId}/${family}`);
+    assert.equal(typeof support.evidence_basis, "string");
   }
+  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", failure_family: "rate-limited" }).status, "unknown");
+  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "codex-sidecar", failure_family: "non-zero-exit" }).status, "unknown");
+  assert.deepEqual(adapters.projectAdapterFailure({ adapter_id: "gpt-connector", provider_code: "AUTH_REQUIRED" }), {
+    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "gpt-connector", provider_code: "AUTH_REQUIRED",
+    failure_family: "credential-missing", state: "failed", recovery_operation: null,
+  });
+  assert.deepEqual(adapters.projectAdapterFailure({ adapter_id: "codex-sidecar", provider_code: "RUN_READY_TIMEOUT" }), {
+    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "codex-sidecar", provider_code: "RUN_READY_TIMEOUT",
+    failure_family: "timeout", state: "unknown", recovery_operation: "result",
+  });
+  assert.deepEqual(adapters.projectAdapterCallerTimeout({ adapter_id: "aiterm" }), {
+    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "aiterm", provider_code: null,
+    failure_family: "timeout", state: "unknown", recovery_operation: "pty_read",
+  });
   assert.throws(() => adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", failure_family: "nonzero" }), code("FAILURE_FAMILY_UNKNOWN"));
-  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", failure_code: "RATE_LIMITED" }), code("FAILURE_CODE_UNKNOWN"));
-  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", failure_code: "ADAPTER_RATE_LIMITED", raw_message: "secret" }), code("INVALID_SCHEMA"));
-  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", failure_code: "A".repeat(129) }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", provider_code: "RATE_LIMITED" }), code("FAILURE_UNMAPPED"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "aiterm", provider_code: "AUTH_REQUIRED" }), code("FAILURE_UNMAPPED"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", provider_code: "AUTH_REQUIRED", raw_message: "secret" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectAdapterCallerTimeout({ adapter_id: "claude-internal" }), code("FAILURE_UNMAPPED"));
 });
 
 test("codex-sidecar requestは実tool schemaの固定値とcaller handleを純粋に投影する", () => {
@@ -175,9 +185,43 @@ test("codex-sidecar observationはunknownと非成功terminalをcompletedへ昇�
   const result = (status, overrides = {}) => ({ status, workflow: "work", summary: "summary", confidence: { level: "high" }, recommendedNextAction: "review", changedFiles: ["lib/x.mjs"], worktreePath: "/workspace/worktree", worktreePreserved: true, ...overrides });
   const completed = adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_terminal", runId, state: "completed", result: result("ok"), cleanup: "not-requested" } });
   assert.equal(completed.state, "completed"); assert.match(completed.terminal.result_digest, /^[a-f0-9]{64}$/);
+  assert.deepEqual(completed.workspace_binding_candidate, { schema_version: "dotagents.codex-sidecar.workspace-binding.v1", executor_handle: handle, provider_run_id: runId, worktree_path: "/workspace/worktree", observed_state: "completed", result_digest: completed.terminal.result_digest });
   assert.equal(adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_interrupted", runId, state: "orphaned", error: { code: "RUN_ORPHANED", message: "lost" }, processGroup: "unknown", salvageAllowed: false, terminal: false } }).state, "unknown");
   for (const status of ["partial", "failed", "refused", "dry-run"]) assert.equal(adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_terminal", runId, state: "completed", result: result(status), cleanup: "not-requested" } }).state, "failed");
   assert.equal(adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_pending", runId, state: "running", phase: "worker", pollAfterMs: 1000 } }).state, "running");
   assert.throws(() => adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_terminal", runId, state: "completed", result: result("ok", { worktreePreserved: false }), cleanup: "completed" } }), code("INVALID_SCHEMA"));
   assert.throws(() => adapters.projectCodexSidecarObservation({ handle, provider: { kind: "run_terminal", runId, state: "completed", result: result("ok", { changedFiles: ["../escape"] }), cleanup: "not-requested" } }), code("INVALID_SCHEMA"));
+});
+
+test("codex-sidecar cancel ackとrecovery inspectionは実unionを検証し、ackだけでcancelledにしない", () => {
+  const handle = { idempotency_key: "A".repeat(22) }; const runId = "b".repeat(64);
+  const acknowledgement = adapters.projectCodexSidecarCancelObservation({ handle, provider: {
+    kind: "run_cancel_ack", runId, accepted: true, terminal: false, state: "cancellation_requested", mode: "cooperative", pollAfterMs: 1000,
+  } });
+  assert.equal(acknowledgement.state, "unknown"); assert.equal(acknowledgement.terminal, null);
+  assert.equal(acknowledgement.cancel_acknowledgement.terminal_reported, false);
+  const status = { kind: "run_interrupted", runId, state: "orphaned", error: { code: "RUN_ORPHANED", message: "lost" }, processGroup: "unknown", salvageAllowed: false, terminal: false };
+  const recovered = adapters.projectCodexSidecarRecoveryObservation({ handle, provider: {
+    kind: "work_recovery_inspection", runId, runDirectory: `/tmp/codex-sidecar/${runId}`, status, quarantinePublished: false, outcome: "inspection",
+  } });
+  assert.equal(recovered.state, "unknown"); assert.deepEqual(recovered.recovery, { outcome: "inspection", quarantine_published: false });
+  assert.equal(Object.hasOwn(recovered, "runDirectory"), false);
+  assert.throws(() => adapters.projectCodexSidecarRecoveryObservation({ handle, provider: {
+    kind: "work_recovery_inspection", runId, runDirectory: `/tmp/codex-sidecar/${runId}`, status: { ...status, runId: "c".repeat(64) }, quarantinePublished: false, outcome: "inspection",
+  } }), code("PROJECTION_MISMATCH"));
+});
+
+test("adapter projectionはControl RecordのWorker/Consultation observationへexact変換できる", () => {
+  const dispatchEvidence = [{ type: "executor-receipt", ref: "native-routing-receipt", digest: "d".repeat(64), observed_at: "2026-07-14T00:00:00.000Z" }];
+  const native = adapters.projectCodexNativeObservation({ agent_path: "/root/routing_smoke", status: "created", routing_receipt: routingReceipt(), report_ref: null, evidence_refs: [] });
+  assert.deepEqual(adapters.buildWorkerControlObservation({ projection: native, observed_version: "gpt-5.6-terra", observed_at: "2026-07-14T00:00:00.000Z", dispatch_evidence: dispatchEvidence }), {
+    state: "dispatched", source: "codex-native", observed_version: "gpt-5.6-terra", observed_at: "2026-07-14T00:00:00.000Z", raw_state: "created",
+    executor_handle: { agent_path: "/root/routing_smoke" }, dispatch_evidence: dispatchEvidence,
+  });
+  const timestamps = { createdAt: "2026-07-14T00:00:00.000Z", updatedAt: "2026-07-14T00:01:00.000Z" };
+  const consultation = adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { slug: "design-review-001", state: "queued", ...timestamps, result: null, error: null } });
+  assert.deepEqual(adapters.buildConsultationControlObservation({ projection: consultation, observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z" }), {
+    state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "queued",
+  });
+  assert.throws(() => adapters.buildWorkerControlObservation({ projection: native, observed_version: "gpt-5.6-terra", observed_at: "2026-07-14T00:00:00.000Z" }), code("EVIDENCE_REQUIRED"));
 });

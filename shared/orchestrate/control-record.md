@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v17",
+  "schema_version": "dotagents.orchestration-control.v18",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -121,7 +121,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v17で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v18で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -129,7 +129,8 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   Executor Registry observation、v13はplacement reservationとsubject digest、v14はresume用の
   Control git directory generation、初期workspace digest、Worker記録時fingerprint、v15はTask取消と
   Worker cancel要求の分離、v16はparent-declared campaign gate、v17はsidecar durable workの
-  遅延execution-worktree bindingを追加した。旧manifestを
+  遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent pathを
+  追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -236,7 +237,7 @@ Registryは各製品の正本や自動discovery engineではなく、親が確�
     "adapter_id": "codex-native",
     "contract_version": "v1",
     "instance_id": "current-parent",
-    "handle_schema_id": "codex-native.agent-id.v1"
+    "handle_schema_id": "codex-native.agent-path.v1"
   },
   "workflow_id": "native-subagent",
   "enabled": {
@@ -645,6 +646,7 @@ Task snapshotで入力を確定するため一律拒否しない。
     "base_sha": "0123456789abcdef0123456789abcdef01234567",
     "preserve_worktree": true,
     "execution_workspace": null,
+    "provider_binding": null,
     "bound_from_revision": null,
     "binding_evidence": [],
     "bound_by": null,
@@ -656,10 +658,12 @@ Task snapshotで入力を確定するため一律拒否しない。
 遅延Runも`admitted`からglobal write reservationを保持するが、実行worktreeがまだ存在しないため
 source fingerprintをbaselineへ偽装せず`baseline_workspace_fingerprint=null`を維持する。
 親がterminal sidecar resultの`worktreePath`を回収した後、record-only
-`worker-workspace-bind`で実pathとevidenceを記録する。bindはactive Runだけに一度許可し、symlink、
+`worker-workspace-bind`で実path、`idempotency_key / provider_run_id / worktree_path / result_digest`を
+相関したprovider binding、evidenceを記録する。bindはactive Runだけに一度許可し、symlink、
 source自身、別common dir、別HEAD、非worktreeを拒否する。実worktreeはsourceと同じcommon dir、
 異なるroot、`HEAD=base_sha`、`preserve_worktree=true`でなければならない。ControlやCLIはworktreeを
-生成・削除せず、sidecar commandも実行しない。
+生成・削除せず、sidecar commandも実行しない。provider bindingのhandle、path、result digestと
+Worker Run／Reportが一致しなければ`REPORT_CORRELATION_MISMATCH`で拒否する。
 
 - `assignment_id`は一つの論理割当を表す。同じTaskへ独立fan-outする時は別assignmentを使う。
   retryは同じassignmentを使う。先行Runが`failed | cancelled`、または
@@ -670,7 +674,7 @@ source自身、別common dir、別HEAD、非worktreeを拒否する。実worktre
   durable `work`は異なるworkflow／handle contractであり、adapter名だけからwrite能力を推測しない。
 - 現在の既知handle schemaは次のとおり。既知の組合せはexact shapeで検証する。
   - `parent.correlation.v1`: `{ "correlation_id": "..." }`
-  - `codex-native.agent-id.v1`: `{ "agent_id": "..." }`または予約時の`null`
+  - `codex-native.agent-path.v1`: `{ "agent_path": "/root/<task>" }`または予約時の`null`
   - `codex-sidecar.idempotency-key.v1`: `{ "idempotency_key": "..." }`。keyは製品契約どおり
     22〜128文字のbase64urlまたはUUID。
   - `codex-sidecar.synchronous.v1`: durable handleを持たず`null`
@@ -1065,7 +1069,7 @@ releaseCampaign({ cwd, control_id, actor_id, expected_revision, campaign_id,
 delegationPacketForWorker({ cwd, control_id, worker_run_id })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
 bindWorkerWorkspace({ cwd, control_id, actor_id, expected_revision, worker_run_id,
-                      workspace_cwd, binding_evidence })
+                      workspace_cwd, provider_binding, binding_evidence })
 requestWorkerCancel({ cwd, control_id, actor_id, expected_revision, worker_run_id, decision })
 observeWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id, observation })
 importWorkerReport({ cwd, control_id, actor_id, expected_revision, worker_run_id, report })

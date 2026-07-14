@@ -184,7 +184,7 @@ export function makeRegistryObservation(overrides = {}) {
     registry_observation_id: "registry-observation-001",
     executor: {
       adapter_id: "codex-native", contract_version: "v1", instance_id: "native-subagent",
-      handle_schema_id: "codex-native.agent-id.v1",
+      handle_schema_id: "codex-native.agent-path.v1",
     },
     workflow_id: "native-subagent",
     enabled: { value: "true", evidence: evidence("docs/registry-enabled.md") },
@@ -225,7 +225,7 @@ export function makePlacementCandidate(overrides = {}) {
       },
       input_digest: "c".repeat(64), approach_family_ref: null, shared_finding_refs: [],
     },
-    executor_handle: { agent_id: "placement-agent-001" },
+    executor_handle: { agent_path: "/root/placement_agent_001" },
     ...overrides,
   };
 }
