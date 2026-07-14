@@ -890,9 +890,10 @@ campaign_id, campaign_type, members, gated_task_ids, audit_required,
 declared_from_revision, declared_by, declared_at, release
 ```
 
-- `campaign_type`は`discovery | refutation | design | implementation | final-audit`。`members`は同じ
-  Controlに既存の`worker-run`または`consultation` IDを1件以上、`gated_task_ids`は同じControlの
-  Task IDを1件以上持つ。重複・未知参照と、git common dir内のCampaign ID重複を拒否する。
+- `campaign_type`は`discovery | refutation | design | implementation | final-audit`だけの固定列挙であり、
+  任意名や`generic`のような後方互換用の種別は受理しない。`members`は同じControlに既存の
+  `worker-run`または`consultation` IDを1件以上、`gated_task_ids`は同じControlのTask IDを1件以上持つ。
+  重複・未知参照と、git common dir内のCampaign ID重複を拒否する。
 - `campaign-status`は各memberの現在state、`all_terminal`、audit要否、releaseをmanifestから導出する
   read-only projectionである。Workerは`completed | failed | cancelled`、Consultationは
   `completed | failed`だけをterminalとし、別の集約stateを保存しない。

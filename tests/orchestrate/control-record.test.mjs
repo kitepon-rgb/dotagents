@@ -1737,6 +1737,32 @@ test("control finalizationは全campaignの明示的な親releaseを必須にす
   assert.equal(finalized.manifest.control_finalization.finalized_by, "parent");
 });
 
+test("campaign_typeは5つの親宣言phaseだけを受理し、改竄・未知種別・未release gateを拒否する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "campaign-phase-types" });
+  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "campaign-phase-member", effect: "read", write_scope: [] }) });
+  const gatedTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: memberTask.revision, task: makeTask({ task_id: "campaign-phase-gated", effect: "read", write_scope: [] }) });
+  const member = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: gatedTask.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-phase-member-worker", task_id: "campaign-phase-member", assignment_id: "campaign-phase-member-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-phase-member-assignment" } }) });
+  const terminal = await api.observeWorker({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: member.revision, worker_run_id: "campaign-phase-member-worker", observation: workerObservation("cancelled") });
+  const phaseTypes = ["discovery", "refutation", "design", "implementation", "final-audit"];
+  let revision = terminal.revision;
+  for (const campaignType of phaseTypes) {
+    const recorded = await api.campaignRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: revision, campaign: {
+      campaign_id: `campaign-phase-${campaignType}`, campaign_type: campaignType, members: [{ kind: "worker-run", id: "campaign-phase-member-worker" }],
+      gated_task_ids: ["campaign-phase-gated"], audit_required: campaignType === "final-audit",
+    } });
+    const status = await api.campaignStatus({ cwd: repo.root, control_id: "campaign-phase-types", campaign_id: `campaign-phase-${campaignType}` });
+    assert.equal(status.campaign_type, campaignType); assert.equal(status.all_terminal, true); assert.equal(status.released, false);
+    revision = recorded.revision;
+  }
+  await assert.rejects(api.campaignRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: revision, campaign: {
+    campaign_id: "campaign-phase-unknown", campaign_type: "generic", members: [{ kind: "worker-run", id: "campaign-phase-member-worker" }], gated_task_ids: ["campaign-phase-gated"], audit_required: false,
+  } }), code("INVALID_SCHEMA"));
+  const gatedWorker = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-phase-gated-worker", task_id: "campaign-phase-gated", assignment_id: "campaign-phase-gated-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-phase-gated-assignment" } }) });
+  await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: gatedWorker.revision, worker_run_id: "campaign-phase-gated-worker" }), code("CAMPAIGN_NOT_RELEASED"));
+  const tampered = structuredClone(gatedWorker.manifest); tampered.campaigns[0].campaign_type = "generic";
+  assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+});
+
 test("Delegation Packetとstrict Worker Report importは相関・scope・親accept分離を強制する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "packet-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "packet-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });

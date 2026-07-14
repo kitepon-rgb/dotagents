@@ -1,6 +1,6 @@
 # Elastic Multi-Agent Orchestrator 完成計画
 
-Status: v1 completion target confirmed by owner (2026-07-14); Phase 3 in progress
+Status: v1 completion target confirmed by owner (2026-07-14); Phase 4 in progress
 
 ## 目的
 
@@ -200,7 +200,7 @@ provider cancel commandは実行していない。
 
 ### Phase 4: Campaign／Barrier
 
-- [ ] Discovery、Refutation、Design、Implementation、Final Audit campaignを親宣言gateとして表現する。
+- [x] Discovery、Refutation、Design、Implementation、Final Audit campaignを親宣言gateとして表現する。
 - [ ] `baseline → discovery → design → safety_net → implementation → behavior_change? → integration →
   knowledge_return → complete`のphase gateを実装する。baseline evidence、design Decision、
   高リスク時のsafety-net evidence、behavior-preserving／behavior-change laneの整合を形式検査する。
