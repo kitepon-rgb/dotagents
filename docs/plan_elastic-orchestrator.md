@@ -151,6 +151,10 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - [x] `orchestrate` skillへ使用条件、小タスク除外、init→record→place→observe→resume→finalize→archiveの
   最小lifecycleを追加する。
 
+Phase gate（2026-07-14）: 2視点のFind、独立refuterのexistence/value反証とCritic、親裁定を1回実施した。
+CLI列挙の`control-finalize`欠落だけをP3の正典同期漏れとして採用・修正し、P0/P1と受入阻害はなし。
+親の通常gateと独立再実行はいずれもControl Record 59件greenで、実Executor接続はPhase 2へ送る。
+
 ### Phase 2: Executor adapters
 
 - [ ] 共通coreへ一枚岩lifecycleを強制せず、能力別optional interfaceを定義する。

@@ -974,7 +974,7 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 ```text
 init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release,
 admit-worker, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
-accept, reject, task-finalize-record, recover-lock, archive
+accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
 
 - mutation commandは`actor_id`と`expected_revision`を必須とする（init／recover-lockを除く）。
