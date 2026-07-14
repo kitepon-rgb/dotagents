@@ -6,7 +6,7 @@ import { join } from "node:path";
 import {
   addLinkedWorktree, cleanupDir, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
   createNonGitDir, createOwnerFixtures, evidence, installSentinelBin, loadControl, makeConsultation, makeTask,
-  makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
+  makeBudget, makeBudgetReservation, makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
   taskAdmissionDigest, terminalWorkerObservation, completedWorkerObservation, workerObservation, writeJson,
 } from "./helpers.mjs";
 
@@ -31,7 +31,7 @@ async function initialized(t, overrides = {}) {
   const base = await makeTempDir();
   t.after(() => cleanupDir(base));
   const repo = await createGitRepo(base);
-  const result = await api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], ...overrides });
+  const result = await api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget(), ...overrides });
   assert.equal(result.revision, 0);
   assert.equal(result.manifest.record_revision, 0);
   assert.equal(result.manifest.control_id, overrides.control_id ?? CONTROL);
@@ -41,8 +41,8 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v3", record_revision: 0, control_id: CONTROL, status: "active",
-    declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
+    schema_version: "dotagents.orchestration-control.v4", record_revision: 0, control_id: CONTROL, status: "active",
+    declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" }, budget: makeBudget(),
     document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [],
     transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
@@ -57,9 +57,9 @@ test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを�
 test("すべてのI/O APIはcwdを必須にし、non-gitを拒否してbareをread-onlyとして初期化する", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const nonGit = await createNonGitDir(base); const source = await createGitRepo(base, "bare-source"); const bare = await createBareRepo(base, source);
-  await assert.rejects(api.init({ control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"] }), code("INVALID_INPUT"));
-  await assert.rejects(api.init({ cwd: nonGit, control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"] }), code("NOT_GIT_REPOSITORY"));
-  const bareControl = await api.init({ cwd: bare.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
+  await assert.rejects(api.init({ control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"], budget: makeBudget() }), code("INVALID_INPUT"));
+  await assert.rejects(api.init({ cwd: nonGit, control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"], budget: makeBudget() }), code("NOT_GIT_REPOSITORY"));
+  const bareControl = await api.init({ cwd: bare.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   assert.equal(bareControl.manifest.declaration.project_root_realpath, null);
   const read = await api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareControl.revision, task: makeTask({ task_id: "bare-read", effect: "read", write_scope: [] }) });
   assert.equal(read.manifest.tasks[0].effect, "read");
@@ -75,7 +75,7 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
   assert.equal(status.transition_receipts.length, 1);
   assert.deepEqual(status.transition_receipts[0].subject, { kind: "control", id: CONTROL });
   assert.match(status.transition_receipts[0].receipt_digest, /^[0-9a-f]{64}$/);
-  await assert.rejects(api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"] }), code("CONTROL_EXISTS"));
+  await assert.rejects(api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTROL_EXISTS"));
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: 1, task: makeTask() }), code("REVISION_CONFLICT"));
 });
 
@@ -207,6 +207,58 @@ test("workflow capability snapshotはTask要件とsidecarのread/write境界をf
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: recorded.revision, worker_run: missingEvidence }), code("INVALID_SCHEMA"));
 });
 
+test("Budget Envelopeは件数・外部Run・wall time・costとunknownを予約時に検査する", async (t) => {
+  const { repo, result } = await initialized(t, {
+    control_id: "budget-control",
+    budget: makeBudget({ max_worker_runs: 3, max_consultations: 1, max_external_runs: 1, max_wall_time_seconds: 1000, max_cost_microusd: 1000 }),
+  });
+  assert.deepEqual(result.manifest.budget, makeBudget({ max_worker_runs: 3, max_consultations: 1, max_external_runs: 1, max_wall_time_seconds: 1000, max_cost_microusd: 1000 }));
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "budget-task", effect: "read", write_scope: [] }) });
+  const external = await api.workerRunRecord({
+    cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ task_id: "budget-task", write_mode: "none", workspace_cwd: repo.root, budget_reservation: makeBudgetReservation({ wall_time_seconds: 400, cost_microusd: 400 }) }),
+  });
+
+  const secondExternal = makeWorkerRun({
+    worker_run_id: "external-two", assignment_id: "external-two", task_id: "budget-task", write_mode: "none", workspace_cwd: repo.root,
+    budget_reservation: makeBudgetReservation({ wall_time_seconds: 100, cost_microusd: 100 }),
+  });
+  secondExternal.lineage.root_assignment_id = "external-two";
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: external.revision, worker_run: secondExternal }), code("BUDGET_EXCEEDED"));
+
+  const parentRun = makeWorkerRun({
+    worker_run_id: "parent-run", assignment_id: "parent-run", task_id: "budget-task", write_mode: "none", workspace_cwd: repo.root,
+    executor: { adapter_id: "parent", contract_version: "v1", instance_id: "parent-session", handle_schema_id: "parent.correlation.v1" },
+    workflow_id: "direct", executor_handle: { correlation_id: "parent-run" },
+    budget_reservation: makeBudgetReservation({ wall_time_seconds: 500, cost_microusd: 500 }),
+  });
+  parentRun.lineage.root_assignment_id = "parent-run";
+  const parentRecorded = await api.workerRunRecord({ cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: external.revision, worker_run: parentRun });
+
+  const consultation = makeConsultation({ task_id: "budget-task", budget_reservation: makeBudgetReservation({ wall_time_seconds: 100, cost_microusd: 100 }) });
+  const consulted = await api.consultationRecord({ cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: parentRecorded.revision, consultation });
+  const secondConsultation = makeConsultation({ consultation_id: "consultation-two", assignment_id: "consultation-two", task_id: "budget-task", budget_reservation: makeBudgetReservation({ wall_time_seconds: 1, cost_microusd: 1 }) });
+  await assert.rejects(api.consultationRecord({ cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: consulted.revision, consultation: secondConsultation }), code("BUDGET_EXCEEDED"));
+
+  const unknownControl = await api.init({
+    cwd: repo.root, control_id: "budget-unknown-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent",
+    document_refs: ["docs/control-record-plan.md"], budget: makeBudget({ max_wall_time_seconds: 1000, max_cost_microusd: 1000 }),
+  });
+  const unknownTask = await api.taskRecord({ cwd: repo.root, control_id: "budget-unknown-control", actor_id: "parent", expected_revision: unknownControl.revision, task: makeTask({ task_id: "budget-unknown-task", effect: "read", write_scope: [] }) });
+  const unknownRun = makeWorkerRun({ worker_run_id: "budget-unknown-run", assignment_id: "budget-unknown-assignment", task_id: "budget-unknown-task", write_mode: "none", workspace_cwd: repo.root, budget_reservation: makeBudgetReservation({ wall_time_seconds: null }) });
+  unknownRun.lineage.root_assignment_id = "budget-unknown-assignment";
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "budget-unknown-control", actor_id: "parent", expected_revision: unknownTask.revision, worker_run: unknownRun }), code("BUDGET_UNKNOWN"));
+
+  const unknownLimitControl = await api.init({
+    cwd: repo.root, control_id: "budget-unknown-limit-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent",
+    document_refs: ["docs/control-record-plan.md"], budget: makeBudget({ max_cost_microusd: null }),
+  });
+  const unknownLimitTask = await api.taskRecord({ cwd: repo.root, control_id: "budget-unknown-limit-control", actor_id: "parent", expected_revision: unknownLimitControl.revision, task: makeTask({ task_id: "budget-unknown-limit-task", effect: "read", write_scope: [] }) });
+  const knownReservation = makeWorkerRun({ worker_run_id: "budget-known-run", assignment_id: "budget-known-assignment", task_id: "budget-unknown-limit-task", write_mode: "none", workspace_cwd: repo.root });
+  knownReservation.lineage.root_assignment_id = "budget-known-assignment";
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "budget-unknown-limit-control", actor_id: "parent", expected_revision: unknownLimitTask.revision, worker_run: knownReservation }), code("BUDGET_UNKNOWN"));
+});
+
 test("Worker state遷移・evidence・retry reservationをrevision連鎖で保存する", async (t) => {
   const { repo, result } = await initialized(t);
   const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, task: makeTask() });
@@ -327,8 +379,8 @@ test("manifest truth tableとtyped evidenceは欠損・矛盾・黙殺をfail-cl
 test("linked worktree共通dirでglobal lockとwrite競合を直列化し、non-overlapを許可する", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const main = await createGitRepo(base); const linked = await addLinkedWorktree(main);
-  const one = await api.init({ cwd: main.root, control_id: "main-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
-  const two = await api.init({ cwd: linked.root, control_id: "linked-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
+  const one = await api.init({ cwd: main.root, control_id: "main-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const two = await api.init({ cwd: linked.root, control_id: "linked-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   assert.equal(one.manifest.declaration.common_dir_realpath, two.manifest.declaration.common_dir_realpath);
   const global = await api.taskRecord({ cwd: main.root, control_id: "main-control", actor_id: "parent", expected_revision: one.revision, task: makeTask({ task_id: "global-unique" }) });
   await assert.rejects(api.taskRecord({ cwd: linked.root, control_id: "linked-control", actor_id: "parent", expected_revision: two.revision, task: makeTask({ task_id: "global-unique" }) }), code("DUPLICATE_ID"));
@@ -363,8 +415,8 @@ test("同一worktreeはscopeが非交差でも予約済みwrite Runを一件だ�
 test("linked worktreeの同一scopeは同一alternative_groupのisolated-alternativeだけ両方予約できる", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const main = await createGitRepo(base); const linked = await addLinkedWorktree(main, "alternative-linked");
-  const left = await api.init({ cwd: main.root, control_id: "alternative-left", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
-  const right = await api.init({ cwd: linked.root, control_id: "alternative-right", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
+  const left = await api.init({ cwd: main.root, control_id: "alternative-left", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const right = await api.init({ cwd: linked.root, control_id: "alternative-right", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const leftTask = await api.taskRecord({ cwd: main.root, control_id: "alternative-left", actor_id: "parent", expected_revision: left.revision, task: makeTask({ task_id: "alternative-task-left", alternative_group: "choice-a" }) });
   const rightTask = await api.taskRecord({ cwd: linked.root, control_id: "alternative-right", actor_id: "parent", expected_revision: right.revision, task: makeTask({ task_id: "alternative-task-right", alternative_group: "choice-a" }) });
   const leftRun = await api.workerRunRecord({ cwd: main.root, control_id: "alternative-left", actor_id: "parent", expected_revision: leftTask.revision, worker_run: makeWorkerRun({ worker_run_id: "alternative-run-left", task_id: "alternative-task-left", assignment_id: "alternative-assignment-left", workspace_cwd: main.root, write_mode: "isolated-alternative" }) });
@@ -378,8 +430,8 @@ test("linked worktreeの同一scopeは同一alternative_groupのisolated-alterna
 test("別linked worktreeでalternative_group不一致は同一scopeを予約できない", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const main = await createGitRepo(base); const linked = await addLinkedWorktree(main, "negative-alternative-linked");
-  const left = await api.init({ cwd: main.root, control_id: "negative-left", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
-  const right = await api.init({ cwd: linked.root, control_id: "negative-right", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
+  const left = await api.init({ cwd: main.root, control_id: "negative-left", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const right = await api.init({ cwd: linked.root, control_id: "negative-right", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const leftTask = await api.taskRecord({ cwd: main.root, control_id: "negative-left", actor_id: "parent", expected_revision: left.revision, task: makeTask({ task_id: "negative-left-task", alternative_group: "choice-a" }) });
   const rightTask = await api.taskRecord({ cwd: linked.root, control_id: "negative-right", actor_id: "parent", expected_revision: right.revision, task: makeTask({ task_id: "negative-right-task", alternative_group: "choice-b" }) });
   const leftRun = await api.workerRunRecord({ cwd: main.root, control_id: "negative-left", actor_id: "parent", expected_revision: leftTask.revision, worker_run: makeWorkerRun({ worker_run_id: "negative-left-run", task_id: "negative-left-task", assignment_id: "negative-left-assignment", workspace_cwd: main.root, write_mode: "isolated-alternative" }) });
@@ -392,7 +444,7 @@ test("別linked worktreeでalternative_group不一致は同一scopeを予約で�
 test("linked worktreeをremove/re-addした実identity driftはadmission時に拒否する", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const main = await createGitRepo(base); const linked = await addLinkedWorktree(main, "identity-linked");
-  const init = await api.init({ cwd: main.root, control_id: "identity-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
+  const init = await api.init({ cwd: main.root, control_id: "identity-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const task = await api.taskRecord({ cwd: main.root, control_id: "identity-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "identity-task" }) });
   const run = await api.workerRunRecord({ cwd: main.root, control_id: "identity-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "identity-task", workspace_cwd: linked.root }) });
   const recordedFileId = run.manifest.worker_runs[0].workspace.git_dir_file_id;
@@ -535,13 +587,13 @@ test("accept/reject/task finalization/archiveは状態・fingerprint・atomic ma
 test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLIはstrict input JSONだけを受理する", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
-  const init = await api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
+  const init = await api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const input = join(base, "status.json"); await writeJson(input, { cwd: repo.root, control_id: CONTROL });
   const protectedEnv = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` };
   const ok = spawnOrchestrate(["status", "--input", input], { env: protectedEnv });
   assert.equal(ok.status, 0); assert.deepEqual(JSON.parse(ok.stdout), { ok: true, command: "status", result: await api.status({ cwd: repo.root, control_id: CONTROL }) });
   const cliControl = "cli-record-only";
-  const cliInitInput = join(base, "cli-init.json"); await writeJson(cliInitInput, { cwd: repo.root, control_id: cliControl, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"] });
+  const cliInitInput = join(base, "cli-init.json"); await writeJson(cliInitInput, { cwd: repo.root, control_id: cliControl, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const cliInit = spawnOrchestrate(["init", "--input", cliInitInput], { env: protectedEnv });
   assert.equal(cliInit.status, 0); const cliInitResult = JSON.parse(cliInit.stdout).result;
   const cliTaskInput = join(base, "cli-task.json"); await writeJson(cliTaskInput, { cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliInitResult.revision, task: makeTask({ task_id: "cli-task" }) });

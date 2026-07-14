@@ -103,7 +103,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   envelopeへ移し、未知adapterのdispatchはfail closed、read-only status/exportは可能にする。
 - [x] workflow単位のcapabilityを表現し、codex-sidecarのread-only同期workflowとdurable writerを
   同一能力へ丸めない。
-- [ ] 最小Budget Envelope（Run／Consultation／外部Run／wall time／costの上限とunknown）を持つ。
+- [x] 最小Budget Envelope（Run／Consultation／外部Run／wall time／costの上限とunknown）を持つ。
   自動価格最適化は行わない。
 - [ ] Control-level finalizationにobjective、受入matrix、最終監査、回帰、knowledge returnの参照を
   必須化し、個別Task finalizationだけでarchiveできないようにする。

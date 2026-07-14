@@ -48,7 +48,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v3",
+  "schema_version": "dotagents.orchestration-control.v4",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -61,6 +61,13 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
     "initial_dirty": false,
     "created_at": "2026-07-14T00:00:00.000Z",
     "created_by": "parent-session-id"
+  },
+  "budget": {
+    "max_worker_runs": 32,
+    "max_consultations": 16,
+    "max_external_runs": 24,
+    "max_wall_time_seconds": 86400,
+    "max_cost_microusd": 100000000
   },
   "document_refs": ["docs/plan_elastic-orchestrator.md"],
   "tasks": [],
@@ -88,9 +95,10 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v3で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
-  versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshotを追加した。
-  旧manifestを黙って書き換えず、明示migrationが実装されるまでは`INVALID_SCHEMA`で停止する。
+- `schema_version`は現在v4で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+  versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
+  Envelopeを追加した。旧manifestを黙って書き換えず、明示migrationが実装されるまでは
+  `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
   `expected_revision`と現在値の一致を必須とする。
 - `status`は`active | archived`。archived manifestは更新不可。
@@ -251,7 +259,7 @@ Worker Runは一回のworker割当である。入力schemaはExecutorごとの�
 
 ```text
 worker_run_id, task_id, assignment_id, executor, workflow_id, role_ref,
-workflow_capabilities,
+workflow_capabilities, budget_reservation,
 workspace_cwd, write_mode, execution_verification,
 lineage,
 state, executor_handle, executor_observation, admission,
@@ -315,6 +323,24 @@ Workerのcommon dirはControlのcommon dirと一致しなければならない�
 - `codex-sidecar`の同期read-only workflow（`auditor / explore / generate / opinion / review /
   risk-check`）は`workspace.write=false`かつ`readonly.enforceable=true`を必須とする。durable `work`は
   `workspace.write=true`かつ`workspace.isolated=true`を必須とし、adapter名だけから能力を合成しない。
+- `budget_reservation`は`wall_time_seconds / cost_microusd`のexact object。各値は非負整数
+  （wall timeの既知値は1以上）または`null=unknown`であり、actual usageや請求額を捏造しない。
+
+## Budget Envelope
+
+Controlの`budget`は`max_worker_runs / max_consultations / max_external_runs /
+max_wall_time_seconds / max_cost_microusd`だけを持つ。件数上限は既知の非負整数を必須とする。
+wall timeとcost上限は非負整数または`null=unknown`である。costは浮動小数を避けるため1 USDの
+100万分の1を1 microusdとして保存する。
+
+- Worker件数はparent／native／externalを含む全Worker Run、Consultation件数は別に数える。
+  external Runは`parent`と`codex-native`以外のWorkerであり、`gpt-connector` Consultationを混ぜない。
+- wall timeとcostは、Worker／Consultationの全予約上限を合算する。failed／cancelled／retryも記録済み
+  Runとして消費し、黙ってbudgetを返却しない。
+- `null`を0、未使用、無制限へ丸めない。read-only `status`はunknownを保持して読めるが、Control上限
+  または新規予約がunknownのままRun／Consultationを追加するmutationは`BUDGET_UNKNOWN`で拒否する。
+- 既知上限を件数または安全整数の合計が超えた場合は`BUDGET_EXCEEDED`。価格推測、自動最適化、
+  provider間換算は行わない。
 - `execution_verification`は`stage`、`observed_version`、`observed_at`、`evidence`だけを持つ。
   stageは`unverified | installed | registered | verified | execution-verified`。parent以外のRunは
   `verified`以上、外部writeは`execution-verified`だけを許可する。未知入口はwriterへ配置しない。
@@ -465,7 +491,7 @@ ConsultationはWorker Runと別collection／別schemaにする。MVPのconnector
 
 ```text
 consultation_id, task_id, assignment_id, connector="gpt-connector",
-slug, model, effort, state, executor_observation, decision_ref
+slug, model, effort, budget_reservation, state, executor_observation, decision_ref
 terminal_evidence
 ```
 
@@ -577,7 +603,7 @@ accept, reject, task-finalize-record, recover-lock, archive
 `cwd`を必須とする。
 
 ```text
-init({ cwd, control_id, objective_ref, actor_id, document_refs })
+init({ cwd, control_id, objective_ref, actor_id, document_refs, budget })
 status({ cwd, control_id })
 taskRecord({ cwd, control_id, actor_id, expected_revision, task })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
@@ -616,7 +642,7 @@ INVALID_INPUT, INVALID_SCHEMA, INVALID_SCOPE, LIMIT_EXCEEDED,
 NOT_GIT_REPOSITORY, BARE_WRITE_FORBIDDEN, CONTROL_EXISTS, CONTROL_NOT_FOUND,
 REVISION_CONFLICT, RECORD_ARCHIVED, DUPLICATE_ID, INVALID_TRANSITION, DEPENDENCY_NOT_READY,
 ASSIGNMENT_ACTIVE, WRITE_CONFLICT, EXECUTOR_FORBIDDEN, ADAPTER_UNKNOWN, CAPABILITY_MISMATCH,
-VERIFICATION_REQUIRED,
+VERIFICATION_REQUIRED, BUDGET_UNKNOWN, BUDGET_EXCEEDED,
 EVIDENCE_REQUIRED, WORKSPACE_DRIFT, ARCHIVE_NOT_READY,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE

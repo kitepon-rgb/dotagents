@@ -20,6 +20,21 @@ export const evidence = (ref, type = "file", overrides = {}) => ({
   type, ref, digest: "e".repeat(64), observed_at: "2026-07-14T00:00:00.000Z", ...overrides,
 });
 
+export const makeBudget = (overrides = {}) => ({
+  max_worker_runs: 32,
+  max_consultations: 16,
+  max_external_runs: 24,
+  max_wall_time_seconds: 86400,
+  max_cost_microusd: 100000000,
+  ...overrides,
+});
+
+export const makeBudgetReservation = (overrides = {}) => ({
+  wall_time_seconds: 3600,
+  cost_microusd: 1000000,
+  ...overrides,
+});
+
 const canonicalJson = (value) => {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value !== null && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
@@ -130,6 +145,7 @@ export function makeWorkerRun(overrides = {}) {
       { capability_id: "workspace.read", value: "true", evidence: evidence("docs/execution-proof.md") },
       { capability_id: "workspace.write", value: "true", evidence: evidence("docs/execution-proof.md") },
     ],
+    budget_reservation: makeBudgetReservation(),
     write_mode: "direct",
     execution_verification: { stage: "execution-verified", observed_version: "test-version", observed_at: "2026-07-14T00:00:00.000Z", evidence: evidence("docs/execution-proof.md") },
     lineage: {
@@ -148,6 +164,7 @@ export function makeConsultation(overrides = {}) {
   return {
     consultation_id: "consultation-001", task_id: "consultation-task", assignment_id: "consultation-assignment",
     connector: "gpt-connector", slug: "known-session-slug", model: "gpt-5.6", effort: "low",
+    budget_reservation: makeBudgetReservation({ wall_time_seconds: 600, cost_microusd: 100000 }),
     state: "planned", executor_observation: null, decision_ref: null, terminal_evidence: [], ...overrides,
   };
 }
