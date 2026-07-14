@@ -51,7 +51,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v10", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v11", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
@@ -129,6 +129,29 @@ test("receipt capacityは閉鎖用slotを予約し、archive済みControlから�
   const successor = await api.init({ cwd: repo.root, control_id: "capacity-successor", predecessor_control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   assert.deepEqual(successor.manifest.continuation, { predecessor_control_id: "capacity-root", root_control_id: "capacity-root", sequence: 1 });
   await assert.rejects(api.init({ cwd: repo.root, control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTROL_EXISTS"));
+});
+
+test("257件目のControlはcommit前に拒否し既存Controlをpoisonしない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "control-000" });
+  const controls = join(repo.commonDir, "dotagents", "orchestrate", "controls");
+  for (let index = 1; index < 256; index++) {
+    const controlId = `control-${String(index).padStart(3, "0")}`;
+    const manifest = structuredClone(result.manifest);
+    manifest.control_id = controlId;
+    manifest.continuation = { predecessor_control_id: null, root_control_id: controlId, sequence: 0 };
+    manifest.transition_receipts = [makeTransitionReceipt({
+      actor_id: manifest.last_update.actor_id,
+      recorded_at: manifest.last_update.updated_at,
+      subject: { kind: "control", id: controlId },
+    })];
+    await mkdir(join(controls, controlId), { mode: 0o700 });
+    await writeJson(join(controls, controlId, "manifest.json"), manifest);
+  }
+  const input = { cwd: repo.root, control_id: "control-256", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() };
+  await assert.rejects(api.init(input), code("CONTROL_CAPACITY_REACHED"));
+  const existing = await api.taskRecord({ cwd: repo.root, control_id: "control-000", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "still-operational" }) });
+  assert.equal(existing.revision, 1);
+  await assert.rejects(access(join(controls, "control-256")));
 });
 
 test("TaskはF/A/H、scope、approval、global task_id一意性を正しく記録する", async (t) => {
@@ -621,11 +644,13 @@ test("baseline後のscope内変更はcompletedとacceptを通過する", async (
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "fingerprint-task", workspace_cwd: repo.root }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
   await writeFile(join(repo.root, "README.md"), "scope-in-change\n");
+  await chmod(join(repo.root, "README.md"), 0o755);
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
   const completed = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() });
   assert.equal(typeof completed.manifest.worker_runs[0].result.workspace_fingerprint.digest, "string");
   const accepted = await api.accept({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: completed.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/verify.md")], decision_note: "scope only", decided_by: "parent" });
   assert.equal(accepted.manifest.worker_runs[0].acceptance.decision, "accepted");
+  assert.equal(accepted.manifest.worker_runs[0].result.workspace_fingerprint.files.find((entry) => entry.path === "README.md").file_mode & 0o777, 0o755);
 });
 
 test("admission後のscope外変更はcompleted観測をWORKSPACE_DRIFTで拒否する", async (t) => {
@@ -636,6 +661,22 @@ test("admission後のscope外変更はcompleted観測をWORKSPACE_DRIFTで拒否
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
   await writeFile(join(repo.root, "README.md"), "outside scope change\n");
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() }), code("WORKSPACE_DRIFT"));
+});
+
+test("admission後の既存dirty scope外file mode変更をWORKSPACE_DRIFTで拒否する", async (t) => {
+  await withRepo(t, async (repo) => {
+    const outside = join(repo.root, "docs", "control-record-plan.md");
+    await writeFile(outside, "# dirty control record fixture plan\n");
+    const init = await api.init({ cwd: repo.root, control_id: "mode-drift-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+    const task = await api.taskRecord({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "mode-drift-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
+    const run = await api.workerRunRecord({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "mode-drift-task", workspace_cwd: repo.root }) });
+    const admitted = await api.admitWorker({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
+    const baseline = admitted.manifest.worker_runs[0].baseline_workspace_fingerprint.files.find((entry) => entry.path === "docs/control-record-plan.md");
+    await chmod(outside, 0o755);
+    const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
+    await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() }), code("WORKSPACE_DRIFT"));
+    assert.equal(baseline.file_mode & 0o777, 0o644);
+  });
 });
 
 test("completed後accept前のworkspace変更はacceptをWORKSPACE_DRIFTで拒否する", async (t) => {

@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v10",
+  "schema_version": "dotagents.orchestration-control.v11",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -114,11 +114,11 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v10で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v11で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
-  protocol snapshotを追加した。旧manifestを
+  protocol snapshot、v11はchanged fileのmode fingerprintとControl総数commit gateを追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -199,6 +199,10 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 - archive済みControlだけを`predecessor_control_id`へ指定して後継Controlをinitできる。後継は同じ
   objective、root ID、単調増加sequenceを持ち、Task／Run IDは新規にする。predecessor manifestは
   chain検証とID予約のため保持し、archived IDを再利用しない。
+- git common dirごとのControl manifestは256件をbounded scan上限とする。256件が存在する状態の
+  新規initはcommit前に`CONTROL_CAPACITY_REACHED`で拒否し、257件目を作って既存Controlの
+  global mutationを自己poisonしない。恒久retentionを拡張する場合は、ID予約とglobal conflictを
+  欠落させない別schema／index契約を先に設計する。
 
 ## Task declaration
 
@@ -517,9 +521,10 @@ Workerの`completed`と親の`accepted | rejected`を分離する。
   regular file以外を拒否する。変更file内容の合計64 MiBまで許可し、64 MiBを超えた時点で拒否する。
   index/statusは各8 MiB上限とし、内容自体は保存・出力しない。
 - fingerprintはaggregate digestに加え、statusが列挙した各pathの
-  `{ path, state, content_digest }`を保存する。deletedではcontent digestを`null`にする。
+  `{ path, state, file_mode, content_digest }`を保存する。deletedではfile modeとcontent digestを
+  `null`にする。
   write予約時の`baseline_workspace_fingerprint`とcompleted時を比較し、増加・変更したpathがすべて
-  Taskのwrite scope内で、scope外pathの状態・digestが変化していない場合だけcompletedを記録する。
+  Taskのwrite scope内で、scope外pathの状態・mode・digestが変化していない場合だけcompletedを記録する。
   accept時はcompleted fingerprintとの完全一致を要求する。
 - 同じfingerprint passを連続2回実行し、HEAD、index digest、status bytes、file集合とcontent digestが
   完全一致した時だけ採用する。計算中にworkspaceが変化した場合はdriftとして拒否する。

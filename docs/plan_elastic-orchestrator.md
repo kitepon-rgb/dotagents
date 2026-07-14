@@ -1,6 +1,6 @@
 # Elastic Multi-Agent Orchestrator 完成計画
 
-Status: v1 completion target confirmed by owner (2026-07-14); Phase 1A in progress
+Status: v1 completion target confirmed by owner (2026-07-14); Phase 1B in progress
 
 ## 目的
 
@@ -123,7 +123,9 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - [x] `bin/orchestrate-run.mjs`へ実行bitを付け、CLI入力由来のlimit errorをtyped metadataでexit 2へ分類する。
 - [x] 全`GIT_*`環境変数を除去し、`git --no-optional-locks`で`git status`の任意index refreshによる
   fingerprint自己driftを止める。失敗再現後、Control Record 20 testsを5回連続greenで確認した。
-- [ ] Phase 1Aの全test、`make ci`、installer／verifyをgreenにし、独立refuterでP0/P1なしを確認する。
+- [x] 独立refuterが再現したscope外file mode driftをfingerprintで拒否する。
+- [x] 独立refuterが再現した257件目Controlの自己poisonをcommit前のcapacity gateで拒否する。
+- [x] Phase 1Aの全test、`make ci`、installer／verifyをgreenにし、独立refuterでP0/P1なしを確認する。
 
 ### Phase 1B: Operator-driven vertical slice
 
