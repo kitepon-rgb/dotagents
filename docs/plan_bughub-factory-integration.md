@@ -210,7 +210,7 @@ Codegraph、MarkItDown、Claude Code CLI、Codex CLI、Grok Buildは本体を改
 | Codegraph | CLI | 既存indexだけstatus/read-only query | `codegraph init`自動実行 |
 | MarkItDown | CLI/uv | bundled local fixtureを変換し出力byte数>0 | URL変換のrc=0だけでgreen |
 | gpt-connector | CLI | native factory diagnostics、product-owned runtime error snapshot、version、state/job schema、CDP/auth/runtime/MCP readiness | Chat/consult/uploadによるhealth判定、prompt/response/file内容/conversation ID/絶対pathの出力、Oracle/APIへのfallback |
-| aiterm-mcp | package/追加version入口 | MCP initialize、read-only PTY list、依存CLI状態 | Codex親から入れ子Codex起動 |
+| aiterm-mcp | package/追加version入口 | MCP initialize、read-only PTY list、依存CLI状態 | agent起動をhealth判定に使うこと、未検証入口をwriter扱いすること |
 | codex-sidecar | 3 npm package | diagnostics/dry-run、result schema、model policy | 実装不要な実agent起動 |
 | ServerManager | package/commit | BugHub外部health、poll鮮度、DB migration、container/source一致、Pi5監視 | BugHubの自己申告だけで合格 |
 | Claude Code CLI | CLI/npm | `claude --version`、npm latest、必須hook/settings契約 | session起動、prompt送信、認証変更、人間向けupdate出力の推測解析 |
@@ -375,10 +375,11 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] 旧Oracle wrapper/config/profileを`gpt-connector`へ流用せず、専用Chrome、product-owned state、model/effort明示、caller既知slug、timeout後`sessions`回収、暗黙fallback禁止を標準形として固定する
 - [x] `make ci`、official/legacy install、skill discovery、factory report v1/new-major fixtureをgreenにする
 - [ ] 新規Claude/Codex sessionで`gpt_connector` MCP surfaceを再読込し、両親からread-only diagnosticsをgreenにする（現在のCodex sessionは起動時cacheに旧Oracle surfaceが残るため再起動後に実施）
-- [ ] Codex親の委譲をnative／外部実行／相談の3レーンへ正典化し、外部子のtask ID・timeout回収・writer worktree隔離・git操作禁止・秘密/H非委譲・親受入れgateを`codex/AGENTS.md`、`orchestrate`、モデル表、Codex断片、host/product契約へ同期する
+- [x] Codex親の委譲をnative／外部実行／相談の3レーンへ正典化し、外部子のtask ID・timeout回収・writer worktree隔離・git操作禁止・秘密/H非委譲・親受入れgateを`codex/AGENTS.md`、`orchestrate`、モデル表、Codex断片、host/product契約へ同期する（`1e8f9fb`、`make ci` green）
 - [ ] Codex親の`codex-sidecar`／aiterm connectorをsupportedとして導入・検証面へ配線し、installed→registered→verified→execution-verifiedを区別する。aitermのGrok/Composer各2回、別Codex、codex-sidecar、gpt-connectorの回収smokeを通すまでwriter利用をgreenにしない
   - [x] このMacのCodex親へ`codex-sidecar` 0.3.7をH承認下で登録し、MCP initialize、12 toolの`tools/list`、factory diagnostics `overall=ready`を確認してverifiedまで上げた。現sessionのtool面は起動時固定のためexecution-verifiedは新規sessionへ残す
   - [x] 同じMacで配布CLIの`codex-sidecar review`を明示Terra×medium・read-onlyで完遂し、三レーン正典diffを独立レビューした。read-only external executionはexecution-verified、writerは`codex_work`未実証として未verifiedに分離する
+  - [x] aitermの配布0.12.2で別CodexをTerra×medium・read-only診断へ起動し、`agent_done`とtranscript回収後にcloseした。続けて0.12.3隔離tgzから実Grok/Composerを各2回起動し、4/4で期待応答・`agent_done`・再認証要求なし・closeを確認した
 
 #### 6.5 shadow、cutover、撤去（H＋F）
 
@@ -426,7 +427,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 1i. [x] FOX Windows nativeでnpm `.cmd` shimをNodeの直接spawnが解決できず導入済み製品を`missing`へ誤投影する欠陥を、固定CLI・引数非再解釈・timeout/output上限を保つ共通command runnerで直し、12製品matrixを実機再送する
 1j. [x] `agents-update`が追加する`/usr/local/bin`でWSLの正規npm global CLIをshadowし、Claude Code更新後versionを旧入口から読む欠陥を直す。検証済み`npm prefix -g`のbinを更新・version確認の同一入口にし、PATH shadowをfixtureと実host ledgerで閉じる
 1k. [ ] registry公開版のThroughline／Spotter／aiterm-mcp／codex-sidecar native diagnosticsとdotagents v2 adapterのschema driftを、製品側正本とexact validatorを保ったまま同期し、main-serverのCaveat診断とGrok Build導入状態も分離して全host post-update gateをgreenにする
-   - [ ] aiterm-mcpのmanaged `GROK_HOME`でOAuth承認結果が一時homeへ取り残される欠陥を、Grok公式 `GROK_AUTH_PATH` 経路へ置換して修正・releaseし、Grok/Composer各2回の連続起動で再承認なしと`agent_done`を実証する（正本: aiterm-mcp `docs/14_grok-auth-path-plan.md`）
+   - [ ] aiterm-mcpのmanaged `GROK_HOME`でOAuth承認結果が一時homeへ取り残される欠陥を、Grok公式 `GROK_AUTH_PATH` 経路へ置換してreleaseする（正本: aiterm-mcp `docs/14_grok-auth-path-plan.md`）
+     - [x] 製品repoでruntime-store高競合/hostile-input修正`c1a2623`とauth/0.12.3 RC`ab11eb7`を独立commitし、全234/234、4並列×12 contention、tgz隔離MCP、Grok/Composer各2回の再認証なし`agent_done`、最終refuter P0/P1なしまで確認した
+     - [ ] push、tag、npm publish、MCP Registry、公開版smoke、BugHub台帳同期をH承認後に実施する
 1m. [ ] Throughline factory diagnosticsのCodex hook集約をdoctorの実状態と一致させ、main-serverの正規hook導入、Macのhandoff readiness、FOX WSL2の`events=ready`なのにsummary=`unverified`となるproducer矛盾を製品repoのcharacterization→修正→patch releaseで閉じる
 1n. [x] Windows共通command runnerのnpm shim解決を実物cmd-shim variantへ追従し、PATH／shimのfilesystem解決も5秒全体deadline内のkill可能helperへ隔離して、UNC・late spawn・悪意あるshimをfail-loudに拒否する
 1o. [x] native diagnosticsを単一overall checkへ潰さずThroughline／Spotter／aiterm-mcpのcomponent別checkへ安全に投影し、report/BugHubでは`unverified`を保持する。gateはdefault-denyのまま、Spotterの人手trust、Throughlineのadvisory evidence/Claude connector、headless aitermのPTY観測不能という完全tupleだけをnonblockingにする
