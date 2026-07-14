@@ -120,7 +120,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
 - [x] 全manifest scan後にglobal ID、assignment immutable tuple、active writer conflictを再検証する。
 - [ ] owner publication/release、manifest commit、new-control parent directory sync、durability metadata、
   `COMMIT_OUTCOME_UNKNOWN`をfault injection付きtestで固定する。
-- [ ] `bin/orchestrate-run.mjs`へ実行bitを付け、CLI入力由来のlimit errorをtyped metadataでexit 2へ分類する。
+- [x] `bin/orchestrate-run.mjs`へ実行bitを付け、CLI入力由来のlimit errorをtyped metadataでexit 2へ分類する。
 - [x] 全`GIT_*`環境変数を除去し、`git --no-optional-locks`で`git status`の任意index refreshによる
   fingerprint自己driftを止める。失敗再現後、Control Record 20 testsを5回連続greenで確認した。
 - [ ] Phase 1Aの全test、`make ci`、installer／verifyをgreenにし、独立refuterでP0/P1なしを確認する。

@@ -26,10 +26,10 @@ async function readInput(path) {
     if (pathInfo.isSymbolicLink() || !pathInfo.isFile() || pathInfo.nlink !== 1) throw new api.ControlRecordError("INPUT_PATH_UNSAFE", "input must be a non-symlink regular file");
     handle = await open(path, FS.O_RDONLY | (FS.O_NOFOLLOW ?? 0)); const before = await handle.stat();
     if (!before.isFile() || before.nlink !== 1) throw new api.ControlRecordError("INPUT_PATH_UNSAFE", "input must be a safe regular file");
-    if (before.size > 64 * 1024) throw new api.ControlRecordError("LIMIT_EXCEEDED", "input exceeds 64 KiB");
+    if (before.size > 64 * 1024) throw new api.ControlRecordError("LIMIT_EXCEEDED", "input exceeds 64 KiB", { category: "input" });
     const buffer = Buffer.alloc(before.size + 1); let offset = 0;
     while (offset < buffer.length) { const { bytesRead } = await handle.read(buffer, offset, buffer.length - offset, offset); if (!bytesRead) break; offset += bytesRead; }
-    if (offset > 64 * 1024) throw new api.ControlRecordError("LIMIT_EXCEEDED", "input exceeds 64 KiB");
+    if (offset > 64 * 1024) throw new api.ControlRecordError("LIMIT_EXCEEDED", "input exceeds 64 KiB", { category: "input" });
     const after = await handle.stat(); const finalPath = await lstat(path);
     if (before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size || before.mtimeMs !== after.mtimeMs || after.dev !== finalPath.dev || after.ino !== finalPath.ino || finalPath.isSymbolicLink() || finalPath.nlink !== 1) throw new api.ControlRecordError("INPUT_PATH_UNSAFE", "input changed while reading");
     let value; try { value = JSON.parse(buffer.subarray(0, offset).toString("utf8")); } catch { throw new api.ControlRecordError("INVALID_INPUT", "input is not valid JSON"); }
@@ -55,7 +55,7 @@ if (args.length === 1 && args[0] === "--help") {
   } catch (error) {
     if (error instanceof api.ControlRecordError) {
       const inputError = new Set(["INVALID_INPUT", "INVALID_SCHEMA", "INVALID_SCOPE", "INPUT_PATH_UNSAFE"]);
-      const isInputLimit = error.code === "LIMIT_EXCEEDED" && /input/i.test(error.message);
+      const isInputLimit = error.code === "LIMIT_EXCEEDED" && error.details?.category === "input";
       outputError(error.code, error.message, inputError.has(error.code) || isInputLimit ? 2 : 1);
     } else outputError("INTERNAL_ERROR", "internal error", 1);
   }
