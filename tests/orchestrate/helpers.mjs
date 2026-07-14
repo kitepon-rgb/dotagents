@@ -32,6 +32,19 @@ export function taskAdmissionDigest(task) {
   return createHash("sha256").update(canonicalJson(snapshot)).digest("hex");
 }
 
+export function makeTransitionReceipt(overrides = {}) {
+  const receipt = {
+    revision: 0, actor_id: "parent-001", operation: "control-init",
+    subject: { kind: "control", id: "control-record-contract" },
+    previous_state: null, next_state: "active", evidence: [],
+    recorded_at: "2026-07-14T00:00:00.000Z", previous_receipt_digest: null,
+    receipt_digest: "", ...overrides,
+  };
+  const payload = structuredClone(receipt); delete payload.receipt_digest;
+  receipt.receipt_digest = createHash("sha256").update(canonicalJson(payload)).digest("hex");
+  return receipt;
+}
+
 export function runGit(cwd, args, extraEnv = {}) {
   return execFileSync("git", args, {
     cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, ...extraEnv },

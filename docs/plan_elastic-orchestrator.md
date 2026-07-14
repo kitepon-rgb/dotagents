@@ -97,7 +97,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   input digest、approach family ref、shared finding refs）を保存し、独立性scoreは作らない。
 - [x] dispatch／terminal／result／verification evidenceをtyped descriptorとして永続化し、内容本体・
   prompt・secret・巨大logは保存しない。
-- [ ] 各mutationのactor、operation、subject、previous／next state、evidence descriptorをboundedで
+- [x] 各mutationのactor、operation、subject、previous／next state、evidence descriptorをboundedで
   immutableなtransition receiptとして同じatomic manifestへ保存する。別`events.jsonl`を二重正本にしない。
 - [ ] Executorを固定enumからversioned `adapter_id / contract_version / instance_id / handle_schema_id`
   envelopeへ移し、未知adapterのdispatchはfail closed、read-only status/exportは可能にする。

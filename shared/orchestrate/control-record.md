@@ -67,6 +67,20 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   "worker_runs": [],
   "consultations": [],
   "task_finalizations": [],
+  "transition_receipts": [
+    {
+      "revision": 0,
+      "actor_id": "parent-session-id",
+      "operation": "control-init",
+      "subject": { "kind": "control", "id": "elastic-phase1" },
+      "previous_state": null,
+      "next_state": "active",
+      "evidence": [],
+      "recorded_at": "2026-07-14T00:00:00.000Z",
+      "previous_receipt_digest": null,
+      "receipt_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }
+  ],
   "last_update": {
     "actor_id": "parent-session-id",
     "updated_at": "2026-07-14T00:00:00.000Z"
@@ -78,6 +92,8 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
   `expected_revision`と現在値の一致を必須とする。
 - `status`は`active | archived`。archived manifestは更新不可。
+- `transition_receipts`はrevision 0の`control-init`から始まり、成功したmanifest mutationごとに
+  1件だけ同じatomic更新へ追加する。件数は常に`record_revision + 1`である。
 - `document_refs`はrepo相対参照だけ。prompt、output、secret、credential、環境変数、巨大log、
   Executor内部stateを保存しない。
 - 通常repositoryでは`project_root_realpath`と`base_sha`は文字列、bareでは上記のとおり`null`を許す。
@@ -105,6 +121,47 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
   boundedなopaque referenceとする。
 - `digest`は参照先または回収内容のSHA-256。内容本体、秘密、巨大logはControlへ複製しない。
 - `observed_at`は親が参照を確認した時刻。descriptorの存在だけで内容十分とは判定しない。
+
+## Transition receipt
+
+別の`events.jsonl`を第二正本にせず、actor、operation、subject、state遷移、使用したevidenceを
+同じmanifestへappend-only receiptとして保存する。
+
+```json
+{
+  "revision": 4,
+  "actor_id": "parent-session-id",
+  "operation": "worker-observe",
+  "subject": { "kind": "worker-run", "id": "R-001" },
+  "previous_state": "admitted",
+  "next_state": "dispatched",
+  "evidence": [
+    {
+      "type": "executor-receipt",
+      "ref": "codex-sidecar:job-001",
+      "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "observed_at": "2026-07-14T00:00:00.000Z"
+    }
+  ],
+  "recorded_at": "2026-07-14T00:00:00.000Z",
+  "previous_receipt_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "receipt_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+}
+```
+
+- operationは`control-init / task-record / worker-run-record / consultation-record / worker-admit /
+  worker-observe / consultation-observe / worker-accept / worker-reject / task-finalize /
+  control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
+- `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
+  `previous_receipt_digest`へ持ち、read/save時に連番とchainを再計算する。過去receiptの書換え、欠落、
+  並べ替えを`INVALID_SCHEMA`で拒否する。
+- evidenceを使わない管理mutationは空配列、dispatch／terminal／result／acceptanceはそのmutationで
+  検証したtyped descriptorを保存する。内容本体は複製しない。
+- failed mutationはrevisionもreceiptも増やさない。`last_update`は最後のreceiptのactor/timeと一致する。
+- `recover-lock`はControl manifest mutationではなく、特定Controlを選ばないlock-owner保守操作なので
+  receipt対象外。lock token、owner body、PID、file identityの検証結果がその操作の返却契約である。
+- 256件を超える継続方法は後続のbounded continuation／retention契約で解決する。上限到達を成功へ
+  丸めたり、古いreceiptを黙って削除したりしない。
 
 ## Task declaration
 

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import {
   addLinkedWorktree, cleanupDir, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
   createNonGitDir, createOwnerFixtures, evidence, installSentinelBin, loadControl, makeConsultation, makeTask,
-  makeTempDir, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
+  makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
   taskAdmissionDigest, terminalWorkerObservation, completedWorkerObservation, workerObservation, writeJson,
 } from "./helpers.mjs";
 
@@ -43,7 +43,8 @@ test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを�
   const manifest = {
     schema_version: "dotagents.orchestration-control.v1", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", base_sha: "0".repeat(40), initial_dirty: false, created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
-    document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
+    document_refs: ["docs/control-record-plan.md"], tasks: [], worker_runs: [], consultations: [], task_finalizations: [],
+    transition_receipts: [makeTransitionReceipt()], last_update: { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" },
   };
   assert.deepEqual(api.validateManifest(manifest), manifest);
   assert.throws(() => api.validateManifest({ ...manifest, prompt: "must never persist" }), code("INVALID_SCHEMA"));
@@ -71,6 +72,9 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
   assert.deepEqual(status, result.manifest);
   assert.equal(status.declaration.base_sha, repo.baseSha);
   assert.equal(status.declaration.common_dir_realpath, repo.commonDir);
+  assert.equal(status.transition_receipts.length, 1);
+  assert.deepEqual(status.transition_receipts[0].subject, { kind: "control", id: CONTROL });
+  assert.match(status.transition_receipts[0].receipt_digest, /^[0-9a-f]{64}$/);
   await assert.rejects(api.init({ cwd: repo.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"] }), code("CONTROL_EXISTS"));
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: 1, task: makeTask() }), code("REVISION_CONFLICT"));
 });
@@ -132,6 +136,14 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   const failed = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: terminalWorkerObservation() });
   assert.equal(failed.manifest.worker_runs[0].state, "failed");
   assert.deepEqual(failed.manifest.worker_runs[0].terminal_evidence, [evidence("docs/executor-terminal-proof.md")]);
+  assert.deepEqual(failed.manifest.transition_receipts.map((entry) => entry.operation), ["control-init", "task-record", "worker-run-record", "worker-admit", "worker-observe", "worker-observe"]);
+  assert.deepEqual(failed.manifest.transition_receipts.at(-2).evidence, [evidence("docs/dispatch-proof.md")]);
+  assert.deepEqual(failed.manifest.transition_receipts.at(-1).evidence, [evidence("docs/executor-terminal-proof.md")]);
+  const tampered = structuredClone(failed.manifest);
+  tampered.transition_receipts[1] = makeTransitionReceipt({ ...tampered.transition_receipts[1], actor_id: "attacker" });
+  assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+  const missingReceipt = structuredClone(failed.manifest); missingReceipt.transition_receipts.pop();
+  assert.throws(() => api.validateManifest(missingReceipt), code("INVALID_SCHEMA"));
   const retry = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: failed.revision, worker_run: makeWorkerRun({ worker_run_id: "run-002", workspace_cwd: repo.root }) });
   assert.equal(retry.manifest.worker_runs.at(-1).assignment_id, "assignment-001");
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run_id: "run-001", observation: workerObservation("running") }), code("INVALID_TRANSITION"));
@@ -417,9 +429,12 @@ test("accept/reject/task finalization/archiveは状態・fingerprint・atomic ma
   const completed = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() });
   const accepted = await api.accept({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: completed.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/verify.md")], decision_note: "accepted", decided_by: "parent" });
   assert.equal(accepted.manifest.worker_runs[0].acceptance.decision, "accepted");
+  assert.equal(accepted.manifest.transition_receipts.at(-1).operation, "worker-accept");
+  assert.deepEqual(accepted.manifest.transition_receipts.at(-1).evidence, [evidence("docs/verify.md")]);
   const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: accepted.revision, task_id: "task-001", finalization_ref: "docs/decision.md", recorded_by: "parent" });
   const archived = await api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision });
   assert.equal(archived.manifest.status, "archived");
+  assert.equal(archived.manifest.transition_receipts.at(-1).operation, "control-archive");
   assert.deepEqual(await readPersistedManifest(repo.commonDir, CONTROL), archived.manifest);
   await assert.rejects(api.reject({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: archived.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/verify.md")], decision_note: "late", decided_by: "parent" }), code("RECORD_ARCHIVED"));
 });
