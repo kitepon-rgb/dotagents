@@ -1496,6 +1496,58 @@ test("control finalizationはTask完了と監査・回帰・knowledge return・�
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, parent_decision: evidence("docs/not-a-decision.md") }), code("INVALID_SCHEMA"));
 });
 
+test("Delegation Packetとstrict Worker Report importは相関・scope・親accept分離を強制する", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "packet-control" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "packet-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const worker = await api.workerRunRecord({
+    cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "packet-worker", task_id: "packet-task", assignment_id: "packet-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "packet-assignment" } }),
+  });
+  const plannedPacket = await api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" });
+  assert.equal(plannedPacket.schema_version, "dotagents.delegation-packet.v1"); assert.equal(plannedPacket.report_template.schema_id, "dotagents.worker-report.v1");
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "packet-worker" });
+  const admittedPacket = await api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" });
+  assert.equal(admittedPacket.packet_digest, plannedPacket.packet_digest);
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "packet-worker", observation: workerObservation("dispatched") });
+  const report = {
+    schema_version: "dotagents.worker-report.v1", control_id: "packet-control", task_id: "packet-task", worker_run_id: "packet-worker", assignment_id: "packet-assignment", packet_digest: plannedPacket.packet_digest,
+    executor_handle: { idempotency_key: "idempotency-001" }, observed_state: "completed", status: "completed", result_digest: "d".repeat(64),
+    evidence: [evidence("docs/packet-result.md")], validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }], changed_paths: [], claims: ["packet-report-import"],
+  };
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, packet_digest: "a".repeat(64) } }), code("REPORT_CORRELATION_MISMATCH"));
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, executor_handle: { idempotency_key: "wrong-handle" } } }), code("REPORT_CORRELATION_MISMATCH"));
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [] } }), code("VALIDATION_INCOMPLETE"));
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [{ ...report.validation_results[0], outcome: "unknown" }] } }), code("VALIDATION_INCOMPLETE"));
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [{ ...report.validation_results[0], outcome: "failed" }] } }), code("REPORT_NONZERO"));
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, status: "failed" } }), code("INVALID_SCHEMA"));
+  const cancelled = await api.taskCancelRecord({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, task_id: "packet-task", decision: evidence("docs/packet-cancel.md", "decision") });
+  await assert.rejects(api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" }), code("TASK_CANCELLED"));
+  const imported = await api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: cancelled.revision, worker_run_id: "packet-worker", report });
+  assert.equal(imported.manifest.worker_runs[0].state, "completed"); assert.equal(imported.manifest.worker_runs[0].acceptance, null);
+  assert.equal(imported.manifest.transition_receipts.at(-1).operation, "worker-report-import");
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: imported.revision, worker_run_id: "packet-worker", report: { ...report, raw_log: "forbidden" } }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.delegationPacketForWorker({ cwd: repo.root, control_id: "packet-control", worker_run_id: "packet-worker" }), code("TASK_CANCELLED"));
+});
+
+test("Delegation Packet/report import CLIは外部Executorを起動しない", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
+  const init = await api.init({ cwd: repo.root, control_id: "packet-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "packet-cli-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "packet-cli-worker", task_id: "packet-cli-task", assignment_id: "packet-cli-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "packet-cli-assignment" } }) });
+  const input = join(base, "packet-cli-input.json"); await writeJson(input, { cwd: repo.root, control_id: "packet-cli", worker_run_id: "packet-cli-worker" });
+  const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` }; const packetOutput = spawnOrchestrate(["delegation-packet", "--input", input], { env });
+  assert.equal(packetOutput.status, 0); const packet = JSON.parse(packetOutput.stdout).result;
+  const admitted = await api.admitWorker({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "packet-cli-worker" });
+  const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "packet-cli-worker", observation: workerObservation("dispatched") });
+  const reportInput = join(base, "packet-report-input.json"); await writeJson(reportInput, { cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-cli-worker", report: {
+    schema_version: "dotagents.worker-report.v1", control_id: "packet-cli", task_id: "packet-cli-task", worker_run_id: "packet-cli-worker", assignment_id: "packet-cli-assignment", packet_digest: packet.packet_digest,
+    executor_handle: { idempotency_key: "idempotency-001" }, observed_state: "completed", status: "completed", result_digest: "e".repeat(64), evidence: [evidence("docs/packet-cli-result.md")], validation_results: [{ validation_ref: "node --test tests/orchestrate/*.test.mjs", outcome: "passed", evidence: evidence("tests/orchestrate/control-record.test.mjs", "command") }], changed_paths: [], claims: [],
+  } });
+  const imported = spawnOrchestrate(["worker-report-import", "--input", reportInput], { env });
+  assert.equal(imported.status, 0); assert.equal(JSON.parse(imported.stdout).result.manifest.worker_runs[0].acceptance, null);
+  await assert.rejects(access(sentinel.log));
+});
+
 test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLIはstrict input JSONだけを受理する", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);

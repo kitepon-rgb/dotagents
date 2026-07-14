@@ -196,6 +196,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 ```
 
 - operationは`control-init / task-record / task-cancel-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit / worker-cancel-request /
+  worker-report-import /
   worker-observe / consultation-observe / worker-accept / worker-reject / task-finalize /
   control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
@@ -783,6 +784,33 @@ dispatch後なら空でない`terminal_evidence`を必須とする。他stateで
 resultを持てない。各evidence配列はWorker直下へ累積保存し、保存する`executor_observation`は
 source/version/time/raw_stateだけである。
 
+### Delegation Packet と Worker Report
+
+`delegation-packet`は、`planned | admitted` Workerから生成する純粋・record-only出力である。
+terminal Run、取消済みTask、未知／forbidden Executor（`gpt-connector`を含む）はfail closedにする。
+生成はdispatch、process起動、network、製品stateの読書きを行わない。
+
+- packet schemaは`dotagents.delegation-packet.v1`。Task canonical snapshot、Worker/assignment ID、
+  Executor envelopeとworkflow、git由来workspace、read/write scope、classification/effect/role、
+  capability・budget reservation、lineage/context policy、validation参照、non-goals、known traps、
+  report schema IDを含む。`packet_digest`はこのimmutable projectionのSHA-256である。
+- packetはprompt全文、raw log、secret、巨大output、Executor製品内部stateを保存・出力しない。
+  `adapter_id / workflow_id / handle_schema_id`を別々に明示し、全Executorが同一lifecycleを持つとは
+  仮定しない。
+- packet内のtemplateは`dotagents.worker-report.v1`を指定する。reportはexact objectで
+  `schema_version, control_id, task_id, worker_run_id, assignment_id, packet_digest, executor_handle,
+  observed_state, status, result_digest, evidence, validation_results, changed_paths, claims`だけを受理する。
+  `prompt`、`raw_log`、`secret`、任意extra fieldは禁止する。`validation_results`の各entryは
+  `validation_ref / outcome / evidence`で、Task snapshotの`validation`を重複なく完全に参照し、全て
+  `passed`でなければならない。空・`unknown`は必須validationを満たさず、`failed`は`REPORT_NONZERO`として
+  拒否する。status/observed stateは現在`completed`のみである。
+- `worker-report-import`はactive（`dispatched | running | unknown`）Runだけを`completed`へ観測する。
+  packet/Task/Run/assignment/Executor handle/digestを再相関し、write Runでは実workspace fingerprintと
+  reportのchanged pathsをscope内かつ一致するものだけにする。取消済みTaskでも既存active Runのterminal
+  観測は許すが、planned/admittedからの新規実行は許さない。import receiptはtyped evidenceを持つ。
+- importは親acceptではない。`acceptance`は`null`のままで、親の検証後に既存`accept`または`reject`を
+  別revisionで記録する。
+
 ### Acceptance
 
 Workerの`completed`と親の`accepted | rejected`を分離する。
@@ -916,7 +944,7 @@ owner fileは1 KiB以下のexact JSONとし、未知keyを拒否する。
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, worker-run-record, consultation-record,
+init, status, status --brief, resume-check, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, worker-report-import, worker-run-record, consultation-record,
 admit-worker, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, recover-lock, archive
 ```
@@ -944,7 +972,9 @@ accept, reject, task-finalize-record, recover-lock, archive
 
 ## Library APIとerror code
 
-純粋関数`validateManifest`、`normalizeScope`、`scopesOverlap`は同期関数とする。git／filesystemへ
+純粋関数`validateManifest`、`normalizeScope`、`scopesOverlap`、
+`workerReportTemplateForPacket(packet)`は同期関数とする。後者はstrict
+`dotagents.delegation-packet.v1`を検証し、対応するWorker Report templateを返す。git／filesystemへ
 触れる以下の関数はすべて`Promise`を返し、暗黙に`process.cwd()`を使わず、入力objectの
 `cwd`を必須とする。
 
@@ -960,9 +990,11 @@ placementDryRun({ cwd, control_id, task_id, evaluated_at, candidates })
 reservePlacement({ cwd, control_id, actor_id, expected_revision, task_id, candidate, review_decision })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
 consultationRecord({ cwd, control_id, actor_id, expected_revision, consultation })
+delegationPacketForWorker({ cwd, control_id, worker_run_id })
 admitWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id })
 requestWorkerCancel({ cwd, control_id, actor_id, expected_revision, worker_run_id, decision })
 observeWorker({ cwd, control_id, actor_id, expected_revision, worker_run_id, observation })
+importWorkerReport({ cwd, control_id, actor_id, expected_revision, worker_run_id, report })
 observeConsultation({ cwd, control_id, actor_id, expected_revision, consultation_id, observation })
 conflictCheck({ cwd, control_id, proposed_worker_run? })
 accept({ cwd, control_id, actor_id, expected_revision, worker_run_id,

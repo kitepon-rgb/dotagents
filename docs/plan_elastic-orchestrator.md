@@ -145,7 +145,7 @@ knowledge returnまでを縦に通した時だけ宣言する。汎用workflow e
   worktree generation、opaque handle、evidence retentionを再確認する。
 - [x] Task cancellationと個別Run cancellationを別operation／stateとして実装し、Task取消が
   Executor上のRunを自動cancelしたふりをしない。Run cancel要求とterminal観測も分離する。
-- [ ] TaskからExecutor別Delegation Packetとstrict Worker Report templateを生成し、report importを検証する。
+- [x] TaskからExecutor別Delegation Packetとstrict Worker Report templateを生成し、report importを検証する。
 - [ ] parent-declared campaign gate（members、all-terminal、audit-required、parent-release）を実装する。
   gateは後続Runを自動起動せず、未充足reservationを拒否するだけにする。
 - [x] `orchestrate` skillへ使用条件、小タスク除外、init→record→place→observe→resume→finalize→archiveの

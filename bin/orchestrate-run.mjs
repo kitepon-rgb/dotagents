@@ -10,6 +10,8 @@ const commands = new Map([
   ["registry-observation-record", api.registryObservationRecord],
   ["placement-dry-run", api.placementDryRun],
   ["placement-reserve", api.reservePlacement],
+  ["delegation-packet", api.delegationPacketForWorker],
+  ["worker-report-import", api.importWorkerReport],
   ["resume-check", api.resumeCheck],
   ["worker-run-record", api.workerRunRecord], ["consultation-record", api.consultationRecord],
   ["admit-worker", api.admitWorker], ["worker-cancel-request", api.requestWorkerCancel], ["observe-worker", api.observeWorker],

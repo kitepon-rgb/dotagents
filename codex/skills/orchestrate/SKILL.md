@@ -16,11 +16,11 @@ description: 複数フェーズ・複数担当の大規模実装、監査、移�
 ## Control Recordの最小lifecycle
 
 1. docs正本を確認してからControlを`init`し、Taskを`task-record`、Worker RunまたはConsultationをそれぞれ`worker-run-record`または`consultation-record`で記録する。
-2. Registry observationを記録し、`placement-dry-run`で候補を出す。親が候補を選び、`placement-reserve`でreservation proposalとして固定してから、親自身がExecutor固有入口でdispatchする。自動dispatchやExecutor stateの複製はしない。
-3. 観測・報告を回収して記録し、親がaccept/rejectを裁定する。`status --brief`でunresolved/unknown/uncollectedを確認し、timeoutや中断後は`resume-check`と同一handleで回収する。Task取消とRun cancel要求は別に記録し、外部側でcancel済みと推測しない。
+2. Registry observationを記録し、`placement-dry-run`で候補を出す。親が候補を選び、`placement-reserve`でreservation proposalとして固定する。planned/admitted Workerの`delegation-packet`を生成してから、親自身がExecutor固有入口でdispatchする。自動dispatchやExecutor stateの複製はしない。
+3. 観測・strict Worker Reportを回収し、`worker-report-import`で記録してから親がaccept/rejectを裁定する。`status --brief`でunresolved/unknown/uncollectedを確認し、timeoutや中断後は`resume-check`と同一handleで回収する。Task取消とRun cancel要求は別に記録し、外部側でcancel済みと推測しない。
 4. 受入済みTaskを`task-finalize-record`、Controlを`control-finalize`でfinalizeし、検証・再発防止に有用な知識を正本へ還流してから`archive`する。
 
-Delegation Packet/Worker Report importとparent-declared campaign gateは現時点で未実装である。report/campaignを自動化済みとして扱わず、必要な親の判断・release・記録を省略しない。
+parent-declared campaign gateは現時点で未実装である。campaignを自動化済みとして扱わず、必要な親の判断・release・記録を省略しない。
 
 ## Codex appendix
 
