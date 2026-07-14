@@ -117,14 +117,17 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - windowは`window_id`、`starts_at`または`duration_seconds`、`reset_at`を持つ。
   - v1は同一poolのplacementを直列化し、一回の選択ごとにsnapshot再取得を要求する。reset境界で旧snapshot／reservationを失効させる。
 - [x] 親identityを`project path + host identity + parent session/thread ID + completed-turn cursor + active lease/epoch`とする。複数履歴は許すが、同じ親identityに複数active leaseがあればfail closedにする。
-- [ ] Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostでcharacterizationする。
-  - 公式契約ではmain turnの`Stop.last_assistant_message`、API失敗の`StopFailure`、background sessionのjob ID／`agents --json`／`logs`／`stop`／`respawn`まで確認した。現MacはClaude Code 2.1.207 installedだが未loginなので、実host smokeは未完了。
+- [x] Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostでcharacterizationする。
+  - 公式契約ではmain turnの`Stop.last_assistant_message`、API失敗の`StopFailure`、background sessionのjob ID／`agents --json`／`logs`／`stop`／`respawn`まで確認した。
+  - 2026-07-15にMax accountへ認証し、Haiku 4.5／plan権限でheadless `result/end_turn`、同じsession IDのresume、`SessionStart:resume`、background job `busy/working → idle/done → stop`を実測した。`--bg`と`--print`は明示競合するため、Observerはbackground job handle、Workerはstream-json `result`を別契約で扱う。
+  - Claude completed turnはfinal assistant、process exit、mtimeで推測せず、Throughline Stop hookがpair capture後にatomic publishする製品所有receiptへ束縛する。Claude `/rewind`はforkなので同一conversation rollback surfaceを作らない。
 - [x] Codex親からClaudeをWorker／相談役として呼ぶ正規入口を棚卸しし、installed→registered→verified→execution-verifiedを分ける。
   - headless `claude -p --output-format stream-json`＋session resumeと、read-only background sessionを入口候補に固定した。
-  - 現行aiterm callable toolにClaude Agentはなく、Elastic adapter catalogも`claude-internal` projection-only。Claude CLIはinstalled、authなし、adapter未登録なのでverified未満。
+  - 現行aiterm callable toolにClaude Agentはなく、Elastic adapter catalogも`claude-internal` projection-only。Claude CLI自体は認証後のheadless／resume／background smokeに成功してexecution-verifiedだが、Elastic adapterは未登録である。
 - [ ] Claude親からCodex旗艦を相談役として呼ぶ正規入口とtimeout回収を実測する。
 - [x] Claude／Codexの残quota、window、reset時刻を取得できる公式またはprovider-owned入口を調査し、取得不能も結論として記録する。
-  - Claude公式は5h／7dの`used_percentage`と`resets_at`、Agent SDKのmodel別7日枠を持つ。未loginのため現account snapshotは未取得。
+  - Claude公式は5h／7dの`used_percentage`と`resets_at`、Agent SDKのmodel別7日枠を持つ。
+  - 認証後のprovider-owned `rate_limit_event`で週次利用率76%、reset `2026-07-17T08:00:00Z`、overage未使用を実測した。5時間枠は当該eventに現れなかったため、存在を推測せずwindow欠落として扱う。
   - Codex CLI 0.144.3のproduct-owned eventで週次10080分枠、used 2%、reset `2026-07-21T20:37:04Z`を非秘密fieldだけで実測した。
 - [x] 調査した外部仕様を各一次ソースからRAGへ保存し、`rag/INDEX.md`へ追記する。
   - `rag/orchestration/provider-quota-and-claude-runtime.md`とraw一次ソース6件へ保存した。
