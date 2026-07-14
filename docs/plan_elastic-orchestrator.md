@@ -188,6 +188,16 @@ Markdown lint、`make ci`のgreenで採用指摘を閉じた。live provider dis
 - [x] read-only低リスクでもv1は親release後だけdispatchする。F write、H、高リスクwriteは自動dispatchしない。
 - [x] provider障害時のfallbackは新しいRun／Decision参照として明示し、元失敗をgreenへ丸めない。
 
+Phase gate（2026-07-14）: 2視点のFind、独立refuterの反証とCritic、親裁定を1回実施した。
+soft capacity unknownのreview漏れ、fallback Decisionの実在未検査と生成receiptへの未束縛を採用し、
+Control schema v21、soft unknown review、Decision文書確認、manual Worker identity／fallback digestを追加した。
+Budget EnvelopeはControl所有なので別Controlの履歴を合算する案を棄却し、Control内上限と全Control横断の
+capacity／write conflictを分離した。manual Worker記録は親の明示宣言でありRegistry eligibilityを主張せず、
+Registry評価済みの配置は`reservePlacement`だけと文書化した。fallbackの別入口はexecutor差へ狭めず、
+同一adapter内workflow変更も親Decisionで説明できる契約を維持した。同じPhaseへの独立監査は反復せず、
+親がdiff・受入条件・関連81 tests・Markdown lint・`make ci`のgreenを確認した。外部Executor、network、
+provider cancel commandは実行していない。
+
 ### Phase 4: Campaign／Barrier
 
 - [ ] Discovery、Refutation、Design、Implementation、Final Audit campaignを親宣言gateとして表現する。

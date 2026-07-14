@@ -70,7 +70,7 @@ async function initialized(t, overrides = {}) {
 
 test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを拒否する", () => {
   const manifest = {
-    schema_version: "dotagents.orchestration-control.v20", record_revision: 0, control_id: CONTROL, status: "active",
+    schema_version: "dotagents.orchestration-control.v21", record_revision: 0, control_id: CONTROL, status: "active",
     declaration: { objective_ref: "docs/control-record-plan.md", project_root_realpath: "/project", common_dir_realpath: "/project/.git", git_dir_realpath: "/project/.git", git_dir_file_id: "1:1", base_sha: "0".repeat(40), initial_dirty: false, initial_status_digest: "a".repeat(64), initial_workspace_digest: "b".repeat(64), created_at: "2026-07-14T00:00:00.000Z", created_by: "parent-001" },
     continuation: { predecessor_control_id: null, root_control_id: CONTROL, sequence: 0 },
     durability: { protocol_version: "fsync-rename-fsync.v1", file_sync: "required", directory_sync: "required", atomic_rename: "required" }, budget: makeBudget(),
@@ -479,6 +479,7 @@ test("Placement dry-runはRegistry由来の候補をcanonical順で評価し、�
   const inputs = [
     observation("placement-eligible"),
     observation("placement-admission-unknown", { capacity: capacity({ admission: { value: "unknown", evidence: null } }) }),
+    observation("placement-soft-unknown", { capacity: capacity({ soft_inflight_limit: { knowledge: "unknown", value: null, evidence: null } }) }),
     observation("placement-soft-exhausted", { capacity: capacity({ soft_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/placement-soft-low.md") }, observed_inflight: { knowledge: "known", value: 1, evidence: evidence("docs/placement-observed-one.md") } }) }),
     observation("placement-disabled", { enabled: { value: "false", evidence: evidence("docs/placement-disabled.md") } }),
     observation("placement-enabled-unknown", { enabled: { value: "unknown", evidence: null } }),
@@ -503,7 +504,7 @@ test("Placement dry-runはRegistry由来の候補をcanonical順で評価し、�
       candidate("v-verification", "placement-verification-insufficient"), candidate("u-adapter", "placement-adapter-unknown"),
       candidate("t-expired", "placement-expired"), candidate("s-enabled-unknown", "placement-enabled-unknown"),
       candidate("r-disabled", "placement-disabled"), candidate("q-soft-review", "placement-soft-exhausted"),
-      candidate("p-admission-review", "placement-admission-unknown"), candidate("o-registry-missing", "placement-missing"),
+      candidate("p-soft-unknown-review", "placement-soft-unknown"), candidate("n-admission-review", "placement-admission-unknown"), candidate("o-registry-missing", "placement-missing"),
       candidate("a-eligible", "placement-eligible"),
     ],
   });
@@ -515,7 +516,7 @@ test("Placement dry-runはRegistry由来の候補をcanonical順で評価し、�
   const resultById = new Map(output.candidates.map((entry) => [entry.candidate_id, entry]));
   assert.deepEqual(resultById.get("a-eligible"), { candidate_id: "a-eligible", registry_observation_id: "placement-eligible", eligibility: "eligible", reasons: [] });
   for (const [candidateId, eligibility, reason] of [
-    ["p-admission-review", "review-required", "capacity-review-required"], ["q-soft-review", "review-required", "capacity-review-required"],
+    ["n-admission-review", "review-required", "capacity-review-required"], ["p-soft-unknown-review", "review-required", "capacity-review-required"], ["q-soft-review", "review-required", "capacity-review-required"],
     ["r-disabled", "ineligible", "enabled-false"], ["s-enabled-unknown", "ineligible", "enabled-unknown"],
     ["t-expired", "ineligible", "registry-expired"], ["u-adapter", "ineligible", "adapter-unknown"], ["o-registry-missing", "ineligible", "registry-missing"],
     ["v-verification", "ineligible", "verification-insufficient"], ["w-capability", "ineligible", "capability-mismatch"],
@@ -771,6 +772,53 @@ test("Placement dry-runはapproach family・retry・integration上限を決定�
   const integrationTask = await api.taskRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent", expected_revision: failed.revision, task: makeTask({ task_id: "placement-integration-task", role: "integrator", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const integration = makePlacementCandidate({ candidate_id: "placement-integration-candidate", registry_observation_id: "placement-policy-registry", assignment_id: "placement-integration-assignment", workspace_cwd: repo.root, lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "placement-integration-assignment", approach_family_ref: "integration-primary" }, executor_handle: { agent_path: "/root/placement_integration_candidate" } });
   assert.deepEqual((await api.placementDryRun({ cwd: repo.root, control_id: "placement-policy-control", task_id: "placement-integration-task", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [integration] })).candidates[0].reasons, ["integration-capacity-exhausted"]);
+});
+
+test("Placement件数上限は所有Control内だけを数え別Controlの履歴を消費しない", async (t) => {
+  const firstControl = "placement-budget-scope-a"; const secondControl = "placement-budget-scope-b";
+  const { repo, result } = await initialized(t, { control_id: firstControl, budget: makeBudget({ max_runs_per_approach_family: 1 }) });
+  const firstTask = await api.taskRecord({
+    cwd: repo.root, control_id: firstControl, actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "placement-budget-task-a", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  await api.workerRunRecord({
+    cwd: repo.root, control_id: firstControl, actor_id: "parent", expected_revision: firstTask.revision,
+    worker_run: makeWorkerRun({
+      worker_run_id: "placement-budget-run-a", task_id: "placement-budget-task-a", assignment_id: "placement-budget-assignment-a",
+      executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "native-subagent", handle_schema_id: "codex-native.agent-path.v1" },
+      workflow_id: "native-subagent", workflow_capabilities: [
+        { capability_id: "report.structured", value: "true", evidence: evidence("docs/budget-scope-report.md") },
+        { capability_id: "workspace.read", value: "true", evidence: evidence("docs/budget-scope-read.md") },
+      ], write_mode: "none", workspace_cwd: repo.root, executor_handle: { agent_path: "/root/placement_budget_a" },
+      lineage: { ...makeWorkerRun().lineage, root_assignment_id: "placement-budget-assignment-a", approach_family_ref: "shared-approach-family" },
+    }),
+  });
+  const second = await api.init({
+    cwd: repo.root, control_id: secondControl, objective_ref: "docs/control-record-plan.md", actor_id: "parent",
+    document_refs: ["docs/control-record-plan.md"], budget: makeBudget({ max_runs_per_approach_family: 1 }),
+  });
+  const secondTask = await api.taskRecord({
+    cwd: repo.root, control_id: secondControl, actor_id: "parent", expected_revision: second.revision,
+    task: makeTask({ task_id: "placement-budget-task-b", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const registry = await api.registryObservationRecord({
+    cwd: repo.root, control_id: secondControl, actor_id: "parent", expected_revision: secondTask.revision,
+    observation: makeRegistryObservation({ registry_observation_id: "placement-budget-registry-b", capacity: {
+      admission: { value: "true", evidence: evidence("docs/budget-scope-admission.md") },
+      hard_inflight_limit: { knowledge: "known", value: 8, evidence: evidence("docs/budget-scope-hard.md") },
+      soft_inflight_limit: { knowledge: "known", value: 8, evidence: evidence("docs/budget-scope-soft.md") },
+      observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/budget-scope-inflight.md") },
+    } }),
+  });
+  const candidate = makePlacementCandidate({
+    candidate_id: "placement-budget-candidate-b", registry_observation_id: "placement-budget-registry-b",
+    assignment_id: "placement-budget-assignment-b", workspace_cwd: repo.root,
+    lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "placement-budget-assignment-b", approach_family_ref: "shared-approach-family" },
+    executor_handle: { agent_path: "/root/placement_budget_b" },
+  });
+  assert.deepEqual((await api.placementDryRun({
+    cwd: repo.root, control_id: secondControl, task_id: "placement-budget-task-b", evaluated_at: "2026-07-14T00:30:00.000Z", candidates: [candidate],
+  })).candidates, [{ candidate_id: "placement-budget-candidate-b", registry_observation_id: "placement-budget-registry-b", eligibility: "eligible", reasons: [] }]);
 });
 
 test("Placement reservationは同一revisionの配置判断をplanned Workerへ原子的に固定する", async (t) => {
@@ -1232,9 +1280,13 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   assert.equal(retry.manifest.worker_runs.at(-1).assignment_id, "assignment-001");
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run_id: "run-001", observation: workerObservation("running") }), code("INVALID_TRANSITION"));
   const fallbackRun = makeWorkerRun({ worker_run_id: "run-fallback", assignment_id: "assignment-fallback", workspace_cwd: repo.root, fallback: { from_worker_run_id: "run-001", decision_ref: "docs/fallback-decision.md" }, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "assignment-fallback", approach_family_ref: "fallback-provider" } });
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run: fallbackRun }), code("GIT_FAILURE"));
+  await writeFile(join(repo.root, "docs", "fallback-decision.md"), "# Fallback decision\n");
   const fallback = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run: fallbackRun });
   assert.deepEqual(fallback.manifest.worker_runs.at(-1).fallback, { from_worker_run_id: "run-001", decision_ref: "docs/fallback-decision.md" });
   assert.equal(fallback.manifest.worker_runs.find((entry) => entry.worker_run_id === "run-001").state, "failed");
+  const swappedDecision = structuredClone(fallback.manifest); swappedDecision.worker_runs.at(-1).fallback.decision_ref = "docs/control-record-plan.md";
+  assert.throws(() => api.validateManifest(swappedDecision), code("INVALID_SCHEMA"));
   const tamperedFallback = structuredClone(fallback.manifest); tamperedFallback.worker_runs.at(-1).fallback.from_worker_run_id = "run-002";
   assert.throws(() => api.validateManifest(tamperedFallback), code("INVALID_SCHEMA"));
 });

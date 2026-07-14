@@ -50,7 +50,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 
 ```json
 {
-  "schema_version": "dotagents.orchestration-control.v20",
+  "schema_version": "dotagents.orchestration-control.v21",
   "record_revision": 0,
   "control_id": "elastic-phase1",
   "status": "active",
@@ -124,7 +124,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v20で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は現在v21で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -134,7 +134,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   Worker cancel要求の分離、v16はparent-declared campaign gate、v17はsidecar durable workの
   遅延execution-worktree binding、v18はprovider binding相関とCodex native canonical agent path、
   v19はapproach family／assignment retry／integration Run上限をBudget、v20は明示fallback参照を
-  Worker Runへ追加した。旧manifestを
+  Worker Runへ追加し、v21はmanual Worker生成identity／fallbackのreceipt digest束縛を追加した。旧manifestを
   黙って書き換えず、明示migrationが実装されるまでは
   `INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -209,9 +209,12 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
   `previous_receipt_digest`へ持ち、read/save時に連番とchainを再計算する。過去receiptの書換え、欠落、
   並べ替えを`INVALID_SCHEMA`で拒否する。
-- `subject_digest`は通常operationでは`null`。`placement-reserve`だけは保存した
+- `subject_digest`は通常operationでは`null`。`placement-reserve`は保存した
   `placement_reservation` exact objectのcanonical JSON SHA-256を必須とし、candidate digest、Registry
-  参照、評価結果、review Decision、親actor、選択時刻をcreation receiptへ結合する。
+  参照、評価結果、review Decision、親actor、選択時刻をcreation receiptへ結合する。manual
+  `worker-run-record`も作成時のWorker／Task／assignment identityとfallback宣言をdigestへ結合し、
+  fallback元RunとDecision参照を含む生成関係の妥当な値への差替えを拒否する。
+  `worker-workspace-bind`はprovider binding digestを結合する。
 - evidenceを使わない管理mutationは空配列、dispatch／terminal／result／acceptanceはそのmutationで
   検証したtyped descriptorを保存する。内容本体は複製しない。
 - failed mutationはrevisionもreceiptも増やさない。`last_update`は最後のreceiptのactor/timeと一致する。
@@ -372,7 +375,7 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
   `verification.observed_at`を持つsnapshotだけを現行候補とする。古いIDは`registry-superseded`、
   評価時刻より未来のIDは`registry-not-yet-observed`で拒否する。最新時刻が同じなのに内容が異なる
   snapshotは順序を捏造せず`registry-refresh-ambiguous`として親reviewへ送る。
-- capacity admissionがunknown、hard limitまたはobserved inflightがunknown、既知soft limit到達は
+- capacity admissionがunknown、hard／soft limitまたはobserved inflightがunknown、既知soft limit到達は
   `review-required`。enabled unknown、hard limit到達、unknown adapter、verification不足その他hard gateは
   `ineligible`。全hard gateを満たしreview理由もなければ`eligible`。
 - capacityの比較値はRegistryの`observed_inflight`だけにしない。同じexecutor envelope／workflowへ
@@ -424,6 +427,11 @@ manifestを拒否する。Registry IDだけを残して派生snapshotを差し�
 `REVISION_CONFLICT`となる。
 planned Runはcapacity／budget予約として後続placementへ数えるが、write workspace reservationは
 従来どおり`admitWorker`時に再検査して取得する。proposal記録自体はdispatchを行わない。
+
+`workerRunRecord`は親がExecutor宣言を直接記録する既存の明示操作であり、Registry snapshotに基づく
+placement eligibilityを主張する操作ではない。Registry評価済みとして扱う時は必ず`reservePlacement`を
+使い、manual記録をeligible／review済みへ読み替えない。どちらの経路も当該ControlのBudget Envelopeと
+明示admissionを迂回できず、全Control横断write conflictはadmission時に再検査する。
 
 ### Brief status and resume check
 
@@ -717,7 +725,8 @@ wall timeとcost上限は非負整数または`null=unknown`である。costは�
 - wall timeとcostは、Worker／Consultationの全予約上限を合算する。failed／cancelled／retryも記録済み
   Runとして消費し、黙ってbudgetを返却しない。
 - approach family上限は同じ非null `lineage.approach_family_ref`の全Run、retry上限は初回を除く同じ
-  assignmentのRun、integration上限はroleが`integrator`のTaskを参照する全Runを数える。placementは
+  assignmentのRun、integration上限はroleが`integrator`のTaskを参照する全Runを、いずれも当該
+  Control内だけで数える。別Controlの履歴は当該Controlが所有するBudgetを消費しない。placementは
   `approach-family-limit / retry-limit / integration-capacity-exhausted`をhard reasonとして返す。
   approach familyがnullの候補は`approach-family-unknown`でineligibleにし、無制限へ丸めない。
 - `null`を0、未使用、無制限へ丸めない。read-only `status`はunknownを保持して読めるが、Control上限
