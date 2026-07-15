@@ -107,7 +107,7 @@ H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugH
 `docs/`正本TODOへ登録する。独立gate・独立commitで根治してから、必ず保持位置へ戻る。
 第三者製品、H操作、権限外の変更は修理済みにせず、TODO登録後に承認・所有者対応を待つ。
 
-- [ ] R1 full gateで再現したMarkdown空行lint 3件を、内容を変えず最小修正してfocused lintを通す。
+- [x] R1 full gateで再現したMarkdown空行lint 3件を、内容を変えず最小修正してfocused lintを通す。
 - [x] Decision証拠を可変plan/TODOからwave専用の不変ADRへ分離する規約を、リポ正典へ固定する。
 - [x] active RunのDelegation Packetを再dispatchなしで回収できるread-only公開入口を追加する。
 - [x] active fixed Worker中の非交差fast-forward commitを安全に検証し、Report回収不能を解消する。

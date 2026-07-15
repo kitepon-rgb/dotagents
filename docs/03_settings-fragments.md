@@ -42,6 +42,7 @@ apply-observer-hook-config --apply --observer-hook "$HOME/.local/bin/observer-pa
 ```
 
 `settings.json`が存在しない・空の場合もadapterがobjectとして扱う。symlink、Observer CLI不在、fragment schema不一致、candidate verifier不一致はfail loudであり、既存の他製品Stop hookを削除して補うことはしない。
+
 - **正本化ゲート hook（全端末推奨・下記）**: プラン承認直後に「計画文書の作法」を注入し、承認プランの docs/ 正本化を機械発火させる。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）、配線だけを各端末の `~/.claude/settings.json` に手挿し（同期ペイロード＋手挿しコネクタ＝settings.json 非同期の型）。設計と TODO は [archive/2026-07_plan-gate-hook.md](archive/2026-07_plan-gate-hook.md)（完遂済み）。
 
 ### 正本化ゲート hook の配線断片
