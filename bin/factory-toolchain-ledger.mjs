@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 const PRODUCTS = new Set(['claude-code', 'codex-cli', 'grok-build']);
 const STATUS = new Set(['success', 'failed', 'skipped', 'pending']);
 const SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/u;
-const REASONS = new Set(['npm_unavailable', 'install_failed', 'registry_unavailable', 'post_version_unavailable', 'version_mismatch', 'updated', 'already_current', 'optional_missing', 'check_failed', 'check_schema_invalid', 'update_failed', 'post_contract_failed', 'not_observed']);
+const REASONS = new Set(['npm_unavailable', 'install_failed', 'registry_unavailable', 'downgrade_refused', 'post_version_unavailable', 'version_mismatch', 'updated', 'already_current', 'optional_missing', 'check_failed', 'check_schema_invalid', 'update_failed', 'post_contract_failed', 'not_observed']);
 const ARGUMENTS = new Set(['file', 'product', 'before', 'latest', 'operation', 'after', 'post-gate', 'reason', 'observed-at']);
 
 function parse(argv) { const [command, ...rest] = argv; if (command !== 'record') throw new Error('recordだけを受理します'); const value = {}; for (let i = 0; i < rest.length; i += 2) { const key = rest[i]; const next = rest[i + 1]; const name = key?.slice(2); if (!key?.startsWith('--') || next === undefined || !ARGUMENTS.has(name) || name in value) throw new Error('引数が不正です'); value[name] = next; } if (Object.keys(value).length !== ARGUMENTS.size) throw new Error('引数が不足しています'); return value; }

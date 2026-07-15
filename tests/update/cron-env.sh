@@ -26,7 +26,9 @@ cat > "$TEST_HOME/.nvm/fake-bin/npm" <<'EOF'
 #!/bin/sh
 case "$*" in
   'prefix -g') printf '%s\n' "${NPM_PREFIX:-$HOME/npm-global}"; exit 0 ;;
-  'view @anthropic-ai/claude-code version --json') echo '"2.1.207"'; exit 0 ;;
+  'view @anthropic-ai/claude-code version --json')
+    if [ -n "${NPM_CLAUDE_LATEST_JSON+x}" ]; then printf '%s\n' "$NPM_CLAUDE_LATEST_JSON"; else echo '"2.1.207"'; fi
+    exit 0 ;;
   'view @openai/codex version --json') echo '"0.144.3"'; exit 0 ;;
 esac
 printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/npm-calls.log"
@@ -51,7 +53,11 @@ chmod +x "$TEST_HOME/.nvm/fake-bin/claude" "$TEST_HOME/.nvm/fake-bin/codex"
 cat > "$TEST_HOME/npm-global/bin/claude" <<'EOF'
 #!/bin/sh
 printf '%s:global-claude\n' "${RUN_ID:-default}" >> "$HOME/cli-calls.log"
-echo '2.1.207'
+count_file="$HOME/${RUN_ID:-default}-claude-version-count"
+count=0; [ ! -f "$count_file" ] || IFS= read -r count < "$count_file"
+count=$((count + 1)); printf '%s' "$count" > "$count_file"
+if [ "${CLAUDE_DISAPPEAR_AFTER_FIRST:-0}" -eq 1 ] && [ "$count" -gt 1 ]; then exit 127; fi
+echo "${CLAUDE_VERSION:-2.1.207}"
 EOF
 cat > "$TEST_HOME/npm-global/bin/codex" <<'EOF'
 #!/bin/sh
@@ -97,12 +103,12 @@ EOF
 chmod +x "$TEST_HOME/base-bin/factory-reporter-schedule-runner"
 cat > "$TEST_HOME/.nvm/fake-bin/grok" <<'EOF'
 #!/bin/sh
-printf 'grok:%s\n' "$*" >> "$HOME/update-events.log"
+printf '%s:grok:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/update-events.log"
 case "$*" in
   'update --check --json')
-    if [ -f "$HOME/grok-updated" ]; then echo '{"currentVersion":"0.2.1","latestVersion":"0.2.1","updateAvailable":false,"installer":"native","channel":"stable","autoUpdate":null,"error":null}'; else echo '{"currentVersion":"0.2.0","latestVersion":"0.2.1","updateAvailable":true,"installer":"native","channel":"stable","autoUpdate":null,"error":null}'; fi ;;
+    if [ -n "${GROK_CHECK_JSON+x}" ]; then printf '%s\n' "$GROK_CHECK_JSON"; elif [ -f "$HOME/grok-updated" ]; then echo '{"currentVersion":"0.2.1","latestVersion":"0.2.1","updateAvailable":false,"installer":"internal","channel":"stable","autoUpdate":null,"error":null}'; else echo '{"currentVersion":"0.2.0","latestVersion":"0.2.1","updateAvailable":true,"installer":"internal","channel":"stable","autoUpdate":null,"error":null}'; fi ;;
   'update --stable') : > "$HOME/grok-updated" ;;
-  --version) echo '0.2.1' ;;
+  --version) [ "${GROK_VERSION_MISSING:-0}" -ne 1 ] || exit 127; echo '0.2.1' ;;
 esac
 EOF
 chmod +x "$TEST_HOME/.nvm/fake-bin/grok"
@@ -130,11 +136,11 @@ fi
   || fail 'gate確定後に最終update observationを1回実行していない'
 [ "$(tail -n 1 "$TEST_HOME/update-events.log")" = "reporter:--config $REPORTER_CONFIG --finalize-update" ] \
   || fail 'factory reporter が更新処理より前に実行された'
-grep -q 'grok:update --check --json' "$TEST_HOME/update-events.log" \
+grep -q '^normal:grok:update --check --json$' "$TEST_HOME/update-events.log" \
   || fail 'Grok stable update check を実行していない'
-grep -q 'grok:update --stable' "$TEST_HOME/update-events.log" \
+grep -q '^normal:grok:update --stable$' "$TEST_HOME/update-events.log" \
   || fail 'Grok update_available時にstable updateを実行していない'
-grep -q 'grok:--version' "$TEST_HOME/update-events.log" \
+grep -q '^normal:grok:--version$' "$TEST_HOME/update-events.log" \
   || fail 'Grok stable update後のversion確認がない'
 grep -q '=== agents-update end:' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
   || fail '完了行がない'
@@ -161,6 +167,82 @@ grep -q '^path-shadow:global-codex$' "$TEST_HOME/cli-calls.log" \
 if grep -q '^path-shadow:shadow-' "$TEST_HOME/cli-calls.log"; then
   fail 'PATH shadowされた旧CLIをversion判定に使った'
 fi
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  NPM_CLAUDE_LATEST_JSON='{"version":"2.1.207"}' RUN_ID=registry-drift \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/registry-drift.out" 2>&1; then
+  fail 'npm registry objectをlatest versionとして受理した'
+fi
+if grep -q '^registry-drift:install -g @anthropic-ai/claude-code@latest$' "$TEST_HOME/npm-calls.log"; then
+  fail 'npm registry schema drift時にClaude Codeを更新した'
+fi
+grep -q '^registry-drift:install -g @openai/codex@latest$' "$TEST_HOME/npm-calls.log" \
+  || fail 'Claude Code registry drift後に独立したCodex更新を継続しなかった'
+node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).products["claude-code"];if(r.reason_code!=="registry_unavailable"||r.operation_status!=="failed")process.exit(1)' \
+  "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" || fail 'registry driftを台帳へfailed記録しない'
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  NPM_CLAUDE_LATEST_JSON='"unknown"' RUN_ID=registry-unknown \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/registry-unknown.out" 2>&1; then
+  fail 'npm registry unknown versionを更新成功扱いした'
+fi
+if grep -q '^registry-unknown:install -g @anthropic-ai/claude-code@latest$' "$TEST_HOME/npm-calls.log"; then
+  fail 'npm registry unknown version時にClaude Codeを更新した'
+fi
+node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).products["claude-code"];if(r.reason_code!=="registry_unavailable"||r.latest_version!==null)process.exit(1)' \
+  "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" || fail 'unknown latestを推測せず台帳へ保存しない'
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  CLAUDE_VERSION=2.2.0 RUN_ID=npm-downgrade \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/npm-downgrade.out" 2>&1; then
+  fail 'installed > registry latestを更新成功扱いした'
+fi
+if grep -q '^npm-downgrade:install -g @anthropic-ai/claude-code@latest$' "$TEST_HOME/npm-calls.log"; then
+  fail 'npm downgradeを実行した'
+fi
+node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).products["claude-code"];if(r.reason_code!=="downgrade_refused"||r.before_version!=="2.2.0"||r.after_version!=="2.2.0")process.exit(1)' \
+  "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" || fail 'npm downgrade拒否を台帳へ保存しない'
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  CLAUDE_DISAPPEAR_AFTER_FIRST=1 RUN_ID=post-cli-missing \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/post-cli-missing.out" 2>&1; then
+  fail '更新後CLI消失を成功扱いした'
+fi
+node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).products["claude-code"];if(r.reason_code!=="post_version_unavailable"||r.after_version!==null)process.exit(1)' \
+  "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" || fail '更新後CLI消失を台帳へ保存しない'
+
+rm -f "$TEST_HOME/grok-updated"
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  GROK_CHECK_JSON='{"currentVersion":"0.2.2","latestVersion":"0.2.1","updateAvailable":false,"installer":"internal","channel":"stable","autoUpdate":null,"error":null}' \
+  RUN_ID=grok-downgrade /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/grok-downgrade.out" 2>&1; then
+  fail 'Grok current > latestを更新成功扱いした'
+fi
+if grep -q '^grok-downgrade:grok:update --stable$' "$TEST_HOME/update-events.log"; then
+  fail 'Grok downgradeを実行した'
+fi
+node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).products["grok-build"];if(r.reason_code!=="downgrade_refused"||r.operation_status!=="failed")process.exit(1)' \
+  "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" || fail 'Grok downgrade拒否を台帳へ保存しない'
+
+rm -f "$TEST_HOME/grok-updated"
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  GROK_VERSION_MISSING=1 RUN_ID=grok-post-missing \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/grok-post-missing.out" 2>&1; then
+  fail 'Grok更新後CLI消失を成功扱いした'
+fi
+node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).products["grok-build"];if(r.reason_code!=="post_version_unavailable"||r.operation_status!=="failed")process.exit(1)' \
+  "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" || fail 'Grok更新後CLI消失を台帳へ保存しない'
 
 if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/shadow-bin:$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \

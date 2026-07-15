@@ -93,7 +93,7 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
   await script('aiterm-mcp', `cat >/dev/null; echo '${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: JSON.stringify(fixtures.aiterm) }] } })}'`);
   await script('claude', "echo '2.1.0'"); await script('codex', "echo '0.144.3'");
   await script('npm', `if [ "$2" = @anthropic-ai/claude-code ]; then echo '"2.1.0"'; else echo '"0.144.3"'; fi`);
-  await script('grok', "echo '{\"currentVersion\":\"0.2.99\",\"latestVersion\":\"0.2.99\",\"updateAvailable\":false,\"installer\":\"native\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'");
+  await script('grok', "echo '{\"currentVersion\":\"0.2.99\",\"latestVersion\":\"0.2.99\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'");
   const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
   const ledgerPath = join(root, 'toolchain-ledger.json'); const record = (version) => ({ before_version: version, latest_version: version, operation_status: 'skipped', after_version: version, post_gate_status: 'success', reason_code: 'already_current', observed_at: '2026-07-13T14:00:00.000Z' });
   await writeFile(ledgerPath, JSON.stringify({ schema_version: 'dotagents.toolchain-update.v1', products: { 'claude-code': record('2.1.0'), 'codex-cli': record('0.144.3'), 'grok-build': record('0.2.99') } }), { mode: 0o600 });
@@ -156,6 +156,28 @@ test('Grokの旧snake_case JSONはstableでも契約違反として拒否する'
   const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
   const report = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
   assert.equal(report.products['grok-build'].checks[0].status, 'unverified');
+});
+
+test('toolchain scannerはregistry schema drift・downgrade・Grok flag不整合をfail closedにする', { concurrency: false }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'factory-v2-toolchain-contract-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
+  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  for (const command of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp']) await script(command, 'exit 1');
+  await script('claude', "echo '2.2.0'"); await script('codex', "echo '0.144.3'");
+  await script('npm', `if [ "$2" = @anthropic-ai/claude-code ]; then echo '"2.1.0"'; else echo '{"version":"0.144.3"}'; fi`);
+  const grokPath = join(bin, 'grok');
+  await script('grok', "echo '{\"currentVersion\":\"0.2.2\",\"latestVersion\":\"0.2.1\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'");
+  const previousPath = process.env.PATH; const previousHome = process.env.HOME; process.env.PATH = `${bin}:${previousPath}`; process.env.HOME = root; t.after(() => { process.env.PATH = previousPath; process.env.HOME = previousHome; });
+  const first = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
+  assert.equal(first.products['claude-code'].latest_version, '2.1.0');
+  assert.equal(first.products['claude-code'].update_status, 'unverified');
+  assert.deepEqual(first.products['claude-code'].checks[1], { check_id: 'npm_latest', status: 'unverified', reason_code: 'downgrade_refused' });
+  assert.equal(first.products['codex-cli'].latest_version, undefined);
+  assert.deepEqual(first.products['codex-cli'].checks[1], { check_id: 'npm_latest', status: 'unverified', reason_code: 'registry_unverified' });
+  assert.deepEqual(first.products['grok-build'].checks[0], { check_id: 'stable_update', status: 'unverified', reason_code: 'downgrade_refused' });
+
+  await writeFile(grokPath, "#!/bin/sh\necho '{\"currentVersion\":\"0.2.0\",\"latestVersion\":\"0.2.1\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'\n");
+  const second = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
+  assert.deepEqual(second.products['grok-build'].checks[0], { check_id: 'stable_update', status: 'unverified', reason_code: 'grok_update_inconsistent' });
 });
 
 test('collection有効時のgpt runtime snapshot失敗をdisabledへ丸めない', { concurrency: false }, async (t) => {

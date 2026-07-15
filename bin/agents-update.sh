@@ -47,6 +47,7 @@ done
 case "$script_source" in */*) script_parent=${script_source%/*} ;; *) script_parent=. ;; esac
 SCRIPT_DIR="$(CDPATH='' cd -P -- "$script_parent" && pwd)"
 TOOLCHAIN_LEDGER_HELPER="${TOOLCHAIN_LEDGER_HELPER:-$SCRIPT_DIR/factory-toolchain-ledger.mjs}"
+TOOLCHAIN_CONTRACT_HELPER="${TOOLCHAIN_CONTRACT_HELPER:-$SCRIPT_DIR/factory-toolchain-contract.mjs}"
 TOOLCHAIN_LEDGER_FILE="${TOOLCHAIN_LEDGER_FILE:-$LOG_DIR/toolchain-ledger.json}"
 
 extract_semver() { node -e 'const s=require("fs").readFileSync(0,"utf8");const m=s.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?/);if(m)process.stdout.write(m[0]);'; }
@@ -123,24 +124,35 @@ UV_TOOLS=(
         '@anthropic-ai/claude-code') product='claude-code'; cli='claude' ;;
         '@openai/codex') product='codex-cli'; cli='codex' ;;
       esac
-      before=none; latest=none; after=none; operation=success; reason=updated
+      before=none; latest=none; after=none; operation=success; reason=updated; skip_install=0
       if [[ -n "$product" ]]; then
         if [[ -n "$npm_global_bin" ]]; then
           before="$($cli --version 2>/dev/null | extract_semver || true)"; before="${before:-none}"
         fi
-        latest="$(npm view "$pkg" version --json 2>/dev/null | extract_semver || true)"; latest="${latest:-none}"
+        registry_json="$(npm view "$pkg" version --json 2>/dev/null)" || registry_json=''
+        if ! latest="$(printf '%s' "$registry_json" | node "$TOOLCHAIN_CONTRACT_HELPER" npm-latest)"; then
+          latest=none; after="$before"; operation=failed; reason=registry_unavailable; skip_install=1; update_failed=1
+          printf 'FAILED: %s registry latest contract\n' "$pkg"
+        elif [[ "$before" != none ]]; then
+          relation="$(node "$TOOLCHAIN_CONTRACT_HELPER" compare "$before" "$latest" 2>/dev/null)" || relation=invalid
+          if [[ "$relation" = 1 ]]; then
+            after="$before"; operation=failed; reason=downgrade_refused; skip_install=1; update_failed=1
+            printf 'FAILED: %s registry latest is older than installed version\n' "$pkg"
+          elif [[ "$relation" = invalid ]]; then
+            before=none
+          fi
+        fi
       fi
-      if ! npm install -g "${pkg}@latest"; then
+      if [[ "$skip_install" -eq 0 ]] && ! npm install -g "${pkg}@latest"; then
         printf 'FAILED: %s\n' "$pkg"
         update_failed=1
         operation=failed; reason=install_failed
       fi
       if [[ -n "$product" ]]; then
-        if [[ -n "$npm_global_bin" ]]; then
+        if [[ "$skip_install" -eq 0 && -n "$npm_global_bin" ]]; then
           after="$($cli --version 2>/dev/null | extract_semver || true)"; after="${after:-none}"
         fi
-        if [[ "$operation" = success && "$latest" = none ]]; then operation=failed; reason=registry_unavailable; update_failed=1
-        elif [[ "$operation" = success && "$after" = none ]]; then operation=failed; reason=post_version_unavailable; update_failed=1
+        if [[ "$operation" = success && "$after" = none ]]; then operation=failed; reason=post_version_unavailable; update_failed=1
         elif [[ "$operation" = success && "$after" != "$latest" ]]; then operation=failed; reason=version_mismatch; update_failed=1
         elif [[ "$operation" = success && "$before" = "$after" ]]; then operation=skipped; reason=already_current
         fi
@@ -177,21 +189,21 @@ UV_TOOLS=(
       grok_check=''
       grok_operation=failed; grok_reason=check_failed
     }
-    if [[ -n "$grok_check" ]] && ! printf '%s' "$grok_check" | node -e '
-      let value; try { value = JSON.parse(require("fs").readFileSync(0, "utf8")); } catch { process.exit(1); }
-      const keys = ["currentVersion", "latestVersion", "updateAvailable", "installer", "channel", "autoUpdate", "error"];
-      const semver = (v) => typeof v === "string" && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(v);
-      process.exit((!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).length !== keys.length || keys.some((key) => !(key in value)) || value.channel !== "stable" || !semver(value.currentVersion) || !semver(value.latestVersion) || typeof value.updateAvailable !== "boolean" || typeof value.installer !== "string" || !(value.autoUpdate === null || typeof value.autoUpdate === "boolean") || !(value.error === null || typeof value.error === "string")) ? 1 : 0);
-    '; then
+    grok_valid=''
+    if [[ -n "$grok_check" ]] && ! grok_valid="$(printf '%s' "$grok_check" | node "$TOOLCHAIN_CONTRACT_HELPER" grok-check 2>&1)"; then
       printf 'FAILED: grok-build stable update JSON\n'
       update_failed=1
-      grok_operation=failed; grok_reason=check_schema_invalid
-    elif [[ -n "$grok_check" ]] && printf '%s' "$grok_check" | node -e '
+      grok_operation=failed
+      case "$grok_valid" in
+        *downgrade_refused*) grok_reason=downgrade_refused ;;
+        *) grok_reason=check_schema_invalid ;;
+      esac
+    elif [[ -n "$grok_valid" ]] && printf '%s' "$grok_valid" | node -e '
       let value; try { value = JSON.parse(require("fs").readFileSync(0, "utf8")); } catch { process.exit(1); }
       process.exit(value.updateAvailable === true ? 0 : 1);
     '; then
-      grok_before="$(printf '%s' "$grok_check" | json_semver currentVersion || true)"; grok_before="${grok_before:-none}"
-      grok_latest="$(printf '%s' "$grok_check" | json_semver latestVersion || true)"; grok_latest="${grok_latest:-none}"
+      grok_before="$(printf '%s' "$grok_valid" | json_semver currentVersion || true)"; grok_before="${grok_before:-none}"
+      grok_latest="$(printf '%s' "$grok_valid" | json_semver latestVersion || true)"; grok_latest="${grok_latest:-none}"
       grok_operation=failed; grok_reason=update_failed
       if ! grok update --stable; then
         printf 'FAILED: grok-build stable update\n'
@@ -201,24 +213,19 @@ UV_TOOLS=(
         update_failed=1
         grok_reason=post_version_unavailable
       else
-        grok_after="$(grok update --check --json)" || grok_after=''
-        if ! printf '%s' "$grok_after" | node -e '
-          let value; try { value = JSON.parse(require("fs").readFileSync(0, "utf8")); } catch { process.exit(1); }
-          const keys = ["currentVersion", "latestVersion", "updateAvailable", "installer", "channel", "autoUpdate", "error"];
-          const semver = (v) => typeof v === "string" && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(v);
-          process.exit((!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).length !== keys.length || keys.some((key) => !(key in value)) || value.channel !== "stable" || !semver(value.currentVersion) || !semver(value.latestVersion) || typeof value.installer !== "string" || !(value.autoUpdate === null || typeof value.autoUpdate === "boolean") || !(value.error === null || typeof value.error === "string") || value.currentVersion !== value.latestVersion || value.updateAvailable !== false) ? 1 : 0);
-        '; then
+        grok_after_json="$(grok update --check --json)" || grok_after_json=''
+        if ! grok_after_valid="$(printf '%s' "$grok_after_json" | node "$TOOLCHAIN_CONTRACT_HELPER" grok-post 2>&1)"; then
           printf 'FAILED: grok-build post-update stable contract\n'
           update_failed=1
           grok_reason=post_contract_failed
         else
-          grok_after="$(printf '%s' "$grok_after" | json_semver currentVersion || true)"; grok_after="${grok_after:-none}"
+          grok_after="$(printf '%s' "$grok_after_valid" | json_semver currentVersion || true)"; grok_after="${grok_after:-none}"
           grok_operation=success; grok_reason=updated
         fi
       fi
-    elif [[ -n "$grok_check" ]]; then
-      grok_before="$(printf '%s' "$grok_check" | json_semver currentVersion || true)"; grok_before="${grok_before:-none}"
-      grok_latest="$(printf '%s' "$grok_check" | json_semver latestVersion || true)"; grok_latest="${grok_latest:-none}"
+    elif [[ -n "$grok_valid" ]]; then
+      grok_before="$(printf '%s' "$grok_valid" | json_semver currentVersion || true)"; grok_before="${grok_before:-none}"
+      grok_latest="$(printf '%s' "$grok_valid" | json_semver latestVersion || true)"; grok_latest="${grok_latest:-none}"
       grok_after="$grok_before"; grok_operation=skipped; grok_reason=already_current
     fi
   fi
