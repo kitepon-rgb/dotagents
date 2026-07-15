@@ -118,7 +118,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - snapshotは非秘密の`quota_pool_id`、`host_instance_id`、対象executor集合を持つ。
   - windowは`window_id`、`starts_at`または`duration_seconds`、`reset_at`を持つ。
   - v1は同一poolのplacementを直列化し、一回の選択ごとにsnapshot再取得を要求する。reset境界で旧snapshot／reservationを失効させる。
-- [x] 親identityを`project path + host identity + parent session/thread ID + completed-turn cursor + active lease/epoch`とする。複数履歴は許すが、同じ親identityに複数active leaseがあればfail closedにする。
+- [x] v1親identityを`project target + host identity + parent thread hash + completed-turn cursor`とする。
+  - hostに信頼できるsession終了eventがなく、Throughline monitor stateも表示用TTLであるため、active
+    lease／epochを推測実装しない。一project一活動親をv1前提とし、Throughlineが検出した
+    `ambiguous_parent`はfail closedにする。将来leaseは正式lifecycle証拠とmigrationを持つ別waveで追加する。
 - [x] Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostでcharacterizationする。
   - 公式契約ではmain turnの`Stop.last_assistant_message`、API失敗の`StopFailure`、background sessionのjob ID／`agents --json`／`logs`／`stop`／`respawn`まで確認した。
   - 2026-07-15にMax accountへ認証し、Haiku 4.5／plan権限でheadless `result/end_turn`、同じsession IDのresume、`SessionStart:resume`、background job `busy/working → idle/done → stop`を実測した。`--bg`と`--print`は明示競合するため、Observerはbackground job handle、Workerはstream-json `result`を別契約で扱う。
@@ -140,7 +143,8 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 - [x] Throughline側正本TODOをCodex専用からClaude／Codex共通契約へ更新する。
   - `docs/14_observer_completed_turn_feed_plan.md`、ADR 0002／0003へClaude Stop receipt、Codex `task_complete`、completed pair chain、host-neutral cursor境界を固定した。Claude receipt実装はThroughline commit `b585e98`、cursor裁定は`682fed2`。
-- [ ] host-neutral cursorへparent identity、host固有の完了証拠、active lease／epochを束縛する。project pathだけで親を選ばず、複数履歴と複数active leaseを区別する。
+- [ ] host-neutral cursorへproject identity、host／thread hash、host固有の完了証拠を束縛し、
+  detected ambiguityをfail closedにする。v1前提外の一般的な複数活動親をmtime／PID／TTLで推測しない。
 - [ ] Codexは`task_complete`、ClaudeはPhase 0で実証した完了証拠だけを採用し、mtimeや進行中projectionを完了扱いしない。
 - [ ] snapshot／delta／thread switch／host switch／resync／projection pending／paginationをblack-box固定する。
 - [ ] Observer以外にも再利用できるJSON-only read／wait CLI、cancel、timeout境界、65秒超live waitを両hostで検証する。
@@ -151,7 +155,8 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 ### Phase 2: Observer完成
 
 - [ ] Observer runtimeをhost-neutral SupervisorとCodex／Claude host adapterへ分離する。
-- [ ] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。host不明または同一identityの複数active leaseはfail closedにする。
+- [ ] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
+  host不明またはThroughlineの`ambiguous_parent`はfail closedにする。
 - [ ] Codex ObserverとClaude Observerで同じwatch／status／stop UXを提供する。
 - [ ] 両hostのproject-local continuationと親Mailbox hook adapterを実装し、host固有wireを共通coreへ漏らさない。
 - [ ] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
