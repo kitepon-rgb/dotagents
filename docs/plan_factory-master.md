@@ -63,7 +63,7 @@ Lane R: 既存工場rollout
 Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。同じdotagentsファイル、
 同じhost設定、本番BugHubを触る作業は同時に走らせず、親がwriterを一本化する。
 
-### 現在の実行queue（2026-07-15再開点）
+### 現在の実行queue（2026-07-16再開点）
 
 上から順にdispatchする。子計画内の未完チェック数は優先度に使わず、本queueとPhase依存だけで
 次の作業を決める。完了・blocked・H待ちが変わった時だけ本節を更新する。
@@ -76,9 +76,9 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 4 | `DONE` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
 | 5 | `DONE` | Claude／Codex provider result journal coreとSupervisor cleanup handoff | Observer / focused gate |
 | 6 | `DONE` | cycle所有権を外部Supervisorへ一意化し、Codex cycle-per-turn request/result coreを訂正する | Observer / focused＋related gate |
-| 7 | `NOW` | Supervisor一step coreをverified Throughline／Codex session所有process・CLI loopへ接続する | Observer / focused gate |
+| 7 | `DONE` | Supervisor一step coreをverified Throughline／Codex session所有process・CLI loopへ接続する | Observer / focused＋related gate |
 | 8 | `H-WAIT` | Codex live app-serverとClaude公開非対話delivery／Stop captureを実証する | Observer / live H gate |
-| 9 | `PARALLEL` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
+| 9 | `NOW` | wire v2の製品所有repo残欠陥（H不要のfixture／adapter修正から進める） | 各製品repo / R1独立gate |
 | 10 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
@@ -196,8 +196,11 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
           - [x] 一target一process lock、evidence input、Codex provider callback、`runSupervisorCycle`、sanitized receiptを
             束ねる一cycle一step callerを実装した。Observer `0ca7abe`、focused 4/4、関連44/44、ADR 0064／0065、
             計画commit `5169db1`で受け入れた。
-          - [ ] verified Throughline clientとpre-initialized Codex app-server sessionを所有する外部process／CLIへ
-            一step coreを配線し、timeout／cancel／fault／explicit stop loopを固定する。
+          - [x] verified Throughline clientとpre-initialized Codex app-server sessionを所有する外部process／CLIへ
+            一step coreを配線し、timeout／cancel／fault／explicit stop loopを固定した。Observer `77cbae4`／
+            `4e29398`／`6d03b71`／`96ccad7`、corrective `dda8567`／`f7efa09`、最終関連70/70、
+            static gate、ADR 0066〜0069、計画commit `e2adbca`で受け入れた。
+            cross-repo receiptは[ADR 0010](adr/0010-observer-supervisor-process-receipt.md)を正とする。
         - [ ] Claude background jobへの公開非対話reply ACKをlive H gateで実証する。Claude Code 2.1.210の
           `agents` shell surfaceにはsendが無いため、`claude -p --resume`やprivate protocolを推測fallbackにしない。
       - [ ] Codexはcycleごとのthread／session／turn／cwdとexact result、Claudeは隔離`--settings` Stop hookと
