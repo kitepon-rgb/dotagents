@@ -30,7 +30,7 @@
 
 | 子計画 | 親内の役割 | 2026-07-15時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了、O2のSupervisor-owned production callerから再開する |
+| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了、O2 queue 19cのClaude公開契約不足でblocked |
 | [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1 local closure完了、実hostはR2、意図的canaryはR3で進める |
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
@@ -91,7 +91,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19a | `DONE` | Codex production parent caller coreとinitial generation bootstrapを閉じる | Observer / O2 focused＋related gate |
 | 19b | `DONE` | Codex parent entry／dotagents配布をisolated HOMEで閉じる | Observer → dotagents / 独立gate |
 | 19c0 | `DONE` | Claude characterization専用の隔離capture／receipt／prepare／verify／cleanup harnessを閉じる | Observer / O2 focused＋related gate |
-| 19c | `H-WAIT` | Claude公開非対話reply／result read／session相関をcharacterizeする | Observer / O2 H gate |
+| 19c | `BLOCKED` | live Hは実施済み。Stop capture欠損、reply／terminal exact result非公開を解消する | Observer / O2 public contract gate |
 | 19d | `BLOCKED→19c` | 実証済み公開面だけでClaude production callerを実装する | Observer / O2 focused＋related gate |
 | 19e | `H-WAIT` | Observer dual-host live campaignを一回実施する | Observer / O2 H gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
@@ -99,6 +99,8 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
+現在のready queueは空である。19cの新しい非H証拠なしに19dを部分実装せず、19d未完のまま
+19e／O3／後続laneを先行させない。
 preflight後に判明したCodex parent callerと配布の非H欠落は
 [ADR 0025](adr/0025-observer-codex-parent-caller-core-receipt.md)と
 [ADR 0026](adr/0026-observer-codex-parent-entry-distribution-receipt.md)で受け入れた。
@@ -106,7 +108,10 @@ preflight後に判明したCodex parent callerと配布の非H欠落は
 [ADR 0027](adr/0027-observer-claude-characterization-readiness-correction.md)で非H queue 19c0を先行させた。
 queue 19c0はObserver `f40b672`、dotagents `78c358b`と
 [ADR 0028](adr/0028-observer-claude-characterization-harness-receipt.md)で受け入れた。
-次はqueue 19cのH承認待ちとする。queue 8は19eへ統合済みで、O2を閉じる前にO3を先行させない。
+queue 19cのlive Hは一つのjob／model requestで実施したが、Stop capture欠損、公開replyと
+terminal exact result readの不在により[ADR 0029](adr/0029-observer-claude-live-characterization-blocked.md)で
+`BLOCKED`とした。19dの部分実装やprivate fallbackは行わず、19cの公開契約が成立するまで19eと
+O3を先行させない。queue 8は19eへ統合済みである。
 
 再開時の所有境界:
 
@@ -298,6 +303,8 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     [ADR 0026](adr/0026-observer-codex-parent-entry-distribution-receipt.md)で受け入れた。
   - [ ] Claude公開非対話reply／exact result readをH characterizationし、実証済み公開面だけで
     production callerを実装した後にdual-host live campaignへ進む。
+    live H自体は一回実施済みだが、Stop capture欠損、reply／terminal exact result非公開により
+    19c／19dをblockedとした（[ADR 0029](adr/0029-observer-claude-live-characterization-blocked.md)）。
     実装順の訂正は[ADR 0024](adr/0024-observer-parent-caller-queue-correction.md)を正とする。
 - [ ] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
   - [x] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、

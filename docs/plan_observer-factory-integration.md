@@ -268,7 +268,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     install gateを[ADR 0028](adr/0028-observer-claude-characterization-harness-receipt.md)で受け入れた。
   - [ ] 上記harness完成後、Claude公開非対話reply／result readをH characterizationし、実証済み公開面だけで
     Claude callerを実装してからdual-host live Hへ進む
-    （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。
+    （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。live Hは一つのjobで実施済みだが、
+    Stop capture欠損、reply／terminal exact result非公開によりcallerはblockedである
+    （[ADR 0029](adr/0029-observer-claude-live-characterization-blocked.md)）。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
