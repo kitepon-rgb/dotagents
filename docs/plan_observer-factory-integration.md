@@ -235,6 +235,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     Phase 2へ公開／無人許可の分離、terminal先行確認、stop receiptとstate観測の分離を追加した。実adapterは未完のまま維持する。
   - [x] `claude logs`がObserverの必要情報以外のアカウント／利用状況表示を含み得ることを再確認した。raw出力を保存・親表示せず、
     子process内のallowlist抽出だけを構造化receiptへ返す出力衛生をPhase 2へ追加した。sanitizing adapter testは未完のまま維持する。
+  - [x] Delegation Packetの`report_template`が最上位field名しか示さず、native implementerがnested evidence／validationを
+    strict schemaどおり返せない運用摩擦を解消する。保存済みpacketからexactなWorker Report skeletonを生成するread-only入口を追加し、
+    packetとskeletonをdispatch前に保存して子へ渡す。親の手補正を標準運用にせず、生成物を埋めたreportがそのままimportできるfocused fixtureを通す。
+    - `worker-report-skeleton`を追加し、correlation、executor handle、validation refs、nested evidence shapeをprefillする。
+      write Runはbaseline確定後のadmittedだけに制限し、active回収でも同じdigestを維持する。focused test 1/1 PASS。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。

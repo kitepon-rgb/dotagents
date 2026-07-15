@@ -903,6 +903,13 @@ fail closedにする。後者は既にactiveなRunのterminal report相関を保
 - importは親acceptではない。`acceptance`は`null`のままで、親の検証後に既存`accept`または`reject`を
   別revisionで記録する。
 
+`worker-report-skeleton`は同じ`cwd / control_id / worker_run_id`から
+`dotagents.worker-report-skeleton.v1`を返すread-only入口である。read Runのplanned／admittedとwrite Runのadmittedでは通常packet、
+activeでは回収packetと同じ相関digestを使い、Worker Report v1のexact top-level fields、executor handle、
+Task validation refs、nested evidence shapeをprefillする。digest／timestamp／receipt refは明示placeholderであり、
+そのままimportできる成功reportではない。親はpacketとskeletonをdispatch前に保存して子へ渡し、
+active後の保存漏れ回収で同じTaskを再dispatchしてはならない。
+
 ## Parent-declared campaign gate
 
 Campaignは親が既存Run群をまとめ、後続Taskの開始条件を宣言するbounded gateである。scheduler、
