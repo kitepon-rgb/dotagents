@@ -243,6 +243,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     二file prepare／backup／atomic replace／途中失敗時rollbackをclean HOME fixtureで固定する。
     trust、model、effort、permission、credential、Spotter等の他製品hookは変更しない。
     focused gate `bash tests/install/observer-hook-config.sh`と`make lint-py`を通し、専用targetを`make ci`へ配線した。
+  - [x] P5-2aとしてObserver製品manifest、sanitized diagnostics、4 executable binと、dotagentsの
+    isolated npm install→reinstall→verify→rollbackを閉じた。Observer `630c5ff`／`b45c07a`／`d03495d`、
+    dotagents `894799b`、Observer ADR 0099〜0100をcross-repo receiptとする。
+  - [ ] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
+    保護集合、cleanup失敗時の再実行決定性を隔離fixtureで閉じる。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
