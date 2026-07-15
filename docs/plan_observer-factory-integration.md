@@ -298,6 +298,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     新しいretry Runへ再配置する。rejected Runを再dispatchせず、具体的blockerがある時だけ証拠付きで停止する契約を
     共有の委譲正典へ固定した。専用schemaや反復監査は追加しない。
   - [x] Control記録済みnative Runへの`agents.interrupt_agent`を、親が`worker-cancel-request`より先に実行した順序誤りを再発防止する。Codex appendixへcancel request先行、interrupt receipt回収、`observe-worker=cancelled`の順を固定した。今回のRunは順序違反をDecisionに明記したrev52とterminal receiptのrev53で閉じ、成功へ丸めていない。
+  - [ ] Observer repoで`codex-sidecar`の正規dry-runを実行すると、project-ownedな`.codex-sidecar.yml`がなく
+    `CONFIG_NOT_FOUND`でfail loudになる統合欠落を解消する。Observerの所有境界内へ最小設定を追加し、秘密、login、
+    host設定変更を伴わないdry-runとfocused fixtureをgreenにしてから、Observer向けexternal execution入口を
+    configured／verifiedへ進める。設定不在をSidecar本体の成功や障害へ丸めず、実writer利用はexecution-verified後に限る。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。
