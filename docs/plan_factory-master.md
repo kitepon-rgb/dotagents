@@ -76,7 +76,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 4 | `DONE` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
 | 5 | `DONE` | Claude／Codex provider result journal coreとSupervisor cleanup handoff | Observer / focused gate |
 | 6 | `DONE` | cycle所有権を外部Supervisorへ一意化し、Codex cycle-per-turn request/result coreを訂正する | Observer / focused＋related gate |
-| 7 | `NOW` | 外部Supervisor production callerを一target一process／一cycle一stepで接続する | Observer / focused gate |
+| 7 | `NOW` | Supervisor一step coreをverified Throughline／Codex session所有process・CLI loopへ接続する | Observer / focused gate |
 | 8 | `H-WAIT` | Codex live app-serverとClaude公開非対話delivery／Stop captureを実証する | Observer / live H gate |
 | 9 | `PARALLEL` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
 | 10 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
@@ -193,8 +193,11 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
           - [x] `applyCycle`／`finalizeAppliedCycle`をdurable cycle input／operation時刻へ束縛し、advisoryの
             Mailbox exact replayとapplied後cleanupへ接続した。Observer `fc51157`、focused 4/4、関連40/40、
             ADR 0062／0063、計画commit `7a638cd`で受け入れた。
-          - [ ] 一target一process lock、evidence input、Codex provider callback、`runSupervisorCycle`を束ねる
-            一cycle一step callerを実装する。
+          - [x] 一target一process lock、evidence input、Codex provider callback、`runSupervisorCycle`、sanitized receiptを
+            束ねる一cycle一step callerを実装した。Observer `0ca7abe`、focused 4/4、関連44/44、ADR 0064／0065、
+            計画commit `5169db1`で受け入れた。
+          - [ ] verified Throughline clientとpre-initialized Codex app-server sessionを所有する外部process／CLIへ
+            一step coreを配線し、timeout／cancel／fault／explicit stop loopを固定する。
         - [ ] Claude background jobへの公開非対話reply ACKをlive H gateで実証する。Claude Code 2.1.210の
           `agents` shell surfaceにはsendが無いため、`claude -p --resume`やprivate protocolを推測fallbackにしない。
       - [ ] Codexはcycleごとのthread／session／turn／cwdとexact result、Claudeは隔離`--settings` Stop hookと
