@@ -156,6 +156,8 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
 
 - [ ] registry公開版とdotagents adapterのschema drift、Throughline diagnostics、Windows ACL／npm shim、
   Codex Sidecar実配布版の残件を製品所有repoで閉じる。
+  - [x] 基盤toolchain 3製品のregistry／Grok exact update契約を`fc3bf3f`で実装し、
+    [ADR 0012](adr/0012-toolchain-update-version-acceptance.md)で受け入れた。
 - [ ] Spotter Windows経路と4 hostのsidecar/auditor diagnosticsを実配布物でgreenにする。
 - [ ] BugHub自己監視のoutbox再送とPi5外部通知bridgeを、意図的障害試験の前まで完成する。
 

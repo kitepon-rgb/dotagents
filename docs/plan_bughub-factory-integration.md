@@ -356,13 +356,14 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] 1製品の更新失敗後も残り製品の更新とfactory reportを継続するが、最終exitは非0にし、成功製品だけで全体をgreenへしない。更新logとBugHub observationは同じproduct ID/reason codeへ対応させる
 - [x] Claude Codeは必須hook/settings、Codexはconfig parser/hooks/native routing、Grok Buildはstable channelとaiterm/headless入口をread-only fixtureで検証する。session/agent起動、prompt送信、login/logout、OAuth変更をhealth checkに使わない
 - [x] host matrixでClaude Code/Codex/Grok Buildのrequired/optional/unsupportedを個別に決め、optional hostのmissingをissue化せず、required hostのmissing/update failure/compat driftだけを所定severityへ写像する
-- [ ] npm registry JSONとGrok `--check --json`のschema drift、未知version、downgrade、部分更新、更新後CLI消失、PATH shadowをfixture化し、人間向けstdout解析や無根拠なlatest推測を禁止する
-  - [ ] npm latestをJSON stringのexact semverだけへ束縛し、registry不明時はClaude/Codexのinstallを開始しない。
-  - [ ] installed > latestを`downgrade_refused`で拒否し、他製品の更新と最終reportは継続する。
-  - [ ] Grokのexact keys、`installer=internal`、stable channel、error null、version大小と`updateAvailable`の
+- [x] npm registry JSONとGrok `--check --json`のschema drift、未知version、downgrade、部分更新、更新後CLI消失、PATH shadowをfixture化し、人間向けstdout解析や無根拠なlatest推測を禁止する
+  - [x] npm latestをJSON stringのexact semverだけへ束縛し、registry不明時はClaude/Codexのinstallを開始しない。
+  - [x] installed > latestを`downgrade_refused`で拒否し、他製品の更新と最終reportは継続する。
+  - [x] Grokのexact keys、`installer=internal`、stable channel、error null、version大小と`updateAvailable`の
     一貫性をscanner／updater共通validatorへ固定する。
-  - [ ] schema drift、未知version、downgrade、部分失敗、更新後CLI消失、PATH shadowのfocused fixtureを通し、
-    [ADR 0011](adr/0011-toolchain-update-version-contract.md)の受入証拠へ固定する。
+  - [x] schema drift、未知version、downgrade、部分失敗、更新後CLI消失、PATH shadowのfocused fixtureを通し、
+    [ADR 0011](adr/0011-toolchain-update-version-contract.md)の契約を
+    [受入receipt ADR 0012](adr/0012-toolchain-update-version-acceptance.md)へ固定した（`fc3bf3f`、related Node 17/17）。
 
 #### 6.3 ServerManager/BugHubのserver-first互換面（F）
 
