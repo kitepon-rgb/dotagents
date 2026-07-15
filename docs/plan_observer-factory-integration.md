@@ -297,6 +297,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     report import前の受入差分は同じTask／Run相関／executor handleで再作業し、正式reject後は同じTask／assignmentの
     新しいretry Runへ再配置する。rejected Runを再dispatchせず、具体的blockerがある時だけ証拠付きで停止する契約を
     共有の委譲正典へ固定した。専用schemaや反復監査は追加しない。
+  - [x] Control記録済みnative Runへの`agents.interrupt_agent`を、親が`worker-cancel-request`より先に実行した順序誤りを再発防止する。Codex appendixへcancel request先行、interrupt receipt回収、`observe-worker=cancelled`の順を固定した。今回のRunは順序違反をDecisionに明記したrev52とterminal receiptのrev53で閉じ、成功へ丸めていない。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。
