@@ -30,11 +30,11 @@
 
 | 子計画 | 親内の役割 | 2026-07-15時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active、未完42件 |
-| [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active、未完34件 |
-| [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active、未完40件 |
-| [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active、未完3件 |
-| [GPT-5.6再配線](plan_gpt56-rewiring.md) | role routing詳細。残る他端末展開はCodex全対応へ合流 | Active、未完6件 |
+| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了後にObserver ADR 0044の既存作業へ戻る |
+| [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1の製品所有repo残件から再開する |
+| [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
+| [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
+| [GPT-5.6再配線](plan_gpt56-rewiring.md) | role routing詳細。残る他端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
 | [メモリ昇格queue](queue_memory-promotion.md) | 各repo作業時の機会駆動queue | Active、主レーンを遮らない |
 
 CalloutとGPT-5.6の他端末チェックは、Codex全対応Wave 3の同じhost receiptを参照して閉じる。
@@ -63,6 +63,31 @@ Lane R: 既存工場rollout
 Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。同じdotagentsファイル、
 同じhost設定、本番BugHubを触る作業は同時に走らせず、親がwriterを一本化する。
 
+### 現在の実行queue（2026-07-15再開点）
+
+上から順にdispatchする。子計画内の未完チェック数は優先度に使わず、本queueとPhase依存だけで
+次の作業を決める。完了・blocked・H待ちが変わった時だけ本節を更新する。
+
+| 順位 | 状態 | 作業 | 所有repo / gate |
+|---|---|---|---|
+| 1 | `NOW` | Claude/Codex各fixtureの65秒超Observer live wait | Throughline / focused live fixture |
+| 2 | `NEXT` | hook・capture・auditor-context・token monitorの関連回帰と文書同期 | Throughline / related gate |
+| 3 | `NEXT` | O1 full regression、独立監査、Control finalization、Observerへのreceipt還流 | Throughline → dotagents / Phase gate |
+| 4 | `READY_AFTER_O1` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
+| 5 | `PARALLEL_AFTER_O1` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
+| 6 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+
+H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
+意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
+
+再開時の所有境界:
+
+- Throughlineのcompleted chain、DB projection、JSON read/wait/cancel/timeoutは実commitとfocused gateで
+  完了済み。残りはqueue 1〜3であり、同じ実装を作り直さない。
+- Observer repoの`docs/plan_observer.md`とADR 0044の既存dirtyは前セッションの未完成果として保全し、
+  O1完了前には編集しない。
+- Latticeは別セッションの所有物であり、本計画の調査・実装・正典還流の対象外とする。
+
 ## 4. 実行TODO
 
 ### Phase M0 — TODO統合
@@ -87,8 +112,10 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 
 ### Phase O1 — Throughline completed-turn feed（NOW）
 
-- [ ] Claude receiptとCodex `task_complete`から、rollback検知可能なhost-neutral completed chainを完成する。
-- [ ] DB projection、`projection_pending`、pagination、JSON-only read/wait、cancel、timeoutを完成する。
+- [x] Claude receiptとCodex `task_complete`から、rollback検知可能なhost-neutral completed chainを完成する。
+  - Throughline `def92f4`、`022c0b8`、`7b07425`と同repo計画のfocused gateを実diffで確認した。
+- [x] DB projection、`projection_pending`、pagination、JSON-only read/wait、cancel、timeoutを完成する。
+  - Throughline `e3380fa`、`60c4036`、`1165efd`と65.1秒のClaude live wait証拠を確認した。
 - [ ] 65秒超live waitとClaude/Codex E2Eを通し、Phase full gateを一回だけ実行する。
 - [ ] Throughline側Controlをfinalizeし、成果commitとADR digestをObserver計画へ還流する。
 
