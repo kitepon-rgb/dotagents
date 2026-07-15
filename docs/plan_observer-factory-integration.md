@@ -260,6 +260,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     packetとskeletonをdispatch前に保存して子へ渡す。親の手補正を標準運用にせず、生成物を埋めたreportがそのままimportできるfocused fixtureを通す。
     - `worker-report-skeleton`を追加し、correlation、executor handle、validation refs、nested evidence shapeをprefillする。
       write Runはbaseline確定後のadmittedだけに制限し、active回収でも同じdigestを維持する。focused test 1/1 PASS。
+  - [x] Codex native follow-upで保存済みpacket／skeletonを要約転記すると、子がstrict nested shapeを再発明して
+    `worker-report-import`不能になる運用摩擦を防ぐ。follow-upには両artifactの実pathを明示し、子へ原本を読ませる。
+    pathを渡せない時はdispatchせず、schemaの説明文だけで代用しない。新しいschema／自動dispatch／個別testは増やさない。
+    - Codex `orchestrate` appendixへ原本path必須、要約転記禁止、pathなしdispatch禁止を追加した。
   - [x] write Runのplanned時にDelegation Packetを生成すると、admit時のbaseline HEAD確定でpacket digestが変わり、
     active report相関に使えなくなる契約不整合を直す。write Runはadmitted後だけpacket生成を許し、read Runのplanned生成は維持する。
     - planned writerを`INVALID_TRANSITION`で拒否し、admitted packetとactive回収skeletonのdigest一致を固定した。

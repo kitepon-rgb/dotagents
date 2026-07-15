@@ -10,6 +10,7 @@ description: 複数フェーズ・複数担当の大規模実装、監査、移�
 ## Codex appendix
 
 - nativeはrouting smokeの確認後に同一子へfollow-upし、必要時のみinterruptする。external executionはsidecar/aitermの固有task/session/job handleでdispatch・observe・resumeし、Controlには参照と観測だけを記録する。
+- nativeへ実作業をfollow-upする前に、`delegation-packet`と`worker-report-skeleton`の出力をそれぞれ安全な一意pathへ保存し、follow-up本文で両方の実pathを明示する。schemaを親が要約転記したり、field一覧だけで代用したりしない。子には両原本を読んでskeletonのexact shapeを保ったまま埋めるよう指示し、pathを渡せない時はdispatchしない。
 - A の委譲は、tightに結合した作業ならCodex nativeを既定にする。隔離、durable work、vendor固有機能、独立capacityが適合する時はsidecar/aitermを選ぶ。nativeでは`agent_type=<role>`と`fork_turns="none"`を指定し、最初のspawnは routing smoke のみとする。
 - `verify-codex-agent-routing <role> <agent-path>` が role・model・effort・developer instructions の一致を確認してから、同じ子へ follow-up で実作業を渡す。
 - `implementer` は仕様固定の実装・テスト、`refuter` は読み取り専用の敵対的検証、`sorter` は読み取り専用の分類・抽出を担う。model と effort は role TOML によって決まり、呼び出し側が手指定しない。
