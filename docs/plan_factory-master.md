@@ -162,6 +162,8 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     [ADR 0013](adr/0013-throughline-diagnostics-product-receipt.md)で受け入れた。host導入はR2へ残す。
   - [x] Windows factory ACLのローカル3入口を`39fba73`で統一済みと確認し、
     [ADR 0014](adr/0014-windows-factory-acl-local-receipt.md)で受け入れた。FOX実機receiptはR2へ残す。
+  - [x] Windows npm shimのPATHEXT／現行2スペースshapeを`5f781a8`／`5479a73`で修正済みと確認し、
+    [ADR 0015](adr/0015-windows-npm-shim-local-receipt.md)で受け入れた。FOX実機receiptはR2へ残す。
 - [ ] Spotter Windows経路と4 hostのsidecar/auditor diagnosticsを実配布物でgreenにする。
 - [ ] BugHub自己監視のoutbox再送とPi5外部通知bridgeを、意図的障害試験の前まで完成する。
 

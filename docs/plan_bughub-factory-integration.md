@@ -452,7 +452,9 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 1p. [ ] Windows factory ACLのローカル修正を受け入れ、FOX Windows native実機receiptで閉じる
    - [x] toolchain ledger、v2 schedule runner、Task Scheduler control artifactをreporter本体と同じ`Set-Acl -LiteralPath`系current-SID-only契約へ統一した。ACL済みtemporary ledgerのrename後再適用を除去し、PowerShell失敗を固定reasonでfail-loudにした（`39fba73`、focused 31/31、[ADR 0014](adr/0014-windows-factory-acl-local-receipt.md)）
    - [ ] FOX Windows nativeでledger生成→post-update scan/gate/enqueue/flush→scheduler dry-run/applyを実機再確認する（credential／実host applyはH）
-1q. [ ] FOX Windows nativeの現行npm global `.cmd` shimが`_prog`行を2スペース字下げする実形を、旧1スペース形と同じbounded helperのexact allowlistへ追加する。あわせて`PATHEXT`の許可外拡張子は実行せず後続候補へ進めるが、実行許可は`.exe`と検証済みnpm `.cmd`だけ、悪意あるshim拒否、5秒全体deadline、Node entrypointの`node_modules`内実在・realpath検証を維持し、実機12製品scan/post-update gateを再送する
+1q. [ ] Windows npm shim resolverのローカル修正を受け入れ、FOX Windows native実機receiptで閉じる
+   - [x] 現行npm global `.cmd`の2スペース`_prog`と旧1スペース形をexact allowlistへ固定し、PATHEXT許可外候補を実行せず`.exe`／検証済みnpm `.cmd`だけへ限定した。悪意あるshim拒否、5秒全体deadline、`node_modules`内regular-file／realpath検証を維持した（`5f781a8`、`5479a73`、focused 5/5、[ADR 0015](adr/0015-windows-npm-shim-local-receipt.md)）
+   - [ ] FOX Windows nativeの実配布版で12製品scan／post-update gateを再送する（実host scan/reportはH/R2）
 1r. [ ] Codex SidecarのWindows npm `.cmd`診断修正を実配布版でFOX Windows nativeへ反映し、12製品scan→post-update gate→enqueue/flush→Task Scheduler dry-run/applyを再送する
    - [x] 0.3.6の`factory-diagnostics`が`spawn("codex-sidecar-mcp")`を直呼びし、MCP initialize可能なのに`packageVersions=unverified`へ誤投影する欠陥を製品側で根治した。固定command・引数非再解釈・timeout・出力上限・fail-loudを維持したWindows回帰test、pack/install smoke、独立反証を通し、Codex Sidecar 3 packageをnpm `0.3.7`、tag `v0.3.7`、global CLI `0.3.7`へ公開・検証した
    - [ ] FOX Windows nativeの実配布版で12製品scan→post-update gate→enqueue/flush→Task Scheduler dry-run/applyを再送する
