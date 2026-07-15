@@ -81,6 +81,9 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 - [x] Decision証拠を可変plan/TODOからwave専用の不変ADRへ分離する規約を、リポ正典へ固定する。
 - [x] active RunのDelegation Packetを再dispatchなしで回収できるread-only公開入口を追加する。
 - [x] active fixed Worker中の非交差fast-forward commitを安全に検証し、Report回収不能を解消する。
+- [x] `boundedArray`が空の必須配列を「arrayでない」と誤診する問題を修正し、必要最小件数を名指しする。
+  - 空配列と非配列を分離し、`observation.dispatch_evidence must contain at least 1 entries`へ修正した。
+    正規のrunning観測は空fieldを送らず省略する。focused gate 1/1 green、fullはPhase末へ繰り延べる。
 
 ### Phase O1 — Throughline completed-turn feed（NOW）
 

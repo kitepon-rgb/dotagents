@@ -1548,6 +1548,14 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
   assert.equal(dispatched.manifest.worker_runs[0].state, "dispatched");
   assert.deepEqual(dispatched.manifest.worker_runs[0].dispatch_evidence, [evidence("docs/dispatch-proof.md")]);
+  await assert.rejects(
+    api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: workerObservation("running", { dispatch_evidence: [] }) }),
+    (error) => {
+      assert.equal(error.code, "INVALID_SCHEMA");
+      assert.equal(error.message, "observation.dispatch_evidence must contain at least 1 entries");
+      return true;
+    },
+  );
   const failed = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: terminalWorkerObservation() });
   assert.equal(failed.manifest.worker_runs[0].state, "failed");
   assert.deepEqual(failed.manifest.worker_runs[0].terminal_evidence, [evidence("docs/executor-terminal-proof.md")]);
