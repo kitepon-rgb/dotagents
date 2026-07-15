@@ -77,7 +77,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 5 | `DONE` | Claude／Codex provider result journal coreとSupervisor cleanup handoff | Observer / focused gate |
 | 6 | `DONE` | cycle所有権を外部Supervisorへ一意化し、Codex cycle-per-turn request/result coreを訂正する | Observer / focused＋related gate |
 | 7 | `DONE` | Supervisor一step coreをverified Throughline／Codex session所有process・CLI loopへ接続する | Observer / focused＋related gate |
-| 8 | `MERGED→19` | Codex live app-serverとClaude公開非対話delivery／Stop captureをqueue 19へ統合 | Observer / live H gate |
+| 8 | `MERGED→19e` | Codex live app-serverとClaude公開非対話delivery／Stop captureをqueue 19eへ統合 | Observer / live H gate |
 | 9 | `DONE` | wire v2の製品所有repo残欠陥とH不要のfixture／adapterを閉じる | 各製品repo / R1独立gate |
 | 10 | `DONE` | planned rollover、parent rebind、generation faultの非H transactionを閉じる | Observer / O2 focused＋related gate |
 | 11 | `DONE` | P2-5のAI tool surface空・project不変・Supervisor Mailbox write fixtureを閉じる | Observer / O2 focused＋related gate |
@@ -88,14 +88,18 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 16 | `DONE` | P5-2a clean環境installer／verify／rollback契約を閉じる | Observer → dotagents / 独立gate |
 | 17 | `DONE` | P5-2b empty fast path性能／retention cleanup契約を閉じる | Observer / O2 focused＋related gate |
 | 18 | `DONE` | P5-1b／P3-4c dual-host live H campaignの非H preflightを閉じる | Observer / O2 focused＋related gate |
-| 19 | `H-WAIT` | Observer dual-host live campaignを一回実施する | Observer / O2 H gate |
+| 19a | `NOW` | Codex production parent caller coreとinitial generation bootstrapを閉じる | Observer / O2 focused＋related gate |
+| 19b | `PENDING` | Codex parent entry／dotagents配布をisolated HOMEで閉じる | Observer → dotagents / 独立gate |
+| 19c | `H-WAIT` | Claude公開非対話reply／result read／session相関をcharacterizeする | Observer / O2 H gate |
+| 19d | `BLOCKED→19c` | 実証済み公開面だけでClaude production callerを実装する | Observer / O2 focused＋related gate |
+| 19e | `H-WAIT` | Observer dual-host live campaignを一回実施する | Observer / O2 H gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
-現在の主レーンにreadyな非H作業はなく、queue 19が次のH-WAITである。queue 8は19へ統合済みで、
-O2を閉じる前にO3を先行させない。
+preflight後の実装可能性監査でparent callerとinitial generationの非H欠落が判明したため、
+queue 19aをNOWとする。queue 8は19eへ統合済みで、O2を閉じる前にO3を先行させない。
 
 再開時の所有境界:
 
@@ -277,6 +281,12 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     product manifest／hook候補／canonical cwdを非変更で検証するversioned preflightとrunbookを閉じる。
     Observer `50b4e86`／`bbe407d`／`80b06f0`、ADR 0103〜0104、focused 13/13、related 40/40、
     actual read-only preflight `h_required`を[ADR 0023](adr/0023-observer-live-preflight-receipt.md)で受け入れた。
+  - [ ] Codex production parent caller、current parent／initial generation bootstrap、同一app-server
+    transportのSupervisor所有を非H fixtureで閉じる。
+  - [ ] 現在Codex親からexact contextを注入するparent entryをdotagentsへ配布し、isolated HOMEで閉じる。
+  - [ ] Claude公開非対話reply／exact result readをH characterizationし、実証済み公開面だけで
+    production callerを実装した後にdual-host live campaignへ進む。
+    実装順の訂正は[ADR 0024](adr/0024-observer-parent-caller-queue-correction.md)を正とする。
 - [ ] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
   - [x] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、
     silence／suppression／replay／誤配送／claim failureとClaude `provider_unavailable`を非H fixtureで固定する。

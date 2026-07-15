@@ -253,6 +253,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     rollback、収集禁止情報をversioned preflight receiptとrunbookへ固定する。
     Observer `50b4e86`／`bbe407d`／`80b06f0`と
     [cross-repo receipt](adr/0023-observer-live-preflight-receipt.md)で受け入れた。
+  - [ ] Codex parent caller coreとinitial generation bootstrapをObserver製品repoで閉じる。
+  - [ ] Codex parent entry／配布をdotagentsのisolated HOME gateで閉じる。
+  - [ ] Claude公開非対話reply／result readをH characterizationし、実証済み公開面だけで
+    Claude callerを実装してからdual-host live Hへ進む
+    （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
