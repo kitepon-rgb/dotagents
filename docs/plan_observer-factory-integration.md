@@ -185,6 +185,12 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 ### Phase 2: Observer完成
 
 - [ ] Observer runtimeをhost-neutral SupervisorとCodex／Claude host adapterへ分離する。
+  - [x] model operation journal core、lock／completed locator／planned rollover／processed cleanup補正を
+    Observer `4c3cc03`／`8afebca`、ADR 0049／0053で受け入れた。
+  - [x] deterministic message ID、record-first receipt、strict recoveryを持つmodel operation専用
+    Mailbox exact replayをObserver `0e7a005`、ADR 0052で受け入れた。
+  - [ ] Supervisorのissue／recover／apply／finalize統合、provider固有exact result read、
+    Claude／Codex host adapter接続の順で閉じる。
 - [ ] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
   host不明またはThroughlineの`ambiguous_parent`はfail closedにする。
 - [ ] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。

@@ -155,6 +155,10 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
   - [x] Codexのread-only generation terminal観測とhost-neutral一command一step bindingを実装する。
     Observer `b06a847`／`02329ad`、関連gate 46/46、ADR 0046、Control revision 29で受け入れた。
   - [ ] model request送信結果不明をhost lifecycleと別journalで回収する。
+    - [x] host-neutral model operation journal coreと回収不能window補正をObserver
+      `4c3cc03`／`8afebca`、ADR 0049／0053で受け入れた。
+    - [x] model operation専用Mailbox exact replayをObserver `0e7a005`、ADR 0052で受け入れた。
+    - [ ] Supervisorをissue／recover／apply／finalizeの四境界へ統合する。
 - [ ] ユーザーの明示指示を受けた親だけが同provider Observerを起動し、一target一watchを確保する。
   二重起動、後勝ちtakeover、暗黙起動、自動再起動はfail closedにする。
 - [ ] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
