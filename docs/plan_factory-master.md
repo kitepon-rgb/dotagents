@@ -81,8 +81,8 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 9 | `DONE` | wire v2の製品所有repo残欠陥とH不要のfixture／adapterを閉じる | 各製品repo / R1独立gate |
 | 10 | `DONE` | planned rollover、parent rebind、generation faultの非H transactionを閉じる | Observer / O2 focused＋related gate |
 | 11 | `DONE` | P2-5のAI tool surface空・project不変・Supervisor Mailbox write fixtureを閉じる | Observer / O2 focused＋related gate |
-| 12 | `NOW` | P4-3 semantic gateとdedupe／cooldownをMailbox publish前へ接続する | Observer / O2 focused gate |
-| 13 | `NEXT` | 残るH不要のObserver統合／E2Eを依存順に閉じる | Observer / O2 related gate |
+| 12 | `DONE` | P4-3 semantic gateとdedupe／cooldownをMailbox publish前へ接続する | Observer / O2 focused＋related gate |
+| 13 | `NOW` | 残るH不要のObserver統合／E2Eを依存順に閉じる | Observer / O2 related gate |
 | 14 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 15 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
@@ -198,8 +198,12 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     exact-empty AI tool surface、Codex read-only envelope、project fingerprint不変、
     Observer state root配下のMailbox publishをObserver `74c8228`／`2168199`／`4110de3`、
     ADR 0083〜0084で受け入れた。live project write拒否とClaude `--safe-mode`互換はH gateへ残す。
-  - [ ] materiality、evidence、novelty、actionability、timingとdedupe／cooldownを
+  - [x] materiality、evidence、novelty、actionability、timingとdedupe／cooldownを
     Mailbox publish前のhost-neutral semantic gateへ実装し、通常進行を既定沈黙にする。
+    Observer `539b2f2`／`0c502ec`／`8c0a54d`／`c007e06`／`c450a65`／`bd2a777`／
+    `a67ce92`／`152afd5`、ADR 0087〜0091で、60分cooldown、severity escalation、record-first
+    decision、Mailbox exact replay、strict behavioral evalを受け入れた。focused 17/17、関連62/62、
+    `npm run check`がgreen。実providerの採否とdogfoodはP4-4のH gateへ残す。
   - [x] Codexのread-only generation terminal観測とhost-neutral一command一step bindingを実装する。
     Observer `b06a847`／`02329ad`、関連gate 46/46、ADR 0046、Control revision 29で受け入れた。
   - [ ] model request送信結果不明をhost lifecycleと別journalで回収する。
