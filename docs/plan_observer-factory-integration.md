@@ -147,10 +147,13 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - provider child起動前にObserver所有stateで一target一watchを確保し、二重起動、後勝ちtakeover、
     推測TTLによるlock奪取、自動再起動を禁止する。停止もユーザーの明示指示を親が処理する。
   - 正本: Observer `docs/adr/0002-explicit-parent-launch.md`（commit `0a47f22`）。
-- [x] Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostでcharacterizationする。
+- [x] Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostで基礎characterizationする。
   - 公式契約ではmain turnの`Stop.last_assistant_message`、API失敗の`StopFailure`、background sessionのjob ID／`agents --json`／`logs`／`stop`／`respawn`まで確認した。
   - 2026-07-15にMax accountへ認証し、Haiku 4.5／plan権限でheadless `result/end_turn`、同じsession IDのresume、`SessionStart:resume`、background job `busy/working → idle/done → stop`を実測した。`--bg`と`--print`は明示競合するため、Observerはbackground job handle、Workerはstream-json `result`を別契約で扱う。
   - Claude completed turnはfinal assistant、process exit、mtimeで推測せず、Throughline Stop hookがpair capture後にatomic publishする製品所有receiptへ束縛する。Claude `/rewind`はforkなので同一conversation rollback surfaceを作らない。
+  - この完了はheadless／resume／background lifecycleの基礎characterizationだけを指す。既存background jobへの
+    公開非対話request、job `sessionId`／Stop `session_id`相関、Observer所有の隔離result capture、
+    terminal exact result readは未実証であり、queue 19cを閉じない。
 - [x] Codex親からClaudeをWorker／相談役として呼ぶ正規入口を棚卸しし、installed→registered→verified→execution-verifiedを分ける。
   - headless `claude -p --output-format stream-json`＋session resumeと、read-only background sessionを入口候補に固定した。
   - 現行aiterm callable toolにClaude Agentはなく、Elastic adapter catalogも`claude-internal` projection-only。Claude CLI自体は認証後のheadless／resume／background smokeに成功してexecution-verifiedだが、Elastic adapterは未登録である。
@@ -253,9 +256,16 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     rollback、収集禁止情報をversioned preflight receiptとrunbookへ固定する。
     Observer `50b4e86`／`bbe407d`／`80b06f0`と
     [cross-repo receipt](adr/0023-observer-live-preflight-receipt.md)で受け入れた。
-  - [ ] Codex parent caller coreとinitial generation bootstrapをObserver製品repoで閉じる。
-  - [ ] Codex parent entry／配布をdotagentsのisolated HOME gateで閉じる。
-  - [ ] Claude公開非対話reply／result readをH characterizationし、実証済み公開面だけで
+  - [x] Codex parent caller coreとinitial generation bootstrapをObserver製品repoで閉じた。
+    Observer `133cf37`／`286a6db`／`8f5fb90`、focused 9/9、related 77/77、`npm run check` green、
+    [受入receipt](adr/0025-observer-codex-parent-caller-core-receipt.md)。
+  - [x] Codex parent entry／配布をdotagentsのisolated HOME gateで閉じた。
+    Observer `659924c`／`0690ee0`／`41a031d`、dotagents `21bc352`、focused 12/12、related 25/25、
+    isolated install／verify／rollback、[受入receipt](adr/0026-observer-codex-parent-entry-distribution-receipt.md)。
+  - [ ] Claude characterization専用の隔離Stop capture、sanitized receipt、prepare／verify／cleanup
+    harnessをObserver製品repoのfixtureで先に閉じる。親Mailbox hookをresult captureへ流用しない
+    （[readiness correction](adr/0027-observer-claude-characterization-readiness-correction.md)）。
+  - [ ] 上記harness完成後、Claude公開非対話reply／result readをH characterizationし、実証済み公開面だけで
     Claude callerを実装してからdual-host live Hへ進む
     （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを

@@ -90,7 +90,8 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 18 | `DONE` | P5-1b／P3-4c dual-host live H campaignの非H preflightを閉じる | Observer / O2 focused＋related gate |
 | 19a | `DONE` | Codex production parent caller coreとinitial generation bootstrapを閉じる | Observer / O2 focused＋related gate |
 | 19b | `DONE` | Codex parent entry／dotagents配布をisolated HOMEで閉じる | Observer → dotagents / 独立gate |
-| 19c | `H-WAIT` | Claude公開非対話reply／result read／session相関をcharacterizeする | Observer / O2 H gate |
+| 19c0 | `READY` | Claude characterization専用の隔離capture／receipt／prepare／verify／cleanup harnessを閉じる | Observer / O2 focused＋related gate |
+| 19c | `H-WAIT→19c0` | Claude公開非対話reply／result read／session相関をcharacterizeする | Observer / O2 H gate |
 | 19d | `BLOCKED→19c` | 実証済み公開面だけでClaude production callerを実装する | Observer / O2 focused＋related gate |
 | 19e | `H-WAIT` | Observer dual-host live campaignを一回実施する | Observer / O2 H gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
@@ -101,7 +102,9 @@ H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugH
 preflight後に判明したCodex parent callerと配布の非H欠落は
 [ADR 0025](adr/0025-observer-codex-parent-caller-core-receipt.md)と
 [ADR 0026](adr/0026-observer-codex-parent-entry-distribution-receipt.md)で受け入れた。
-次はqueue 19cのH承認待ちとする。queue 8は19eへ統合済みで、O2を閉じる前にO3を先行させない。
+さらに19cを実行可能にするprovider result capture harnessが未実装だったため、
+[ADR 0027](adr/0027-observer-claude-characterization-readiness-correction.md)で非H queue 19c0を先行させた。
+次はqueue 19c0とする。queue 8は19eへ統合済みで、O2を閉じる前にO3を先行させない。
 
 再開時の所有境界:
 
