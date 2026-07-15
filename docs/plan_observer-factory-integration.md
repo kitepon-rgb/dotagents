@@ -169,6 +169,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   terminal receiptのowner、作成時点、atomic保存、job ID／result digest相関、再開手順を耐久契約として実装する。
   即時完了、terminal直前のadapter crash、実行中adapter restart、daemon消失、失敗terminalを独立fixtureにし、
   terminal後に`claude logs <id>`の`control.sock`が失われても成功や空結果へ丸めず、Claude private job state直読を標準fallbackにしない。
+- [ ] Claude Observer所有MCP toolは`--tools`での公開と`--allowedTools`での`dontAsk`無人許可を別々にexact指定する。
+  stop前に公開`agents --json`でterminalなら`already_terminal`を返してCLI stopを再発行せず、実行中stopのcommand receiptと
+  terminal state観測を分離する。stop確認不能では同じjob IDを再観測し、terminal不明なら`stopping`を維持する。
 - [ ] Claude backgroundのuser／project／local settings、hooks、pluginsを隔離し、HEAD、index、tracked／untracked、modeを含む
   project fingerprint不変を確認する。65秒超の実行中jobでstop、子process残存なし、再stop、親／launcher再起動後の状態を実証する。
 - [ ] 両hostのproject-local continuationと親Mailbox hook adapterを実装し、host固有wireを共通coreへ漏らさない。
@@ -225,6 +228,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - [x] Claude background CLIの可変長flagがpromptを取り込むargv順序と、terminal後の一時daemon終了により`claude logs <id>`が
     `control.sock`不在になる運用摩擦を再現した。Observer ADR 0010へ失敗2件と成功1件を固定し、Phase 2のhost adapter TODOへ
     bounded receipt収集とprivate state非依存を追加した。adapter実装とcrash回収gateは未完のまま維持する。
+  - [x] Claude backgroundでMCP toolを`--tools`だけへ指定すると`dontAsk`が拒否すること、`--allowedTools`へ同toolをexact追加すると
+    75秒超`working`を維持して実行中stopできることを再現した。再stopは成功receiptを返さず、公開一覧は`stopped`を保持したため、
+    Phase 2へ公開／無人許可の分離、terminal先行確認、stop receiptとstate観測の分離を追加した。実adapterは未完のまま維持する。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。
