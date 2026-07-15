@@ -214,6 +214,8 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [ ] 各委譲前に入口availability、role、provider、quota snapshot、reservationを記録する。
 - [ ] timeoutは同一handleで回収し、同一taskを重複起動しない。
 - [ ] 正規入口で再現したオーケストレーション欠陥はdotagentsの本計画TODOへ追加し、独立gate／独立commitで即修正してからObserver本筋へ戻る。
+  - [x] worktreeで未作成のTask `doc_ref`を渡した時、内部`git hash-object`失敗を`GIT_FAILURE`へ誤分類せず、利用者が直せる`IO_FAILURE: task document is unavailable`として返す。
+    - focused test 1/1 PASS、Observer実Controlの同じ入力で`IO_FAILURE`を再確認した。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。

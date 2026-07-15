@@ -553,6 +553,25 @@ test("TaskはF/A/H、scope、approval、global task_id一意性を正しく記�
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: hRecorded.revision, task: makeTask() }), code("DUPLICATE_ID"));
 });
 
+test("Task documentが未作成ならgit障害へ誤分類しない", async (t) => {
+  const { repo, result } = await initialized(t);
+  await assert.rejects(
+    api.taskRecord({
+      cwd: repo.root,
+      control_id: CONTROL,
+      actor_id: "parent-001",
+      expected_revision: result.revision,
+      task: makeTask({ task_id: "missing-task-document", doc_ref: "docs/not-created.md" }),
+    }),
+    (error) => {
+      assert.ok(error instanceof api.ControlRecordError);
+      assert.equal(error.code, "IO_FAILURE");
+      assert.equal(error.message, "task document is unavailable");
+      return true;
+    },
+  );
+});
+
 test("H Task admissionはapproval snapshotのoperation digestと有効期限を照合する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "approval-control" });
   const approval = makeApproval();
