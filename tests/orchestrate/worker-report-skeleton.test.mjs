@@ -52,6 +52,10 @@ test("Worker Report skeletonはnested strict shapeを固定し保存後そのま
       lineage: { ...makeWorkerRun().lineage, root_assignment_id: "skeleton-assignment" },
     }),
   });
+  await assert.rejects(
+    api.delegationPacketForWorker({ cwd: repo.root, control_id: controlId, worker_run_id: "skeleton-worker" }),
+    (error) => error instanceof api.ControlRecordError && error.code === "INVALID_TRANSITION",
+  );
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: worker.revision, worker_run_id: "skeleton-worker" });
 
   const inputPath = join(base, "skeleton-input.json");
@@ -65,6 +69,8 @@ test("Worker Report skeletonはnested strict shapeを固定し保存後そのま
   assert.deepEqual(Object.keys(skeleton.report.validation_results[0]).sort(), ["evidence", "outcome", "validation_ref"]);
   assert.deepEqual(Object.keys(skeleton.report.validation_results[0].evidence).sort(), ["digest", "observed_at", "ref", "type"]);
   assert.equal(skeleton.report.result_digest, "REPLACE_WITH_SHA256");
+  const admittedPacket = await api.delegationPacketForWorker({ cwd: repo.root, control_id: controlId, worker_run_id: "skeleton-worker" });
+  assert.equal(admittedPacket.packet_digest, skeleton.packet_digest);
 
   const dispatched = await api.observeWorker({
     cwd: repo.root,

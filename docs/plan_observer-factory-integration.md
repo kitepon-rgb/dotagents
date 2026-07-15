@@ -240,6 +240,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     packetとskeletonをdispatch前に保存して子へ渡す。親の手補正を標準運用にせず、生成物を埋めたreportがそのままimportできるfocused fixtureを通す。
     - `worker-report-skeleton`を追加し、correlation、executor handle、validation refs、nested evidence shapeをprefillする。
       write Runはbaseline確定後のadmittedだけに制限し、active回収でも同じdigestを維持する。focused test 1/1 PASS。
+  - [x] write Runのplanned時にDelegation Packetを生成すると、admit時のbaseline HEAD確定でpacket digestが変わり、
+    active report相関に使えなくなる契約不整合を直す。write Runはadmitted後だけpacket生成を許し、read Runのplanned生成は維持する。
+    - planned writerを`INVALID_TRANSITION`で拒否し、admitted packetとactive回収skeletonのdigest一致を固定した。
+      関連focused gateは各1/1 PASS。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。

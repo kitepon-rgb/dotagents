@@ -874,7 +874,8 @@ execution workspaceのHEAD、identity、scopeと現在fingerprintを検査する
 
 ### Delegation Packet と Worker Report
 
-`delegation-packet`は、`planned | admitted` Workerから生成する純粋・record-only出力である。
+`delegation-packet`は、read Runの`planned | admitted`またはwrite Runの`admitted`から生成する純粋・record-only出力である。
+write Runはadmissionでbaseline HEADを確定するため、planned時のpacket生成を`INVALID_TRANSITION`で拒否する。
 `delegation-packet-recover`は、packet保存漏れから同一Runを再dispatchせず相関情報を回収するため、
 `dispatched | running | unknown` Workerだけから同じprojectionを再構成する専用read-only出力である。
 前者は取消済みTask、両者は対象外state、未知／forbidden Executor（`gpt-connector`を含む）を
