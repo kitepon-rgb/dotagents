@@ -31,7 +31,7 @@
 | 子計画 | 親内の役割 | 2026-07-15時点 |
 |---|---|---|
 | [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了、O2のSupervisor-owned production callerから再開する |
-| [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1の製品所有repo残件から再開する |
+| [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1 local closure完了、実hostはR2、意図的canaryはR3で進める |
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
 | [GPT-5.6再配線](plan_gpt56-rewiring.md) | role routing詳細。残る他端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
@@ -78,8 +78,10 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 6 | `DONE` | cycle所有権を外部Supervisorへ一意化し、Codex cycle-per-turn request/result coreを訂正する | Observer / focused＋related gate |
 | 7 | `DONE` | Supervisor一step coreをverified Throughline／Codex session所有process・CLI loopへ接続する | Observer / focused＋related gate |
 | 8 | `H-WAIT` | Codex live app-serverとClaude公開非対話delivery／Stop captureを実証する | Observer / live H gate |
-| 9 | `NOW` | wire v2の製品所有repo残欠陥（H不要のfixture／adapter修正から進める） | 各製品repo / R1独立gate |
-| 10 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 9 | `DONE` | wire v2の製品所有repo残欠陥とH不要のfixture／adapterを閉じる | 各製品repo / R1独立gate |
+| 10 | `NOW` | Observer共通core／host adapterの残りを閉じる | Observer / O2 focused gate |
+| 11 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
+| 12 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -155,7 +157,7 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
 
 ### Phase R1 — wire v2残欠陥（O1以降と並行可）
 
-- [ ] registry公開版とdotagents adapterのschema drift、Throughline diagnostics、Windows ACL／npm shim、
+- [x] registry公開版とdotagents adapterのschema drift、Throughline diagnostics、Windows ACL／npm shim、
   Codex Sidecar実配布版の残件を製品所有repoで閉じる。
   - [x] 基盤toolchain 3製品のregistry／Grok exact update契約を`fc3bf3f`で実装し、
     [ADR 0012](adr/0012-toolchain-update-version-acceptance.md)で受け入れた。
@@ -171,12 +173,14 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     [ADR 0017](adr/0017-codex-sidecar-windows-mcp-product-receipt.md)で受け入れた。FOX実配布receiptはR2へ残す。
   - [x] dotagentsのSidecar `auditor` presetとfactory v2 scannerのpreset名／dry-run exact検証を
     `a35e987`、focused 10/10、[ADR 0020](adr/0020-sidecar-auditor-adapter-receipt.md)で受け入れた。
-- [ ] 4 hostのsidecar/auditor diagnosticsを実配布物でgreenにする。
-- [ ] BugHub自己監視のoutbox再送とPi5外部通知bridgeを、意図的障害試験の前まで完成する。Pi5本体の
-  versioned source／fixture receipt欠落は[ADR 0019](adr/0019-r1-local-closure-refutation.md)のP1としてR1へ戻した。
+- [x] BugHub自己監視のoutbox再送fixtureとPi5外部通知bridgeのH不要source契約を、意図的障害試験の
+  前まで完成する。Pi5本体のversioned source／fixture receipt欠落は
+  [ADR 0019](adr/0019-r1-local-closure-refutation.md)のP1としてR1へ戻した。
   - [x] ServerManager所有のbridge／60秒ticker／`run(deps)` fixtureをimmutable commit/pathとfocused
     12＋4件で[ADR 0021](adr/0021-servermanager-pi5-bughub-bridge-receipt.md)へ受け入れた。意図的障害と
     実Discord／BugHub配送はR3のH gateへ残す。
+- [x] R1 full gateと一回の独立反証へのcorrectionを
+  [ADR 0022](adr/0022-r1-local-closure.md)で受け入れた。
 
 詳細: [BugHub計画 Wave 6〜8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
 
@@ -238,6 +242,8 @@ Observer `docs/plan_observer.md`
 
 - [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの各hostで、一回のcampaignとして
   install/config/routing/hook/MCP/Throughline/factory reporterを検証する。
+- [ ] 4 hostのSidecar `auditor` diagnosticsと、R1でlocal受入したThroughline／Windows ACL／npm shim／
+  Spotter／Sidecarの実配布receiptを同じhost campaignで閉じる。
 - [ ] Callout HookとGPT-5.6再配線の他端末残件を、Codex全対応Wave 3の同じreceiptで閉じる。
 - [ ] 新規Claude/Codex sessionで`gpt_connector`、3 role routing、session handoff、Spotter project hookを実火する。
 - [ ] host固有のH操作、未対応、optional、blockedを混同せず端末台帳へ記録する。
