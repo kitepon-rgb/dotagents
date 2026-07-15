@@ -281,6 +281,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     active report相関に使えなくなる契約不整合を直す。write Runはadmitted後だけpacket生成を許し、read Runのplanned生成は維持する。
     - planned writerを`INVALID_TRANSITION`で拒否し、admitted packetとactive回収skeletonのdigest一致を固定した。
       関連focused gateは各1/1 PASS。
+  - [x] Worker Report skeletonが`observed_at`を一般的なRFC 3339と案内する一方、strict importerは
+    ミリ秒付きUTC canonical ISO-8601だけを受理する不整合を直す。placeholder自身へ
+    `YYYY-MM-DDTHH:mm:ss.sssZ`を明示し、実native Reportを親の手補正なしでimportできる形へ戻す。
+    - focused test 1/1 PASS。正本: [ADR 0006](adr/0006-worker-report-canonical-timestamp-guidance.md)。
   - [x] TODO完了候補時に一度だけ、親が標準経路外の手補正・証拠再構成・代替回収の有無を確認する。
     有った場合は最終成功で握り潰さず、所有repoの`docs/`正本TODOを登録または参照してから本筋へ戻る。
     専用receipt／schema／個別testは増やさず、TODO単位の共有契約として固定する。

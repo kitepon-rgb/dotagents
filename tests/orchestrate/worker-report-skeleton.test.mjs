@@ -69,6 +69,10 @@ test("Worker Report skeletonはnested strict shapeを固定し保存後そのま
   assert.deepEqual(Object.keys(skeleton.report.validation_results[0]).sort(), ["evidence", "outcome", "validation_ref"]);
   assert.deepEqual(Object.keys(skeleton.report.validation_results[0].evidence).sort(), ["digest", "observed_at", "ref", "type"]);
   assert.equal(skeleton.report.result_digest, "REPLACE_WITH_SHA256");
+  assert.equal(skeleton.report.evidence[0].observed_at, "REPLACE_WITH_TIMESTAMP_YYYY-MM-DDTHH:mm:ss.sssZ");
+  assert.equal(skeleton.report.validation_results[0].evidence.observed_at, "REPLACE_WITH_TIMESTAMP_YYYY-MM-DDTHH:mm:ss.sssZ");
+  assert.match(skeleton.placeholders.observed_at, /YYYY-MM-DDTHH:mm:ss\.sssZ/u);
+  assert.match(skeleton.placeholders.observed_at, /ミリ秒3桁/u);
   const admittedPacket = await api.delegationPacketForWorker({ cwd: repo.root, control_id: controlId, worker_run_id: "skeleton-worker" });
   assert.equal(admittedPacket.packet_digest, skeleton.packet_digest);
 
