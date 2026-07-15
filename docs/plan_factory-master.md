@@ -109,11 +109,17 @@ H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugH
 - [x] `boundedArray`が空の必須配列を「arrayでない」と誤診する問題を修正し、必要最小件数を名指しする。
   - 空配列と非配列を分離し、`observation.dispatch_evidence must contain at least 1 entries`へ修正した。
     正規のrunning観測は空fieldを送らず省略する。focused gate 1/1 green、fullはPhase末へ繰り延べる。
-- [ ] Control finalizationが可変planをDecision証拠として受理する欠陥を修正する。
+- [x] Control finalizationが可変planをDecision証拠として受理する欠陥を修正する。
   - Observer O1の正規`task-finalize-record`で`docs/plan_observer.md`が受理され、リポ正典の
     「accept/reject/finalizationは不変ADR」を破れることを再現した。
   - Taskの`finalization_ref`とControlの`parent_decision.ref`を`docs/adr/*.md`へ限定し、可変planを
     fail closedにする。既存の同一path・同一blob履歴保持契約は維持する。
+  - `852c704`で修正。focused finalization gate 10/10 green。関連gateは92/93 greenで、唯一の失敗は
+    下記の既存期待漏れと特定したため、変更済み92件を反復せず失敗scopeだけ再検証した。
+- [x] 未作成fallback Decisionのエラー期待を`IO_FAILURE`契約へ揃える。
+  - `4ac37f3`で未作成Task文書をgit障害へ誤分類しない契約に直した際、fallback文書の既存testだけ
+    `GIT_FAILURE`期待が残り、Control Record関連gate 92/93で再現した。
+  - 期待値だけを現契約へ揃え、focused gate 1/1 green。full regressionはPhase末へ集約する。
 
 ### Phase O1 — Throughline completed-turn feed（NOW）
 

@@ -1590,7 +1590,7 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   assert.equal(retry.manifest.worker_runs.at(-1).assignment_id, "assignment-001");
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run_id: "run-001", observation: workerObservation("running") }), code("INVALID_TRANSITION"));
   const fallbackRun = makeWorkerRun({ worker_run_id: "run-fallback", assignment_id: "assignment-fallback", workspace_cwd: repo.root, fallback: { from_worker_run_id: "run-001", decision_ref: "docs/fallback-decision.md" }, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "assignment-fallback", approach_family_ref: "fallback-provider" } });
-  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run: fallbackRun }), code("GIT_FAILURE"));
+  await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run: fallbackRun }), code("IO_FAILURE"));
   await writeFile(join(repo.root, "docs", "fallback-decision.md"), "# Fallback decision\n");
   const fallback = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: retry.revision, worker_run: fallbackRun });
   assert.deepEqual(fallback.manifest.worker_runs.at(-1).fallback, { from_worker_run_id: "run-001", decision_ref: "docs/fallback-decision.md" });
