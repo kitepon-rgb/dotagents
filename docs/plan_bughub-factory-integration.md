@@ -428,7 +428,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 0a. [x] Wave 6の`gpt-connector`公開版、基盤CLI 3製品adapter/update契約、ServerManagerの固定12製品new-major endpoint、dotagents new-major clientをregistry/配布物由来で確認し、v1 Oracle clientを壊さず受理できる状態をrollout開始gateにする
 0b. [ ] SpotterのWindows Codex実行経路修正版とdotagentsの`auditor` presetを受け入れ、4 hostの実配布receiptで閉じる
    - [x] Windows npm shimをprobe／auditor／Sidecarの用途別に安全に解決し、timeout時のprocess tree終了失敗もfail-loudにしたSpotter v1.4.25を、製品repoの公開記録とfocused 131/131で[ADR 0016](adr/0016-spotter-windows-codex-product-receipt.md)へ受け入れた
-   - [ ] dotagentsの`.codex-sidecar.yml`に`auditor` presetが収録済みであることを実diffとadapter gateで受け入れる
+   - [x] dotagentsの`.codex-sidecar.yml`に`auditor` presetが収録済みであることを実diff、Sidecar 0.3.7正規diagnostics、factory v2 adapter 10/10で[ADR 0018](adr/0018-sidecar-auditor-preset-local-receipt.md)へ受け入れた
    - [ ] Mac、main-server、FOX WSL2、FOX Windows nativeでinstall・doctor・Codex auditor・Sidecar diagnosticsを実配布版から検証する（実host apply／trust／scanはH/R2）
 1. [x] main-server: `FACTORY_INGEST_ENABLED=true`でv1を維持し、v2 ingest/view OFFでschema 4対応serverをDB backup付き配備 → `/readyz`とv1継続を確認 → v2 ingest/viewをON → v2 endpoint単体canaryを確認する。candidateはrevision一致activation markerまでHTTP書込みを503で閉じ、activation前の切替失敗だけをquiesced rollback setから自動復元する。旧containerなしの初回導入も同じfixtureで扱う
 1a. [x] v1 scannerへ一回限りの明示`--oracle-retired`入口を追加し、Oracle CLIを実行せず`not_applicable`にした最終full snapshotをschema検証付きで生成する。通常scanとv1 rollback schedulerは従来どおりOracleを観測する
