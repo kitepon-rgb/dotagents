@@ -442,7 +442,11 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
    - [x] aiterm-mcpのmanaged `GROK_HOME`でOAuth承認結果が一時homeへ取り残される欠陥を、Grok公式 `GROK_AUTH_PATH` 経路へ置換してreleaseする（完了正本: aiterm-mcp `docs/archive/14_grok-auth-path-plan.md`）
      - [x] 製品repoでruntime-store高競合/hostile-input修正`c1a2623`、auth経路`ab11eb7`、長文PTY送信`42cf4af`、chunk直列化とstale-lock fail-closed`5c6b79a`を独立commitした。ローカル240/240、長文・別process送信10連続、tgz隔離MCP、Grok/Composer各2回の再認証なし`agent_done`、旧8-process条件の再反証P0/P1なしまで確認した
      - [x] `v0.12.3`を`52264c3`へ固定し、tag CI `29300067245`の8 test jobとTrusted Publishingをgreenにした。npm 0.12.3、GitHub Release、MCP Registry workflow `29300266525`、Registry `isLatest=true`、公開版MCP 10 tools＋Grok/Composer実smokeを確認。Mac正規CLIを0.12.3へ更新し、v1 reporterでBugHubへ送信後、`mac-kite/aiterm-mcp`が0.12.3・installed・compatible、outbox 0・ACK failure 0であることをreadbackした
-1m. [ ] Throughline factory diagnosticsのCodex hook集約をdoctorの実状態と一致させ、main-serverの正規hook導入、Macのhandoff readiness、FOX WSL2の`events=ready`なのにsummary=`unverified`となるproducer矛盾を製品repoのcharacterization→修正→patch releaseで閉じる
+1m. [ ] Throughline factory diagnosticsの製品修正を受け入れ、残るhost導入・readinessを全host gateで閉じる
+   - [x] `events=ready`なのにsummary=`unverified`となるproducer矛盾を製品repoのcharacterization→修正→patch releaseで閉じた。Throughline `f928c13`、v0.6.3 tag `fc83ddf`、公開記録`fe8ea87`、focused 15/15を[ADR 0013](adr/0013-throughline-diagnostics-product-receipt.md)で受け入れた
+   - [ ] main-serverへ正規hookを導入し、factory diagnosticsを再観測する（実host applyはH）
+   - [ ] Macのhandoff readinessを実配布物で再観測する（実host scan/reportはR2 host receiptへ合流）
+   - [ ] FOX WSL2でv0.6.3以降のproducer出力を再観測し、旧`events=ready`／summary=`unverified`観測を解消する（実host scan/reportはR2 host receiptへ合流）
 1n. [x] Windows共通command runnerのnpm shim解決を実物cmd-shim variantへ追従し、PATH／shimのfilesystem解決も5秒全体deadline内のkill可能helperへ隔離して、UNC・late spawn・悪意あるshimをfail-loudに拒否する
 1o. [x] native diagnosticsを単一overall checkへ潰さずThroughline／Spotter／aiterm-mcpのcomponent別checkへ安全に投影し、report/BugHubでは`unverified`を保持する。gateはdefault-denyのまま、Spotterの人手trust、Throughlineのadvisory evidence/Claude connector、headless aitermのPTY観測不能という完全tupleだけをnonblockingにする
 1p. [ ] Windows実機でtoolchain ledger、v2 schedule runner、Task Scheduler control artifactが旧`[IO.*]::SetAccessControl` ACL入口で失敗する欠陥を、reporter本体と同じ`Set-Acl -LiteralPath`系current-SID-only契約へ統一する。ACL済みtemporary ledgerのrename後に再適用して「更新済みなのに非0」となる窓をなくし、PowerShell失敗は秘密・絶対pathを出さない固定reasonでfail-loudにする。ledger生成→post-update scan/gate/enqueue/flush→scheduler dry-run/applyを実機で再確認する
