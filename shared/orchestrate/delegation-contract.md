@@ -19,6 +19,6 @@
 
 統括は報告を採用宣言に替えない。対象diff、書込範囲、挙動差、Worker Reportの根拠を確認し、関連gateを自ら再実行してaccept/rejectを裁定する。委譲中に見つかった前提誤り・想定外の実挙動・再発防止知識は、必要な計画または正本へ還流する。
 
-`reject`は成果物の受入棄却であって、Taskの取消・終了・blocker認定ではない。修正可能な受入差分なら同じTask、Run相関、executor handleで再作業し、Workerは完了報告を撤回しただけで停止しない。契約矛盾、権限不足、外部状態待ちなど具体的blockerがある時だけ、その証拠と未充足条件を統括へ返す。Taskを取消す場合は、統括がrejectとは別のDecisionとして明示する。
+`reject`は成果物の受入棄却であって、Taskの取消・終了・blocker認定ではない。ただし正式な`worker-report-import → reject`はそのWorker Runを終端する。report import前に親が修正可能な受入差分を返した時は、Workerは同じRun相関とexecutor handleで再作業し、完了報告を撤回しただけで停止しない。import後にrejectした時は、同じTaskとassignmentの新しいretry Runを作り、新しいPacket／Report相関で再配置する。rejected Runの書換えや再dispatchは禁止する。契約矛盾、権限不足、外部状態待ちなど具体的blockerがある時だけ、その証拠と未充足条件を統括へ返す。Taskを取消す場合は、統括がrejectとは別のDecisionとして明示する。
 
 Workerは外部executorの成功・cancel・timeoutを推測しない。timeoutや中断は`unknown`として同一handleを正規入口で回収し、同一taskを重複起動しない。H操作、credential/login、publish、本番deploy、意図的障害はPacketに含めず、統括が別途承認を得る。

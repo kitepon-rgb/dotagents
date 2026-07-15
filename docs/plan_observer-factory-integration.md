@@ -294,8 +294,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     有った場合は最終成功で握り潰さず、所有repoの`docs/`正本TODOを登録または参照してから本筋へ戻る。
     専用receipt／schema／個別testは増やさず、TODO単位の共有契約として固定する。
   - [x] Worker Reportの親受入を`reject`した時、native implementerが完了報告を撤回したままTaskも終了する運用摩擦を直す。
-    `reject`は成果物の受入棄却でありTask取消ではない。修正可能なら同じTask／Run相関／executor handleで再作業し、
-    具体的blockerがある時だけ証拠付きで停止する契約を共有の委譲正典へ固定した。専用schemaや反復監査は追加しない。
+    report import前の受入差分は同じTask／Run相関／executor handleで再作業し、正式reject後は同じTask／assignmentの
+    新しいretry Runへ再配置する。rejected Runを再dispatchせず、具体的blockerがある時だけ証拠付きで停止する契約を
+    共有の委譲正典へ固定した。専用schemaや反復監査は追加しない。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。
