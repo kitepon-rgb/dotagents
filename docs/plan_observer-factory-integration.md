@@ -185,6 +185,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [ ] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。
   active watchが既にある場合は`already_active`で停止し、暗黙起動、二重起動、後勝ちtakeoverを行わない。
 - [ ] Codex ObserverとClaude Observerで同じwatch／status／stop UXを提供する。
+- [x] Observer hostのproject identityを、監視対象ごとの作業folderではなく単一のObserver repo rootへ固定する。
+  - Observer rootの`AGENTS.md`／`CLAUDE.md`が伴走者、read-only、既定沈黙、一サイクル一件、同providerという
+    静的役割を所有し、起動ごとのpromptはtarget、watch、cursor等の可変情報だけを渡す。
+  - targetの`project_root`はchild start envelopeとMCP照合にだけ使い、host `cwd`、一時git repo、アプリ上の
+    project identityへ投影しない。正本: Observer ADR 0017、commit `6abd9e6`。
 - [ ] Claude host adapterで、可変長の`--mcp-config`／`--tools`より前にprompt positionalを置くargv契約を固定し、
   terminal receiptのowner、作成時点、atomic保存、job ID／result digest相関、再開手順を耐久契約として実装する。
   即時完了、terminal直前のadapter crash、実行中adapter restart、daemon消失、失敗terminalを独立fixtureにし、
@@ -199,6 +204,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [ ] 両hostのproject-local continuationと親Mailbox hook adapterを実装し、host固有wireを共通coreへ漏らさない。
 - [ ] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
 - [ ] read-only、誤配送防止、crash recovery、faulted停止、installer／verify／rollbackを両hostで完遂する。
+  - [ ] Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。
+    Observer CLIがClaude／Codex別のcanonical `Stop` entryを所有し、dotagentsはmessage、Mailbox、routing、renderを
+    再実装しない。CLI不在、schema不一致、candidate不正はfail loudにする。
+  - [ ] 既定dry-run、既存hook保持、Observer entry各一件への正規化、Claude `settings.json`とCodex `hooks.json`の
+    二file prepare／backup／atomic replace／途中失敗時rollbackをclean HOME fixtureで固定する。
+    trust、model、effort、permission、credential、Spotter等の他製品hookは変更しない。
+  - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
+    live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
 
 **Gate:** 同じObserver製品が親hostと同じproviderで伴走し、正常進行では沈黙する。
