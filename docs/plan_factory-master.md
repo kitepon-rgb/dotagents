@@ -121,6 +121,15 @@ H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugH
   - `4ac37f3`で未作成Task文書をgit障害へ誤分類しない契約に直した際、fallback文書の既存testだけ
     `GIT_FAILURE`期待が残り、Control Record関連gate 92/93で再現した。
   - 期待値だけを現契約へ揃え、focused gate 1/1 green。full regressionはPhase末へ集約する。
+- [x] Worker Report importが許容clock skewを超える未来の証拠時刻を受理する欠陥を修正する。
+  - Observer Supervisor統合Runで、実時刻`2026-07-15T14:41Z`に対して`15:15Z`の
+    `evidence[].observed_at`と`validation_results[].evidence.observed_at`をControl revision 55が
+    受理することを再現した。受入前に検出したため、当該Runはrejectして正しい証拠でretryする。
+  - 異host間のclock skewは5分まで許容し、それを超える未来時刻は`EVIDENCE_FROM_FUTURE`で
+    fail closedにする。過去の証拠は長時間Runやoffline回収の正当な履歴として維持する。
+  - top-level／validation証拠のfocused gate 1/1、Control Record関連gate 93/93、`make lint-js`が
+    green。最初の関連gateは完走後のexit code回収に失敗したため未検証扱いとし、同じgateを
+    session回収可能な入口で一度再実行した。full regressionはPhase末へ集約する。
 
 ### Phase O1 — Throughline completed-turn feed（COMPLETE）
 

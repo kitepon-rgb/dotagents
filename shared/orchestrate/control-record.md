@@ -903,6 +903,9 @@ fail closedにする。後者は既にactiveなRunのterminal report相関を保
   あることを確認し、packet digestを含む残りの相関項目を省略しない。write Runでは実execution workspace fingerprintと
   reportのchanged pathsをscope内かつ一致するものだけにする。取消済みTaskでも既存active Runのterminal
   観測は許すが、planned/admittedからの新規実行は許さない。import receiptはtyped evidenceを持つ。
+- report直下と`validation_results`内の全evidenceはcanonical ISO-8601時刻を持つ。長時間Runやoffline回収の
+  過去時刻は維持するが、import時刻より5分を超えて未来なら`EVIDENCE_FROM_FUTURE`で拒否する。拒否後は
+  imported evidenceを書き換えず、新しいretry Runへ実際の観測時刻を持つReportを収容する。
 - importは親acceptではない。`acceptance`は`null`のままで、親の検証後に既存`accept`または`reject`を
   別revisionで記録する。
 
