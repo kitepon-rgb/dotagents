@@ -107,7 +107,9 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
 ### Phase O2 — Observer製品完成
 
 - [ ] host-neutral SupervisorとClaude/Codex host adapterを完成する。
-- [ ] 親identity、同provider配置、同一UX、Mailbox配送、crash recovery、installer/rollbackを完成する。
+- [ ] ユーザーの明示指示を受けた親だけが同provider Observerを起動し、一target一watchを確保する。
+  二重起動、後勝ちtakeover、暗黙起動、自動再起動はfail closedにする。
+- [ ] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
 - [ ] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
 - [ ] Observer側ControlとPhase監査を閉じる。
 

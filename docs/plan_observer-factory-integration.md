@@ -122,6 +122,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - hostに信頼できるsession終了eventがなく、Throughline monitor stateも表示用TTLであるため、active
     lease／epochを推測実装しない。一project一活動親をv1前提とし、Throughlineが検出した
     `ambiguous_parent`はfail closedにする。将来leaseは正式lifecycle証拠とmigrationを持つ別waveで追加する。
+- [x] Observerの起動責任を、ユーザーの明示指示を受けた現在親に固定する。
+  - install／SessionStart／project openから暗黙起動せず、親が同providerの正式background／child入口を使う。
+  - provider child起動前にObserver所有stateで一target一watchを確保し、二重起動、後勝ちtakeover、
+    推測TTLによるlock奪取、自動再起動を禁止する。停止もユーザーの明示指示を親が処理する。
+  - 正本: Observer `docs/adr/0002-explicit-parent-launch.md`（commit `0a47f22`）。
 - [x] Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostでcharacterizationする。
   - 公式契約ではmain turnの`Stop.last_assistant_message`、API失敗の`StopFailure`、background sessionのjob ID／`agents --json`／`logs`／`stop`／`respawn`まで確認した。
   - 2026-07-15にMax accountへ認証し、Haiku 4.5／plan権限でheadless `result/end_turn`、同じsession IDのresume、`SessionStart:resume`、background job `busy/working → idle/done → stop`を実測した。`--bg`と`--print`は明示競合するため、Observerはbackground job handle、Workerはstream-json `result`を別契約で扱う。
@@ -157,6 +162,8 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [ ] Observer runtimeをhost-neutral SupervisorとCodex／Claude host adapterへ分離する。
 - [ ] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
   host不明またはThroughlineの`ambiguous_parent`はfail closedにする。
+- [ ] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。
+  active watchが既にある場合は`already_active`で停止し、暗黙起動、二重起動、後勝ちtakeoverを行わない。
 - [ ] Codex ObserverとClaude Observerで同じwatch／status／stop UXを提供する。
 - [ ] 両hostのproject-local continuationと親Mailbox hook adapterを実装し、host固有wireを共通coreへ漏らさない。
 - [ ] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
