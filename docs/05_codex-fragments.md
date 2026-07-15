@@ -213,3 +213,13 @@ codex mcp add gpt_connector -- gpt-connector-mcp
 STDIO の environment は closed-mode として扱う。親 shell の値が必要だと推測して継承に頼らず、`mcp_servers.<id>.env` / `env_vars` に必要最小限を明示する。secret をコマンド行・repo・会話ログに書かない。OAuth は `codex mcp login <name>` を対話 H の下で行い、未認証の任意 MCP は理由付き WARN とする。
 
 疎通は書込みを伴わない最小操作で確認する。`caveat_search`、OpenAI Docs 検索、`aiterm` の session list は read-only。`codegraph` は既存 `.codegraph/` index がある project にだけ query し、index が無ければ `codegraph init` を勝手に実行しない。gpt-connectorの `sessions` はread-onlyだが、Chat送信は依頼に必要な時だけ行う。Oracleは互換・rollback時だけ参照する。
+## Observer parent Stop hook
+
+ObserverのCodex Stop hookは`hooks.json`へ手書きしない。Claude設定と同じtransactionで、Observer CLIが返すCodex fragment（`timeoutSec`、`async=false`、`statusMessage=null`を含む）を適用する。
+
+```bash
+apply-observer-hook-config --observer-hook "$HOME/.local/bin/observer-parent-stop-hook"
+apply-observer-hook-config --apply --observer-hook "$HOME/.local/bin/observer-parent-stop-hook"
+```
+
+adapterは既存の他製品hookを保持し、Observer targetだけを一件へ正規化する。`CODEX_HOME`を指定した隔離fixtureではその配下の`hooks.json`を対象にできるが、実端末でのapplyはH gateである。

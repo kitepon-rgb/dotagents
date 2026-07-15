@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-install test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ci help
+.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-install test-observer-hook-config test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ci help
 
 lint: lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks ## 静的 lint + skill/hook smoke
 
@@ -34,6 +34,9 @@ lint-hooks: ## Claude / Codex hook の空打ち smoke
 test-install: ## 隔離 HOME の install/profile/config apply 検証
 	bash tests/install/clean-home.sh
 
+test-observer-hook-config: ## 隔離 HOME のObserver parent Stop hook transaction検証
+	bash tests/install/observer-hook-config.sh
+
 test-update: ## cron 最小 PATH で NVM 配下の npm を解決できることを検証
 	bash tests/update/cron-env.sh
 
@@ -52,7 +55,7 @@ test-factory-scan: ## 工場9製品scanの公開CLI・privacy・platform契約�
 test-orchestrate: ## orchestration control record の契約を検証
 	node --test tests/orchestrate/*.test.mjs
 
-ci: lint test-install test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ## ローカル/CI 共通の全ゲート
+ci: lint test-install test-observer-hook-config test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ## ローカル/CI 共通の全ゲート
 
 help: ## タスク一覧
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
