@@ -166,6 +166,8 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     [ADR 0015](adr/0015-windows-npm-shim-local-receipt.md)で受け入れた。FOX実機receiptはR2へ残す。
   - [x] Spotter Windows Codex実行経路の製品修正v1.4.25を
     [ADR 0016](adr/0016-spotter-windows-codex-product-receipt.md)で受け入れた。4 host実配布receiptはR2へ残す。
+  - [x] Codex Sidecar Windows MCP shim修正v0.3.7を
+    [ADR 0017](adr/0017-codex-sidecar-windows-mcp-product-receipt.md)で受け入れた。FOX実配布receiptはR2へ残す。
 - [ ] Spotterの`auditor` presetと4 hostのsidecar/auditor diagnosticsを実配布物でgreenにする。
 - [ ] BugHub自己監視のoutbox再送とPi5外部通知bridgeを、意図的障害試験の前まで完成する。
 
