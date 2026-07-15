@@ -207,6 +207,8 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - [ ] Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。
     Observer CLIがClaude／Codex別のcanonical `Stop` entryを所有し、dotagentsはmessage、Mailbox、routing、renderを
     再実装しない。CLI不在、schema不一致、candidate不正はfail loudにする。
+    - [x] Observer側P3-4b1のrepo、Control、commit、immutable ADR digest、親受入時刻をcross-repo receiptへ固定した。
+      - 正本: [ADR 0007](adr/0007-observer-hook-config-cross-repo-receipt.md)。
   - [ ] 既定dry-run、既存hook保持、Observer entry各一件への正規化、Claude `settings.json`とCodex `hooks.json`の
     二file prepare／backup／atomic replace／途中失敗時rollbackをclean HOME fixtureで固定する。
     trust、model、effort、permission、credential、Spotter等の他製品hookは変更しない。
