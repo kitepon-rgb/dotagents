@@ -262,9 +262,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - [x] Codex parent entry／配布をdotagentsのisolated HOME gateで閉じた。
     Observer `659924c`／`0690ee0`／`41a031d`、dotagents `21bc352`、focused 12/12、related 25/25、
     isolated install／verify／rollback、[受入receipt](adr/0026-observer-codex-parent-entry-distribution-receipt.md)。
-  - [ ] Claude characterization専用の隔離Stop capture、sanitized receipt、prepare／verify／cleanup
-    harnessをObserver製品repoのfixtureで先に閉じる。親Mailbox hookをresult captureへ流用しない
-    （[readiness correction](adr/0027-observer-claude-characterization-readiness-correction.md)）。
+  - [x] Claude characterization専用の隔離Stop capture、sanitized receipt、prepare／verify／cleanup
+    harnessをObserver製品repoのfixtureで先に閉じた。親Mailbox hookをresult captureへ流用しない。
+    Observer `f40b672`、dotagents `78c358b`、focused 10/10、related 26/26、package／isolated
+    install gateを[ADR 0028](adr/0028-observer-claude-characterization-harness-receipt.md)で受け入れた。
   - [ ] 上記harness完成後、Claude公開非対話reply／result readをH characterizationし、実証済み公開面だけで
     Claude callerを実装してからdual-host live Hへ進む
     （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。
