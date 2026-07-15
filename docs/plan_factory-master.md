@@ -178,6 +178,11 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
         Observer `3600876`、focused 26/26、ADR 0057で固定した。
       - [ ] 同じClaude job／Codex turnへcycle入力を一度だけ配送するrequest contractを先に固定する。
         provider acceptedは「既に動いているhost lifecycle」ではなく、このrequest固有handleを証明する。
+        - [x] host-neutral canonical cycle requestとCodexの`thread/read baseline -> turn/steer -> exact ACK` fixtureを
+          Observer `1bb7b07`、focused 22/22、Supervisor関連16/16、ADR 0059で受け入れた。
+          provider journal欠損とaccepted-before-generic-accepted recoveryもfail-closedに補正した。
+        - [ ] Claude background jobへの公開非対話reply ACKをlive H gateで実証する。Claude Code 2.1.210の
+          `agents` shell surfaceにはsendが無いため、`claude -p --resume`やprivate protocolを推測fallbackにしない。
       - [ ] Codexはrequest開始前item baselineとmatching Stop session／turn、Claudeは隔離`--settings` Stop hookと
         job `sessionId`／payload `session_id`を束縛し、core callbackへ接続する。
       - [ ] fake callback fixtureの後、実model request、hook trust、session相関をlive H gateで一度だけ実証する。
