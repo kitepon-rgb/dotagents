@@ -357,6 +357,12 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] Claude Codeは必須hook/settings、Codexはconfig parser/hooks/native routing、Grok Buildはstable channelとaiterm/headless入口をread-only fixtureで検証する。session/agent起動、prompt送信、login/logout、OAuth変更をhealth checkに使わない
 - [x] host matrixでClaude Code/Codex/Grok Buildのrequired/optional/unsupportedを個別に決め、optional hostのmissingをissue化せず、required hostのmissing/update failure/compat driftだけを所定severityへ写像する
 - [ ] npm registry JSONとGrok `--check --json`のschema drift、未知version、downgrade、部分更新、更新後CLI消失、PATH shadowをfixture化し、人間向けstdout解析や無根拠なlatest推測を禁止する
+  - [ ] npm latestをJSON stringのexact semverだけへ束縛し、registry不明時はClaude/Codexのinstallを開始しない。
+  - [ ] installed > latestを`downgrade_refused`で拒否し、他製品の更新と最終reportは継続する。
+  - [ ] Grokのexact keys、`installer=internal`、stable channel、error null、version大小と`updateAvailable`の
+    一貫性をscanner／updater共通validatorへ固定する。
+  - [ ] schema drift、未知version、downgrade、部分失敗、更新後CLI消失、PATH shadowのfocused fixtureを通し、
+    [ADR 0011](adr/0011-toolchain-update-version-contract.md)の受入証拠へ固定する。
 
 #### 6.3 ServerManager/BugHubのserver-first互換面（F）
 
