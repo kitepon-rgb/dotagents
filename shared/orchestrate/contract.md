@@ -17,7 +17,7 @@
 
 ## Control Recordの最小lifecycle
 
-1. docs正本を確認してからControlを`init`し、Taskを`task-record`、Worker RunまたはConsultationをそれぞれ`worker-run-record`または`consultation-record`で記録する。
+1. docs正本を確認してからControlを`init`し、直後・最初のTask前にriskとbehavior laneを`phase-gate-record`で固定する。phase gate未設定のまま`task-record`へ進まない。既存Controlで設定漏れを発見した場合は、実在するretained evidenceだけで順序どおりphaseを記録し、事後の推測や証拠再構成で完了へ丸めない。その後、Taskを`task-record`、Worker RunまたはConsultationをそれぞれ`worker-run-record`または`consultation-record`で記録する。
 2. Registry observationを記録し、`placement-dry-run`で候補を出す。親が候補を選び、`placement-reserve`でreservation proposalとして固定する。複数Runの完了を後続Taskの条件にする時は、親が`campaign-record`でmembers／gate／audit要否を宣言する。planned/admitted Workerの`delegation-packet`を生成してから、親自身がExecutor固有入口でdispatchする。packet保存漏れはactive Run専用のread-only `delegation-packet-recover`で回収し、同じRunを再dispatchしない。自動dispatchやExecutor stateの複製はしない。
 3. 観測・strict Worker Reportを回収し、`worker-report-import`で記録してから親がaccept/rejectを裁定する。`status --brief`でunresolved/unknown/uncollectedを確認し、timeoutや中断後は`resume-check`と同一handleで回収する。Task取消とRun cancel要求は別に記録し、外部側でcancel済みと推測しない。
 4. `campaign-status`で全member terminalを確認し、audit-requiredなら証拠を揃えて親が`campaign-release`する。releaseは後続Runを自動起動しないため、親が改めてplacement／admission／dispatchする。

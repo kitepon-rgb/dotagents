@@ -2589,6 +2589,15 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
   const cliInit = spawnOrchestrate(["init", "--input", cliInitInput], { env: protectedEnv });
   assert.equal(cliInit.status, 0); const cliInitResult = JSON.parse(cliInit.stdout).result;
   const cliTaskInput = join(base, "cli-task.json"); await writeJson(cliTaskInput, { cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliInitResult.revision, task: makeTask({ task_id: "cli-task" }) });
+  const prematureTask = spawnOrchestrate(["task-record", "--input", cliTaskInput], { env: protectedEnv });
+  assert.equal(prematureTask.status, 1); assert.equal(JSON.parse(prematureTask.stderr).code, "PHASE_GATE_NOT_RECORDED");
+  const cliPhaseInput = join(base, "cli-phase.json"); await writeJson(cliPhaseInput, {
+    cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliInitResult.revision,
+    risk: "standard", behavior_lane: "behavior-change",
+  });
+  const cliPhase = spawnOrchestrate(["phase-gate-record", "--input", cliPhaseInput], { env: protectedEnv });
+  assert.equal(cliPhase.status, 0); const cliPhaseResult = JSON.parse(cliPhase.stdout).result;
+  await writeJson(cliTaskInput, { cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliPhaseResult.revision, task: makeTask({ task_id: "cli-task" }) });
   const cliTask = spawnOrchestrate(["task-record", "--input", cliTaskInput], { env: protectedEnv });
   assert.equal(cliTask.status, 0); const cliTaskResult = JSON.parse(cliTask.stdout).result;
   const cliRunInput = join(base, "cli-run.json"); await writeJson(cliRunInput, { cwd: repo.root, control_id: cliControl, actor_id: "parent", expected_revision: cliTaskResult.revision, worker_run: makeWorkerRun({ task_id: "cli-task", worker_run_id: "cli-run", assignment_id: "cli-assignment", workspace_cwd: repo.root }) });

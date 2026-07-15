@@ -303,6 +303,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     隔離worktree writer、`gpt-5.6-terra/medium`の明示policyを追加し、秘密、login、host設定変更、実Codex呼出なしで
     `diagnostics=ok`、review `dry-run`、factory diagnostics `overall=ready`を確認した（Observer commit `33bde15`）。
     実writer利用は別のexecution-verified gateまで進めない。
+  - [x] Control finalizationは完了済みphase gateを必須にするのに、公開CLIが未設定のまま最初のTaskを記録でき、
+    全Task完了後まで失敗を遅延させる運用摩擦を解消する。`control-init`直後・最初の`task-record`前に
+    `phase-gate-record`を必須とする共有契約へ更新し、公開CLIは未設定を早期にfail loudする。
+    - 公開CLIは`PHASE_GATE_NOT_RECORDED`で拒否し、phase記録後のTask作成とrecord-only非実行境界を
+      focused test 1/1で確認した。内部library APIは既存Control／fixture互換のため変更していない。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。

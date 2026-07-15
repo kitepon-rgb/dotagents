@@ -66,7 +66,12 @@ if (args.length === 1 && args[0] === "--help") {
 } else {
   const brief = args.length === 4; const command = brief ? "status --brief" : args[0];
   try {
-    const input = await readInput(brief ? args[3] : args[2]); const result = await (brief ? api.statusBrief : commands.get(command))(input);
+    const input = await readInput(brief ? args[3] : args[2]);
+    if (command === "task-record") {
+      const phase = await api.phaseGateStatus({ cwd: input.cwd, control_id: input.control_id });
+      if (!phase.configured) throw new api.ControlRecordError("PHASE_GATE_NOT_RECORDED", "record phase gate before the first task");
+    }
+    const result = await (brief ? api.statusBrief : commands.get(command))(input);
     process.stdout.write(`${JSON.stringify({ ok: true, command, result })}\n`);
   } catch (error) {
     if (error instanceof api.ControlRecordError) {
