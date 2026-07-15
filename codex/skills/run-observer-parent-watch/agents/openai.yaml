@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run Observer Parent Watch"
+  short_description: "Codex親からObserver監視を起動し同じsessionで回収する"
+  default_prompt: "$run-observer-parent-watchを使い、現在のCodex親からObserverを起動してforeground sessionを保持してください。"

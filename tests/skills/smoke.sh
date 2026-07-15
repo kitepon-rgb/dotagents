@@ -36,7 +36,7 @@ frontmatter_is_name_and_description_only() {
   ' "$1" || fail "$1 の frontmatter は name/description だけではない"
 }
 
-for skill in orchestrate auto-deploy-on-push; do
+for skill in orchestrate auto-deploy-on-push run-observer-parent-watch; do
   file="$ROOT/codex/skills/$skill/SKILL.md"
   [ -f "$file" ] || fail "$file がない"
   frontmatter_is_name_and_description_only "$file"
@@ -98,5 +98,19 @@ contains "$deploy" '秘密値は表示・収集・保存しない'
 contains "$deploy" '秘密をログ・文書・commit に含めない'
 contains "$deploy" '実本番操作は明示承認されたものだけ実行する'
 contains "$deploy" '../../../claude/skills/auto-deploy-on-push/SKILL.md'
+
+observer="$ROOT/codex/skills/run-observer-parent-watch/SKILL.md"
+contains "$observer" 'parent codex run'
+contains "$observer" '別providerやprivate protocolへfallbackしない'
+# shellcheck disable=SC2016 # backticks are literal Markdown from the skill contract.
+contains "$observer" '`--runtime-root`は渡さない'
+contains "$observer" '重複起動しない'
+contains "$observer" '別transport、別thread、別spawn'
+assert_order "$observer" \
+  'observer watch status' \
+  '承認を待つ' \
+  'PTY付きforeground' \
+  'session ID' \
+  'SIGINT'
 
 echo 'skills smoke: OK'

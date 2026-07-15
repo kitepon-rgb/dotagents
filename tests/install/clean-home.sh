@@ -167,6 +167,13 @@ json.dump(data, open(path, "w", encoding="utf-8"))
 PY
 verify "$OFFICIAL_HOME" official
 assert_link "$OFFICIAL_HOME/.agents/skills/orchestrate" "$ROOT/codex/skills/orchestrate"
+assert_link "$OFFICIAL_HOME/.agents/skills/run-observer-parent-watch" "$ROOT/codex/skills/run-observer-parent-watch"
+rm "$OFFICIAL_HOME/.agents/skills/run-observer-parent-watch"
+[ ! -e "$OFFICIAL_HOME/.agents/skills/run-observer-parent-watch" ] \
+  || fail 'official skill rollback後もentryが残る'
+HOME="$OFFICIAL_HOME" "$ROOT/install.sh" --profile official >/dev/null
+assert_link "$OFFICIAL_HOME/.agents/skills/run-observer-parent-watch" "$ROOT/codex/skills/run-observer-parent-watch"
+verify "$OFFICIAL_HOME" official
 assert_link "$OFFICIAL_HOME/.local/bin/factory-reporter" "$ROOT/bin/factory-reporter.mjs"
 assert_link "$OFFICIAL_HOME/.local/bin/factory-external-event" "$ROOT/bin/factory-external-event.mjs"
 [ -x "$OFFICIAL_HOME/.local/bin/factory-external-event" ] || fail 'factory-external-event が実行可能でない'
@@ -351,6 +358,9 @@ HOME="$LEGACY_HOME" "$ROOT/install.sh" --profile=legacy
 apply_config "$LEGACY_HOME" --apply
 verify "$LEGACY_HOME" legacy
 assert_link "$LEGACY_HOME/.codex/skills/orchestrate" "$ROOT/codex/skills/orchestrate"
+assert_link "$LEGACY_HOME/.codex/skills/run-observer-parent-watch" "$ROOT/codex/skills/run-observer-parent-watch"
 [ ! -e "$LEGACY_HOME/.agents/skills/orchestrate" ] || fail 'legacy が official skill 面を作った'
+[ ! -e "$LEGACY_HOME/.agents/skills/run-observer-parent-watch" ] \
+  || fail 'legacy が official Observer parent skill 面を作った'
 
 echo 'clean-home install: OK'
