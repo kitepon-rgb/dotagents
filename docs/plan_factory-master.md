@@ -74,9 +74,10 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 2 | `DONE` | hook・capture・auditor-context・token monitorの関連回帰と文書同期 | Throughline / related gate |
 | 3 | `DONE` | O1 full regression、独立監査、Control finalization、Observerへのreceipt還流 | Throughline → dotagents / Phase gate |
 | 4 | `DONE` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
-| 5 | `NOW` | Claude／Codexのexact operation result readをprovider固有journalへ実装する | Observer / focused gate |
-| 6 | `PARALLEL` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
-| 7 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 5 | `DONE` | Claude／Codex provider result journal coreとSupervisor cleanup handoff | Observer / focused gate |
+| 6 | `NOW` | 同generationへのcycle request配送、Stop／baseline束縛、隔離hook接続を契約化して実装する | Observer / focused＋live H gate |
+| 7 | `PARALLEL` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
+| 8 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -171,6 +172,15 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
       Observer `c226cc9`、focused 15/15、関連gate 47/47、ADR 0054、Control revision 62で受け入れた。
     - [ ] Claude／Codexのexact operation result readをprovider固有journalへ実装し、送信結果不明を
       別operationへの再送やhost lifecycleの成功で隠さない。
+      - [x] provider journal coreをObserver `4443ff9`、両host focused 10/10、ADR 0056で受け入れた。
+        Control `observer-provider-result-read-20260715`はrevision 28でfinalize／archive済み。
+      - [x] generic completed後のprovider cleanupをSupervisorへ接続し、cleanup成功後だけapplyする順序を
+        Observer `3600876`、focused 26/26、ADR 0057で固定した。
+      - [ ] 同じClaude job／Codex turnへcycle入力を一度だけ配送するrequest contractを先に固定する。
+        provider acceptedは「既に動いているhost lifecycle」ではなく、このrequest固有handleを証明する。
+      - [ ] Codexはrequest開始前item baselineとmatching Stop session／turn、Claudeは隔離`--settings` Stop hookと
+        job `sessionId`／payload `session_id`を束縛し、core callbackへ接続する。
+      - [ ] fake callback fixtureの後、実model request、hook trust、session相関をlive H gateで一度だけ実証する。
 - [ ] ユーザーの明示指示を受けた親だけが同provider Observerを起動し、一target一watchを確保する。
   二重起動、後勝ちtakeover、暗黙起動、自動再起動はfail closedにする。
 - [ ] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
