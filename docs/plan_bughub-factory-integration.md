@@ -418,7 +418,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
   - [x] `sha256(servermanager:<check_id>:<reason_code>)`（process到達不能は固定`availability:unreachable`）をdurable eventとしてPi5に保存し、dotagents所有の明示connector CLI経由でmain-server reporterへopen/resolveを渡す
   - [x] Discord成功とBugHub還流成功を別ackにし、片方の失敗をもう片方の成功で消さない。復旧後もBugHub accepted確認までeventを保持する
   - [x] main-serverのexternal-event connectorとPi5のbridge/tickerを配布し、実`/readyz` ready状態で120秒間にstate mtimeが2回進み、events空・connector pending 0を維持するnormal canaryを確認する
-  - [ ] Pi5 bridge/ticker本体の所有repo、immutable commit/path、`run(deps)` fixtureを受け入れ、再配布／rollback可能なsource契約を固定する（計画記録だけではH-only残件としない）
+  - [x] Pi5 bridge/ticker本体の所有repo、immutable commit/path、`run(deps)` fixtureを受け入れ、再配布／rollback可能なsource契約を固定する。ServerManager `74c315b`／`b3ac6da`、focused 12＋4件、[ADR 0021](adr/0021-servermanager-pi5-bughub-bridge-receipt.md)を証拠とし、意図的canaryはH-only残件へ分離する
   - [ ] Wave 8.6a/6bの分離済み意図的canaryで、transient誤openなしとDiscord通知→BugHub accepted→resolve→isolated state削除をそれぞれ実証する
 
 ### Wave 8 — 4環境canary rollout（H＋F）

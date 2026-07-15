@@ -174,6 +174,9 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
 - [ ] 4 hostのsidecar/auditor diagnosticsを実配布物でgreenにする。
 - [ ] BugHub自己監視のoutbox再送とPi5外部通知bridgeを、意図的障害試験の前まで完成する。Pi5本体の
   versioned source／fixture receipt欠落は[ADR 0019](adr/0019-r1-local-closure-refutation.md)のP1としてR1へ戻した。
+  - [x] ServerManager所有のbridge／60秒ticker／`run(deps)` fixtureをimmutable commit/pathとfocused
+    12＋4件で[ADR 0021](adr/0021-servermanager-pi5-bughub-bridge-receipt.md)へ受け入れた。意図的障害と
+    実Discord／BugHub配送はR3のH gateへ残す。
 
 詳細: [BugHub計画 Wave 6〜8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
 
