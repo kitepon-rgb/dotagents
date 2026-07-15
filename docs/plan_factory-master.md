@@ -190,6 +190,11 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
           `1d442c8`で受け入れた。Claude accepted recoveryの永久poll skipも同じ単位で修正した。
         - [ ] 外部Supervisor production callerを一target一process／一cycle一stepで接続し、timeoutではAIを
           起動せず、record-first operationからprovider request／result／apply／cursor commitを駆動する。
+          - [x] `applyCycle`／`finalizeAppliedCycle`をdurable cycle input／operation時刻へ束縛し、advisoryの
+            Mailbox exact replayとapplied後cleanupへ接続した。Observer `fc51157`、focused 4/4、関連40/40、
+            ADR 0062／0063、計画commit `7a638cd`で受け入れた。
+          - [ ] 一target一process lock、evidence input、Codex provider callback、`runSupervisorCycle`を束ねる
+            一cycle一step callerを実装する。
         - [ ] Claude background jobへの公開非対話reply ACKをlive H gateで実証する。Claude Code 2.1.210の
           `agents` shell surfaceにはsendが無いため、`claude -p --resume`やprivate protocolを推測fallbackにしない。
       - [ ] Codexはcycleごとのthread／session／turn／cwdとexact result、Claudeは隔離`--settings` Stop hookと

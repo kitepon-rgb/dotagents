@@ -197,6 +197,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     訂正した。Observer `3f35dbb`、focused 38/38、Supervisor関連16/16、ADR 0060／0061で受け入れた。
   - [ ] 外部Supervisor production callerを一target一process／一cycle一stepで接続する。timeoutではAIを起動せず、
     record-first operationからprovider request／result／apply／cursor commitを駆動する。
+    - [x] `applyCycle`／`finalizeAppliedCycle`をdurable cycle input／operation時刻へ束縛し、advisoryの
+      Mailbox exact replayとapplied後cleanupへ接続した。Observer `fc51157`、ADR 0062／0063、関連40/40で受け入れた。
+    - [ ] 一target一process lock、evidence input、Codex provider callbackを束ねる一step callerを実装する。
   - [ ] Codex live app-serverとClaude公開非対話delivery／session相関／隔離Stop captureをH gateで実証する。
 - [ ] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
   host不明またはThroughlineの`ambiguous_parent`はfail closedにする。
