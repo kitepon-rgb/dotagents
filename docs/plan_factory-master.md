@@ -77,7 +77,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 5 | `DONE` | Claude／Codex provider result journal coreとSupervisor cleanup handoff | Observer / focused gate |
 | 6 | `DONE` | cycle所有権を外部Supervisorへ一意化し、Codex cycle-per-turn request/result coreを訂正する | Observer / focused＋related gate |
 | 7 | `DONE` | Supervisor一step coreをverified Throughline／Codex session所有process・CLI loopへ接続する | Observer / focused＋related gate |
-| 8 | `H-WAIT` | Codex live app-serverとClaude公開非対話delivery／Stop captureを実証する | Observer / live H gate |
+| 8 | `MERGED→19` | Codex live app-serverとClaude公開非対話delivery／Stop captureをqueue 19へ統合 | Observer / live H gate |
 | 9 | `DONE` | wire v2の製品所有repo残欠陥とH不要のfixture／adapterを閉じる | 各製品repo / R1独立gate |
 | 10 | `DONE` | planned rollover、parent rebind、generation faultの非H transactionを閉じる | Observer / O2 focused＋related gate |
 | 11 | `DONE` | P2-5のAI tool surface空・project不変・Supervisor Mailbox write fixtureを閉じる | Observer / O2 focused＋related gate |
@@ -87,13 +87,15 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 15 | `DONE` | Observer MCP compatibility／diagnosticsの存廃と公開契約を裁定する | Observer / O2 focused＋related gate |
 | 16 | `DONE` | P5-2a clean環境installer／verify／rollback契約を閉じる | Observer → dotagents / 独立gate |
 | 17 | `DONE` | P5-2b empty fast path性能／retention cleanup契約を閉じる | Observer / O2 focused＋related gate |
-| 18 | `NOW` | P5-1b／P3-4c dual-host live H campaignの非H preflightを閉じる | Observer / O2 focused＋related gate |
+| 18 | `DONE` | P5-1b／P3-4c dual-host live H campaignの非H preflightを閉じる | Observer / O2 focused＋related gate |
 | 19 | `H-WAIT` | Observer dual-host live campaignを一回実施する | Observer / O2 H gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
+現在の主レーンにreadyな非H作業はなく、queue 19が次のH-WAITである。queue 8は19へ統合済みで、
+O2を閉じる前にO3を先行させない。
 
 再開時の所有境界:
 
@@ -271,8 +273,10 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     Observer `1d045df`／`8b49493`／`876fe5c`、ADR 0101〜0102、focused 10/10、関連39/39、
     hook p95 32.165 ms、空Mailbox p95 23.936 ms、wait overhead p95 35.982 msを受け入れた。
     full regressionと独立重監査はPhase O2 gateへ残した。
-  - [ ] P5-1b／P3-4cのdual-host live H campaign前に、binary／version／公開host surface／
+  - [x] P5-1b／P3-4cのdual-host live H campaign前に、binary／version／公開host surface／
     product manifest／hook候補／canonical cwdを非変更で検証するversioned preflightとrunbookを閉じる。
+    Observer `50b4e86`／`bbe407d`／`80b06f0`、ADR 0103〜0104、focused 13/13、related 40/40、
+    actual read-only preflight `h_required`を[ADR 0023](adr/0023-observer-live-preflight-receipt.md)で受け入れた。
 - [ ] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
   - [x] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、
     silence／suppression／replay／誤配送／claim failureとClaude `provider_unavailable`を非H fixtureで固定する。

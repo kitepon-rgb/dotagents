@@ -249,8 +249,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - [x] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
     保護集合、cleanup失敗時の再実行決定性を隔離fixtureで閉じた。Observer
     `1d045df`／`8b49493`／`876fe5c`、ADR 0101〜0102を受入receiptとする。
-  - [ ] P5-1b／P3-4cのlive H実施前に、両host prerequisite、必須相関証拠、停止条件、
+  - [x] P5-1b／P3-4cのlive H実施前に、両host prerequisite、必須相関証拠、停止条件、
     rollback、収集禁止情報をversioned preflight receiptとrunbookへ固定する。
+    Observer `50b4e86`／`bbe407d`／`80b06f0`と
+    [cross-repo receipt](adr/0023-observer-live-preflight-receipt.md)で受け入れた。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
