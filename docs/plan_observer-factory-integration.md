@@ -271,8 +271,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。live Hは一つのjobで実施済みだが、
     Stop capture欠損、reply／terminal exact result非公開によりcallerはblockedである
     （[ADR 0029](adr/0029-observer-claude-live-characterization-blocked.md)）。
-    - [ ] Stop未発火とstdin／payload／result不正を区別するraw-free diagnostic receiptをObserverで閉じる
-      （[ADR 0030](adr/0030-observer-claude-characterization-diagnostic-queue.md)）。
+    - [x] Stop未発火とstdin／payload／result不正を区別するraw-free diagnostic receiptをObserverで閉じた。
+      Observer `f239a07`、focused 9/9、related 29/29、`npm run check` green、
+      [ADR 0031](adr/0031-observer-claude-diagnostic-receipt-acceptance.md)を受入証拠とする。
     - [ ] diagnostic receipt受入後、別H承認で一つのClaude jobだけを再characterizeする。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
     live host成功へ丸めない。

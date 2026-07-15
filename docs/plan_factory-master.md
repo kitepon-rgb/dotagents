@@ -92,8 +92,8 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19b | `DONE` | Codex parent entry／dotagents配布をisolated HOMEで閉じる | Observer → dotagents / 独立gate |
 | 19c0 | `DONE` | Claude characterization専用の隔離capture／receipt／prepare／verify／cleanup harnessを閉じる | Observer / O2 focused＋related gate |
 | 19c | `BLOCKED` | live Hは実施済み。Stop capture欠損、reply／terminal exact result非公開を解消する | Observer / O2 public contract gate |
-| 19c1 | `READY` | hook未発火とpayload／result不正を分けるraw-free diagnostic receiptを閉じる | Observer / O2 focused＋related gate |
-| 19c2 | `H-WAIT→19c1` | diagnostic receiptで一つのClaude jobを再characterizeする | Observer / O2 H gate |
+| 19c1 | `DONE` | hook未発火とpayload／result不正を分けるraw-free diagnostic receiptを閉じる | Observer / O2 focused＋related gate |
+| 19c2 | `H-WAIT` | diagnostic receiptで一つのClaude jobを再characterizeする | Observer / O2 H gate |
 | 19d | `BLOCKED→19c2` | 実証済み公開面だけでClaude production callerを実装する | Observer / O2 focused＋related gate |
 | 19e | `H-WAIT` | Observer dual-host live campaignを一回実施する | Observer / O2 H gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
@@ -101,8 +101,8 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
-現在のready queueは19c1だけである。19c1を閉じる前に19c2を再実行せず、19c2の新しい
-実証なしに19dを部分実装しない。19d未完のまま19e／O3／後続laneを先行させない。
+現在のready queueは空で、次は19c2の別H承認待ちである。19c2の新しい実証なしに19dを
+部分実装しない。19d未完のまま19e／O3／後続laneを先行させない。
 preflight後に判明したCodex parent callerと配布の非H欠落は
 [ADR 0025](adr/0025-observer-codex-parent-caller-core-receipt.md)と
 [ADR 0026](adr/0026-observer-codex-parent-entry-distribution-receipt.md)で受け入れた。
@@ -115,6 +115,8 @@ terminal exact result readの不在により[ADR 0029](adr/0029-observer-claude-
 `BLOCKED`とした。19dの部分実装やprivate fallbackは行わず、19cの公開契約が成立するまで19eと
 O3を先行させない。さらにcapture欠損がhook未発火とhook内parse拒否を区別できない診断欠陥を
 [ADR 0030](adr/0030-observer-claude-characterization-diagnostic-queue.md)で19c1非Hと19c2再Hへ分離した。
+19c1はObserver `f239a07`、focused 9/9、related 29/29、`npm run check` greenと
+[ADR 0031](adr/0031-observer-claude-diagnostic-receipt-acceptance.md)で受け入れた。
 queue 8は19eへ統合済みである。
 
 再開時の所有境界:
