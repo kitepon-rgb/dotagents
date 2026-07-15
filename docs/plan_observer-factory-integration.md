@@ -204,14 +204,17 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [ ] 両hostのproject-local continuationと親Mailbox hook adapterを実装し、host固有wireを共通coreへ漏らさない。
 - [ ] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
 - [ ] read-only、誤配送防止、crash recovery、faulted停止、installer／verify／rollbackを両hostで完遂する。
-  - [ ] Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。
+  - [x] Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。
     Observer CLIがClaude／Codex別のcanonical `Stop` entryを所有し、dotagentsはmessage、Mailbox、routing、renderを
     再実装しない。CLI不在、schema不一致、candidate不正はfail loudにする。
     - [x] Observer側P3-4b1のrepo、Control、commit、immutable ADR digest、親受入時刻をcross-repo receiptへ固定した。
       - 正本: [ADR 0007](adr/0007-observer-hook-config-cross-repo-receipt.md)。
-  - [ ] 既定dry-run、既存hook保持、Observer entry各一件への正規化、Claude `settings.json`とCodex `hooks.json`の
+    - dotagents実装・受入: commit `2fb48cb`、Control report import revision 45、parent accept revision 46。
+      正本: [ADR 0008](adr/0008-observer-hook-config-transaction-adapter.md)。
+  - [x] 既定dry-run、既存hook保持、Observer entry各一件への正規化、Claude `settings.json`とCodex `hooks.json`の
     二file prepare／backup／atomic replace／途中失敗時rollbackをclean HOME fixtureで固定する。
     trust、model、effort、permission、credential、Spotter等の他製品hookは変更しない。
+    focused gate `bash tests/install/observer-hook-config.sh`と`make lint-py`を通し、専用targetを`make ci`へ配線した。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
