@@ -79,9 +79,12 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 7 | `DONE` | Supervisor一step coreをverified Throughline／Codex session所有process・CLI loopへ接続する | Observer / focused＋related gate |
 | 8 | `H-WAIT` | Codex live app-serverとClaude公開非対話delivery／Stop captureを実証する | Observer / live H gate |
 | 9 | `DONE` | wire v2の製品所有repo残欠陥とH不要のfixture／adapterを閉じる | 各製品repo / R1独立gate |
-| 10 | `NOW` | Observer共通core／host adapterの残りを閉じる | Observer / O2 focused gate |
-| 11 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
-| 12 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 10 | `DONE` | planned rollover、parent rebind、generation faultの非H transactionを閉じる | Observer / O2 focused＋related gate |
+| 11 | `DONE` | P2-5のAI tool surface空・project不変・Supervisor Mailbox write fixtureを閉じる | Observer / O2 focused＋related gate |
+| 12 | `NOW` | P4-3 semantic gateとdedupe／cooldownをMailbox publish前へ接続する | Observer / O2 focused gate |
+| 13 | `NEXT` | 残るH不要のObserver統合／E2Eを依存順に閉じる | Observer / O2 related gate |
+| 14 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
+| 15 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -187,6 +190,16 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
 ### Phase O2 — Observer製品完成
 
 - [ ] host-neutral SupervisorとClaude/Codex host adapterを完成する。
+  - [x] planned rollover、parent rebind、generation faultを別transaction／receiptとして
+    host-neutral core、両provider binding、Supervisor restart gateへ接続した。
+    Observer `2bfc09c`／`426f8b9`／`3a737ad`／`107d2ca`／`22cf33a`、
+    corrective `fe4f743`、ADR 0070〜0082で受け入れた。実host terminal／faultはH gateへ残す。
+  - [x] P2-5の旧Observer MCP write条件をADR 0060後のSupervisor所有境界へ補正し、
+    exact-empty AI tool surface、Codex read-only envelope、project fingerprint不変、
+    Observer state root配下のMailbox publishをObserver `74c8228`／`2168199`／`4110de3`、
+    ADR 0083〜0084で受け入れた。live project write拒否とClaude `--safe-mode`互換はH gateへ残す。
+  - [ ] materiality、evidence、novelty、actionability、timingとdedupe／cooldownを
+    Mailbox publish前のhost-neutral semantic gateへ実装し、通常進行を既定沈黙にする。
   - [x] Codexのread-only generation terminal観測とhost-neutral一command一step bindingを実装する。
     Observer `b06a847`／`02329ad`、関連gate 46/46、ADR 0046、Control revision 29で受け入れた。
   - [ ] model request送信結果不明をhost lifecycleと別journalで回収する。
