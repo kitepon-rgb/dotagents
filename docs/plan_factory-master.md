@@ -84,9 +84,10 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 12 | `DONE` | P4-3 semantic gateとdedupe／cooldownをMailbox publish前へ接続する | Observer / O2 focused＋related gate |
 | 13 | `DONE` | P5-1a host-neutral core E2Eと非H fault matrixを閉じる | Observer / O2 focused＋related gate |
 | 14 | `DONE` | public watch lifecycle／CLI／status／stop UXを両provider共通化する | Observer / O2 focused＋related gate |
-| 15 | `NOW` | Observer MCP compatibility／diagnosticsの存廃と公開契約を裁定する | Observer / O2 focused＋related gate |
-| 16 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
-| 17 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 15 | `DONE` | Observer MCP compatibility／diagnosticsの存廃と公開契約を裁定する | Observer / O2 focused＋related gate |
+| 16 | `NOW` | P5-2a clean環境installer／verify／rollback契約を閉じる | Observer → dotagents / 独立gate |
+| 17 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
+| 18 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -255,6 +256,10 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     Observer `a4195a3`／`f904922`、ADR 0095〜0096、focused 13/13、関連37/37、static greenを受け入れた。
   - [ ] dotagents／installerから現在親の実host actionを注入し、live spawn／stopをP5-1b H gateで受け入れる。
 - [ ] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
+  - [x] Observer MCPをread-only compatibility／diagnosticsとして維持し、決定的な
+    `observer-mcp --diagnostics`、package bin、stdio／version互換、production AI surface無効を固定した。
+    Observer `1d85039`／`951cdeb`、ADR 0097〜0098、focused 5/5、関連24/24、static greenを受け入れた。
+  - [ ] P5-2aとしてversioned製品manifest、sanitized verify、隔離install／reinstall／rollbackを閉じる。
 - [ ] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
   - [x] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、
     silence／suppression／replay／誤配送／claim failureとClaude `provider_unavailable`を非H fixtureで固定する。
