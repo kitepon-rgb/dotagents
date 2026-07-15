@@ -45,7 +45,8 @@ for entry in \
   'observer:bin/observer.mjs' \
   'observer-mcp:bin/observer-mcp.mjs' \
   'observer-parent-stop-hook:bin/observer-parent-stop-hook.mjs' \
-  'observer-hook-config:bin/observer-hook-config.mjs'
+  'observer-hook-config:bin/observer-hook-config.mjs' \
+  'observer-claude-characterization:bin/observer-claude-characterization.mjs'
 do
   name="${entry%%:*}"
   relative="${entry#*:}"
@@ -109,6 +110,7 @@ manifest = {
         {"name": "observer-mcp", "path": "bin/observer-mcp.mjs"},
         {"name": "observer-parent-stop-hook", "path": "bin/observer-parent-stop-hook.mjs"},
         {"name": "observer-hook-config", "path": "bin/observer-hook-config.mjs"},
+        {"name": "observer-claude-characterization", "path": "bin/observer-claude-characterization.mjs"},
     ],
     "dependencies": [
         {"name": "node", "version": ">=22.13", "scope": "runtime"},

@@ -89,7 +89,7 @@ verify_candidate
 HOME="$HOME_FIXTURE" npm uninstall --global --prefix "$PREFIX" observer \
   --ignore-scripts --no-audit --no-fund >/dev/null
 [ ! -e "$PREFIX/lib/node_modules/observer" ] || fail 'rollback後もObserver packageが残っています'
-for name in observer observer-mcp observer-parent-stop-hook observer-hook-config; do
+for name in observer observer-mcp observer-parent-stop-hook observer-hook-config observer-claude-characterization; do
   [ ! -e "$PREFIX/bin/$name" ] || fail "rollback後も$name commandが残っています"
 done
 [ "$(cat "$PREFIX/unrelated.sentinel")" = 'prefix-unrelated-must-remain' ] \
