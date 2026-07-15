@@ -107,6 +107,16 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - Throughline: `observer-feed-20260715` → `docs/14_observer_completed_turn_feed_plan.md`
   - ServerManager: `factory-wire-v2-20260715` → `bughub/docs/FACTORY_V2_ROLLOUT_PLAN.md`
   - cross-repo receiptは本計画に`repo`、`control_id`、`task_id`、成果物ref／digest、親Decision、受入時刻を記録し、別repoのTask依存へ偽装しない。
+- [x] cancelled TaskがControl finalizationを永久に阻害するlifecycle矛盾を修正する。
+  - 正規`task-cancel-record`後も`control-finalize`が全Taskの`task-finalize`を要求する一方、cancelled Taskへの
+    `task-finalize`は`INVALID_TRANSITION`で拒否されることをObserver Control revision 60で再現した。
+  - Control閉鎖条件、`status --brief`のunresolved集合、将来receipt容量予約では、Taskを
+    `task-finalized または cancelled`ならterminalとみなす。
+  - cancelled Taskへの`task-finalize`拒否、cancel Decision証拠、cancelled依存をreadyへ変えない規則は維持する。
+  - focused testでcancelのみのTaskを持つControlがphase gate後にfinalize／archiveでき、cancelがunresolvedへ
+    二重掲載されず、既存の取消拒否testが残ることを証明する。
+  - `closedTaskIds`をControl閉鎖、brief、receipt予約の3面で共用し、254件目のreceiptまで使用した境界fixtureを含む
+    focused 5/5を通した。cancelled依存のadmission規則とcancelled Taskへの`task-finalize`拒否は変更していない。
 - [x] 各provider矢印をlaneへ固定する。
   - Observer: Worker／Consultationではなく、製品固有runtime＋同provider host adapter。
   - Codex→Claude Worker: 新設する`claude-native` execution adapter。

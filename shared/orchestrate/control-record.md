@@ -229,7 +229,7 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 - `recover-lock`はControl manifest mutationではなく、特定Controlを選ばないlock-owner保守操作なので
   receipt対象外。lock token、owner body、PID、file identityの検証結果がその操作の返却契約である。
 - receiptは256件を上限とし、各mutationのcommit前に、全nonterminal Run／Consultationのterminal化、
-  completed Workerの親Decision、未release Campaign、未完了phase gate、未finalize Task、Control finalization、archiveに必要な最悪receipt数を
+  completed Workerの親Decision、未release Campaign、未完了phase gate、未finalizeかつ未cancelのTask、Control finalization、archiveに必要な最悪receipt数を
   予約する。閉鎖slotを侵食する拡張は`CONTROL_CAPACITY_RESERVED`で拒否し、古いreceiptを削除しない。
 - archive済みControlだけを`predecessor_control_id`へ指定して後継Controlをinitできる。後継は同じ
   objective、root ID、単調増加sequenceを持ち、Task／Run IDは新規にする。predecessor manifestは
@@ -451,7 +451,7 @@ placement eligibilityを主張する操作ではない。Registry評価済みと
 - Task取消件数、取消済みTask ID、未terminalのcancel要求済みWorker ID
 - nonterminal WorkerのExecutor envelope、workflow、opaque handle、最終観測、cancel要求snapshot
 - nonterminal Consultationのconnector、slug、model／effort、最終観測
-- finalization未記録Task、completed未受入Worker、Control finalization未完
+- finalizationもcancellationも未記録のTask、completed未受入Worker、Control finalization未完
 - Campaignごとのtype、all-terminal、audit-required、release有無と、未release Campaign ID
 - stateが`unknown`のRun／Consultationと、値がunknownのRegistry field
 - `dispatched | running | unknown`で所有Executorから未回収のRun／Consultation
@@ -560,6 +560,8 @@ cancelled_at`を追加する。Task本体はimmutableのまま、取消記録を
   Task取消だけでExecutor上の処理をcancelled扱いにせず、既存Runは所有Executorの観測で閉じる。
 - finalized Taskの取消、同一Taskの重複取消を拒否する。Task取消DecisionはWorker個別のcancel要求を
   代替せず、既存Runを止める場合はRunごとに`requestWorkerCancel`を記録する。
+- cancelled TaskはControl閉鎖上のterminal Taskであり、別の`task_finalization`を要求しない。ただし取消時点の
+  Run／Consultationは従来どおり個別にterminalへ回収し、cancelled Taskを依存Taskのready証拠にはしない。
 
 - Fの外部writerを拒否する。Fのwriteは`executor=parent`だけ。
 - `role_effect_policy`は`dotagents.role-effect.v1`のexact snapshotとし、`sorter | refuter | verifier`の
@@ -1296,10 +1298,10 @@ archive判定は次のtruth tableを満たす時だけ`active -> archived`へ一
 | Worker | nonterminalが0。`completed`はacceptance必須。`failed/cancelled`はacceptance不要 |
 | Consultation | nonterminalが0。`completed`は`decision_ref`必須。`failed`はdecision ref不要 |
 | Campaign | 全件が親release済み。audit-required Campaignはaudit evidenceと親Decision必須 |
-| Task | 全Taskにdocs正本上のfinalization参照が1件あり、対応Run／Consultationが全件terminal、completed Workerは親裁定済み |
+| Task | 全Taskにdocs正本上のfinalization参照またはcancel Decisionが1件あり、対応Run／Consultationが全件terminal、completed Workerは親裁定済み |
 | Manifest | statusが`active` |
 
-unknown、planned、admitted、未release Campaign、finalization参照なしTask、completed未受入Worker、
+unknown、planned、admitted、未release Campaign、finalization／cancel DecisionなしTask、completed未受入Worker、
 completed未裁定Consultationのいずれかが
 一件でもあれば`ARCHIVE_NOT_READY`で拒否する。
 

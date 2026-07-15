@@ -2231,6 +2231,51 @@ test("Task finalizationはactive child・未裁定・取消を拒否しdecision 
   await assert.rejects(api.taskFinalizeRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelled.revision, task_id: "cancelled-finalization-task", finalization_ref: "docs/task-finalization-decision.md", recorded_by: "parent" }), code("INVALID_TRANSITION"));
 });
 
+test("Taskはcancelledなら未finalizeでもControl finalizationとarchiveを阻害しない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "cancelled-task-control-close" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "cancelled-task-control-close", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "cancelled-control-task", effect: "read", write_scope: [] }),
+  });
+  const cancelDecision = await materializeDocumentEvidence(repo, evidence("docs/cancelled-control-task.md", "decision"));
+  const cancelled = await api.taskCancelRecord({
+    cwd: repo.root, control_id: "cancelled-task-control-close", actor_id: "parent", expected_revision: task.revision,
+    task_id: "cancelled-control-task", decision: cancelDecision,
+  });
+  const brief = await api.statusBrief({ cwd: repo.root, control_id: "cancelled-task-control-close" });
+  assert.deepEqual(brief.cancellations.task_ids, ["cancelled-control-task"]);
+  assert.deepEqual(brief.unresolved.task_ids, []);
+
+  const phaseComplete = await completePhaseGate(repo, "cancelled-task-control-close", cancelled.revision);
+  const padded = structuredClone(phaseComplete.manifest);
+  for (let revision = padded.record_revision + 1; revision <= 253; revision++) {
+    const previous = padded.transition_receipts.at(-1);
+    padded.transition_receipts.push(makeTransitionReceipt({
+      revision, actor_id: "parent", operation: "task-record",
+      subject: { kind: "task", id: `cancelled-close-padding-${revision}` },
+      previous_state: null, next_state: "recorded", previous_receipt_digest: previous.receipt_digest,
+    }));
+  }
+  padded.record_revision = 253;
+  padded.last_update = { actor_id: "parent", updated_at: padded.transition_receipts.at(-1).recorded_at };
+  await writeJson(join(repo.commonDir, "dotagents", "orchestrate", "controls", "cancelled-task-control-close", "manifest.json"), padded);
+
+  const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
+    cwd: repo.root, control_id: "cancelled-task-control-close", actor_id: "parent", expected_revision: 253,
+    acceptance_matrix_ref: "docs/cancelled-close-acceptance.md",
+    final_audit_evidence: [evidence("docs/cancelled-close-audit.md")],
+    regression_evidence: [evidence("docs/cancelled-close-regression.md")],
+    knowledge_return_refs: ["docs/cancelled-close-knowledge.md"],
+    parent_decision: evidence("docs/cancelled-close-decision.md", "decision"), finalized_by: "parent",
+  }));
+  assert.equal(finalized.revision, 254);
+  const archived = await api.archive({
+    cwd: repo.root, control_id: "cancelled-task-control-close", actor_id: "parent", expected_revision: finalized.revision,
+  });
+  assert.equal(archived.revision, 255);
+  assert.equal(archived.manifest.status, "archived");
+});
+
 test("accept/reject/task finalization/control finalization/archiveは状態・証拠・atomic manifestを検査する", async (t) => {
   const { repo, result } = await initialized(t);
   const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask() });
