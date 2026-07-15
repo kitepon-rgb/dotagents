@@ -86,9 +86,11 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 14 | `DONE` | public watch lifecycle／CLI／status／stop UXを両provider共通化する | Observer / O2 focused＋related gate |
 | 15 | `DONE` | Observer MCP compatibility／diagnosticsの存廃と公開契約を裁定する | Observer / O2 focused＋related gate |
 | 16 | `DONE` | P5-2a clean環境installer／verify／rollback契約を閉じる | Observer → dotagents / 独立gate |
-| 17 | `NOW` | P5-2b empty fast path性能／retention cleanup契約を閉じる | Observer / O2 focused＋related gate |
-| 18 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
-| 19 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 17 | `DONE` | P5-2b empty fast path性能／retention cleanup契約を閉じる | Observer / O2 focused＋related gate |
+| 18 | `NOW` | P5-1b／P3-4c dual-host live H campaignの非H preflightを閉じる | Observer / O2 focused＋related gate |
+| 19 | `H-WAIT` | Observer dual-host live campaignを一回実施する | Observer / O2 H gate |
+| 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
+| 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -264,8 +266,13 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     Observer `630c5ff`／`b45c07a`／`d03495d`、dotagents `894799b`、ADR 0099〜0100、
     Observer focused 12/12・関連32/32、dotagents multi-repo／hook／clean-home gateを受け入れた。
     実HOME apply、hook trust、live host、credential、publish／pushは未実施のH／後続gateへ残した。
-  - [ ] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
-    保護集合、失敗時の再実行決定性を隔離fixtureで閉じる。
+  - [x] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
+    保護集合、失敗時の再実行決定性を隔離fixtureで閉じた。
+    Observer `1d045df`／`8b49493`／`876fe5c`、ADR 0101〜0102、focused 10/10、関連39/39、
+    hook p95 32.165 ms、空Mailbox p95 23.936 ms、wait overhead p95 35.982 msを受け入れた。
+    full regressionと独立重監査はPhase O2 gateへ残した。
+  - [ ] P5-1b／P3-4cのdual-host live H campaign前に、binary／version／公開host surface／
+    product manifest／hook候補／canonical cwdを非変更で検証するversioned preflightとrunbookを閉じる。
 - [ ] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
   - [x] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、
     silence／suppression／replay／誤配送／claim failureとClaude `provider_unavailable`を非H fixtureで固定する。

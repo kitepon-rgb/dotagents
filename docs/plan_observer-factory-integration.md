@@ -246,8 +246,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - [x] P5-2aとしてObserver製品manifest、sanitized diagnostics、4 executable binと、dotagentsの
     isolated npm install→reinstall→verify→rollbackを閉じた。Observer `630c5ff`／`b45c07a`／`d03495d`、
     dotagents `894799b`、Observer ADR 0099〜0100をcross-repo receiptとする。
-  - [ ] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
-    保護集合、cleanup失敗時の再実行決定性を隔離fixtureで閉じる。
+  - [x] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
+    保護集合、cleanup失敗時の再実行決定性を隔離fixtureで閉じた。Observer
+    `1d045df`／`8b49493`／`876fe5c`、ADR 0101〜0102を受入receiptとする。
+  - [ ] P5-1b／P3-4cのlive H実施前に、両host prerequisite、必須相関証拠、停止条件、
+    rollback、収集禁止情報をversioned preflight receiptとrunbookへ固定する。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
