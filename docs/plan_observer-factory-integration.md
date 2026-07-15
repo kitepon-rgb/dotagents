@@ -189,8 +189,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     Observer `4c3cc03`／`8afebca`、ADR 0049／0053で受け入れた。
   - [x] deterministic message ID、record-first receipt、strict recoveryを持つmodel operation専用
     Mailbox exact replayをObserver `0e7a005`、ADR 0052で受け入れた。
-  - [ ] Supervisorのissue／recover／apply／finalize統合、provider固有exact result read、
-    Claude／Codex host adapter接続の順で閉じる。
+  - [x] Supervisorのissue／recover／apply／finalize統合をObserver `c226cc9`、focused 15/15、
+    関連gate 47/47、ADR 0054、Control revision 62で受け入れた。
+  - [ ] provider固有exact result read、Claude／Codex host adapter接続の順で閉じる。
 - [ ] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
   host不明またはThroughlineの`ambiguous_parent`はfail closedにする。
 - [ ] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。
@@ -319,6 +320,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     `phase-gate-record`を必須とする共有契約へ更新し、公開CLIは未設定を早期にfail loudする。
     - 公開CLIは`PHASE_GATE_NOT_RECORDED`で拒否し、phase記録後のTask作成とrecord-only非実行境界を
       focused test 1/1で確認した。内部library APIは既存Control／fixture互換のため変更していない。
+  - [x] Worker Reportの証拠時刻がimport時刻より約33分未来でもControlが受理する欠陥を、Observer
+    Supervisor統合Runのrevision 55で再現した。異host間のclock skewを5分まで許容し、それを超える
+    `evidence[].observed_at`と`validation_results[].evidence.observed_at`を`EVIDENCE_FROM_FUTURE`で
+    拒否するようdotagents `d6702b6`で修正した。旧Runはrevision 56でrejectし、同一assignmentの
+    retry Reportを正時刻でrevision 60にimport、revision 61でacceptした。
 - [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
 - [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
 - [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。

@@ -74,7 +74,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 2 | `DONE` | hook・capture・auditor-context・token monitorの関連回帰と文書同期 | Throughline / related gate |
 | 3 | `DONE` | O1 full regression、独立監査、Control finalization、Observerへのreceipt還流 | Throughline → dotagents / Phase gate |
 | 4 | `DONE` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
-| 5 | `NOW` | model request送信結果不明をhost lifecycleと別journalで回収する | Observer / focused gate |
+| 5 | `NOW` | Claude／Codexのexact operation result readをprovider固有journalへ実装する | Observer / focused gate |
 | 6 | `PARALLEL` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
 | 7 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
@@ -167,7 +167,10 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     - [x] host-neutral model operation journal coreと回収不能window補正をObserver
       `4c3cc03`／`8afebca`、ADR 0049／0053で受け入れた。
     - [x] model operation専用Mailbox exact replayをObserver `0e7a005`、ADR 0052で受け入れた。
-    - [ ] Supervisorをissue／recover／apply／finalizeの四境界へ統合する。
+    - [x] Supervisorをissue／recover／apply／finalizeの四境界へ統合する。
+      Observer `c226cc9`、focused 15/15、関連gate 47/47、ADR 0054、Control revision 62で受け入れた。
+    - [ ] Claude／Codexのexact operation result readをprovider固有journalへ実装し、送信結果不明を
+      別operationへの再送やhost lifecycleの成功で隠さない。
 - [ ] ユーザーの明示指示を受けた親だけが同provider Observerを起動し、一target一watchを確保する。
   二重起動、後勝ちtakeover、暗黙起動、自動再起動はfail closedにする。
 - [ ] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
