@@ -88,8 +88,8 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 16 | `DONE` | P5-2a clean環境installer／verify／rollback契約を閉じる | Observer → dotagents / 独立gate |
 | 17 | `DONE` | P5-2b empty fast path性能／retention cleanup契約を閉じる | Observer / O2 focused＋related gate |
 | 18 | `DONE` | P5-1b／P3-4c dual-host live H campaignの非H preflightを閉じる | Observer / O2 focused＋related gate |
-| 19a | `NOW` | Codex production parent caller coreとinitial generation bootstrapを閉じる | Observer / O2 focused＋related gate |
-| 19b | `PENDING` | Codex parent entry／dotagents配布をisolated HOMEで閉じる | Observer → dotagents / 独立gate |
+| 19a | `DONE` | Codex production parent caller coreとinitial generation bootstrapを閉じる | Observer / O2 focused＋related gate |
+| 19b | `NOW` | Codex parent entry／dotagents配布をisolated HOMEで閉じる | Observer → dotagents / 独立gate |
 | 19c | `H-WAIT` | Claude公開非対話reply／result read／session相関をcharacterizeする | Observer / O2 H gate |
 | 19d | `BLOCKED→19c` | 実証済み公開面だけでClaude production callerを実装する | Observer / O2 focused＋related gate |
 | 19e | `H-WAIT` | Observer dual-host live campaignを一回実施する | Observer / O2 H gate |
@@ -98,8 +98,9 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
-preflight後の実装可能性監査でparent callerとinitial generationの非H欠落が判明したため、
-queue 19aをNOWとする。queue 8は19eへ統合済みで、O2を閉じる前にO3を先行させない。
+preflight後に判明したparent callerとinitial generationの非H欠落は
+[ADR 0025](adr/0025-observer-codex-parent-caller-core-receipt.md)で受け入れたため、
+queue 19bをNOWとする。queue 8は19eへ統合済みで、O2を閉じる前にO3を先行させない。
 
 再開時の所有境界:
 
@@ -281,8 +282,10 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     product manifest／hook候補／canonical cwdを非変更で検証するversioned preflightとrunbookを閉じる。
     Observer `50b4e86`／`bbe407d`／`80b06f0`、ADR 0103〜0104、focused 13/13、related 40/40、
     actual read-only preflight `h_required`を[ADR 0023](adr/0023-observer-live-preflight-receipt.md)で受け入れた。
-  - [ ] Codex production parent caller、current parent／initial generation bootstrap、同一app-server
-    transportのSupervisor所有を非H fixtureで閉じる。
+  - [x] Codex production parent caller、current parent／initial generation bootstrap、同一app-server
+    transportのSupervisor所有を非H fixtureで閉じる。Observer `133cf37`／`286a6db`／`8f5fb90`、
+    focused 9/9、related 77/77、`npm run check` greenを
+    [ADR 0025](adr/0025-observer-codex-parent-caller-core-receipt.md)で受け入れた。
   - [ ] 現在Codex親からexact contextを注入するparent entryをdotagentsへ配布し、isolated HOMEで閉じる。
   - [ ] Claude公開非対話reply／exact result readをH characterizationし、実証済み公開面だけで
     production callerを実装した後にdual-host live campaignへ進む。
