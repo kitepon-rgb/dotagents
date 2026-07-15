@@ -82,9 +82,10 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 10 | `DONE` | planned rollover、parent rebind、generation faultの非H transactionを閉じる | Observer / O2 focused＋related gate |
 | 11 | `DONE` | P2-5のAI tool surface空・project不変・Supervisor Mailbox write fixtureを閉じる | Observer / O2 focused＋related gate |
 | 12 | `DONE` | P4-3 semantic gateとdedupe／cooldownをMailbox publish前へ接続する | Observer / O2 focused＋related gate |
-| 13 | `NOW` | P5-1a host-neutral core E2Eと非H fault matrixを閉じる | Observer / O2 focused＋related gate |
-| 14 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
-| 15 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 13 | `DONE` | P5-1a host-neutral core E2Eと非H fault matrixを閉じる | Observer / O2 focused＋related gate |
+| 14 | `NOW` | public watch lifecycle／CLI／status／stop UXを両provider共通化する | Observer / O2 focused＋related gate |
+| 15 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
+| 16 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -250,9 +251,10 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
   二重起動、後勝ちtakeover、暗黙起動、自動再起動はfail closedにする。
 - [ ] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
 - [ ] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
-  - [ ] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、
+  - [x] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、
     silence／suppression／replay／誤配送／claim failureとClaude `provider_unavailable`を非H fixtureで固定する。
-    実装境界はObserver ADR 0092、設計commit `14b57ac`を正とする。
+    Observer `ddd768a`／`e203190`／`f6b296b`／`0f5fd78`、ADR 0092〜0094で、focused 6/6、
+    関連178/178、`npm run check` greenを受け入れた。
   - [ ] Claude／Codexのproduction request、session相関、hook trust、実host faultはP5-1bのH gateで受け入れる。
 - [ ] Observer側ControlとPhase監査を閉じる。
 
