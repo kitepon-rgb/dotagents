@@ -73,9 +73,10 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 1 | `DONE` | Claude/Codex各fixtureの65秒超Observer live wait | Throughline / focused live fixture |
 | 2 | `DONE` | hook・capture・auditor-context・token monitorの関連回帰と文書同期 | Throughline / related gate |
 | 3 | `DONE` | O1 full regression、独立監査、Control finalization、Observerへのreceipt還流 | Throughline → dotagents / Phase gate |
-| 4 | `NOW` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
-| 5 | `PARALLEL_AFTER_O1` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
-| 6 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 4 | `DONE` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
+| 5 | `NOW` | model request送信結果不明をhost lifecycleと別journalで回収する | Observer / focused gate |
+| 6 | `PARALLEL` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
+| 7 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -151,6 +152,9 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
 ### Phase O2 — Observer製品完成
 
 - [ ] host-neutral SupervisorとClaude/Codex host adapterを完成する。
+  - [x] Codexのread-only generation terminal観測とhost-neutral一command一step bindingを実装する。
+    Observer `b06a847`／`02329ad`、関連gate 46/46、ADR 0046、Control revision 29で受け入れた。
+  - [ ] model request送信結果不明をhost lifecycleと別journalで回収する。
 - [ ] ユーザーの明示指示を受けた親だけが同provider Observerを起動し、一target一watchを確保する。
   二重起動、後勝ちtakeover、暗黙起動、自動再起動はfail closedにする。
 - [ ] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
