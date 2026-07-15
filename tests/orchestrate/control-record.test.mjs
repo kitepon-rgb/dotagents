@@ -285,7 +285,7 @@ test("advisory snapshotのlatest Registryはarchived Controlの新しいsnapshot
   const phase = await completePhaseGate(repo, "advisory-archived-registry", archivedOnly.revision);
   const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
     cwd: repo.root, control_id: "advisory-archived-registry", actor_id: "parent", expected_revision: phase.revision,
-    acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")], regression_evidence: [evidence("docs/regression.md")], knowledge_return_refs: ["docs/knowledge.md"], parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
+    acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")], regression_evidence: [evidence("docs/regression.md")], knowledge_return_refs: ["docs/knowledge.md"], parent_decision: evidence("docs/adr/control-decision.md", "decision"), finalized_by: "parent",
   }));
   const archived = await api.archive({ cwd: repo.root, control_id: "advisory-archived-registry", actor_id: "parent", expected_revision: finalized.revision });
   const successor = await api.init({ cwd: repo.root, control_id: "advisory-active-registry", predecessor_control_id: "advisory-archived-registry", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
@@ -499,7 +499,7 @@ test("receipt capacityは閉鎖用slotを予約し、archive済みControlから�
     cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253,
     acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")],
     regression_evidence: [evidence("docs/regression.md")], knowledge_return_refs: ["docs/knowledge.md"],
-    parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
+    parent_decision: evidence("docs/adr/control-decision.md", "decision"), finalized_by: "parent",
   }), code("FINALIZATION_NOT_READY"));
   const archivalRoot = await api.init({ cwd: repo.root, control_id: "capacity-archival-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const phaseComplete = await completePhaseGate(repo, "capacity-archival-root", archivalRoot.revision);
@@ -507,7 +507,7 @@ test("receipt capacityは閉鎖用slotを予約し、archive済みControlから�
     cwd: repo.root, control_id: "capacity-archival-root", actor_id: "parent", expected_revision: phaseComplete.revision,
     acceptance_matrix_ref: "docs/acceptance.md", final_audit_evidence: [evidence("docs/audit.md")],
     regression_evidence: [evidence("docs/regression.md")], knowledge_return_refs: ["docs/knowledge.md"],
-    parent_decision: evidence("docs/decision.md", "decision"), finalized_by: "parent",
+    parent_decision: evidence("docs/adr/control-decision.md", "decision"), finalized_by: "parent",
   }));
   const archived = await api.archive({ cwd: repo.root, control_id: "capacity-archival-root", actor_id: "parent", expected_revision: finalized.revision });
   const successor = await api.init({ cwd: repo.root, control_id: "capacity-successor", predecessor_control_id: "capacity-archival-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
@@ -1641,8 +1641,8 @@ test("Task snapshotは文書全体OIDから独立し、同一Control依存のrea
   const consultation = await api.consultationRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: run.revision, consultation: makeConsultation({ task_id: "dependent-task" }) });
   await assert.rejects(api.admitWorker({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, worker_run_id: "run-001" }), code("DEPENDENCY_NOT_READY"));
   await assert.rejects(api.observeConsultation({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, consultation_id: "consultation-001", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } }), code("DEPENDENCY_NOT_READY"));
-  await materializeTaskDecision(repo, "docs/foundation-decision.md");
-  const finalized = await api.taskFinalizeRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, task_id: "foundation-task", finalization_ref: "docs/foundation-decision.md", recorded_by: "parent" });
+  await materializeTaskDecision(repo, "docs/adr/foundation-decision.md");
+  const finalized = await api.taskFinalizeRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: consultation.revision, task_id: "foundation-task", finalization_ref: "docs/adr/foundation-decision.md", recorded_by: "parent" });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: finalized.revision, worker_run_id: "run-001" });
   const dispatched = await api.observeConsultation({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: admitted.revision, consultation_id: "consultation-001", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "dispatched" } });
   assert.equal(dispatched.manifest.consultations[0].state, "dispatched");
@@ -2197,7 +2197,7 @@ test("Task finalizationはactive child・未裁定・取消を拒否しdecision 
   const { repo, result } = await initialized(t, { control_id: "task-finalization-boundary" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "finalization-task", effect: "read", write_scope: [] }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "finalization-run", task_id: "finalization-task", assignment_id: "finalization-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "finalization-assignment" } }) });
-  const finalize = (expected_revision) => api.taskFinalizeRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision, task_id: "finalization-task", finalization_ref: "docs/task-finalization-decision.md", recorded_by: "parent" });
+  const finalize = (expected_revision) => api.taskFinalizeRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision, task_id: "finalization-task", finalization_ref: "docs/adr/task-finalization-decision.md", recorded_by: "parent" });
   await assert.rejects(finalize(run.revision), code("FINALIZATION_NOT_READY"));
   const workerCancelled = await api.observeWorker({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: run.revision, worker_run_id: "finalization-run", observation: workerObservation("cancelled") });
   const consultation = await api.consultationRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: workerCancelled.revision, consultation: makeConsultation({ consultation_id: "finalization-consultation", task_id: "finalization-task", assignment_id: "finalization-consultation-assignment" }) });
@@ -2210,12 +2210,13 @@ test("Task finalizationはactive child・未裁定・取消を拒否しdecision 
   const pendingCompleted = await api.observeWorker({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: pendingDispatched.revision, worker_run_id: "pending-acceptance-run", observation: completedWorkerObservation() });
   await assert.rejects(finalize(pendingCompleted.revision), code("FINALIZATION_NOT_READY"));
   const pendingAccepted = await api.accept({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: pendingCompleted.revision, worker_run_id: "pending-acceptance-run", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/pending-acceptance-decision.md", "decision")], decision_note: "parent decided", decided_by: "parent" });
+  await assert.rejects(api.taskFinalizeRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: pendingAccepted.revision, task_id: "finalization-task", finalization_ref: "docs/control-record-plan.md", recorded_by: "parent" }), code("DECISION_EVIDENCE_NOT_IMMUTABLE"));
   await assert.rejects(finalize(pendingAccepted.revision), code("EVIDENCE_UNAVAILABLE"));
-  await materializeTaskDecision(repo, "docs/task-finalization-decision.md");
+  await materializeTaskDecision(repo, "docs/adr/task-finalization-decision.md");
   const finalized = await finalize(pendingAccepted.revision);
   const receipt = finalized.manifest.transition_receipts.at(-1);
   assert.equal(receipt.operation, "task-finalize"); assert.equal(receipt.subject_digest.length, 64);
-  assert.equal(receipt.evidence[0].ref, "docs/task-finalization-decision.md");
+  assert.equal(receipt.evidence[0].ref, "docs/adr/task-finalization-decision.md");
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: finalized.revision, worker_run: makeWorkerRun({ worker_run_id: "late-finalized-run", task_id: "finalization-task", assignment_id: "late-finalized-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "late-finalized-assignment" } }) }), code("TASK_FINALIZED"));
   await assert.rejects(api.consultationRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: finalized.revision, consultation: makeConsultation({ consultation_id: "late-finalized-consultation", task_id: "finalization-task", assignment_id: "late-finalized-consultation-assignment" }) }), code("TASK_FINALIZED"));
   const tamperedRecord = structuredClone(finalized.manifest); tamperedRecord.task_finalizations[0].finalization_ref = "docs/other.md";
@@ -2228,7 +2229,7 @@ test("Task finalizationはactive child・未裁定・取消を拒否しdecision 
   const cancelledControl = await api.init({ cwd: repo.root, control_id: "cancelled-task-finalization", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const cancelledTask = await api.taskRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelledControl.revision, task: makeTask({ task_id: "cancelled-finalization-task", effect: "read", write_scope: [] }) });
   const cancelled = await api.taskCancelRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelledTask.revision, task_id: "cancelled-finalization-task", decision: evidence("docs/cancelled-task.md", "decision") });
-  await assert.rejects(api.taskFinalizeRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelled.revision, task_id: "cancelled-finalization-task", finalization_ref: "docs/task-finalization-decision.md", recorded_by: "parent" }), code("INVALID_TRANSITION"));
+  await assert.rejects(api.taskFinalizeRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelled.revision, task_id: "cancelled-finalization-task", finalization_ref: "docs/adr/task-finalization-decision.md", recorded_by: "parent" }), code("INVALID_TRANSITION"));
 });
 
 test("Taskはcancelledなら未finalizeでもControl finalizationとarchiveを阻害しない", async (t) => {
@@ -2266,7 +2267,7 @@ test("Taskはcancelledなら未finalizeでもControl finalizationとarchiveを�
     final_audit_evidence: [evidence("docs/cancelled-close-audit.md")],
     regression_evidence: [evidence("docs/cancelled-close-regression.md")],
     knowledge_return_refs: ["docs/cancelled-close-knowledge.md"],
-    parent_decision: evidence("docs/cancelled-close-decision.md", "decision"), finalized_by: "parent",
+    parent_decision: evidence("docs/adr/cancelled-close-decision.md", "decision"), finalized_by: "parent",
   }));
   assert.equal(finalized.revision, 254);
   const archived = await api.archive({
@@ -2287,8 +2288,8 @@ test("accept/reject/task finalization/control finalization/archiveは状態・�
   assert.equal(accepted.manifest.worker_runs[0].acceptance.decision, "accepted");
   assert.equal(accepted.manifest.transition_receipts.at(-1).operation, "worker-accept");
   assert.deepEqual(accepted.manifest.transition_receipts.at(-1).evidence, [evidence("docs/verify.md")]);
-  await materializeTaskDecision(repo, "docs/decision.md");
-  const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: accepted.revision, task_id: "task-001", finalization_ref: "docs/decision.md", recorded_by: "parent" });
+  await materializeTaskDecision(repo, "docs/adr/task-decision.md");
+  const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: accepted.revision, task_id: "task-001", finalization_ref: "docs/adr/task-decision.md", recorded_by: "parent" });
   await assert.rejects(api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision }), code("ARCHIVE_NOT_READY"));
   const phaseComplete = await completePhaseGate(repo, CONTROL, decided.revision);
   const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
@@ -2297,7 +2298,7 @@ test("accept/reject/task finalization/control finalization/archiveは状態・�
     final_audit_evidence: [evidence("docs/final-audit.md")],
     regression_evidence: [evidence("docs/regression.md")],
     knowledge_return_refs: ["docs/knowledge-return.md"],
-    parent_decision: evidence("docs/final-decision.md", "decision"),
+    parent_decision: evidence("docs/adr/final-decision.md", "decision"),
     finalized_by: "parent",
   }));
   assert.equal(finalized.manifest.control_finalization.objective_ref, "docs/control-record-plan.md");
@@ -2327,7 +2328,7 @@ test("archiveはfinalization Decisionの同一path旧digestだけをgit履歴か
     cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: result.revision,
     task: makeTask({ task_id: "history-retention-task", effect: "read", write_scope: [] }),
   });
-  const decisionRef = "docs/history-retention-decision.md";
+  const decisionRef = "docs/adr/history-retention-decision.md";
   await materializeTaskDecision(repo, decisionRef);
   runGit(repo.root, ["add", decisionRef]);
   runGit(repo.root, ["commit", "-q", "-m", "record original finalization decision"]);
@@ -2342,7 +2343,7 @@ test("archiveはfinalization Decisionの同一path旧digestだけをgit履歴か
     final_audit_evidence: [evidence("docs/history-retention-audit.md")],
     regression_evidence: [evidence("docs/history-retention-regression.md")],
     knowledge_return_refs: ["docs/history-retention-knowledge.md"],
-    parent_decision: evidence("docs/history-retention-final-decision.md", "decision"), finalized_by: "parent",
+    parent_decision: evidence("docs/adr/history-retention-final-decision.md", "decision"), finalized_by: "parent",
   }));
 
   const knowledgePath = join(repo.root, "docs", "history-retention-knowledge.md");
@@ -2371,15 +2372,16 @@ test("control finalizationはTask完了と監査・回帰・knowledge return・�
     cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision,
     acceptance_matrix_ref: "docs/acceptance-matrix.md", final_audit_evidence: [evidence("docs/final-audit.md")],
     regression_evidence: [evidence("npm-test", "command")], knowledge_return_refs: ["docs/knowledge-return.md"],
-    parent_decision: evidence("docs/final-decision.md", "decision"), finalized_by: "parent",
+    parent_decision: evidence("docs/adr/final-decision.md", "decision"), finalized_by: "parent",
   };
   await assert.rejects(api.finalizeControl(base), code("FINALIZATION_NOT_READY"));
-  await materializeTaskDecision(repo, "docs/decision.md");
-  const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision, task_id: "task-001", finalization_ref: "docs/decision.md", recorded_by: "parent" });
+  await materializeTaskDecision(repo, "docs/adr/task-decision.md");
+  const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision, task_id: "task-001", finalization_ref: "docs/adr/task-decision.md", recorded_by: "parent" });
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, final_audit_evidence: [] }), code("INVALID_SCHEMA"));
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, regression_evidence: [] }), code("INVALID_SCHEMA"));
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, knowledge_return_refs: [] }), code("INVALID_SCHEMA"));
   await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, parent_decision: evidence("docs/not-a-decision.md") }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.finalizeControl({ ...base, expected_revision: decided.revision, parent_decision: evidence("docs/control-record-plan.md", "decision") }), code("DECISION_EVIDENCE_NOT_IMMUTABLE"));
 });
 
 test("control finalizationはmatrix・監査・回帰・knowledgeの実在とdigestをfinalize境界で検査する", async (t) => {
@@ -2389,7 +2391,7 @@ test("control finalizationはmatrix・監査・回帰・knowledgeの実在とdig
     cwd: repo.root, control_id: "finalization-evidence-boundary", actor_id: "parent", expected_revision: phaseComplete.revision,
     acceptance_matrix_ref: "docs/matrix-evidence.md", final_audit_evidence: [evidence("docs/audit-evidence.md")],
     regression_evidence: [evidence("docs/regression-evidence.md")], knowledge_return_refs: ["docs/knowledge-evidence.md"],
-    parent_decision: evidence("docs/finalization-parent-decision.md", "decision"), finalized_by: "parent",
+    parent_decision: evidence("docs/adr/finalization-parent-decision.md", "decision"), finalized_by: "parent",
   };
   await assert.rejects(api.finalizeControl(input), code("EVIDENCE_UNAVAILABLE"));
   const prepared = await materializeFinalizationInput(repo, input);
@@ -2403,9 +2405,9 @@ test("control finalizationは全campaignの明示的な親releaseを必須にす
   const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-finalization-worker", task_id: "campaign-finalization-task", assignment_id: "campaign-finalization-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-finalization-assignment" } }) });
   const cancelled = await api.observeWorker({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "campaign-finalization-worker", observation: workerObservation("cancelled") });
   const campaign = await api.campaignRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: cancelled.revision, campaign: { campaign_id: "campaign-finalization-gate", campaign_type: "final-audit", members: [{ kind: "worker-run", id: "campaign-finalization-worker" }], gated_task_ids: ["campaign-finalization-task"], audit_required: false } });
-  await materializeTaskDecision(repo, "docs/campaign-finalization-decision.md");
-  const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: campaign.revision, task_id: "campaign-finalization-task", finalization_ref: "docs/campaign-finalization-decision.md", recorded_by: "parent" });
-  const finalization = (expected_revision) => ({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision, acceptance_matrix_ref: "docs/campaign-acceptance.md", final_audit_evidence: [evidence("docs/campaign-final-audit.md")], regression_evidence: [evidence("docs/campaign-regression.md")], knowledge_return_refs: ["docs/campaign-knowledge.md"], parent_decision: evidence("docs/campaign-final-decision.md", "decision"), finalized_by: "parent" });
+  await materializeTaskDecision(repo, "docs/adr/campaign-finalization-decision.md");
+  const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: campaign.revision, task_id: "campaign-finalization-task", finalization_ref: "docs/adr/campaign-finalization-decision.md", recorded_by: "parent" });
+  const finalization = (expected_revision) => ({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision, acceptance_matrix_ref: "docs/campaign-acceptance.md", final_audit_evidence: [evidence("docs/campaign-final-audit.md")], regression_evidence: [evidence("docs/campaign-regression.md")], knowledge_return_refs: ["docs/campaign-knowledge.md"], parent_decision: evidence("docs/adr/campaign-final-decision.md", "decision"), finalized_by: "parent" });
   await assert.rejects(api.finalizeControl(finalization(decided.revision)), code("FINALIZATION_NOT_READY"));
   const released = await api.releaseCampaign({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: decided.revision, campaign_id: "campaign-finalization-gate", audit_evidence: [], decision: evidence("docs/campaign-release-decision.md", "decision") });
   const phaseComplete = await completePhaseGate(repo, "campaign-finalization", released.revision);
@@ -2685,7 +2687,7 @@ test("phase gateは不足・順序逸脱・receipt改竄・未complete finalizat
   const baseline = await api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: recorded.revision, phase: "baseline", state: "completed", evidence: [evidence("docs/baseline.md")], decision: null });
   const discovery = await api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: baseline.revision, phase: "discovery", state: "completed", evidence: [], decision: null });
   await assert.rejects(api.phaseGateAdvance({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: discovery.revision, phase: "design", state: "completed", evidence: [], decision: null }), code("INVALID_SCHEMA"));
-  await assert.rejects(api.finalizeControl({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: discovery.revision, acceptance_matrix_ref: "docs/a.md", final_audit_evidence: [evidence("docs/audit.md")], regression_evidence: [evidence("test", "command")], knowledge_return_refs: ["docs/knowledge.md"], parent_decision: evidence("docs/final.md", "decision"), finalized_by: "parent" }), code("FINALIZATION_NOT_READY"));
+  await assert.rejects(api.finalizeControl({ cwd: repo.root, control_id: "phase-negative", actor_id: "parent", expected_revision: discovery.revision, acceptance_matrix_ref: "docs/a.md", final_audit_evidence: [evidence("docs/audit.md")], regression_evidence: [evidence("test", "command")], knowledge_return_refs: ["docs/knowledge.md"], parent_decision: evidence("docs/adr/final.md", "decision"), finalized_by: "parent" }), code("FINALIZATION_NOT_READY"));
   const tampered = structuredClone(discovery.manifest); tampered.transition_receipts.at(-1).next_state = "not-required";
   assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
 });

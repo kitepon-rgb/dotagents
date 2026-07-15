@@ -1272,7 +1272,7 @@ TASK_FINALIZED,
 APPROVAL_MISMATCH, APPROVAL_EXPIRED,
 ROLE_EFFECT_FORBIDDEN,
 CONTROL_CAPACITY_RESERVED, CONTROL_CAPACITY_REACHED, CONTINUATION_NOT_READY,
-PLATFORM_UNVERIFIED,
+PLATFORM_UNVERIFIED, DECISION_EVIDENCE_NOT_IMMUTABLE,
 LOCK_OUTCOME_UNKNOWN,
 LOCK_CONTENDED, LOCK_MALFORMED, LOCK_LIVE, LOCK_NOT_FOUND, LOCK_TOKEN_MISMATCH,
 STATE_PATH_UNSAFE, INPUT_PATH_UNSAFE, COMMIT_OUTCOME_UNKNOWN, IO_FAILURE, GIT_FAILURE
@@ -1291,6 +1291,9 @@ task_id, finalization_ref, recorded_by, recorded_at
 
 - `finalization_ref`の意味・outcome・reasonはdocsが所有し、Control Recordは解釈しない。ただし実在と
   SHA-256をfinalize時に検証し、`type=decision` evidenceとrecord exact objectをimmutable receiptへ結合する。
+- 新しい`finalization_ref`とControl-level `parent_decision.ref`は`docs/adr/<file>.md`だけを受理する。
+  可変plan/TODOや別pathは`DECISION_EVIDENCE_NOT_IMMUTABLE`で拒否する。既存manifestはread／archive互換のため
+  暗黙migrationせず、過去の同一path・同一blob保持契約も変更しない。
 - 一つのTaskへ参照は1件だけ。取消済みTask、nonterminal Run／Consultation、親未裁定completed Workerを
   持つTaskはfinalizeできない。finalize後は新規Worker／Consultationを追加できない。
 

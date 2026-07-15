@@ -109,6 +109,11 @@ H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugH
 - [x] `boundedArray`が空の必須配列を「arrayでない」と誤診する問題を修正し、必要最小件数を名指しする。
   - 空配列と非配列を分離し、`observation.dispatch_evidence must contain at least 1 entries`へ修正した。
     正規のrunning観測は空fieldを送らず省略する。focused gate 1/1 green、fullはPhase末へ繰り延べる。
+- [ ] Control finalizationが可変planをDecision証拠として受理する欠陥を修正する。
+  - Observer O1の正規`task-finalize-record`で`docs/plan_observer.md`が受理され、リポ正典の
+    「accept/reject/finalizationは不変ADR」を破れることを再現した。
+  - Taskの`finalization_ref`とControlの`parent_decision.ref`を`docs/adr/*.md`へ限定し、可変planを
+    fail closedにする。既存の同一path・同一blob履歴保持契約は維持する。
 
 ### Phase O1 — Throughline completed-turn feed（NOW）
 
