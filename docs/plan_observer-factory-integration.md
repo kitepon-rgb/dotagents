@@ -191,7 +191,13 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     Mailbox exact replayをObserver `0e7a005`、ADR 0052で受け入れた。
   - [x] Supervisorのissue／recover／apply／finalize統合をObserver `c226cc9`、focused 15/15、
     関連gate 47/47、ADR 0054、Control revision 62で受け入れた。
-  - [ ] provider固有exact result read、Claude／Codex host adapter接続の順で閉じる。
+  - [x] provider固有result journal coreとSupervisor cleanup順序をObserver `4443ff9`／`3600876`、
+    ADR 0056／0057で受け入れた。
+  - [x] AI wait loopとSupervisorの二重所有を解消し、Codexをcycleごとの`turn/start`とexact result回収へ
+    訂正した。Observer `3f35dbb`、focused 38/38、Supervisor関連16/16、ADR 0060／0061で受け入れた。
+  - [ ] 外部Supervisor production callerを一target一process／一cycle一stepで接続する。timeoutではAIを起動せず、
+    record-first operationからprovider request／result／apply／cursor commitを駆動する。
+  - [ ] Codex live app-serverとClaude公開非対話delivery／session相関／隔離Stop captureをH gateで実証する。
 - [ ] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
   host不明またはThroughlineの`ambiguous_parent`はfail closedにする。
 - [ ] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。
@@ -200,7 +206,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [x] Observer hostのproject identityを、監視対象ごとの作業folderではなく単一のObserver repo rootへ固定する。
   - Observer rootの`AGENTS.md`／`CLAUDE.md`が伴走者、read-only、既定沈黙、一サイクル一件、同providerという
     静的役割を所有し、起動ごとのpromptはtarget、watch、cursor等の可変情報だけを渡す。
-  - targetの`project_root`はchild start envelopeとMCP照合にだけ使い、host `cwd`、一時git repo、アプリ上の
+  - targetの`project_root`はchild start envelopeとSupervisor state照合にだけ使い、host `cwd`、一時git repo、アプリ上の
     project identityへ投影しない。正本: Observer ADR 0017、commit `6abd9e6`。
 - [ ] Claude host adapterで、可変長の`--mcp-config`／`--tools`より前にprompt positionalを置くargv契約を固定し、
   terminal receiptのowner、作成時点、atomic保存、job ID／result digest相関、再開手順を耐久契約として実装する。
@@ -208,12 +214,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   terminal後に`claude logs <id>`の`control.sock`が失われても成功や空結果へ丸めず、Claude private job state直読を標準fallbackにしない。
   raw `claude logs`はアカウント／利用状況表示を含み得るため親出力、Control、Observer stateへ流さず、子process内で
   allowlist済みのjob ID、terminal state、result digest、観測時刻だけを構造化receiptへ抽出する。後追いmaskを安全境界にしない。
-- [ ] Claude Observer所有MCP toolは`--tools`での公開と`--allowedTools`での`dontAsk`無人許可を別々にexact指定する。
-  stop前に公開`agents --json`でterminalなら`already_terminal`を返してCLI stopを再発行せず、実行中stopのcommand receiptと
-  terminal state観測を分離する。stop確認不能では同じjob IDを再観測し、terminal不明なら`stopping`を維持する。
+- [x] production Observer AIのtool allowlistを空にし、Throughline wait／read、project読取、shell／file toolを
+  AIへ公開しない。既存Observer MCP serverは削除せず、compatibility／diagnostics上の存廃をPhase 2内の別Taskで裁定する。
+- [ ] Claude stop前に公開`agents --json`でterminalなら`already_terminal`を返してCLI stopを再発行せず、実行中stopの
+  command receiptとterminal state観測を分離する。stop確認不能では同じjob IDを再観測し、terminal不明なら`stopping`を維持する。
 - [ ] Claude backgroundのuser／project／local settings、hooks、pluginsを隔離し、HEAD、index、tracked／untracked、modeを含む
   project fingerprint不変を確認する。65秒超の実行中jobでstop、子process残存なし、再stop、親／launcher再起動後の状態を実証する。
-- [ ] 両hostのproject-local continuationと親Mailbox hook adapterを実装し、host固有wireを共通coreへ漏らさない。
+- [ ] project-local Stop hookはmatching provider resultのcaptureだけを行い、block continuationを返さない。
+  次cycleは外部Supervisorが開始し、親Mailbox hook adapterは別責務の高速配送員として維持する。
 - [ ] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
 - [ ] read-only、誤配送防止、crash recovery、faulted停止、installer／verify／rollbackを両hostで完遂する。
   - [x] Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。

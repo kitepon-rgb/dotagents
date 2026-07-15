@@ -30,7 +30,7 @@
 
 | 子計画 | 親内の役割 | 2026-07-15時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了、Observer ADR 0044の既存作業へ復帰する |
+| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了、O2のSupervisor-owned production callerから再開する |
 | [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1の製品所有repo残件から再開する |
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
@@ -75,9 +75,11 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 3 | `DONE` | O1 full regression、独立監査、Control finalization、Observerへのreceipt還流 | Throughline → dotagents / Phase gate |
 | 4 | `DONE` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
 | 5 | `DONE` | Claude／Codex provider result journal coreとSupervisor cleanup handoff | Observer / focused gate |
-| 6 | `NOW` | 同generationへのcycle request配送、Stop／baseline束縛、隔離hook接続を契約化して実装する | Observer / focused＋live H gate |
-| 7 | `PARALLEL` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
-| 8 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 6 | `DONE` | cycle所有権を外部Supervisorへ一意化し、Codex cycle-per-turn request/result coreを訂正する | Observer / focused＋related gate |
+| 7 | `NOW` | 外部Supervisor production callerを一target一process／一cycle一stepで接続する | Observer / focused gate |
+| 8 | `H-WAIT` | Codex live app-serverとClaude公開非対話delivery／Stop captureを実証する | Observer / live H gate |
+| 9 | `PARALLEL` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
+| 10 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -176,16 +178,23 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
         Control `observer-provider-result-read-20260715`はrevision 28でfinalize／archive済み。
       - [x] generic completed後のprovider cleanupをSupervisorへ接続し、cleanup成功後だけapplyする順序を
         Observer `3600876`、focused 26/26、ADR 0057で固定した。
-      - [ ] 同じClaude job／Codex turnへcycle入力を一度だけ配送するrequest contractを先に固定する。
+      - [ ] 同じlogical generationへcycle入力を一度だけ配送するrequest contractを先に固定する。
         provider acceptedは「既に動いているhost lifecycle」ではなく、このrequest固有handleを証明する。
-        - [x] host-neutral canonical cycle requestとCodexの`thread/read baseline -> turn/steer -> exact ACK` fixtureを
+        - [x] **SUPERSEDED:** host-neutral canonical cycle requestとCodexの`thread/read baseline -> turn/steer -> exact ACK` fixtureを
           Observer `1bb7b07`、focused 22/22、Supervisor関連16/16、ADR 0059で受け入れた。
-          provider journal欠損とaccepted-before-generic-accepted recoveryもfail-closedに補正した。
+          provider journal欠損補正は維持するが、AI wait loopとSupervisorの二重所有、Stop idle問題のため
+          `turn/steer`／Stop continuation部分をADR 0060でsupersedeした。
+        - [x] 外部Supervisor単一所有とCodexの
+          `thread/read context -> cycle turn/start -> exact ACK -> accepted journal`へ訂正した。
+          Observer `3f35dbb`、focused 38/38、Supervisor関連16/16、static gate、ADR 0061、計画commit
+          `1d442c8`で受け入れた。Claude accepted recoveryの永久poll skipも同じ単位で修正した。
+        - [ ] 外部Supervisor production callerを一target一process／一cycle一stepで接続し、timeoutではAIを
+          起動せず、record-first operationからprovider request／result／apply／cursor commitを駆動する。
         - [ ] Claude background jobへの公開非対話reply ACKをlive H gateで実証する。Claude Code 2.1.210の
           `agents` shell surfaceにはsendが無いため、`claude -p --resume`やprivate protocolを推測fallbackにしない。
-      - [ ] Codexはrequest開始前item baselineとmatching Stop session／turn、Claudeは隔離`--settings` Stop hookと
+      - [ ] Codexはcycleごとのthread／session／turn／cwdとexact result、Claudeは隔離`--settings` Stop hookと
         job `sessionId`／payload `session_id`を束縛し、core callbackへ接続する。
-      - [ ] fake callback fixtureの後、実model request、hook trust、session相関をlive H gateで一度だけ実証する。
+      - [ ] production caller fixtureの後、実model request、hook trust、session相関をlive H gateで一度だけ実証する。
 - [ ] ユーザーの明示指示を受けた親だけが同provider Observerを起動し、一target一watchを確保する。
   二重起動、後勝ちtakeover、暗黙起動、自動再起動はfail closedにする。
 - [ ] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
