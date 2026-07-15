@@ -169,8 +169,8 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     [ADR 0016](adr/0016-spotter-windows-codex-product-receipt.md)で受け入れた。4 host実配布receiptはR2へ残す。
   - [x] Codex Sidecar Windows MCP shim修正v0.3.7を
     [ADR 0017](adr/0017-codex-sidecar-windows-mcp-product-receipt.md)で受け入れた。FOX実配布receiptはR2へ残す。
-  - [ ] dotagentsのSidecar `auditor` presetは実在するが、factory v2 scannerのpreset名／dry-run exact検証を
-    [ADR 0019](adr/0019-r1-local-closure-refutation.md)のP1としてR1へ戻した。
+  - [x] dotagentsのSidecar `auditor` presetとfactory v2 scannerのpreset名／dry-run exact検証を
+    `a35e987`、focused 10/10、[ADR 0020](adr/0020-sidecar-auditor-adapter-receipt.md)で受け入れた。
 - [ ] 4 hostのsidecar/auditor diagnosticsを実配布物でgreenにする。
 - [ ] BugHub自己監視のoutbox再送とPi5外部通知bridgeを、意図的障害試験の前まで完成する。Pi5本体の
   versioned source／fixture receipt欠落は[ADR 0019](adr/0019-r1-local-closure-refutation.md)のP1としてR1へ戻した。
