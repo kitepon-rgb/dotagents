@@ -1175,7 +1175,10 @@ accept, reject, task-finalize-record, control-finalize, recover-lock, archive
   1件以上のknowledge return参照、`type=decision`の親最終Decisionをexact objectとして保存する。
   受入matrix、最終監査、回帰、knowledge return、親Decisionはrepo内の実在する通常fileに限定し、
   finalize時にSHA-256を再計算する。matrix／knowledgeの生成descriptorを含む全要素をfinalize receiptへ
-  固定順で結合し、archive直前にも全Task／Control finalization文書を再hashする。
+  固定順で結合し、archive直前にも全Task／Control finalization文書を再hashする。過去の
+  `type=decision`だけは、現内容が変わっていても同一repoの最大256 commitにある同一path・regular blob・
+  完全一致SHA-256を合計64 MiB以内で確認できれば保持済みとする。`type=file`、別path、近似一致、unsafeな
+  現path、bare repoへこの履歴保持を拡張しない。
 - `archive`は上記Control-level finalizationが存在する場合だけ許可する。個別Task finalizationだけでは
   archiveできない。Control-level finalization後はarchive以外を拒否し、archive後はread-only。
 

@@ -2321,6 +2321,49 @@ test("accept/reject/task finalization/control finalization/archiveは状態・�
   await assert.rejects(api.reject({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: archived.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/verify.md")], decision_note: "late", decided_by: "parent" }), code("RECORD_ARCHIVED"));
 });
 
+test("archiveはfinalization Decisionの同一path旧digestだけをgit履歴から保持する (history retention)", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "finalization-history-retention" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "history-retention-task", effect: "read", write_scope: [] }),
+  });
+  const decisionRef = "docs/history-retention-decision.md";
+  await materializeTaskDecision(repo, decisionRef);
+  runGit(repo.root, ["add", decisionRef]);
+  runGit(repo.root, ["commit", "-q", "-m", "record original finalization decision"]);
+  const taskFinalized = await api.taskFinalizeRecord({
+    cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: task.revision,
+    task_id: "history-retention-task", finalization_ref: decisionRef, recorded_by: "parent",
+  });
+  const phaseComplete = await completePhaseGate(repo, "finalization-history-retention", taskFinalized.revision);
+  const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
+    cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: phaseComplete.revision,
+    acceptance_matrix_ref: "docs/history-retention-matrix.md",
+    final_audit_evidence: [evidence("docs/history-retention-audit.md")],
+    regression_evidence: [evidence("docs/history-retention-regression.md")],
+    knowledge_return_refs: ["docs/history-retention-knowledge.md"],
+    parent_decision: evidence("docs/history-retention-final-decision.md", "decision"), finalized_by: "parent",
+  }));
+
+  const knowledgePath = join(repo.root, "docs", "history-retention-knowledge.md");
+  const originalKnowledge = await readFile(knowledgePath, "utf8");
+  runGit(repo.root, ["add", "docs/history-retention-knowledge.md"]);
+  runGit(repo.root, ["commit", "-q", "-m", "record original file evidence"]);
+  await writeFile(join(repo.root, decisionRef), "new decision at the same path\n");
+  await writeFile(knowledgePath, "new file evidence at the same path\n");
+  runGit(repo.root, ["add", decisionRef, "docs/history-retention-knowledge.md"]);
+  runGit(repo.root, ["commit", "-q", "-m", "replace retained evidence"]);
+
+  await assert.rejects(api.archive({
+    cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: finalized.revision,
+  }), code("EVIDENCE_DIGEST_MISMATCH"));
+  await writeFile(knowledgePath, originalKnowledge);
+  const archived = await api.archive({
+    cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: finalized.revision,
+  });
+  assert.equal(archived.manifest.status, "archived");
+});
+
 test("control finalizationはTask完了と監査・回帰・knowledge return・親Decisionを必須にする", async (t) => {
   const { repo, result } = await initialized(t);
   const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ effect: "read", write_scope: [] }) });

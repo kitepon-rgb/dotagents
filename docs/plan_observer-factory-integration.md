@@ -117,6 +117,16 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     二重掲載されず、既存の取消拒否testが残ることを証明する。
   - `closedTaskIds`をControl閉鎖、brief、receipt予約の3面で共用し、254件目のreceiptまで使用した境界fixtureを含む
     focused 5/5を通した。cancelled依存のadmission規則とcancelled Taskへの`task-finalize`拒否は変更していない。
+- [x] archiveのfinalization証拠検証でも、旧Decision digestのbounded git履歴保持を認める。
+  - Observer foundation Control revision 71の正規`archive`で、過去に可変`docs/plan_observer.md`を使った
+    Task finalization receiptが`EVIDENCE_DIGEST_MISMATCH`となり、Controlがfinalizedのまま閉鎖不能になることを再現した。
+  - `resume-check`で既に採用済みの「同一repo・同一path・regular blob・完全一致SHA-256・最大256 commit・
+    合計64 MiB」の探索だけを、Task／Control finalizationの`type=decision`へ再利用する。
+  - `type=file`、別path、近似一致、unsafeな現path、bare repoを履歴fallbackで成功へ変えない。
+  - focused testで、同一pathの旧Decision blobが履歴に残る時だけarchiveでき、digest不一致拒否の既存契約を維持する。
+  - `verifyFinalizationRetention`へ既存のbounded履歴探索を接続し、履歴に旧版がある`type=file`を一度拒否した後、
+    current bytesを復元した同じControlだけがarchiveできるfocused 1/1を通した。
+  - 完了記録: `docs/elastic-orchestrator-archive-decision-history.md`。
 - [x] 各provider矢印をlaneへ固定する。
   - Observer: Worker／Consultationではなく、製品固有runtime＋同provider host adapter。
   - Codex→Claude Worker: 新設する`claude-native` execution adapter。
