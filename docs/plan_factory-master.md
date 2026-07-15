@@ -30,7 +30,7 @@
 
 | 子計画 | 親内の役割 | 2026-07-15時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了後にObserver ADR 0044の既存作業へ戻る |
+| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了、Observer ADR 0044の既存作業へ復帰する |
 | [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1の製品所有repo残件から再開する |
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
@@ -70,10 +70,10 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 
 | 順位 | 状態 | 作業 | 所有repo / gate |
 |---|---|---|---|
-| 1 | `NOW` | Claude/Codex各fixtureの65秒超Observer live wait | Throughline / focused live fixture |
-| 2 | `NEXT` | hook・capture・auditor-context・token monitorの関連回帰と文書同期 | Throughline / related gate |
-| 3 | `NEXT` | O1 full regression、独立監査、Control finalization、Observerへのreceipt還流 | Throughline → dotagents / Phase gate |
-| 4 | `READY_AFTER_O1` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
+| 1 | `DONE` | Claude/Codex各fixtureの65秒超Observer live wait | Throughline / focused live fixture |
+| 2 | `DONE` | hook・capture・auditor-context・token monitorの関連回帰と文書同期 | Throughline / related gate |
+| 3 | `DONE` | O1 full regression、独立監査、Control finalization、Observerへのreceipt還流 | Throughline → dotagents / Phase gate |
+| 4 | `NOW` | ADR 0044のCodex terminal observation APIとhost-neutral provider binding step machine | Observer / focused gate |
 | 5 | `PARALLEL_AFTER_O1` | wire v2の製品所有repo残欠陥 | 各製品repo / R1独立gate |
 | 6 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
@@ -121,14 +121,20 @@ H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugH
     `GIT_FAILURE`期待が残り、Control Record関連gate 92/93で再現した。
   - 期待値だけを現契約へ揃え、focused gate 1/1 green。full regressionはPhase末へ集約する。
 
-### Phase O1 — Throughline completed-turn feed（NOW）
+### Phase O1 — Throughline completed-turn feed（COMPLETE）
 
 - [x] Claude receiptとCodex `task_complete`から、rollback検知可能なhost-neutral completed chainを完成する。
   - Throughline `def92f4`、`022c0b8`、`7b07425`と同repo計画のfocused gateを実diffで確認した。
 - [x] DB projection、`projection_pending`、pagination、JSON-only read/wait、cancel、timeoutを完成する。
   - Throughline `e3380fa`、`60c4036`、`1165efd`と65.1秒のClaude live wait証拠を確認した。
-- [ ] 65秒超live waitとClaude/Codex E2Eを通し、Phase full gateを一回だけ実行する。
-- [ ] Throughline側Controlをfinalizeし、成果commitとADR digestをObserver計画へ還流する。
+- [x] 65秒超live waitとClaude/Codex E2Eを通し、Phase full gateを一回だけ実行する。
+  - 両host live waitはObserver commit `dc31c08`のfixtureで2/2成功、実行時間68.442秒。
+    Throughline関連gate 130/130、full 661件中660成功・Windows限定1 skip。
+  - 独立監査のP1/P2は成功へ丸めずrejectし、Throughline `02a809f`／`88fafaf`で独立修正、
+    focused 28/28を通した。
+- [x] Throughline側Controlをfinalizeし、成果commitとADR digestをObserver計画へ還流する。
+  - Phase受入はThroughline ADR 0010、lane補正はADR 0011。監査修正Control revision 15、
+    元closure Control revision 78でfinalizeし、Throughline計画commit `ebfc152`へ固定した。
 
 詳細: [Observer計画 Phase 1](plan_observer-factory-integration.md#phase-1-throughline両host-completed-turn-feed) ／
 Throughline `docs/14_observer_completed_turn_feed_plan.md`

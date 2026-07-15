@@ -168,12 +168,17 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 - [x] Throughline側正本TODOをCodex専用からClaude／Codex共通契約へ更新する。
   - `docs/14_observer_completed_turn_feed_plan.md`、ADR 0002／0003へClaude Stop receipt、Codex `task_complete`、completed pair chain、host-neutral cursor境界を固定した。Claude receipt実装はThroughline commit `b585e98`、cursor裁定は`682fed2`。
-- [ ] host-neutral cursorへproject identity、host／thread hash、host固有の完了証拠を束縛し、
+- [x] host-neutral cursorへproject identity、host／thread hash、host固有の完了証拠を束縛し、
   detected ambiguityをfail closedにする。v1前提外の一般的な複数活動親をmtime／PID／TTLで推測しない。
-- [ ] Codexは`task_complete`、ClaudeはPhase 0で実証した完了証拠だけを採用し、mtimeや進行中projectionを完了扱いしない。
-- [ ] snapshot／delta／thread switch／host switch／resync／projection pending／paginationをblack-box固定する。
-- [ ] Observer以外にも再利用できるJSON-only read／wait CLI、cancel、timeout境界、65秒超live waitを両hostで検証する。
-- [ ] Throughline既存Claude pathとCodex pathの回帰gateを通し、独立commit／rollback単位を保つ。
+- [x] Codexは`task_complete`、ClaudeはPhase 0で実証した完了証拠だけを採用し、mtimeや進行中projectionを完了扱いしない。
+- [x] snapshot／delta／thread switch／host switch／resync／projection pending／paginationをblack-box固定する。
+- [x] Observer以外にも再利用できるJSON-only read／wait CLI、cancel、timeout境界、65秒超live waitを両hostで検証する。
+- [x] Throughline既存Claude pathとCodex pathの回帰gateを通し、独立commit／rollback単位を保つ。
+  - 両host live fixture 2/2（68.442秒）、関連gate 130/130、full 661件中660成功・Windows限定1 skip。
+  - 独立監査で検出したClaude複数turn receipt欠落とPOSIX project case誤照合は、Throughline
+    `02a809f`／`88fafaf`で独立修正し、focused 28/28を通した。監査時点のFAILEDはControlでreject保持した。
+  - Throughline ADR 0010／0011、監査修正Control revision 15、closure Control revision 78、
+    計画final commit `ebfc152`をPhase 1のcross-repo受入証拠とする。
 
 **Gate:** 両hostで進行中turnを除外し、完了turnを欠落・重複なくObserverへ渡せる。
 
