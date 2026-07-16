@@ -43,5 +43,16 @@ test("synthetic registryは実Worker record validation pathでtypedに検証さ�
 
 test("production registryは既存の検証済みexecutorだけを公開する", () => {
   assert.equal(EXECUTOR_CONTRACT_REGISTRY.has({ adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.idempotency-key.v1" }, "work"), true);
+  assert.equal(EXECUTOR_CONTRACT_REGISTRY.has({ adapter_id: "claude-native", contract_version: "v1", instance_id: "local-cli", handle_schema_id: "claude-native.session.v1" }, "native-subagent"), true);
+  assert.deepEqual(validateExecutorContractSnapshot({
+    executor: { adapter_id: "claude-native", contract_version: "v1", instance_id: "local-cli", handle_schema_id: "claude-native.session.v1" },
+    workflow_id: "native-subagent", executor_handle: { session_id: "123e4567-e89b-42d3-a456-426614174000" },
+    workflow_capabilities: [{ capability_id: "workspace.read", value: "true", evidence: { type: "file", ref: "docs/plan_observer-factory-integration.md", digest: "a".repeat(64), observed_at: "2026-07-16T11:30:00.000Z" } }],
+  }), { external: true, handle_schema_id: "claude-native.session.v1" });
+  assert.throws(() => validateExecutorContractSnapshot({
+    executor: { adapter_id: "claude-native", contract_version: "v1", instance_id: "local-cli", handle_schema_id: "claude-native.session.v1" },
+    workflow_id: "native-subagent", executor_handle: { session_id: "not-a-uuid" },
+    workflow_capabilities: [{ capability_id: "workspace.read", value: "true", evidence: { type: "file", ref: "docs/plan_observer-factory-integration.md", digest: "a".repeat(64), observed_at: "2026-07-16T11:30:00.000Z" } }],
+  }), controlCode("INVALID_SCHEMA"));
   assert.equal(EXECUTOR_CONTRACT_REGISTRY.has({ adapter_id: "claude-internal", contract_version: "v1", instance_id: "legacy", handle_schema_id: "claude.session.v1" }, "native-subagent"), false);
 });
