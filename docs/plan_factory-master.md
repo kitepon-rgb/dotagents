@@ -519,9 +519,15 @@ Observer `docs/plan_observer.md`
 - [x] 設計を不変ADRで裁定する: quota snapshot契約・純粋selector仕様・Control schema v27
   （selector decision束縛＋consultation cancelled state＝ADR 0053の本修正）・実装wave分割。
   - [ADR 0054](adr/0054-o4-rate-aware-scheduler-design.md)で裁定（refuter 2票、採用17・棄却2）。
-- [ ] provider-owned quota snapshot、window正規化、`pace_ratio`、hysteresis、pool lock、reservationを実装する。
-- [ ] stale、取得不能、矛盾、reset境界、残量ゼロをfail loudにし、架空値や暗黙fallbackを使わない。
+- [x] provider-owned quota snapshot、window正規化、`pace_ratio`、hysteresis、pool lock、reservationを実装する。
+  - Wave Q/S（`83236c4`・[ADR 0055](adr/0055-o4-wave-qs-acceptance.md)）、Wave V（`75f33fc`・
+    [ADR 0056](adr/0056-o4-wave-v-acceptance.md)）、Wave A（quota-adapter＋pool lock配線・
+    [ADR 0057](adr/0057-o4-wave-a-acceptance.md)）で完了。**実取得（account usage読取）はlive H
+    承認待ちとして子計画へ残置**（実装済み扱いにしない）。
+- [x] stale、取得不能、矛盾、reset境界、残量ゼロをfail loudにし、架空値や暗黙fallbackを使わない。
+  - 取得不能はWave Aの`projectQuotaObservationFailure`（必ずtyped error）、他はWave Q/S fixtureで固定。
 - [ ] Control schemaとreceiptへselector decisionを束縛し、週次dogfoodで両社の消費ペースを評価する。
+  - 束縛はWave V（v27 subject digest自動束縛）で完了。**残: Wave D週次dogfood＝実需開始時**。
 
 詳細: [Observer計画 Phase 4](plan_observer-factory-integration.md#phase-4-rate-aware-elastic-scheduler)
 

@@ -441,17 +441,21 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     remaining_ratioをbasis points整数へ、model_familyをwindow単位scopeへ、window_length検証を追加）。
     validator実装はWave Q。
 - [ ] OpenAI／Anthropic adapterでquota snapshotを取得し、秘密、cookie、token、account内部stateをControlへ複製しない。
+  - request/projection純関数と秘密非複製は`lib/orchestrate/quota-adapter.mjs`（受入[ADR 0057](adr/0057-o4-wave-a-acceptance.md)）で完了。
+    **残: 実取得（account usage読取）＝live H承認待ち**。活性化前に実イベントでshape/単位をfixture再確認する。
 - [x] 異なるreset時刻をUTCで正規化し、`pace_ratio`と最も逼迫したwindowを計算する純粋selectorを実装する。
   - `lib/orchestrate/rate-selector.mjs`（`83236c4`、受入[ADR 0055](adr/0055-o4-wave-qs-acceptance.md)）。
     canonical ISO UTC強制・model_family_scope選別・残量下限・pace飽和・量子化tie-break。
 - [x] role適格候補だけを入力にし、Observer／相談役／F作業を自動均衡対象から除外する。
   - placement語彙`{observer, consultant, worker}`で受け、observer/consultantは`ROLE_NOT_BALANCED`、
     親直轄Fは語彙外（既存`EXECUTOR_FORBIDDEN`が担保。ADR 0054裁定）。
-- [ ] 会社間の頻繁な切替を防ぐhysteresis、quota pool単位lock、選択ごとのsnapshot再取得、reset時失効、同率時の決定的tie-breakを実装する。
+- [x] 会社間の頻繁な切替を防ぐhysteresis、quota pool単位lock、選択ごとのsnapshot再取得、reset時失効、同率時の決定的tie-breakを実装する。
   - hysteresis・鮮度強制（選択ごと再取得）・reset失効・決定的tie-breakは`83236c4`で実装・fixture固定済み。
-    **残: quota pool単位lockの配線**（store lock機構の再利用。Wave V/Aで閉じる）。
-- [ ] stale／取得失敗／残量ゼロ／window矛盾／reset境界／時差／一社のみ適格をfail-loud fixtureで固定する。
-  - 取得失敗（Wave A adapter projection）以外の6項目は`83236c4`のWave Q/S fixtureで固定済み。
+    quota pool単位lockはWave Aでlock-owners機構再利用のpool leaseとして配線し、selector_decision付き
+    placement-reserveへ保持必須を課した（受入[ADR 0057](adr/0057-o4-wave-a-acceptance.md)）。
+- [x] stale／取得失敗／残量ゼロ／window矛盾／reset境界／時差／一社のみ適格をfail-loud fixtureで固定する。
+  - 取得失敗以外の6項目は`83236c4`のWave Q/S fixtureで固定済み。取得失敗はWave Aの
+    `projectQuotaObservationFailure`（必ずtyped error・closed語彙）fixtureで固定（受入[ADR 0057](adr/0057-o4-wave-a-acceptance.md)）。
 - [x] Control schema v27（[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)でv26はO3
   Consultation多provider化へ割当済み）へ使用snapshot digest、quota pool、評価時刻、選択理由、
   reservationを持つselector decisionを追加し、candidate digest／receiptへ束縛する。旧version reader
