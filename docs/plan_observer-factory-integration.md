@@ -452,10 +452,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     **残: quota pool単位lockの配線**（store lock機構の再利用。Wave V/Aで閉じる）。
 - [ ] stale／取得失敗／残量ゼロ／window矛盾／reset境界／時差／一社のみ適格をfail-loud fixtureで固定する。
   - 取得失敗（Wave A adapter projection）以外の6項目は`83236c4`のWave Q/S fixtureで固定済み。
-- [ ] Control schema v27（[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)でv26はO3
+- [x] Control schema v27（[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)でv26はO3
   Consultation多provider化へ割当済み）へ使用snapshot digest、quota pool、評価時刻、選択理由、
   reservationを持つselector decisionを追加し、candidate digest／receiptへ束縛する。旧version reader
   継続、v27新規作成、migration／rollback fixtureを同時に通す。
+  - `75f33fc`で完了（受入[ADR 0056](adr/0056-o4-wave-v-acceptance.md)）。selector_decisionは
+    optional keyとしてplacement-reserve subject digestへ自動束縛（改竄の恒久検出をfixture固定）。
+    v27はconsultation `cancelled` state（`consultation-cancel`・ADR 0053除外のretire）も導入。
+    reader {v25,v26,v27}継続・隣接migration/条件付きrollback・full 152/152・fail 0・skip 0。
 - [ ] 実消費と選択結果を週次で評価し、両社がreset時に過不足なく使われるかdogfood記録を残す。
 
 **Gate:** 架空quotaやsilent fallbackなしで、適格Workerを日割り余裕のあるproviderへ再現可能に配置できる。
