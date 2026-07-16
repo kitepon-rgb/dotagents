@@ -106,8 +106,10 @@ H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugH
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを
 [ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)で採用した。
-基礎実装はAiterm `dd43c40`、operation相関訂正は`3842ff2`、focused 1/1、related 122/122、
-full 262/262、独立反証P0/P1/P2残存なしで完了した。fixture成功をlive成功へ丸めないが、
+基礎実装はAiterm `dd43c40`、operation相関訂正は`3842ff2`、公開version境界は`ceb75e8`、
+構造化machine callerは`28b7438`で完了した。相関gateはfocused 1/1、related 122/122、full 262/262、
+独立反証P0/P1/P2残存なし、構造化caller gateはfocused 5/5、related 126/126でgreenである。
+fixture成功をlive成功へ丸めないが、
 [ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)の順序どおり非Hの19dを先に実装し、
 実Claude初回／follow-upは19eの一回のdual-host live H campaignへ統合する。19d未完のまま
 19e／O3／後続laneは先行させない。
@@ -331,7 +333,8 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     実装順の訂正は[ADR 0024](adr/0024-observer-parent-caller-queue-correction.md)を正とする。
     - [x] Aiterm queue 19c3で`claude_agent`の永続session、初回／follow-up、Stop完了、operation相関付き
       exact result、timeout後回収、interrupt／closeを非H独立gateで閉じた。`claude -p`反復は代替にしない。
-      Aiterm `dd43c40`／`3842ff2`、focused 1/1、related 122/122、full 262/262、独立反証後green
+      Aiterm `dd43c40`／`3842ff2`／`ceb75e8`／`28b7438`。相関gateはfocused 1/1、related 122/122、
+      full 262/262、独立反証後green。構造化caller gateはfocused 5/5、related 126/126
       （[ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)）。
     - [ ] queue 19dでAiterm公開面だけをClaude production callerへ接続する。
     - [ ] queue 19eで実Claude初回／follow-up各1 turn、Stop、exact result、timeoutなしの通常回収、
