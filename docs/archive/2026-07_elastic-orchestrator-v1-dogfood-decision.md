@@ -3,7 +3,7 @@
 - Control ID: `elastic-v1-dogfood-20260714`
 - Decision owner: parent-belle
 - Decision date: 2026-07-14
-- Immutable input: `docs/elastic-orchestrator-v1-dogfood-discovery.md`
+- Immutable input: `docs/2026-07_elastic-orchestrator-v1-dogfood-discovery.md`
 - Independent refutation: `run-dedup-refutation`
 - Consultation: `consultation-gpt-blindspots`（助言専用。Worker数・独立監査票には算入しない）
 

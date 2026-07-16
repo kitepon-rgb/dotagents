@@ -20,10 +20,10 @@ refuter 2本はread-only、sorterは機械照合だけを担当し、親の意�
 | 指摘 | 裁定 | disposition |
 | --- | --- | --- |
 | native completedがstrict reportを迂回 | 採用 | native／aiterm completedを`WORKER_REPORT_IMPORT_REQUIRED`へ統一しnegative test追加 |
-| 実ControlのRegistry／placement未使用 | 採用 | [registry dogfood](elastic-orchestrator-v1-registry-dogfood.md)を同一Controlで縦切り |
+| 実ControlのRegistry／placement未使用 | 採用 | [registry dogfood](2026-07_elastic-orchestrator-v1-registry-dogfood.md)を同一Controlで縦切り |
 | 3件超のexternal Runを証明できない | 解釈を棄却 | plan文脈の「親外部Run」はnativeを含むWorker Run。Consultationは除外し、barrier Cで4 Worker重複を実証 |
 | plan archiveでobjective refが破断 | 採用 | Control閉鎖後、旧pathをarchive正本への互換redirectだけにし、TODO正本はarchiveへ一本化 |
-| Throughline handoff相関が検証不能 | 採用 | [bounded handoff evidence](elastic-orchestrator-v1-handoff-evidence.md)を追加 |
+| Throughline handoff相関が検証不能 | 採用 | [bounded handoff evidence](2026-07_elastic-orchestrator-v1-handoff-evidence.md)を追加 |
 | Grok／Composerをexecution-verifiedと記録 | 採用 | immutable履歴は改変せず、最終Decisionでdiagnostics-readyに訂正しcapacity証拠から除外 |
 | callout cacheのowner／symlink未検証 | 採用 | 共通safe helper、cache root／marker symlinkのnegative smokeを追加 |
 | config適用範囲が4 hookだけと記述 | 採用 | callout 4イベント＋SessionStart advisory 1件へ正典を統一 |
