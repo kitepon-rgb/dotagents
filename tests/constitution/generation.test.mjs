@@ -1,0 +1,119 @@
+import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import test from "node:test";
+
+const ROOT = resolve(import.meta.dirname, "..", "..");
+const RENDER = join(ROOT, "bin", "render-global-constitution.mjs");
+
+async function fixture(t) {
+  const root = await mkdtemp(join(tmpdir(), "constitution-generation-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  for (const directory of ["shared", "claude", "codex"]) await mkdir(join(root, directory), { recursive: true });
+  await writeFile(join(root, "shared/constitution.md"), "# 共通\n\n共通本文\n", "utf8");
+  await writeFile(join(root, "claude/CLAUDE.delta.md"), "# Claude差分\n\n- Claude行\n", "utf8");
+  await writeFile(join(root, "codex/AGENTS.delta.md"), "# Codex差分\n\n- Codex行\n", "utf8");
+  return root;
+}
+
+function run(root, mode) {
+  return spawnSync(process.execPath, [RENDER, mode, "--root", root], { encoding: "utf8" });
+}
+
+test("共通正本とhost deltaから完全な生成物を冪等生成する", async (t) => {
+  const root = await fixture(t);
+  const first = run(root, "--write");
+  assert.equal(first.status, 0, first.stderr);
+  const claude = await readFile(join(root, "claude/CLAUDE.md"), "utf8");
+  const codex = await readFile(join(root, "codex/AGENTS.md"), "utf8");
+  assert.match(claude, /GENERATED FILE: 直接編集禁止/);
+  assert.match(claude, /shared\/constitution\.md \+ claude\/CLAUDE\.delta\.md/);
+  assert.match(claude, /共通本文[\s\S]*Claude差分/);
+  assert.match(codex, /共通本文[\s\S]*Codex差分/);
+  execFileSync(process.execPath, [RENDER, "--write", "--root", root]);
+  assert.equal(await readFile(join(root, "claude/CLAUDE.md"), "utf8"), claude);
+  assert.equal(await readFile(join(root, "codex/AGENTS.md"), "utf8"), codex);
+});
+
+test("見出しだけの空deltaは固有差分節を出力しない", async (t) => {
+  const root = await fixture(t);
+  await writeFile(join(root, "claude/CLAUDE.delta.md"), "# Claude差分\n", "utf8");
+  assert.equal(run(root, "--write").status, 0, "write should succeed");
+  const claude = await readFile(join(root, "claude/CLAUDE.md"), "utf8");
+  const codex = await readFile(join(root, "codex/AGENTS.md"), "utf8");
+  assert.doesNotMatch(claude, /Claude差分/);
+  assert.match(claude, /共通本文\n$/);
+  assert.match(codex, /Codex差分[\s\S]*Codex行/);
+  assert.equal(run(root, "--check").status, 0);
+});
+
+test("checkは生成物driftを拒否し、再生成後だけ通す", async (t) => {
+  const root = await fixture(t);
+  assert.equal(run(root, "--write").status, 0);
+  await writeFile(join(root, "codex/AGENTS.md"), "手編集\n", "utf8");
+  const drift = run(root, "--check");
+  assert.equal(drift.status, 1);
+  assert.match(drift.stderr, /生成物drift: codex\/AGENTS\.md/);
+  assert.equal(run(root, "--write").status, 0);
+  assert.equal(run(root, "--check").status, 0);
+});
+
+test("不正な引数は入力エラーとして拒否する", () => {
+  const result = spawnSync(process.execPath, [RENDER, "--unknown"], { encoding: "utf8" });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /usage:/);
+});
+
+test("実repoの共通契約とhost固有契約を交差させず保持する", async () => {
+  const common = await readFile(join(ROOT, "shared/constitution.md"), "utf8");
+  const claudeDelta = await readFile(join(ROOT, "claude/CLAUDE.delta.md"), "utf8");
+  const codexDelta = await readFile(join(ROOT, "codex/AGENTS.delta.md"), "utf8");
+  const claude = await readFile(join(ROOT, "claude/CLAUDE.md"), "utf8");
+  const codex = await readFile(join(ROOT, "codex/AGENTS.md"), "utf8");
+
+  for (const heading of [
+    "人格 — あなたはベル",
+    "応対規範 — まず会話し、黙って進めない",
+    "姿勢の五原則（迷ったらここに戻る）",
+    "調査と知識の置き場",
+    "計画文書の作法",
+    "作業レーンと統制",
+    "ツールと権限",
+    "git・shell・ファイルの作法（実被弾からの鉄則）",
+    "報告",
+    "出力衛生",
+  ]) assert.match(common, new RegExp(`^## ${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "m"));
+  assert.match(common, /push・force 系・履歴改変はユーザーの明示指示時のみ/);
+  assert.match(common, /全hostで既定として aiterm-mcp の永続PTY/);
+  assert.match(common, /host標準の単発shellツール可/);
+
+  // 両deltaは空（見出しのみ）を保ち、生成物に固有差分節を作らない（オーナー裁定 2026-07-16）
+  assert.equal(claudeDelta.trim(), "# Claude Code固有差分");
+  assert.equal(codexDelta.trim(), "# Codex固有差分");
+  assert.doesNotMatch(claude, /固有差分/);
+  assert.doesNotMatch(codex, /固有差分/);
+
+  // 共通契約は共通正本にだけ存在し、hostへ依存する記述を含まない
+  assert.match(common, /project側を優先する/);
+  assert.match(common, /確信できない指摘は棄却する/);
+  assert.doesNotMatch(common, /spawn_agent|agent_type|fork_turns|effortはlow|Bash ツール/);
+  // Elastic統括正典（shared/orchestrate・docs/02）所有の契約を憲法へ複製しない
+  assert.doesNotMatch(common, /execution-verified|installed（CLI存在）|gpt-connector-mcp|maintenance wave|characterization/);
+
+  // host deltaは共通契約を重複保持しない
+  for (const delta of [claudeDelta, codexDelta]) {
+    assert.doesNotMatch(delta, /project側を優先/);
+    assert.doesNotMatch(delta, /委譲レーンは三つ|① native＝|external executionを積極利用/);
+    assert.doesNotMatch(delta, /role定義（implementer／refuter／sorter等）をそのまま使う/);
+    assert.doesNotMatch(delta, /mcp__aiterm__pty_|永続PTYは cwd/);
+    assert.doesNotMatch(delta, /利用可能性は4段階|installed（CLI存在）/);
+    assert.doesNotMatch(delta, /外部実行の受入契約|外部セッションの回収契約|状態不明として扱い/);
+    assert.doesNotMatch(delta, /gpt-connector-mcp|docs\/06_gpt-connector\.md|手動rollback/);
+    assert.doesNotMatch(delta, /docs\/02_models\.md/);
+    assert.doesNotMatch(delta, /実モデルの格下げ/);
+    assert.doesNotMatch(delta, /確信が持てない指摘|棄却側に倒す/);
+    assert.doesNotMatch(delta, /直接編集しない/);
+  }
+});

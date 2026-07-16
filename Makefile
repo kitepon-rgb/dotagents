@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-install test-observer-hook-config test-observer-package test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ci help
+.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-constitution test-install test-observer-hook-config test-observer-package test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ci help
 
 lint: lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks ## 静的 lint + skill/hook smoke
 
@@ -21,7 +21,7 @@ lint-js: ## bin/ と lib/orchestrate/ の Node.js script を構文チェック
 lint-md: ## markdownlint（緩い設定・生きた正典のみ / .markdownlint-cli2.jsonc）
 	$(MDLINT)
 
-lint-constitution: ## CLAUDE.md / AGENTS.md のツール非依存な共通章を照合
+lint-constitution: ## 共通憲法＋host deltaと生成物の完全一致を照合
 	./bin/verify-constitution-parity.sh
 
 lint-skills: ## Codex skill の frontmatter と安全契約を静的検証
@@ -30,6 +30,9 @@ lint-skills: ## Codex skill の frontmatter と安全契約を静的検証
 lint-hooks: ## Claude / Codex hook の空打ち smoke
 	bash tests/hooks/smoke.sh
 	bash tests/hooks/codex-smoke.sh
+
+test-constitution: ## 共通憲法generatorの冪等性とdrift拒否
+	node --test tests/constitution/generation.test.mjs
 
 test-install: ## 隔離 HOME の install/profile/config apply 検証
 	bash tests/install/clean-home.sh
@@ -58,7 +61,7 @@ test-factory-scan: ## 工場9製品scanの公開CLI・privacy・platform契約�
 test-orchestrate: ## orchestration control record の契約を検証
 	node --test tests/orchestrate/*.test.mjs
 
-ci: lint test-install test-observer-hook-config test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ## ローカル/CI 共通の全ゲート
+ci: lint test-constitution test-install test-observer-hook-config test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ## ローカル/CI 共通の全ゲート
 
 help: ## タスク一覧
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \

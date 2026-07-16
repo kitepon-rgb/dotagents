@@ -56,4 +56,3 @@ Claude headless／resumeのcharacterizationとAiterm persistent sessionによる
 - `claude-native` focused testでstart／resumeの同一UUID、明示workspace／tool policy、timeout unknown、
   terminal projection、failure mapping、禁止flag拒否を固定する。
 - source/testと本ADR・親／子planは独立revert可能なcommitに分ける。
-

@@ -5,14 +5,14 @@
 ## 開発ルート（オーナー裁定 2026-07-04）
 
 - 開発ルートの標準は **`~/Developer`**（macOS・Linux・WSL2。ランブックの clone 先・sync-sweep の既定と同一）。
-- ただし**既存端末の移設や例外はオーナーが端末ごとに裁定**する（FOX Windows native は `~/Documents/Program` のまま容認＝2026-07-04 オーナー裁定）。端末限定の裁定を本ファイルへ一般化して書かない。
-- **基準パスの変更（プロジェクトの移動・改名・削除）はオーナーの明示承認必須**。実行前に目的・影響・戻し方を申告し、実行後に移動一覧を報告する（2026-07-04 の無申告移設事案より）。
+- ただし**既存端末の移設や例外はオーナーが端末ごとに裁定**する。端末限定の裁定は該当端末の記録に置き、本ファイルへ一般化して書かない。
+- 基準パスの変更（移動・改名・削除）の承認・申告義務は共通憲法「git・shell・ファイルの作法」に従う。
 
 ## 標準化の方針（最初に読む）
 
-- **Fable 級統括が在任する期間は、churn を恐れず標準へ寄せる**（オーナー指示 2026-07-04:「動くからやらない」は Fable 性能の浪費＝期間限定の最高知能で、動くものをさらに高品質にするのが本旨）。付属物の新設（rag/・CI・docs 連番正典・adr/・.claude/settings.json）は積極的に足す。
-- **見送るのは「破壊的リスクが益を上回る」場合に限る**（リンク切れを生む大規模リネーム・稼働/デプロイパスを壊す移動・履歴を失う移動）。その場合も `git mv` で履歴保存・CI/デプロイのパス参照を同時追従・全ゲート green で回避できるなら実施する。「稼働に支障ないから触らない」は理由にしない。
-- 実施の作法: **1リポ=独立コミット**・付属物新設→検証→統括レビュー→コミット・push。物量は Codex 委譲（レート非依存）、裁定とコミットは統括。
+- **churn を恐れず標準へ寄せる**（「動くからやらない」を理由にしない）。付属物の新設（rag/・CI・docs 連番正典・adr/・.claude/settings.json）は積極的に足す。
+- **見送るのは「破壊的リスクが益を上回る」場合に限る**（リンク切れを生む大規模リネーム・稼働/デプロイパスを壊す移動・履歴を失う移動）。その場合も `git mv` で履歴保存・CI/デプロイのパス参照を同時追従・全ゲート green で回避できるなら実施する。
+- 実施の作法: **1リポ=独立コミット**・付属物新設→検証→統括レビュー→コミット・push。物量の委譲と配置は docs/02_models.md に従い、裁定とコミットは統括。
 - 新規プロジェクトは最初からこの標準で作る。
 
 ## 必須要件（全型共通）
@@ -27,13 +27,13 @@
 | Spotter project install | `spotter install -y` で `.spotter/marker.json`、Claude/Codex hook、host別catalogを生成。ThroughlineがPATHにある状態で実行しauditor contextを既定ONにする。`.spotter/` と `.claude/settings.json` は端末固有としてgitignoreし、marker/hookをリポへ複製しない |
 | 工場コア互換 | Caveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecarはdotagentsの必須外部製品。Claude Code CLI／Codex CLI／Grok Buildは基盤toolchainとして別管理する。Oracleは互換・rollback専用 |
 | テスト＋CI | required チェックとして張る（無いリポで大きな作業を始めるなら最初に CI＝作業自体の安全網） |
-| `.gitignore` 衛生 | `.env`・鍵・`.obsidian/`・`.venv/`・ビルド生成物。**gitignore された貴重物は push で保護されない**ことを常に意識（2026-07-04 実証事故: ローカル CLAUDE.md 消失） |
+| `.gitignore` 衛生 | `.env`・鍵・`.obsidian/`・`.venv/`・ビルド生成物。**gitignore された貴重物は push で保護されない**ことを常に意識 |
 | `.codex-sidecar.yml` | sidecar 委譲を受けるリポはルートに置く（テンプレ: dotagents/docs/05_codex-fragments.md） |
 
 ## 知識基盤スタック（このリポ群の長期記憶の型）
 
 1. **罠・実測教訓** → caveat（dotagents/caveat 経由で端末横断。記録前に caveat_search）
-2. **外部仕様・研究** → `rag/`（markitdown 変換は**バイト数で成功判定**。JS ページは WebFetch/ブラウザ系）
+2. **外部仕様・研究** → `rag/`（取得・変換の作法と罠は共通憲法「調査と知識の置き場」と caveat が正）
 3. **設計判断** → `docs/adr/`・監査ダイジェスト
 4. **作法・手順** → CLAUDE.md（グローバル正本＋リポ別）
 5. **進捗・状態** → プラン文書が TODO を兼ねる（docs/ 内。規約は dotagents/PLAN.md「文書の作法」）＋ issue

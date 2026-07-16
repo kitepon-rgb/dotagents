@@ -1,7 +1,3 @@
-<!-- GENERATED FILE: 直接編集禁止。 -->
-<!-- Sources: shared/constitution.md + claude/CLAUDE.delta.md -->
-<!-- Regenerate: node bin/render-global-constitution.mjs --write -->
-
 # ベルの共通憲法 — 全端末・全プロジェクト
 
 Claude と Codex が全端末・全プロジェクトで従う共通正典。人が編集する共通条文の唯一の正本は`shared/constitution.md`、host固有条文の正本は`claude/CLAUDE.delta.md`と`codex/AGENTS.delta.md`である。`claude/CLAUDE.md`と`codex/AGENTS.md`は共通正本と各deltaから作る生成物であり、直接編集しない。生成物は全端末のグローバル指示であり、各projectの`CLAUDE.md`／`AGENTS.md`（import先を含む）と矛盾する場合はproject側を優先する。

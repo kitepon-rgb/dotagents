@@ -1,6 +1,6 @@
 # 02_models — 役割→モデル×エフォートの決定表（唯一の参照点）
 
-<!-- 前提: 2026-07-14 更新（GPT-5.6 / Grok 4.5 世代）。バージョン固定禁止（PLAN 原則9）。モデル名をこの表以外＋公認例外（codex/agents/*.toml・.codex-sidecar.yml）に書き散らさない -->
+<!-- 前提: 2026-07-16 更新（GPT-5.6 / Grok 4.5 世代）。バージョン固定禁止（PLAN 原則9）。モデル名をこの表以外＋公認例外（codex/agents/*.toml・.codex-sidecar.yml）に書き散らさない -->
 
 方針: skill・agents・委譲契約・スクリプトは**役割名**でモデルを指し、具体名への解決はこの表だけが担う。世代交代時は**この1枚＋公認例外2種を更新して push すれば全端末が追従**する。更新トリガーはオーナーの宣言（PLAN 原則6）。
 
@@ -10,7 +10,7 @@
 
 | 枠 | 入口 | 特徴 |
 |---|---|---|
-| Anthropic | Claude Code 本体・Agent/Workflow・`sonnet`/`haiku` | 統括の窓＝有限資源。物量を流さない |
+| Anthropic | Claude Code 本体・Agent/Workflow・`sonnet`/`haiku` | 統括の窓＝有限資源。quota残を見つつ`sonnet`へ実装・finderを配ってよい（オーナー裁定 2026-07-16） |
 | OpenAI **Codex** | codex CLI・codex-sidecar MCP・Codex ネイティブ子 | 物量の第一柱 |
 | OpenAI **ChatGPT** | **gpt-connector**（MCP ID `gpt_connector`・API fallback禁止） | Codex 枠と別勘定。実読不要の純推論はここが最得。Oracleは互換・rollback専用 |
 | xAI | grok CLI・aiterm の grok/composer agent | 完全独立枠。物量の第二柱＋並列 finder |
@@ -29,13 +29,12 @@
 
 ## 決定表（役割→ティア×effort×入口。既定は写すだけ・外れる方を要正当化）
 
-### provider配置の三原則
+### provider配置の原則
 
 - **Observerは親と同じprovider family**: Codex親にはCodex、Claude親にはClaudeを置く。同じアプリのUXと近い思考様式による伴走が目的であり、継続的な反証役として扱わない。
 - **親の相談役は原則として異なるprovider**: Codex親はClaude主モデル、Claude親はCodex旗艦を第一候補にし、provider固有の盲点を補う。相談役はWorkerやObserverへ混ぜない。
-- **一般Workerは適格候補間でrate-aware配置**: role、能力、独立性、F/A/Hを満たす候補だけを残し、各providerの残quotaとresetまでの残時間から算出する日割り余裕をplacement判断に使う。Observer、相談役、F作業は自動均衡対象外とする。
-
-rate-aware selectorは[Observer完成・工場編入・Elastic配置改善計画](plan_observer-factory-integration.md)の実装完了までは未提供である。quota取得不能・stale・矛盾時に架空値や暗黙fallbackで配置を成功扱いしてはならない。
+- **一般Workerは適格候補間でrate-aware配置**: role、能力、独立性、F/A/Hを満たす候補だけを残し、残quotaを配置判断に使う。quota取得不能・stale時に架空値や暗黙fallbackで配置を成功扱いしない（rate-aware selectorは[Observer計画](plan_observer-factory-integration.md)の完了まで未提供）。
+- **Phase検証はクロスprovider**（オーナー裁定 2026-07-16）: Phase完了時の重い検証は、Claude親の成果をCodex（`codex_review`／`codex_risk_check`）が、Codex親の成果をClaude（`claude -p`）が1回検証する。TODO単位ではやらず親確認で足りる。指摘の採用・棄却は統括が裁定する。
 
 | 役割 | Claude レーン | Codex レーン | xAI レーン | ChatGPT レーン |
 |---|---|---|---|---|
@@ -45,25 +44,19 @@ rate-aware selectorは[Observer完成・工場編入・Elastic配置改善計画
 | 反証・検証（リポ実読あり） | 主 継承×high・refuter | 旗艦=`gpt-5.6-sol`×high・refuter 定義 / codex_risk_check | —（ハルシ増・形式推論弱） | — |
 | セカンドオピニオン（実読不要の純推論） | — | — | `grok-4.5` 可（実務的専門判断は首位級） | **第一選択**: `gpt_connector`（command=`gpt-connector-mcp`。正典は [06_gpt-connector.md](06_gpt-connector.md)） |
 | 設計（並列 Plan） | 主 継承×medium〜high | 旗艦×medium・codex_opinion | `grok-4.5`・実務判断の別視点 | 設計意見の別視点 |
-| 実装物量（第一選択・外部枠） | —（外部へ） | **中位=`gpt-5.6-terra`×medium**・codex_work / implementer 定義 | **`grok-composer-2.5-fast`＝並ぶ第一選択**（仕様固定＋検証コマンド必須の委譲契約を厳守） | —（ChatGPT second-opinion laneは実装を担わない） |
-| 実装物量（次善・Claude 枠） | `sonnet`×low〜medium・implementer | — | — | — |
+| 実装物量（外部枠） | —（Claude枠の行と対等候補） | **中位=`gpt-5.6-terra`×medium**・codex_work / implementer 定義 | **`grok-composer-2.5-fast`**（仕様固定＋検証コマンド必須の委譲契約を厳守） | —（ChatGPT second-opinion laneは実装を担わない） |
+| 実装物量（Claude 枠・外部枠と対等） | `sonnet`×low〜medium・implementer | — | — | — |
 | 軽作業・分類・抽出 | `haiku`×low（次善） | 軽量=`gpt-5.6-luna`×low・sorter 定義 / codex_generate | composer 可 | — |
 | 第三者レビュー | — | 旗艦×medium・codex_review（契約クリティカル差分は high） | — | 差分を貼れる規模なら併用可 |
 
-**Codex親の入口は三レーン**（オーナー恒久裁定 2026-07-14）: ①native subagent、②external execution（codex-sidecar、aitermのCodex/Grok/Composer）、③consultation（gpt-connector）。nativeの同時枠上限を工場全体の上限にせず、Codex親から入れ子Codexを起動してよい。nativeはrepo密結合の通常作業、sidecarは隔離した非対話作業、aitermは対話・永続PTY・別vendor枠、gpt-connectorは相談専用として使い分ける。
+### 入口と使い分け
 
-外部子にはtask ID・repo/cwd・read/write範囲・成功条件・検証を渡し、共有worktreeはread-only、writerは専用worktreeを原則とする。timeoutは状態不明としてsession/jobを回収し、重複起動しない。子のgit操作・H操作・秘密取扱いを禁止し、親が実diffとテストで受け入れる。入口状態はinstalled→registered→verified→execution-verifiedを区別し、writerはexecution-verifiedだけを使う。
-
-**入口の既知の事実（2026-07-14）**:
-
-- **Codex ネイティブ子（GPT-5.6 Sol/Terra の MultiAgent V2）**: 0.144.1 は既定で `agent_type/model/effort` を `spawn_agent` schema から隠すため、`~/.codex/config.toml` の `[features.multi_agent_v2]` に `hide_spawn_agent_metadata=false`＋`tool_namespace="agents"` が全端末必須。`task_name` は role でなくタスクパス。custom role は `agent_type=<role>`＋`fork_turns="none"` で handshake-only spawn し、`verify-codex-agent-routing` green 後にだけ本作業を follow-up する。現行 spawn 応答は実効設定を返さない。
-- **ネイティブ子 sandbox の別論点**: role の `sandbox_mode` 適用後、親 turn の permission profile が再適用されて上書きされる（0.144.1 source と V1 implementer rollout で実測）。routing verifier は実効sandboxを常に表示するが、role/model/effort誤配線の判定とは分離する。sandbox一致まで要求する検証では `CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` を使う。
-- **codex-sidecar は端末 config.toml の model/effort 行を隔離 home に正確に継承する**。`model` / `modelReasoningEffort`（low〜xhigh のみ。ultra/max 無し）を**毎回明示**するか、対象リポの `.codex-sidecar.yml` defaults に落とす（dotagents は defaults=中位×medium 設定済み）。隔離 home に AGENTS.md はコピーされない＝sidecar 子は委譲契約プロンプトで統制する。
-- **aiterm `codex_agent` は `model`/`reasoning_effort` 引数対応（2026-07-11 改修・v0.11.0 として npm 公開済み。端末反映は `npm i -g aiterm-mcp`）**: 引数は CLI 引数＋managed config ピン上書きで端末ピンより優先。省略時は端末 config 継承のままで、**起動応答が実効 model/effort と出所（引数/端末config継承/CLI既定）を明示**する（effort=ultra は警告付き）＝決定表どおり毎回 model×effort を明示して呼ぶ。
-- **aiterm の grok/composer は隔離設計（OAuth のみ共有）**＝ピン継承問題なし。`grok_agent` の既定は `grok-4.5`（`model` 引数で上書き可・stale な `grok-build` は 2026-07-11 廃止）。**grok の `--effort` は headless（`grok -p`）専用で対話 TUI では無視される**＝grok/composer への `reasoning_effort` 指定は aiterm が起動前に明示エラーで拒否する。
-- **`claude-native` Worker adapter（O3・2026-07-16）はrequest/observation projectionのみ**: catalog登録済みだがlive dispatch・実model requestは未実施＝execution-verified未満であり、writerへ使わない。start/resumeは同一caller UUID、caller timeoutはunknown、成功はstrict Worker Report import後だけ。OAuth経路へ`--bare`禁止（2.1.211はOAuth/keychainを読まない）。契約正本は`shared/orchestrate/executor-adapters.md`。
-- grok はこの端末で**認証済み**（2026-07-11 時点・tier 4）。
-- **Codex の `/model` ピッカー選択は config.toml へ永続書き込みされる**（再ピン仕様）。だから子は継承に依存しない（上記の構造で遮断済み）。
+- **Codex親の三レーン**（オーナー恒久裁定 2026-07-14）: ① native subagent＝repo密結合の通常作業、② external execution＝codex-sidecar（隔離・非対話）とaiterm（対話・永続PTY・別vendor枠）、③ consultation＝gpt-connector（相談専用）。nativeの同時枠上限を工場全体の上限にせず、Codex親から入れ子Codexを起動してよい。
+- **委譲の安全・回収・受入契約は[委譲契約](../shared/orchestrate/delegation-contract.md)が正本**。external writerに使えるのは execution-verified（installed→registered→verified→execution-verified の最終段）だけ。
+- **codex-sidecar**（非対話一括: `codex_work`/`codex_review`/`codex_explore`/`codex_opinion`/`codex_risk_check`/`codex_auditor`/`codex_generate`）: 端末 config.toml の model/effort を隔離 home に継承する＝`model`/`modelReasoningEffort`（low〜xhigh のみ）を**毎回明示**するか対象repoの`.codex-sidecar.yml` defaults に落とす（dotagents は中位×medium 設定済み）。隔離 home に AGENTS.md はコピーされない＝子は委譲契約プロンプトで統制する。
+- **aiterm**（対話: `codex_agent`/`grok_agent`/`composer_agent`）: codex_agent は`model`/`reasoning_effort`引数が端末ピンより優先され、起動応答が実効値と出所を明示する＝決定表どおり毎回明示して呼ぶ。grok/composer は隔離設計（OAuth のみ共有）。grok の`--effort`は headless（`grok -p`）専用で、対話TUIへの effort 指定は aiterm が起動前に拒否する。
+- **Codex native routing の罠**（`agent_type`隠蔽・`fork_turns`既定・sandbox再適用・routing smoke手順）の正典は[05_codex-fragments.md](05_codex-fragments.md)。`/model`ピッカー選択は config.toml へ永続書込されるため、子は継承に依存しない。
+- **`claude-native` Worker adapter（O3）は projection のみ**＝execution-verified 未満であり writer へ使わない（契約正本は`shared/orchestrate/executor-adapters.md`）。
 
 ## エフォートのエスカレーションゲート
 
@@ -75,16 +68,9 @@ rate-aware selectorは[Observer完成・工場編入・Elastic配置改善計画
 
 **上げ方の規律**: 1回に動かすのは「ティア」か「effort」の片方だけ・effort は1段ずつ。**xhigh / max は既定禁止**（high との有意差を実測できた時のみ・理由記録）。**ultra は既定禁止・オーナー明示要求時のみ**（ultra＝max 推論＋proactive 自動委譲 ON＝子を自動量産。使用量急増の公式警告あり）。
 
-**下げゲート**: 統括レーンで委譲すると裁定した仕様固定・機械判定可能な作業（A相当）は1段下げを試してよい（下げも1段ずつ）。通常レーンへ委譲を要求する規則ではない。
+**下げゲート**: 統括レーンで委譲すると裁定した仕様固定・機械判定可能な作業（A相当）は1段下げを試してよい（下げも1段ずつ）。
 
 **品質エスカレーションは統括の裁量（安さは既定であって強制ではない）**: 委譲物を検証して品質に納得しない時、統括の判断で上位（`sonnet` → `opus` → 主モデル自身／Terra → Sol）へ引き上げて再実行してよい。「安く済ませる」より「正しく仕上げる」が上位。エスカレーションした事実と理由は残す。
-
-## 委譲の実行ツール
-
-- **非対話の一括委譲・独立レビュー → codex-sidecar MCP**: `codex_work`（隔離 worktree で実装）・`codex_review`・`codex_explore`・`codex_opinion`・`codex_risk_check`・`codex_auditor`・`codex_generate`。**model/effort は毎回明示 or `.codex-sidecar.yml` defaults**（上記入口事実）。
-- **対話で外部エージェントを駆動 → aiterm**: `codex_agent`・`grok_agent`・`composer_agent`（対話 TUI を永続端末に起動→ `pty_read`/`pty_send`）。上記の入口事実（継承・stale・effort 無視）に注意。
-- **非対話の xAI 物量 → `grok -p`（headless）**: `--effort low|medium|high` はここでのみ有効。
-- **セカンドオピニオン → `gpt_connector`**（command=`gpt-connector-mcp`）。専用Chrome・product-owned state・明示model/effort・caller既知slugを使い、timeout後は sessions で回収する。Oracle/OpenAI APIへの暗黙fallbackは禁止（正典 [06_gpt-connector.md](06_gpt-connector.md)）。
 
 ## 指定の作法
 

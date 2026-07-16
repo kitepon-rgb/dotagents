@@ -1,10 +1,10 @@
 # Workflow スクリプト雛形
 
-実証済みの2型。コピーして DIMENSIONS/CTX/検証観点をタスクに合わせて書き換える。`agent()` の `model`・`effort` は方針どおり明示する（検証=省略で主モデル継承＋effort high／物量=sonnet＋effort low）。省略で親任せにしない——親が最上位のとき全子が張り付く（docs/02_models.md「継承の罠」）。
+実証済みの2型。コピーして DIMENSIONS/CTX/検証観点をタスクに合わせて書き換える。`agent()` の `model`・`effort` は docs/02_models.md の決定表どおり明示する（検証・反証系だけ省略＝主モデル継承可）。省略で親任せにしない——親が最上位のとき全子が張り付く。
 
 ## 型1: 敵対的監査（Find→Dedup→Verify→Critic）
 
-発見の網羅は並列多視点で、信頼性は「指摘ごとの反証」で作る。**high 指摘は2レンズ**（実在性/価値）。Critic の盲点は第2ラウンドへ。
+発見の網羅は並列多視点で、信頼性は「指摘ごとの反証」で作る（この重い型自体、統括レーンの契約クリティカル範囲だけに使う＝contract.md「監査の頻度」）。**2レンズ（実在性/価値）は契約クリティカルな指摘だけ**。Critic の盲点は第2ラウンドへ。
 
 ```js
 export const meta = {
@@ -15,10 +15,11 @@ export const meta = {
 const CTX = `<リポジトリ・規約・「誤検知を避けるための前提」（意図的な設計を指摘させない）・
 読み取り専用の明言・「evidence に file:line 必須・推測禁止・確度の高いものだけ最大N件」>`
 const FINDINGS = { type:'object', required:['findings'], properties:{ findings:{ type:'array', maxItems:10,
-  items:{ type:'object', required:['title','kind','files','evidence','impact','effort','suggestion'],
+  items:{ type:'object', required:['title','kind','files','evidence','impact','effort','suggestion','contract_critical'],
     properties:{ title:{type:'string'}, kind:{type:'string'}, files:{type:'array',items:{type:'string'}},
       evidence:{type:'string'}, impact:{type:'string',enum:['high','medium','low']},
-      effort:{type:'string',enum:['S','M','L']}, suggestion:{type:'string'} } } } } }
+      effort:{type:'string',enum:['S','M','L']}, suggestion:{type:'string'},
+      contract_critical:{type:'boolean'} } } } } }  // 契約クリティカル＝認可・tx・公開契約・依存方向・本番操作級
 const VERDICT = { type:'object', required:['real','worth_it','reason'], properties:{
   real:{type:'boolean'}, worth_it:{type:'boolean'}, risk:{type:'string'}, reason:{type:'string'},
   revised_suggestion:{type:'string'} } }
@@ -34,7 +35,7 @@ phase('Dedup')  // 統合のみ・全 id が merged_ids に現れることをコ
 
 phase('Verify') // 疑わしきは false。existence レンズ＝実読で evidence 検証／value レンズ＝直す価値・挙動リスク
 const verified = await parallel(uniq.map((f,i) => () => {
-  const lenses = f.impact === 'high' ? ['existence','value'] : ['existence']
+  const lenses = f.contract_critical ? ['existence','value'] : ['existence']  // 契約クリティカル判定はCTX側で定義
   return parallel(lenses.map(lens => () =>
     agent(`${CTX}\nあなたは懐疑的な検証者。反証を試みよ。観点:${lens}。疑わしい場合は false。\n指摘:${JSON.stringify(f)}`,
       { label:`verify:${i}:${lens}`, phase:'Verify', schema:VERDICT, agentType:'Explore' })
@@ -43,7 +44,7 @@ const verified = await parallel(uniq.map((f,i) => () => {
 }))
 
 phase('Critic') // 「この監査に漏れている観点・どの指摘にも登場しない重要領域」を実ファイル確認つきで最大5件
-// → 盲点が出たら同型の第2ラウンドを回す（実績: 認証層・APIルート層など5盲点→追加25件確定）
+// → 盲点が出たら同型の第2ラウンドを回す
 return { confirmed: verified.filter(f=>f.confirmed), rejected: verified.filter(f=>!f.confirmed) /*棄却理由も残す*/ }
 ```
 

@@ -29,7 +29,7 @@
 ## hooks の方針
 
 - 自動化（「毎回 X したら Y」）は memory や指示ではなく hooks でしか成立しない——必要になったら update-config skill で settings.json に組む。
-- この Mac の実例: caveat の UserPromptSubmit / Stop hook（罠シグナルの提示・セッション状態の退避）。他端末へは caveat MCP 導入（P1 ランブック）とセットで。
+- 実例: caveat の UserPromptSubmit / Stop hook（罠シグナルの提示・セッション状態の退避）。配線は caveat 側の正典に従い、caveat MCP 導入とセットで適用する。
 - **Spotter hookは手挿ししない**: 対象projectで `spotter install -y` を実行し、Spotter自身にproject markerとClaude 5 hookを管理させる。PATH上のThroughlineが解決できればauditor contextは既定ON。全projectへglobal発火させる旧`--user`方式はdaemon proliferationを再発させるため非採用。
 
 ## Observer parent Stop hook（Claude）
@@ -53,7 +53,7 @@ apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-con
 集合を検証してから二設定を原子的に復元する。途中失敗はrestore開始前状態へ戻し、元々absentだったconfigは
 削除する。manifest導入前の旧archiveや手製tarをrestoreへ流用しない。
 
-- **計画レーン案内 hook（全端末推奨・下記）**: プラン承認直後に「計画文書の作法」を注入する。通常レーンは会話・内蔵planで閉じ、複数Phase・複数repo・H操作など統括レーンだけを`docs/`正本化へ案内する。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）、配線だけを各端末の `~/.claude/settings.json` に手挿しする。初期設計は [archive/2026-07_plan-gate-hook.md](archive/2026-07_plan-gate-hook.md)、現行のレーン裁定はグローバルCLAUDE.md／AGENTS.mdを正とする。
+- **計画レーン案内 hook（全端末推奨・下記）**: プラン承認直後に「計画文書の作法」を注入する。レーンの発動条件はグローバル正典「作業レーンと統制」に従う（本書へ条件を複製しない）。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）、配線だけを各端末の `~/.claude/settings.json` に手挿しする。初期設計は [archive/2026-07_plan-gate-hook.md](archive/2026-07_plan-gate-hook.md)、現行のレーン裁定はグローバルCLAUDE.md／AGENTS.mdを正とする。
 
 ### 計画レーン案内 hook の配線断片
 
@@ -79,7 +79,7 @@ apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-con
 
 ### 呼びかけ hook 群の配線断片（配置ゲート・TODO ゲート・着手案内）
 
-前提: `./install.sh` 済み（`~/.local/bin/{delegation-gate-hook,todo-gate-hook,onset-gate-hook}` が存在。`todo-gate-hook` はサブコマンド `session-start` / `stop` を取る）。現行の義務はグローバルCLAUDE.md／AGENTS.md、Hookの実装履歴は [docs/plan_callout-hooks.md](plan_callout-hooks.md) を参照する。4本とも `~/.claude/settings.json` にマージ（既存配列があればその配列へ足す、無ければ新規作成）。ライブ反映＝配線後の新セッション不要（計画 Phase 1・P5 で hot-reload 実測済み）。
+前提: `./install.sh` 済み（`~/.local/bin/{delegation-gate-hook,todo-gate-hook,onset-gate-hook}` が存在。`todo-gate-hook` はサブコマンド `session-start` / `stop` を取る）。現行の義務はグローバルCLAUDE.md／AGENTS.md、Hookの実装履歴は [docs/plan_callout-hooks.md](plan_callout-hooks.md) を参照する。4本とも `~/.claude/settings.json` にマージ（既存配列があればその配列へ足す、無ければ新規作成）。ライブ反映＝配線後の新セッション不要（hot-reload 実測済み）。
 
 #### C1 配置ゲート（PreToolUse・委譲ツール呼び出し時）
 

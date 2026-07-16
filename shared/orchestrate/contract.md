@@ -11,9 +11,9 @@
 
 ## 使う時・使わない時
 
-複数repo・複数Executor・複数Phase、長時間resume、campaign、H操作、高リスク契約、workspace競合、durable recoveryのいずれかを含む統括レーンで使う。対象projectの`docs/`にある生きた計画/TODOが正本であることを最初に確認する。
+**複数repo・複数Executor・複数Phaseが実際に揃う戦役（campaign）だけで使う**（オーナー裁定 2026-07-16）。対象projectの`docs/`にある生きた計画/TODOが正本であることを最初に確認する。
 
-単一repo・単一担当・単一責務で容易にrevertでき、H操作、高リスク契約、長時間resume、workspace競合を含まない通常レーンにはControl Recordを使わない。短い成功条件、focused test、対象限定commitで閉じる。途中で統括条件が発生したら原子的作業を止めて昇格し、既存active Controlに属する作業を通常レーンへ降格しない。
+それ以外はすべて通常レーンとし、Control Recordを使わない。短い成功条件、focused test、対象限定commitで閉じる。通常レーンでもWorkerへのコーディング委譲は可能で、Packetなしの明確な指示と親のdiff・test確認で受け入れる。途中で統括条件が揃ったら原子的作業を止めて昇格し、既存active Controlに属する作業を通常レーンへ降格しない。H操作の承認と高リスク操作の説明義務はレーンに関係なく適用する。
 
 ## Control Recordの最小lifecycle
 
@@ -21,16 +21,16 @@
 2. Registry observationを記録し、`placement-dry-run`で候補を出す。親が候補を選び、`placement-reserve`でreservation proposalとして固定する。複数Runの完了を後続Taskの条件にする時は、親が`campaign-record`でmembers／gate／audit要否を宣言する。planned/admitted Workerの`delegation-packet`を生成してから、親自身がExecutor固有入口でdispatchする。packet保存漏れはactive Run専用のread-only `delegation-packet-recover`で回収し、同じRunを再dispatchしない。自動dispatchやExecutor stateの複製はしない。
 3. 観測・strict Worker Reportを回収し、`worker-report-import`で記録してから親がaccept/rejectを裁定する。`status --brief`でunresolved/unknown/uncollectedを確認し、timeoutや中断後は`resume-check`と同一handleで回収する。Task取消とRun cancel要求は別に記録し、外部側でcancel済みと推測しない。
 4. `campaign-status`で全member terminalを確認し、audit-requiredなら証拠を揃えて親が`campaign-release`する。releaseは後続Runを自動起動しないため、親が改めてplacement／admission／dispatchする。
-5. 受入済みTaskを`docs/adr/<file>.md`の不変Decisionで`task-finalize-record`し、全Campaign release後に同じく不変ADRの親DecisionでControlを`control-finalize`する。検証・再発防止に有用な知識を正本へ還流してから`archive`する。
+5. 受入済みTaskを`docs/adr/<file>.md`の不変Decisionで`task-finalize-record`し、全Campaign release後に同じく不変ADRの親DecisionでControlを`control-finalize`する。追記可能なplan/TODOをaccept/reject/finalizationのDecision証拠へ使わない。過去digestの保持確認は同一repoのgit履歴にある同一path・regular blob・完全一致SHA-256だけを認め、別pathや近似一致へfallbackしない。検証・再発防止に有用な知識を正本へ還流してから`archive`する。
 
 Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[委譲契約](delegation-contract.md)を正本とする。
 
 ## 統括ゲート
 
-1. 大きな変更、監査指摘、重要な設計判断は、独立した反証で実在性と価値を確認する。確信できない指摘は棄却する。
-2. 委譲には、対象範囲、変更の性質、仕様、罠、characterization 規約、検証、前提再検証、報告形式を明示する。委譲結果は統括が diff と検証で採用判断する。
+1. 独立した反証で実在性と価値を確認するのは、契約クリティカル（F相当：認可・トランザクション・公開契約・依存方向・本番操作・履歴修復）な変更・監査指摘・設計判断だけ（オーナー裁定 2026-07-16）。それ以外は統括自身の確認で足りる。確信できない指摘は棄却する。
+2. 委譲は[委譲契約](delegation-contract.md)のPacket 8点に従い、結果は統括が diff と検証で採用判断する（項目を本書へ再掲しない）。
 3. 挙動不変レーンと挙動修正レーンを分ける。挙動修正は一件ごとに差分を明文化し、必要な承認を得る。
-4. 作業を独立して revert できる単位に分割し、各単位で全ゲートを通す。並行作業は書き込み範囲を交差させない。
+4. 作業を独立して revert できる単位に分割する。実装中はfocused testを回し、単位完了時に関連gateを1回通す（full regressionはPhase gateへ集約）。並行作業は書き込み範囲を交差させない。
 5. 外部状態を変更する前には、目的・影響・rollback を説明し、H 承認が必要な操作は承認後だけ実行する。失敗を fallback で隠さない。
 
 ## 実装と受入
@@ -38,6 +38,7 @@ Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[�
 - 並列実装は非交差の書込範囲でwaveを分け、同一ファイルを触る作業は直列化する。巨大な任務を一人へ渡さず、1責務を1受入単位に分解する。
 - 統括はWorkerの完了報告を鵜呑みにせず、対象diff、受入条件、関連gate、未検証範囲を自ら確認してaccept/rejectする。受入済みの発見と検証結果は正本へ還流する。
 - 安全網より先に本体を変更しない。反証なしの監査指摘を実装へ流さず、並行作業中に裸のcommitで他者の変更を巻き込まない。
+- **active fixed Worker中の親commit**: 同じworktreeへの親commitは、予約HEADからのfast-forwardで、Taskの`read_scope`／`write_scope`と非交差なpathだけをpathspecでcommitし、Controlがcommit pathとindexを検証できる場合に限る。関連scope、履歴改変、staged成果、検証不能な変更はWorker完了までcommitしない。
 
 ## フェーズ
 
@@ -45,15 +46,13 @@ Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[�
 
 設計と裁定の成果である計画には、非目標（やらないこと）、既知の罠、検証方法を必ず含める。
 
-監査は Find（複数視点）→ Dedup → 指摘ごとの反証 → Critic（盲点）→ 統括裁定の順に行う。件数遷移と棄却理由を残す。
+重い監査（Phase完了時・契約クリティカル範囲）は Find（複数視点）→ Dedup → 指摘ごとの反証 → Critic（盲点）→ 統括裁定の順に行う。件数遷移と棄却理由を残す。
 
 ## 監査の頻度
 
-- 軽量監査は、細かな編集や個別patchごとではなく、計画文書のチェックボックス1件（TODO）を完了候補にした時に1回行う。統括が対象diff、受け入れ条件、関連test、未検証範囲を確認してからTODOを完了にする。
-- TODO完了候補時に一度だけ、標準経路外の手補正・証拠再構成・代替回収の有無も確認する。有った場合は最終結果が成功でも握り潰さず、本筋へ戻る前に所有repoの`docs/`正本TODOを登録するか既存TODOを具体的に参照する。この確認専用のreceipt・schema・個別testは増やさない。
-- TODO監査で再現できた問題は修正し、統括が該当testと再現手順で閉じる。同じTODOへ新しい独立監査を反復してシーソーさせず、残る横断的な懸念はPhase監査へ送る。ただしP0/P1相当の契約破壊・安全上の問題が再現した場合は、その問題を閉じるまで完了扱いにしない。
-- 重い独立監査はPhaseの全TODOと通常gateが完了した時に1回行う。複数視点、独立反証、Critic、親裁定など高コストな監査構造はここへ集約する。
-- 全体完成時は、計画の全受け入れ条件と成果物を対象に最終監査を行う。TODO監査やPhase監査を、単なる編集回数・不安・監査自身の指摘追加を理由に増殖させない。
+- 軽量監査はTODO完了候補時に1回：統括が対象diff、受け入れ条件、関連test、未検証範囲を確認して閉じる。標準経路外の手補正・証拠再構成があった場合だけ、握り潰さず正本TODOへ記録する。
+- 重い監査構造（複数視点・独立反証・Critic）はPhase完了時に1回、契約クリティカルな範囲に限定する（オーナー裁定 2026-07-16）。検証者は原則として親と異なるproviderを使う（Claude親→Codex、Codex親→Claude。対応と入口は`docs/02_models.md`）。P0/P1相当の再現問題を除き、同じTODOへ監査を反復しない。
+- 監査を編集回数・不安・監査自身の指摘追加を理由に増殖させない。
 
 ## Phase maintenance
 
@@ -62,4 +61,4 @@ Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[�
 
 ## 還流
 
-調査、実測、再発防止に有用な知識は、所有プロジェクトの文書・罠データベース・再利用可能な調査記録へ還流する。外部ツールの管理領域へプロジェクト状態を置かない。
+知識還流Phaseの置き場と作法は共通憲法「調査と知識の置き場」に従う。

@@ -28,4 +28,4 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 
 - 罠DB: [../caveat/](../caveat/)（own エントリの正本。caveat MCP が symlink 越しに読む）
 - 調査資産: [../rag/INDEX.md](../rag/INDEX.md)
-- 人格・全端末規範: [../claude/CLAUDE.md](../claude/CLAUDE.md)（グローバル CLAUDE.md 正本）
+- 人格・全端末共通規範: [../shared/constitution.md](../shared/constitution.md)（唯一の共通正本。Claude／Codex固有差分と配布生成物は各hostディレクトリ）

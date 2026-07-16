@@ -20,7 +20,7 @@ STATE_DIR = state_dir()
 if STATE_DIR is None:
     raise SystemExit(0)
 
-ONSET_CONTEXT = "INFO: 複数repo・Executor・Phase、長時間resume、H操作、高リスク契約を含む統括レーンは、グローバル AGENTS.md「作業レーンと統制」とorchestrate skillに従います。単一repo・単一担当・可逆・低リスクな通常レーンはdocs plan、F/A/H宣言、既定委譲、Controlが不要です。このINFO自体は作業範囲を拡張しません。"
+ONSET_CONTEXT = "INFO: 複数repo・複数Executor・複数Phaseが実際に揃う統括レーンの戦役は、グローバル AGENTS.md「作業レーンと統制」とorchestrate skillに従います。それ以外はすべて通常レーンで、docs plan、F/A/H宣言、Controlが不要です（Workerへの委譲は通常レーンでも可）。このINFO自体は作業範囲を拡張しません。"
 
 
 def error_log(name):

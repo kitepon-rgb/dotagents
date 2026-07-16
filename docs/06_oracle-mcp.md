@@ -57,7 +57,7 @@
 
 ## 呼び出しの標準形（GPT-5.6 世代・0.15.2 時点）
 
-**モデルと Effort は ChatGPT アカウントの現在値で走る**（現在: GPT-5.6 Sol系 × Effort Extra High。変更はオーナーが ChatGPT UI で行う）。0.15.2 の暫定仕様として以下は**全部封印**:
+**モデルと Effort は ChatGPT アカウントの現在値で走る**（変更はオーナーが ChatGPT UI で行う。現在値は共有文書に書かない）。0.15.2 の暫定仕様として以下は**全部封印**:
 
 - preset `chatgpt-pro-heavy` — 旧 "Pro" ラベル照合で必ず失敗
 - `browserModelLabel` — MCP 経路では gpt-* モデル時に無視され、非 gpt 文字列はファジー解決で別モデルに化ける（実測: "GPT-5.6 Sol" → gpt-5.2）

@@ -487,7 +487,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - **A（native委譲）**: 仕様固定後のrepo別diagnostics/runtime store、adapter、fixture、dashboard、文書の逐語追従。
 - **H（オーナー）**: dirty作業の裁定、秘密/token配置、ChatGPTログイン、hook trust、npm publish、全OSのscheduler/MCP実登録・解除、DB backupを伴う本番deploy、意図的障害試験、Oracle最終撤去、実端末rollback drill。
 
-Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読む。native subagentを基本線としつつ、native枠上限を工場全体の上限にせず、execution-verifiedなcodex-sidecarとaitermのCodex/Grok/Composerを外部実行に積極利用する。外部子はtask/session一意化、writerのworktree隔離、git/H/秘密操作禁止、親のdiff/test受入を守る。Claude親で実施する場合も、aitermを使うこと自体を「project native」の条件にはしない。
+Codex親は対象repoをcwdにし、そのrepoのAGENTS.mdを読む。委譲レーン・外部子の安全/回収/受入は[委譲契約](../shared/orchestrate/delegation-contract.md)と[docs/02_models.md](02_models.md)の共通規則に従う（本planへ複製しない）。Claude親で実施する場合も、aitermを使うこと自体を「project native」の条件にはしない。
 
 ## 9. 非目標
 

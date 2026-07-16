@@ -17,7 +17,7 @@
 gpt-connector browser start
 ```
 
-macOSのcold startは、`--no-startup-window`で窓なしの専用Chromeを起動し、CDPでbackgroundのChatGPT targetを最初から最小化してから正規PIDだけをunhideする。アプリをhiddenのまま運用しない。成功条件はCDPの自己申告だけではなく、同じPIDに属するWindow Server layer 0の画面内windowが0件であること。2026-07-14の実機cold smokeでは、約10ms間隔・15秒の監視中も最大0件で、同時startは`started` 1件と`already_ready` 1件へ収束し、最小化中の実Chat後も0件だった。
+macOSのcold startは、`--no-startup-window`で窓なしの専用Chromeを起動し、CDPでbackgroundのChatGPT targetを最初から最小化してから正規PIDだけをunhideする。アプリをhiddenのまま運用しない。成功条件はCDPの自己申告だけではなく、同じPIDに属するWindow Server layer 0の画面内windowが0件であること（実測記録は製品repo／rag側が保持）。
 
 認証や手動確認で表示が必要な時だけ、次を使う。
 

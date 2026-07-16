@@ -76,12 +76,13 @@ contains "$ROOT/codex/skills/orchestrate/SKILL.md" '通常レーンは委譲を�
 contains "$ROOT/shared/orchestrate/executor-adapters.md" 'まず新規admissionを止める'
 # shellcheck disable=SC2016 # backticks are literal Markdown from the contract.
 contains "$ROOT/shared/orchestrate/executor-adapters.md" '`unknown`を別terminal stateへ暗黙変換しない'
-contains "$ROOT/codex/AGENTS.md" '① native＝'
-contains "$ROOT/codex/AGENTS.md" '② external execution＝'
-contains "$ROOT/codex/AGENTS.md" '③ consultation＝'
-contains "$ROOT/codex/AGENTS.md" 'commit / push / branch切替 / merge / rebase / reset / stash'
-contains "$ROOT/codex/AGENTS.md" '秘密・token・cookie・OAuth・private key'
-contains "$ROOT/codex/AGENTS.md" 'installed（CLI存在）→ registered（親へconnector登録）→ verified（read-only疎通）→ execution-verified'
+# 2026-07-16裁定: 委譲3レーン・4段階はdocs/02、worker安全契約はdelegation-contractが正典（生成憲法は共通部のみ）
+contains "$ROOT/docs/02_models.md" '① native subagent＝'
+contains "$ROOT/docs/02_models.md" '② external execution＝'
+contains "$ROOT/docs/02_models.md" '③ consultation＝'
+contains "$ROOT/shared/orchestrate/delegation-contract.md" 'branch切替、commit、push、merge、rebase、reset、stash'
+contains "$ROOT/shared/orchestrate/delegation-contract.md" '秘密・token・cookie・OAuth・private key'
+contains "$ROOT/docs/02_models.md" 'installed→registered→verified→execution-verified'
 contains "$ROOT/docs/05_codex-fragments.md" 'codex mcp add codex-sidecar -- codex-sidecar-mcp'
 if rg -qi 'Workflow' "$ROOT/codex/skills/orchestrate/SKILL.md"; then
   fail 'Codex orchestrate が Claude 専用 Workflow を実行入口としている'

@@ -507,4 +507,4 @@ Dogfood記録（2026-07-15）:
 | Throughline | 対象CLI testを`node --import ./src/test-env.mjs --test <files>`で実行 | `npm test` |
 | ServerManager | `npm --prefix bughub test`と対象bridge／scanner test | `npm test` |
 
-大規模Phase開始時にbaselineを1回取り、同一HEAD・同一workspace digestなら再利用する。実装中はfocused、TODO完了候補はrelated、repo full gateはPhase完了時に1回だけ行い、親diff確認と重複実行を避ける。Hを要する実host／deploy／rollback drillはテストgreen後に別gateで実施する。
+テスト頻度・baseline再利用は共通憲法と`shared/orchestrate/contract.md`の頻度規約に従う（本planへ複製しない。repo別コマンドは上表が固有分）。Hを要する実host／deploy／rollback drillはテストgreen後に別gateで実施する。

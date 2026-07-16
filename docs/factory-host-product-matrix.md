@@ -33,7 +33,7 @@
 
 ## 親別connector matrix
 
-製品導入とconnector有効化を混同しない。外部実行connectorはinstalled / registered / verified / execution-verifiedを区別し、writer利用はexecution-verifiedだけに限る。
+製品導入とconnector有効化を混同しない。外部実行connectorの4段階（installed→execution-verified）とwriter制限は[docs/02_models.md](02_models.md)「入口と使い分け」が正典。
 
 | product | Claude親 | Codex親 |
 |---|---|---|
@@ -47,20 +47,11 @@
 | codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う |
 | ServerManager | connector not_applicable | connector not_applicable |
 
-Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。Codex親はnative枠を工場全体の上限とせず、codex-sidecarとaitermの外部実行を積極利用する。gpt-connectorは相談専用で、専用Chrome、product-owned state、明示model/effort、caller既知slugを必須とし、timeout時は sessions で回収する。Oracleはv1互換・手動rollback専用で、通常matrixには含めない。
+Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。
 
-## 2026-07-13 実測baseline
+## 診断とreportの扱い
 
-read-only SSHとlocal PATHで確認した。PATH文字列そのものは端末固有なのでBugHubへ送らず、診断結果だけを保持する。
-
-| host | 8製品CLI | ServerManager | 備考 |
-|---|---|---|---|
-| Mac | 旧Oracleを含む全8件解決 | not_applicable | gpt-connector／基盤CLIは切替前の再検証対象 |
-| main-server | 旧Oracleを含む全8件解決 | source/runtimeあり | gpt-connector connectorは再検証対象 |
-| FOX WSL2 | 旧Oracleを含む全8件解決 | not_applicable | 非login SSHではnpm prefix PATHが復元されないため、scheduler診断はlogin相当env必須 |
-| FOX Windows native | PowerShellで旧Oracleを含む全8件解決 | not_applicable | gpt-connector／基盤CLIは未検証 |
-
-native diagnostics は product overall に加えて component check を報告する。定期runnerは component health を exit failure へ変換せず、raw report を ServerManager/BugHub host matrix へ送る。post-update gate だけが有限 allowlist 以外の `unverified` と全 `fail` を blocking にする。ServerManager は現在 fail 中心に issue 化するため、critical `unverified` の即時通知は保証されない。
+端末ごとの実測結果（PATH解決・再検証状況）は端末固有状態としてBugHub／各端末の記録が保持し、本matrixへスナップショットを書かない。非login SSHでnpm prefix PATHが復元されずscheduler診断にlogin相当envが必要になる罠はcaveatが正。component health・post-update gate・issue化の挙動は[factory-reporter-runbook.md](factory-reporter-runbook.md)「v2 component health と post-update gate」が正典。
 
 ## reporter profileへの写像
 

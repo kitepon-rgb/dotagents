@@ -13,7 +13,7 @@
 GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モデル配置の正典が旧世代（gpt-5.5・grok-build）のまま腐った。さらに:
 
 1. **最上位張り付き**: `~/.codex/config.toml` が Sol×ultra にピンされ、ultra＝「max 推論＋proactive 自動委譲」なので最上位モデルが最上位の子を自動量産していた。Claude 側も ultracode の子が親モデルを既定継承する同型問題。
-2. **Codex 親が憲法に従わない**: `~/.codex/AGENTS.md` は Claude 中心憲法への直接 symlink で、aiterm 既定など Codex に有害な指示が混在していた。解消時に専用憲法を約2KBへ過剰圧縮し、人格・応対・調査・計画・権限・変更作法まで落とした二次事故も発生した。
+2. **Codex 親が憲法に従わない**: `~/.codex/AGENTS.md` は Claude 中心憲法への直接 symlink で、Claude固有配線の混在など Codex に有害な指示が含まれていた。解消時に専用憲法を約2KBへ過剰圧縮し、人格・応対・調査・計画・権限・変更作法まで落とした二次事故も発生した（注: 2026-07-16裁定でshell入口はaiterm PTY既定が全host共通化された。当時の問題は配線の混在であってPTY自体ではない）。
 3. **判断基準の不在**: モデル×エフォートの決定表がなく、親の賢さ頼み。日常の親は Claude=Opus 4.8 / Codex=Sol（設計者 Fable より弱い）なので、判断は表とゲートに焼き込む必要がある。
 
 ## 設計の背骨（5行）
@@ -27,12 +27,12 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 ## 調査で確定した事実（要点。詳細は rag/models/ の2記事）
 
 - **GPT-5.6**（2026-07-09 GA）: `gpt-5.6-sol`（旗艦 $5/$30）/`gpt-5.6-terra`（中位 $2.5/$15）/`gpt-5.6-luna`（軽量 $1/$6）。effort=low/medium/high/xhigh/max/ultra、**Sol の既定は low**（公式「低く始めて上げろ」「max を無条件推奨するな」）。**ultra＝max 推論＋proactive 自動委譲 ON**（使用量急増の公式警告）。ネイティブサブエージェント: `~/.codex/agents/<name>.toml`（`name`/`description`/`developer_instructions` **3必須**・欠落や綴りミスは起動 warning のみで無言無効化）。
-- **xAI**（2026-07-08 GA）: `grok-4.5`（$2/$6・500k・effort low/medium/high のみ・実務判断は首位級だが難関SWE/形式推論は弱い・ハルシ増）／`grok-composer-2.5-fast`（effort 非対応・物量特化・判断力低）。この端末は認証済み（tier 4）。
+- **xAI**（2026-07-08 GA）: `grok-4.5`（$2/$6・500k・effort low/medium/high のみ・実務判断は首位級だが難関SWE/形式推論は弱い・ハルシ増）／`grok-composer-2.5-fast`（effort 非対応・物量特化・判断力低）。
 - **refuter 反証で判明（max_threadsのみ2026-07-13訂正）**: codex-sidecar は端末 config の model/effort 行を**正確に継承する**（＝Sol×ultra ピンが sidecar 委譲へ波及していた）。`.codex-sidecar.yml` が無いと sidecar 自体が CONFIG_NOT_FOUND。`[agents]` に委譲モードのキーは無い（effort から自動導出）。当時の `agents.max_threads` 起動エラー説は再現未実施で、現行公式仕様が公開設定として明記したため撤回。`/model` ピッカーは config.toml へ**再ピン永続化**する。aiterm の grok/composer は隔離設計（OAuth のみ共有）で継承問題なし。
 
-## 決定表（docs/02_models.md へ収容済みが正。ここは要旨）
+## 決定表
 
-役割→〔ティア×effort×入口〕を Claude／Codex／xAI／OpenAI-ChatGPT（gpt-connector）の4レーンで規定。要点: 実装物量の第一選択は **Terra×medium（codex_work / implementer.toml）と Composer 2.5**（並列）、並列 finder は **grok-4.5**、実読不要の純推論・独立視点は **`mcp__gpt_connector__consult`**（相談であり委譲ではない。caller既知slug、model+effort明示、専用Chrome、product-owned state、timeout後sessions）、反証・裁定は**旗艦×high か Claude 主モデル**。Oracle・APIの暗黙fallbackは禁止し、Oracleはv1互換／手動rollbackに限定する。**2026-07-14 supersession**: Codex親の子をnative一択とした旧決定は撤回し、native／external execution（codex-sidecar・aiterm Codex/Grok/Composer）／consultation（gpt-connector）の三レーンを使う。
+役割→〔ティア×effort×入口〕の決定表は [docs/02_models.md](02_models.md) のみを参照する（本planへ要旨を複製しない。過去の要旨は複製が腐る実証となったため削除済み——supersessionの経緯はgit履歴とADR 0048参照）。
 
 ## 実装チェックリスト
 
@@ -92,7 +92,7 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 
 ## 他端末波及チェックリスト（端末ごと）
 
-- [ ] git pull → `~/.codex/AGENTS.md` が実ファイルなら意図確認・退避（価値ある行は codex/AGENTS.md へ PR）
+- [ ] git pull → `~/.codex/AGENTS.md`が実ファイルなら意図確認・退避（価値ある共通行は`shared/constitution.md`、Codex固有行は`codex/AGENTS.delta.md`へPRし、生成物を更新）
 - [ ] `./install.sh` → `./bin/verify-install.sh` OK（override 非空があれば FAIL 名指しに従う）
 - [ ] docs/05 §3 の V2 routing 必須断片適用（custom role の個別 `[agents.<name>]` 登録は不要）
 - [ ] Codex 新セッション実測（schema に `agent_type`／`fork_turns="none"`／3 role の routing-check）

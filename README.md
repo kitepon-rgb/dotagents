@@ -1,6 +1,6 @@
 # dotagents
 
-Claude Code / Codex の環境そのもの（skill・command・agents・rule・グローバル CLAUDE.md・罠DB・調査資産・環境整備の聖典）を**複数端末で同期する個人 dotfiles**。GitHub が真実の源。
+Claude Code / Codex の環境そのもの（skill・command・agents・rule・グローバル共通憲法・調査資産・環境整備の聖典）を**複数端末で同期する個人 dotfiles**。GitHub が真実の源（罠DBは v0.15+ で Caveat 自身が dotagents 外で管理）。
 
 - **趣旨・原則・残件**: [PLAN.md](PLAN.md)（憲章＝聖典 v4。プランは docs/ で TODO を兼ねる）
 - **AI 向けの掟（全エージェント共通）**: [AGENTS.md](AGENTS.md)（Claude は [CLAUDE.md](CLAUDE.md) が `@AGENTS.md` で取り込む）。**URL を渡された AI のオンボーディング入口も AGENTS.md**（「AI オンボーディング」節）
@@ -15,13 +15,17 @@ dotagents/
 ├── install.sh           … symlink 配置（冪等・実ファイルは SKIP・失敗は停止）
 ├── docs/                … 00_overview.md（地図）・02_models.md（役割→モデル対応表）・01_project-layout.md・進行中プラン／archive/（役目を終えた文書）
 ├── rag/                 … 調査・研究の再利用棚（INDEX.md＋topic/raw/ 一次ソース）
+├── shared/
+│   └── constitution.md  … Claude/Codex共通憲法の唯一の手編集正本
 ├── claude/
-│   ├── CLAUDE.md        … グローバル鉄則の正本（→ ~/.claude/CLAUDE.md）
+│   ├── CLAUDE.delta.md  … Claude固有差分の正本
+│   ├── CLAUDE.md        … 共通＋deltaの生成物（→ ~/.claude/CLAUDE.md）
 │   ├── skills/          … → ~/.claude/skills/<name>
 │   ├── commands/        … → ~/.claude/commands/<name>.md
 │   └── agents/          … → ~/.claude/agents/<name>.md
 ├── codex/
-│   ├── AGENTS.md        … Codex グローバル規範の正本（→ ~/.codex/AGENTS.md）
+│   ├── AGENTS.delta.md  … Codex固有差分の正本
+│   ├── AGENTS.md        … 共通＋deltaの生成物（→ ~/.codex/AGENTS.md）
 │   ├── agents/          … → ~/.codex/agents/<name>.toml
 │   ├── skills/          … → $HOME/.agents/skills/<name>（既定。legacy は明示指定）
 │   └── rules/           … → ~/.codex/rules/<file>
@@ -31,11 +35,14 @@ dotagents/
 ```mermaid
 flowchart LR
   subgraph repo["dotagents (このリポジトリ)"]
-    gcm["claude/CLAUDE.md"]
+    common["shared/constitution.md"]
+    cdelta["claude/CLAUDE.delta.md"]
+    xdelta["codex/AGENTS.delta.md"]
+    gcm["claude/CLAUDE.md (generated)"]
     cs["claude/skills/&lt;name&gt;/"]
     cc["claude/commands/&lt;name&gt;.md"]
     ca["claude/agents/&lt;name&gt;.md"]
-    xam["codex/AGENTS.md"]
+    xam["codex/AGENTS.md (generated)"]
     xca["codex/agents/&lt;name&gt;.toml"]
     xs["codex/skills/&lt;name&gt;/"]
     xr["codex/rules/&lt;file&gt;"]
@@ -53,6 +60,10 @@ flowchart LR
     hxr["~/.codex/rules/&lt;file&gt;"]
     hbin["~/.local/bin/&lt;name&gt;"]
   end
+  common --> gcm
+  cdelta --> gcm
+  common --> xam
+  xdelta --> xam
   gcm -. "install.sh が symlink" .-> hgcm
   cs -. symlink .-> hcs
   cc -. symlink .-> hcc
@@ -83,8 +94,11 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | Claude command | `auto-deploy-on-push` / `polish-github` | 各スキルの入口 |
 | Codex skill | `polish-github` | GitHub presentation 整備（正本は Claude 版・Codex 版は薄いポインタ＝一本化済み） |
 | Codex rule | `default.rules` | Codex 常時適用ルール |
-| Codex グローバル規範 | `codex/AGENTS.md` | ベルの共通憲法＋Codex 固有のモデル配置・native／外部実行／相談レーン・shell 入口（2026-07 リポ正本化。対応表は docs/02_models.md） |
-| Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲定義（terra×medium / sol×high×read-only / luna×low） |
+| 共通憲法 | `shared/constitution.md` | Claude／Codexへ生成する人格・応対・安全・調査・計画・git・報告の唯一の共通正本 |
+| Claudeグローバル規範 | `claude/CLAUDE.delta.md` → `claude/CLAUDE.md` | 共通憲法＋Claude delta（2026-07-16現在は空）から合成する配布生成物 |
+| Codexグローバル規範 | `codex/AGENTS.delta.md` → `codex/AGENTS.md` | 共通憲法＋Codex delta（2026-07-16現在は空。配置・配線の正典はdocs/02・docs/05）から合成する配布生成物 |
+| bin | `render-global-constitution.mjs` | 共通憲法＋host deltaから両runtime向け完全指示を冪等生成し、driftを検査 |
+| Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲のrole定義（役割→model×effortの正は docs/02_models.md） |
 | bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
 | bin | `bughub-external-probe.mjs` | server profileからloopback `/readyz`とdeploy revision manifestを照合し、安全な固定checkへ投影 |
 | bin | `factory-reporter.mjs` | 明示opt-inされた工場reportを検証・outbox保存・BugHubへ冪等送信 |
@@ -117,20 +131,19 @@ Claude command の Codex 正規入口は slash command の模造ではなく、�
 
 ### Codex 9面の対応状況
 
-「全対応」はファイル数の左右対称ではなく能力対称で判定する。詳細な合格条件と進捗は
-[Codex 全対応計画](docs/plan_codex-full-support.md) が正本。
+「全対応」はファイル数の左右対称ではなく能力対称で判定する。合格条件・進捗・各面の状態は
+[Codex 全対応計画](docs/plan_codex-full-support.md) が正本（本 README には複製しない）。
 
-| 面 | dotagents の正規入口 | 状態 |
-|---|---|---|
-| AGENTS_MD | `codex/AGENTS.md`＋リポごとの `AGENTS.md` | 対応済み |
-| CONFIG | `docs/05_codex-fragments.md`＋`apply-codex-config`＋`verify-install` | 必須断片を限定適用・検証 |
-| SKILLS | `codex/skills/` → user skill 面 | 移行中（公式面を既定化） |
-| PLUGINS | — | 非採用（個人git＋symlink配布と二重化するため） |
-| MCP_SERVER_CONFIG | `docs/05_codex-fragments.md` | 親別 matrix・登録/list/疎通手順を正本化 |
-| SUBAGENTS | `codex/agents/*.toml`＋`verify-codex-agent-routing` | 対応済み |
-| HOOKS | `bin/codex-callout-hook.sh`＋`docs/05_codex-fragments.md` | INFO 契約で対応済み |
-| COMMANDS | Claude command に対応する Codex skill | 対応表を上記へ固定 |
-| SESSIONS | Throughline＋Codex handoff smoke | 外部正本を Wave 2-3 で受入検証予定 |
+| 面 | dotagents の正規入口 |
+|---|---|
+| AGENTS_MD | `codex/AGENTS.md`＋リポごとの `AGENTS.md` |
+| CONFIG / MCP_SERVER_CONFIG | `docs/05_codex-fragments.md`＋`apply-codex-config`＋`verify-install` |
+| SKILLS | `codex/skills/` → user skill 面（公式面が既定） |
+| PLUGINS | — 非採用（個人git＋symlink配布と二重化するため） |
+| SUBAGENTS | `codex/agents/*.toml`＋`verify-codex-agent-routing` |
+| HOOKS | `bin/codex-callout-hook.sh`＋`docs/05_codex-fragments.md` |
+| COMMANDS | Claude command に対応する Codex skill |
+| SESSIONS | Throughline＋Codex handoff smoke |
 
 ## 他端末セットアップ・ランブック
 
@@ -177,7 +190,7 @@ cd ~/Developer/dotagents
 tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claude/CLAUDE.md .claude/skills .claude/agents .claude/commands .codex/AGENTS.md 2>/dev/null || true
 # グローバル CLAUDE.md / Codex AGENTS.md の実ファイルが残っていると正本化が静かに不成立になる
 [ -f ~/.claude/CLAUDE.md ] && [ ! -L ~/.claude/CLAUDE.md ] && rm ~/.claude/CLAUDE.md
-# ~/.codex/AGENTS.md が実ファイルなら先に中身を確認——価値ある行は codex/AGENTS.md へ PR してから退避・削除する
+# ~/.codex/AGENTS.md が実ファイルなら先に中身を確認——価値ある行を共通正本／Codex deltaへ振り分け、生成物を更新してから退避・削除する
 [ -f ~/.codex/AGENTS.md ] && [ ! -L ~/.codex/AGENTS.md ] && rm ~/.codex/AGENTS.md
 ```
 
@@ -268,6 +281,6 @@ tail -5 ~/.local/state/agents-update/agents-update.log # "agents-update end" 行
 - `~/.claude/{settings.json,plugins,projects,sessions}` — 端末固有 / 認証情報（端末メモリ含む。設定の推奨断片は docs/03_settings-fragments.md）
 - `~/.codex/{config.toml,auth.json,sessions,*.sqlite}` — 同上
 - `~/.codex/skills/.system/` — Codex CLI バンドルのシステム skill
-- ~~`~/.codex/AGENTS.md`~~ — 2026-07 にリポ正本化（`codex/AGENTS.md` → symlink 配布）。端末ローカルの緊急上書きは `~/.codex/AGENTS.override.md`（非コミット・`bin/verify-install.sh` が非空を FAIL 名指し）
+- ~~`~/.codex/AGENTS.md`~~ — 2026-07 にリポ正本化（`shared/constitution.md`＋`codex/AGENTS.delta.md`から作る`codex/AGENTS.md`をsymlink配布）。端末ローカルの緊急上書きは `~/.codex/AGENTS.override.md`（非コミット・`bin/verify-install.sh` が非空を FAIL 名指し）
 - 罠DB（旧 `caveat/`）は **v0.15+ で dotagents の外**へ移管済み。`~/.caveat/own` を Caveat 自身が private の Caveat-Private へ同期する（public/private とも）。第三者共有は `caveat publish` が public のみ Caveat-Public へ抽出。旧 `*.private.md` gitignore ガードは死に文だったため撤廃
 - リポ直下の `.claude/` `.vscode/` `.obsidian/` — 端末固有状態（gitignore 済み）

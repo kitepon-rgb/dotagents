@@ -44,7 +44,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 
 | 面 | 現状 | 本計画の裁定 |
 |---|---|---|
-| AGENTS_MD | ルート `AGENTS.md`、Claude/Codex グローバル正典、共通章 parity あり | 対応済み。サイズ上限・override shadow を最終 E2E で再確認 |
+| AGENTS_MD | ルート`AGENTS.md`、共通正本＋host deltaから作るClaude/Codexグローバル生成物、生成一致gateあり | 対応済み。サイズ上限・override shadowを最終E2Eで再確認 |
 | CONFIG | `docs/03`・`docs/05` に断片、端末適用は手動 | 必須キーと dotagents hook だけ安全に適用・検証できるようにする |
 | SKILLS | Claude 3件、Codex 3件。Codex `orchestrate` は Claude 本文丸ごと symlink | `orchestrate` を製品別入口へ分け、`audit-gauntlet` と `auto-deploy-on-push` を Codex 化 |
 | PLUGINS | repo 内 manifest/marketplace なし | **非採用**。個人git+symlink配布を二重化するため今回の完了条件外 |

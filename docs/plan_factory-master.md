@@ -23,8 +23,7 @@
 - 子計画のチェックが残っていても、本書の順序を飛び越えて独立着手しない。
 - 子計画を完遂したら、受入証拠を本書へ記録して子計画を`docs/archive/`へ退避する。
 - 各製品repoの計画は、dotagentsへ複製せずリンクとcross-repo receiptで束縛する。
-- 実装中はfocused test、TODO完了候補でrelated gateを一回、full regressionはPhase完了時に
-  一回だけ行う。同じHEADとworkspace digestのbaselineをworkerごとに再走しない。
+- テスト・監査の頻度は共通憲法「テストは薄く速く」と`shared/orchestrate/contract.md`「監査の頻度」に従う（本書へ複製しない）。
 
 ## 2. 子計画台帳
 

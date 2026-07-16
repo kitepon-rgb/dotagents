@@ -9,14 +9,14 @@
 
 **AI はピンを打ち替えない**。以下は事実の提示のみで、適用可否・タイミングはオーナー判断。
 
-- 現状（この端末・2026-07-11 時点）: `~/.codex/config.toml` は `gpt-5.6-sol` × `ultra` にピン済み（実測: `grep -E '^model|^model_reasoning_effort' ~/.codex/config.toml`）。
+- 現在値の点検は各端末で `grep -E '^model|^model_reasoning_effort' ~/.codex/config.toml`（端末の現状値は共有文書に書かない＝端末メモリ側へ）。
 - **ultra の事実**: ultra = 最大推論（max 相当）＋ proactive な自動マルチエージェント委譲 ON。使用量急増の公式警告（CLI 0.144.0 以降・並列スレッド数閾値。閾値の具体値はローカル裏取り不能＝確度: 中、前セッション由来）。
 - **公式指針（`~/.codex/models_cache.json` 実測・2026-07-10 取得）**: `gpt-5.6-sol` の `default_reasoning_level` は **low**、`gpt-5.6-terra` は **medium**。「低く始めて上げろ」に沿う既定値。
 - 推奨値の提示（適用はオーナー判断）: 旗艦×low または旗艦×medium。proactive 自動委譲を意図せず踏みたくない場合は ultra を避ける。
 
 ## 2. 再ピン問題
 
-TUI/アプリの `/model` 選択（モデルピッカー）は `config.toml` へ**永続書き込み**される仕様。この端末では `gpt-5.5/high` → `xhigh` → `gpt-5.6-sol/ultra` と変遷した実測あり＝断片を一度適用しても、次に `/model` を触れば上書きされる。
+TUI/アプリの `/model` 選択（モデルピッカー）は `config.toml` へ**永続書き込み**される仕様＝断片を一度適用しても、次に `/model` を触れば上書きされる。
 
 - **点検**: `grep -E '^model|^model_reasoning_effort' ~/.codex/config.toml`
 - **戻し手順**:
@@ -33,8 +33,7 @@ TUI/アプリの `/model` 選択（モデルピッカー）は `config.toml` へ
 ただし GPT-5.6 Sol/Terra が選ぶ MultiAgent V2 には、role 定義の探索とは別の入口バグがある。
 Codex 0.144.1 の実装では `hide_spawn_agent_metadata` の既定値が `true` で、単なる表示抑制ではなく
 `spawn_agent` schema から `agent_type / model / reasoning_effort / service_tier` の4入力を削除する。
-その状態の `task_name` は `/root/...` のタスクパス名を作るだけで、同名 custom agent を選ばない。
-今回の実被弾では3子すべて `agent_role = null` となり、親の Sol×xhigh を継承した。
+その状態の `task_name` は `/root/...` のタスクパス名を作るだけで、同名 custom agent を選ばない＝子は`agent_role = null`で親のmodel×effortを黙って継承する（実被弾の記録はrag/codex参照）。
 
 全端末で以下を必須適用する。`tool_namespace = "agents"` は、拡張した schema を既定の
 `collaboration` namespace に置いた時に backend の reserved-schema 検証で 400 になる組み合わせを避ける。
@@ -58,10 +57,7 @@ tool_namespace = "agents"
 - 現行 spawn 応答は実効 role/model/effort/sandbox を返さないため、上記スクリプトが rollout JSONL を読む。
 
 **未解決の上流バグ（2026-07-11）**: 0.144.1 は role config 適用後に親 turn の live
-permission profile を子へ再適用するため、custom agent の `sandbox_mode` を親 sandbox で上書きする。
-実際、V1 で role/model/effort/developer instructions が正しく適用された過去の implementer 子も
-`sandbox_policy = danger-full-access` だった。これは公式文書の「custom agent ごとに sandbox を override
-できる」と不一致。ただし今回の role/model/effort 誤配線とは別論点なので、既定の routing 判定からは分離し、
+permission profile を子へ再適用するため、custom agent の `sandbox_mode` を親 sandbox で上書きする（公式文書の「custom agent ごとに sandbox を override できる」と不一致）。role/model/effort 誤配線とは別論点なので既定の routing 判定からは分離し、
 `CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` の時だけ差を FAIL にする。
 
 グローバル `[agents]` の `max_threads` / `max_depth` は公開設定で、公式既定はそれぞれ `6` / `1`。
@@ -144,7 +140,7 @@ codex --profile work
 ## 8. 旧 `~/.codex/AGENTS.md` の退避・置換手順
 
 1. **実ファイルか symlink か確認**: `ls -la ~/.codex/AGENTS.md`（symlink なら dotagents の `codex/AGENTS.md` を指しているはずで対応不要）。
-2. 実ファイルなら中身を読み、**価値ある行があれば** dotagents の `codex/AGENTS.md` へ PR（この判断はオーナー確認を要する＝勝手に統合しない）。
+2. 実ファイルなら中身を読み、**価値ある共通行は**`shared/constitution.md`、Codexの配置・配線に関する行は`docs/02_models.md`／本書へPRする（この判断はオーナー確認を要する＝勝手に統合しない）。deltaは空（見出しのみ）が既定で、本当にhost固有の規範だけ`codex/AGENTS.delta.md`へ。`codex/AGENTS.md`は生成物なので直接編集しない。
 3. tar 退避してから削除: `tar czf ~/.codex/AGENTS.md.bak-$(date +%Y%m%d).tar.gz -C ~/.codex AGENTS.md && rm ~/.codex/AGENTS.md`
 4. `./install.sh --profile official` を再実行し、symlink が張られることを確認: `readlink ~/.codex/AGENTS.md` が dotagents の `codex/AGENTS.md` を指すこと。
 
