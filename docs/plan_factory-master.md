@@ -110,6 +110,11 @@ intentional crash／通信断は別承認のため実施しない。O3／後続l
 Observer ADR 0127と本repo [ADR 0024](adr/0024-observer-hook-state-root-binding.md)に従い、
 preflight／adapter／両caller／両hookを
 同一explicit state rootへ束縛する独立修理を閉じてから19eを再開する。
+state root修理後のClaude attemptではhook errorは消えたが、Aiterm controllerのPATHがglobal
+Throughlineを先に解決し、DB sessionだけ増えてcandidate completed receiptが0件だった。
+Observer ADR 0129と本repo [ADR 0025](adr/0025-throughline-capture-runtime-binding.md)に従い、
+Claude parent controllerのPATH先頭をcampaign prefixへ固定し、capture／readを同じcandidateへ束縛する。
+手動transcript投入やglobal package更新へfallbackしない。
 19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを

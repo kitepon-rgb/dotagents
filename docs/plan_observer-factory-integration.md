@@ -302,6 +302,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       失敗attemptは成功へ含めず、独立gate／commit後にqueue 19eへ戻る
       （[ADR 0024](adr/0024-observer-hook-state-root-binding.md)）。Observer focused 28/28、related 48/48、
       dotagents hook transaction／isolated package gate、対象docs lintはgreen。
+    - [ ] state root修理後に再現したThroughline capture実行物不一致を閉じる。Aiterm Claude parent
+      controllerのPATH先頭をcampaign prefixへ固定し、bare `throughline process-turn`とabsolute
+      `observer-read`を同じcandidateへ束縛する。失敗attemptは成功へ含めず、global updateや
+      手動transcript投入へfallbackしない（[ADR 0025](adr/0025-throughline-capture-runtime-binding.md)）。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
