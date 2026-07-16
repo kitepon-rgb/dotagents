@@ -33,6 +33,23 @@ Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[�
 4. 作業を独立して revert できる単位に分割する。実装中はfocused testを回し、単位完了時に関連gateを1回通す（full regressionはPhase gateへ集約）。並行作業は書き込み範囲を交差させない。
 5. 外部状態を変更する前には、目的・影響・rollback を説明し、H 承認が必要な操作は承認後だけ実行する。失敗を fallback で隠さない。
 
+## 知能の配置原則（provider対称）
+
+役割→モデルの解決はホスト側正典（`docs/02_models.md`）だけで行い、本契約とコードへモデル名を焼き込まない。
+本契約が固定するのはproviderとの**関係**である:
+
+- **Observerは親と同じprovider family**に置く。同じアプリのUXと近い思考様式による伴走が目的であり、
+  ObserverはControlのWorker票にもConsultation票にも入らない（ADR 0043-5）。
+- **相談役（Consultation）は親と異なるprovider familyを第一候補**にし、provider固有の盲点を補う。
+  これは第一候補の原則であって強制拒否ではない——同familyのconnector（例: Codex親からのChatGPT相談）も
+  引き続き使える。相談役はWorkerやObserverへ混ぜない。
+- **一般Workerは適格候補（role・能力・独立性・F/A/H適合）内での適応配置**とする。残quotaに基づく
+  rate-aware selectorが提供されるまで、quota架空値・暗黙fallbackで配置を成功扱いしない。
+
+役割と配置関係の機械可読な対応は`lib/orchestrate/placement-policy.mjs`
+（`dotagents.placement-policy.v1`）が固定し、fixtureがadapter catalogのconsultation laneおよび
+Control schema v26のconnector enumとの整合を検証する。
+
 ## 実装と受入
 
 - 並列実装は非交差の書込範囲でwaveを分け、同一ファイルを触る作業は直列化する。巨大な任務を一人へ渡さず、1責務を1受入単位に分解する。

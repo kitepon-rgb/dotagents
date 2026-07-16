@@ -467,9 +467,16 @@ Observer `docs/plan_observer.md`
 ### Phase O3 — Elastic provider対称化
 
 - [ ] Observer同社、相談役異社、一般Worker適応配置をshared orchestration契約へ固定する。
-- [ ] Codex→Claude execution/consultationとClaude→Codex consultationのhandle、observe、resume、
+- [x] Codex→Claude execution/consultationとClaude→Codex consultationのhandle、observe、resume、
   timeout回収、failure mappingを実装する。
-- [ ] provider障害時の切替を別Runとして記録し、fallback元の成功へ偽装しない。
+  - Worker laneは`claude-native@v1`（[ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)）、
+    consultation laneは`claude-native@consult-v1`／`codex-sidecar@consult-v1`＋Control schema v26の
+    typed handle（`50d79d5`、[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)）。
+    いずれもprojection純関数で、実model live dispatchはlive H gateへ残置。
+- [x] provider障害時の切替を別Runとして記録し、fallback元の成功へ偽装しない。
+  - Consultation切替の非偽装をv26実fixtureで固定（`209e2df`、
+    [ADR 0050](adr/0050-o3-placement-policy-and-switch-fixtures-acceptance.md)）。Worker側fallback宣言
+    （v20/v21のfallback参照・receipt束縛）は既存契約が正のまま。
 - [x] O3の最初の実装境界を、既存v25 Worker契約へ`claude-native`純粋adapterを追加するwaveと、
   Consultationの型付きhandle／schema変更waveへ分離する。
   - [ADR 0043](adr/0043-o3-claude-provider-adapter-boundary.md)で、同一UUID resume、timeout unknown、

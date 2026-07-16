@@ -352,7 +352,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 3: Elasticのprovider対称化
 
-- [ ] shared orchestration契約へ「Observer同社／相談役異社／一般Worker適応配置」を反映する。
+- [x] shared orchestration契約へ「Observer同社／相談役異社／一般Worker適応配置」を反映する。
+  - `shared/orchestrate/contract.md`「知能の配置原則（provider対称）」節を新設（`209e2df`と同wave、
+    受入[ADR 0050](adr/0050-o3-placement-policy-and-switch-fixtures-acceptance.md)）。役割→モデルの
+    解決は`docs/02_models.md`単独のまま、providerとの関係だけを契約化した。
 - [x] Codex親からClaude Worker／相談役を呼ぶadapter、handle、observe、resume、failure mappingを実装する。
   - Worker laneは`claude-native@v1`（[ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)）、
     相談役laneは`claude-native@consult-v1`（同一UUID resume・`--tools ""`全tool無効・cwd非複製、
@@ -368,8 +371,15 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     adapter_id×lane keying、consultation observationのworker projection遮断まで`50d79d5`で実装。
     ADR 0045 Gateの全focused fixture固定、related 127/127・fail 0・skip 0、`make lint-js` green。
     受入は[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)。
-- [ ] provider障害時の別社切替は新Runとして記録し、fallback元の成功へ偽装しない。
-- [ ] role別の適格provider集合と、親と異なる相談役をplacement fixtureで固定する。
+- [x] provider障害時の別社切替は新Runとして記録し、fallback元の成功へ偽装しない。
+  - Consultation切替をv26実fixtureで固定（gpt failed終端後のみ同一assignmentでclaude-native新record可、
+    元recordのstate・handle・terminal_evidence不変、nonterminal/completed中は`ASSIGNMENT_ACTIVE`、
+    ID再利用は`DUPLICATE_ID`。`209e2df`）。Worker側は既存のfallback宣言（v20/v21）が正のまま。
+- [x] role別の適格provider集合と、親と異なる相談役をplacement fixtureで固定する。
+  - `lib/orchestrate/placement-policy.mjs`（observer=same／consultant=cross-first／worker=adaptive、
+    connector→family分類、fail-closed）と、policy＝v26 connector enum＝catalog consultation laneの
+    三者一致fixture（`209e2df`、related 132/132・fail 0・skip 0）。相談役異社は第一候補原則で
+    あり強制拒否にしない（同社ChatGPT相談laneを保全）。
 - [x] O3実装境界を先に固定する。
   - [ADR 0043](adr/0043-o3-claude-provider-adapter-boundary.md)で、既存v25 Worker契約を変えない
     `claude-native` adapterを最初の独立単位とし、Consultationの多provider schema変更を別gateにした。
