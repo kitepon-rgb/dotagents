@@ -144,6 +144,7 @@ test("claude-native Worker requestは隔離workspaceと同一UUIDを固定し暗
     assert.equal(resume.arguments.argv.includes(forbidden), false, forbidden);
   }
   assert.throws(() => adapters.claudeNativeStartRequest({ ...common, handle: { session_id: "not-a-uuid" } }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.claudeNativeStartRequest({ ...common, handle: { session_id: "123E4567-E89B-42D3-A456-426614174000" } }), code("INVALID_SCHEMA"));
   assert.throws(() => adapters.claudeNativeStartRequest({ ...common, fallback_model: "claude-haiku-4-5" }), code("INVALID_SCHEMA"));
   assert.throws(() => adapters.claudeNativeStartRequest({ ...common, tool_policy: { ...common.tool_policy, tools: ["mcp__private"] } }), code("INVALID_SCHEMA"));
   assert.throws(() => adapters.claudeNativeStartRequest({ ...common, tool_policy: { ...common.tool_policy, allowed_tools: ["Bash(git *)"] } }), code("INVALID_SCHEMA"));
