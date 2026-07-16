@@ -483,8 +483,13 @@ Observer `docs/plan_observer.md`
     [ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)で受け入れた。live dispatchは未実施。
 - [ ] Consultation多provider化はv25 `slug`へのhandle詰込みを禁止し、旧v25 reader、型付きhandle、
   migration／rollback、O4のv26予約とのversion順を新しい不変ADRで裁定してから実装する。
-- [ ] 既存未コミットを別セッション由来として放置しない。WSL relay RAGはPhase R2未収容成果、
+- [x] 既存未コミットを別セッション由来として放置しない。WSL relay RAGはPhase R2未収容成果、
   CDC PDF/PNGは正典還流済み中間物、`claude -p` allowはO3の権限規則として、それぞれ別scopeで閉じる。
+  - WSL relay RAGは`0170f00`、mcp-observer INDEX行追補は`cd2ea3a`、`claude -p` allowは`cffb342`で
+    独立収容した。`tmp/pdfs/cdc_prompt*`は一次PDFの出典URL・取得方法付き全文が
+    `rag/orchestration/raw/openai-cdc-multiagent-prompt.md`に保存済みで機能的消費者ゼロを確認し、
+    保全不要と裁定して削除した。`codex/rules/default.rules`のLattice向けallow 1行は別セッション
+    所有物として非commitのまま保全する。
 
 詳細: [Observer計画 Phase 3](plan_observer-factory-integration.md#phase-3-elasticのprovider対称化)
 

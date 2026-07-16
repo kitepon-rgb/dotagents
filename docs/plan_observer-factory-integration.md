@@ -372,8 +372,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     実model request／login／credential／network dispatchは未実施。
 - [ ] ConsultationのClaude session ID／Codex handleをv25の`slug`へ読み替えず、旧v25継続読取、
   型付きhandle、migration／rollback、O4のv26予約とのversion順を不変ADRで裁定する。
-- [ ] 既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、
+- [x] 既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、
   `claude -p` allowはO3権限規則として別scope／別commitで閉じる。保護指定pathを本adapter commitへ混ぜない。
+  - `0170f00`（WSL relay RAG＋INDEX行）、`cd2ea3a`（mcp-observer INDEX行追補）、`cffb342`
+    （`claude -p` allow。model H承認ではない）。CDC中間物はrag raw保存・出典URL・消費者ゼロを
+    確認のうえ保全不要と裁定して削除。Lattice向けallow行は別セッション所有として非commit保全。
 
 **Gate:** 親hostにかかわらず、同じControlとlane固有のPacket／Report／Decision／timeout回収契約で両社レーンを使える。host projectionをexecution成功へ投影しない。
 
