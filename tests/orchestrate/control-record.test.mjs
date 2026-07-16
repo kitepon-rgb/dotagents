@@ -5,8 +5,8 @@ import { test } from "node:test";
 import { dirname, join } from "node:path";
 
 import {
-  addLinkedWorktree, canonicalDigest, cleanupDir, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
-  createNonGitDir, createOwnerFixtures, evidence, installSentinelBin, loadControl, makeConsultation, makeTask,
+  addLinkedWorktree, canonicalDigest, cleanupDir, controlStatePaths, createBareRepo, createFingerprintBoundaryFiles, createGitRepo, createOversizedFingerprintFile,
+  createNonGitDir, createOwnerFixtures, evidence, installSentinelBin, loadControl, makeConsultation, makeConsultationV25, makeTask,
   makeApproval, makeBudget, makeBudgetReservation, makePlacementCandidate, makeRegistryObservation, makeTempDir, makeTransitionReceipt, makeWorkerRun, OWNER_SCHEMA, readPersistedManifest, runGit, spawnOrchestrate,
   taskAdmissionDigest, terminalWorkerObservation, completedWorkerObservation, workerObservation, writeJson,
 } from "./helpers.mjs";
@@ -167,7 +167,7 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
 test("status briefとresume checkはopaque状態・workspace drift・evidence retentionを要約する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "brief-control" });
   const ready = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });
-  assert.equal(ready.schema_version, "dotagents.orchestration-resume-check.v6");
+  assert.equal(ready.schema_version, "dotagents.orchestration-resume-check.v7");
   assert.equal(ready.outcome, "ready");
   await writeFile(join(repo.root, "docs", "resume-dirty.md"), "dirty\n");
   const changed = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });
@@ -184,9 +184,9 @@ test("status briefとresume checkはopaque状態・workspace drift・evidence re
   const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: consultation.revision, consultation_id: "brief-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
   const unknown = await api.observeConsultation({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: consultationDispatched.revision, consultation_id: "brief-consultation", observation: { state: "unknown", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z", raw_state: "unknown" } });
   const brief = await api.statusBrief({ cwd: repo.root, control_id: "brief-state-control" });
-  assert.equal(brief.schema_version, "dotagents.orchestration-status-brief.v6");
+  assert.equal(brief.schema_version, "dotagents.orchestration-status-brief.v7");
   assert.equal(brief.active.worker_runs[0].executor_handle.idempotency_key, "A".repeat(22));
-  assert.equal(brief.active.consultations[0].slug, "known-session-slug");
+  assert.deepEqual(brief.active.consultations[0].consultation_handle, { slug: "known-session-slug" });
   assert.deepEqual(brief.unknown.consultation_ids, ["brief-consultation"]);
   assert.ok(brief.unknown.registry_observations[0].fields.includes("capacity:hard_inflight_limit"));
   assert.deepEqual(brief.uncollected.worker_run_ids, ["brief-worker"]);
@@ -1362,7 +1362,7 @@ test("Task取消は既存Consultationを変えず新規dispatchだけを拒否�
   const { repo, result } = await initialized(t, { control_id: "cancel-active-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "cancel-active-task", effect: "read", write_scope: [] }) });
   const plannedConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: task.revision, consultation: makeConsultation({ consultation_id: "cancel-planned-consultation", task_id: "cancel-active-task", assignment_id: "cancel-planned-consultation-assignment" }) });
-  const activeConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: plannedConsultation.revision, consultation: makeConsultation({ consultation_id: "cancel-active-consultation", task_id: "cancel-active-task", assignment_id: "cancel-active-consultation-assignment", slug: "cancel-active-slug" }) });
+  const activeConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: plannedConsultation.revision, consultation: makeConsultation({ consultation_id: "cancel-active-consultation", task_id: "cancel-active-task", assignment_id: "cancel-active-consultation-assignment", consultation_handle: { slug: "cancel-active-slug" } }) });
   const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: activeConsultation.revision, consultation_id: "cancel-active-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
   const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: consultationDispatched.revision, worker_run: makeWorkerRun({ worker_run_id: "cancel-active-run", task_id: "cancel-active-task", assignment_id: "cancel-active-worker-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "cancel-active-worker-assignment" } }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "cancel-active-run" });
@@ -1672,7 +1672,7 @@ test("実adapter projectionをControl RecordのWorkerとConsultationへ往復で
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "adapter-roundtrip-worker", observation: workerObservationValue });
   assert.equal(dispatched.manifest.worker_runs[0].state, "dispatched"); assert.deepEqual(dispatched.manifest.worker_runs[0].executor_handle, { agent_path: agentPath });
 
-  const consultation = await api.consultationRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: dispatched.revision, consultation: makeConsultation({ consultation_id: "adapter-roundtrip-consultation", task_id: "adapter-roundtrip-task", assignment_id: "adapter-roundtrip-consultation-assignment", slug: "adapter-roundtrip-consultation" }) });
+  const consultation = await api.consultationRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: dispatched.revision, consultation: makeConsultation({ consultation_id: "adapter-roundtrip-consultation", task_id: "adapter-roundtrip-task", assignment_id: "adapter-roundtrip-consultation-assignment", consultation_handle: { slug: "adapter-roundtrip-consultation" } }) });
   const timestamps = { createdAt: "2026-07-14T00:01:00.000Z", updatedAt: "2026-07-14T00:02:00.000Z" };
   const consultProjection = adapters.projectGptConnectorObservation({ slug: "adapter-roundtrip-consultation", provider: { slug: "adapter-roundtrip-consultation", state: "queued", ...timestamps, result: null, error: null } });
   const consultationObservation = adapters.buildConsultationControlObservation({ projection: consultProjection, observed_version: "gpt-5.6", observed_at: "2026-07-14T00:02:00.000Z" });
@@ -2809,4 +2809,159 @@ test("phase gate CLIはrecord/advance/statusだけを行い外部providerを起�
   const statusInput = join(base, "phase-status.json"); await writeJson(statusInput, { cwd: repo.root, control_id: "phase-cli" });
   const status = spawnOrchestrate(["phase-gate-status", "--input", statusInput], { env }); assert.equal(status.status, 0); assert.equal(JSON.parse(status.stdout).result.current_phase, "discovery");
   await assert.rejects(access(sentinel.log));
+});
+
+const V25 = "dotagents.orchestration-control.v25";
+const V26 = "dotagents.orchestration-control.v26";
+
+/** 実在するv25 Control（v23→v25世代のinit産物）を再現する: schema定数とconsultation shapeだけがv26と異なる。 */
+async function downgradeControlToV25(repo, controlId) {
+  const manifest = await readPersistedManifest(repo.commonDir, controlId);
+  manifest.schema_version = V25;
+  for (const consultation of manifest.consultations) {
+    consultation.slug = consultation.consultation_handle.slug;
+    delete consultation.consultation_handle;
+  }
+  const paths = await controlStatePaths(repo.commonDir, controlId);
+  await writeJson(paths.manifest, manifest);
+}
+
+async function consultationTaskRecorded(t, controlId) {
+  const { repo, result } = await initialized(t, { control_id: controlId });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "consultation-task", effect: "read", write_scope: [] }) });
+  return { repo, revision: task.revision };
+}
+
+test("v26 initはtyped consultation_handleの多provider consultationを固定しshape違反をfail closedにする", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "v26-multiprovider");
+  const sessionId = "123e4567-e89b-42d3-a456-426614174000";
+  assert.equal((await api.status({ cwd: repo.root, control_id: "v26-multiprovider" })).schema_version, V26);
+  const claude = await api.consultationRecord({
+    cwd: repo.root, control_id: "v26-multiprovider", actor_id: "parent", expected_revision: revision,
+    consultation: makeConsultation({ consultation_id: "claude-consult", assignment_id: "claude-consult-assignment", connector: "claude-native", consultation_handle: { session_id: sessionId } }),
+  });
+  assert.deepEqual(claude.manifest.consultations[0].consultation_handle, { session_id: sessionId });
+  const dispatched = await api.observeConsultation({
+    cwd: repo.root, control_id: "v26-multiprovider", actor_id: "parent", expected_revision: claude.revision, consultation_id: "claude-consult",
+    observation: { state: "dispatched", source: "claude-native", observed_version: "2.1.211", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "dispatched" },
+  });
+  const completedObservation = adapters.buildConsultationControlObservation({
+    projection: adapters.projectClaudeNativeConsultObservation({ handle: { session_id: sessionId }, status: "completed" }),
+    observed_version: "2.1.211", observed_at: "2026-07-17T00:01:00.000Z", decision_ref: "docs/consult-decision.md",
+  });
+  const completed = await api.observeConsultation({ cwd: repo.root, control_id: "v26-multiprovider", actor_id: "parent", expected_revision: dispatched.revision, consultation_id: "claude-consult", observation: completedObservation });
+  assert.equal(completed.manifest.consultations[0].decision_ref, "docs/consult-decision.md");
+  const sidecar = await api.consultationRecord({
+    cwd: repo.root, control_id: "v26-multiprovider", actor_id: "parent", expected_revision: completed.revision,
+    consultation: makeConsultation({ consultation_id: "sidecar-consult", assignment_id: "sidecar-consult-assignment", connector: "codex-sidecar", consultation_handle: null }),
+  });
+  assert.equal(sidecar.manifest.consultations[1].consultation_handle, null);
+  const brief = await api.statusBrief({ cwd: repo.root, control_id: "v26-multiprovider" });
+  assert.equal(brief.schema_version, "dotagents.orchestration-status-brief.v7");
+  assert.deepEqual(brief.active.consultations, [{
+    consultation_id: "sidecar-consult", task_id: "consultation-task", state: "planned",
+    connector: "codex-sidecar", consultation_handle: null, model: "gpt-5.6", effort: "low", executor_observation: null,
+  }]);
+  const reject = async (consultation, expected) => assert.rejects(api.consultationRecord({
+    cwd: repo.root, control_id: "v26-multiprovider", actor_id: "parent", expected_revision: sidecar.revision, consultation,
+  }), code(expected));
+  await reject(makeConsultation({ consultation_id: "unknown-connector", assignment_id: "unknown-connector-assignment", connector: "aiterm", consultation_handle: null }), "INVALID_SCHEMA");
+  await reject(makeConsultation({ consultation_id: "shape-violation", assignment_id: "shape-violation-assignment", connector: "claude-native", consultation_handle: { slug: "not-a-session" } }), "INVALID_SCHEMA");
+  await reject(makeConsultation({ consultation_id: "uppercase-uuid", assignment_id: "uppercase-uuid-assignment", connector: "claude-native", consultation_handle: { session_id: sessionId.toUpperCase() } }), "INVALID_SCHEMA");
+  await reject(makeConsultation({ consultation_id: "null-gpt", assignment_id: "null-gpt-assignment", consultation_handle: null }), "INVALID_SCHEMA");
+  await reject(makeConsultationV25({ consultation_id: "slug-stuffing", assignment_id: "slug-stuffing-assignment", connector: "claude-native", slug: sessionId }), "INVALID_SCHEMA");
+  await reject(makeConsultationV25({ consultation_id: "v25-shape-on-v26", assignment_id: "v25-shape-on-v26-assignment" }), "INVALID_SCHEMA");
+});
+
+test("v25 active Controlは読取もmutationも従来契約で継続しv26専用recordはSCHEMA_UPGRADE_REQUIREDになる", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "v25-continuity");
+  await downgradeControlToV25(repo, "v25-continuity");
+  assert.equal((await api.status({ cwd: repo.root, control_id: "v25-continuity" })).schema_version, V25);
+  const recorded = await api.consultationRecord({ cwd: repo.root, control_id: "v25-continuity", actor_id: "parent", expected_revision: revision, consultation: makeConsultationV25() });
+  assert.equal(recorded.manifest.consultations[0].slug, "known-session-slug");
+  const dispatched = await api.observeConsultation({
+    cwd: repo.root, control_id: "v25-continuity", actor_id: "parent", expected_revision: recorded.revision, consultation_id: "consultation-001",
+    observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "dispatched" },
+  });
+  const brief = await api.statusBrief({ cwd: repo.root, control_id: "v25-continuity" });
+  assert.equal(brief.schema_version, "dotagents.orchestration-status-brief.v7");
+  assert.deepEqual(brief.active.consultations[0].consultation_handle, { slug: "known-session-slug" });
+  assert.equal((await api.resumeCheck({ cwd: repo.root, control_id: "v25-continuity" })).schema_version, "dotagents.orchestration-resume-check.v7");
+  await assert.rejects(api.consultationRecord({
+    cwd: repo.root, control_id: "v25-continuity", actor_id: "parent", expected_revision: dispatched.revision,
+    consultation: makeConsultation({ consultation_id: "needs-v26", assignment_id: "needs-v26-assignment", connector: "claude-native", consultation_handle: { session_id: "123e4567-e89b-42d3-a456-426614174000" } }),
+  }), code("SCHEMA_UPGRADE_REQUIRED"));
+  await assert.rejects(api.consultationRecord({
+    cwd: repo.root, control_id: "v25-continuity", actor_id: "parent", expected_revision: dispatched.revision,
+    consultation: makeConsultation({ consultation_id: "gpt-typed-handle", assignment_id: "gpt-typed-handle-assignment" }),
+  }), code("SCHEMA_UPGRADE_REQUIRED"));
+});
+
+test("control-migrateはv25→v26を決定的に一回で行い非gpt consultationが居るv26をv25へ戻さない", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "migrate-control");
+  await downgradeControlToV25(repo, "migrate-control");
+  const recorded = await api.consultationRecord({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: revision, consultation: makeConsultationV25() });
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V25 }), code("INVALID_TRANSITION"));
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: "dotagents.orchestration-control.v27" }), code("INVALID_SCHEMA"));
+  const migrated = await api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V26 });
+  assert.equal(migrated.manifest.schema_version, V26);
+  assert.equal(migrated.revision, recorded.revision + 1);
+  assert.deepEqual(migrated.manifest.consultations[0].consultation_handle, { slug: "known-session-slug" });
+  assert.equal(Object.hasOwn(migrated.manifest.consultations[0], "slug"), false);
+  const receipt = migrated.manifest.transition_receipts.at(-1);
+  assert.equal(receipt.operation, "control-migrate");
+  assert.deepEqual(receipt.subject, { kind: "control", id: "migrate-control" });
+  assert.equal(receipt.previous_state, V25);
+  assert.equal(receipt.next_state, V26);
+  const claude = await api.consultationRecord({
+    cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: migrated.revision,
+    consultation: makeConsultation({ consultation_id: "claude-consult", assignment_id: "claude-consult-assignment", connector: "claude-native", consultation_handle: { session_id: "123e4567-e89b-42d3-a456-426614174000" } }),
+  });
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: claude.revision, target_schema_version: V25 }), code("ROLLBACK_UNSUPPORTED"));
+});
+
+test("rollbackはgpt-connectorのみのv26をv25へ戻しmigrate receiptは両versionで有効に残る", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "rollback-control");
+  const recorded = await api.consultationRecord({ cwd: repo.root, control_id: "rollback-control", actor_id: "parent", expected_revision: revision, consultation: makeConsultation() });
+  const rolledBack = await api.controlMigrate({ cwd: repo.root, control_id: "rollback-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V25 });
+  assert.equal(rolledBack.manifest.schema_version, V25);
+  assert.equal(rolledBack.manifest.consultations[0].slug, "known-session-slug");
+  assert.equal(Object.hasOwn(rolledBack.manifest.consultations[0], "consultation_handle"), false);
+  assert.equal(rolledBack.manifest.transition_receipts.at(-1).operation, "control-migrate");
+  const v25Mutation = await api.consultationRecord({
+    cwd: repo.root, control_id: "rollback-control", actor_id: "parent", expected_revision: rolledBack.revision,
+    consultation: makeConsultationV25({ consultation_id: "post-rollback", assignment_id: "post-rollback-assignment" }),
+  });
+  assert.equal(v25Mutation.manifest.consultations[1].slug, "known-session-slug");
+  const remigrated = await api.controlMigrate({ cwd: repo.root, control_id: "rollback-control", actor_id: "parent", expected_revision: v25Mutation.revision, target_schema_version: V26 });
+  assert.equal(remigrated.manifest.schema_version, V26);
+  assert.equal(remigrated.manifest.transition_receipts.filter((entry) => entry.operation === "control-migrate").length, 2);
+});
+
+test("receipt容量際のcontrol-migrateは架空の空きを作らずCONTROL_CAPACITY_RESERVEDで拒否される", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "migrate-capacity" });
+  const manifest = structuredClone(result.manifest);
+  for (let revision = 1; revision <= 253; revision++) {
+    const previous = manifest.transition_receipts.at(-1);
+    manifest.transition_receipts.push(makeTransitionReceipt({
+      revision, operation: "task-record", subject: { kind: "task", id: `synthetic-${revision}` },
+      previous_state: null, next_state: "recorded", previous_receipt_digest: previous.receipt_digest,
+    }));
+  }
+  manifest.record_revision = 253;
+  manifest.last_update = { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" };
+  await writeJson((await controlStatePaths(repo.commonDir, "migrate-capacity")).manifest, manifest);
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-capacity", actor_id: "parent", expected_revision: 253, target_schema_version: V25 }), code("CONTROL_CAPACITY_RESERVED"));
+});
+
+test("consult-v1契約はWorker laneの実行者としてoperationally knownにならない", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "consult-worker-forbidden");
+  await assert.rejects(api.workerRunRecord({
+    cwd: repo.root, control_id: "consult-worker-forbidden", actor_id: "parent", expected_revision: revision,
+    worker_run: makeWorkerRun({
+      task_id: "consultation-task", write_mode: "none", workspace_cwd: repo.root,
+      executor: { adapter_id: "claude-native", contract_version: "consult-v1", instance_id: "local", handle_schema_id: "claude-native.session.v1" },
+      executor_handle: { session_id: "123e4567-e89b-42d3-a456-426614174000" },
+    }),
+  }), code("ADAPTER_UNKNOWN"));
 });

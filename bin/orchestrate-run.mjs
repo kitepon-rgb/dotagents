@@ -20,6 +20,7 @@ const commands = new Map([
   ["approach-family-record", api.approachFamilyGovernanceRecord], ["approach-family-status", api.approachFamilyStatus], ["approach-family-block", api.approachFamilyBlock], ["approach-family-reopen", api.approachFamilyReopen],
   ["phase-gate-record", api.phaseGateRecord], ["phase-gate-status", api.phaseGateStatus], ["phase-gate-advance", api.phaseGateAdvance],
   ["resume-check", api.resumeCheck],
+  ["control-migrate", api.controlMigrate],
   ["worker-run-record", api.workerRunRecord], ["consultation-record", api.consultationRecord],
   ["admit-worker", api.admitWorker], ["worker-workspace-bind", api.bindWorkerWorkspace], ["worker-cancel-request", api.requestWorkerCancel], ["observe-worker", api.observeWorker],
   ["observe-consultation", api.observeConsultation], ["conflict-check", api.conflictCheck],

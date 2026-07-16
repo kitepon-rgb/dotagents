@@ -234,13 +234,19 @@ export function makePlacementCandidate(overrides = {}) {
   };
 }
 
+/** v26 shape (typed consultation_handle). Use makeConsultationV25 for legacy v25 manifests. */
 export function makeConsultation(overrides = {}) {
   return {
     consultation_id: "consultation-001", task_id: "consultation-task", assignment_id: "consultation-assignment",
-    connector: "gpt-connector", slug: "known-session-slug", model: "gpt-5.6", effort: "low",
+    connector: "gpt-connector", consultation_handle: { slug: "known-session-slug" }, model: "gpt-5.6", effort: "low",
     budget_reservation: makeBudgetReservation({ wall_time_seconds: 600, cost_microusd: 100000 }),
     state: "planned", executor_observation: null, decision_ref: null, terminal_evidence: [], ...overrides,
   };
+}
+
+export function makeConsultationV25(overrides = {}) {
+  const { consultation_handle, ...consultation } = makeConsultation();
+  return { ...consultation, slug: consultation_handle.slug, ...overrides };
 }
 
 export const workerObservation = (state, overrides = {}) => ({

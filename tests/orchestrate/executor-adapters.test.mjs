@@ -24,7 +24,7 @@ const routingReceipt = (overrides = {}) => {
 
 test("default catalogは製品固有のoptional operationだけを公開する", () => {
   const catalog = adapters.defaultAdapterCatalog();
-  assert.equal(catalog.length, 6);
+  assert.equal(catalog.length, 8);
   assert.deepEqual(adapters.lookupInterface({ adapter_id: "codex-sidecar", contract_version: "v1", interface_id: "durable-work" }).interface.operations.map((entry) => [entry.operation_id, entry.tool_name, entry.effect]), [
     ["start", "codex_work_start", "control"], ["result", "codex_work_result", "observe"], ["cancel", "codex_work_cancel", "control"],
     ["inspect-recovery", "codex_work_recover", "observe"], ["quarantine", "codex_work_recover", "control"],
@@ -34,6 +34,12 @@ test("default catalogは製品固有のoptional operationだけを公開する",
   assert.deepEqual(adapters.lookupInterface({ adapter_id: "claude-native", contract_version: "v1", interface_id: "headless-session" }).interface.operations.map((entry) => [entry.operation_id, entry.tool_name]), [["start", "claude"], ["resume", "claude"]]);
   assert.equal(adapters.lookupOperation({ adapter_id: "gpt-connector", contract_version: "v1", interface_id: "consultation-job", operation_id: "consult" }).adapter.lane, "consultation");
   assert.deepEqual(adapters.lookupInterface({ adapter_id: "claude-internal", contract_version: "v1", interface_id: "appendix-projection" }).interface.operations.map((entry) => entry.effect), ["observe"]);
+  const claudeConsult = adapters.lookupInterface({ adapter_id: "claude-native", contract_version: "consult-v1", interface_id: "consultation-session" });
+  assert.equal(claudeConsult.adapter.lane, "consultation");
+  assert.deepEqual(claudeConsult.interface.operations.map((entry) => [entry.operation_id, entry.tool_name]), [["start", "claude"], ["resume", "claude"]]);
+  const sidecarConsult = adapters.lookupOperation({ adapter_id: "codex-sidecar", contract_version: "consult-v1", interface_id: "consultation-opinion", operation_id: "consult" });
+  assert.equal(sidecarConsult.adapter.lane, "consultation");
+  assert.equal(sidecarConsult.operation.tool_name, "codex_opinion");
 });
 
 test("catalog descriptorはexact shape、unique id、bounds、lane制約をfail closedにする", () => {
@@ -44,6 +50,11 @@ test("catalog descriptorはexact shape、unique id、bounds、lane制約をfail 
   assert.throws(() => adapters.validateAdapterDescriptor({ ...descriptor, interfaces: Array.from({ length: 33 }, () => descriptor.interfaces[0]) }), code("INVALID_SCHEMA"));
   const gpt = adapters.defaultAdapterCatalog().find((entry) => entry.adapter_id === "gpt-connector");
   assert.throws(() => adapters.validateAdapterDescriptor({ ...gpt, lane: "worker" }), code("LANE_FORBIDDEN"));
+  for (const consultAdapterId of ["claude-native", "codex-sidecar"]) {
+    const consult = adapters.defaultAdapterCatalog().find((entry) => entry.adapter_id === consultAdapterId && entry.contract_version === "consult-v1");
+    assert.throws(() => adapters.validateAdapterDescriptor({ ...consult, lane: "worker" }), code("LANE_FORBIDDEN"), `${consultAdapterId}@consult-v1 worker lane`);
+    assert.throws(() => adapters.validateAdapterCatalog([...adapters.defaultAdapterCatalog().filter((entry) => entry !== consult), { ...consult, lane: "worker" }]), code("LANE_FORBIDDEN"));
+  }
   const claude = adapters.defaultAdapterCatalog().find((entry) => entry.adapter_id === "claude-internal");
   assert.throws(() => adapters.validateAdapterDescriptor({ ...claude, interfaces: [{ ...claude.interfaces[0], operations: [{ ...claude.interfaces[0].operations[0], effect: "control" }] }] }), code("LANE_FORBIDDEN"));
   assert.throws(() => adapters.validateAdapterDescriptor({ ...claude, interfaces: [{ ...claude.interfaces[0], operations: [{ ...claude.interfaces[0].operations[0], operation_id: "dispatch" }] }] }), code("LANE_FORBIDDEN"));
@@ -203,37 +214,53 @@ test("claude-internalはappendix由来のunknown projectionだけを提供し、
   assert.throws(() => adapters.projectClaudeInternalAppendixObservation({ observed_at: "2026-07-14" }), code("INVALID_SCHEMA"));
 });
 
-test("adapter別failure matrixは実provider code・caller event・unknownを区別する", () => {
+test("adapter×lane別failure matrixは実provider code・caller event・unknownを区別する", () => {
   const families = ["credential-missing", "rate-limited", "timeout", "non-zero-exit", "malformed-report", "workspace-missing", "unsupported-capability"];
-  for (const adapterId of ["codex-sidecar", "codex-native", "aiterm", "claude-native", "gpt-connector", "claude-internal"]) for (const family of families) {
-    const support = adapters.lookupAdapterFailureSupport({ adapter_id: adapterId, failure_family: family });
-    assert.ok(["mapped", "caller-event", "unknown", "not-applicable"].includes(support.status), `${adapterId}/${family}`);
+  const laneMatrix = [
+    ["codex-sidecar", ["worker", "consultation"]], ["codex-native", ["worker"]], ["aiterm", ["worker"]],
+    ["claude-native", ["worker", "consultation"]], ["gpt-connector", ["consultation"]], ["claude-internal", ["host-projection"]],
+  ];
+  for (const [adapterId, lanes] of laneMatrix) for (const lane of lanes) for (const family of families) {
+    const support = adapters.lookupAdapterFailureSupport({ adapter_id: adapterId, lane, failure_family: family });
+    assert.ok(["mapped", "caller-event", "unknown", "not-applicable"].includes(support.status), `${adapterId}/${lane}/${family}`);
     assert.equal(typeof support.evidence_basis, "string");
+    assert.equal(support.lane, lane);
   }
-  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", failure_family: "rate-limited" }).status, "unknown");
-  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "codex-sidecar", failure_family: "non-zero-exit" }).status, "unknown");
-  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "claude-native", failure_family: "timeout" }).status, "caller-event");
-  assert.deepEqual(adapters.projectAdapterCallerTimeout({ adapter_id: "claude-native" }), {
-    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "claude-native", provider_code: null,
+  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", lane: "consultation", failure_family: "rate-limited" }).status, "unknown");
+  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "codex-sidecar", lane: "worker", failure_family: "non-zero-exit" }).status, "unknown");
+  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "claude-native", lane: "worker", failure_family: "timeout" }).status, "caller-event");
+  assert.deepEqual(adapters.projectAdapterCallerTimeout({ adapter_id: "claude-native", lane: "worker" }), {
+    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "claude-native", lane: "worker", provider_code: null,
     failure_family: "timeout", state: "unknown", recovery_operation: null,
   });
-  assert.deepEqual(adapters.projectAdapterFailure({ adapter_id: "gpt-connector", provider_code: "AUTH_REQUIRED" }), {
-    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "gpt-connector", provider_code: "AUTH_REQUIRED",
+  assert.deepEqual(adapters.projectAdapterFailure({ adapter_id: "gpt-connector", lane: "consultation", provider_code: "AUTH_REQUIRED" }), {
+    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "gpt-connector", lane: "consultation", provider_code: "AUTH_REQUIRED",
     failure_family: "credential-missing", state: "failed", recovery_operation: null,
   });
-  assert.deepEqual(adapters.projectAdapterFailure({ adapter_id: "codex-sidecar", provider_code: "RUN_READY_TIMEOUT" }), {
-    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "codex-sidecar", provider_code: "RUN_READY_TIMEOUT",
+  assert.deepEqual(adapters.projectAdapterFailure({ adapter_id: "codex-sidecar", lane: "worker", provider_code: "RUN_READY_TIMEOUT" }), {
+    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "codex-sidecar", lane: "worker", provider_code: "RUN_READY_TIMEOUT",
     failure_family: "timeout", state: "unknown", recovery_operation: "result",
   });
-  assert.deepEqual(adapters.projectAdapterCallerTimeout({ adapter_id: "aiterm" }), {
-    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "aiterm", provider_code: null,
+  assert.deepEqual(adapters.projectAdapterCallerTimeout({ adapter_id: "aiterm", lane: "worker" }), {
+    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "aiterm", lane: "worker", provider_code: null,
     failure_family: "timeout", state: "unknown", recovery_operation: "pty_read",
   });
-  assert.throws(() => adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", failure_family: "nonzero" }), code("FAILURE_FAMILY_UNKNOWN"));
-  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", provider_code: "RATE_LIMITED" }), code("FAILURE_UNMAPPED"));
-  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "aiterm", provider_code: "AUTH_REQUIRED" }), code("FAILURE_UNMAPPED"));
-  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", provider_code: "AUTH_REQUIRED", raw_message: "secret" }), code("INVALID_SCHEMA"));
-  assert.throws(() => adapters.projectAdapterCallerTimeout({ adapter_id: "claude-internal" }), code("FAILURE_UNMAPPED"));
+  // 同一adapter_idでもlaneで回収契約が分かれる（ADR 0045）: sidecar consultationはdurable回収opを返さない
+  assert.deepEqual(adapters.projectAdapterCallerTimeout({ adapter_id: "codex-sidecar", lane: "consultation" }), {
+    schema_version: "dotagents.executor-adapter.failure.v1", adapter_id: "codex-sidecar", lane: "consultation", provider_code: null,
+    failure_family: "timeout", state: "unknown", recovery_operation: null,
+  });
+  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "claude-native", lane: "consultation", failure_family: "workspace-missing" }).status, "not-applicable");
+  assert.equal(adapters.lookupAdapterFailureSupport({ adapter_id: "claude-native", lane: "worker", failure_family: "workspace-missing" }).status, "caller-event");
+  assert.throws(() => adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", lane: "worker", failure_family: "timeout" }), code("ADAPTER_UNKNOWN"));
+  assert.throws(() => adapters.lookupAdapterFailureSupport({ adapter_id: "codex-native", lane: "consultation", failure_family: "timeout" }), code("ADAPTER_UNKNOWN"));
+  assert.throws(() => adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", lane: "consultation", failure_family: "nonzero" }), code("FAILURE_FAMILY_UNKNOWN"));
+  assert.throws(() => adapters.lookupAdapterFailureSupport({ adapter_id: "gpt-connector", failure_family: "timeout" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", lane: "consultation", provider_code: "RATE_LIMITED" }), code("FAILURE_UNMAPPED"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "aiterm", lane: "worker", provider_code: "AUTH_REQUIRED" }), code("FAILURE_UNMAPPED"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "codex-sidecar", lane: "consultation", provider_code: "RUN_READY_TIMEOUT" }), code("FAILURE_UNMAPPED"));
+  assert.throws(() => adapters.projectAdapterFailure({ adapter_id: "gpt-connector", lane: "consultation", provider_code: "AUTH_REQUIRED", raw_message: "secret" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectAdapterCallerTimeout({ adapter_id: "claude-internal", lane: "host-projection" }), code("FAILURE_UNMAPPED"));
 });
 
 test("codex-sidecar requestは実tool schemaの固定値とcaller handleを純粋に投影する", () => {
@@ -295,4 +322,83 @@ test("adapter projectionはControl RecordのWorker/Consultation observationへex
     state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "queued",
   });
   assert.throws(() => adapters.buildWorkerControlObservation({ projection: native, observed_version: "gpt-5.6-terra", observed_at: "2026-07-14T00:00:00.000Z" }), code("EVIDENCE_REQUIRED"));
+});
+
+test("claude-native consult requestは同一UUID・cwd必須・全tool無効を固定しworker schemaと分離する", () => {
+  const handle = { session_id: "123e4567-e89b-42d3-a456-426614174000" };
+  const common = { handle, prompt: "この設計への最強の反論を述べよ。", cwd: "/workspace/consult-project", model: "claude-opus-4-8", effort: "high" };
+  const start = adapters.claudeNativeConsultStartRequest(common);
+  assert.deepEqual(start, {
+    schema_version: "dotagents.claude-native.consult-request.v1", operation_id: "start", tool_name: "claude",
+    arguments: {
+      cwd: "/workspace/consult-project",
+      argv: ["--print", "--verbose", "--output-format", "stream-json", "--input-format", "text", "--session-id", handle.session_id, "--model", "claude-opus-4-8", "--effort", "high", "--permission-mode", "dontAsk", "--tools", "", "--disable-slash-commands", "--no-chrome"],
+      stdin: common.prompt,
+    },
+  });
+  const resume = adapters.claudeNativeConsultResumeRequest(common);
+  assert.equal(resume.arguments.argv.includes("--resume"), true);
+  assert.equal(resume.arguments.argv.includes("--session-id"), false);
+  for (const request of [start, resume]) {
+    assert.deepEqual(request.arguments.argv.slice(request.arguments.argv.indexOf("--tools"), request.arguments.argv.indexOf("--tools") + 2), ["--tools", ""]);
+    assert.equal(request.arguments.argv.includes("--allowedTools"), false);
+    for (const forbidden of ["--continue", "--fallback-model", "--bare", "--safe-mode", "--no-session-persistence"]) assert.equal(request.arguments.argv.includes(forbidden), false, forbidden);
+  }
+  assert.throws(() => adapters.claudeNativeConsultStartRequest({ ...common, handle: { session_id: "123E4567-E89B-42D3-A456-426614174000" } }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.claudeNativeConsultStartRequest({ ...common, cwd: "relative/path" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.claudeNativeConsultStartRequest({ ...common, tool_policy: { permission_mode: "dontAsk", tools: ["Read"], allowed_tools: [] } }), code("INVALID_SCHEMA"));
+});
+
+test("claude-native consult observationはconsultation_handleを保ちworker projectionへ流入しない", () => {
+  const handle = { session_id: "123e4567-e89b-42d3-a456-426614174000" };
+  const running = adapters.projectClaudeNativeConsultObservation({ handle, status: "running" });
+  assert.deepEqual(running, { schema_version: "dotagents.claude-native.consult-observation.v1", consultation_handle: handle, state: "running", raw_status: "running", terminal: null });
+  const timeout = adapters.projectClaudeNativeConsultTimeoutObservation({ handle });
+  assert.deepEqual(timeout, { schema_version: "dotagents.claude-native.consult-observation.v1", consultation_handle: handle, state: "unknown", raw_status: "caller_timeout", terminal: null });
+  assert.throws(() => adapters.projectClaudeNativeConsultObservation({ handle, status: "cancelled" }), code("INVALID_SCHEMA"));
+  const completed = adapters.projectClaudeNativeConsultObservation({ handle, status: "completed" });
+  assert.deepEqual(adapters.buildConsultationControlObservation({ projection: completed, observed_version: "2.1.211", observed_at: "2026-07-16T00:00:00.000Z", decision_ref: "docs/consult-decision.md" }), {
+    state: "completed", source: "claude-native", observed_version: "2.1.211", observed_at: "2026-07-16T00:00:00.000Z", raw_state: "completed", decision_ref: "docs/consult-decision.md",
+  });
+  // consultation observationはWorker laneへ逆流しない（ADR 0045 §3）
+  for (const projection of [completed, running, timeout]) {
+    assert.throws(() => adapters.buildWorkerControlObservation({ projection, observed_version: "2.1.211", observed_at: "2026-07-16T00:00:00.000Z" }), code("PROJECTION_UNSUPPORTED"));
+  }
+  // Worker observationもconsultation laneへ入らない
+  const workerObservation = adapters.projectClaudeNativeObservation({ handle, status: "running", exit_code: null, signal: null, report_ref: null, evidence_refs: [] });
+  assert.throws(() => adapters.buildConsultationControlObservation({ projection: workerObservation, observed_version: "2.1.211", observed_at: "2026-07-16T00:00:00.000Z" }), code("PROJECTION_UNSUPPORTED"));
+});
+
+test("codex-sidecar opinion requestはread-only固定でwrite系引数もdurable handleも生成しない", () => {
+  const request = adapters.codexSidecarOpinionRequest({ projectRoot: "/workspace/source", prompt: "この設計の最強の反論を述べよ。", model: "gpt-5.6-codex", effort: "xhigh" });
+  assert.deepEqual(request, {
+    schema_version: "dotagents.codex-sidecar.consult-request.v1", operation_id: "consult", tool_name: "codex_opinion",
+    arguments: { projectRoot: "/workspace/source", prompt: "この設計の最強の反論を述べよ。", model: "gpt-5.6-codex", modelReasoningEffort: "xhigh" },
+  });
+  for (const forbidden of ["allowWork", "preserveWorktree", "idempotencyKey", "baseRef"]) assert.equal(Object.hasOwn(request.arguments, forbidden), false, forbidden);
+  assert.throws(() => adapters.codexSidecarOpinionRequest({ projectRoot: "/workspace/source", prompt: "x", model: "gpt-5.6-codex", effort: "max" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.codexSidecarOpinionRequest({ projectRoot: "relative", prompt: "x", model: "gpt-5.6-codex", effort: "low" }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.codexSidecarOpinionRequest({ projectRoot: "/workspace/source", prompt: "x", model: "gpt-5.6-codex", effort: "low", allowWork: true }), code("INVALID_SCHEMA"));
+});
+
+test("codex-sidecar opinion observationはhandle nullを固定し、caller観測のerror/timeoutで終端できる", () => {
+  const result = { status: "ok", workflow: "opinion", summary: "objections", confidence: { level: "high" }, recommendedNextAction: "revise" };
+  const completed = adapters.projectCodexSidecarOpinionObservation({ provider: result });
+  assert.equal(completed.state, "completed"); assert.equal(completed.consultation_handle, null); assert.match(completed.terminal.result_digest, /^[a-f0-9]{64}$/);
+  assert.equal(adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, status: "refused" } }).state, "failed");
+  assert.throws(() => adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, workflow: "work" } }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, status: "dry-run" } }), code("INVALID_SCHEMA"));
+  assert.deepEqual(adapters.projectCodexSidecarOpinionDispatchObservation(), { schema_version: "dotagents.codex-sidecar.consult-observation.v1", consultation_handle: null, state: "dispatched", raw_status: "caller_dispatch", terminal: null });
+  const errored = adapters.projectCodexSidecarOpinionErrorObservation({ error: { code: "APP_SERVER_TIMEOUT", message: "raw text is discarded" } });
+  assert.deepEqual(errored, { schema_version: "dotagents.codex-sidecar.consult-observation.v1", consultation_handle: null, state: "failed", raw_status: "APP_SERVER_TIMEOUT", terminal: { error_code: "APP_SERVER_TIMEOUT" } });
+  const timeout = adapters.projectCodexSidecarOpinionTimeoutObservation();
+  assert.deepEqual(timeout, { schema_version: "dotagents.codex-sidecar.consult-observation.v1", consultation_handle: null, state: "unknown", raw_status: "caller_timeout", terminal: null });
+  const evidence = [{ type: "executor-receipt", ref: "mcp:codex_opinion:APP_SERVER_TIMEOUT", digest: "d".repeat(64), observed_at: "2026-07-16T00:00:00.000Z" }];
+  assert.deepEqual(adapters.buildConsultationControlObservation({ projection: errored, observed_version: "codex-sidecar-mcp", observed_at: "2026-07-16T00:00:00.000Z", terminal_evidence: evidence }), {
+    state: "failed", source: "codex-sidecar", observed_version: "codex-sidecar-mcp", observed_at: "2026-07-16T00:00:00.000Z", raw_state: "APP_SERVER_TIMEOUT", terminal_evidence: evidence,
+  });
+  assert.throws(() => adapters.buildConsultationControlObservation({ projection: { ...completed, consultation_handle: { slug: "fabricated" } }, observed_version: "codex-sidecar-mcp", observed_at: "2026-07-16T00:00:00.000Z", decision_ref: "docs/decision.md" }), code("INVALID_SCHEMA"));
+  for (const projection of [completed, timeout]) {
+    assert.throws(() => adapters.buildWorkerControlObservation({ projection, observed_version: "codex-sidecar-mcp", observed_at: "2026-07-16T00:00:00.000Z" }), code("PROJECTION_UNSUPPORTED"));
+  }
 });
