@@ -7,6 +7,7 @@ import io
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -16,6 +17,8 @@ from pathlib import Path
 
 
 SCHEMA = "observer.parent_stop_hook_fragment.v1"
+BACKUP_SCHEMA = "dotagents.observer_hook_config_backup.v1"
+BACKUP_MANIFEST = "observer-hook-backup.json"
 
 
 def parse_args():
@@ -23,8 +26,14 @@ def parse_args():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--dry-run", action="store_true", help="差分を表示する（既定）")
     mode.add_argument("--apply", action="store_true", help="backup後に適用する")
-    parser.add_argument("--observer-hook", required=True, help="absolute observer-parent-stop-hook executable path")
-    return parser.parse_args()
+    mode.add_argument("--restore", metavar="ARCHIVE", help="検証済みbackupを原子的に復元する")
+    parser.add_argument("--observer-hook", help="absolute observer-parent-stop-hook executable path")
+    args = parser.parse_args()
+    if args.restore is None and args.observer_hook is None:
+        parser.error("--observer-hook が必要です")
+    if args.restore is not None and args.observer_hook is not None:
+        parser.error("--restore と --observer-hook は同時指定できません")
+    return args
 
 
 def load_json(text, path):
@@ -131,60 +140,146 @@ def render(value):
     return json.dumps(value, ensure_ascii=False, indent=2) + "\n"
 
 
-def backup(home, originals, existed):
+def backup_member(home, path):
+    try:
+        return str(path.relative_to(home))
+    except ValueError:
+        return f"external-codex-home/{path.name}"
+
+
+def file_metadata(path):
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise ValueError(f"{path}: regular fileが必要です")
+    return {"mode": stat.S_IMODE(info.st_mode), "uid": info.st_uid, "gid": info.st_gid}
+
+
+def validate_file_metadata(value, label):
+    allowed_groups = set(os.getgroups()) | {os.getegid()}
+    if value["uid"] != os.geteuid() or value["gid"] not in allowed_groups or value["mode"] < 0 \
+            or value["mode"] > 0o777 or value["mode"] & 0o133:
+        raise ValueError(f"{label}: modeまたはownerが安全条件を満たしません")
+
+
+def snapshot(paths):
+    existed = {path: path.exists() for path in paths.values()}
+    metadata = {path: file_metadata(path) if existed[path] else None for path in paths.values()}
+    for path, value in metadata.items():
+        if value is not None:
+            validate_file_metadata(value, path)
+    originals = {path: path.read_text(encoding="utf-8") if existed[path] else "" for path in paths.values()}
+    return originals, existed, metadata
+
+
+def ensure_unchanged(paths, originals, existed, metadata):
+    current = snapshot(paths)
+    if current != (originals, existed, metadata):
+        raise OSError("Observer hook configがtransaction準備中に変更されました")
+
+
+def backup(home, paths, originals, existed, metadata):
     directory = home / "Archives"
-    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if directory.exists():
+        info = directory.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid():
+            raise ValueError("Archives directoryのownerまたはtypeが不正です")
+    else:
+        directory.mkdir(parents=True, mode=0o700)
     os.chmod(directory, 0o700)
     stamp = os.environ.get("DOTAGENTS_TEST_BACKUP_STAMP") or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    archive = directory / f"dotagents-observer-hook-config-{stamp}.tar.gz"
-    for suffix in range(1, 1000):
-        if not archive.exists():
+    descriptor = None
+    for suffix in range(0, 1000):
+        ending = "" if suffix == 0 else f"-{suffix}"
+        archive = directory / f"dotagents-observer-hook-config-{stamp}{ending}.tar.gz"
+        try:
+            descriptor = os.open(archive, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
             break
-        archive = directory / f"dotagents-observer-hook-config-{stamp}-{suffix}.tar.gz"
+        except FileExistsError:
+            continue
     else:
         raise OSError("Observer hook backup名の連番上限を超えました")
-    with tarfile.open(archive, "w:gz") as tar:
-        for path, content in originals.items():
-            if not existed[path]:
-                continue
-            try:
-                member_name = str(path.relative_to(home))
-            except ValueError:
-                member_name = f"external-codex-home/{path.name}"
-            info = tarfile.TarInfo(member_name)
-            encoded = content.encode("utf-8")
-            info.size, info.mode = len(encoded), 0o600
-            tar.addfile(info, io.BytesIO(encoded))
-    os.chmod(archive, 0o600)
+    entries = []
+    for provider, path in paths.items():
+        current = metadata[path]
+        entries.append({
+            "provider": provider,
+            "member": backup_member(home, path),
+            "existed": existed[path],
+            "mode": current["mode"] if current else None,
+            "uid": current["uid"] if current else None,
+            "gid": current["gid"] if current else None,
+        })
+    manifest = json.dumps({"schema": BACKUP_SCHEMA, "entries": entries}, ensure_ascii=False, separators=(",", ":")) + "\n"
+    try:
+        with os.fdopen(descriptor, "wb") as archive_file:
+            descriptor = None
+            with tarfile.open(fileobj=archive_file, mode="w:gz") as tar:
+                encoded_manifest = manifest.encode("utf-8")
+                manifest_info = tarfile.TarInfo(BACKUP_MANIFEST)
+                manifest_info.size, manifest_info.mode = len(encoded_manifest), 0o600
+                tar.addfile(manifest_info, io.BytesIO(encoded_manifest))
+                for provider, path in paths.items():
+                    if not existed[path]:
+                        continue
+                    info = tarfile.TarInfo(backup_member(home, path))
+                    encoded = originals[path].encode("utf-8")
+                    info.size, info.mode = len(encoded), metadata[path]["mode"]
+                    tar.addfile(info, io.BytesIO(encoded))
+    except BaseException:
+        if descriptor is not None:
+            os.close(descriptor)
+        archive.unlink(missing_ok=True)
+        raise
     return archive
 
 
-def prepare(path, content):
+def prepare(path, content, metadata):
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent, text=True)
     with os.fdopen(descriptor, "w", encoding="utf-8") as file:
         file.write(content)
         file.flush()
         os.fsync(file.fileno())
+        os.fchmod(file.fileno(), metadata["mode"])
+        os.fchown(file.fileno(), metadata["uid"], metadata["gid"])
     return temporary
 
 
-def transaction(changed, originals, existed):
+def verify_desired(desired):
+    for path, value in desired.items():
+        if value is None:
+            if path.exists():
+                raise OSError(f"{path.name}: absent状態を復元できません")
+            continue
+        if path.read_text(encoding="utf-8") != value["content"]:
+            raise OSError(f"{path.name}: 内容を復元できません")
+        actual = file_metadata(path)
+        expected = {key: value[key] for key in ("mode", "uid", "gid")}
+        if actual != expected:
+            raise OSError(f"{path.name}: modeまたはownerを復元できません")
+
+
+def transaction(desired, originals, existed, metadata):
     prepared, replaced = {}, []
     try:
-        for path, content in changed.items():
-            prepared[path] = prepare(path, content)
-        for path in changed:
+        for path, value in desired.items():
+            if value is not None:
+                prepared[path] = prepare(path, value["content"], value)
+        for path, value in desired.items():
             if os.environ.get("DOTAGENTS_TEST_FAIL_REPLACE") == path.name:
                 raise OSError(f"test injection: {path.name}")
-            os.replace(prepared[path], path)
+            if value is None:
+                path.unlink(missing_ok=True)
+            else:
+                os.replace(prepared[path], path)
             replaced.append(path)
+        verify_desired(desired)
     except BaseException as exc:
         errors = []
         for path in reversed(replaced):
             try:
                 if existed[path]:
-                    os.replace(prepare(path, originals[path]), path)
+                    os.replace(prepare(path, originals[path], metadata[path]), path)
                 else:
                     path.unlink(missing_ok=True)
             except BaseException as rollback:
@@ -196,11 +291,89 @@ def transaction(changed, originals, existed):
             Path(temporary).unlink(missing_ok=True)
 
 
+def validate_restore_metadata(entry):
+    exact = {"provider", "member", "existed", "mode", "uid", "gid"}
+    if not isinstance(entry, dict) or set(entry) != exact or entry.get("provider") not in {"claude", "codex"} \
+            or not isinstance(entry.get("member"), str) or not isinstance(entry.get("existed"), bool):
+        raise ValueError("backup manifest entryが不正です")
+    if not entry["existed"]:
+        if any(entry[key] is not None for key in ("mode", "uid", "gid")):
+            raise ValueError("backup absent metadataが不正です")
+        return
+    if not all(isinstance(entry[key], int) for key in ("mode", "uid", "gid")):
+        raise ValueError("backup file metadataが不正です")
+    validate_file_metadata(entry, "backup")
+
+
+def read_backup(archive, home, paths):
+    archive_directory = home / "Archives"
+    if not archive.is_absolute() or archive.is_symlink():
+        raise ValueError("--restore はabsolute regular archiveが必要です")
+    archive = archive.resolve(strict=True)
+    if archive.parent != archive_directory or not archive.name.startswith("dotagents-observer-hook-config-") \
+            or not archive.name.endswith(".tar.gz"):
+        raise ValueError("--restore はabsolute regular archiveが必要です")
+    directory_info = archive_directory.lstat()
+    if not stat.S_ISDIR(directory_info.st_mode) or directory_info.st_uid != os.geteuid() \
+            or stat.S_IMODE(directory_info.st_mode) & 0o077:
+        raise ValueError("restore archive directoryのownerまたはmodeが不正です")
+    descriptor = os.open(archive, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    info = os.fstat(descriptor)
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.geteuid() \
+            or stat.S_IMODE(info.st_mode) & 0o077:
+        os.close(descriptor)
+        raise ValueError("restore archiveのownerまたはmodeが不正です")
+    try:
+        with os.fdopen(descriptor, "rb") as archive_file:
+            descriptor = None
+            with tarfile.open(fileobj=archive_file, mode="r:gz") as tar:
+                members = tar.getmembers()
+                if len(members) > 3 or any(not member.isfile() or member.size > 10 * 1024 * 1024 for member in members):
+                    raise ValueError("restore archive memberが不正です")
+                indexed = {member.name: member for member in members}
+                if len(indexed) != len(members) or BACKUP_MANIFEST not in indexed:
+                    raise ValueError("restore archive manifestが不正です")
+                manifest_file = tar.extractfile(indexed[BACKUP_MANIFEST])
+                if manifest_file is None:
+                    raise ValueError("restore archive manifestを読めません")
+                manifest = json.loads(manifest_file.read().decode("utf-8"))
+                if not isinstance(manifest, dict) or set(manifest) != {"schema", "entries"} \
+                        or manifest.get("schema") != BACKUP_SCHEMA or not isinstance(manifest.get("entries"), list) \
+                        or len(manifest["entries"]) != 2:
+                    raise ValueError("restore archive manifest schemaが不正です")
+                by_provider = {}
+                desired = {}
+                expected_members = {BACKUP_MANIFEST}
+                for entry in manifest["entries"]:
+                    validate_restore_metadata(entry)
+                    provider = entry["provider"]
+                    if provider in by_provider or entry["member"] != backup_member(home, paths[provider]):
+                        raise ValueError("restore archive targetが不正です")
+                    by_provider[provider] = entry
+                    if entry["existed"]:
+                        expected_members.add(entry["member"])
+                        member = indexed.get(entry["member"])
+                        if member is None:
+                            raise ValueError("restore archive contentが不足しています")
+                        extracted = tar.extractfile(member)
+                        if extracted is None:
+                            raise ValueError("restore archive contentを読めません")
+                        content = extracted.read().decode("utf-8")
+                        desired[paths[provider]] = {"content": content, **{key: entry[key] for key in ("mode", "uid", "gid")}}
+                    else:
+                        desired[paths[provider]] = None
+                if set(by_provider) != {"claude", "codex"} or set(indexed) != expected_members:
+                    raise ValueError("restore archive member集合が不正です")
+                return desired
+    except (OSError, tarfile.TarError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"restore archiveを検証できません: {exc}") from exc
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
 def main():
     args = parse_args()
-    executable = Path(args.observer_hook)
-    if not executable.is_absolute():
-        raise ValueError("--observer-hook はabsolute pathが必要です")
     home = Path(os.environ.get("HOME", str(Path.home()))).expanduser().resolve()
     codex_home = Path(os.environ.get("CODEX_HOME", home / ".codex")).expanduser()
     paths = {"claude": home / ".claude" / "settings.json", "codex": codex_home / "hooks.json"}
@@ -209,8 +382,16 @@ def main():
         raise ValueError("Claude settings directory と Codex hooks directory はsymlinkでは適用できません")
     if any(path.is_symlink() for path in paths.values()):
         raise ValueError("Claude settings.json と Codex hooks.json はsymlinkでは適用できません")
-    existed = {path: path.exists() for path in paths.values()}
-    originals = {path: path.read_text(encoding="utf-8") if existed[path] else "" for path in paths.values()}
+    originals, existed, metadata = snapshot(paths)
+    if args.restore is not None:
+        desired = read_backup(Path(args.restore), home, paths)
+        ensure_unchanged(paths, originals, existed, metadata)
+        transaction(desired, originals, existed, metadata)
+        print(f"apply-observer-hook-config: 復元完了（archive: {args.restore}）")
+        return
+    executable = Path(args.observer_hook)
+    if not executable.is_absolute():
+        raise ValueError("--observer-hook はabsolute pathが必要です")
     proposed = {}
     for provider, path in paths.items():
         item = fragment(provider, str(executable))
@@ -226,8 +407,13 @@ def main():
     if not changed:
         print("apply-observer-hook-config: 変更なし")
         return
-    archive = backup(home, originals, existed)
-    transaction(changed, originals, existed)
+    ensure_unchanged(paths, originals, existed, metadata)
+    archive = backup(home, paths, originals, existed, metadata)
+    desired = {}
+    for path, content in changed.items():
+        current = metadata[path] if existed[path] else {"mode": 0o600, "uid": os.geteuid(), "gid": os.getegid()}
+        desired[path] = {"content": content, **current}
+    transaction(desired, originals, existed, metadata)
     print(f"apply-observer-hook-config: 適用完了（backup: {archive}）")
 
 

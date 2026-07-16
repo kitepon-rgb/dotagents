@@ -113,7 +113,8 @@ if HOME="$SYMLINK_HOME" CODEX_HOME="$SYMLINK_HOME/codex-link" OBSERVER_HOOK_CONF
 ln -s "$SYMLINK_HOME/missing-codex-target" "$SYMLINK_HOME/broken-codex-link"
 if HOME="$SYMLINK_HOME" CODEX_HOME="$SYMLINK_HOME/broken-codex-link" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --dry-run --observer-hook "$HOOK" >/dev/null 2>&1; then fail 'broken symlink CODEX_HOMEを成功扱いした'; fi
 EMPTY_HOME="$(mktemp -d)"
-trap 'rm -rf "$HOME_FIXTURE" "$CLI_DIR" "$SYMLINK_HOME" "$EMPTY_HOME"' EXIT
+RESTORE_HOME="$(mktemp -d)"
+trap 'rm -rf "$HOME_FIXTURE" "$CLI_DIR" "$SYMLINK_HOME" "$EMPTY_HOME" "$RESTORE_HOME"' EXIT
 mkdir -p "$EMPTY_HOME/.claude"
 : >"$EMPTY_HOME/.claude/settings.json"
 HOME="$EMPTY_HOME" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" >/dev/null
@@ -124,4 +125,55 @@ home = Path(sys.argv[1])
 assert isinstance(json.load(open(home / ".claude/settings.json")), dict)
 assert isinstance(json.load(open(home / ".codex/hooks.json")), dict)
 PY
+
+mkdir -p "$RESTORE_HOME/.claude"
+cat >"$RESTORE_HOME/.claude/settings.json" <<'EOF'
+{"restore":"original","hooks":{"Stop":[]}}
+EOF
+chmod 640 "$RESTORE_HOME/.claude/settings.json"
+restore_before="$(cat "$RESTORE_HOME/.claude/settings.json")"
+restore_uid="$(stat -f %u "$RESTORE_HOME/.claude/settings.json")"
+restore_gid="$(stat -f %g "$RESTORE_HOME/.claude/settings.json")"
+HOME="$RESTORE_HOME" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" \
+  "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" >/dev/null
+restore_archive="$(find "$RESTORE_HOME/Archives" -name '*.tar.gz' -print -quit)"
+[ -n "$restore_archive" ] || fail 'restore fixture backupがない'
+[ "$(stat -f %Lp "$RESTORE_HOME/.claude/settings.json")" = 640 ] || fail 'applyが既存modeを保持しない'
+[ "$(stat -f %Lp "$RESTORE_HOME/.codex/hooks.json")" = 600 ] || fail 'applyが新規configを0600にしない'
+
+applied_claude="$(cat "$RESTORE_HOME/.claude/settings.json")"
+applied_codex="$(cat "$RESTORE_HOME/.codex/hooks.json")"
+if HOME="$RESTORE_HOME" DOTAGENTS_TEST_FAIL_REPLACE=hooks.json \
+  "$ROOT/bin/apply-observer-hook-config.sh" --restore "$restore_archive" >/dev/null 2>&1
+then
+  fail 'restore replace failureを成功扱いした'
+fi
+[ "$(cat "$RESTORE_HOME/.claude/settings.json")" = "$applied_claude" ] || fail 'restore失敗がClaude current stateを壊した'
+[ "$(cat "$RESTORE_HOME/.codex/hooks.json")" = "$applied_codex" ] || fail 'restore失敗がCodex current stateを壊した'
+
+HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$restore_archive" >/dev/null
+[ "$(cat "$RESTORE_HOME/.claude/settings.json")" = "$restore_before" ] || fail 'restoreがClaude原文を戻さない'
+[ ! -e "$RESTORE_HOME/.codex/hooks.json" ] || fail 'restoreが元absentのCodex configを削除しない'
+[ "$(stat -f %Lp "$RESTORE_HOME/.claude/settings.json")" = 640 ] || fail 'restoreが元modeを戻さない'
+[ "$(stat -f %u "$RESTORE_HOME/.claude/settings.json")" = "$restore_uid" ] || fail 'restoreが元uidを戻さない'
+[ "$(stat -f %g "$RESTORE_HOME/.claude/settings.json")" = "$restore_gid" ] || fail 'restoreが元gidを戻さない'
+
+ln -s "$restore_archive" "$RESTORE_HOME/restore-link.tar.gz"
+if HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$RESTORE_HOME/restore-link.tar.gz" >/dev/null 2>&1
+then
+  fail 'symlink archiveをrestoreした'
+fi
+chmod 644 "$restore_archive"
+if HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$restore_archive" >/dev/null 2>&1
+then
+  fail 'world-readable archiveをrestoreした'
+fi
+chmod 600 "$restore_archive"
+bad_archive="$RESTORE_HOME/Archives/dotagents-observer-hook-config-bad.tar.gz"
+printf '%s' 'not-a-backup' >"$bad_archive"
+chmod 600 "$bad_archive"
+if HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$bad_archive" >/dev/null 2>&1
+then
+  fail '破損archiveをrestoreした'
+fi
 echo 'observer hook config: OK'

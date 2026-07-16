@@ -96,13 +96,15 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19c2 | `DONE` | diagnostic receiptで一つのClaude jobを再characterizeする | Observer / O2 H gate |
 | 19c3 | `DONE` | Aitermへ永続PTYの対話型`claude_agent`とoperation相関付き公開completion／recovery契約を追加する | Aiterm / 独立focused＋related＋full gate |
 | 19d | `DONE` | Aiterm公開面だけで永続Claude Observer production callerとgeneration lifecycleを実装する | Observer / O2 focused＋related＋full gate |
-| 19e | `H-WAIT` | Aiterm実Claude smokeを含むObserver dual-host live campaignを一回実施する | Observer / O2 H gate |
+| 19e | `IN PROGRESS` | 承認済み通常系Observer dual-host liveを一回実施する。intentional faultは別承認 | Observer / O2 H gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
-現在の非H ready queueはない。次は19e dual-host live Hであり、個別承認までO3／後続laneを先行させない。
+19e通常campaignは2026-07-16に承認済み。実host適用前に、陳腐化したpreflight／runbookと
+hook configの検証済みrestore入口を独立gateで修理し、green後に両hostを各一回だけ実行する。
+intentional crash／通信断は別承認のため実施しない。O3／後続laneは19e完了まで先行させない。
 19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを

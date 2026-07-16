@@ -39,9 +39,14 @@ Observerのparent Stop entryは手書きしない。Observer配布済みの`obse
 ```bash
 apply-observer-hook-config --observer-hook "$HOME/.local/bin/observer-parent-stop-hook"
 apply-observer-hook-config --apply --observer-hook "$HOME/.local/bin/observer-parent-stop-hook"
+apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-config-<timestamp>.tar.gz"
 ```
 
 `settings.json`が存在しない・空の場合もadapterがobjectとして扱う。symlink、Observer CLI不在、fragment schema不一致、candidate verifier不一致はfail loudであり、既存の他製品Stop hookを削除して補うことはしない。
+`--apply`は変更前の存在有無、mode、uid／gidと内容を0600 archiveへ記録し、既存configのmode／ownerを
+保持する。`--restore`は同じ`HOME`／`CODEX_HOME`で、symlinkでない本人所有archiveと固定manifest／member
+集合を検証してから二設定を原子的に復元する。途中失敗はrestore開始前状態へ戻し、元々absentだったconfigは
+削除する。manifest導入前の旧archiveや手製tarをrestoreへ流用しない。
 
 - **正本化ゲート hook（全端末推奨・下記）**: プラン承認直後に「計画文書の作法」を注入し、承認プランの docs/ 正本化を機械発火させる。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）、配線だけを各端末の `~/.claude/settings.json` に手挿し（同期ペイロード＋手挿しコネクタ＝settings.json 非同期の型）。設計と TODO は [archive/2026-07_plan-gate-hook.md](archive/2026-07_plan-gate-hook.md)（完遂済み）。
 

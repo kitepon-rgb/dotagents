@@ -290,10 +290,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       `claude -p`／fresh evaluatorは禁止する。Observer `7bfafa4`、focused 20/20、related 50/50、
       full 393/393、Control revision 62／20 archiveを
       [ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)で受け入れた。
-    - [ ] **NEXT — H-WAIT:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
+    - [ ] **IN PROGRESS — 承認済み:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
       dual-host campaignと同じ19e live Hで一度確認する。fixture成功をlive成功へ丸めず、model requestを伴うため
-      明示承認後にだけ実行する。
-  - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
+      明示承認後にだけ実行する。通常campaignは2026-07-16にオーナー承認済み。intentional crash／通信断は
+      別承認のまま実施しない。
+    - [ ] 19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline
+      `observer-read`疎通へ補正し、`apply-observer-hook-config`へ検証済みarchiveからの原子的restore、
+      absent状態、mode／owner保持を追加する。rollback入口がgreenになるまで実HOMEへapplyしない。
+  - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
 
