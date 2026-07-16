@@ -134,6 +134,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - Claude→Codex相談: workspaceを持たないCodex Consultation adapter。既存sidecarを使う場合もconsultation schemaへ投影する。
   - `claude-internal`: dispatch不能なhost projectionのまま維持する。
 - [x] rate-aware証拠はControl schemaをversion upして束縛する方針を採用する。quota snapshot／selector decision／pool reservationをcandidate digestとreceiptへ含め、旧v25 active Controlの継続読取、v26新規作成、migration／rollbackを同じTODOで固定する。
+  - 訂正（2026-07-16）: rate-aware selector用のversionは[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)で**v27**へ変更した。v26はO3 Consultation多provider化が取る。本行の「v26新規作成」は当時の予約記録として保持する。
 - [x] quota poolの最小identityと並行予約規則を固定する。
   - snapshotは非秘密の`quota_pool_id`、`host_instance_id`、対象executor集合を持つ。
   - windowは`window_id`、`starts_at`または`duration_seconds`、`reset_at`を持つ。
@@ -370,8 +371,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     control-record）117/117・fail 0・skip 0、`make lint-js` green。argv契約はClaude Code 2.1.211の
     実CLI helpと照合済み。受入は[ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)。
     実model request／login／credential／network dispatchは未実施。
-- [ ] ConsultationのClaude session ID／Codex handleをv25の`slug`へ読み替えず、旧v25継続読取、
+- [x] ConsultationのClaude session ID／Codex handleをv25の`slug`へ読み替えず、旧v25継続読取、
   型付きhandle、migration／rollback、O4のv26予約とのversion順を不変ADRで裁定する。
+  - [ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)で裁定。O3=v26／O4=v27、
+    connector別`consultation_handle`（gpt=slug、claude-native=同一UUID、sidecar=null）、
+    v25継続mutation、明示`control-migrate`、data-plane限定rollback、brief/resume-check v7、
+    failure supportのlane別keying、sidecar同期consultの終端evidence条件化を固定した。
+    独立refuter 2票（互換視点・実装可能性視点）を通し、採用7群・棄却4群を件数遷移付きで
+    ADRへ記録した。実装は次のfocused gate単位で行う。
 - [x] 既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、
   `claude -p` allowはO3権限規則として別scope／別commitで閉じる。保護指定pathを本adapter commitへ混ぜない。
   - `0170f00`（WSL relay RAG＋INDEX行）、`cd2ea3a`（mcp-observer INDEX行追補）、`cffb342`
@@ -388,7 +395,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [ ] role適格候補だけを入力にし、Observer／相談役／F作業を自動均衡対象から除外する。
 - [ ] 会社間の頻繁な切替を防ぐhysteresis、quota pool単位lock、選択ごとのsnapshot再取得、reset時失効、同率時の決定的tie-breakを実装する。
 - [ ] stale／取得失敗／残量ゼロ／window矛盾／reset境界／時差／一社のみ適格をfail-loud fixtureで固定する。
-- [ ] Control schema v26へ使用snapshot digest、quota pool、評価時刻、選択理由、reservationを持つselector decisionを追加し、candidate digest／receiptへ束縛する。v25 reader継続、v26新規作成、migration／rollback fixtureを同時に通す。
+- [ ] Control schema v27（[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)でv26はO3
+  Consultation多provider化へ割当済み）へ使用snapshot digest、quota pool、評価時刻、選択理由、
+  reservationを持つselector decisionを追加し、candidate digest／receiptへ束縛する。旧version reader
+  継続、v27新規作成、migration／rollback fixtureを同時に通す。
 - [ ] 実消費と選択結果を週次で評価し、両社がreset時に過不足なく使われるかdogfood記録を残す。
 
 **Gate:** 架空quotaやsilent fallbackなしで、適格Workerを日割り余裕のあるproviderへ再現可能に配置できる。

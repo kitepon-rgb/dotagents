@@ -483,6 +483,9 @@ Observer `docs/plan_observer.md`
     [ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)で受け入れた。live dispatchは未実施。
 - [ ] Consultation多provider化はv25 `slug`へのhandle詰込みを禁止し、旧v25 reader、型付きhandle、
   migration／rollback、O4のv26予約とのversion順を新しい不変ADRで裁定してから実装する。
+  - 裁定は[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)で完了（O3=v26／O4=v27、
+    refuter 2票通過）。実装（v26 reader/writer、typed handle、migration、brief v7、adapter拡張）は
+    未着手であり、本checkboxは実装完了時に閉じる。
 - [x] 既存未コミットを別セッション由来として放置しない。WSL relay RAGはPhase R2未収容成果、
   CDC PDF/PNGは正典還流済み中間物、`claude -p` allowはO3の権限規則として、それぞれ別scopeで閉じる。
   - WSL relay RAGは`0170f00`、mcp-observer INDEX行追補は`cd2ea3a`、`claude -p` allowは`cffb342`で
