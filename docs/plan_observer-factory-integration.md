@@ -271,7 +271,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。live Hは一つのjobで実施済みだが、
     再Hでhook invocation、job／session、Stop payloadはconfirmedとなった。canonical resultは
     `E_CLAUDE_CHARACTERIZATION_RESULT_INVALID`、reply／terminal exact resultはunsupportedのため
-    callerはblockedである
+    旧background job callerはblockedである
     （[ADR 0032](adr/0032-observer-claude-live-recharacterization-blocked.md)）。
     - [x] Stop未発火とstdin／payload／result不正を区別するraw-free diagnostic receiptをObserverで閉じた。
       Observer `f239a07`、focused 9/9、related 29/29、`npm run check` green、
@@ -279,6 +279,15 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     - [x] diagnostic receipt受入後、別H承認で一つのClaude job／Haiku requestだけを再characterizeした。
       terminal、cleanup、project／host settings不変はconfirmed、追加spawnと明示stopは不要だった。
       必要な公開delivery／result contractが現れるまでcallerを部分実装しない。
+    - [x] Aitermの永続PTYへ対話型`claude_agent`を追加し、同じ利用者可視sessionへの初回／follow-up、
+      Stop完了、exact result、timeout後回収、interrupt／closeを公開契約として閉じる。
+      Throughline L2をObserver自身の継続理解の代替にせず、Supervisorは非AI transport制御へ限定する
+      （Aiterm `dd43c40`、focused 1/1、related 109/109、full 249/249、独立反証後green、
+      [ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)）。
+    - [ ] 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを19c3 live Hで一度確認する。
+      fixture成功をlive成功へ丸めず、model requestを伴うため明示承認後にだけ実行する。
+    - [ ] Aiterm公開面だけでClaude production callerを実装し、同じ永続Claude sessionへcompleted turnを
+      順次投入する。completed turnごとの`claude -p`／fresh evaluatorは禁止する。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
