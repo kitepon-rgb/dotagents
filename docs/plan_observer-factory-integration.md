@@ -410,8 +410,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 **Gate:** 親hostにかかわらず、同じControlとlane固有のPacket／Report／Decision／timeout回収契約で両社レーンを使える。host projectionをexecution成功へ投影しない。
 - Phase gate前半実施済み（2026-07-17）: orchestration full regression **136/136・fail 0・skip 0**、
   クロスprovider Phase監査（Codex `codex_review`→refuter反証→統括裁定、採用5・棄却1、修理`a77b889`）を
-  [ADR 0051](adr/0051-o3-phase-audit-record.md)で記録。**残るO3完了条件はlive H gateのみ**
-  （実model dispatch smoke・`--tools ""`実測。オーナー承認待ち）。
+  [ADR 0051](adr/0051-o3-phase-audit-record.md)で記録。
+- **Gate充足（2026-07-17）**: オーナー承認のlive H gate（4 smoke全green: `--tools ""`＋`-p`、
+  同一UUID resume、worker Read-only、`codex_opinion` liveの自前projection往復）を
+  [ADR 0052](adr/0052-o3-live-h-gate-acceptance.md)で受入。Phase 3は完了。
+  execution-verified昇格とdogfood consultation記録・v25→v26 migrationは実需時（Phase 4/6）へ。
 
 ### Phase 3 maintenance queue
 
