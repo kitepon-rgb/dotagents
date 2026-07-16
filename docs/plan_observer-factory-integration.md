@@ -325,6 +325,12 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       commit `33eb05a`でcanonical directoryへ一意化し、focused 15/15、related 35/35、package verify、
       installed module smoke `providers=2 root_count=1 canonical=true`を通した。失敗attemptは成功へ含めず、
       再pack済みcandidateから19eを再開する（Observer ADR 0133）。
+    - [x] canonical root修理後に再現したThroughline completed timestamp境界を閉じる。Throughline
+      `observer_read.v1`の正規整数msをObserver evidenceのcanonical `.sssZ`へevidence collectorで一度だけ
+      変換し、文字列、負数、範囲外値はfail closedにする。Observer commit `d84c969`、focused 9/9、
+      related 42/42、package verify、実feed installed smoke
+      `feed_turns=1 snapshot_turns=1 canonical=true`がgreen。失敗attemptは成功へ含めず19eを再開する
+      （Observer ADR 0134）。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。

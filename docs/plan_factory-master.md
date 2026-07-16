@@ -136,6 +136,11 @@ focused 14/14、subprocess 2/2、related 78/78、受入れ記録`af06e0a`を閉�
 `33eb05a`でCLI runtime rootをcanonical directoryへ一意化し、focused 15/15、related 35/35、
 package verify、installed module smokeを通した。失敗attemptはObserver live成功へ含めず、再pack済み
 candidateから19eを再開する。
+canonical root修理後の実callerは、Throughline整数`completed_at`をObserver evidenceのcanonical
+`.sssZ`へ変換せずprovider launch前に拒否した。Throughline wireは既存公開契約どおり維持し、Observer
+ADR 0134とcommit `d84c969`でevidence collector境界だけにstrict adapterを追加した。focused 9/9、
+related 42/42、package verify、実feed installed smokeがgreen。失敗attemptは成功へ含めず、再pack済み
+candidateから19eを再開する。
 19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを
