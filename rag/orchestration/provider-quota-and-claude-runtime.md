@@ -4,6 +4,24 @@
 **確度:** 公式仕様=高、現Mac実測=高、未ログインClaudeの実行挙動=未検証  
 **対象:** Observer同provider伴走、異provider相談、一般Workerのrate-aware配置
 
+## 失効注記（2026-07-16・原文は当時の実測として保持）
+
+本記事の一部は後続の実測・正典で失効した。原文を書き換えず、以下を正とする。
+
+1. **「Claude未認証」（結論6・adapter裁定表の「未login」）は失効。** 後続のClaude live
+   characterization（Observer queue 19c2、dotagents `docs/adr/0029`〜`0032`受入）で認証済み
+   headless／resume実行が確認された。現在の入口状態は`docs/02_models.md`「入口の既知の事実」を正とする。
+2. **Claude background session（`--bg`／`--agent observer`）をObserver hostにする候補（結論2・3、
+   adapter裁定表1行目、残る実測gateのbackground Observer項）は失効。** Claude Code 2.1.210の
+   background job経路には公開reply／terminal exact result readがなくcanonical resultも拒否された
+   （dotagents `docs/adr/0032`）。Observer hostはAiterm所有の永続PTY対話session（`claude_agent`）へ
+   置換済み（`docs/adr/0033`、実装受入は`docs/adr/0038`〜`0039`）。
+3. **Consultationを「`--bare --tools ""`相当」とする方針（公式契約節）は失効。** Claude Code 2.1.211の
+   `--bare`はOAuth／keychainを読まずAPI key経路だけを使うため、subscription（OAuth）routeへ使わない。
+   Worker adapterの確定契約（同一UUID start/resume、`--continue`／`--fallback-model`／`--bare`／
+   `--safe-mode`／`--no-session-persistence`禁止、timeout unknown、strict Worker Report import）は
+   `docs/adr/0043`と`shared/orchestrate/executor-adapters.md`を正とする。
+
 ## 結論
 
 1. Claude親のcompleted turnは`TaskCompleted`ではなく`Stop`を正規証拠にできる。`Stop`は`session_id`、`cwd`、`last_assistant_message`、`background_tasks`、`session_crons`を持ち、API失敗は`StopFailure`へ分離される。進行中projectionやmtimeを完了扱いする必要はない。

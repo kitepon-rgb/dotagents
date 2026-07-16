@@ -711,7 +711,8 @@ Worker Run／Reportが一致しなければ`REPORT_CORRELATION_MISMATCH`で拒�
     22〜128文字のbase64urlまたはUUID。
   - `codex-sidecar.synchronous.v1`: durable handleを持たず、予約・active・reportを通して`null`
   - `aiterm.session.v1`: `{ "session_id": "...", "agent_kind": "codex|grok|composer" }`または予約時の`null`
-  - `claude-native.session.v1`: `{ "session_id": "..." }`または予約時の`null`
+  - `claude-native.session.v1`: `{ "session_id": "..." }`または予約時の`null`。`session_id`は
+    caller生成のlowercase UUIDだけを受理し、start/resumeを通して同一値を維持する。
 - 未知のadapter／contract／workflow／handle schemaを含むmanifestは、bounded opaque handleとして
   structural validationを通し、`status`のJSON出力で回収できる。一方、そのControlへのmutationと
   新規Worker記録は`ADAPTER_UNKNOWN`でfail closedにする。未知handleを解釈、補完、dispatchしない。

@@ -363,8 +363,13 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - Claude Code 2.1.211の`--bare`はOAuth／keychainを読まないためsubscription routeへ使わず、
     `--continue`、推測session、`--fallback-model`、`claude-internal` dispatch転用も禁止する。
   - baselineはorchestration関連115/115、fail 0、skip 0。実model request／network／credentialは未実施。
-- [ ] `claude-native` Worker adapterのstart／same-session resume／observation／timeout unknown／failure
+- [x] `claude-native` Worker adapterのstart／same-session resume／observation／timeout unknown／failure
   mappingを純粋projectionとして実装し、禁止flagと別session fallbackをfocused testで拒否する。
+  - dotagents `4a3c9a7`（adapter＋focused test＋Control handle UUID厳格化）、`1573fce`（監査検出の
+    大文字UUID非対称修理）。変更後focused 5/5、related gate（executor-adapters＋executor-contracts＋
+    control-record）117/117・fail 0・skip 0、`make lint-js` green。argv契約はClaude Code 2.1.211の
+    実CLI helpと照合済み。受入は[ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)。
+    実model request／login／credential／network dispatchは未実施。
 - [ ] ConsultationのClaude session ID／Codex handleをv25の`slug`へ読み替えず、旧v25継続読取、
   型付きhandle、migration／rollback、O4のv26予約とのversion順を不変ADRで裁定する。
 - [ ] 既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、

@@ -61,6 +61,7 @@ rate-aware selectorは[Observer完成・工場編入・Elastic配置改善計画
 - **codex-sidecar は端末 config.toml の model/effort 行を隔離 home に正確に継承する**。`model` / `modelReasoningEffort`（low〜xhigh のみ。ultra/max 無し）を**毎回明示**するか、対象リポの `.codex-sidecar.yml` defaults に落とす（dotagents は defaults=中位×medium 設定済み）。隔離 home に AGENTS.md はコピーされない＝sidecar 子は委譲契約プロンプトで統制する。
 - **aiterm `codex_agent` は `model`/`reasoning_effort` 引数対応（2026-07-11 改修・v0.11.0 として npm 公開済み。端末反映は `npm i -g aiterm-mcp`）**: 引数は CLI 引数＋managed config ピン上書きで端末ピンより優先。省略時は端末 config 継承のままで、**起動応答が実効 model/effort と出所（引数/端末config継承/CLI既定）を明示**する（effort=ultra は警告付き）＝決定表どおり毎回 model×effort を明示して呼ぶ。
 - **aiterm の grok/composer は隔離設計（OAuth のみ共有）**＝ピン継承問題なし。`grok_agent` の既定は `grok-4.5`（`model` 引数で上書き可・stale な `grok-build` は 2026-07-11 廃止）。**grok の `--effort` は headless（`grok -p`）専用で対話 TUI では無視される**＝grok/composer への `reasoning_effort` 指定は aiterm が起動前に明示エラーで拒否する。
+- **`claude-native` Worker adapter（O3・2026-07-16）はrequest/observation projectionのみ**: catalog登録済みだがlive dispatch・実model requestは未実施＝execution-verified未満であり、writerへ使わない。start/resumeは同一caller UUID、caller timeoutはunknown、成功はstrict Worker Report import後だけ。OAuth経路へ`--bare`禁止（2.1.211はOAuth/keychainを読まない）。契約正本は`shared/orchestrate/executor-adapters.md`。
 - grok はこの端末で**認証済み**（2026-07-11 時点・tier 4）。
 - **Codex の `/model` ピッカー選択は config.toml へ永続書き込みされる**（再ピン仕様）。だから子は継承に依存しない（上記の構造で遮断済み）。
 

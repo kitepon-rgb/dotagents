@@ -22,6 +22,7 @@ versionedかつ純粋なcatalogである。schemaは`dotagents.executor-adapter.
 | `codex-sidecar@v1` | worker | `durable-work` | start、result、cancel、read-only recovery inspection、明示確認付きquarantine |
 | `codex-native@v1` | worker | `native-agent` | `spawn_agent`, `followup_task`, `interrupt_agent` |
 | `aiterm@v1` | worker | `interactive-session` | `codex_agent`, `grok_agent`, `composer_agent`, `pty_read`, `pty_send`, `pty_key`, `pty_close`, `pty_list` |
+| `claude-native@v1` | worker | `headless-session` | `start`, `resume` |
 | `gpt-connector@v1` | consultation | `consultation-job` | `consult`, `sessions` |
 | `claude-internal@v1` | host-projection | `appendix-projection` | observation projection only |
 
@@ -119,6 +120,34 @@ interrupted`、report/evidence参照だけをboundedに保持する。`completed
 schema外として拒否する。adapterはPTY/MCPを実行せず、aitermが保証しないread-only強制やworktree隔離も
 主張しない。
 
+## Claude native headless-session packet / projection
+
+`claudeNativeStartRequest`と`claudeNativeResumeRequest`は、親が自ら`claude` CLIをheadlessで起動する
+ためのinvocation packetを返す純粋関数である（transport `pty`）。processの生成、stdin投入、timeout、
+terminal回収は親が所有し、adapterはfilesystem・process・networkを実行しない。startはcaller生成の
+lowercase UUIDを`--session-id`へ、resumeは同じUUIDを`--resume`へ渡し、start/resumeを通して同一session
+IDだけを使う。隔離workspaceの絶対path、明示model、明示effort（`low|medium|high|xhigh|max`）、明示tool
+policyを必須とし、暗黙既定を作らない。
+
+tool policyは`permission_mode="dontAsk"`固定で、`tools`は承認済みbuilt-in Worker tool
+（`Read / Glob / Grep / Bash / Edit / Write / NotebookEdit`）だけ、`allowed_tools`は`tools`で選択済みの
+tool名（引数指定形を含む）に束縛される。生成argvは`--print --verbose --output-format stream-json
+--input-format text`と`--disable-slash-commands --no-chrome`を固定し、`--continue`、`--fallback-model`、
+`--bare`、`--safe-mode`、`--no-session-persistence`を生成しない。Claude Code 2.1.211の`--bare`は
+OAuth／keychainを読まずAPI key経路だけを使うため、subscription route（OAuth）へ使わない。
+`--safe-mode`はproject正典とhookを無効化するため暗黙既定にしない。adapterはcredentialを読まず、
+親が所有する既存Claude CLI環境を変更しない。
+
+`projectClaudeNativeObservation`はhandle、`running / unknown / completed / failed`、exit code、signal、
+report/evidence参照だけをboundedに投影する。`completed`は`exit_code=0`かつ空でないstrict Worker Report
+参照とevidence参照1件以上、`failed`は非成功のterminal receipt（非0 exitまたはsignal）を必須とし、
+非terminalへterminal fieldを混ぜない。caller timeoutは`projectClaudeNativeTimeoutObservation`で
+`state="unknown"`／`raw_status="caller_timeout"`として保持し、成功・失敗へ丸めない。同じsession IDの
+process状態を回収してからresume可否を決め、別sessionや別providerへの切替は元Runのterminal Decision後に
+新Runとして記録する。`buildWorkerControlObservation`はcompleted projectionとcaller提供resultだけの
+成功確定を`WORKER_REPORT_IMPORT_REQUIRED`で拒否し、成功の記録は後続のstrict Worker Report importだけが
+行う。`claude-internal`はhost projection専用のまま維持し、このadapterへ昇格させない。
+
 ## gpt-connector consultation packet / projection
 
 配布済み`gpt-connector`の一次source（`dist/src/contract.js`、`dist/src/mcp-server.js`）に従い、
@@ -165,6 +194,7 @@ raw messageをControlへ複製しない。providerが公開していないcode�
 | `codex-sidecar` | mapped | unknown | mapped | unknown | mapped | unknown | mapped | 同一idempotency keyの`result` |
 | `codex-native` | unknown | unknown | caller-event | not-applicable | caller-event | unknown | caller-event | 確認済み再照会toolなし |
 | `aiterm` | unknown | unknown | caller-event | unknown | caller-event | unknown | unknown | 同一sessionの`pty_read` |
+| `claude-native` | unknown | unknown | caller-event | caller-event | caller-event | caller-event | caller-event | 確認済み再照会toolなし（親が同一session IDのprocess状態を回収） |
 | `gpt-connector` | mapped | unknown | mapped/caller recovery | not-applicable | caller-event | not-applicable | mapped | 同一slugの`sessions` |
 | `claude-internal` | not-applicable | not-applicable | not-applicable | not-applicable | not-applicable | not-applicable | caller-event | なし |
 

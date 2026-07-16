@@ -477,7 +477,10 @@ Observer `docs/plan_observer.md`
     `--continue`／`--fallback-model`／OAuth経路の`--bare`禁止、`claude-internal` projection-onlyを固定した。
   - orchestration関連baselineは115/115、fail 0、skip 0。実model request、login、credential、networkは
     実行していない。
-- [ ] `claude-native` Worker adapterのrequest／observation／failure projectionをfocused gateで実装する。
+- [x] `claude-native` Worker adapterのrequest／observation／failure projectionをfocused gateで実装する。
+  - dotagents `4a3c9a7`／`1573fce`、focused 5/5、related 117/117（fail 0、skip 0）、`make lint-js` green。
+    shared契約・02_models.md・rag失効注記を同時整合し、
+    [ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)で受け入れた。live dispatchは未実施。
 - [ ] Consultation多provider化はv25 `slug`へのhandle詰込みを禁止し、旧v25 reader、型付きhandle、
   migration／rollback、O4のv26予約とのversion順を新しい不変ADRで裁定してから実装する。
 - [ ] 既存未コミットを別セッション由来として放置しない。WSL relay RAGはPhase R2未収容成果、
