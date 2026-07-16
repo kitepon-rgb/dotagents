@@ -429,7 +429,17 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 4: Rate-aware Elastic Scheduler
 
-- [ ] `quota_pool_id`、`host_instance_id`、対象executor集合、`provider`、`model_family`、`windows[]`、`remaining_ratio`、`starts_at`または`duration_seconds`、`reset_at`、`observed_at`、`source`、`confidence`を持つquota snapshot契約を定義する。
+> 設計正本は[ADR 0054](adr/0054-o4-rate-aware-scheduler-design.md)（2026-07-17裁定、refuter 2票
+> 通過・採用17棄却2）。quota snapshot契約（remaining_bp整数化・window単位model scope・
+> window_length検証）、純粋selector（残量下限・pace飽和・量子化tie-break・エラー検査順固定・
+> 4要素executor envelope）、Control schema v27（selector_decision optional key・consultation
+> cancelled state・migration/rollback）、実装wave Q/S/V/A/Dの分割を固定した。
+> 以下のTODOはADR 0054の裁定に従って実装する。
+
+- [x] `quota_pool_id`、`host_instance_id`、対象executor集合、`provider`、`windows[]`（`remaining_bp`、`starts_at`または`duration_seconds`、`reset_at`、`model_family_scope`）、`observed_at`、`source`、`confidence`を持つquota snapshot契約を定義する。
+  - [ADR 0054](adr/0054-o4-rate-aware-scheduler-design.md) Decision 1で裁定（refuter指摘により
+    remaining_ratioをbasis points整数へ、model_familyをwindow単位scopeへ、window_length検証を追加）。
+    validator実装はWave Q。
 - [ ] OpenAI／Anthropic adapterでquota snapshotを取得し、秘密、cookie、token、account内部stateをControlへ複製しない。
 - [ ] 異なるreset時刻をUTCで正規化し、`pace_ratio`と最も逼迫したwindowを計算する純粋selectorを実装する。
 - [ ] role適格候補だけを入力にし、Observer／相談役／F作業を自動均衡対象から除外する。

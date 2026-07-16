@@ -516,6 +516,9 @@ Observer `docs/plan_observer.md`
 
 ### Phase O4 — rate-aware scheduler
 
+- [x] 設計を不変ADRで裁定する: quota snapshot契約・純粋selector仕様・Control schema v27
+  （selector decision束縛＋consultation cancelled state＝ADR 0053の本修正）・実装wave分割。
+  - [ADR 0054](adr/0054-o4-rate-aware-scheduler-design.md)で裁定（refuter 2票、採用17・棄却2）。
 - [ ] provider-owned quota snapshot、window正規化、`pace_ratio`、hysteresis、pool lock、reservationを実装する。
 - [ ] stale、取得不能、矛盾、reset境界、残量ゼロをfail loudにし、架空値や暗黙fallbackを使わない。
 - [ ] Control schemaとreceiptへselector decisionを束縛し、週次dogfoodで両社の消費ペースを評価する。
