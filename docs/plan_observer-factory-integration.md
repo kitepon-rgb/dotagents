@@ -310,10 +310,16 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       PATHでfresh tmux serverを作り、global tmux serverのstale環境を再利用しない。global socket／session／
       packageは変更せず、candidate自然Stopのreceiptと`observer-read` completed turnで受け入れる
       （[ADR 0026](adr/0026-aiterm-campaign-runtime-isolation.md)）。
-    - [ ] 専用runtimeのUnix socket長境界を閉じる。campaign root直下の短い0700 `r`を使い、
-      `<TMPDIR>/claude-tmux-sockets/claude-mcp`をmacOSで103 bytes以下とlaunch前に実測する。
-      105-byte pathの失敗attemptは成功へ含めず、global runtimeへfallbackしない
-      （[ADR 0027](adr/0027-aiterm-runtime-socket-length-bound.md)）。
+    - [x] 専用runtimeのUnix socket長境界を閉じる。campaign root直下の短い0700 `r2`を使い、
+      実物`<TMPDIR>/claude-tmux-sockets/claude.sock`をmacOSで94 bytesとlaunch前に実測した。
+      105-byte pathの失敗attemptは成功へ含めず、global runtimeへfallbackしない。ADR 0027の
+      予測名／92 bytesは[ADR 0028](adr/0028-queue19e-socket-and-stop-flush-correction.md)で訂正する。
+    - [x] 短い専用runtimeで再現したThroughline Stop transcript flush raceを閉じる。Aiterm session、
+      candidate-first PATH、実Claude `end_turn`、Stop hook error 0は成立したが、final assistant行の
+      transcript可視化前にone-shot backfillしてDB本文／receiptが0件になった。Throughline commit
+      `a46b915`でbounded barrierを独立実装し、focused 14/14、subprocess 2/2、related 78/78を通した。
+      失敗attemptは成功へ含めず、修理済みcandidate再梱包後に19eを再開する
+      （[ADR 0028](adr/0028-queue19e-socket-and-stop-flush-correction.md)）。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
