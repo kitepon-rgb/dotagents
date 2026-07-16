@@ -57,6 +57,7 @@
 - **aiterm**（対話: `codex_agent`/`grok_agent`/`composer_agent`）: codex_agent は`model`/`reasoning_effort`引数が端末ピンより優先され、起動応答が実効値と出所を明示する＝決定表どおり毎回明示して呼ぶ。grok/composer は隔離設計（OAuth のみ共有）。grok の`--effort`は headless（`grok -p`）専用で、対話TUIへの effort 指定は aiterm が起動前に拒否する。
 - **Codex native routing の罠**（`agent_type`隠蔽・`fork_turns`既定・sandbox再適用・routing smoke手順）の正典は[05_codex-fragments.md](05_codex-fragments.md)。`/model`ピッカー選択は config.toml へ永続書込されるため、子は継承に依存しない。
 - **`claude-native` Worker adapter（O3）は projection のみ**＝execution-verified 未満であり writer へ使わない（契約正本は`shared/orchestrate/executor-adapters.md`）。
+- **Consultation多provider化（O3・v26）**: Codex親→Claude相談は`claude-native@consult-v1`（同一UUID resume・全tool無効）、Claude親→Codex相談は`codex-sidecar@consult-v1`（`codex_opinion`・handleなし同期）をControl schema v26のtyped `consultation_handle`で記録できる（[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)）。adapterはprojectionのみで実model live dispatchは未実施＝live H gate後に運用へ入れる。ChatGPT相談（gpt-connector）の第一選択は不変。
 
 ## エフォートのエスカレーションゲート
 

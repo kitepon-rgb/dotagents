@@ -127,7 +127,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は現在v25で固定し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は`{v25, v26}`のclosed setをreaderが受理し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -140,9 +140,12 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   Worker Runへ追加し、v21はmanual Worker生成identity／fallbackのreceipt digest束縛を追加し、v22は固定順の
   phase gateを追加し、v23はdocs artifactのID／digest／status projection、v24はapproach family governance、
   v25はCampaign宣言とmanual Worker lineageのreceipt束縛およびFinding共有境界を追加した。同じv1完成前の
-  v25契約でTask／Control finalizationのsubject digest、文書evidence、Campaign親裁定境界をfail closedにした。旧manifestを
-  黙って書き換えず、明示migrationが実装されるまでは
-  `INVALID_SCHEMA`で停止する。
+  v25契約でTask／Control finalizationのsubject digest、文書evidence、Campaign親裁定境界をfail closedにした。
+  v26はConsultationの`slug`をconnector別typed `consultation_handle`へ置換し、connectorを
+  closed enumへ拡張した（ADR 0045）。新規initはv26で作成する。v25 active Controlは読取も
+  mutationも従来契約のまま継続し、旧manifestを黙って書き換えない。v25→v26は明示の
+  `control-migrate`だけが行い、mutation時の自動昇格を`SCHEMA_UPGRADE_REQUIRED`で拒否する。
+  上記closed set外のversionは`INVALID_SCHEMA`で停止する。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
   `expected_revision`と現在値の一致を必須とする。
 - `status`は`active | archived`。Control-level finalization後はarchive以外のmutationを拒否し、
@@ -211,7 +214,10 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
 - operationは`control-init / task-record / task-cancel-record / registry-observation-record / placement-reserve / worker-run-record / consultation-record / worker-admit / worker-workspace-bind / worker-cancel-request /
   worker-report-import /
   worker-observe / consultation-observe / campaign-record / campaign-release / phase-gate-record / phase-gate-advance / worker-accept / worker-reject / task-finalize /
-  control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
+  control-migrate / control-finalize / control-archive`の固定集合。subject kindも固定集合で、任意event名を受理しない。
+  `control-migrate`は両version（v25／v26）のreaderが受理する——rollback後のv25 manifestにも
+  migrate系receiptは恒久に残るため、これを拒否すると「v25として有効」が成立しない。
+  そのreceiptはsubjectがControl自身、`previous_state`／`next_state`がfrom/to schema versionである。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
   `previous_receipt_digest`へ持ち、read/save時に連番とchainを再計算する。過去receiptの書換え、欠落、
   並べ替えを`INVALID_SCHEMA`で拒否する。
@@ -443,14 +449,16 @@ placement eligibilityを主張する操作ではない。Registry評価済みと
 
 ### Brief status and resume check
 
-`status --brief`は`dotagents.orchestration-status-brief.v6`としてmanifest全体を複製せず、
+`status --brief`は`dotagents.orchestration-status-brief.v7`としてmanifest全体を複製せず、
 次だけを親の再開用に固定shapeで返す。`resumeCheck`はこのbriefを含むため
-`dotagents.orchestration-resume-check.v6`とする。
+`dotagents.orchestration-resume-check.v7`とする。v7はv6の`slug`直接投影を
+`consultation_handle`投影へ置換したprojection bumpで、v25 manifestのconsultationも
+`{ "slug": ... }`へ正規化して返す（silent shape変形を許さない。ADR 0045）。
 
 - Control ID、schema/revision/status、objective、last update、Task／Registry／Worker／Consultation／Campaign件数
 - Task取消件数、取消済みTask ID、未terminalのcancel要求済みWorker ID
 - nonterminal WorkerのExecutor envelope、workflow、opaque handle、最終観測、cancel要求snapshot
-- nonterminal Consultationのconnector、slug、model／effort、最終観測
+- nonterminal Consultationのconnector、consultation_handle、model／effort、最終観測
 - finalizationもcancellationも未記録のTask、completed未受入Worker、Control finalization未完
 - Campaignごとのtype、all-terminal、audit-required、release有無と、未release Campaign ID
 - stateが`unknown`のRun／Consultationと、値がunknownのRegistry field
@@ -474,7 +482,7 @@ review_reasons
   generation変更は`blocked`。全worktree Workerは記録時のbounded fingerprintを持ち、read／planned Workerの
   内容差は`review-required`。予約中writerのscope外差分、index／HEAD／ignored output driftは`blocked`、
   scope内の作業途中は`review-required`。read Worker等のHEAD変更も親reviewへ送る。
-- `dispatched | running | unknown`のWorker／Consultationは、opaque handleまたはconnector slugを一覧へ戻し、
+- `dispatched | running | unknown`のWorker／Consultationは、opaque handleまたはconsultation handleを一覧へ戻し、
   所有Executorへの再照会が必要なため`review-required`とする。timeoutをfailedへ変換しない。
 - `file | decision` evidenceはproject rootの非symlink regular fileを合計64 MiBまで再hashする。欠損、
   digest不一致、unsafe path、hash上限超過、読取中driftは`blocked`。同じdecision pathの現内容が
@@ -1013,26 +1021,43 @@ Workerの`completed`と親の`accepted | rejected`を分離する。
 
 ## Consultation
 
-ConsultationはWorker Runと別collection／別schemaにする。MVPのconnectorは
-`gpt-connector`だけ。
+ConsultationはWorker Runと別collection／別schemaにする。v26のconnectorは
+`gpt-connector | claude-native | codex-sidecar`のclosed enum（未知connectorはfail closed。
+enum追加は常に新schema versionを要する）。v25 manifestでは従来どおり`gpt-connector`固定・
+`slug`文字列のままmutationも継続する（ADR 0045）。
 
 ```text
-consultation_id, task_id, assignment_id, connector="gpt-connector",
-slug, model, effort, budget_reservation, state, executor_observation, decision_ref
+consultation_id, task_id, assignment_id, connector,
+consultation_handle, model, effort, budget_reservation, state, executor_observation, decision_ref
 terminal_evidence
 ```
 
 - 任意のTaskを参照できる。TaskのeffectはConsultation自体のmutabilityを表さず、Consultationは常に
   workspaceとwrite capabilityを持たない。
 - workspace、read/write scope、worker role、cancel、worker result、acceptanceを持てない。
-- slugはcaller既知のidempotency key。timeout後は同じslugを`sessions`で回収する。
+- `consultation_handle`はconnector別exact shape:
+  - `gpt-connector`: `{ "slug": "..." }` — caller既知のidempotency key。timeout後は同じslugを
+    `sessions`で回収する（v25では同じ意味の`slug`文字列field）。
+  - `claude-native`: `{ "session_id": "<lowercase UUID>" }` — Worker handleと同一validator。
+    workspaceを持たず、同一session IDだけでresumeする。
+  - `codex-sidecar`: `null`固定 — 同期read-only consultation（`codex_opinion`）はdurable handleを
+    持たない製品契約のため、handleを捏造せずconsultation_id＋request相関で結果を照合する。
 - 状態は`planned -> dispatched -> running | unknown | completed | failed`、
   `running/unknown -> running | unknown | completed | failed`。terminalは巻き戻さない。
-- CLIはChatGPTへ送信せず、`sessions`も呼ばない。親が製品を再照会した観測だけを記録する。
+- CLIは外部providerへ送信も再照会もしない。親が製品を再照会した観測だけを記録する。
+- caller timeoutは全connectorで`unknown`。gpt-connectorは同一slugの`sessions`、claude-nativeは
+  同一session IDのprocess状態で回収する。claude-nativeではstream-jsonの`type:result`を完了信号とし、
+  process exitを完了信号にしない（backgrounded task残存中はprocessが生存する）。
 - completed consultationは`decision_ref`を持てるが、Worker完成件数へ数えない。
 - 同じ`assignment_id`の再相談は先行Consultationが`failed`の場合だけ許可する。
   nonterminalまたは`completed`が残る間は拒否し、独立した追加相談は別assignmentを使う。
-- `failed`には所有製品のterminal状態を確認した`terminal_evidence`を必須とし、Consultation直下へ保存する。
+  provider障害時の別provider切替は、元Consultationの`failed`終端後に新しいConsultationとして
+  記録し、元の成功へ丸めず元のhandleを書き換えない。
+- `failed`の`terminal_evidence`は所有製品のterminal状態を確認したdescriptorを必須とする。ただし
+  `codex-sidecar`の同期consultには再照会入口が無く結果喪失時に製品terminal状態を取得できないため、
+  connector条件付きで**caller側が観測したMCPエラー／timeout観測の`command`または
+  `executor-receipt` evidence**を認める（ADR 0045 §7）。`unknown`のままtask finalizeが恒久ブロック
+  される契約穴を作らない。
 
 `observeConsultation`の`observation`はWorkerと共通の
 `state, source, observed_version, observed_at, raw_state`だけを基礎fieldとし、`completed`だけ
@@ -1043,6 +1068,28 @@ source/version/time/raw_stateだけで、`decision_ref`はConsultation直下に�
 Consultationも`planned`ではobservation／decision／terminal evidenceが空、
 `dispatched | running | unknown`ではobservationだけ、`completed`ではobservation＋decision ref、
 `failed`ではobservation＋terminal evidenceだけを許可する。
+
+## Schema migration（control-migrate）
+
+v25→v26は暗黙に行わず、明示コマンド`control-migrate`だけが一回で行う（ADR 0045）。
+
+- 決定的変換: 各consultationの`slug: s`→`consultation_handle: { slug: s }`。connectorは既存の
+  `gpt-connector`のまま、他collectionは不変。`record_revision`を+1し、transition receiptへ
+  `operation="control-migrate"`とfrom/to schema version（`previous_state`／`next_state`）を記録する。
+- finalized／archivedのControlはmigrateしない（歴史はそのversionのまま読む）。finalizedは
+  `CONTROL_FINALIZED`、archivedは`RECORD_ARCHIVED`で拒否される。同一versionへのmigrateは
+  `INVALID_TRANSITION`。
+- receipt容量上限（256）近傍ではclosing slot予約により`CONTROL_CAPACITY_RESERVED`でfail loudに
+  拒否される。架空の空きを作らない。
+- v26→v25 rollbackは、**非`gpt-connector` consultationが1件も存在しない場合に限り**決定的に可能
+  （`consultation_handle:{slug}`→`slug`）。1件でも存在すれば`ROLLBACK_UNSUPPORTED`でfail loudにし、
+  silent degradeやhandle捨てを行わない。rollbackも`control-migrate`の明示operation（方向指定）で、
+  transition receiptへ記録する。
+- rollbackの範囲はdata-planeに限る。rollback後manifestにもmigrate系receiptは恒久に残り、store内に
+  v26 manifestが1つでも存在する限り、v26実装前のコードは（全manifest scanのため）無関係なv25
+  Controlの操作も含めて動作しない。実装コミット自体のrevertはv26 manifest・migrate receiptが
+  1件も生まれる前にのみ安全で、以後の後退はdata-plane rollback＋前方修正で行う。
+- 実施はControlごとに親が裁定し、多provider consultationを実際に記録する直前まで行わない。
 
 ## Global mutation transaction
 
@@ -1153,7 +1200,7 @@ Registry由来のcapacity warning、`truncated`だけを持つ。各配列はcan
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, advisory-snapshot, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, delegation-packet-recover, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
+init, status, status --brief, resume-check, advisory-snapshot, control-migrate, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, delegation-packet-recover, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
 admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, conflict-check,
 accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
@@ -1207,6 +1254,7 @@ placementDryRun({ cwd, control_id, task_id, evaluated_at, candidates })
 reservePlacement({ cwd, control_id, actor_id, expected_revision, task_id, candidate, review_decision })
 workerRunRecord({ cwd, control_id, actor_id, expected_revision, worker_run })
 consultationRecord({ cwd, control_id, actor_id, expected_revision, consultation })
+controlMigrate({ cwd, control_id, actor_id, expected_revision, target_schema_version })
 campaignRecord({ cwd, control_id, actor_id, expected_revision, campaign })
 campaignStatus({ cwd, control_id, campaign_id })
 releaseCampaign({ cwd, control_id, actor_id, expected_revision, campaign_id,
@@ -1275,6 +1323,7 @@ FINALIZATION_NOT_READY, CONTROL_FINALIZED,
 TASK_FINALIZED,
 APPROVAL_MISMATCH, APPROVAL_EXPIRED,
 ROLE_EFFECT_FORBIDDEN,
+SCHEMA_UPGRADE_REQUIRED, ROLLBACK_UNSUPPORTED,
 CONTROL_CAPACITY_RESERVED, CONTROL_CAPACITY_REACHED, CONTINUATION_NOT_READY,
 PLATFORM_UNVERIFIED, DECISION_EVIDENCE_NOT_IMMUTABLE,
 LOCK_OUTCOME_UNKNOWN,

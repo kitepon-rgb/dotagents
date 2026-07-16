@@ -23,10 +23,15 @@ versionedかつ純粋なcatalogである。schemaは`dotagents.executor-adapter.
 | `codex-native@v1` | worker | `native-agent` | `spawn_agent`, `followup_task`, `interrupt_agent` |
 | `aiterm@v1` | worker | `interactive-session` | `codex_agent`, `grok_agent`, `composer_agent`, `pty_read`, `pty_send`, `pty_key`, `pty_close`, `pty_list` |
 | `claude-native@v1` | worker | `headless-session` | `start`, `resume` |
+| `claude-native@consult-v1` | consultation | `consultation-session` | `start`, `resume` |
+| `codex-sidecar@consult-v1` | consultation | `consultation-opinion` | `consult`（`codex_opinion`） |
 | `gpt-connector@v1` | consultation | `consultation-job` | `consult`, `sessions` |
 | `claude-internal@v1` | host-projection | `appendix-projection` | observation projection only |
 
-`gpt-connector`はWorker laneへ登録できない。`claude-internal`はCodexからdispatchできるinterfaceを持たず、
+`gpt-connector`はWorker laneへ登録できない。catalogの一意キーは`adapter_id×contract_version`であり、
+consultation laneは同一adapter_idの**別contract entry**（`consult-v1`）として追加する（ADR 0045）。
+`consult-`で始まるcontract_versionのdescriptorは`lane="consultation"`必須で、Worker laneへの登録は
+`LANE_FORBIDDEN`でfail closedにする。`claude-internal`はCodexからdispatchできるinterfaceを持たず、
 appendix由来の観測projectionだけを表す。未知adapter/interface/operationはtyped errorでfail closedにする。
 sidecar recoveryは同じ`codex_work_recover` toolでも、既定のread-only inspectionと
 `confirmNoRunningProcesses=true`を要するquarantine mutationを別operationとして扱う。
@@ -172,6 +177,38 @@ Worker capacity、実行票、worker reportには変換しない。
 投影する。`buildConsultationControlObservation`はこのprojectionをControl Recordが受理するexact shapeへ
 変換し、completed時のDecision参照とfailed時のterminal evidenceを混同しない。
 
+## claude-native consultation packet / projection（consult-v1）
+
+`claudeNativeConsultStartRequest`／`claudeNativeConsultResumeRequest`はWorker laneと同じ
+同一UUID start/resume契約のまま、相談専用のrequest（`dotagents.claude-native.consult-request.v1`）を
+純粋に投影する。tool policyは固定で`--permission-mode dontAsk`＋`--tools ""`（全tool無効。
+Claude Code 2.1.211のCLI helpに明記。`-p`＋全tool無効のlive挙動は後続live H gateで実測）とし、
+`--allowedTools`を生成しない。禁止flag（`--continue`／`--fallback-model`／`--bare`／`--safe-mode`／
+`--no-session-persistence`）はWorker laneと同様に生成しない。**Consultation recordはworkspace
+fieldを持たないが、request builderはCLI実行のためのcwdを要求し、Controlへは複製しない**（ADR 0045）。
+
+`projectClaudeNativeConsultObservation`は専用observation schema
+（`dotagents.claude-native.consult-observation.v1`）で`consultation_handle`（同一session ID）と
+状態だけを残す。caller timeoutは`projectClaudeNativeConsultTimeoutObservation`で`unknown`として
+保持する。Worker用observation schemaとは相互に受理されない（lane逆流の遮断はControl Record bridge参照）。
+
+## codex-sidecar consultation packet / projection（consult-v1）
+
+`codexSidecarOpinionRequest`は配布済み`codex-sidecar-mcp`の`codex_opinion` tool契約
+（`readonly: true`、required `projectRoot`、effort enum `low|medium|high|xhigh`——`max`なし）へ
+prompt、model、effortを投影する。read-only性は製品側tool descriptorの`readonly: true`と、
+request builderがwrite系引数（`allowWork`／`preserveWorktree`／`idempotencyKey`等）を一切
+生成しないことで担保する。存在しない「catalog上のread-only capability field」を根拠にしない。
+effort語彙はconnectorごとに製品契約へ束縛し、共通語彙を捏造しない。
+
+同期consultはdurable handleを持たないため、projection（`dotagents.codex-sidecar.consult-observation.v1`）
+は`consultation_handle: null`を固定し、consultation_id＋request相関で結果を照合する。
+`projectCodexSidecarOpinionObservation`は`workflow="opinion"`の実result shapeを検証して
+completed（`ok`）／failed（`partial|failed|refused`）へ投影し、`projectCodexSidecarOpinionErrorObservation`／
+`projectCodexSidecarOpinionTimeoutObservation`がcaller観測のMCPエラー／timeoutを表す。結果喪失時は
+製品terminal状態を取得できないため、failed終端のterminal evidenceにはcaller観測の`command`または
+`executor-receipt` descriptorをconnector条件付きで認める（ADR 0045 §7）。
+
 ## Claude internal appendix projection
 
 `claude-internal`はcatalogどおり`host-projection` laneかつ`projection-only` restrictionを維持する。
@@ -188,15 +225,19 @@ host tool名、capacity、execution-verified、Worker成功をこのadapterは�
 共通lifecycleへ押し込まず、型付きの最小projectionだけを返す。supportは`mapped / caller-event /
 unknown / not-applicable`と根拠を返す。credentialとrate limitは製品所有のままとし、秘密・account quota・
 raw messageをControlへ複製しない。providerが公開していないcodeをcallerが自己申告する入口は持たない。
+**キー粒度は`adapter_id×lane`**（ADR 0045）——同一adapter_idでもworker laneのdurable回収契約を
+consultation laneへ返さない。lane未定義の組はcodeを捏造せず`ADAPTER_UNKNOWN`で拒否する。
 
-| Adapter | credential-missing | rate-limited | timeout | non-zero-exit | malformed-report | workspace-missing | unsupported-capability | timeout recovery |
+| Adapter×Lane | credential-missing | rate-limited | timeout | non-zero-exit | malformed-report | workspace-missing | unsupported-capability | timeout recovery |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `codex-sidecar` | mapped | unknown | mapped | unknown | mapped | unknown | mapped | 同一idempotency keyの`result` |
-| `codex-native` | unknown | unknown | caller-event | not-applicable | caller-event | unknown | caller-event | 確認済み再照会toolなし |
-| `aiterm` | unknown | unknown | caller-event | unknown | caller-event | unknown | unknown | 同一sessionの`pty_read` |
-| `claude-native` | unknown | unknown | caller-event | caller-event | caller-event | caller-event | caller-event | 確認済み再照会toolなし（親が同一session IDのprocess状態を回収） |
-| `gpt-connector` | mapped | unknown | mapped/caller recovery | not-applicable | caller-event | not-applicable | mapped | 同一slugの`sessions` |
-| `claude-internal` | not-applicable | not-applicable | not-applicable | not-applicable | not-applicable | not-applicable | caller-event | なし |
+| `codex-sidecar`×worker | mapped | unknown | mapped | unknown | mapped | unknown | mapped | 同一idempotency keyの`result` |
+| `codex-sidecar`×consultation | unknown | unknown | caller-event | not-applicable | caller-event | caller-event | unknown | なし（同期consultに再照会入口なし。unknownのまま親が終端裁定） |
+| `codex-native`×worker | unknown | unknown | caller-event | not-applicable | caller-event | unknown | caller-event | 確認済み再照会toolなし |
+| `aiterm`×worker | unknown | unknown | caller-event | unknown | caller-event | unknown | unknown | 同一sessionの`pty_read` |
+| `claude-native`×worker | unknown | unknown | caller-event | caller-event | caller-event | caller-event | caller-event | 確認済み再照会toolなし（親が同一session IDのprocess状態を回収） |
+| `claude-native`×consultation | unknown | unknown | caller-event | caller-event | caller-event | not-applicable（recordはworkspaceを持たない） | caller-event | 確認済み再照会toolなし（親が同一session IDのprocess状態を回収） |
+| `gpt-connector`×consultation | mapped | unknown | mapped/caller recovery | not-applicable | caller-event | not-applicable | mapped | 同一slugの`sessions` |
+| `claude-internal`×host-projection | not-applicable | not-applicable | not-applicable | not-applicable | not-applicable | not-applicable | caller-event | なし |
 
 caller timeoutはterminal failedへ丸めず、`state="unknown"`とadapter固有のrecovery operationだけを
 残す。providerがterminal failureとして返した`UPLOAD_TIMEOUT`はfailedのまま保持する。既存の`codexSidecarResultRequest`、`aitermTimeoutRecoveryRequest`、
@@ -209,6 +250,9 @@ caller timeoutはterminal failedへ丸めず、`state="unknown"`とadapter固有
 `buildWorkerControlObservation`と`buildConsultationControlObservation`はadapter projectionをControl Recordの
 exact observation payloadへ変換する純粋関数である。Workerは`executor_handle`を同じshapeのまま渡し、
 dispatched／completed／failed・cancelledの証拠fieldを状態ごとに一つだけ要求する。sidecar completedでは
-Control result digestとprovider result digestの一致も要求する。Consultationはgpt-connector専用で、
-completedのDecision参照とfailedのterminal evidenceを分離する。どちらもfilesystem、network、host toolを
-実行しない。
+Control result digestとprovider result digestの一致も要求する。Consultationはconnector別observation
+schema（gpt-connector／claude-native consult／codex-sidecar consult）をdispatchして受理し、
+completedのDecision参照とfailedのterminal evidenceを分離する。**consultation observation schemaは
+`buildWorkerControlObservation`が`PROJECTION_UNSUPPORTED`で拒否し、Worker observation schemaも
+consultation側へ入らない**——consultationの結果がWorker control observationへ流入する経路を作らない
+（ADR 0045）。どちらもfilesystem、network、host toolを実行しない。

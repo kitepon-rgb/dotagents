@@ -480,11 +480,15 @@ Observer `docs/plan_observer.md`
   - dotagents `4a3c9a7`／`1573fce`、focused 5/5、related 117/117（fail 0、skip 0）、`make lint-js` green。
     shared契約・02_models.md・rag失効注記を同時整合し、
     [ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)で受け入れた。live dispatchは未実施。
-- [ ] Consultation多provider化はv25 `slug`へのhandle詰込みを禁止し、旧v25 reader、型付きhandle、
+- [x] Consultation多provider化はv25 `slug`へのhandle詰込みを禁止し、旧v25 reader、型付きhandle、
   migration／rollback、O4のv26予約とのversion順を新しい不変ADRで裁定してから実装する。
   - 裁定は[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)で完了（O3=v26／O4=v27、
-    refuter 2票通過）。実装（v26 reader/writer、typed handle、migration、brief v7、adapter拡張）は
-    未着手であり、本checkboxは実装完了時に閉じる。
+    refuter 2票通過）。
+  - 実装（v26 reader/writer、typed handle、明示`control-migrate`、brief/resume-check v7、
+    consult-v1 adapter拡張、failure supportのlane別keying）は`50d79d5`で完了。ADR 0045 Gateの
+    全focused fixtureをtestで固定し、related gate **127/127・fail 0・skip 0**、`make lint-js` green。
+    受入は[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)。実model request／
+    login／credential／network dispatchと`--tools ""` live実測は未実施（live H gateへ残置）。
 - [x] 既存未コミットを別セッション由来として放置しない。WSL relay RAGはPhase R2未収容成果、
   CDC PDF/PNGは正典還流済み中間物、`claude -p` allowはO3の権限規則として、それぞれ別scopeで閉じる。
   - WSL relay RAGは`0170f00`、mcp-observer INDEX行追補は`cd2ea3a`、`claude -p` allowは`cffb342`で

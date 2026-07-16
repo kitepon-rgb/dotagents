@@ -353,9 +353,21 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 ### Phase 3: Elasticのprovider対称化
 
 - [ ] shared orchestration契約へ「Observer同社／相談役異社／一般Worker適応配置」を反映する。
-- [ ] Codex親からClaude Worker／相談役を呼ぶadapter、handle、observe、resume、failure mappingを実装する。
-- [ ] Claude親からCodex相談役を呼ぶ経路を既存sidecar／native境界と整合させる。
-- [ ] Consultationを`gpt-connector`固定からlane別adapterへ拡張し、Workerと別collectionのまま維持する。ObserverをControlのWorker票やConsultation票へ混ぜない。
+- [x] Codex親からClaude Worker／相談役を呼ぶadapter、handle、observe、resume、failure mappingを実装する。
+  - Worker laneは`claude-native@v1`（[ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)）、
+    相談役laneは`claude-native@consult-v1`（同一UUID resume・`--tools ""`全tool無効・cwd非複製、
+    `50d79d5`、受入[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)）。
+    いずれもprojection純関数で、実model live dispatchはH gateへ残置。
+- [x] Claude親からCodex相談役を呼ぶ経路を既存sidecar／native境界と整合させる。
+  - `codex-sidecar@consult-v1`＝同期read-only `codex_opinion`（製品契約: `readonly:true`・
+    `projectRoot`必須・effort `low|medium|high|xhigh`）。durable handleを捏造せず
+    `consultation_handle:null`固定、write系引数非生成、caller観測error/timeoutで終端可（`50d79d5`）。
+- [x] Consultationを`gpt-connector`固定からlane別adapterへ拡張し、Workerと別collectionのまま維持する。ObserverをControlのWorker票やConsultation票へ混ぜない。
+  - Control schema v26のconnector closed enum＋typed `consultation_handle`、v25継続mutation、
+    明示`control-migrate`（rollbackは非gpt不在時のみ）、brief/resume-check v7、failure supportの
+    adapter_id×lane keying、consultation observationのworker projection遮断まで`50d79d5`で実装。
+    ADR 0045 Gateの全focused fixture固定、related 127/127・fail 0・skip 0、`make lint-js` green。
+    受入は[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)。
 - [ ] provider障害時の別社切替は新Runとして記録し、fallback元の成功へ偽装しない。
 - [ ] role別の適格provider集合と、親と異なる相談役をplacement fixtureで固定する。
 - [x] O3実装境界を先に固定する。
@@ -378,7 +390,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     v25継続mutation、明示`control-migrate`、data-plane限定rollback、brief/resume-check v7、
     failure supportのlane別keying、sidecar同期consultの終端evidence条件化を固定した。
     独立refuter 2票（互換視点・実装可能性視点）を通し、採用7群・棄却4群を件数遷移付きで
-    ADRへ記録した。実装は次のfocused gate単位で行う。
+    ADRへ記録した。実装は`50d79d5`で完了（受入[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)）。
 - [x] 既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、
   `claude -p` allowはO3権限規則として別scope／別commitで閉じる。保護指定pathを本adapter commitへ混ぜない。
   - `0170f00`（WSL relay RAG＋INDEX行）、`cd2ea3a`（mcp-observer INDEX行追補）、`cffb342`
