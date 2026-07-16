@@ -195,6 +195,18 @@ queue 8は19eへ統合済みである。
     不変Decisionを記録し、workspaceを採用・復元・書き換えないfocused契約を追加する。
   - focused 1/1、accept／reject／Task finalization関連3/3、`make lint-js` green。受入証拠は
     [ADR 0034](adr/0034-control-reject-after-workspace-drift.md)。full regressionは工場Phase gateへ集約する。
+- [x] Placement予約時に`executor_handle=null`だったnative Workerへdispatch相関handleを記録すると、
+  予約candidate digestが自己矛盾してControlが更新不能になる欠陥を修正する。
+  - Observer P5-1b4dの正規`placement-reserve`→`worker-admit`→native dispatchで再現した。実workerは
+    一度だけ起動済みだが、`observe-worker=dispatched`が`placement reservation candidate digest is invalid`で
+    revision 38から進まず、Reportを正規回収できない。
+  - 予約時点の`null` handleとdispatch時に初めて得る相関handleを別事実として扱い、既存v25 Controlを
+    継続読取する。`null`からの一回限りのbindはdispatch receiptへhandle digestを固定し、別handleへの
+    差替えとreceipt改竄はfail closedにする。予約時からhandleがある既存経路のdigest契約は維持する。
+  - focused fixtureで予約→admit→dispatch→statusを完走し、保存handleまたは相関receiptの改竄拒否を確認する。
+    focused 1/1、Control Record関連95/95、`make lint-js`がgreen。実Observer Controlもrevision 39で
+    dispatch相関、revision 40でstrict Report importまで回復した。受入証拠は
+    [ADR 0037](adr/0037-control-late-dispatch-handle-correlation.md)。full regressionは工場Phase gateへ集約する。
 
 ### Phase O1 — Throughline completed-turn feed（COMPLETE）
 

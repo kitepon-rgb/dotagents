@@ -1163,6 +1163,59 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
   assert.equal(reviewed.manifest.worker_runs.at(-1).placement_reservation.review_decision.type, "decision");
 });
 
+test("Placement予約後に確定したnative handleをdispatch receiptへ相関してControlを継続できる", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "placement-late-handle-control" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "placement-late-handle-control", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "placement-late-handle-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const registry = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "placement-late-handle-control", actor_id: "parent", expected_revision: task.revision,
+    observation: makeRegistryObservation({
+      registry_observation_id: "placement-late-handle-registry", expires_at: "2099-07-14T00:00:00.000Z",
+      capacity: {
+        admission: { value: "true", evidence: evidence("docs/placement-late-handle-admission.md") },
+        hard_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/placement-late-handle-hard.md") },
+        soft_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/placement-late-handle-soft.md") },
+        observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/placement-late-handle-inflight.md") },
+      },
+    }),
+  });
+  const reserved = await api.reservePlacement({
+    cwd: repo.root, control_id: "placement-late-handle-control", actor_id: "parent", expected_revision: registry.revision,
+    task_id: "placement-late-handle-task",
+    candidate: makePlacementCandidate({
+      candidate_id: "placement-late-handle-run", registry_observation_id: "placement-late-handle-registry",
+      assignment_id: "placement-late-handle-assignment", workspace_cwd: repo.root, executor_handle: null,
+      lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "placement-late-handle-assignment" },
+    }),
+    review_decision: null,
+  });
+  const admitted = await api.admitWorker({
+    cwd: repo.root, control_id: "placement-late-handle-control", actor_id: "parent", expected_revision: reserved.revision,
+    worker_run_id: "placement-late-handle-run",
+  });
+  const agentPath = "/root/placement_late_handle_agent";
+  const dispatched = await api.observeWorker({
+    cwd: repo.root, control_id: "placement-late-handle-control", actor_id: "parent", expected_revision: admitted.revision,
+    worker_run_id: "placement-late-handle-run",
+    observation: workerObservation("dispatched", { source: "codex-native", executor_handle: { agent_path: agentPath } }),
+  });
+  assert.equal(dispatched.manifest.worker_runs[0].state, "dispatched");
+  assert.deepEqual(dispatched.manifest.worker_runs[0].executor_handle, { agent_path: agentPath });
+  assert.deepEqual((await api.status({ cwd: repo.root, control_id: "placement-late-handle-control" })).worker_runs[0].executor_handle, { agent_path: agentPath });
+
+  const forgedHandle = structuredClone(dispatched.manifest);
+  forgedHandle.worker_runs[0].executor_handle = { agent_path: "/root/placement_late_handle_forged" };
+  assert.throws(() => api.validateManifest(forgedHandle), code("INVALID_SCHEMA"));
+  const forgedReceipt = structuredClone(dispatched.manifest);
+  const receipt = forgedReceipt.transition_receipts.at(-1);
+  receipt.subject_digest = "0".repeat(64);
+  const receiptPayload = structuredClone(receipt); delete receiptPayload.receipt_digest;
+  receipt.receipt_digest = canonicalDigest(receiptPayload);
+  assert.throws(() => api.validateManifest(forgedReceipt), code("INVALID_SCHEMA"));
+});
+
 test("手動Worker記録もdedicated-worktree isolationを回避できない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "manual-isolation-control" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "manual-isolation-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
