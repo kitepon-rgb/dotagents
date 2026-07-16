@@ -1,5 +1,7 @@
 # プラン: GPT-5.6 世代対応オーケストレーション再配線
 
+**2026-07-16 supersession**: 本書に残る旧着手ゲート・既定委譲は実装当時の履歴であり、現在はグローバルCLAUDE.md／AGENTS.md「作業レーンと統制」の二レーン裁定を優先する。
+
 > 実行順と全体状態の親正本は[開発工場 統合マスター計画](plan_factory-master.md)。残る他端末routing確認はCodex全対応Wave 3と同じhost receiptで閉じ、本書単独で端末rolloutを反復しない。
 
 <!-- 前提: Fable級統括が設計・Opus/Sol級の親が日常実行（2026-07 時点）。モデル×エフォートの正は docs/02_models.md -->

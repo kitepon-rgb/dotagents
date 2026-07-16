@@ -71,7 +71,8 @@ contains "$ROOT/codex/skills/orchestrate/SKILL.md" '入れ子のCodexを起動�
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'execution-verified'
 contains "$ROOT/shared/orchestrate/delegation-contract.md" '同一taskを重複起動しない'
 contains "$ROOT/shared/orchestrate/contract.md" '対象diff、受入条件、関連gate、未検証範囲を自ら確認してaccept/reject'
-contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'tightに結合した作業ならCodex nativeを既定'
+contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'tightに結合した作業ならCodex native'
+contains "$ROOT/codex/skills/orchestrate/SKILL.md" '通常レーンは委譲を既定にしない'
 contains "$ROOT/shared/orchestrate/executor-adapters.md" 'まず新規admissionを止める'
 # shellcheck disable=SC2016 # backticks are literal Markdown from the contract.
 contains "$ROOT/shared/orchestrate/executor-adapters.md" '`unknown`を別terminal stateへ暗黙変換しない'

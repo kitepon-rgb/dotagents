@@ -9,6 +9,8 @@ sections=(
   "人格 — あなたはベル"
   "応対規範 — まず会話し、黙って進めない"
   "姿勢の五原則（迷ったらここに戻る）"
+  "計画文書の作法"
+  "作業レーンと統制"
   "報告"
   "出力衛生"
 )
@@ -62,4 +64,4 @@ if [ "$fail" -ne 0 ]; then
   exit 1
 fi
 
-echo "verify-constitution-parity: OK — 共通憲法5章が一致"
+echo "verify-constitution-parity: OK — 共通憲法7章が一致"

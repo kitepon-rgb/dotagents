@@ -1,6 +1,6 @@
 <svg viewBox="0 0 680 625" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ti de">
 <title id="ti">ベルのオーケストレーション全容 v2</title>
-<desc id="de">依頼が着手ゲート(F/A/H判定)を通り統括ベル(Claude主)が配置を決める。既定Aの物量は書ける4枠(Codex sidecar・Grok・aiterm対話・Claude内)へ委譲。Oracleは物量を書けない相談窓口として統括に破線で接続。委譲物は統括ゲートで検証しpushとmemory/caveat/ragへ還流。呼びかけhookが着手と委譲の瞬間に規範を注入する。</desc>
+<desc id="de">依頼を通常レーンと統括レーンに分ける。通常は親が原子的に完了し、統括ではF/A/Hと必要な配置を使う。委譲利益が明確なAだけを書ける4枠へ渡し、委譲物は統括ゲートで検証する。</desc>
 <style>
 svg{--text-primary:#24211d;--text-secondary:#6b6459;--text-accent:#c65d3b;--border-strong:#cfc9be;--bg2:#f5f3ee;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;}
 @media (prefers-color-scheme:dark){svg{--text-primary:#ece9e3;--text-secondary:#a8a196;--text-accent:#e0805c;--border-strong:#4a453d;--bg2:#2b2824;}}
@@ -12,8 +12,8 @@ svg{--text-primary:#24211d;--text-secondary:#6b6459;--text-accent:#c65d3b;--bord
 <line x1="340" y1="48" x2="340" y2="66" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
 
 <rect x="150" y="68" width="380" height="48" rx="8" fill="var(--bg2)" stroke="var(--text-accent)" stroke-width="2"/>
-<text x="340" y="88" text-anchor="middle" font-size="14" font-weight="500" fill="var(--text-accent)">⚡ ① 着手ゲート</text>
-<text x="340" y="106" text-anchor="middle" font-size="11.5" fill="var(--text-secondary)">F / A / H を判定・既定 A＝委譲・配置を1行宣言</text>
+<text x="340" y="88" text-anchor="middle" font-size="14" font-weight="500" fill="var(--text-accent)">⚡ ① レーン選択</text>
+<text x="340" y="106" text-anchor="middle" font-size="11.5" fill="var(--text-secondary)">通常は親直／統括だけ F / A / H・必要時に配置</text>
 <line x1="340" y1="116" x2="340" y2="134" stroke="var(--border-strong)" marker-end="url(#arrow)"/>
 
 <rect x="150" y="136" width="380" height="52" rx="8" fill="var(--bg2)" stroke="var(--text-accent)" stroke-width="2"/>
@@ -38,7 +38,7 @@ svg{--text-primary:#24211d;--text-secondary:#6b6459;--text-accent:#c65d3b;--bord
 
 <rect x="250" y="226" width="180" height="46" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
 <text x="340" y="245" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">A＝仕様固定の物量</text>
-<text x="340" y="262" text-anchor="middle" font-size="10.5" fill="var(--text-accent)">→ 委譲（既定）⚡C1</text>
+<text x="340" y="262" text-anchor="middle" font-size="10.5" fill="var(--text-accent)">→ 利益が明確なら委譲 ⚡C1</text>
 
 <rect x="460" y="226" width="180" height="46" rx="8" fill="var(--bg2)" stroke="var(--border-strong)"/>
 <text x="550" y="245" text-anchor="middle" font-size="12.5" font-weight="500" fill="var(--text-primary)">H＝人手</text>
@@ -93,5 +93,5 @@ svg{--text-primary:#24211d;--text-secondary:#6b6459;--text-accent:#c65d3b;--bord
 <text x="50" y="577" font-size="10.5" fill="var(--text-secondary)">実線＝物量委譲</text>
 <line x1="188" y1="573" x2="210" y2="573" stroke="var(--text-accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
 <text x="218" y="577" font-size="10.5" fill="var(--text-secondary)">破線＝Oracle への相談（書けない）</text>
-<text x="20" y="597" font-size="10.5" fill="var(--text-secondary)">⚡ 呼びかけ hook（C1 配置ゲート・C4 着手ゲート）が行動の瞬間に規範を注入</text>
+<text x="20" y="597" font-size="10.5" fill="var(--text-secondary)">⚡ hook（C4 レーン案内・C1 委譲契約案内）は通常レーンへ統括を強制しない</text>
 </svg>

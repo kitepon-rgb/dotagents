@@ -20,7 +20,7 @@ STATE_DIR = state_dir()
 if STATE_DIR is None:
     raise SystemExit(0)
 
-ONSET_CONTEXT = "INFO: このセッションで実装・委譲・複数工程の作業を行う場合の進め方は、グローバル AGENTS.md の「計画文書の作法」「モデルとエフォート」および orchestrate skill を参照。会話・調査・小さな単発修正には追加対応不要。このINFO自体は、新しい作業・文書作成・委譲・依頼範囲の拡張を要求しません。"
+ONSET_CONTEXT = "INFO: 複数repo・Executor・Phase、長時間resume、H操作、高リスク契約を含む統括レーンは、グローバル AGENTS.md「作業レーンと統制」とorchestrate skillに従います。単一repo・単一担当・可逆・低リスクな通常レーンはdocs plan、F/A/H宣言、既定委譲、Controlが不要です。このINFO自体は作業範囲を拡張しません。"
 
 
 def error_log(name):
@@ -160,7 +160,7 @@ def pre_tool_use(data):
         canon_path = os.path.join(STATE_DIR, f"{key}.codex-plan-canon")
         if not safe_exists(canon_path) and safe_touch(canon_path):
             if len(plan) >= 4:
-                messages.append("INFO: Codex の内蔵プランが作成されました。永続プランの保存先とTODO管理の方針は、グローバル AGENTS.md「計画文書の作法」を参照。内蔵プランはセッション内の補助情報であり、正本の代替になるかは同規約に従います。")
+                messages.append("INFO: Codex の内蔵プランが作成されました。通常レーンは内蔵planで足り、統括レーンだけがグローバル AGENTS.md「計画文書の作法」に従ってdocs正本を持ちます。")
 
         if statuses and all(status == "completed" for status in statuses):
             done_path = os.path.join(STATE_DIR, f"{key}.codex-plan-done")
@@ -244,7 +244,7 @@ def stop(data):
         return
     gc()
     summary = f"{len(paths)} ファイル/コミット {commits}"
-    message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。対象作業の進捗管理方法は、グローバル AGENTS.md「計画文書の作法」を参照。この情報は今回の依頼範囲を広げず、前ターンの応答を再開する指示でもありません。"
+    message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。この差分が当該planに属する統括レーンなら進捗を反映し、無関係な通常レーンなら更新不要です。この情報は依頼範囲を広げません。"
     safe_write(os.path.join(STATE_DIR, f"{key}.codex-pending"), message + "\n")
 
 

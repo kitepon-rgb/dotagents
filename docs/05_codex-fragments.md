@@ -150,7 +150,7 @@ codex --profile work
 
 ## 9. hooks.json への呼びかけ hook 配線
 
-Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3／着手ゲート C4）の Codex ミラーが X1-X5 である。設計・Hook 台帳・INFO 契約の正典は [docs/plan_callout-hooks.md](plan_callout-hooks.md)。通常の配線は section 7 の `apply-codex-config` だけを使い、古い jq 手挿し断片を併用しない。
+Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3／着手案内 C4）の Codex ミラーが X1-X5 である。現行の義務はグローバルAGENTS.md「作業レーンと統制」、実装履歴は [docs/plan_callout-hooks.md](plan_callout-hooks.md) を参照する。通常の配線は section 7 の `apply-codex-config` だけを使い、古い jq 手挿し断片を併用しない。
 
 | イベント | command | 役割 | timeoutSec |
 |---|---|---|---:|

@@ -27,7 +27,7 @@ Claude appendixは、Claude固有入口から得たstatusをControlへ投影す�
 | L0 統括 | 裁定・契約クリティカル（認可/tx/公開API互換/依存方向/本番操作）・履歴修復・コミット・最終責任 | 本人 | セッション主モデル |
 | L1 監査・検証 | 発見→重複統合→**指摘ごとの反証**→網羅性Critic（盲点→第2ラウンド） | Workflow（`references/workflow-templates.md`） | 省略=主モデル継承（検証の精度優先）。数で押す finder は sonnet 可 |
 | L2 設計 | 2〜4視点の並列設計（実行順序/配置/取捨 等）→**割れは統括が根拠で裁定**（多数決禁止） | Agent (Plan) | 主モデル継承 |
-| L3 実装 | 仕様が固まった実装・テスト作成・逐語移設・整理 | **まず外部枠 codex-sidecar の `codex_work`（隔離 worktree・Claude レート非依存）**、次善で Agent/Workflow `model: sonnet`（機械的なら haiku） | 外部枠優先→sonnet |
+| L3 実装 | 統括レーンで委譲利益が明確な仕様固定物量 | 外部枠 codex-sidecar の `codex_work`、次善で Agent/Workflow `model: sonnet`（機械的なら haiku） | 外部枠優先→sonnet |
 | L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | 非対話＝codex-sidecar の `codex_review`/`codex_work`/`codex_generate` 等／対話＝aiterm の `codex_agent`・`grok_agent`・`composer_agent` | レート非依存＝第一選択（02_models.md） |
 
 **レート予算**: L0 統括（Claude）の窓は有限資源。物量は L4 外部枠（Codex/Grok＝Claude レート非依存）を第一選択にし、Claude 内 sonnet/haiku は外部の性能が足りない時の次善（同じ Anthropic 枠を食う）。これは共有最低契約に対するClaude固有の配置強化策であり、詳細は docs/02_models.md。
@@ -53,7 +53,7 @@ Claude appendixは、Claude固有入口から得たstatusをControlへ投影す�
 - **裁定は棄却側へ倒す**: 確信が持てない指摘・提案は棄却する（もっともらしいだけの大改造を通さない。迷ったら殺す）。
 - **契約クリティカルは自己実装前に refuter を1回通す**: 認可・tx・公開API互換・依存方向・本番操作は、着手前に「この設計は安全か」を refuter に殺させてから。
 - **エスカレーション裁量**: 委譲物に納得しなければ上位（Opus → 最上位 latest）へ引き上げてよい。安さは品質の人質ではない。
-- **配置はゲートで宣言**: 着手ゲート（F/A/H）と同時に（ティア, effort, 入口）を1行宣言。02_models.md の決定表の既定から上振れする方（上位ティア・xhigh 以上・ultra・物量への主モデル継承）を要正当化にする。配置に迷ったら安い方・採用に迷ったら棄却。
+- **配置は統括レーンで宣言**: F/A/Hと同時に（ティア, effort, 入口）を1行宣言する。通常レーンは分類・配置宣言を要しない。02_models.mdの既定から上振れする方を要正当化し、配置に迷ったら安い方・採用に迷ったら棄却する。
 
 ## Claude 固有の参照
 

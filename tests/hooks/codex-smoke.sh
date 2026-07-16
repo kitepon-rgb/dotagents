@@ -40,11 +40,11 @@ run x2-fastpath-other python3 "$HOOK" pre-tool-use <<<'{"session_id":"p0","tool_
 run x2-plan-small python3 "$HOOK" pre-tool-use <<<'{"session_id":"p1","tool_name":"update_plan","tool_input":{"plan":[{"step":"a","status":"pending"},{"step":"b","status":"pending"}]}}' \
   && [ "$RUN_BYTES" -eq 0 ] && pass x2-plan-small || fail_case x2-plan-small
 
-# update_plan 初回・step>=4 → 正本化ゲート文言
+# update_plan 初回・step>=4 → レーン別の計画文言
 run x2-plan-canon python3 "$HOOK" pre-tool-use <<EOF
 {"session_id":"p2","tool_name":"update_plan","tool_input":{"plan":[{"step":"a","status":"pending"},{"step":"b","status":"pending"},{"step":"c","status":"pending"},{"step":"d","status":"pending"}]}}
 EOF
-json && [[ "$RUN_OUT" == *"INFO: Codex"* ]] && pass x2-plan-canon || fail_case x2-plan-canon
+json && [[ "$RUN_OUT" == *"通常レーンは内蔵planで足り"* && "$RUN_OUT" == *"統括レーンだけ"* ]] && pass x2-plan-canon || fail_case x2-plan-canon
 
 # 同一セッション2回目の update_plan（4件以上でも）→ 初回スロットル済みで沈黙
 run x2-plan-canon-2nd python3 "$HOOK" pre-tool-use <<EOF
@@ -131,7 +131,7 @@ EOF
 
 # --- X3/X5 user-prompt-submit（セッション1回のINFO ＋ pending drain） ---
 run x35-normal python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
-  && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass x35-normal || fail_case x35-normal
+  && json && [[ "$RUN_OUT" == *'通常レーン'* && "$RUN_OUT" == *'Controlが不要'* ]] && pass x35-normal || fail_case x35-normal
 
 run x35-silent python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
   && [ "$RUN_BYTES" -eq 0 ] && pass x35-silent || fail_case x35-silent

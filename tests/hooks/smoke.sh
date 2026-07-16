@@ -186,7 +186,7 @@ run c3-active python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass c3-active || fail_case c3-active
 
-run c4-normal python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass c4-normal || fail_case c4-normal
+run c4-normal python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && json && [[ "$RUN_OUT" == *'通常レーン'* && "$RUN_OUT" == *'Controlが不要'* ]] && pass c4-normal || fail_case c4-normal
 run c4-silent python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && [ "$RUN_BYTES" -eq 0 ] && pass c4-silent || fail_case c4-silent
 run c4-off env DOTAGENTS_ONSET_GATE=off python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u2"}' && [ "$RUN_BYTES" -eq 0 ] && pass c4-off || fail_case c4-off
 printf '%s\n' keep >"$STATE/cache-file-target"

@@ -53,9 +53,9 @@ apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-con
 集合を検証してから二設定を原子的に復元する。途中失敗はrestore開始前状態へ戻し、元々absentだったconfigは
 削除する。manifest導入前の旧archiveや手製tarをrestoreへ流用しない。
 
-- **正本化ゲート hook（全端末推奨・下記）**: プラン承認直後に「計画文書の作法」を注入し、承認プランの docs/ 正本化を機械発火させる。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）、配線だけを各端末の `~/.claude/settings.json` に手挿し（同期ペイロード＋手挿しコネクタ＝settings.json 非同期の型）。設計と TODO は [archive/2026-07_plan-gate-hook.md](archive/2026-07_plan-gate-hook.md)（完遂済み）。
+- **計画レーン案内 hook（全端末推奨・下記）**: プラン承認直後に「計画文書の作法」を注入する。通常レーンは会話・内蔵planで閉じ、複数Phase・複数repo・H操作など統括レーンだけを`docs/`正本化へ案内する。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）、配線だけを各端末の `~/.claude/settings.json` に手挿しする。初期設計は [archive/2026-07_plan-gate-hook.md](archive/2026-07_plan-gate-hook.md)、現行のレーン裁定はグローバルCLAUDE.md／AGENTS.mdを正とする。
 
-### 正本化ゲート hook の配線断片
+### 計画レーン案内 hook の配線断片
 
 前提: `./install.sh` 済み（`~/.local/bin/plan-gate-hook` が存在）。`~/.claude/settings.json` にマージ（既存 `hooks.PostToolUse` があればその配列へ足す）。ライブ反映＝次のプラン承認から発火:
 
@@ -75,11 +75,11 @@ apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-con
 ```
 
 - matcher は `ExitPlanMode` 完全一致（プラン承認専用イベントは無く PostToolUse で受ける）。
-- TodoWrite には貼らない（些末用途が多く毎回発火は alarm fatigue）。TodoWrite 経路は散文の正本化ゲートがカバー。
+- TodoWrite には貼らない（些末用途が多く毎回発火は alarm fatigue）。通常レーンのTodoWriteから文書作成を要求しない。
 
-### 呼びかけ hook 群の配線断片（配置ゲート・TODO ゲート・着手ゲート）
+### 呼びかけ hook 群の配線断片（配置ゲート・TODO ゲート・着手案内）
 
-前提: `./install.sh` 済み（`~/.local/bin/{delegation-gate-hook,todo-gate-hook,onset-gate-hook}` が存在。`todo-gate-hook` はサブコマンド `session-start` / `stop` を取る）。設計・Hook 台帳・オーナー裁定の正典は [docs/plan_callout-hooks.md](plan_callout-hooks.md)（進行中プラン）。4本とも `~/.claude/settings.json` にマージ（既存配列があればその配列へ足す、無ければ新規作成）。ライブ反映＝配線後の新セッション不要（計画 Phase 1・P5 で hot-reload 実測済み）。
+前提: `./install.sh` 済み（`~/.local/bin/{delegation-gate-hook,todo-gate-hook,onset-gate-hook}` が存在。`todo-gate-hook` はサブコマンド `session-start` / `stop` を取る）。現行の義務はグローバルCLAUDE.md／AGENTS.md、Hookの実装履歴は [docs/plan_callout-hooks.md](plan_callout-hooks.md) を参照する。4本とも `~/.claude/settings.json` にマージ（既存配列があればその配列へ足す、無ければ新規作成）。ライブ反映＝配線後の新セッション不要（計画 Phase 1・P5 で hot-reload 実測済み）。
 
 #### C1 配置ゲート（PreToolUse・委譲ツール呼び出し時）
 

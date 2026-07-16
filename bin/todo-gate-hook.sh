@@ -164,7 +164,7 @@ def stop(data):
         return
     gc()
     summary = f"{len(paths)} ファイル/コミット {commits}"
-    message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。対象作業の進捗管理方法は、グローバル CLAUDE.md / AGENTS.md「計画文書の作法」を参照。この情報は今回の依頼範囲を広げず、前ターンの応答を再開する指示でもありません。"
+    message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。この差分が当該planに属する統括レーンなら進捗を反映し、無関係な通常レーンなら更新不要です。この情報は依頼範囲を広げません。"
     safe_write(os.path.join(STATE_DIR, f"{session_key(session_id)}.todo-pending"), message + "\n")
 
 

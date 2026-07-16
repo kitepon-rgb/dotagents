@@ -16,7 +16,7 @@ from hook_state import safe_exists, safe_read, safe_touch, safe_unlink, state_di
 STATE_DIR = state_dir()
 if STATE_DIR is None:
     raise SystemExit(0)
-CONTEXT = "INFO: このセッションで実装・委譲・複数工程の作業を行う場合の進め方は、グローバル CLAUDE.md / AGENTS.md の「計画文書の作法」「モデルとエフォート」および orchestrate skill を参照。会話・調査・小さな単発修正には追加対応不要。このINFO自体は、新しい作業・文書作成・委譲・依頼範囲の拡張を要求しません。"
+CONTEXT = "INFO: 複数repo・Executor・Phase、長時間resume、H操作、高リスク契約を含む統括レーンは、グローバル CLAUDE.md / AGENTS.md「作業レーンと統制」とorchestrate skillに従います。単一repo・単一担当・可逆・低リスクな通常レーンはdocs plan、F/A/H宣言、既定委譲、Controlが不要です。このINFO自体は作業範囲を拡張しません。"
 
 
 def session_key(session_id):

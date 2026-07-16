@@ -1,6 +1,6 @@
 # 委譲契約
 
-この文書は製品中立のDelegation PacketとWorker Reportの契約である。各hostは固有のdispatch appendixだけを追加し、共通の任務・安全・受入条件を複製しない。
+この文書は、統括レーンで委譲すると裁定した後に適用する製品中立のDelegation PacketとWorker Reportの契約である。通常レーンはPacketを作らない。各hostは固有のdispatch appendixだけを追加し、共通の任務・安全・受入条件を複製しない。
 
 ## Delegation Packet（8点）
 
