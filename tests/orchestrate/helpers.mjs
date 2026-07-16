@@ -344,3 +344,20 @@ exec "${realGit}" "$@"
   await chmod(git, 0o700);
   return { bin, log };
 }
+
+export const makeQuotaExecutor = (overrides = {}) => ({
+  adapter_id: "codex-sidecar", contract_version: "v1", instance_id: "local-default", handle_schema_id: "codex-sidecar.idempotency-key.v1", ...overrides,
+});
+
+export const makeQuotaWindow = (overrides = {}) => ({
+  window_id: "5h", duration_seconds: 5 * 3600, reset_at: "2026-07-17T04:00:00.000Z",
+  remaining_bp: 7000, model_family_scope: null, ...overrides,
+});
+
+export const makeQuotaSnapshot = (overrides = {}) => ({
+  schema_version: "dotagents.quota-snapshot.v1",
+  quota_pool_id: "openai-sub-main", host_instance_id: "host-mac-main",
+  executor_scope: [makeQuotaExecutor()], provider: "openai",
+  windows: [makeQuotaWindow()],
+  observed_at: "2026-07-17T00:00:00.000Z", source: "app-ui", confidence: "reported", ...overrides,
+});
