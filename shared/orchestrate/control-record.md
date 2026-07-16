@@ -218,6 +218,9 @@ evidenceは参照文字列だけで流さず、次のexact objectとしてmanife
   `control-migrate`は両version（v25／v26）のreaderが受理する——rollback後のv25 manifestにも
   migrate系receiptは恒久に残るため、これを拒否すると「v25として有効」が成立しない。
   そのreceiptはsubjectがControl自身、`previous_state`／`next_state`がfrom/to schema versionである。
+  readerはmigrate receiptの意味も検証する: subjectは当該Control・evidence空・両stateは
+  既知schema versionかつ相異・複数receiptは連鎖（前のnextが次のprevious）・最後の
+  `next_state`は現`schema_version`と一致。捏造migration履歴をdigest chainだけで有効化しない。
 - `receipt_digest`は自身を除くreceiptのcanonical JSON SHA-256。revision 1以降は直前receiptのdigestを
   `previous_receipt_digest`へ持ち、read/save時に連番とchainを再計算する。過去receiptの書換え、欠落、
   並べ替えを`INVALID_SCHEMA`で拒否する。
@@ -1042,6 +1045,9 @@ terminal_evidence
     workspaceを持たず、同一session IDだけでresumeする。
   - `codex-sidecar`: `null`固定 — 同期read-only consultation（`codex_opinion`）はdurable handleを
     持たない製品契約のため、handleを捏造せずconsultation_id＋request相関で結果を照合する。
+- v26の`effort`はconnector別に製品契約へ束縛する（`claude-native`: `low..max`、`codex-sidecar`:
+  `low..xhigh`）。request builderがdispatchできないplanned recordを作らない。`gpt-connector`は
+  v25 recordのmigrate互換のため従来どおりopaqueな文字列。
 - 状態は`planned -> dispatched -> running | unknown | completed | failed`、
   `running/unknown -> running | unknown | completed | failed`。terminalは巻き戻さない。
 - CLIは外部providerへ送信も再照会もしない。親が製品を再照会した観測だけを記録する。
@@ -1061,9 +1067,13 @@ terminal_evidence
 
 `observeConsultation`の`observation`はWorkerと共通の
 `state, source, observed_version, observed_at, raw_state`だけを基礎fieldとし、`completed`だけ
-`decision_ref`、`failed`だけ空でない`terminal_evidence`を追加できる。handle、workspace、
+`decision_ref`、`failed`だけ空でない`terminal_evidence`を追加できる。workspace、
 result、acceptance、worker evidenceを持てない。保存する`executor_observation`は
 source/version/time/raw_stateだけで、`decision_ref`はConsultation直下に保存する。
+**観測はrecordへ相関束縛される**（O3 Phase監査採用指摘）: `source`はrecordの`connector`と
+一致必須。optionalの`consultation_handle`を含む場合はrecordのhandle（v25は`{slug}`相当）と
+完全一致必須で、`executor_observation`へは格納しない。adapter bridgeの出力はhandleを
+含むため、bridge経由の観測は自動的にこの照合を受ける。
 
 Consultationも`planned`ではobservation／decision／terminal evidenceが空、
 `dispatched | running | unknown`ではobservationだけ、`completed`ではobservation＋decision ref、

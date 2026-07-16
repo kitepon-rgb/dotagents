@@ -189,7 +189,9 @@ fieldを持たないが、request builderはCLI実行のためのcwdを要求し
 
 `projectClaudeNativeConsultObservation`は専用observation schema
 （`dotagents.claude-native.consult-observation.v1`）で`consultation_handle`（同一session ID）と
-状態だけを残す。caller timeoutは`projectClaudeNativeConsultTimeoutObservation`で`unknown`として
+状態を残す。**`completed`はstream-jsonの`type:result`受信を指す`result_receipt`（bounded string）を
+必須とし、process exitだけでcompletedを作れない**（ADR 0045 §7のadapter層強制。O3 Phase監査
+採用指摘）。caller timeoutは`projectClaudeNativeConsultTimeoutObservation`で`unknown`として
 保持する。Worker用observation schemaとは相互に受理されない（lane逆流の遮断はControl Record bridge参照）。
 
 ## codex-sidecar consultation packet / projection（consult-v1）
@@ -205,7 +207,9 @@ effort語彙はconnectorごとに製品契約へ束縛し、共通語彙を捏�
 は`consultation_handle: null`を固定し、consultation_id＋request相関で結果を照合する。
 `projectCodexSidecarOpinionObservation`は`workflow="opinion"`の実result shapeを検証して
 completed（`ok`）／failed（`partial|failed|refused`）へ投影し、`projectCodexSidecarOpinionErrorObservation`／
-`projectCodexSidecarOpinionTimeoutObservation`がcaller観測のMCPエラー／timeoutを表す。結果喪失時は
+`projectCodexSidecarOpinionTimeoutObservation`がcaller観測のMCPエラー／timeoutを表す。
+read-only opinionのresultに**write痕跡（非空`changedFiles`・`worktreePath`・`worktreePreserved`）が
+載っていたら製品契約違反の兆候としてfail closed**にする（空の`changedFiles`だけ許容）。結果喪失時は
 製品terminal状態を取得できないため、failed終端のterminal evidenceにはcaller観測の`command`または
 `executor-receipt` descriptorをconnector条件付きで認める（ADR 0045 §7）。
 
@@ -252,7 +256,9 @@ exact observation payloadへ変換する純粋関数である。Workerは`execut
 dispatched／completed／failed・cancelledの証拠fieldを状態ごとに一つだけ要求する。sidecar completedでは
 Control result digestとprovider result digestの一致も要求する。Consultationはconnector別observation
 schema（gpt-connector／claude-native consult／codex-sidecar consult）をdispatchして受理し、
-completedのDecision参照とfailedのterminal evidenceを分離する。**consultation observation schemaは
+completedのDecision参照とfailedのterminal evidenceを分離する。bridge出力はprojectionの
+`consultation_handle`を保持し、`observeConsultation`がrecordのconnector・handleとの一致を
+mutation時に検証する（O3 Phase監査採用指摘）。**consultation observation schemaは
 `buildWorkerControlObservation`が`PROJECTION_UNSUPPORTED`で拒否し、Worker observation schemaも
 consultation側へ入らない**——consultationの結果がWorker control observationへ流入する経路を作らない
 （ADR 0045）。どちらもfilesystem、network、host toolを実行しない。

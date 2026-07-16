@@ -408,6 +408,17 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     確認のうえ保全不要と裁定して削除。Lattice向けallow行は別セッション所有として非commit保全。
 
 **Gate:** 親hostにかかわらず、同じControlとlane固有のPacket／Report／Decision／timeout回収契約で両社レーンを使える。host projectionをexecution成功へ投影しない。
+- Phase gate前半実施済み（2026-07-17）: orchestration full regression **136/136・fail 0・skip 0**、
+  クロスprovider Phase監査（Codex `codex_review`→refuter反証→統括裁定、採用5・棄却1、修理`a77b889`）を
+  [ADR 0051](adr/0051-o3-phase-audit-record.md)で記録。**残るO3完了条件はlive H gateのみ**
+  （実model dispatch smoke・`--tools ""`実測。オーナー承認待ち）。
+
+### Phase 3 maintenance queue
+
+- [ ] consultationのplanned→terminal脱出経路を設計裁定する（既存v25契約の欠陥。取消済みTaskの
+  planned consultationがControl finalizeを恒久ブロックする。worker同型のplanned→cancelled＋
+  dispatch_attempt_evidence案。truth table・shared文書・fixture波及のため不変ADR必須。
+  実storeに該当Controlなし＝P0/P1非該当。記録元: [ADR 0051](adr/0051-o3-phase-audit-record.md)）。
 
 ### Phase 4: Rate-aware Elastic Scheduler
 

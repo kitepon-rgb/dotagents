@@ -504,6 +504,10 @@ Observer `docs/plan_observer.md`
     保全不要と裁定して削除した。`codex/rules/default.rules`のLattice向けallow 1行は別セッション
     所有物として非commitのまま保全する。
 
+- [ ] live H gateでO3を完了する（オーナー承認必須）: claude-native consult/worker・`codex_opinion`の
+  実model dispatch smokeと`--tools ""` live実測。Phase gate前半（full 136/136＋クロスprovider監査、
+  採用5・棄却1修理済み）は[ADR 0051](adr/0051-o3-phase-audit-record.md)で完了済み。
+
 詳細: [Observer計画 Phase 3](plan_observer-factory-integration.md#phase-3-elasticのprovider対称化)
 
 ### Phase O4 — rate-aware scheduler
