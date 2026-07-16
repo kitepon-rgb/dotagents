@@ -567,6 +567,11 @@ cancelled_at`を追加する。Task本体はimmutableのまま、取消記録を
 
 - 取消後は新しいplacement reservation、Worker Run、Consultation、planned Workerのadmission、
   planned Consultationのdispatchを拒否する。
+- **取消済みTaskのplanned Consultationは閉鎖要求から除外する**（ADR 0053）: dispatchが恒久拒否され
+  planned→terminal遷移が存在しないため、Control finalization準備・closing receipt容量予約・
+  campaign all-terminal判定の3箇所で孤児として除外する。stateは`planned`のまま書き換えず監査可能に
+  保ち、`dispatched`以降のConsultationは従来どおりterminalへの回収を必須とする。v27で明示の
+  `cancelled` stateを導入し、この除外を廃止する予定。
 - 取消時点で存在するWorker／Consultationのstate、opaque handle、write reservationを変更しない。
   Task取消だけでExecutor上の処理をcancelled扱いにせず、既存Runは所有Executorの観測で閉じる。
 - finalized Taskの取消、同一Taskの重複取消を拒否する。Task取消DecisionはWorker個別のcancel要求を

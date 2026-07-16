@@ -3087,3 +3087,86 @@ test("control-migrate receiptは対象Control・v25/v26遷移・連鎖・最終s
   assert.throws(() => api.validateManifest(tamper((_manifest, receipt) => { receipt.next_state = "dotagents.orchestration-control.v25"; receipt.previous_state = "dotagents.orchestration-control.v25"; })), code("INVALID_SCHEMA"));
   assert.throws(() => api.validateManifest(tamper((manifest, _receipt) => { manifest.schema_version = "dotagents.orchestration-control.v25"; })), code("INVALID_SCHEMA"));
 });
+
+test("取消済みTaskのplanned consultationはfinalize・容量予約・campaign終端を恒久ブロックしない", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "orphaned-consult-close" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "orphan-task", effect: "read", write_scope: [] }),
+  });
+  const consultation = await api.consultationRecord({
+    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: task.revision,
+    consultation: makeConsultation({ consultation_id: "orphan-consult", task_id: "orphan-task", assignment_id: "orphan-assignment" }),
+  });
+  const campaign = await api.campaignRecord({
+    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: consultation.revision,
+    campaign: { campaign_id: "orphan-campaign", campaign_type: "discovery", members: [{ kind: "consultation", id: "orphan-consult" }], gated_task_ids: ["orphan-task"], audit_required: false },
+  });
+  assert.equal((await api.campaignStatus({ cwd: repo.root, control_id: "orphaned-consult-close", campaign_id: "orphan-campaign" })).all_terminal, false);
+  const cancelDecision = await materializeDocumentEvidence(repo, evidence("docs/orphan-cancel.md", "decision"));
+  const cancelled = await api.taskCancelRecord({
+    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: campaign.revision,
+    task_id: "orphan-task", decision: cancelDecision,
+  });
+  // 除外はstateを書き換えず、dispatch拒否（非偽装）も維持される
+  const manifest = await api.status({ cwd: repo.root, control_id: "orphaned-consult-close" });
+  assert.equal(manifest.consultations[0].state, "planned");
+  await assert.rejects(api.observeConsultation({
+    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: cancelled.revision, consultation_id: "orphan-consult",
+    observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "dispatched" },
+  }), code("TASK_CANCELLED"));
+  // campaign終端判定は取消済みTaskのplanned consultationを孤児として除外する
+  assert.equal((await api.campaignStatus({ cwd: repo.root, control_id: "orphaned-consult-close", campaign_id: "orphan-campaign" })).all_terminal, true);
+  const releaseDecision = await materializeDocumentEvidence(repo, evidence("docs/orphan-release.md", "decision"));
+  const released = await api.releaseCampaign({
+    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: cancelled.revision,
+    campaign_id: "orphan-campaign", decision: releaseDecision, audit_evidence: [],
+  });
+  const phaseComplete = await completePhaseGate(repo, "orphaned-consult-close", released.revision);
+  // 容量予約の除外: 253まで詰めてもfinalize＋archiveのちょうど2 slotで閉じ切れる
+  const padded = structuredClone(phaseComplete.manifest);
+  for (let revision = padded.record_revision + 1; revision <= 253; revision++) {
+    const previous = padded.transition_receipts.at(-1);
+    padded.transition_receipts.push(makeTransitionReceipt({
+      revision, actor_id: "parent", operation: "task-record",
+      subject: { kind: "task", id: `orphan-close-padding-${revision}` },
+      previous_state: null, next_state: "recorded", previous_receipt_digest: previous.receipt_digest,
+    }));
+  }
+  padded.record_revision = 253;
+  padded.last_update = { actor_id: "parent", updated_at: padded.transition_receipts.at(-1).recorded_at };
+  await writeJson(join(repo.commonDir, "dotagents", "orchestrate", "controls", "orphaned-consult-close", "manifest.json"), padded);
+  const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
+    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: 253,
+    acceptance_matrix_ref: "docs/orphan-close-acceptance.md",
+    final_audit_evidence: [evidence("docs/orphan-close-audit.md")],
+    regression_evidence: [evidence("docs/orphan-close-regression.md")],
+    knowledge_return_refs: ["docs/orphan-close-knowledge.md"],
+    parent_decision: evidence("docs/adr/orphan-close-decision.md", "decision"), finalized_by: "parent",
+  }));
+  assert.equal(finalized.revision, 254);
+  assert.equal(finalized.manifest.consultations[0].state, "planned");
+  const archived = await api.archive({ cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: finalized.revision });
+  assert.equal(archived.manifest.status, "archived");
+});
+
+test("未取消Taskのplanned consultationは従来どおりControl finalizationをブロックする", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "planned-still-blocks" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "planned-still-blocks", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "blocking-task", effect: "read", write_scope: [] }),
+  });
+  const consultation = await api.consultationRecord({
+    cwd: repo.root, control_id: "planned-still-blocks", actor_id: "parent", expected_revision: task.revision,
+    consultation: makeConsultation({ consultation_id: "blocking-consult", task_id: "blocking-task", assignment_id: "blocking-assignment" }),
+  });
+  const phaseComplete = await completePhaseGate(repo, "planned-still-blocks", consultation.revision);
+  await assert.rejects(api.finalizeControl(await materializeFinalizationInput(repo, {
+    cwd: repo.root, control_id: "planned-still-blocks", actor_id: "parent", expected_revision: phaseComplete.revision,
+    acceptance_matrix_ref: "docs/blocking-acceptance.md",
+    final_audit_evidence: [evidence("docs/blocking-audit.md")],
+    regression_evidence: [evidence("docs/blocking-regression.md")],
+    knowledge_return_refs: ["docs/blocking-knowledge.md"],
+    parent_decision: evidence("docs/adr/blocking-decision.md", "decision"), finalized_by: "parent",
+  })), code("FINALIZATION_NOT_READY"));
+});

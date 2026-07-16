@@ -418,10 +418,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 3 maintenance queue
 
-- [ ] consultationのplanned→terminal脱出経路を設計裁定する（既存v25契約の欠陥。取消済みTaskの
-  planned consultationがControl finalizeを恒久ブロックする。worker同型のplanned→cancelled＋
-  dispatch_attempt_evidence案。truth table・shared文書・fixture波及のため不変ADR必須。
-  実storeに該当Controlなし＝P0/P1非該当。記録元: [ADR 0051](adr/0051-o3-phase-audit-record.md)）。
+- [x] consultationのplanned→terminal脱出経路を設計裁定する（既存v25契約の欠陥。取消済みTaskの
+  planned consultationがControl finalizeを恒久ブロックする。記録元:
+  [ADR 0051](adr/0051-o3-phase-audit-record.md)）。
+  - [ADR 0053](adr/0053-consultation-orphaned-planned-closure-exemption.md)で裁定・実装。
+    stateを書き換えず、finalize準備・closing容量予約・campaign終端判定の3箇所で孤児を除外
+    （shape不変・両version・migrationなし）。容量上限ちょうどでのfinalize/archive成功と
+    未取消時の従来ブロックをfixtureで固定、full 138/138。明示`cancelled` stateはv27（O4設計）で
+    導入し本除外を廃止する。
 
 ### Phase 4: Rate-aware Elastic Scheduler
 
