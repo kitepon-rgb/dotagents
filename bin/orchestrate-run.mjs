@@ -23,7 +23,7 @@ const commands = new Map([
   ["control-migrate", api.controlMigrate],
   ["worker-run-record", api.workerRunRecord], ["consultation-record", api.consultationRecord],
   ["admit-worker", api.admitWorker], ["worker-workspace-bind", api.bindWorkerWorkspace], ["worker-cancel-request", api.requestWorkerCancel], ["observe-worker", api.observeWorker],
-  ["observe-consultation", api.observeConsultation], ["conflict-check", api.conflictCheck],
+  ["observe-consultation", api.observeConsultation], ["consultation-cancel", api.consultationCancel], ["conflict-check", api.conflictCheck],
   ["accept", api.accept], ["reject", api.reject], ["task-finalize-record", api.taskFinalizeRecord],
   ["control-finalize", api.finalizeControl], ["recover-lock", api.recoverLock], ["archive", api.archive],
 ]);

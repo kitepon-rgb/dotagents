@@ -2813,6 +2813,14 @@ test("phase gate CLIはrecord/advance/statusだけを行い外部providerを起�
 
 const V25 = "dotagents.orchestration-control.v25";
 const V26 = "dotagents.orchestration-control.v26";
+const V27 = "dotagents.orchestration-control.v27";
+
+/** v26 Control（v26世代init産物）を再現する: cancelled不在のconsultation shapeはv27と同一で、schema定数だけが異なる。 */
+async function downgradeControlToV26(repo, controlId) {
+  const manifest = await readPersistedManifest(repo.commonDir, controlId);
+  manifest.schema_version = V26;
+  await writeJson((await controlStatePaths(repo.commonDir, controlId)).manifest, manifest);
+}
 
 /** 実在するv25 Control（v23→v25世代のinit産物）を再現する: schema定数とconsultation shapeだけがv26と異なる。 */
 async function downgradeControlToV25(repo, controlId) {
@@ -2832,10 +2840,10 @@ async function consultationTaskRecorded(t, controlId) {
   return { repo, revision: task.revision };
 }
 
-test("v26 initはtyped consultation_handleの多provider consultationを固定しshape違反をfail closedにする", async (t) => {
+test("typed schema initはtyped consultation_handleの多provider consultationを固定しshape違反をfail closedにする", async (t) => {
   const { repo, revision } = await consultationTaskRecorded(t, "v26-multiprovider");
   const sessionId = "123e4567-e89b-42d3-a456-426614174000";
-  assert.equal((await api.status({ cwd: repo.root, control_id: "v26-multiprovider" })).schema_version, V26);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "v26-multiprovider" })).schema_version, V27);
   const claude = await api.consultationRecord({
     cwd: repo.root, control_id: "v26-multiprovider", actor_id: "parent", expected_revision: revision,
     consultation: makeConsultation({ consultation_id: "claude-consult", assignment_id: "claude-consult-assignment", connector: "claude-native", consultation_handle: { session_id: sessionId } }),
@@ -2902,7 +2910,9 @@ test("control-migrateはv25→v26を決定的に一回で行い非gpt consultati
   await downgradeControlToV25(repo, "migrate-control");
   const recorded = await api.consultationRecord({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: revision, consultation: makeConsultationV25() });
   await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V25 }), code("INVALID_TRANSITION"));
-  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: "dotagents.orchestration-control.v27" }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: "dotagents.orchestration-control.v28" }), code("INVALID_SCHEMA"));
+  // v25→v27の直行migrationは存在しない（隣接version限定・ADR 0054）
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V27 }), code("INVALID_TRANSITION"));
   const migrated = await api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V26 });
   assert.equal(migrated.manifest.schema_version, V26);
   assert.equal(migrated.revision, recorded.revision + 1);
@@ -2922,6 +2932,7 @@ test("control-migrateはv25→v26を決定的に一回で行い非gpt consultati
 
 test("rollbackはgpt-connectorのみのv26をv25へ戻しmigrate receiptは両versionで有効に残る", async (t) => {
   const { repo, revision } = await consultationTaskRecorded(t, "rollback-control");
+  await downgradeControlToV26(repo, "rollback-control");
   const recorded = await api.consultationRecord({ cwd: repo.root, control_id: "rollback-control", actor_id: "parent", expected_revision: revision, consultation: makeConsultation() });
   const rolledBack = await api.controlMigrate({ cwd: repo.root, control_id: "rollback-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V25 });
   assert.equal(rolledBack.manifest.schema_version, V25);
@@ -2951,7 +2962,7 @@ test("receipt容量際のcontrol-migrateは架空の空きを作らずCONTROL_CA
   manifest.record_revision = 253;
   manifest.last_update = { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" };
   await writeJson((await controlStatePaths(repo.commonDir, "migrate-capacity")).manifest, manifest);
-  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-capacity", actor_id: "parent", expected_revision: 253, target_schema_version: V25 }), code("CONTROL_CAPACITY_RESERVED"));
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-capacity", actor_id: "parent", expected_revision: 253, target_schema_version: V26 }), code("CONTROL_CAPACITY_RESERVED"));
 });
 
 test("consult-v1契約はWorker laneの実行者としてoperationally knownにならない", async (t) => {
@@ -3090,6 +3101,8 @@ test("control-migrate receiptは対象Control・v25/v26遷移・連鎖・最終s
 
 test("取消済みTaskのplanned consultationはfinalize・容量予約・campaign終端を恒久ブロックしない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "orphaned-consult-close" });
+  // ADR 0053の孤児除外はv25/v26のreader semantics（v27の脱出経路はconsultation-cancel）
+  await downgradeControlToV26(repo, "orphaned-consult-close");
   const task = await api.taskRecord({
     cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: result.revision,
     task: makeTask({ task_id: "orphan-task", effect: "read", write_scope: [] }),
@@ -3169,4 +3182,219 @@ test("未取消Taskのplanned consultationは従来どおりControl finalization
     knowledge_return_refs: ["docs/blocking-knowledge.md"],
     parent_decision: evidence("docs/adr/blocking-decision.md", "decision"), finalized_by: "parent",
   })), code("FINALIZATION_NOT_READY"));
+});
+
+const makeSelectorDecision = (overrides = {}) => ({
+  schema_version: "dotagents.selector-decision.v1",
+  selected_quota_pool_id: "openai-sub-main",
+  selected_executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "native-subagent", handle_schema_id: "codex-native.agent-path.v1" },
+  evaluated_at: "2026-07-17T00:00:00.000Z",
+  reason: "only-eligible",
+  pool_evaluations: [{ quota_pool_id: "openai-sub-main", min_pace_bp: 11667, binding_window_id: "5h", eligible: true, exclusion_reason: null }],
+  snapshot_evidence: [{ type: "executor-receipt", ref: "quota-snapshot:openai-sub-main:2026-07-17T00:00:00.000Z", digest: "a".repeat(64), observed_at: "2026-07-17T00:00:00.000Z" }],
+  reservation: { wall_time_seconds: 3600, cost_microusd: 1000000 },
+  ...overrides,
+});
+
+test("v27のconsultation-cancelはplannedだけをDecision証拠付きで終端し観測経由の偽装を許さない", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "v27-cancel");
+  const recorded = await api.consultationRecord({
+    cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: revision,
+    consultation: makeConsultation({ consultation_id: "cancel-me", assignment_id: "cancel-assignment" }),
+  });
+  // 観測stateにcancelledは存在しない（偽装cancel不可）
+  await assert.rejects(api.observeConsultation({
+    cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: recorded.revision, consultation_id: "cancel-me",
+    observation: { state: "cancelled", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "cancelled" },
+  }), code("INVALID_SCHEMA"));
+  const cancelled = await api.consultationCancel({
+    cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: recorded.revision,
+    consultation_id: "cancel-me", decision: evidence("docs/adr/cancel-me-decision.md", "decision"),
+  });
+  const stored = cancelled.manifest.consultations.find((entry) => entry.consultation_id === "cancel-me");
+  assert.equal(stored.state, "cancelled");
+  assert.equal(stored.executor_observation, null);
+  assert.equal(stored.decision_ref, null);
+  assert.deepEqual(stored.terminal_evidence, []);
+  const receipt = cancelled.manifest.transition_receipts.at(-1);
+  assert.equal(receipt.operation, "consultation-cancel");
+  assert.deepEqual(receipt.subject, { kind: "consultation", id: "cancel-me" });
+  assert.equal(receipt.previous_state, "planned");
+  assert.equal(receipt.next_state, "cancelled");
+  assert.equal(receipt.evidence[0].ref, "docs/adr/cancel-me-decision.md");
+  // cancelledからの観測遷移は不可
+  await assert.rejects(api.observeConsultation({
+    cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: cancelled.revision, consultation_id: "cancel-me",
+    observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:01:00.000Z", raw_state: "dispatched" },
+  }), code("INVALID_TRANSITION"));
+  // 同一assignmentの再相談はfailed同様に許可される
+  const retried = await api.consultationRecord({
+    cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: cancelled.revision,
+    consultation: makeConsultation({ consultation_id: "retry-after-cancel", assignment_id: "cancel-assignment" }),
+  });
+  // 非plannedのcancelは不可
+  const dispatched = await api.observeConsultation({
+    cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: retried.revision, consultation_id: "retry-after-cancel",
+    observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:02:00.000Z", raw_state: "dispatched" },
+  });
+  await assert.rejects(api.consultationCancel({
+    cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: dispatched.revision,
+    consultation_id: "retry-after-cancel", decision: evidence("docs/adr/late-cancel.md", "decision"),
+  }), code("INVALID_TRANSITION"));
+  // mutation産cancelledが居る間はv26へrollbackできない
+  await assert.rejects(api.controlMigrate({
+    cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: dispatched.revision, target_schema_version: V26,
+  }), code("ROLLBACK_UNSUPPORTED"));
+  // v26 manifestではconsultation-cancel自体がSCHEMA_UPGRADE_REQUIRED
+  const legacy = await consultationTaskRecorded(t, "v26-no-cancel");
+  await downgradeControlToV26(legacy.repo, "v26-no-cancel");
+  const legacyRecorded = await api.consultationRecord({
+    cwd: legacy.repo.root, control_id: "v26-no-cancel", actor_id: "parent", expected_revision: legacy.revision,
+    consultation: makeConsultation({ consultation_id: "legacy-consult", assignment_id: "legacy-assignment" }),
+  });
+  await assert.rejects(api.consultationCancel({
+    cwd: legacy.repo.root, control_id: "v26-no-cancel", actor_id: "parent", expected_revision: legacyRecorded.revision,
+    consultation_id: "legacy-consult", decision: evidence("docs/adr/legacy-cancel.md", "decision"),
+  }), code("SCHEMA_UPGRADE_REQUIRED"));
+});
+
+test("v27では孤児除外が適用されずconsultation-cancelが明示の脱出経路になる", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "v27-escape");
+  const recorded = await api.consultationRecord({
+    cwd: repo.root, control_id: "v27-escape", actor_id: "parent", expected_revision: revision,
+    consultation: makeConsultation({ consultation_id: "escape-consult", assignment_id: "escape-assignment" }),
+  });
+  const cancelDecision = await materializeDocumentEvidence(repo, evidence("docs/escape-task-cancel.md", "decision"));
+  const taskCancelled = await api.taskCancelRecord({
+    cwd: repo.root, control_id: "v27-escape", actor_id: "parent", expected_revision: recorded.revision,
+    task_id: "consultation-task", decision: cancelDecision,
+  });
+  const phaseComplete = await completePhaseGate(repo, "v27-escape", taskCancelled.revision);
+  const finalizeInput = async (revision) => materializeFinalizationInput(repo, {
+    cwd: repo.root, control_id: "v27-escape", actor_id: "parent", expected_revision: revision,
+    acceptance_matrix_ref: "docs/escape-acceptance.md",
+    final_audit_evidence: [evidence("docs/escape-audit.md")],
+    regression_evidence: [evidence("docs/escape-regression.md")],
+    knowledge_return_refs: ["docs/escape-knowledge.md"],
+    parent_decision: evidence("docs/adr/escape-decision.md", "decision"), finalized_by: "parent",
+  });
+  // v27では孤児plannedがfinalizeをブロックする（除外は適用されない）
+  await assert.rejects(api.finalizeControl(await finalizeInput(phaseComplete.revision)), code("FINALIZATION_NOT_READY"));
+  const escapeDecision = await materializeDocumentEvidence(repo, evidence("docs/escape-consult-cancel.md", "decision"));
+  const escaped = await api.consultationCancel({
+    cwd: repo.root, control_id: "v27-escape", actor_id: "parent", expected_revision: phaseComplete.revision,
+    consultation_id: "escape-consult", decision: escapeDecision,
+  });
+  const finalized = await api.finalizeControl(await finalizeInput(escaped.revision));
+  assert.equal(finalized.manifest.control_finalization !== null, true);
+});
+
+test("migration ladderはv25→v26→v27を一段ずつ進み孤児plannedだけをcancelledへ決定的に変換する", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "ladder-control");
+  await downgradeControlToV25(repo, "ladder-control");
+  const keep = await api.consultationRecord({
+    cwd: repo.root, control_id: "ladder-control", actor_id: "parent", expected_revision: revision,
+    consultation: makeConsultationV25({ consultation_id: "keep-planned", assignment_id: "keep-assignment" }),
+  });
+  const doomedTask = await api.taskRecord({
+    cwd: repo.root, control_id: "ladder-control", actor_id: "parent", expected_revision: keep.revision,
+    task: makeTask({ task_id: "doomed-task", effect: "read", write_scope: [] }),
+  });
+  const orphan = await api.consultationRecord({
+    cwd: repo.root, control_id: "ladder-control", actor_id: "parent", expected_revision: doomedTask.revision,
+    consultation: makeConsultationV25({ consultation_id: "orphan-consult", task_id: "doomed-task", assignment_id: "orphan-assignment" }),
+  });
+  const doomCancelled = await api.taskCancelRecord({
+    cwd: repo.root, control_id: "ladder-control", actor_id: "parent", expected_revision: orphan.revision,
+    task_id: "doomed-task", decision: evidence("docs/doomed-cancel.md", "decision"),
+  });
+  const toV26 = await api.controlMigrate({ cwd: repo.root, control_id: "ladder-control", actor_id: "parent", expected_revision: doomCancelled.revision, target_schema_version: V26 });
+  assert.equal(toV26.manifest.schema_version, V26);
+  assert.equal(toV26.manifest.consultations.every((entry) => entry.state === "planned"), true);
+  const toV27 = await api.controlMigrate({ cwd: repo.root, control_id: "ladder-control", actor_id: "parent", expected_revision: toV26.revision, target_schema_version: V27 });
+  assert.equal(toV27.manifest.schema_version, V27);
+  const states = Object.fromEntries(toV27.manifest.consultations.map((entry) => [entry.consultation_id, entry.state]));
+  assert.deepEqual(states, { "keep-planned": "planned", "orphan-consult": "cancelled" });
+  const migrateReceipts = toV27.manifest.transition_receipts.filter((entry) => entry.operation === "control-migrate");
+  assert.deepEqual(migrateReceipts.map((entry) => [entry.previous_state, entry.next_state]), [[V25, V26], [V26, V27]]);
+  // rollback v27→v26はmigration産cancelledを決定的にplannedへ復元する
+  const rolledBack = await api.controlMigrate({ cwd: repo.root, control_id: "ladder-control", actor_id: "parent", expected_revision: toV27.revision, target_schema_version: V26 });
+  assert.equal(rolledBack.manifest.schema_version, V26);
+  assert.equal(rolledBack.manifest.consultations.find((entry) => entry.consultation_id === "orphan-consult").state, "planned");
+});
+
+test("selector_decisionはv27のplacement reservationへoptional keyとして束縛されv26では拒否される", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "selector-placement" });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "selector-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const registry = await api.registryObservationRecord({
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: task.revision,
+    observation: makeRegistryObservation({
+      registry_observation_id: "selector-registry", expires_at: "2099-07-14T00:00:00.000Z",
+      capacity: {
+        admission: { value: "true", evidence: evidence("docs/selector-admission.md") },
+        hard_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/selector-hard.md") },
+        soft_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/selector-soft.md") },
+        observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/selector-inflight.md") },
+      },
+    }),
+  });
+  const reserved = await api.reservePlacement({
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: registry.revision,
+    task_id: "selector-task",
+    candidate: makePlacementCandidate({
+      candidate_id: "selector-run", registry_observation_id: "selector-registry",
+      assignment_id: "selector-assignment", workspace_cwd: repo.root, executor_handle: null,
+      lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "selector-assignment" },
+    }),
+    review_decision: null,
+    selector_decision: makeSelectorDecision(),
+  });
+  const reservation = reserved.manifest.worker_runs[0].placement_reservation;
+  assert.deepEqual(reservation.selector_decision, makeSelectorDecision());
+  const receipt = reserved.manifest.transition_receipts.at(-1);
+  assert.equal(receipt.operation, "placement-reserve");
+  assert.equal(typeof receipt.subject_digest, "string");
+  // digest束縛: selector_decisionの改竄は読取で恒久検出される
+  const tampered = structuredClone(reserved.manifest);
+  tampered.worker_runs[0].placement_reservation.selector_decision = makeSelectorDecision({ reason: "max-headroom" });
+  assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+  // selector_decision付きreservationが居る間はv26へrollbackできない
+  await assert.rejects(api.controlMigrate({
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: reserved.revision, target_schema_version: V26,
+  }), code("ROLLBACK_UNSUPPORTED"));
+  // selectorを経ないreservationにはkey自体が存在しない
+  assert.equal(Object.hasOwn(makePlacementCandidate(), "selector_decision"), false);
+  // v26 manifestへのselector_decisionはSCHEMA_UPGRADE_REQUIRED
+  const legacy = await initialized(t, { control_id: "selector-legacy" });
+  await downgradeControlToV26(legacy.repo, "selector-legacy");
+  const legacyTask = await api.taskRecord({
+    cwd: legacy.repo.root, control_id: "selector-legacy", actor_id: "parent", expected_revision: legacy.result.revision,
+    task: makeTask({ task_id: "selector-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
+  });
+  const legacyRegistry = await api.registryObservationRecord({
+    cwd: legacy.repo.root, control_id: "selector-legacy", actor_id: "parent", expected_revision: legacyTask.revision,
+    observation: makeRegistryObservation({
+      registry_observation_id: "selector-registry", expires_at: "2099-07-14T00:00:00.000Z",
+      capacity: {
+        admission: { value: "true", evidence: evidence("docs/selector-admission.md") },
+        hard_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/selector-hard.md") },
+        soft_inflight_limit: { knowledge: "known", value: 1, evidence: evidence("docs/selector-soft.md") },
+        observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/selector-inflight.md") },
+      },
+    }),
+  });
+  await assert.rejects(api.reservePlacement({
+    cwd: legacy.repo.root, control_id: "selector-legacy", actor_id: "parent", expected_revision: legacyRegistry.revision,
+    task_id: "selector-task",
+    candidate: makePlacementCandidate({
+      candidate_id: "selector-legacy-run", registry_observation_id: "selector-registry",
+      assignment_id: "selector-legacy-assignment", workspace_cwd: legacy.repo.root, executor_handle: null,
+      lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "selector-legacy-assignment" },
+    }),
+    review_decision: null,
+    selector_decision: makeSelectorDecision(),
+  }), code("SCHEMA_UPGRADE_REQUIRED"));
 });
