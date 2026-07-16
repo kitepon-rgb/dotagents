@@ -115,6 +115,10 @@ Throughlineを先に解決し、DB sessionだけ増えてcandidate completed rec
 Observer ADR 0129と本repo [ADR 0025](adr/0025-throughline-capture-runtime-binding.md)に従い、
 Claude parent controllerのPATH先頭をcampaign prefixへ固定し、capture／readを同じcandidateへ束縛する。
 手動transcript投入やglobal package更新へfallbackしない。
+PATH補正後もcompleted receiptは0件であり、Aitermのglobal tmux serverがserver生成時のstale環境を
+新sessionへ継承していた。Observer ADR 0130と本repo
+[ADR 0026](adr/0026-aiterm-campaign-runtime-isolation.md)に従い、campaign専用0700 `TMPDIR`と
+candidate-first PATHを同時に渡してfresh Aiterm serverを作る。global socket／session／packageは変更しない。
 19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを
