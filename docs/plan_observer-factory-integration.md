@@ -320,6 +320,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       `a46b915`でbounded barrierを独立実装し、focused 14/14、subprocess 2/2、related 78/78を通した。
       失敗attemptは成功へ含めず、修理済みcandidate再梱包後に19eを再開する
       （[ADR 0028](adr/0028-queue19e-socket-and-stop-flush-correction.md)）。
+    - [x] 修理済みcandidateの自然Stop receipt後に再現したinstalled Observer package root不一致を閉じる。
+      CLIだけが末尾`/`付きrootを作り、preflightと実parent callerが分岐していた。Observer
+      commit `33eb05a`でcanonical directoryへ一意化し、focused 15/15、related 35/35、package verify、
+      installed module smoke `providers=2 root_count=1 canonical=true`を通した。失敗attemptは成功へ含めず、
+      再pack済みcandidateから19eを再開する（Observer ADR 0133）。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。

@@ -131,6 +131,11 @@ transcriptはlatest logical groupを返すため、async Stopがfinal assistant�
 backfillしたThroughline flush raceである。Throughline commit `a46b915`でbounded barrierを実装し、
 focused 14/14、subprocess 2/2、related 78/78、受入れ記録`af06e0a`を閉じた。失敗attemptは成功へ
 含めず、修理済みcandidateを再梱包して19eを再開する。
+修理済みcandidateの自然Stop receiptを1件確認後、実`observer parent claude run`はprovider launch前に
+末尾`/`付きpackage rootをcanonicalでないとして拒否した。Observer ADR 0133とcommit
+`33eb05a`でCLI runtime rootをcanonical directoryへ一意化し、focused 15/15、related 35/35、
+package verify、installed module smokeを通した。失敗attemptはObserver live成功へ含めず、再pack済み
+candidateから19eを再開する。
 19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを
