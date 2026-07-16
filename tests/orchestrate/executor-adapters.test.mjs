@@ -319,7 +319,7 @@ test("adapter projectionはControl RecordのWorker/Consultation observationへex
   const timestamps = { createdAt: "2026-07-14T00:00:00.000Z", updatedAt: "2026-07-14T00:01:00.000Z" };
   const consultation = adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { slug: "design-review-001", state: "queued", ...timestamps, result: null, error: null } });
   assert.deepEqual(adapters.buildConsultationControlObservation({ projection: consultation, observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z" }), {
-    state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "queued",
+    state: "dispatched", source: "gpt-connector", consultation_handle: { slug: "design-review-001" }, observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "queued",
   });
   assert.throws(() => adapters.buildWorkerControlObservation({ projection: native, observed_version: "gpt-5.6-terra", observed_at: "2026-07-14T00:00:00.000Z" }), code("EVIDENCE_REQUIRED"));
 });
@@ -356,9 +356,13 @@ test("claude-native consult observationはconsultation_handleを保ちworker pro
   const timeout = adapters.projectClaudeNativeConsultTimeoutObservation({ handle });
   assert.deepEqual(timeout, { schema_version: "dotagents.claude-native.consult-observation.v1", consultation_handle: handle, state: "unknown", raw_status: "caller_timeout", terminal: null });
   assert.throws(() => adapters.projectClaudeNativeConsultObservation({ handle, status: "cancelled" }), code("INVALID_SCHEMA"));
-  const completed = adapters.projectClaudeNativeConsultObservation({ handle, status: "completed" });
+  // 完了信号はstream-jsonのtype:result receiptであり、process exitでcompletedを作れない（ADR 0045 §7）
+  assert.throws(() => adapters.projectClaudeNativeConsultObservation({ handle, status: "completed" }), code("EVIDENCE_REQUIRED"));
+  assert.throws(() => adapters.projectClaudeNativeConsultObservation({ handle, status: "running", result_receipt: "claude:stream-result:end_turn" }), code("INVALID_SCHEMA"));
+  const completed = adapters.projectClaudeNativeConsultObservation({ handle, status: "completed", result_receipt: "claude:stream-result:end_turn" });
+  assert.deepEqual(completed.terminal, { result_receipt: "claude:stream-result:end_turn" });
   assert.deepEqual(adapters.buildConsultationControlObservation({ projection: completed, observed_version: "2.1.211", observed_at: "2026-07-16T00:00:00.000Z", decision_ref: "docs/consult-decision.md" }), {
-    state: "completed", source: "claude-native", observed_version: "2.1.211", observed_at: "2026-07-16T00:00:00.000Z", raw_state: "completed", decision_ref: "docs/consult-decision.md",
+    state: "completed", source: "claude-native", consultation_handle: handle, observed_version: "2.1.211", observed_at: "2026-07-16T00:00:00.000Z", raw_state: "completed", decision_ref: "docs/consult-decision.md",
   });
   // consultation observationはWorker laneへ逆流しない（ADR 0045 §3）
   for (const projection of [completed, running, timeout]) {
@@ -388,6 +392,11 @@ test("codex-sidecar opinion observationはhandle nullを固定し、caller観測
   assert.equal(adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, status: "refused" } }).state, "failed");
   assert.throws(() => adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, workflow: "work" } }), code("INVALID_SCHEMA"));
   assert.throws(() => adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, status: "dry-run" } }), code("INVALID_SCHEMA"));
+  // read-only opinionにwrite痕跡が載っていたら製品契約違反としてfail closed（空changedFilesだけは許容）
+  assert.throws(() => adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, changedFiles: ["lib/x.mjs"] } }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, worktreePath: "/workspace/worktree" } }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, worktreePreserved: true } }), code("INVALID_SCHEMA"));
+  assert.equal(adapters.projectCodexSidecarOpinionObservation({ provider: { ...result, changedFiles: [] } }).state, "completed");
   assert.deepEqual(adapters.projectCodexSidecarOpinionDispatchObservation(), { schema_version: "dotagents.codex-sidecar.consult-observation.v1", consultation_handle: null, state: "dispatched", raw_status: "caller_dispatch", terminal: null });
   const errored = adapters.projectCodexSidecarOpinionErrorObservation({ error: { code: "APP_SERVER_TIMEOUT", message: "raw text is discarded" } });
   assert.deepEqual(errored, { schema_version: "dotagents.codex-sidecar.consult-observation.v1", consultation_handle: null, state: "failed", raw_status: "APP_SERVER_TIMEOUT", terminal: { error_code: "APP_SERVER_TIMEOUT" } });
@@ -395,7 +404,7 @@ test("codex-sidecar opinion observationはhandle nullを固定し、caller観測
   assert.deepEqual(timeout, { schema_version: "dotagents.codex-sidecar.consult-observation.v1", consultation_handle: null, state: "unknown", raw_status: "caller_timeout", terminal: null });
   const evidence = [{ type: "executor-receipt", ref: "mcp:codex_opinion:APP_SERVER_TIMEOUT", digest: "d".repeat(64), observed_at: "2026-07-16T00:00:00.000Z" }];
   assert.deepEqual(adapters.buildConsultationControlObservation({ projection: errored, observed_version: "codex-sidecar-mcp", observed_at: "2026-07-16T00:00:00.000Z", terminal_evidence: evidence }), {
-    state: "failed", source: "codex-sidecar", observed_version: "codex-sidecar-mcp", observed_at: "2026-07-16T00:00:00.000Z", raw_state: "APP_SERVER_TIMEOUT", terminal_evidence: evidence,
+    state: "failed", source: "codex-sidecar", consultation_handle: null, observed_version: "codex-sidecar-mcp", observed_at: "2026-07-16T00:00:00.000Z", raw_state: "APP_SERVER_TIMEOUT", terminal_evidence: evidence,
   });
   assert.throws(() => adapters.buildConsultationControlObservation({ projection: { ...completed, consultation_handle: { slug: "fabricated" } }, observed_version: "codex-sidecar-mcp", observed_at: "2026-07-16T00:00:00.000Z", decision_ref: "docs/decision.md" }), code("INVALID_SCHEMA"));
   for (const projection of [completed, timeout]) {

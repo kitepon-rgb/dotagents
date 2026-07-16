@@ -2846,7 +2846,7 @@ test("v26 initはtyped consultation_handleの多provider consultationを固定�
     observation: { state: "dispatched", source: "claude-native", observed_version: "2.1.211", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "dispatched" },
   });
   const completedObservation = adapters.buildConsultationControlObservation({
-    projection: adapters.projectClaudeNativeConsultObservation({ handle: { session_id: sessionId }, status: "completed" }),
+    projection: adapters.projectClaudeNativeConsultObservation({ handle: { session_id: sessionId }, status: "completed", result_receipt: "claude:stream-result:end_turn" }),
     observed_version: "2.1.211", observed_at: "2026-07-17T00:01:00.000Z", decision_ref: "docs/consult-decision.md",
   });
   const completed = await api.observeConsultation({ cwd: repo.root, control_id: "v26-multiprovider", actor_id: "parent", expected_revision: dispatched.revision, consultation_id: "claude-consult", observation: completedObservation });
@@ -3011,4 +3011,79 @@ test("provider障害時の切替は元Consultationのfailed終端後の新record
     cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: completedSwitch.revision,
     consultation: makeConsultation({ consultation_id: "third-attempt", assignment_id: "switch-assignment", connector: "codex-sidecar", consultation_handle: null }),
   }), code("ASSIGNMENT_ACTIVE"));
+});
+
+test("consultation observationはrecordのconnector・handleと相関しない観測を拒否する", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "observation-binding");
+  const sessionId = "123e4567-e89b-42d3-a456-426614174000";
+  const gpt = await api.consultationRecord({
+    cwd: repo.root, control_id: "observation-binding", actor_id: "parent", expected_revision: revision,
+    consultation: makeConsultation({ consultation_id: "gpt-bind", assignment_id: "gpt-bind-assignment" }),
+  });
+  await assert.rejects(api.observeConsultation({
+    cwd: repo.root, control_id: "observation-binding", actor_id: "parent", expected_revision: gpt.revision, consultation_id: "gpt-bind",
+    observation: { state: "dispatched", source: "claude-native", observed_version: "2.1.211", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "dispatched" },
+  }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.observeConsultation({
+    cwd: repo.root, control_id: "observation-binding", actor_id: "parent", expected_revision: gpt.revision, consultation_id: "gpt-bind",
+    observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "dispatched", consultation_handle: { slug: "some-other-slug" } },
+  }), code("INVALID_SCHEMA"));
+  const dispatched = await api.observeConsultation({
+    cwd: repo.root, control_id: "observation-binding", actor_id: "parent", expected_revision: gpt.revision, consultation_id: "gpt-bind",
+    observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "dispatched", consultation_handle: { slug: "known-session-slug" } },
+  });
+  const stored = dispatched.manifest.consultations[0].executor_observation;
+  assert.deepEqual(Object.keys(stored).sort(), ["observed_at", "observed_version", "raw_state", "source"]);
+  const claude = await api.consultationRecord({
+    cwd: repo.root, control_id: "observation-binding", actor_id: "parent", expected_revision: dispatched.revision,
+    consultation: makeConsultation({ consultation_id: "claude-bind", assignment_id: "claude-bind-assignment", connector: "claude-native", consultation_handle: { session_id: sessionId } }),
+  });
+  await assert.rejects(api.observeConsultation({
+    cwd: repo.root, control_id: "observation-binding", actor_id: "parent", expected_revision: claude.revision, consultation_id: "claude-bind",
+    observation: { state: "dispatched", source: "claude-native", observed_version: "2.1.211", observed_at: "2026-07-17T00:01:00.000Z", raw_state: "dispatched", consultation_handle: { session_id: "ffffffff-ffff-4fff-8fff-ffffffffffff" } },
+  }), code("INVALID_SCHEMA"));
+});
+
+test("v26 recordはconnector固有のeffort語彙へ束縛されdispatch不能なplanned recordを作らない", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "effort-binding");
+  const reject = async (consultation) => assert.rejects(api.consultationRecord({
+    cwd: repo.root, control_id: "effort-binding", actor_id: "parent", expected_revision: revision, consultation,
+  }), code("INVALID_SCHEMA"));
+  await reject(makeConsultation({ consultation_id: "sidecar-max", assignment_id: "sidecar-max-assignment", connector: "codex-sidecar", consultation_handle: null, effort: "max" }));
+  await reject(makeConsultation({ consultation_id: "claude-banana", assignment_id: "claude-banana-assignment", connector: "claude-native", consultation_handle: { session_id: "123e4567-e89b-42d3-a456-426614174000" }, effort: "standard" }));
+  const claudeMax = await api.consultationRecord({
+    cwd: repo.root, control_id: "effort-binding", actor_id: "parent", expected_revision: revision,
+    consultation: makeConsultation({ consultation_id: "claude-max", assignment_id: "claude-max-assignment", connector: "claude-native", consultation_handle: { session_id: "123e4567-e89b-42d3-a456-426614174000" }, effort: "max" }),
+  });
+  const gptFree = await api.consultationRecord({
+    cwd: repo.root, control_id: "effort-binding", actor_id: "parent", expected_revision: claudeMax.revision,
+    consultation: makeConsultation({ consultation_id: "gpt-free", assignment_id: "gpt-free-assignment", effort: "standard" }),
+  });
+  assert.equal(gptFree.manifest.consultations.length, 2);
+});
+
+test("control-migrate receiptは対象Control・v25/v26遷移・連鎖・最終schema一致をreaderが検証する", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "migrate-receipt-guard");
+  await downgradeControlToV25(repo, "migrate-receipt-guard");
+  const migrated = await api.controlMigrate({ cwd: repo.root, control_id: "migrate-receipt-guard", actor_id: "parent", expected_revision: revision, target_schema_version: V26 });
+  const valid = migrated.manifest;
+  api.validateManifest(structuredClone(valid));
+  const tamper = (mutate) => {
+    const manifest = structuredClone(valid);
+    const receipt = manifest.transition_receipts.at(-1);
+    assert.equal(receipt.operation, "control-migrate");
+    mutate(manifest, receipt);
+    const previous = manifest.transition_receipts.at(-2);
+    manifest.transition_receipts[manifest.transition_receipts.length - 1] = makeTransitionReceipt({
+      revision: receipt.revision, actor_id: receipt.actor_id, operation: receipt.operation, subject: receipt.subject,
+      previous_state: receipt.previous_state, next_state: receipt.next_state, evidence: receipt.evidence,
+      recorded_at: receipt.recorded_at, previous_receipt_digest: previous.receipt_digest,
+    });
+    manifest.last_update = { actor_id: receipt.actor_id, updated_at: receipt.recorded_at };
+    return manifest;
+  };
+  assert.throws(() => api.validateManifest(tamper((_manifest, receipt) => { receipt.subject = { kind: "task", id: "bogus" }; })), code("INVALID_SCHEMA"));
+  assert.throws(() => api.validateManifest(tamper((_manifest, receipt) => { receipt.previous_state = "dotagents.orchestration-control.v99"; })), code("INVALID_SCHEMA"));
+  assert.throws(() => api.validateManifest(tamper((_manifest, receipt) => { receipt.next_state = "dotagents.orchestration-control.v25"; receipt.previous_state = "dotagents.orchestration-control.v25"; })), code("INVALID_SCHEMA"));
+  assert.throws(() => api.validateManifest(tamper((manifest, _receipt) => { manifest.schema_version = "dotagents.orchestration-control.v25"; })), code("INVALID_SCHEMA"));
 });
