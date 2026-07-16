@@ -2322,6 +2322,54 @@ test("accept/reject/task finalization/control finalization/archiveは状態・�
   await assert.rejects(api.reject({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: archived.revision, worker_run_id: "run-001", result_digest: "a".repeat(64), verification_evidence: [evidence("docs/verify.md")], decision_note: "late", decided_by: "parent" }), code("RECORD_ARCHIVED"));
 });
 
+test("rejectはcompleted writer後のworkspace進行を採用せず棄却Decisionだけを記録する", async (t) => {
+  const controlId = "reject-after-workspace-drift";
+  const { repo, result } = await initialized(t, { control_id: controlId });
+  const task = await api.taskRecord({
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision,
+    task: makeTask({ task_id: "drifted-result-task" }),
+  });
+  const run = await api.workerRunRecord({
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({
+      worker_run_id: "drifted-result-run", task_id: "drifted-result-task",
+      assignment_id: "drifted-result-assignment", workspace_cwd: repo.root,
+      lineage: { ...makeWorkerRun().lineage, root_assignment_id: "drifted-result-assignment" },
+    }),
+  });
+  const admitted = await api.admitWorker({
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: run.revision,
+    worker_run_id: "drifted-result-run",
+  });
+  const dispatched = await api.observeWorker({
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: admitted.revision,
+    worker_run_id: "drifted-result-run", observation: workerObservation("dispatched"),
+  });
+  const completed = await api.observeWorker({
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: dispatched.revision,
+    worker_run_id: "drifted-result-run", observation: completedWorkerObservation(),
+  });
+  const progressed = join(repo.root, "lib", "orchestrate", "newer-parent-work.mjs");
+  await mkdir(dirname(progressed), { recursive: true });
+  await writeFile(progressed, "export const newerParentWork = true;\n");
+  const decision = {
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: completed.revision,
+    worker_run_id: "drifted-result-run", result_digest: "a".repeat(64),
+    verification_evidence: [evidence("docs/reject-after-drift.md")],
+    decision_note: "workspace進行後の旧resultを採用せず棄却する", decided_by: "parent",
+  };
+  await assert.rejects(api.accept(decision), code("WORKSPACE_DRIFT"));
+  const rejected = await api.reject(decision);
+  assert.equal(rejected.manifest.worker_runs[0].acceptance.decision, "rejected");
+  assert.equal(await readFile(progressed, "utf8"), "export const newerParentWork = true;\n");
+  await materializeTaskDecision(repo, "docs/adr/reject-after-drift-decision.md");
+  const finalized = await api.taskFinalizeRecord({
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: rejected.revision,
+    task_id: "drifted-result-task", finalization_ref: "docs/adr/reject-after-drift-decision.md", recorded_by: "parent",
+  });
+  assert.equal(finalized.manifest.task_finalizations[0].task_id, "drifted-result-task");
+});
+
 test("archiveはfinalization Decisionの同一path旧digestだけをgit履歴から保持する (history retention)", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "finalization-history-retention" });
   const task = await api.taskRecord({

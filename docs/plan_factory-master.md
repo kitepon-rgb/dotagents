@@ -187,6 +187,14 @@ queue 8は19eへ統合済みである。
   - top-level／validation証拠のfocused gate 1/1、Control Record関連gate 93/93、`make lint-js`が
     green。最初の関連gateは完走後のexit code回収に失敗したため未検証扱いとし、同じgateを
     session回収可能な入口で一度再実行した。full regressionはPhase末へ集約する。
+- [x] completed writer Runを棄却する時までcurrent workspace fingerprint一致を要求し、workspace進行後に
+  `reject`不能・Task finalization不能になるControl回収欠陥を修正する。
+  - Observer P5-1b4b Controlで、report import前の誤った`observe-worker=completed`後にworkspaceをcommitすると、
+    Runを採用しない`reject`も`WORKSPACE_DRIFT`で閉じられず、未裁定RunがTaskを永久に塞ぐことを再現した。
+  - `accept`はcurrent fingerprint完全一致を維持する。`reject`は保存済みresult digestと親の棄却証拠だけで
+    不変Decisionを記録し、workspaceを採用・復元・書き換えないfocused契約を追加する。
+  - focused 1/1、accept／reject／Task finalization関連3/3、`make lint-js` green。受入証拠は
+    [ADR 0034](adr/0034-control-reject-after-workspace-drift.md)。full regressionは工場Phase gateへ集約する。
 
 ### Phase O1 — Throughline completed-turn feed（COMPLETE）
 
