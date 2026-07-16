@@ -28,11 +28,12 @@ def parse_args():
     mode.add_argument("--apply", action="store_true", help="backup後に適用する")
     mode.add_argument("--restore", metavar="ARCHIVE", help="検証済みbackupを原子的に復元する")
     parser.add_argument("--observer-hook", help="absolute observer-parent-stop-hook executable path")
+    parser.add_argument("--state-root", help="absolute Observer private state root bound into both hooks")
     args = parser.parse_args()
-    if args.restore is None and args.observer_hook is None:
-        parser.error("--observer-hook が必要です")
-    if args.restore is not None and args.observer_hook is not None:
-        parser.error("--restore と --observer-hook は同時指定できません")
+    if args.restore is None and (args.observer_hook is None or args.state_root is None):
+        parser.error("--observer-hook と --state-root が必要です")
+    if args.restore is not None and (args.observer_hook is not None or args.state_root is not None):
+        parser.error("--restore と --observer-hook/--state-root は同時指定できません")
     return args
 
 
@@ -76,8 +77,8 @@ def run_observer(arguments, *, candidate=None):
         raise ValueError("observer-hook-config CLI のJSON出力が不正です") from exc
 
 
-def fragment(provider, executable):
-    value = run_observer(["fragment", "--provider", provider, "--executable", executable])
+def fragment(provider, executable, state_root):
+    value = run_observer(["fragment", "--provider", provider, "--executable", executable, "--state-root", state_root])
     if not isinstance(value, dict) or value.get("schema") != SCHEMA or value.get("provider") != provider or value.get("event") != "Stop" or not isinstance(value.get("entry"), dict):
         raise ValueError(f"observer-hook-config {provider} fragment schema が不正です")
     return value
@@ -95,6 +96,11 @@ def fragment_command(provider, value):
     return entry["command"]
 
 
+def is_target_command(command, provider, executable):
+    prefix = f"{executable} --provider {provider}"
+    return isinstance(command, str) and (command == prefix or command.startswith(f"{prefix} --state-root "))
+
+
 def stop_entries(config, path):
     hooks = config.setdefault("hooks", {})
     if not isinstance(hooks, dict):
@@ -105,7 +111,7 @@ def stop_entries(config, path):
     return entries
 
 
-def normalize(provider, config, path, item):
+def normalize(provider, config, path, item, executable):
     entries = stop_entries(config, path)
     command = fragment_command(provider, item)
     if provider == "claude":
@@ -114,7 +120,7 @@ def normalize(provider, config, path, item):
             if not isinstance(entry, dict) or not isinstance(entry.get("hooks"), list):
                 normalized.append(entry)
                 continue
-            hooks = [hook for hook in entry["hooks"] if not (isinstance(hook, dict) and hook.get("command") == command)]
+            hooks = [hook for hook in entry["hooks"] if not (isinstance(hook, dict) and is_target_command(hook.get("command"), provider, executable))]
             if hooks:
                 copied = dict(entry)
                 copied["hooks"] = hooks
@@ -126,12 +132,12 @@ def normalize(provider, config, path, item):
         normalized.append(copy.deepcopy(item["entry"]))
         config["hooks"]["Stop"] = normalized
     else:
-        config["hooks"]["Stop"] = [entry for entry in entries if not (isinstance(entry, dict) and entry.get("command") == command)] + [copy.deepcopy(item["entry"])]
+        config["hooks"]["Stop"] = [entry for entry in entries if not (isinstance(entry, dict) and is_target_command(entry.get("command"), provider, executable))] + [copy.deepcopy(item["entry"])]
     return config
 
 
-def verify(provider, executable, candidate):
-    value = run_observer(["verify", "--provider", provider, "--executable", executable], candidate=candidate)
+def verify(provider, executable, state_root, candidate):
+    value = run_observer(["verify", "--provider", provider, "--executable", executable, "--state-root", state_root], candidate=candidate)
     if not isinstance(value, dict) or value.get("schema") != "observer.parent_stop_hook_verification.v1" or value.get("provider") != provider or value.get("event") != "Stop" or value.get("status") != "canonical" or value.get("target_count") != 1:
         raise ValueError(f"observer-hook-config {provider} verifier がcanonicalを返しません")
 
@@ -392,11 +398,14 @@ def main():
     executable = Path(args.observer_hook)
     if not executable.is_absolute():
         raise ValueError("--observer-hook はabsolute pathが必要です")
+    state_root = Path(args.state_root)
+    if not state_root.is_absolute():
+        raise ValueError("--state-root はabsolute pathが必要です")
     proposed = {}
     for provider, path in paths.items():
-        item = fragment(provider, str(executable))
-        config = normalize(provider, load_json(originals[path], path), path, item)
-        verify(provider, str(executable), config)
+        item = fragment(provider, str(executable), str(state_root))
+        config = normalize(provider, load_json(originals[path], path), path, item, str(executable))
+        verify(provider, str(executable), str(state_root), config)
         proposed[path] = render(config)
     changed = {path: content for path, content in proposed.items() if content != originals[path]}
     if not args.apply:

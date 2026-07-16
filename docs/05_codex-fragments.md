@@ -219,12 +219,16 @@ STDIO の environment は closed-mode として扱う。親 shell の値が必�
 ObserverのCodex Stop hookは`hooks.json`へ手書きしない。Claude設定と同じtransactionで、Observer CLIが返すCodex fragment（`timeoutSec`、`async=false`、`statusMessage=null`を含む）を適用する。
 
 ```bash
-apply-observer-hook-config --observer-hook "$HOME/.local/bin/observer-parent-stop-hook"
-apply-observer-hook-config --apply --observer-hook "$HOME/.local/bin/observer-parent-stop-hook"
+apply-observer-hook-config --observer-hook "$HOME/.local/bin/observer-parent-stop-hook" \
+  --state-root "$HOME/.local/state/observer"
+apply-observer-hook-config --apply --observer-hook "$HOME/.local/bin/observer-parent-stop-hook" \
+  --state-root "$HOME/.local/state/observer"
 apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-config-<timestamp>.tar.gz"
 ```
 
 adapterは既存の他製品hookを保持し、Observer targetだけを一件へ正規化する。`CODEX_HOME`を指定した隔離fixtureではその配下の`hooks.json`を対象にできるが、実端末でのapplyはH gateである。
+`--state-root`はpreflight、parent caller、Claude／Codex Stop hookで同じabsolute pathを必須とし、
+旧rootを持つ同一Observer targetを重複保持しない。
 `--apply`が返す0600 archiveは元の存在有無、mode、uid／gidを固定manifestへ持つ。rollbackは同じ
 `HOME`／`CODEX_HOME`で`--restore`を使い、二設定を原子的に復元する。restore途中失敗は開始前状態へ戻り、
 元absentの設定は削除される。manifest導入前の旧archiveや手製tarはfail closedで拒否する。

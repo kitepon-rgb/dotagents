@@ -48,7 +48,8 @@ dry="$(
   CODEX_HOME="$HOME_FIXTURE/.codex" \
   OBSERVER_HOOK_CONFIG_BIN="$PREFIX/bin/observer-hook-config" \
     "$ROOT/bin/apply-observer-hook-config.sh" --dry-run \
-    --observer-hook "$PREFIX/bin/observer-parent-stop-hook"
+    --observer-hook "$PREFIX/bin/observer-parent-stop-hook" \
+    --state-root "$HOME_FIXTURE/observer-state"
 )"
 printf '%s' "$dry" | grep -Fq 'provider=claude' || fail 'installed hook dry-runがClaudeを検証しません'
 printf '%s' "$dry" | grep -Fq 'provider=codex' || fail 'installed hook dry-runがCodexを検証しません'

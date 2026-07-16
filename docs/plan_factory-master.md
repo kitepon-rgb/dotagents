@@ -105,6 +105,11 @@ H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugH
 19e通常campaignは2026-07-16に承認済み。実host適用前に、陳腐化したpreflight／runbookと
 hook configの検証済みrestore入口を独立gateで修理し、green後に両hostを各一回だけ実行する。
 intentional crash／通信断は別承認のため実施しない。O3／後続laneは19e完了まで先行させない。
+最初のClaude live attemptはmodel応答後、Stop hookだけがcallerと異なる既定state rootを参照して
+`E_PERMISSION_INVALID`となり、completed feed 0件のまま正規closeした。成功へ含めない。
+Observer ADR 0127と本repo [ADR 0024](adr/0024-observer-hook-state-root-binding.md)に従い、
+preflight／adapter／両caller／両hookを
+同一explicit state rootへ束縛する独立修理を閉じてから19eを再開する。
 19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを

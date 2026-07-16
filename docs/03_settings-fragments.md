@@ -37,10 +37,15 @@
 Observerのparent Stop entryは手書きしない。Observer配布済みの`observer-hook-config`からversioned fragmentを取得し、dotagents adapterが既存hookを保ったまま正規化する。既定はdry-runであり、実端末の`--apply`とhook trustはH gateである。
 
 ```bash
-apply-observer-hook-config --observer-hook "$HOME/.local/bin/observer-parent-stop-hook"
-apply-observer-hook-config --apply --observer-hook "$HOME/.local/bin/observer-parent-stop-hook"
+apply-observer-hook-config --observer-hook "$HOME/.local/bin/observer-parent-stop-hook" \
+  --state-root "$HOME/.local/state/observer"
+apply-observer-hook-config --apply --observer-hook "$HOME/.local/bin/observer-parent-stop-hook" \
+  --state-root "$HOME/.local/state/observer"
 apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-config-<timestamp>.tar.gz"
 ```
+
+`--state-root`はpreflight、`observer parent ... run`、両providerのStop hookで同じabsolute pathを使う。
+省略や既定rootへの暗黙fallbackは認めず、以前のstate rootを持つ同一Observer targetはcanonical一件へ置換する。
 
 `settings.json`が存在しない・空の場合もadapterがobjectとして扱う。symlink、Observer CLI不在、fragment schema不一致、candidate verifier不一致はfail loudであり、既存の他製品Stop hookを削除して補うことはしない。
 `--apply`は変更前の存在有無、mode、uid／gidと内容を0600 archiveへ記録し、既存configのmode／ownerを

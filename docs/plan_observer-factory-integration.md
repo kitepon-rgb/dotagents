@@ -294,9 +294,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       dual-host campaignと同じ19e live Hで一度確認する。fixture成功をlive成功へ丸めず、model requestを伴うため
       明示承認後にだけ実行する。通常campaignは2026-07-16にオーナー承認済み。intentional crash／通信断は
       別承認のまま実施しない。
-    - [ ] 19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline
+    - [x] 19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline
       `observer-read`疎通へ補正し、`apply-observer-hook-config`へ検証済みarchiveからの原子的restore、
       absent状態、mode／owner保持を追加する。rollback入口がgreenになるまで実HOMEへapplyしない。
+    - [x] 最初のClaude live attemptで再現したstate root不一致を根治する。Observer hook fragment／preflightと
+      dotagents adapterへ同じexplicit state rootを必須化し、旧root targetをcanonical一件へ置換する。
+      失敗attemptは成功へ含めず、独立gate／commit後にqueue 19eへ戻る
+      （[ADR 0024](adr/0024-observer-hook-state-root-binding.md)）。Observer focused 28/28、related 48/48、
+      dotagents hook transaction／isolated package gate、対象docs lintはgreen。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
