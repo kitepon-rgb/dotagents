@@ -28,9 +28,9 @@
 
 ## 2. 子計画台帳
 
-| 子計画 | 親内の役割 | 2026-07-15時点 |
+| 子計画 | 親内の役割 | 2026-07-16時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1完了、O2 queue 19d-dが次の非H ready |
+| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1／19d完了、O2 queue 19e dual-host live H待ち |
 | [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1 local closure完了、実hostはR2、意図的canaryはR3で進める |
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
@@ -95,14 +95,15 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19c1 | `DONE` | hook未発火とpayload／result不正を分けるraw-free diagnostic receiptを閉じる | Observer / O2 focused＋related gate |
 | 19c2 | `DONE` | diagnostic receiptで一つのClaude jobを再characterizeする | Observer / O2 H gate |
 | 19c3 | `DONE` | Aitermへ永続PTYの対話型`claude_agent`とoperation相関付き公開completion／recovery契約を追加する | Aiterm / 独立focused＋related＋full gate |
-| 19d | `IN_PROGRESS` | Aiterm公開面だけで永続Claude Observer production callerを実装する（a/b/c完了、dが次） | Observer / O2 focused＋related gate |
+| 19d | `DONE` | Aiterm公開面だけで永続Claude Observer production callerとgeneration lifecycleを実装する | Observer / O2 focused＋related＋full gate |
 | 19e | `H-WAIT` | Aiterm実Claude smokeを含むObserver dual-host live campaignを一回実施する | Observer / O2 H gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
-現在の非H ready queueは19d-dである。19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
+現在の非H ready queueはない。次は19e dual-host live Hであり、個別承認までO3／後続laneを先行させない。
+19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを
 [ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)で採用した。
@@ -111,9 +112,10 @@ Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを
 focused 1/1、related 122/122、full 262/262、独立反証P0/P1/P2残存なし、構造化caller gateは
 focused 5/5、related 126/126、launcher receipt gateはfocused 4/4、related 94/94でgreenである。
 fixture成功をlive成功へ丸めないが、
-[ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)の順序どおり非Hの19dを先に実装し、
-実Claude初回／follow-upは19eの一回のdual-host live H campaignへ統合する。19d未完のまま
-19e／O3／後続laneは先行させない。
+[ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)の順序どおり非Hの19dを先に実装した。
+Observer `7bfafa4`、focused 20/20、related 50/50、full 393/393、Control revision 62／20 archiveを
+[ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)で受け入れた。実Claude初回／follow-upは
+19eの一回のdual-host live H campaignへ統合する。
 preflight後に判明したCodex parent callerと配布の非H欠落は
 [ADR 0025](adr/0025-observer-codex-parent-caller-core-receipt.md)と
 [ADR 0026](adr/0026-observer-codex-parent-entry-distribution-receipt.md)で受け入れた。
@@ -358,7 +360,7 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
       full 262/262、独立反証後green。構造化caller gateはfocused 5/5、related 126/126、
       launcher receipt gateはfocused 4/4、related 94/94
       （[ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)）。
-    - [ ] queue 19dでAiterm公開面だけをClaude production callerへ接続する。
+    - [x] queue 19dでAiterm公開面だけをClaude production callerへ接続する。
       - [x] 19d-a: Aiterm stdio MCPのversion／tool schema／executable identityを固定し、`claude_turn`の
         structured statusをgeneric Claude provider operationへ変換した。Observer `3116955`、focused 8/8、
         related 58/58、`npm run check` green。
@@ -369,8 +371,10 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
         接続し、通常completed cycle間で同じ`claude.session`を再利用する。通常終了は`pty_close`後にMCP processを
         閉じ、未対応rollover／parent rebindをfail loudにした。Observer `d8dfb92`、focused 27/27、related 91/91、
         `npm run check` green。受入は[ADR 0036](adr/0036-observer-claude-production-caller-core.md)。
-      - [ ] 19d-d（NEXT）: rollback／parent rebindのstop／relaunch／recoveryをAiterm公開toolだけへ接続し、
-        P5-1b4のfull regressionと一回の独立重監査で19dを閉じる。
+      - [x] 19d-d: rollback／parent rebindのstop／relaunch／recoveryをAiterm公開toolだけへ接続した。
+        Observer `7bfafa4`、focused 20/20、related 50/50、full 393/393。独立重監査のP1実装欠陥2件を
+        補正し、P5-1b4 Control revision 62と最終監査Control revision 20をarchiveして19dを閉じた
+        （[ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)）。
     - [ ] queue 19eで実Claude初回／follow-up各1 turn、Stop、exact result、timeoutなしの通常回収、
       session closeをdual-host campaignと同じ一回のH gateで確認する。model request、認証状態、
       実session生成を伴うため明示承認後に行う。

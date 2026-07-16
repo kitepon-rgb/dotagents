@@ -284,9 +284,13 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       Throughline L2をObserver自身の継続理解の代替にせず、Supervisorは非AI transport制御へ限定する
       （Aiterm `dd43c40`／`3842ff2`、focused 1/1、related 122/122、full 262/262、独立反証後green、
       [ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)）。
-    - [ ] **NEXT:** Aiterm公開面だけでClaude production callerを実装し、同じ永続Claude sessionへcompleted turnを
-      順次投入する。completed turnごとの`claude -p`／fresh evaluatorは禁止する。
-    - [ ] caller実装後、実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
+    - [x] Aiterm公開面だけでClaude production callerを実装し、同じ永続Claude sessionへcompleted turnを
+      順次投入する。generation rollover／same-provider parent rebindではstructured close後に別sessionへ切り替え、
+      launch response lossは相関済み`claude_agent` exact replayだけで回収する。completed turnごとの
+      `claude -p`／fresh evaluatorは禁止する。Observer `7bfafa4`、focused 20/20、related 50/50、
+      full 393/393、Control revision 62／20 archiveを
+      [ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)で受け入れた。
+    - [ ] **NEXT — H-WAIT:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
       dual-host campaignと同じ19e live Hで一度確認する。fixture成功をlive成功へ丸めず、model requestを伴うため
       明示承認後にだけ実行する。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／rollback testを
