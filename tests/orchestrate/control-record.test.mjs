@@ -2965,3 +2965,50 @@ test("consult-v1契約はWorker laneの実行者としてoperationally knownに�
     }),
   }), code("ADAPTER_UNKNOWN"));
 });
+
+test("provider障害時の切替は元Consultationのfailed終端後の新recordであり元の成功へ丸めない", async (t) => {
+  const { repo, revision } = await consultationTaskRecorded(t, "provider-switch");
+  const sessionId = "123e4567-e89b-42d3-a456-426614174000";
+  const gpt = await api.consultationRecord({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: revision,
+    consultation: makeConsultation({ consultation_id: "gpt-attempt", assignment_id: "switch-assignment" }),
+  });
+  const dispatched = await api.observeConsultation({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: gpt.revision, consultation_id: "gpt-attempt",
+    observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:00:00.000Z", raw_state: "dispatched" },
+  });
+  const claudeSwitch = () => makeConsultation({ consultation_id: "claude-switch", assignment_id: "switch-assignment", connector: "claude-native", consultation_handle: { session_id: sessionId } });
+  await assert.rejects(api.consultationRecord({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: dispatched.revision, consultation: claudeSwitch(),
+  }), code("ASSIGNMENT_ACTIVE"));
+  const failedEvidence = [evidence("connector:gpt-connector:gpt-attempt", "executor-receipt")];
+  const failed = await api.observeConsultation({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: dispatched.revision, consultation_id: "gpt-attempt",
+    observation: { state: "failed", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-17T00:01:00.000Z", raw_state: "failed", terminal_evidence: failedEvidence },
+  });
+  const switched = await api.consultationRecord({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: failed.revision, consultation: claudeSwitch(),
+  });
+  const original = switched.manifest.consultations.find((entry) => entry.consultation_id === "gpt-attempt");
+  assert.equal(original.state, "failed");
+  assert.deepEqual(original.consultation_handle, { slug: "known-session-slug" });
+  assert.deepEqual(original.terminal_evidence, failedEvidence);
+  const replacement = switched.manifest.consultations.find((entry) => entry.consultation_id === "claude-switch");
+  assert.equal(replacement.connector, "claude-native");
+  assert.equal(replacement.state, "planned");
+  await assert.rejects(api.consultationRecord({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: switched.revision,
+    consultation: makeConsultation({ consultation_id: "gpt-attempt", assignment_id: "duplicate-id-assignment" }),
+  }), code("DUPLICATE_ID"));
+  const completedSwitch = await api.observeConsultation({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: switched.revision, consultation_id: "claude-switch",
+    observation: { state: "dispatched", source: "claude-native", observed_version: "2.1.211", observed_at: "2026-07-17T00:02:00.000Z", raw_state: "dispatched" },
+  }).then((result) => api.observeConsultation({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: result.revision, consultation_id: "claude-switch",
+    observation: { state: "completed", source: "claude-native", observed_version: "2.1.211", observed_at: "2026-07-17T00:03:00.000Z", raw_state: "completed", decision_ref: "docs/switch-decision.md" },
+  }));
+  await assert.rejects(api.consultationRecord({
+    cwd: repo.root, control_id: "provider-switch", actor_id: "parent", expected_revision: completedSwitch.revision,
+    consultation: makeConsultation({ consultation_id: "third-attempt", assignment_id: "switch-assignment", connector: "codex-sidecar", consultation_handle: null }),
+  }), code("ASSIGNMENT_ACTIVE"));
+});
