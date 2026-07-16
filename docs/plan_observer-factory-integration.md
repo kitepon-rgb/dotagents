@@ -306,10 +306,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       controllerのPATH先頭をcampaign prefixへ固定し、bare `throughline process-turn`とabsolute
       `observer-read`を同じcandidateへ束縛する。失敗attemptは成功へ含めず、global updateや
       手動transcript投入へfallbackしない（[ADR 0025](adr/0025-throughline-capture-runtime-binding.md)）。
-    - [ ] PATH補正後に判明したAiterm runtime共有を閉じる。campaign専用0700 `TMPDIR`とcandidate-first
+    - [x] PATH補正後に判明したAiterm runtime共有を閉じる。campaign専用0700 `TMPDIR`とcandidate-first
       PATHでfresh tmux serverを作り、global tmux serverのstale環境を再利用しない。global socket／session／
       packageは変更せず、candidate自然Stopのreceiptと`observer-read` completed turnで受け入れる
       （[ADR 0026](adr/0026-aiterm-campaign-runtime-isolation.md)）。
+    - [ ] 専用runtimeのUnix socket長境界を閉じる。campaign root直下の短い0700 `r`を使い、
+      `<TMPDIR>/claude-tmux-sockets/claude-mcp`をmacOSで103 bytes以下とlaunch前に実測する。
+      105-byte pathの失敗attemptは成功へ含めず、global runtimeへfallbackしない
+      （[ADR 0027](adr/0027-aiterm-runtime-socket-length-bound.md)）。
   - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
     live host成功へ丸めない。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。

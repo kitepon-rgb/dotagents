@@ -119,6 +119,10 @@ PATH補正後もcompleted receiptは0件であり、Aitermのglobal tmux server�
 新sessionへ継承していた。Observer ADR 0130と本repo
 [ADR 0026](adr/0026-aiterm-campaign-runtime-isolation.md)に従い、campaign専用0700 `TMPDIR`と
 candidate-first PATHを同時に渡してfresh Aiterm serverを作る。global socket／session／packageは変更しない。
+最初の専用runtime名では最終tmux socketが105 bytesとなり、macOSの104-byte `sun_path`へ収まらず
+session生成前に失敗した。本repo [ADR 0027](adr/0027-aiterm-runtime-socket-length-bound.md)と
+Observer ADR 0131に従い、campaign root直下の短い0700 `r`を使い、最終path 103 bytes以下をlaunch前に
+実測する。長いruntimeの失敗をlive成功へ含めない。
 19c2は一回の再Hを完了し、Claude Code 2.1.210のbackground job経路に
 公開reply／terminal exact result readがなくcanonical resultも拒否された事実は維持する。一方、
 Aiterm所有の永続PTYへ対話型`claude_agent`を追加する公開routeを
