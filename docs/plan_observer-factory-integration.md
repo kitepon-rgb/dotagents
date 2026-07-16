@@ -266,13 +266,13 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     harnessをObserver製品repoのfixtureで先に閉じた。親Mailbox hookをresult captureへ流用しない。
     Observer `f40b672`、dotagents `78c358b`、focused 10/10、related 26/26、package／isolated
     install gateを[ADR 0028](adr/0028-observer-claude-characterization-harness-receipt.md)で受け入れた。
-  - [ ] 上記harness完成後、Claude公開非対話reply／result readをH characterizationし、実証済み公開面だけで
-    Claude callerを実装してからdual-host live Hへ進む
-    （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。live Hは一つのjobで実施済みだが、
-    再Hでhook invocation、job／session、Stop payloadはconfirmedとなった。canonical resultは
-    `E_CLAUDE_CHARACTERIZATION_RESULT_INVALID`、reply／terminal exact resultはunsupportedのため
-    旧background job callerはblockedである
-    （[ADR 0032](adr/0032-observer-claude-live-recharacterization-blocked.md)）。
+  - [x] 上記harness完成後、Claude公開非対話reply／result readをH characterizationし、旧background job routeの
+    unsupportedを証拠化した上で、実証済みAiterm公開面だけでClaude callerを実装してdual-host live Hへ進む
+    （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。最初のlive Hと診断receipt後の再Hで
+    hook invocation、job／session、Stop payloadはconfirmedとなったが、canonical resultは
+    `E_CLAUDE_CHARACTERIZATION_RESULT_INVALID`、reply／terminal exact resultはunsupportedだったため、
+    旧background job callerを[ADR 0032](adr/0032-observer-claude-live-recharacterization-blocked.md)で閉じ、
+    19c3以降のAiterm対話routeへ置換した。
     - [x] Stop未発火とstdin／payload／result不正を区別するraw-free diagnostic receiptをObserverで閉じた。
       Observer `f239a07`、focused 9/9、related 29/29、`npm run check` green、
       [ADR 0031](adr/0031-observer-claude-diagnostic-receipt-acceptance.md)を受入証拠とする。
@@ -290,10 +290,11 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       `claude -p`／fresh evaluatorは禁止する。Observer `7bfafa4`、focused 20/20、related 50/50、
       full 393/393、Control revision 62／20 archiveを
       [ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)で受け入れた。
-    - [ ] **IN PROGRESS — 承認済み:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
+    - [x] **DONE — 承認済み:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
       dual-host campaignと同じ19e live Hで一度確認する。fixture成功をlive成功へ丸めず、model requestを伴うため
       明示承認後にだけ実行する。通常campaignは2026-07-16にオーナー承認済み。intentional crash／通信断は
-      別承認のまま実施しない。
+      別承認のまま実施しない。Claude r12／Codex r11の通常系受入、設定のexact rollback、修理commitとgateは
+      [ADR 0039](adr/0039-observer-dual-host-live-acceptance.md)を正とする。
     - [x] 19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline
       `observer-read`疎通へ補正し、`apply-observer-hook-config`へ検証済みarchiveからの原子的restore、
       absent状態、mode／owner保持を追加する。rollback入口がgreenになるまで実HOMEへapplyしない。
@@ -331,8 +332,8 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       related 42/42、package verify、実feed installed smoke
       `feed_turns=1 snapshot_turns=1 canonical=true`がgreen。失敗attemptは成功へ含めず19eを再開する
       （Observer ADR 0134）。
-  - [ ] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
-    live host成功へ丸めない。
+  - [x] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
+    live host成功へ丸めない。通常系19eで実施後、最初のarchiveとdigest／mode／ownerが一致する設定へ復元した。
 - [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
 
 **Gate:** 同じObserver製品が親hostと同じproviderで伴走し、正常進行では沈黙する。

@@ -30,7 +30,7 @@
 
 | 子計画 | 親内の役割 | 2026-07-16時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1／19d完了、O2 queue 19e dual-host live H待ち |
+| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1／queue 19e完了、O2 Phase gate待ち |
 | [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1 local closure完了、実hostはR2、意図的canaryはR3で進める |
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
@@ -96,7 +96,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19c2 | `DONE` | diagnostic receiptで一つのClaude jobを再characterizeする | Observer / O2 H gate |
 | 19c3 | `DONE` | Aitermへ永続PTYの対話型`claude_agent`とoperation相関付き公開completion／recovery契約を追加する | Aiterm / 独立focused＋related＋full gate |
 | 19d | `DONE` | Aiterm公開面だけで永続Claude Observer production callerとgeneration lifecycleを実装する | Observer / O2 focused＋related＋full gate |
-| 19e | `IN PROGRESS` | 承認済み通常系Observer dual-host liveを一回実施する。intentional faultは別承認 | Observer / O2 H gate |
+| 19e | `DONE` | 承認済み通常系Observer dual-host liveを一回実施する。intentional faultは別承認 | Observer / O2 H gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
@@ -154,6 +154,15 @@ fixture成功をlive成功へ丸めないが、
 Observer `7bfafa4`、focused 20/20、related 50/50、full 393/393、Control revision 62／20 archiveを
 [ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)で受け入れた。実Claude初回／follow-upは
 19eの一回のdual-host live H campaignへ統合する。
+queue 19eはオーナーの明示承認後、campaign candidateだけで完了した。Claude r12／Codex r11は各々
+親completed feed 2件、同じObserver generationのcompleted cycle 2件、初回cycle後65秒超、pending state
+なし、caller cancel／host terminalを満たした。最初のconfig archiveから両provider設定をdigest、mode
+0600、uid 501、gid 20一致で復元し、candidate設定が残っていないことも確認した。campaign中に再現した
+所有製品欠陥はAiterm `4d3befd`、Observer `396cf05`／`ebd8ae6`／`b044690`／`9eb4a7e`、Throughline
+`95a3233`へ独立修理し、修理済みfresh runだけを成功へ数えた。受入証拠は
+[ADR 0039](adr/0039-observer-dual-host-live-acceptance.md)、Observer ADR 0139、Throughline ADR 0013を正とする。
+intentional fault、push、publish、deploy、loginは実施していない。次はObserver P5-3のfull regression、
+独立重監査、knowledge returnであり、その完了前にO3を開始しない。
 preflight後に判明したCodex parent callerと配布の非H欠落は
 [ADR 0025](adr/0025-observer-codex-parent-caller-core-receipt.md)と
 [ADR 0026](adr/0026-observer-codex-parent-entry-distribution-receipt.md)で受け入れた。
@@ -385,7 +394,7 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
     Observer `659924c`／`0690ee0`／`41a031d`、dotagents `21bc352`、focused 12/12、related
     25/25、isolated install／verify／rollback、`npm run check`／`make lint` greenを
     [ADR 0026](adr/0026-observer-codex-parent-entry-distribution-receipt.md)で受け入れた。
-  - [ ] Claudeの公開対話delivery／exact result readをAitermで完成し、その公開面だけで
+  - [x] Claudeの公開対話delivery／exact result readをAitermで完成し、その公開面だけで
     production callerを実装した後にdual-host live campaignへ進む。
     live Hと診断receipt後の再Hは各一回実施済みである。再Hでhook invocation、job／session、Stop
     payloadはconfirmedとなったが、canonical result拒否とreply／terminal exact result非公開により
@@ -413,15 +422,17 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
         Observer `7bfafa4`、focused 20/20、related 50/50、full 393/393。独立重監査のP1実装欠陥2件を
         補正し、P5-1b4 Control revision 62と最終監査Control revision 20をarchiveして19dを閉じた
         （[ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)）。
-    - [ ] queue 19eで実Claude初回／follow-up各1 turn、Stop、exact result、timeoutなしの通常回収、
+    - [x] queue 19eで実Claude初回／follow-up各1 turn、Stop、exact result、timeoutなしの通常回収、
       session closeをdual-host campaignと同じ一回のH gateで確認する。model request、認証状態、
-      実session生成を伴うため明示承認後に行う。
+      実session生成を伴うため明示承認後に行う。Claude r12／Codex r11の受入証拠は
+      [ADR 0039](adr/0039-observer-dual-host-live-acceptance.md)。
 - [ ] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
   - [x] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、
     silence／suppression／replay／誤配送／claim failureとClaude `provider_unavailable`を非H fixtureで固定する。
     Observer `ddd768a`／`e203190`／`f6b296b`／`0f5fd78`、ADR 0092〜0094で、focused 6/6、
     関連178/178、`npm run check` greenを受け入れた。
-  - [ ] Claude／Codexのproduction request、session相関、hook trust、実host faultはP5-1bのH gateで受け入れる。
+  - [x] Claude／Codexのproduction request、session相関、hook trust、通常停止をP5-1bのH gateで受け入れる。
+    intentional crash／通信断は通常campaignの完了条件へ混ぜず、別の明示承認を要する。
 - [ ] Observer側ControlとPhase監査を閉じる。
 
 詳細: [Observer計画 Phase 2](plan_observer-factory-integration.md#phase-2-observer完成) ／
