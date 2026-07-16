@@ -290,11 +290,16 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       `claude -p`／fresh evaluatorは禁止する。Observer `7bfafa4`、focused 20/20、related 50/50、
       full 393/393、Control revision 62／20 archiveを
       [ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)で受け入れた。
-    - [x] **DONE — 承認済み:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
+    - [ ] **CORRECTION — 再open:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
       dual-host campaignと同じ19e live Hで一度確認する。fixture成功をlive成功へ丸めず、model requestを伴うため
       明示承認後にだけ実行する。通常campaignは2026-07-16にオーナー承認済み。intentional crash／通信断は
       別承認のまま実施しない。Claude r12／Codex r11の通常系受入、設定のexact rollback、修理commitとgateは
       [ADR 0039](adr/0039-observer-dual-host-live-acceptance.md)を正とする。
+      ただしCodex app-server二attemptのMCP process群16件がcampaign rootを`cwd`にしたまま残留したため、
+      leader terminalをprocess全体の終了へ読み替えた証拠だけを
+      [ADR 0041](adr/0041-observer-queue19e-process-group-correction.md)で失効した。Observer `b089448`／
+      ADR 0140のP5-1b5b-r15と、独立したpost-spawn/pre-ready recovery修理、修理後HEADのPhase gateを
+      閉じるまで本項を完了へ戻さず、O3を開始しない。
     - [x] 19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline
       `observer-read`疎通へ補正し、`apply-observer-hook-config`へ検証済みarchiveからの原子的restore、
       absent状態、mode／owner保持を追加する。rollback入口がgreenになるまで実HOMEへapplyしない。

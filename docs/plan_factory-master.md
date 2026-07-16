@@ -30,7 +30,7 @@
 
 | 子計画 | 親内の役割 | 2026-07-16時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O1／queue 19e完了、O2 Phase gate待ち |
+| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。queue 19eをprocess残留で再open。O2修理gate待ち |
 | [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1 local closure完了、実hostはR2、意図的canaryはR3で進める |
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
@@ -96,7 +96,10 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19c2 | `DONE` | diagnostic receiptで一つのClaude jobを再characterizeする | Observer / O2 H gate |
 | 19c3 | `DONE` | Aitermへ永続PTYの対話型`claude_agent`とoperation相関付き公開completion／recovery契約を追加する | Aiterm / 独立focused＋related＋full gate |
 | 19d | `DONE` | Aiterm公開面だけで永続Claude Observer production callerとgeneration lifecycleを実装する | Observer / O2 focused＋related＋full gate |
-| 19e | `DONE` | 承認済み通常系Observer dual-host liveを一回実施する。intentional faultは別承認 | Observer / O2 H gate |
+| 19e | `CORRECTION` | 通常系dual-host liveのcycle／rollback証拠は維持し、Codex process残留0だけを失効する | dotagents → Observer / 訂正gate |
+| 19e-r15 | `NOW` | Codex app-serverの固有process group全体をboundedに終了し、group不在まで確認する | Observer / focused＋related gate |
+| 19f | `PENDING` | post-spawn/pre-ready failureを同じwatch identity／handleのlaunch cleanupへ接続する | Observer / 独立focused＋related gate |
+| 19g | `PENDING` | 修理後HEADのfull regression、独立重監査、knowledge return、Control／receiptを閉じる | Observer → dotagents / O2 Phase gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 
@@ -163,6 +166,12 @@ queue 19eはオーナーの明示承認後、campaign candidateだけで完了�
 [ADR 0039](adr/0039-observer-dual-host-live-acceptance.md)、Observer ADR 0139、Throughline ADR 0013を正とする。
 intentional fault、push、publish、deploy、loginは実施していない。次はObserver P5-3のfull regression、
 独立重監査、knowledge returnであり、その完了前にO3を開始しない。
+ただしcampaign root削除前のopen-file検査で、終了済みCodex app-server二attemptが起動したMCP
+process群16件の残留が判明した。app-server leader件数0をprocess全体の終了へ読み替えた証拠だけを
+[ADR 0041](adr/0041-observer-queue19e-process-group-correction.md)で失効し、queue 19eを`CORRECTION`へ戻す。
+製品側の設計DecisionはObserver `b089448`／ADR 0140を正とする。P5-1b5b-r15と、独立再現する
+post-spawn/pre-ready recovery欠陥を別gate／別commitで閉じ、修理後HEADのPhase gateを完了するまで
+O3／後続laneを開始しない。
 preflight後に判明したCodex parent callerと配布の非H欠落は
 [ADR 0025](adr/0025-observer-codex-parent-caller-core-receipt.md)と
 [ADR 0026](adr/0026-observer-codex-parent-entry-distribution-receipt.md)で受け入れた。
