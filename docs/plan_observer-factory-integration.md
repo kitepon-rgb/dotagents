@@ -187,7 +187,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 2: Observer完成
 
-- [ ] Observer runtimeをhost-neutral SupervisorとCodex／Claude host adapterへ分離する。
+- [x] Observer runtimeをhost-neutral SupervisorとCodex／Claude host adapterへ分離する。
   - [x] model operation journal core、lock／completed locator／planned rollover／processed cleanup補正を
     Observer `4c3cc03`／`8afebca`、ADR 0049／0053で受け入れた。
   - [x] deterministic message ID、record-first receipt、strict recoveryを持つmodel operation専用
@@ -198,7 +198,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     ADR 0056／0057で受け入れた。
   - [x] AI wait loopとSupervisorの二重所有を解消し、Codexをcycleごとの`turn/start`とexact result回収へ
     訂正した。Observer `3f35dbb`、focused 38/38、Supervisor関連16/16、ADR 0060／0061で受け入れた。
-  - [ ] 外部Supervisor production callerを一target一process／一cycle一stepで接続する。timeoutではAIを起動せず、
+  - [x] 外部Supervisor production callerを一target一process／一cycle一stepで接続する。timeoutではAIを起動せず、
     record-first operationからprovider request／result／apply／cursor commitを駆動する。
     - [x] `applyCycle`／`finalizeAppliedCycle`をdurable cycle input／operation時刻へ束縛し、advisoryの
       Mailbox exact replayとapplied後cleanupへ接続した。Observer `fc51157`、ADR 0062／0063、関連40/40で受け入れた。
@@ -208,18 +208,20 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       一step coreを配線し、timeout／cancel／fault／explicit stop loopを固定した。Observer `77cbae4`／
       `4e29398`／`6d03b71`／`96ccad7`、corrective `dda8567`／`f7efa09`、最終関連70/70、
       ADR 0066〜0069、計画commit `e2adbca`で受け入れた。実host requestはH gateへ残す。
-  - [ ] Codex live app-serverとClaude公開非対話delivery／session相関／隔離Stop captureをH gateで実証する。
-- [ ] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
+  - [x] **SUPERSEDED:** Claude公開非対話background routeをunsupportedとして閉じ、Codex app-serverと
+    Aiterm公開Claude sessionのdelivery／session相関／StopをH gateで実証した。
+- [x] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
   host不明またはThroughlineの`ambiguous_parent`はfail closedにする。
-- [ ] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。
+- [x] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。
   active watchが既にある場合は`already_active`で停止し、暗黙起動、二重起動、後勝ちtakeoverを行わない。
-- [ ] Codex ObserverとClaude Observerで同じwatch／status／stop UXを提供する。
+- [x] Codex ObserverとClaude Observerで同じwatch／status／stop UXを提供する。
 - [x] Observer hostのproject identityを、監視対象ごとの作業folderではなく単一のObserver repo rootへ固定する。
   - Observer rootの`AGENTS.md`／`CLAUDE.md`が伴走者、read-only、既定沈黙、一サイクル一件、同providerという
     静的役割を所有し、起動ごとのpromptはtarget、watch、cursor等の可変情報だけを渡す。
   - targetの`project_root`はchild start envelopeとSupervisor state照合にだけ使い、host `cwd`、一時git repo、アプリ上の
     project identityへ投影しない。正本: Observer ADR 0017、commit `6abd9e6`。
-- [ ] Claude host adapterで、可変長の`--mcp-config`／`--tools`より前にprompt positionalを置くargv契約を固定し、
+- [x] **SUPERSEDED:** 旧Claude background adapterのargv／private job recoveryは採用せず、Aiterm公開
+  `claude_agent`／`claude_turn`／`pty_close`契約へ置換した。旧案では、
   terminal receiptのowner、作成時点、atomic保存、job ID／result digest相関、再開手順を耐久契約として実装する。
   即時完了、terminal直前のadapter crash、実行中adapter restart、daemon消失、失敗terminalを独立fixtureにし、
   terminal後に`claude logs <id>`の`control.sock`が失われても成功や空結果へ丸めず、Claude private job state直読を標準fallbackにしない。
@@ -227,14 +229,14 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   allowlist済みのjob ID、terminal state、result digest、観測時刻だけを構造化receiptへ抽出する。後追いmaskを安全境界にしない。
 - [x] production Observer AIのtool allowlistを空にし、Throughline wait／read、project読取、shell／file toolを
   AIへ公開しない。既存Observer MCP serverは削除せず、compatibility／diagnostics上の存廃をPhase 2内の別Taskで裁定する。
-- [ ] Claude stop前に公開`agents --json`でterminalなら`already_terminal`を返してCLI stopを再発行せず、実行中stopの
+- [x] **SUPERSEDED:** 旧Claude backgroundの`agents --json` stop案はAiterm公開session terminalへ置換した。旧案では、
   command receiptとterminal state観測を分離する。stop確認不能では同じjob IDを再観測し、terminal不明なら`stopping`を維持する。
-- [ ] Claude backgroundのuser／project／local settings、hooks、pluginsを隔離し、HEAD、index、tracked／untracked、modeを含む
+- [x] **SUPERSEDED:** 旧Claude background隔離案はcampaign専用Aiterm runtimeと設定transactionへ置換した。旧案では、
   project fingerprint不変を確認する。65秒超の実行中jobでstop、子process残存なし、再stop、親／launcher再起動後の状態を実証する。
-- [ ] project-local Stop hookはmatching provider resultのcaptureだけを行い、block continuationを返さない。
+- [x] project-local Stop hookはmatching provider resultのcaptureだけを行い、block continuationを返さない。
   次cycleは外部Supervisorが開始し、親Mailbox hook adapterは別責務の高速配送員として維持する。
-- [ ] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
-- [ ] read-only、誤配送防止、crash recovery、faulted停止、installer／verify／rollbackを両hostで完遂する。
+- [x] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
+- [x] read-only、誤配送防止、crash recovery、faulted停止、installer／verify／rollbackを両hostで完遂する。
   - [x] Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。
     Observer CLIがClaude／Codex別のcanonical `Stop` entryを所有し、dotagentsはmessage、Mailbox、routing、renderを
     再実装しない。CLI不在、schema不一致、candidate不正はfail loudにする。
@@ -290,7 +292,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       `claude -p`／fresh evaluatorは禁止する。Observer `7bfafa4`、focused 20/20、related 50/50、
       full 393/393、Control revision 62／20 archiveを
       [ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)で受け入れた。
-    - [ ] **CORRECTION — 再open:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
+    - [x] **CORRECTION — 受入完了:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
       dual-host campaignと同じ19e live Hで一度確認する。fixture成功をlive成功へ丸めず、model requestを伴うため
       明示承認後にだけ実行する。通常campaignは2026-07-16にオーナー承認済み。intentional crash／通信断は
       別承認のまま実施しない。Claude r12／Codex r11の通常系受入、設定のexact rollback、修理commitとgateは
@@ -299,7 +301,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       leader terminalをprocess全体の終了へ読み替えた証拠だけを
       [ADR 0041](adr/0041-observer-queue19e-process-group-correction.md)で失効した。Observer `b089448`／
       ADR 0140のP5-1b5b-r15と、独立したpost-spawn/pre-ready recovery修理、修理後HEADのPhase gateを
-      閉じるまで本項を完了へ戻さず、O3を開始しない。
+      Observer `1493b35`／ADR 0144、focused 16/16、related 68/68、full 412/412、P0/P1残存0、
+      Control revision 26 archiveで閉じた。cross-repo receiptは
+      [ADR 0042](adr/0042-observer-phase-o2-cross-repo-receipt.md)。
     - [x] 19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline
       `observer-read`疎通へ補正し、`apply-observer-hook-config`へ検証済みarchiveからの原子的restore、
       absent状態、mode／owner保持を追加する。rollback入口がgreenになるまで実HOMEへapplyしない。
@@ -339,7 +343,9 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       （Observer ADR 0134）。
   - [x] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
     live host成功へ丸めない。通常系19eで実施後、最初のarchiveとdigest／mode／ownerが一致する設定へ復元した。
-- [ ] Codex／Claude E2EとPhase監査を通し、Observer側active planの全受け入れ条件を閉じる。
+- [x] Codex／Claude E2EとPhase監査を通し、Observer側Phase O2の受け入れ条件を閉じる。
+  - Observer `1493b35`／ADR 0144、Control revision 26 archive、focused 16/16、related 68/68、
+    full 412/412、独立重監査P0/P1残存0を受け入れた。次ready TODOはPhase 3。
 
 **Gate:** 同じObserver製品が親hostと同じproviderで伴走し、正常進行では沈黙する。
 
