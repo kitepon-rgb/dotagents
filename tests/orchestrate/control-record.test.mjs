@@ -3341,17 +3341,38 @@ test("selector_decisionはv27のplacement reservationへoptional keyとして束
       },
     }),
   });
+  const selectorCandidate = () => makePlacementCandidate({
+    candidate_id: "selector-run", registry_observation_id: "selector-registry",
+    assignment_id: "selector-assignment", workspace_cwd: repo.root, executor_handle: null,
+    lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "selector-assignment" },
+  });
+  // ADR 0054 Wave A: selector経由のreservationはquota pool leaseの保持が必須（配線が飾りにならない）
+  await assert.rejects(api.reservePlacement({
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: registry.revision,
+    task_id: "selector-task", candidate: selectorCandidate(), review_decision: null,
+    selector_decision: makeSelectorDecision(),
+  }), code("QUOTA_POOL_LOCK_REQUIRED"));
+  // lease tokenはselector_decisionなしでは意味を持たない
+  await assert.rejects(api.reservePlacement({
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: registry.revision,
+    task_id: "selector-task", candidate: selectorCandidate(), review_decision: null,
+    quota_pool_lock_token: "0f0e0d0c-0b0a-4998-8776-655443322110",
+  }), code("INVALID_SCHEMA"));
+  const poolLock = await api.quotaPoolLockAcquire({ cwd: repo.root, quota_pool_id: "openai-sub-main" });
+  // 別pool向けのleaseでは選択poolの保持を満たさない
+  const otherLock = await api.quotaPoolLockAcquire({ cwd: repo.root, quota_pool_id: "anthropic-sub-main" });
+  await assert.rejects(api.reservePlacement({
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: registry.revision,
+    task_id: "selector-task", candidate: selectorCandidate(), review_decision: null,
+    selector_decision: makeSelectorDecision(), quota_pool_lock_token: otherLock.token,
+  }), code("QUOTA_POOL_LOCK_REQUIRED"));
   const reserved = await api.reservePlacement({
     cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: registry.revision,
-    task_id: "selector-task",
-    candidate: makePlacementCandidate({
-      candidate_id: "selector-run", registry_observation_id: "selector-registry",
-      assignment_id: "selector-assignment", workspace_cwd: repo.root, executor_handle: null,
-      lineage: { ...makePlacementCandidate().lineage, root_assignment_id: "selector-assignment" },
-    }),
-    review_decision: null,
-    selector_decision: makeSelectorDecision(),
+    task_id: "selector-task", candidate: selectorCandidate(), review_decision: null,
+    selector_decision: makeSelectorDecision(), quota_pool_lock_token: poolLock.token,
   });
+  await api.quotaPoolLockRelease({ cwd: repo.root, quota_pool_id: "anthropic-sub-main", token: otherLock.token });
+  await api.quotaPoolLockRelease({ cwd: repo.root, quota_pool_id: "openai-sub-main", token: poolLock.token });
   const reservation = reserved.manifest.worker_runs[0].placement_reservation;
   assert.deepEqual(reservation.selector_decision, makeSelectorDecision());
   const receipt = reserved.manifest.transition_receipts.at(-1);
@@ -3397,4 +3418,26 @@ test("selector_decisionはv27のplacement reservationへoptional keyとして束
     review_decision: null,
     selector_decision: makeSelectorDecision(),
   }), code("SCHEMA_UPGRADE_REQUIRED"));
+});
+
+test("quota pool lockはpool単位のleaseとして競合をfail loudにしtoken明示でだけ解放される", async (t) => {
+  const { repo } = await initialized(t, { control_id: "pool-lock-lifecycle" });
+  const lock = await api.quotaPoolLockAcquire({ cwd: repo.root, quota_pool_id: "openai-sub-main" });
+  assert.match(lock.token, /^[0-9a-f-]{36}$/);
+  // 同一poolの二重acquireはLOCK_CONTENDEDで、保持者のtoken・acquired_atを開示する（協調回収の入口）
+  await assert.rejects(api.quotaPoolLockAcquire({ cwd: repo.root, quota_pool_id: "openai-sub-main" }), (error) => {
+    assert.ok(error instanceof api.ControlRecordError); assert.equal(error.code, "LOCK_CONTENDED");
+    assert.equal(error.details.owners.length, 1); assert.equal(error.details.owners[0].token, lock.token);
+    return true;
+  });
+  // 別poolは独立して獲得できる（pool単位の射程）
+  const other = await api.quotaPoolLockAcquire({ cwd: repo.root, quota_pool_id: "anthropic-sub-main" });
+  await api.quotaPoolLockRelease({ cwd: repo.root, quota_pool_id: "anthropic-sub-main", token: other.token });
+  // 誤ったtokenでは解放できない
+  await assert.rejects(api.quotaPoolLockRelease({ cwd: repo.root, quota_pool_id: "openai-sub-main", token: "00000000-0000-4000-8000-000000000000" }), code("LOCK_NOT_FOUND"));
+  await api.quotaPoolLockRelease({ cwd: repo.root, quota_pool_id: "openai-sub-main", token: lock.token });
+  // 解放済みleaseの再解放と再取得
+  await assert.rejects(api.quotaPoolLockRelease({ cwd: repo.root, quota_pool_id: "openai-sub-main", token: lock.token }), code("LOCK_NOT_FOUND"));
+  const again = await api.quotaPoolLockAcquire({ cwd: repo.root, quota_pool_id: "openai-sub-main" });
+  await api.quotaPoolLockRelease({ cwd: repo.root, quota_pool_id: "openai-sub-main", token: again.token });
 });

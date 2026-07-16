@@ -26,6 +26,7 @@ const commands = new Map([
   ["observe-consultation", api.observeConsultation], ["consultation-cancel", api.consultationCancel], ["conflict-check", api.conflictCheck],
   ["accept", api.accept], ["reject", api.reject], ["task-finalize-record", api.taskFinalizeRecord],
   ["control-finalize", api.finalizeControl], ["recover-lock", api.recoverLock], ["archive", api.archive],
+  ["quota-pool-lock-acquire", api.quotaPoolLockAcquire], ["quota-pool-lock-release", api.quotaPoolLockRelease],
 ]);
 
 function outputError(code, message, exitCode) {
