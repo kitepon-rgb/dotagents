@@ -522,8 +522,9 @@ Observer `docs/plan_observer.md`
 - [x] provider-owned quota snapshot、window正規化、`pace_ratio`、hysteresis、pool lock、reservationを実装する。
   - Wave Q/S（`83236c4`・[ADR 0055](adr/0055-o4-wave-qs-acceptance.md)）、Wave V（`75f33fc`・
     [ADR 0056](adr/0056-o4-wave-v-acceptance.md)）、Wave A（quota-adapter＋pool lock配線・
-    [ADR 0057](adr/0057-o4-wave-a-acceptance.md)）で完了。**実取得（account usage読取）はlive H
-    承認待ちとして子計画へ残置**（実装済み扱いにしない）。
+    [ADR 0057](adr/0057-o4-wave-a-acceptance.md)）で完了。live H実測は
+    [ADR 0058](adr/0058-o4-live-quota-observation-acceptance.md)：**OpenAI verified・Anthropicは
+    実wireにutilizationが無くsnapshot未達を実態固定**（残作業は子計画の同項目）。
 - [x] stale、取得不能、矛盾、reset境界、残量ゼロをfail loudにし、架空値や暗黙fallbackを使わない。
   - 取得不能はWave Aの`projectQuotaObservationFailure`（必ずtyped error）、他はWave Q/S fixtureで固定。
 - [ ] Control schemaとreceiptへselector decisionを束縛し、週次dogfoodで両社の消費ペースを評価する。

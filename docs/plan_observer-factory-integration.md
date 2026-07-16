@@ -442,7 +442,10 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     validator実装はWave Q。
 - [ ] OpenAI／Anthropic adapterでquota snapshotを取得し、秘密、cookie、token、account内部stateをControlへ複製しない。
   - request/projection純関数と秘密非複製は`lib/orchestrate/quota-adapter.mjs`（受入[ADR 0057](adr/0057-o4-wave-a-acceptance.md)）で完了。
-    **残: 実取得（account usage読取）＝live H承認待ち**。活性化前に実イベントでshape/単位をfixture再確認する。
+    live H実測（受入[ADR 0058](adr/0058-o4-live-quota-observation-acceptance.md)）で**OpenAIはverified**
+    （実token_count→snapshot往復）。**残: Anthropicは実wireにutilizationが無くsnapshot未達**
+    （`UTILIZATION_UNAVAILABLE`で実態固定。次候補=CLIのutilization追加の追observation、または
+    statusline補助入口＝別H）。両provider verifiedまでrate-aware自動配置を開始しない。
 - [x] 異なるreset時刻をUTCで正規化し、`pace_ratio`と最も逼迫したwindowを計算する純粋selectorを実装する。
   - `lib/orchestrate/rate-selector.mjs`（`83236c4`、受入[ADR 0055](adr/0055-o4-wave-qs-acceptance.md)）。
     canonical ISO UTC強制・model_family_scope選別・残量下限・pace飽和・量子化tie-break。

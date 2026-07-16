@@ -4,6 +4,27 @@
 **確度:** 公式仕様=高、現Mac実測=高、未ログインClaudeの実行挙動=未検証  
 **対象:** Observer同provider伴走、異provider相談、一般Workerのrate-aware配置
 
+## live H実測追記（2026-07-17・ADR 0058。原文は保持）
+
+O4 live quota観測（Control `observer-factory-20260715` Task `o4-live-quota-observation`）の実測で
+本文の2箇所が更新された。
+
+1. **Codex token_count（0.144.3）の完全shapeは本文の抜粋より広い。** 本文の3 key引用は抜粋であり、
+   実イベントは`{limit_id, limit_name, primary, secondary, credits{has_credits, unlimited, balance},
+   individual_limit, plan_type, rate_limit_reached_type}`を持つ（2026-07-16T23:32:39.061Z実測、
+   used_percent 24.0／window_minutes 10080／resets_at 1784780155）。projection純関数はこの完全形を
+   characterizeし、実イベント→`dotagents.quota-snapshot.v1`（remaining_bp 7600）の往復をfixture固定
+   した。`individual_limit`はnullしか観測されておらず、非nullは`SCHEMA_DRIFT`で拒否する。
+   **OpenAI laneのquota snapshot取得はlive verified。**
+2. **Claude Code 2.1.211の実stream `rate_limit_event`はSDK文書と形が違い、utilizationを持たない。**
+   実wireはcamelCaseの`{status, resetsAt, rateLimitType, overageStatus, overageDisabledReason,
+   isUsingOverage}`だけで、SDK文書（snake_case・`utilization: float|None`）はSDK側の正規化形である。
+   utilization不在のため**この入口単独ではremaining_bpを導出できず、snapshotは作れない**。adapterは
+   `normalizeClaudeCliRateLimitEvent`（wire→SDK形正規化）と`UTILIZATION_UNAVAILABLE`（捏造禁止の
+   typed error）で実態を固定した。CLIがutilizationを載せた場合の前方互換fixtureは通済み。
+   **Anthropic laneのsnapshot取得は未達**——候補はCLI側のutilization追加、またはstatusline補助入口
+   （`used_percentage`。設定変更＝別H）。両provider verifiedまでrate-aware自動配置は開始しない。
+
 ## 失効注記（2026-07-16・原文は当時の実測として保持）
 
 本記事の一部は後続の実測・正典で失効した。原文を書き換えず、以下を正とする。

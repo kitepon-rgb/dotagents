@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import {
   QuotaAdapterError, QUOTA_OBSERVATION_ENTRIES, QUOTA_OBSERVATION_FAILURE_CODES,
-  QUOTA_OBSERVATION_REQUEST_SCHEMA, buildQuotaObservationRequest,
+  QUOTA_OBSERVATION_REQUEST_SCHEMA, buildQuotaObservationRequest, normalizeClaudeCliRateLimitEvent,
   projectAnthropicRateLimitEvents, projectCodexTokenCountEvent, projectQuotaObservationFailure,
 } from "../../lib/orchestrate/quota-adapter.mjs";
 import { quotaSnapshotDigest } from "../../lib/orchestrate/quota-snapshot.mjs";
@@ -101,7 +101,8 @@ test("Anthropic projectionは単位違い・raw同梱・未知shapeをfail loud�
   // SDK正: utilizationは0.0..1.0のfraction。percent値(30)は単位バグとして拒否する
   assert.throws(() => projectAnthropicRateLimitEvents(anthropicInput({ events: [makeRateLimitInfo({ utilization: 30 })] })), code("EVENT_MALFORMED"));
   assert.throws(() => projectAnthropicRateLimitEvents(anthropicInput({ events: [makeRateLimitInfo({ utilization: -0.1 })] })), code("EVENT_MALFORMED"));
-  assert.throws(() => projectAnthropicRateLimitEvents(anthropicInput({ events: [makeRateLimitInfo({ utilization: null })] })), code("EVENT_MALFORMED"));
+  // utilization不在は2.1.211実測の健全形＝専用codeで「snapshotを作れない」ことを名指しする
+  assert.throws(() => projectAnthropicRateLimitEvents(anthropicInput({ events: [makeRateLimitInfo({ utilization: null })] })), code("UTILIZATION_UNAVAILABLE"));
   // epochミリ秒（単位バグ）と欠落resets_at
   assert.throws(() => projectAnthropicRateLimitEvents(anthropicInput({ events: [makeRateLimitInfo({ resets_at: 1784260800000 })] })), code("EVENT_MALFORMED"));
   assert.throws(() => projectAnthropicRateLimitEvents(anthropicInput({ events: [makeRateLimitInfo({ resets_at: null })] })), code("EVENT_MALFORMED"));
@@ -137,6 +138,43 @@ test("Codex token_countのprojectionは0.144.3実測shapeを固定しsecondary n
   assert.deepEqual(both.windows.map((window) => [window.window_id, window.remaining_bp]), [["codex-primary", 9800], ["codex-secondary", 5000]]);
 });
 
+// 2026-07-17 live H実測（codex-cli 0.144.3・observed 2026-07-16T23:32:39.061Z）の完全event。
+// 07-15抜粋（3 key）に対しlimit_name/credits/individual_limit/plan_type/rate_limit_reached_typeを
+// 追加で持つ。ADR 0058受入fixture。
+const liveCodexEvent = () => ({
+  limit_id: "codex",
+  limit_name: null,
+  primary: { used_percent: 24.0, window_minutes: 10080, resets_at: 1784780155 },
+  secondary: null,
+  credits: { has_credits: false, unlimited: false, balance: "0" },
+  individual_limit: null,
+  plan_type: "pro",
+  rate_limit_reached_type: null,
+});
+
+test("Codex 0.144.3のlive完全event（2026-07-17実測）をそのまま投影できる", () => {
+  const snapshot = projectCodexTokenCountEvent(codexInput({
+    event: liveCodexEvent(), observed_at: "2026-07-16T23:32:39.061Z",
+  }));
+  assert.deepEqual(snapshot.windows, [
+    { window_id: "codex-primary", duration_seconds: 604800, reset_at: "2026-07-23T04:15:55.000Z", remaining_bp: 7600, model_family_scope: null },
+  ]);
+  assert.match(quotaSnapshotDigest(snapshot), /^[a-f0-9]{64}$/);
+  // credits・plan_typeは検証のみでsnapshotへ複製されない（account stateの非複製）
+  assert.equal(JSON.stringify(snapshot).includes("credits"), false);
+  assert.equal(JSON.stringify(snapshot).includes("plan_type"), false);
+  assert.equal(JSON.stringify(snapshot).includes("balance"), false);
+  // 未特性化のindividual_limit非nullはdrift
+  assert.throws(() => projectCodexTokenCountEvent(codexInput({
+    event: { ...liveCodexEvent(), individual_limit: { used_percent: 1, window_minutes: 60, resets_at: 1784780155 } },
+    observed_at: "2026-07-16T23:32:39.061Z",
+  })), code("SCHEMA_DRIFT"));
+  // credits shapeの逸脱はfail loud
+  assert.throws(() => projectCodexTokenCountEvent(codexInput({
+    event: { ...liveCodexEvent(), credits: { has_credits: false } }, observed_at: "2026-07-16T23:32:39.061Z",
+  })), code("INVALID_SCHEMA"));
+});
+
 test("Codex projectionはschema driftと窓ゼロ・単位バグをfail loudにする", () => {
   // 両slot nullはquota観測ではない
   assert.throws(() => projectCodexTokenCountEvent(codexInput({ event: makeCodexEvent({ primary: null }) })), code("NO_QUOTA_WINDOWS"));
@@ -150,6 +188,42 @@ test("Codex projectionはschema driftと窓ゼロ・単位バグをfail loudに�
   assert.throws(() => projectCodexTokenCountEvent(codexInput({ event: makeCodexEvent({ primary: { used_percent: 2, window_minutes: 10080, resets_at: 1784666224000 } }) })), code("EVENT_MALFORMED"));
   // 窓の残り時間 > window長は矛盾（古いresets_atの転用を殺す）
   assert.throws(() => projectCodexTokenCountEvent(codexInput({ event: makeCodexEvent({ primary: { used_percent: 2, window_minutes: 60, resets_at: 1784666224 } }) })), code("WINDOW_CONTRADICTION"));
+});
+
+// 2026-07-17 live H実測（Claude Code 2.1.211・claude -p stream-json）のverbatim wire event。
+// camelCase・utilization不在が現行の健全形。ADR 0058受入fixture。
+const liveClaudeWireEvent = () => ({
+  status: "allowed",
+  resetsAt: 1784257800,
+  rateLimitType: "five_hour",
+  overageStatus: "rejected",
+  overageDisabledReason: "org_level_disabled",
+  isUsingOverage: false,
+});
+
+test("Claude CLI 2.1.211のlive wire event（2026-07-17実測）は正規化されutilization不在をfail loudにする", () => {
+  const normalized = normalizeClaudeCliRateLimitEvent(liveClaudeWireEvent());
+  assert.deepEqual(normalized, {
+    status: "allowed", resets_at: 1784257800, rate_limit_type: "five_hour", utilization: null,
+    overage_status: "rejected", overage_resets_at: null, overage_disabled_reason: "org_level_disabled",
+  });
+  // 実wireそのままではsnapshotを作れない＝捏造せずUTILIZATION_UNAVAILABLE
+  assert.throws(() => projectAnthropicRateLimitEvents(anthropicInput({
+    events: [normalized], observed_at: "2026-07-16T23:35:00.000Z",
+  })), code("UTILIZATION_UNAVAILABLE"));
+  // 将来CLIがutilizationを載せたらそのままsnapshotへ通る（前方互換の固定）
+  const withUtilization = normalizeClaudeCliRateLimitEvent({ ...liveClaudeWireEvent(), utilization: 0.24 });
+  const snapshot = projectAnthropicRateLimitEvents(anthropicInput({
+    events: [withUtilization], observed_at: "2026-07-16T23:35:00.000Z",
+  }));
+  assert.deepEqual(snapshot.windows, [
+    { window_id: "5h", duration_seconds: 18000, reset_at: "2026-07-17T03:10:00.000Z", remaining_bp: 7600, model_family_scope: null },
+  ]);
+  // wireの未知keyはdrift（characterization破り）、isUsingOverageは非boolean拒否・非複製
+  assert.throws(() => normalizeClaudeCliRateLimitEvent({ ...liveClaudeWireEvent(), quotaLeft: 1 }), code("INVALID_SCHEMA"));
+  assert.throws(() => normalizeClaudeCliRateLimitEvent({ ...liveClaudeWireEvent(), isUsingOverage: "no" }), code("EVENT_MALFORMED"));
+  assert.throws(() => normalizeClaudeCliRateLimitEvent({ ...liveClaudeWireEvent(), raw: {} }), code("EVENT_MALFORMED"));
+  assert.equal(Object.hasOwn(normalized, "isUsingOverage"), false);
 });
 
 test("取得失敗のprojectionは必ずtyped errorになりsnapshotを作らない", () => {
