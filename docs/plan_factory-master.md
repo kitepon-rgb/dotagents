@@ -471,6 +471,17 @@ Observer `docs/plan_observer.md`
 - [ ] Codex→Claude execution/consultationとClaude→Codex consultationのhandle、observe、resume、
   timeout回収、failure mappingを実装する。
 - [ ] provider障害時の切替を別Runとして記録し、fallback元の成功へ偽装しない。
+- [x] O3の最初の実装境界を、既存v25 Worker契約へ`claude-native`純粋adapterを追加するwaveと、
+  Consultationの型付きhandle／schema変更waveへ分離する。
+  - [ADR 0043](adr/0043-o3-claude-provider-adapter-boundary.md)で、同一UUID resume、timeout unknown、
+    `--continue`／`--fallback-model`／OAuth経路の`--bare`禁止、`claude-internal` projection-onlyを固定した。
+  - orchestration関連baselineは115/115、fail 0、skip 0。実model request、login、credential、networkは
+    実行していない。
+- [ ] `claude-native` Worker adapterのrequest／observation／failure projectionをfocused gateで実装する。
+- [ ] Consultation多provider化はv25 `slug`へのhandle詰込みを禁止し、旧v25 reader、型付きhandle、
+  migration／rollback、O4のv26予約とのversion順を新しい不変ADRで裁定してから実装する。
+- [ ] 既存未コミットを別セッション由来として放置しない。WSL relay RAGはPhase R2未収容成果、
+  CDC PDF/PNGは正典還流済み中間物、`claude -p` allowはO3の権限規則として、それぞれ別scopeで閉じる。
 
 詳細: [Observer計画 Phase 3](plan_observer-factory-integration.md#phase-3-elasticのprovider対称化)
 

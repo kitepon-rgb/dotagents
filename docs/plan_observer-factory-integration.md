@@ -357,6 +357,18 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 - [ ] Consultationを`gpt-connector`固定からlane別adapterへ拡張し、Workerと別collectionのまま維持する。ObserverをControlのWorker票やConsultation票へ混ぜない。
 - [ ] provider障害時の別社切替は新Runとして記録し、fallback元の成功へ偽装しない。
 - [ ] role別の適格provider集合と、親と異なる相談役をplacement fixtureで固定する。
+- [x] O3実装境界を先に固定する。
+  - [ADR 0043](adr/0043-o3-claude-provider-adapter-boundary.md)で、既存v25 Worker契約を変えない
+    `claude-native` adapterを最初の独立単位とし、Consultationの多provider schema変更を別gateにした。
+  - Claude Code 2.1.211の`--bare`はOAuth／keychainを読まないためsubscription routeへ使わず、
+    `--continue`、推測session、`--fallback-model`、`claude-internal` dispatch転用も禁止する。
+  - baselineはorchestration関連115/115、fail 0、skip 0。実model request／network／credentialは未実施。
+- [ ] `claude-native` Worker adapterのstart／same-session resume／observation／timeout unknown／failure
+  mappingを純粋projectionとして実装し、禁止flagと別session fallbackをfocused testで拒否する。
+- [ ] ConsultationのClaude session ID／Codex handleをv25の`slug`へ読み替えず、旧v25継続読取、
+  型付きhandle、migration／rollback、O4のv26予約とのversion順を不変ADRで裁定する。
+- [ ] 既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、
+  `claude -p` allowはO3権限規則として別scope／別commitで閉じる。保護指定pathを本adapter commitへ混ぜない。
 
 **Gate:** 親hostにかかわらず、同じControlとlane固有のPacket／Report／Decision／timeout回収契約で両社レーンを使える。host projectionをexecution成功へ投影しない。
 
