@@ -227,9 +227,13 @@ L0 ベースライン（直轄化・CI green・現状固定）
         外部通信遮断（update-check/upgrade/telemetry/beta-signup無効化）。smoke実測: serverInfoが
         lattice版を名乗り、daemon recordはLattice側registryのみへ書込。ci green（root 290・
         sensor 2476・exit 0）
-  - [ ] wave2: 別bin `lattice-mcp`（内部daemon再invoke受理・exit表）・`codegraph_status`の
-        mode/reason field・hello二分法（異製品typed error／同製品版差degrade）・fail closed境界
-        （DB破損系・fallback engine初期化失敗の握り潰し改修）・stdout純度テスト
+  - [x] wave2（2026-07-17・Lattice `dcd5b70`）: 別bin `lattice-mcp`（内部daemon再invoke受理・
+        exit契約・stdout純度テスト）・`codegraph_status`のmode/reason機械可読化・hello二分法
+        （異製品`foreign-product`はfail closed・同製品版差は`version-skew` degrade）・
+        DB open失敗の`IndexOpenError`化（index不在guidanceはDecision 6のまま維持）。
+        検収実測: sensor vitest 2481 passed/fail 0・bin integration green・ci exit 0。
+        親レビュー特記: workerがOOMガードバイパス（lattice-mcpがCLI経由のNode 25.x V8対策を
+        通らない）をスコープ外発見として別タスク化——L3残検証と合わせて扱う
 - [ ] 親別matrix（Claude親・Codex親）での登録・疎通をisolated HOMEで検証する
 - [ ] focused／関連gate green
 
