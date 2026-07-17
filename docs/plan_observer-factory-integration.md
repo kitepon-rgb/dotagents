@@ -408,6 +408,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     確認のうえ保全不要と裁定して削除。Lattice向けallow行は別セッション所有として非commit保全。
 
 **Gate:** 親hostにかかわらず、同じControlとlane固有のPacket／Report／Decision／timeout回収契約で両社レーンを使える。host projectionをexecution成功へ投影しない。
+
 - Phase gate前半実施済み（2026-07-17）: orchestration full regression **136/136・fail 0・skip 0**、
   クロスprovider Phase監査（Codex `codex_review`→refuter反証→統括裁定、採用5・棄却1、修理`a77b889`）を
   [ADR 0051](adr/0051-o3-phase-audit-record.md)で記録。
