@@ -6,14 +6,15 @@
 
 ## 単位・向きの対照表（2026-07-17固定。使用量⇄残量の取り違え防止・オーナー注意喚起起点）
 
-機械向け入口は**3つとも「使用済み」向き**で、残量への反転は`quota-adapter.mjs`のprojection一箇所
-だけが行う（`remaining_bp` = 残量basis points）。fixtureは実測値ごと固定済み＝意味が反転すれば落ちる。
+**運用中の入口は各provider 1本＝計2本**（Codex `token_count`／Claude statusline）。全field
+「使用済み」向きで、残量への反転は`quota-adapter.mjs`のprojection一箇所だけが行う
+（`remaining_bp` = 残量basis points）。fixtureは実測値ごと固定済み＝意味が反転すれば落ちる。
 
-| 入口 | field | 向き（公式文言） | 変換 |
-|---|---|---|---|
-| Codex `token_count` | `used_percent` 0..100 | 使用済み | `10000 − round(×100)` |
-| Claude statusline | `used_percentage` 0..100 | 使用済み（"consumed"） | `10000 − round(×100)` |
-| Claude SDK RateLimitEvent | `utilization` 0.0..1.0 | 使用済み（"Fraction … consumed"。wireは未配信） | `10000 − round(×10000)` |
+| 状態 | 入口 | field | 向き（公式文言） | 変換 |
+|---|---|---|---|---|
+| **運用中** | Codex `token_count` | `used_percent` 0..100 | 使用済み | `10000 − round(×100)` |
+| **運用中** | Claude statusline | `used_percentage` 0..100 | 使用済み（"consumed"） | `10000 − round(×100)` |
+| 休眠（前方互換コードのみ） | Claude SDK RateLimitEvent | `utilization` 0.0..1.0 | 使用済み（"Fraction … consumed"。wire未配信＝snapshot不可） | `10000 − round(×10000)` |
 
 **罠**: 人間向けUI表示には残量向き（"X% left"等。statuslineのcontext系は`used_percentage`と
 `remaining_percentage`が両方存在）が混在する。**UI目視値を`source: "manual"`でsnapshotへ入れる時が
