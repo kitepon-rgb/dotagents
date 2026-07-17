@@ -315,12 +315,24 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     （patch捕獲欠陥起因の再走・実測）
 - [x] 着地ごとにdotagents正規gate（`make lint`／`make ci`）green・境界事故0を確認する
   - batchごとfocused＋lint PASS、最終`make ci` exit 0（隔離HOME Codex検証含む）
-- [ ] Phase gate: full CI・**`fable`×high refuter 1回**・クロスprovider検証1回・support/refute ADR・
+- [x] Phase gate: full CI・**`fable`×high refuter 1回**・クロスprovider検証1回・support/refute ADR・
       知識還流（caveat／rag）
-- [ ] **refuteなら編入・退役は発動しない**。correction planを立てて本計画のL6以降を凍結する
+  - 2026-07-18完了: full CI両repo green・refuter=**条件付きsupport**（核心数値は独立再検証で全裏付き・
+    反証条件4種不成立）・クロスprovider（codex_review指摘2件採用→契約正典へresume-check envelope例外
+    明記＋testコメント訂正）・caveat 1件還流（rag該当なし＝外部仕様調査なしでスキップ）。
+    一次記録はLattice [L5 Phase gate evidence](../../Lattice/docs/evidence/2026-07-18-rc4-l5-phase-gate.md)、
+    裁定はLattice [ADR 0051](../../Lattice/docs/adr/0051-rc4-phase-gate-support.md)（claim境界・
+    lane裁定・残余リスク恒久化条件を含む）。Control `lattice-rc4-dotagents-v1` finalize・archive済み
+- [x] **refuteなら編入・退役は発動しない**。correction planを立てて本計画のL6以降を凍結する
+  - supportで閉じたため不発動。L6凍結解除（ADR 0051 Decision 1）
 
-### Phase L6 — 編入wave（RC4 supportで閉じた場合のみ）
+### Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）
 
+- [ ] **Lattice編入パッケージ要件を文書化する**（RC4 planからのcarry-over・ADR 0051 Decision 6）:
+      CLI 6面の安定契約（ADR 0044 Decision 8）、schema一覧、run store／artifact規約、
+      executor adapter契約、Codegraph同梱方針（正規CLI/SDK・MIT notice維持）。
+      **ADR 0051 Decision 5の残余リスク恒久化条件**（subagent executor形態は公開repo内容のみ・
+      秘匿情報は隔離HOME回帰が前提）を編入契約へ含める
 - [ ] **Lattice native factory diagnostics**を実装する（version・schema version・overall・check ID・
       秘密なしJSON・非0意味論）。自作製品の必須要件であり、dotagents側adapterより先行する
 - [ ] **opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する
@@ -369,6 +381,20 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
       **重大度は報告元＝Latticeの製品契約が決める**既存意味論を維持する
 - [ ] 読み取り専用集約・`resolve`／`reopen`・`/ai`の既存契約を壊さない
 - [ ] 本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）
+
+### Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）
+
+2026-07-18にRC4 plan（Lattice `docs/archive/plan_lattice_rc4_dotagents_dogfood.md`）から移管。所有repoはすべてLattice:
+
+- [ ] sensor: Lua/Luau/Rubyの`require()`検出が`visitNode`フック実装のため関数本体内requireを拾えない
+      （偽陰性・JS/TSと同型の穴）。対処は`extractCall`合流点への移設。最小再現: 関数内`require 'mod'`を
+      indexしimports辺が出ないこと（所有: Lattice sensor/）
+- [ ] CLI: `lattice plan compile`のtyped失敗が`cli_error.v1`の`code`/`message`だけを出し、compile resultの
+      `detail`（BOUNDARY_UNKNOWNのunknown内訳等）を落とす。対処候補: `cli_error.v1`へ`detail`追加
+      （schema変更＝ADR 0044 Decision 8のenvelope正式化と同時に裁定）（所有: Lattice src/runtime-cli.mjs）
+- [ ] artifact: `patches_bound_to_accepted_receipts`検査がpath照合のみ（保存`checkpoint_digest`未検証・
+      receipt content digestとの突合なし）＝patch取り違え・破損がpath一致なら通る。digest照合へ強化
+      （ADR 0051 Decision 4。所有: Lattice src/rc4-stage1-dogfood.mjs系）
 
 ## 5. 既知の罠
 

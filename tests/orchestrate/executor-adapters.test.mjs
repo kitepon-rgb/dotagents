@@ -210,7 +210,7 @@ test("gpt-connector成功result・失敗errorはConsultSnapshot/ConsultFailure�
   const errorValue = { code: "AUTH_REQUIRED", message: "raw error message is discarded", retry: "after_auth", partialUpload: { count: 1, cleanup: "failed" } };
   const failed = { slug: "design-review-001", state: "failed", ...timestamps, result: null, error: errorValue };
 
-  // 1. sessionIdがUUID v4形式でない場合の拒否
+  // 1. sessionIdがUUID形式（v1〜v5）でない場合の拒否
   assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...succeeded, result: { ...result, sessionId: "not-a-uuid" } } }), code("INVALID_SCHEMA"));
 
   // 2. attachments.countとnames/mimeTypes配列長の不一致検出

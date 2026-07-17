@@ -1291,6 +1291,10 @@ accept, reject, task-finalize-record, control-finalize, recover-lock, archive
   positional、未知option、重複option、余剰引数をexit 2で拒否する。input fileは各APIの
   object引数そのもので、64 KiB以下の通常fileかつsymlinkでないことを必須とする。
 - 成功時はstdoutへ`{ "ok": true, "command": "...", "result": ... }`を1行だけ出す。
+  例外として`resume-check`のみ、`result`より前に
+  `"summary": { "outcome": ..., "blocking_count": ..., "review_count": ... }`を含む4-key envelopeを出す
+  （長大なresult末尾のoutcome誤読を防ぐ実被弾対策。既存キーの名称・順序・意味は不変で、
+  他コマンドのenvelopeへは波及させない）。
   失敗時はstderrへ`{ "ok": false, "code": "...", "message": "..." }`を1行だけ出し、
   引数／入力schema違反はexit 2、競合・状態・filesystem・git失敗はexit 1とする。
 - provider command、network、dispatch、poll loop、cancel、retry、worktree生成、branch切替、commit、
