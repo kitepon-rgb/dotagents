@@ -220,7 +220,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
       stdio server であり、自動dispatch常駐basicとは別物）
   - **2026-07-17裁定済み**（ADR 0049 Decision 9: session寿命stdio＋refcount/idle-timeout自動終了の
     cache工程・書込範囲の限定列挙）。00_product-contract.mdへの追記は実装waveで行う（ADR Consequences）
-- [ ] MCP面を実装し、index不在project・未対応host・Lattice非稼働時の振る舞いを明示する
+- [x] MCP面を実装し、index不在project・未対応host・Lattice非稼働時の振る舞いを明示する
       （**fail closedを既定にし、暗黙fallbackで成功扱いしない**）
   - [x] wave1（2026-07-17・Lattice `34cac18`）: 製品同一性の分離（version `1.4.1-lattice.1`・
         sentinel起動時fail・daemon registry `~/.lattice/sensor/`・socket `lattice-sensor-` prefix）＋
@@ -234,8 +234,15 @@ L0 ベースライン（直轄化・CI green・現状固定）
         検収実測: sensor vitest 2481 passed/fail 0・bin integration green・ci exit 0。
         親レビュー特記: workerがOOMガードバイパス（lattice-mcpがCLI経由のNode 25.x V8対策を
         通らない）をスコープ外発見として別タスク化——L3残検証と合わせて扱う
-- [ ] 親別matrix（Claude親・Codex親）での登録・疎通をisolated HOMEで検証する
-- [ ] focused／関連gate green
+- [x] 親別matrix（Claude親・Codex親）での登録・疎通をisolated HOMEで検証する
+  - **2026-07-17完了**: Claude親=isolated HOMEで`claude mcp add lattice -- node …/bin/lattice-mcp.mjs`
+    →`claude mcp list`で**✔ Connected**（live MCP handshake実証）。Codex親=isolated HOMEで
+    `codex mcp add`→`codex mcp list`でenabled登録確認（Codex sessionでのlive疎通は実端末適用の
+    H検証時に併せて行う）。実端末への登録はH（L6/L7）のまま
+- [x] focused／関連gate green
+  - **2026-07-17時点green**: wave2検収でLattice `npm run ci` exit 0（root 294 tests・
+    sensor vitest 2481 passed・check pass）。L3成果はLattice `32f0383`（ADR 0049）・
+    `34cac18`（wave1）・`dcd5b70`（wave2）
 
 ### Phase L4 — RC4 Stage 1（disposable clone・H）
 
