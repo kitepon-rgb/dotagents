@@ -385,10 +385,13 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     オンボーディングへ導入行追記。本host実導入（`/opt/homebrew/bin/lattice` 0.1.0）→
     `verify-install --profile official` OK→`make ci` exit 0。他hostは週次`agents-update`が
     次回実行で自動導入（PACKAGES経由）
-- [ ] **Lattice v0.2.0 publish（H承認待ちcarry-over）**: 未公開のmaintenance wave 4件
+- [x] **Lattice v0.2.0 publish（H承認待ちcarry-over）**: 未公開のmaintenance wave 4件
       （sensor require偽陰性fix・patch bind強化・**cli_error.v2＋doctor退役＝breaking**）を含む。
       repo側version bumpは実施済み（0.1.0のまま公開物と別内容になるhazard解消）。publish時は
       目的・影響・rollback説明→H承認→full gate→publish→latest確認の作法（README変更管理）に従う
+  - 2026-07-18完了: H承認（オーナー「承認する 進めろ」）→pack隔離smoke green（doctor exit 2含む）→
+    tag `v0.2.0`→publish→latest=0.2.0確認→本host更新（`lattice --version`=0.2.0・diagnostics ok）。
+    他hostは週次agents-updateで自動追従
 - [x] コア一覧の更新: 第10枠はObserver予約済み（wire v3）。**Latticeは第11**として
       PLAN.md／AGENTS.md／README.mdを更新する（Codegraph退役完了までは入替でなく追加）
   - 2026-07-18完了: 3文書へ「第11・編入中・Observer第10予約・入替でなく追加」を最小追記。
