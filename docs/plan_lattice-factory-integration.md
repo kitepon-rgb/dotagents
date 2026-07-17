@@ -357,7 +357,14 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
       正規diagnostics・state/schema/migration・runtime error・host/connector期待・修正先）
   - 2026-07-18完了: `lattice`台帳（編入中・第11明記・diagnostics/runtime error正本・adapter未実装の
     明示・表現/禁止）。host/connector期待は共通境界どおりmatrix所有のため台帳へ複製せず
-- [ ] dotagents側adapter＋privacy negative fixtureを実装する
+- [x] dotagents側adapter＋privacy negative fixtureを実装する
+  - 2026-07-18完了: diagnostics projection `latticeProduct`（scan.mjs・exact schema検証・overall/exit/
+    check集計の整合検査・detailの秘密/絶対path拒否）＋runtime error adapter
+    `collectLatticeRuntimeErrors`（runtime-errors.mjs・固定catalog 5 code検証・ack bundle対応）。
+    **wire v3 reportへは未enroll**＝scan loopへreport未載せ製品skip guardを追加し、enrollmentは
+    L7 wire v4の集合変更で行う。test 8本（privacy negative 4様・catalog逸脱・ENOENT・disabled含む）＋
+    関連136 test＋lint green。実装中にLattice `state_schema_version`の数値/文字列非互換を検出し
+    Lattice `6cfcd44`で是正
 - [ ] `docs/factory-host-product-matrix.md`へLattice行を追加する。**FOX Windows nativeはClaude/Codex/Grokの
       3 toolchainすべてunsupported＝executor依存のLattice runtimeが構造的に動かない**。gpt-connector行45型の
       分離（CLI presenceはrequired／runtime面はunsupported）を使い、matrix:17「8製品は全現役hostへ常備」
