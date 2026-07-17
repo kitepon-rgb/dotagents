@@ -222,6 +222,14 @@ L0 ベースライン（直轄化・CI green・現状固定）
     cache工程・書込範囲の限定列挙）。00_product-contract.mdへの追記は実装waveで行う（ADR Consequences）
 - [ ] MCP面を実装し、index不在project・未対応host・Lattice非稼働時の振る舞いを明示する
       （**fail closedを既定にし、暗黙fallbackで成功扱いしない**）
+  - [x] wave1（2026-07-17・Lattice `34cac18`）: 製品同一性の分離（version `1.4.1-lattice.1`・
+        sentinel起動時fail・daemon registry `~/.lattice/sensor/`・socket `lattice-sensor-` prefix）＋
+        外部通信遮断（update-check/upgrade/telemetry/beta-signup無効化）。smoke実測: serverInfoが
+        lattice版を名乗り、daemon recordはLattice側registryのみへ書込。ci green（root 290・
+        sensor 2476・exit 0）
+  - [ ] wave2: 別bin `lattice-mcp`（内部daemon再invoke受理・exit表）・`codegraph_status`の
+        mode/reason field・hello二分法（異製品typed error／同製品版差degrade）・fail closed境界
+        （DB破損系・fallback engine初期化失敗の握り潰し改修）・stdout純度テスト
 - [ ] 親別matrix（Claude親・Codex親）での登録・疎通をisolated HOMEで検証する
 - [ ] focused／関連gate green
 
