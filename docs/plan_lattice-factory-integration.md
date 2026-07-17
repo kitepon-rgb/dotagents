@@ -107,22 +107,42 @@ L0 ベースライン（直轄化・CI green・現状固定）
 
 ### Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）
 
-- [ ] 題材batch（6〜10件・control-record.mjs系／adapter系／docs系混在）をactiveレーンのTODOから選定し、
+前半（batch選定〜witness実測）は2026-07-17にLattice側evidenceで消化済みだったがplan反映が漏れていた。
+後半（compile判定裁定〜gate）は改良前sensorのAFFECTED_TEST_DRIFT停止で持ち越され、L2/L3完了後の
+2026-07-17に改良後sensorで消化した（Phase順の入替はsensor欠陥起因・evidenceに機序記録あり）。
+
+- [x] 題材batch（6〜10件・control-record.mjs系／adapter系／docs系混在）をactiveレーンのTODOから選定し、
       選定根拠をevidenceへ記録する。**凍結不要の運用合意**: Latticeはread-only判定のみ、dotagents側の
       消化は止めない、判定のstale化はそれ自体を実測記録とする
-- [ ] batch定義evidenceへdotagents私有caveatの該当エントリを添付する
+  - Lattice [batch定義](../../Lattice/docs/evidence/2026-07-17-rc4-stage0-batch.md)（T1〜T6・オーナーGO）
+- [x] batch定義evidenceへdotagents私有caveatの該当エントリを添付する
       （`orchestrate-run-worker-run-record-approach-family-ref-null`＝`lineage.approach_family_ref: null`が
       BUDGET_UNKNOWNで拒否される、`orchestrate-run-cli-internal-error-lib`＝INTERNAL_ERRORは未適用と限らない）
-- [ ] 各TODOのboundary witnessを実作成し、**作成時間・参照証拠・書けなかった項目を1件ずつ実測**する
+  - batch定義evidence「添付caveat」節（5エントリ）
+- [x] 各TODOのboundary witnessを実作成し、**作成時間・参照証拠・書けなかった項目を1件ずつ実測**する
       （丸め・事後推定禁止）
-- [ ] Codegraph indexは**Lattice側clone/copy上にだけ**作る。dotagents正規repoに`.codegraph/`は無く
+  - Lattice [witness実測](../../Lattice/docs/evidence/2026-07-17-rc4-stage0-witness-cost.md)
+    （17〜36秒/件・ADR 0048真値訂正）
+- [x] Codegraph indexは**Lattice側clone/copy上にだけ**作る。dotagents正規repoに`.codegraph/`は無く
       gitignore対象外のため、live repoでの`codegraph init`は書込ゼロ契約違反かつdirtyを生む
-- [ ] `lattice plan compile`のconflict/wave/unknown判定を親が1件ずつ妥当／過剰serial／見逃しで裁定し、
+  - 前半＝Stage 0 clone（`73947b3`）、後半＝scratchpad clone（`c3640f4`）とも遵守。正規repoは無dirty
+- [x] `lattice plan compile`のconflict/wave/unknown判定を親が1件ずつ妥当／過剰serial／見逃しで裁定し、
       **見逃し0件を確認する**（見逃しは即refute条件）
-- [ ] call graph非可視結合（shell hooks・markdown憲法・巨大単一file）がwitnessで表現できたかを個別記録し、
+  - **2026-07-17完了**: Lattice
+    [compile判定裁定](../../Lattice/docs/evidence/2026-07-17-rc4-stage0-compile-adjudication.md)。
+    request A（T1+T2+T4）dispatchable＝conflict 3件全て妥当・waves `[[T1,T4],[T2]]`妥当・過剰serial 0・
+    独立grep全数照合で**見逃し0**。request B（全6件）BOUNDARY_UNKNOWN＝unknown分類一致6/6。
+    witness束縛の作法3点（共有writeの両own・covering query必須・同一targetは単一query_id）を実測で確定
+- [x] call graph非可視結合（shell hooks・markdown憲法・巨大単一file）がwitnessで表現できたかを個別記録し、
       **Codegraph盲点の発生頻度を定量化する**（L2 fork判断の一次データ）
-- [ ] Stage 0 gate: witnessコスト閾値・unknown率・判定一致率を実測に基づき確定・記録し、
+  - 前半実測がADR 0047/0048のfork判断一次データ。後半でmd主体は`codegraph_empty` typed unknown、
+    shell結合は(c2)クラス実例3件のまま（L2裁定どおり・再燃条件はStage 1実測）
+- [x] Stage 0 gate: witnessコスト閾値・unknown率・判定一致率を実測に基づき確定・記録し、
       Stage 1 targetを裁定する
+  - **2026-07-17裁定**（compile判定裁定evidence §7）: witness≤3分/件・drift写経0・dispatchable系
+    unknown率0・判定一致100%維持。Stage 1 target＝dotagents disposable cloneへ直行、dispatchable
+    3 TODO×capacity 2×2 waves最小構成。unknown期待クラスは混載せずrequest分割（whole-request
+    gatingのため）
 
 ### Phase L2 — Codegraph吸収・sensor改良
 
