@@ -128,18 +128,23 @@ L0 ベースライン（直轄化・CI green・現状固定）
 
 - [x] L1実測を根拠にfork要否を裁定する（予断で決めない）
   - **2026-07-17裁定: fork＝吸収する**（オーナー裁定・Lattice [ADR 0047](../../Lattice/docs/adr/0047-codegraph-absorption-and-sensor-ownership.md)）。
-    Stage 0実測: `control-record.mjs`の真値4件に対しdepth=1→3件（偽陰性1）・depth=5（既定）→12件
-    （偽陽性8）で、**真値を返すdepthが存在しない**。グラフが両方向に壊れている（存在しないimport経路の辺／
-    計算パスの動的import未解決／spawn駆動の不可視結合）ため、**パラメータ調整では原理的に直らない**。
-    upstreamは3ヶ月停止（`git fetch`で確認）でPR到着をcritical pathに載せられない。
-    代案（depth表現追加）は機能せず、代案（契約緩和）はdrift検出＝中核主張を殺すため却下。
-- [ ] fork時: MIT license notice・attribution（upstream `841beea` 2026-04-30）を維持し、
-      fork repoの所有・release・version契約を台帳へ先行記録する
-- [ ] **グラフ構築のcorrectnessを改良する**（実測が示した優先順。当初想定の(c)が本命ではなかった）:
-      (a) 存在しないimport経路の辺を出さない（偽陽性の除去）
-      (b) 計算パスの動的import（`import(join(...))`等）を解決する（偽陰性の除去）
+    Stage 0実測（数値はLattice [ADR 0048](../../Lattice/docs/adr/0048-stage0-ground-truth-correction.md)で訂正済み）:
+    `control-record.mjs`の真値7件（推移的import閉包＋動的import）に対しdepth=1→3件（偽陰性4）・
+    depth=5（既定）→12件（真陽性6・偽陽性6・偽陰性1）で、**真値を返すdepthが存在しない**。
+    HEAD `04ab45c` 実ビルド再測定でv1.4.1と出力同一＝欠陥健在。depth=1の「正解」はimport追跡でなく
+    名前一致フォールバックの偶然（`imports`辺0本・`reject`名の`calls`辺8本）。
+    **パラメータ調整では原理的に直らない**。0047の「upstream 3ヶ月停止」は誤り（現役repo）で、
+    却下は残り2理由（depth無効・契約緩和拒否）で立つ。
+- [ ] fork時: MIT license notice・attribution（fork時点のupstream commitを記録）を維持し、
+      fork repoの所有・release・version契約を台帳へ先行記録する。upstream追従方針
+      （cherry-pick基準）を吸収実装時に明文化する（ADR 0048 Decision 4）
+- [ ] **グラフ構築のcorrectnessを改良する**（実測が特定した原因箇所。優先順）:
+      (a) 経路実在を検証しない名前一致フォールバック（`resolution/index.ts` Strategy 3）と
+      confidence非永続化（`edges`スキーマに列なし・低信頼辺が同格）を直す（偽陽性の除去）
+      (b) JS/TS extractionに動的import/require処理を追加し（機能自体が不在。Lua/R/Rubyに前例）、
+      定数畳み込みで`import(join(定数...))`を解決する（偽陰性の除去）
       (c) call graph非可視の結合（spawn・shell・markdown・設定）を索引化する
-- [ ] 改良の受入は数値で示す: **Stage 0で確立した真値（import経路の実在検証）に対し`affected`が
+- [ ] 改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が
       exact一致**すること、かつwitnessコストがL1実測比で有意に下がること。
       どちらも満たさないなら改良を成功扱いしない
 - [ ] focused gate → 関連gate → Lattice `npm run ci` green
