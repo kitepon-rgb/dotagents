@@ -4,6 +4,21 @@
 **確度:** 公式仕様=高、現Mac実測=高、未ログインClaudeの実行挙動=未検証  
 **対象:** Observer同provider伴走、異provider相談、一般Workerのrate-aware配置
 
+## 単位・向きの対照表（2026-07-17固定。使用量⇄残量の取り違え防止・オーナー注意喚起起点）
+
+機械向け入口は**3つとも「使用済み」向き**で、残量への反転は`quota-adapter.mjs`のprojection一箇所
+だけが行う（`remaining_bp` = 残量basis points）。fixtureは実測値ごと固定済み＝意味が反転すれば落ちる。
+
+| 入口 | field | 向き（公式文言） | 変換 |
+|---|---|---|---|
+| Codex `token_count` | `used_percent` 0..100 | 使用済み | `10000 − round(×100)` |
+| Claude statusline | `used_percentage` 0..100 | 使用済み（"consumed"） | `10000 − round(×100)` |
+| Claude SDK RateLimitEvent | `utilization` 0.0..1.0 | 使用済み（"Fraction … consumed"。wireは未配信） | `10000 − round(×10000)` |
+
+**罠**: 人間向けUI表示には残量向き（"X% left"等。statuslineのcontext系は`used_percentage`と
+`remaining_percentage`が両方存在）が混在する。**UI目視値を`source: "manual"`でsnapshotへ入れる時が
+最大の反転混入口**——manual入力時は必ず「その表示が使用か残量か」を確認してからused系へ正規化する。
+
 ## live H実測追記（2026-07-17・ADR 0058。原文は保持）
 
 O4 live quota観測（Control `observer-factory-20260715` Task `o4-live-quota-observation`）の実測で
