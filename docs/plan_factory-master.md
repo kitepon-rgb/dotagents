@@ -101,6 +101,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19g | `DONE` | 修理後HEADのfull regression、独立重監査、knowledge return、Control／receiptを閉じる | Observer → dotagents / O2 Phase gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
+| 22 | `READY` | LatticeのBugHub source登録（adapter/schema/認証）を独立waveで行う | ServerManager / 独立gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。
@@ -204,6 +205,27 @@ queue 8は19eへ統合済みである。
 - Observer repoの`docs/plan_observer.md`とADR 0044の既存dirtyは前セッションの未完成果として保全し、
   O1完了前には編集しない。
 - Latticeは別セッションの所有物であり、本計画の調査・実装・正典還流の対象外とする。
+  Lattice repo自体の開発・RC4遂行はLattice側統括の所掌のまま、dotagents側の連携条件だけを
+  下記裁定で持つ。
+
+Lattice RC4連携のオーナー裁定（2026-07-17。連絡・質疑はオーナー経由）:
+
+- Lattice側RC3完了報告とRC4 staged計画（Stage 0 read-only／Stage 1 disposable clone／
+  Stage 2 正規着地）を一次資料検証・反証3本の吸収後に受理した。
+- 将来方向: Latticeをコア編入し、**CodegraphをLatticeへ完全吸収・置換する**。前提として
+  Lattice MCP面の新設（session内code intelligenceの継承）と、Oracle退役前例に倣うshadow
+  同等性gateを編入パッケージ要件へ課す。Codegraph本体はMIT第三者としてLattice内部依存化。
+- **wire v3は既裁定の固定13製品のまま凍結（A案）**。Lattice編入＋Codegraph退役はRC4 support後の
+  wire v4独立waveで行い、v3へ後付けしない。
+- RC4 Stage 0の題材は、凍結不要の運用合意（Latticeはread-only実測のみ・dotagents側の消化は
+  止めない・判定のstale化はそれ自体を実測記録とする）のもとactiveレーンのTODOから出す。
+- Stage 1のH承認には、隔離HOMEでのexecutor実行と、executor packetでの`install.sh`・
+  `spotter install`・`apply-codex-config`・`mcp add`系の実行禁止を必須条件として付す
+  （Lattice側ADR 0046へ反映依頼済み）。
+- RC4中のdotagents実欠陥はBugHub経路とし、queue 22（Lattice source登録）を即着手する。
+  登録完了までの暫定は常設割込ゲート＋maintenance queue経由。
+- `codex/rules/default.rules`のLattice向けallow 1行はRC3 planのarchive移動でstale確定し、
+  オーナー承認でdiscard済み（上記「非commit保全」裁定を更新・終結）。
 
 ## 4. 実行TODO
 
