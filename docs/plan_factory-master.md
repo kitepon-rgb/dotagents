@@ -598,11 +598,15 @@ Observer `docs/plan_observer.md`
 
 以下は主レーンを遮らない。対象repoを触る機会、またはH条件が整った時に消化する。
 
-- [ ] Control RecordのWSL/DrvFs境界を安全に裁定する。`metadata`なしでWindowsドライブ上のrepoを扱うと
+- [x] Control RecordのWSL/DrvFs境界を安全に裁定する。`metadata`なしでWindowsドライブ上のrepoを扱うと
   state directoryが`0777`となり、`init`が`STATE_PATH_UNSAFE`でfail closedすることをLiveTR監査で再現した。
   `metadata`を有効化してもLinux modeはWindows ACLを制限しないため、`0700`だけで安全扱いしない。
   Windows-backed repoを明示unsupportedにするpreflight/runbook、またはowner-onlyを実証できる安全な
   state配置・project bindingを設計し、WSL fixtureで通常repoとdirty workspaceのControl初期化を固定する。
+  - 2026-07-17消化（常設割込ゲートの同件と同一受入）: `825918e`＋`788c84a`で外部state配置を実装。
+    mode-fidelity probe／key決定的導出／binding照合lock前強制／namespace層owner検査。fixture 11本、
+    `make ci` green、FOX実機のDrvFS repoでinit/status/resume-check `ready` を実火確認・検証後cleanup済み。
+    正典は`shared/orchestrate/control-record.md`「state配置とmode-fidelity probe」節。
 - [ ] 同一pathのartifact更新を安全に世代交代できる契約を決める。LiveTR監査で、current artifactの文書を
   先に上書きすると`artifact-status-record`が旧digest不一致でfail closedし、旧版byte列を回収しない限り
   supersede不能になることを再現した。更新前supersedeを強制する入口、版付きartifact ref、または旧blobを
