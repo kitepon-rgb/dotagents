@@ -603,6 +603,10 @@ Observer `docs/plan_observer.md`
   `metadata`を有効化してもLinux modeはWindows ACLを制限しないため、`0700`だけで安全扱いしない。
   Windows-backed repoを明示unsupportedにするpreflight/runbook、またはowner-onlyを実証できる安全な
   state配置・project bindingを設計し、WSL fixtureで通常repoとdirty workspaceのControl初期化を固定する。
+- [ ] 同一pathのartifact更新を安全に世代交代できる契約を決める。LiveTR監査で、current artifactの文書を
+  先に上書きすると`artifact-status-record`が旧digest不一致でfail closedし、旧版byte列を回収しない限り
+  supersede不能になることを再現した。更新前supersedeを強制する入口、版付きartifact ref、または旧blobを
+  Control所有領域へ保存する方式を比較し、上書き後も履歴を捏造せず回収できるfixtureを固定する。
 - [ ] GitHub側のみのrepo 20件超の終活裁定を行う。削除・archiveはオーナー承認後だけ行う。
 - [ ] [P4メモリ昇格queue](queue_memory-promotion.md)を各repoの次回作業時に消化する。
 - [ ] npm Publishing accessの2FA／token禁止締めをオーナー画面で行う（H）。
