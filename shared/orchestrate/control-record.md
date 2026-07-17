@@ -44,6 +44,33 @@ git repositoryだけをMVP対象とする。
 - directoryはPOSIXで`0700`、fileは`0600`とし、read/save時にowner UIDとmodeを検証する。
   Windows owner-only ACLは未検証のため、現v1は`PLATFORM_UNVERIFIED`でfail closedにする。
 
+### state配置とmode-fidelity probe（2026-07-17）
+
+POSIX modeを保持・表示できないfilesystem（WSL2のmetadata無しDrvFS/9p mount等。`chmod 0700`が
+成功を返すのに読み戻しが`0777`になる）では、repo内`.git`配下にowner-onlyのstateを置けない。
+配置は次の規則で決める。0700/0600判定自体はどの配置でも弱めない。
+
+- **mode-fidelity probe**: 作成時、`common dir`直下に**ランダム名の新品ディレクトリ**を
+  `mkdir(0700)`→`chmod(0700)`→`lstat`読み戻し→`rmdir`して判定する。新品なら改ざんの窓が無いため、
+  「capable FS上の0777＝改ざん」と「FSがmodeを表示できない」を区別できる。probeは**mode表示の
+  忠実性**の証明であって、アクセス強制力の証明ではない（dmask等で0700を表示するmountは従来
+  実装と同様に受け入れ、以後の異常は既存のlstat/uid/nlink検査が拾う）。
+- **capable**: 従来どおり`<common dir>/dotagents/orchestrate/`。この配置での0700/0600違反は
+  改ざんとして従来どおりfail closedする（probeで外部へ逃がさない）。
+- **incapable**: `${XDG_STATE_HOME:-~/.local/state}/dotagents/orchestrate/repos/<key>/`へ置く。
+  `<key>`は`common dir` realpathのSHA-256＝**repo identityからの決定的導出**であり、repo側に
+  可変ポインタ（marker）を置かない（差し替え可能な参照自体を存在させない）。外部側にも同じ
+  0700/0600判定を適用し、そこでも証明できなければfail closedする。
+- **project binding**: 外部key directoryは`binding.json`（0600）に`common_dir_realpath`と
+  `common_dir_file_id`（dev:ino）を保持し、アクセス時に実repoから再計算した値との**完全一致**を
+  要求する。照合は**lock-owner書込みを含む一切の外部state書込みより前**に行う。不一致は
+  fail closed（`STATE_PATH_UNSAFE`）。dev:inoの再起動跨ぎ安定性はWSL2実機で実測済み
+  （FOX 2026-07-17、`wsl --shutdown`前後で`0:67:5348024557972214`一致）。
+- **残骸と同居**: mode非忠実FS上の非空in-repo残骸は黙って無視せず、残骸pathを名指しして
+  fail closedする（空の残骸だけ無視してよい）。in-repoと外部のstateが同居した場合、および
+  capable FSでの新規作成時に外部stateが既存の場合は、silent orphanを作らず明示エラーにする。
+  どちらを残すかは人が裁定して手動で除去する。
+
 ## Manifest
 
 manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiBを上限とする。

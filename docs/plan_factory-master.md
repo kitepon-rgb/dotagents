@@ -257,6 +257,19 @@ Lattice編入のオーナー裁定（2026-07-17）:
   - 空配列と非配列を分離し、`observation.dispatch_evidence must contain at least 1 entries`へ修正した。
     正規のrunning観測は空fieldを送らず省略する。focused gate 1/1 green、fullはPhase末へ繰り延べる。
 - [x] Control finalizationが可変planをDecision証拠として受理する欠陥を修正する。
+- [x] mode非忠実FS（WSL2 metadata無しDrvFS/9p）上のrepoでControl Record initが
+  `STATE_PATH_UNSAFE: state directory owner or mode is unsafe`で不能な欠陥を、外部state配置で修理する。
+  - FOX WSL2実機で再現・実測（chmod 0700成功→読み戻し0777、mount強制uid=1000は所有の証明にならない、
+    dev:inoはWSL再起動跨ぎで安定）。`fable`×high設計反証1回を吸収（fresh-dir probe採用、marker廃止＝
+    key決定的導出、binding照合をlock書込み前へ、残骸の明示エラー化、dev安定性実測を受入ゲート化）。
+    0700/0600判定は弱めず、mode-fidelity probeでcapable/incapableを判別し、incapableだけ
+    `XDG_STATE_HOME`配下のbinding付き外部stateへ置く。ext4/APFSは挙動不変（既存112 test無修正green）。
+    fixture 9本追加、正典は`shared/orchestrate/control-record.md`「state配置とmode-fidelity probe」節。
+- [ ] Control Recordの`type:"file"` evidenceがgit履歴照合されず（`decision`型のみ救済）、生きた文書を
+  参照したControlが編集1回で恒久blockedになる欠陥を修理する（caveat
+  `control-record-file-evidence-1-blocked-decision`が正。4 Control全部がblocked実測済み。
+  最小修正はcontrol-record.mjsの履歴照合ガードから`type==="decision"`を外すこと。契約クリティカルにつき
+  着手前に`fable`×high反証1回。archive退避とevidence解決の正典衝突は別途設計裁定）。
   - Observer O1の正規`task-finalize-record`で`docs/plan_observer.md`が受理され、リポ正典の
     「accept/reject/finalizationは不変ADR」を破れることを再現した。
   - Taskの`finalization_ref`とControlの`parent_decision.ref`を`docs/adr/*.md`へ限定し、可変planを

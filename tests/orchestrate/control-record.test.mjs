@@ -3441,3 +3441,177 @@ test("quota pool lockはpool単位のleaseとして競合をfail loudにしtoken
   const again = await api.quotaPoolLockAcquire({ cwd: repo.root, quota_pool_id: "openai-sub-main" });
   await api.quotaPoolLockRelease({ cwd: repo.root, quota_pool_id: "openai-sub-main", token: again.token });
 });
+
+// ---- state placement: mode-fidelity probe / external state / project binding ----
+
+async function withStateFidelity(forced, xdgDir, fn) {
+  const prevEnv = process.env.NODE_ENV; const prevForce = process.env.DOTAGENTS_ORCHESTRATE_TEST_STATE_FIDELITY; const prevXdg = process.env.XDG_STATE_HOME;
+  process.env.NODE_ENV = "test";
+  if (forced === null) delete process.env.DOTAGENTS_ORCHESTRATE_TEST_STATE_FIDELITY; else process.env.DOTAGENTS_ORCHESTRATE_TEST_STATE_FIDELITY = forced;
+  process.env.XDG_STATE_HOME = xdgDir;
+  try { return await fn(); }
+  finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevForce === undefined) delete process.env.DOTAGENTS_ORCHESTRATE_TEST_STATE_FIDELITY; else process.env.DOTAGENTS_ORCHESTRATE_TEST_STATE_FIDELITY = prevForce;
+    if (prevXdg === undefined) delete process.env.XDG_STATE_HOME; else process.env.XDG_STATE_HOME = prevXdg;
+  }
+}
+
+function externalKeyDirOf(xdgDir, commonDir) {
+  return join(xdgDir, "dotagents", "orchestrate", "repos", createHash("sha256").update(commonDir, "utf8").digest("hex"));
+}
+
+test("mode非忠実FSではControl stateを外部XDGへ置き、init/status/mutation/resume-checkが同じControlを回収する", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const xdg = join(base, "xdg-state");
+  await withStateFidelity("incapable", xdg, async () => {
+    const init = await api.init({ cwd: repo.root, control_id: "drvfs-control", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() });
+    assert.equal(init.revision, 0);
+    // in-repo側にstateを作っていない
+    await assert.rejects(access(join(repo.commonDir, "dotagents")), { code: "ENOENT" });
+    // 外部側にbinding(0600)とmanifestがある
+    const keyDir = externalKeyDirOf(xdg, repo.commonDir);
+    const bindingRaw = JSON.parse(await readFile(join(keyDir, "binding.json"), "utf8"));
+    assert.equal(bindingRaw.schema_version, "dotagents.orchestration-state-binding.v1");
+    assert.equal(bindingRaw.common_dir_realpath, repo.commonDir);
+    const persisted = JSON.parse(await readFile(join(keyDir, "controls", "drvfs-control", "manifest.json"), "utf8"));
+    assert.equal(persisted.control_id, "drvfs-control");
+    // status / mutation(lock経路) / resume-check が同じControlを回収する
+    const status = await api.status({ cwd: repo.root, control_id: "drvfs-control" });
+    assert.equal(status.control_id, "drvfs-control");
+    const task = await api.taskRecord({ cwd: repo.root, control_id: "drvfs-control", actor_id: "parent", expected_revision: 0, task: makeTask({ task_id: "drvfs-task" }) });
+    assert.equal(task.revision, 1);
+    const resume = await api.resumeCheck({ cwd: repo.root, control_id: "drvfs-control" });
+    assert.ok(["ready", "review-required", "blocked"].includes(resume.outcome));
+  });
+});
+
+test("外部stateのbindingが別repoを指す場合、lock書込みの前にfail closedする", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repoA = await createGitRepo(base, "repo-a"); const repoB = await createGitRepo(base, "repo-b");
+  const xdg = join(base, "xdg-state");
+  await withStateFidelity("incapable", xdg, async () => {
+    await api.init({ cwd: repoA.root, control_id: "bind-a", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() });
+    // repo Bのkey位置へrepo Aのstate一式を移植（binding改ざん相当）
+    const keyA = externalKeyDirOf(xdg, repoA.commonDir); const keyB = externalKeyDirOf(xdg, repoB.commonDir);
+    const { cp } = await import("node:fs/promises");
+    await cp(keyA, keyB, { recursive: true });
+    await assert.rejects(api.status({ cwd: repoB.root, control_id: "bind-a" }), code("STATE_PATH_UNSAFE"));
+    await assert.rejects(api.taskRecord({ cwd: repoB.root, control_id: "bind-a", actor_id: "parent", expected_revision: 0, task: makeTask({ task_id: "t" }) }), code("STATE_PATH_UNSAFE"));
+    // 書込み(lock-owner)が発生していないこと
+    assert.deepEqual(await readdir(join(keyB, "lock-owners")), []);
+  });
+});
+
+test("capable FS上のin-repo state 0700違反は改ざんとして従来どおりfailする（probeは外部へ逃がさない）", async (t) => {
+  if (process.platform === "win32") return;
+  const { repo } = await initialized(t, { control_id: "capable-tamper" });
+  const root = join(repo.commonDir, "dotagents", "orchestrate");
+  await chmod(root, 0o755);
+  const xdg = join(dirname(repo.root), "xdg-state");
+  await withStateFidelity(null, xdg, async () => {
+    await assert.rejects(api.status({ cwd: repo.root, control_id: "capable-tamper" }), code("STATE_PATH_UNSAFE"));
+    await assert.rejects(access(join(xdg, "dotagents")), { code: "ENOENT" });
+  });
+  await chmod(root, 0o700);
+});
+
+test("mode非忠実FSで非空のin-repo残骸は黙って無視せず、残骸pathを名指ししてfailする", async (t) => {
+  if (process.platform === "win32") return;
+  const { repo } = await initialized(t, { control_id: "residue-control" });
+  const root = join(repo.commonDir, "dotagents", "orchestrate");
+  await chmod(root, 0o755);
+  const xdg = join(dirname(repo.root), "xdg-state-residue");
+  await withStateFidelity("incapable", xdg, async () => {
+    await assert.rejects(api.status({ cwd: repo.root, control_id: "residue-control" }), (error) => {
+      assert.ok(error instanceof api.ControlRecordError); assert.equal(error.code, "STATE_PATH_UNSAFE");
+      assert.equal(error.details?.residue_path, root);
+      assert.ok(error.details?.entries.includes("controls"));
+      return true;
+    });
+  });
+  await chmod(root, 0o700);
+});
+
+test("mode非忠実FSで空のin-repo残骸は無視して外部stateへ進む", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const root = join(repo.commonDir, "dotagents", "orchestrate");
+  await mkdir(join(repo.commonDir, "dotagents"), { mode: 0o755, recursive: true });
+  await mkdir(root, { mode: 0o755 });
+  const xdg = join(base, "xdg-state");
+  await withStateFidelity("incapable", xdg, async () => {
+    const init = await api.init({ cwd: repo.root, control_id: "empty-residue", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() });
+    assert.equal(init.revision, 0);
+    const status = await api.status({ cwd: repo.root, control_id: "empty-residue" });
+    assert.equal(status.control_id, "empty-residue");
+  });
+});
+
+test("in-repoと外部のControl stateが同居したら曖昧として明示failする", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const xdg = join(base, "xdg-state");
+  await withStateFidelity("incapable", xdg, async () => {
+    await api.init({ cwd: repo.root, control_id: "dual-control", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() });
+  });
+  await mkdir(join(repo.commonDir, "dotagents"), { mode: 0o700 });
+  await mkdir(join(repo.commonDir, "dotagents", "orchestrate"), { mode: 0o700 });
+  await withStateFidelity(null, xdg, async () => {
+    await assert.rejects(api.status({ cwd: repo.root, control_id: "dual-control" }), code("STATE_PATH_UNSAFE"));
+  });
+});
+
+test("capable FSの新規createで外部stateが既存なら、黙ってorphanせずfailする", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const xdg = join(base, "xdg-state");
+  const keyDir = externalKeyDirOf(xdg, repo.commonDir);
+  await mkdir(keyDir, { recursive: true, mode: 0o700 });
+  await withStateFidelity(null, xdg, async () => {
+    await assert.rejects(api.init({ cwd: repo.root, control_id: "orphan-guard", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() }), code("STATE_PATH_UNSAFE"));
+  });
+});
+
+test("外部stateのbinding/manifestにも0600 owner検査が効く", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const xdg = join(base, "xdg-state");
+  await withStateFidelity("incapable", xdg, async () => {
+    await api.init({ cwd: repo.root, control_id: "ext-mode", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() });
+    const keyDir = externalKeyDirOf(xdg, repo.commonDir);
+    await chmod(join(keyDir, "binding.json"), 0o644);
+    await assert.rejects(api.status({ cwd: repo.root, control_id: "ext-mode" }), code("STATE_PATH_UNSAFE"));
+    await chmod(join(keyDir, "binding.json"), 0o600);
+    await chmod(join(keyDir, "controls", "ext-mode", "manifest.json"), 0o644);
+    await assert.rejects(api.status({ cwd: repo.root, control_id: "ext-mode" }), code("STATE_PATH_UNSAFE"));
+  });
+});
+
+test("正規CLIがmode非忠実FSで同じ外部Controlをinit/status/resume-checkで回収する", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const xdg = join(base, "xdg-state");
+  const env = { ...process.env, NODE_ENV: "test", DOTAGENTS_ORCHESTRATE_TEST_STATE_FIDELITY: "incapable", XDG_STATE_HOME: xdg };
+  const inputDir = join(base, "inputs"); await mkdir(inputDir);
+  await writeJson(join(inputDir, "init.json"), { cwd: repo.root, control_id: "cli-ext", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() });
+  const init = spawnOrchestrate(["init", "--input", join(inputDir, "init.json")], { env });
+  assert.equal(init.status, 0, init.stderr || init.stdout);
+  assert.equal(JSON.parse(init.stdout).ok, true);
+  await writeJson(join(inputDir, "status.json"), { cwd: repo.root, control_id: "cli-ext" });
+  const status = spawnOrchestrate(["status", "--input", join(inputDir, "status.json")], { env });
+  assert.equal(status.status, 0, status.stderr || status.stdout);
+  assert.equal(JSON.parse(status.stdout).result.control_id, "cli-ext");
+  await writeJson(join(inputDir, "resume.json"), { cwd: repo.root, control_id: "cli-ext" });
+  const resume = spawnOrchestrate(["resume-check", "--input", join(inputDir, "resume.json")], { env });
+  assert.equal(resume.status, 0, resume.stderr || resume.stdout);
+  assert.ok(["ready", "review-required", "blocked"].includes(JSON.parse(resume.stdout).result.outcome));
+});
