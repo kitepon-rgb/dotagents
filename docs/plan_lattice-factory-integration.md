@@ -165,6 +165,18 @@ L0 ベースライン（直轄化・CI green・現状固定）
         unresolved可視化。`resolveViaImport`に相対specifier限定のraw-text解決分岐を
         追加（拡張子なし`require('./x')`と静的import生specifierの既存の穴を同時に修理）
       - [ ] (c) call graph非可視の結合（spawn・shell・markdown・設定）を索引化する
+        - [x] (c1) spawn系（JS/TSのchild_process起動）— **2026-07-17完了**（Lattice `6c82461`）。
+          新edge kind `invokes`（`resolved_by='spawn-path'`・confidence 0.95）。束縛検証付き検出
+          （`spawn`/`spawnSync`/`execFile`/`execFileSync`/`fork`。`exec`系のshell文字列解析は
+          スコープ外と明記）＋(b)の定数畳み込み再利用＋resolver専用ゲート。親レビューで
+          implementer成果からFPクラス1件（名前一致Strategy 3へのフォールバックで
+          `spawn('git')`→同名シンボル誤edge）を検出し、再現テスト付きで修理済み。
+          オラクル: `affected bin/orchestrate-run.mjs`＝真値6件exact一致（FP0/FN0・真値は
+          親が独立grep確認）、`control-record.mjs` 7件回帰なし
+        - [ ] (c2) shell・markdown・設定 — sensorに文法自体が無く新規サブシステム。
+          ADR 0048の教訓（定義→測定→検証の順）に従い、witnessコスト実測で真値インスタンスを
+          採ってから要否・設計を裁定する。**真値実例採取済み**: `tests/install/clean-home.sh`・
+          `tests/hooks/smoke.sh`が`bin/orchestrate-run.mjs`をshell経由で実行（affected不可視）
 - [ ] 改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が
       exact一致**すること、かつwitnessコストがL1実測比で有意に下がること。
       どちらも満たさないなら改良を成功扱いしない
@@ -173,7 +185,12 @@ L0 ベースライン（直轄化・CI green・現状固定）
       （FP0/FN0）。動的経路は `helpers.mjs →(imports/file-path/0.95)→
       control-record.mjs` の実在辺で裏付け確認済み（名前一致の偶然でない）。
       witnessコスト比較は未測定（残件）
-- [ ] focused gate → 関連gate → Lattice `npm run ci` green
+- [x] focused gate → 関連gate → Lattice `npm run ci` green
+  - **2026-07-17時点green（(c1)まで反映）**: root node:test 290/290・sensor vitest
+    147 files/2476 passed/fail 0・check pass・ci exit 0。gate実行でP1級既存欠陥を発見・修理:
+    吸収commit `ce16412`以降、root ciの無指定globがsensor/__tests__のvitest専用TSテストを
+    拾い恒常failしていた（Lattice `ae1f9dd`でtest/へスコープ＋sensor vitestを`test:sensor`
+    としてciへ正式編入）。L2に追加変更が入ったら再実行して閉じ直す
 
 ### Phase L3 — Lattice MCP面新設
 
