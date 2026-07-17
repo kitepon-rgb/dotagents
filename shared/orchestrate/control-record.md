@@ -60,7 +60,10 @@ POSIX modeを保持・表示できないfilesystem（WSL2のmetadata無しDrvFS/
 - **incapable**: `${XDG_STATE_HOME:-~/.local/state}/dotagents/orchestrate/repos/<key>/`へ置く。
   `<key>`は`common dir` realpathのSHA-256＝**repo identityからの決定的導出**であり、repo側に
   可変ポインタ（marker）を置かない（差し替え可能な参照自体を存在させない）。外部側にも同じ
-  0700/0600判定を適用し、そこでも証明できなければfail closedする。
+  0700/0600判定を`orchestrate`層から下に適用し、そこでも証明できなければfail closedする。
+  中間の`<XDG>/dotagents`はfactory-reporter等と同居する**共有namespace**であり、mode 0700は
+  要求しない（dir実体・symlink拒否・owner一致のみ要求。in-repo配置で`.git`自体に0700を
+  要求しないのと同じ構造。FOX実測: 既存namespaceは0775、各コンポーネントdirが0700）。
 - **project binding**: 外部key directoryは`binding.json`（0600）に`common_dir_realpath`と
   `common_dir_file_id`（dev:ino）を保持し、アクセス時に実repoから再計算した値との**完全一致**を
   要求する。照合は**lock-owner書込みを含む一切の外部state書込みより前**に行う。不一致は

@@ -3615,3 +3615,41 @@ test("正規CLIがmode非忠実FSで同じ外部Controlをinit/status/resume-che
   assert.equal(resume.status, 0, resume.stderr || resume.stdout);
   assert.ok(["ready", "review-required", "blocked"].includes(JSON.parse(resume.stdout).result.outcome));
 });
+
+test("既存の共有namespace（<XDG>/dotagents が0775）は外部state作成を妨げない。orchestrate層から下は0700を要求する", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const xdg = join(base, "xdg-state");
+  // FOX実測の再現: namespaceが他コンポーネントと同居して0775
+  await mkdir(join(xdg, "dotagents", "factory-reporter"), { recursive: true, mode: 0o700 });
+  await chmod(join(xdg, "dotagents"), 0o775);
+  await withStateFidelity("incapable", xdg, async () => {
+    const init = await api.init({ cwd: repo.root, control_id: "ns-shared", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() });
+    assert.equal(init.revision, 0);
+    const status = await api.status({ cwd: repo.root, control_id: "ns-shared" });
+    assert.equal(status.control_id, "ns-shared");
+    // orchestrate層から下は0700
+    const { stat: statFn } = await import("node:fs/promises");
+    const orch = await statFn(join(xdg, "dotagents", "orchestrate"));
+    assert.equal(orch.mode & 0o777, 0o700);
+    // orchestrate層の0700違反は、create経路（新規Control）でfail closedする
+    // （read経路が祖先を再検査しないのはin-repo配置の従来対称性。keyDir以下の0700は維持される）
+    await chmod(join(xdg, "dotagents", "orchestrate"), 0o755);
+    await assert.rejects(api.init({ cwd: repo.root, control_id: "ns-shared-2", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() }), code("STATE_PATH_UNSAFE"));
+    await chmod(join(xdg, "dotagents", "orchestrate"), 0o700);
+  });
+});
+
+test("共有namespaceがsymlinkならfail closedする", async (t) => {
+  if (process.platform === "win32") return;
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const xdg = join(base, "xdg-state");
+  await mkdir(join(base, "elsewhere"), { recursive: true, mode: 0o700 });
+  await mkdir(xdg, { recursive: true, mode: 0o700 });
+  await symlink(join(base, "elsewhere"), join(xdg, "dotagents"));
+  await withStateFidelity("incapable", xdg, async () => {
+    await assert.rejects(api.init({ cwd: repo.root, control_id: "ns-symlink", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() }), code("STATE_PATH_UNSAFE"));
+  });
+});
