@@ -328,11 +328,13 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 
 ### Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）
 
-- [ ] **Lattice編入パッケージ要件を文書化する**（RC4 planからのcarry-over・ADR 0051 Decision 6）:
+- [x] **Lattice編入パッケージ要件を文書化する**（RC4 planからのcarry-over・ADR 0051 Decision 6）:
       CLI 6面の安定契約（ADR 0044 Decision 8）、schema一覧、run store／artifact規約、
       executor adapter契約、Codegraph同梱方針（正規CLI/SDK・MIT notice維持）。
       **ADR 0051 Decision 5の残余リスク恒久化条件**（subagent executor形態は公開repo内容のみ・
       秘匿情報は隔離HOME回帰が前提）を編入契約へ含める
+  - 2026-07-18完了: Lattice [docs/01_integration-package.md](../../Lattice/docs/01_integration-package.md)
+    （台帳形式・各契約の正典ADRへのポインタ集約・残余リスク恒久化条件と委譲項目を明記）
 - [ ] **Lattice native factory diagnostics**を実装する（version・schema version・overall・check ID・
       秘密なしJSON・非0意味論）。自作製品の必須要件であり、dotagents側adapterより先行する
 - [ ] **opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する
