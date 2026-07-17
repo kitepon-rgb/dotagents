@@ -3,6 +3,10 @@
 *.swo
 *~
 
+# Python 実行時生成物（lib/orchestrate/hook_state.py 等を import した端末で発生）
+__pycache__/
+*.pyc
+
 # per-machine state (Claude Code project-scoped settings, VSCode tasks with
 # absolute paths baked in by Throughline). See README "含めないもの".
 .claude/
