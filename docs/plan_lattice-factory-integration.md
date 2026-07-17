@@ -203,11 +203,23 @@ L0 ベースライン（直轄化・CI green・現状固定）
 
 ### Phase L3 — Lattice MCP面新設
 
-- [ ] MCP面の公開契約を設計・裁定する（F）: tool面（`codegraph_explore`相当の後継）、schema、
+- [x] MCP面の公開契約を設計・裁定する（F）: tool面（`codegraph_explore`相当の後継）、schema、
       versioned JSON、error意味論、既存CLI 6面との責務分離。**契約クリティカル＝`fable`スポット諮問＋
       `fable`×high refuter 1回＋クロスprovider `codex_opinion` 1回**
-- [ ] 「常駐サービス化はしない」非目標とMCP server提供の両立を明文化する（MCP serverはsession寿命の
+  - **2026-07-17完了**: Lattice [ADR 0049](../../Lattice/docs/adr/0049-lattice-mcp-surface-contract.md)
+    （`32f0383`）Accepted。作法どおり3枚のガードレールを全部通した——fable諮問9指摘・
+    codex_opinion 7反対（3件は理由付き棄却）・fable refuter反証6件（全採用）。中核裁定:
+    tool面は8 tool同名維持（改名ADR起票をL7 cutover受入条項へ固定）、**製品同一性の分離**
+    （version名前空間化`-lattice.N`・global状態dir分離・hello二分法＝refuterが検出した
+    「同一versionでの無言cross-product attach」「第三者`stop --all`の越境kill」
+    「self-update直後の正当な旧daemon全滅」の3重大欠陥の根治）、外部通信遮断のv1受入条件化
+    （upstream self-upgrade・既定ON telemetryの無効化）、typed degradation
+    （direct切替事由の列挙制・DB破損系fail closed・mode機械可読化）、別bin `lattice-mcp`、
+    併走期間のhost単位排他とoffline record/replay比較
+- [x] 「常駐サービス化はしない」非目標とMCP server提供の両立を明文化する（MCP serverはsession寿命の
       stdio server であり、自動dispatch常駐basicとは別物）
+  - **2026-07-17裁定済み**（ADR 0049 Decision 9: session寿命stdio＋refcount/idle-timeout自動終了の
+    cache工程・書込範囲の限定列挙）。00_product-contract.mdへの追記は実装waveで行う（ADR Consequences）
 - [ ] MCP面を実装し、index不在project・未対応host・Lattice非稼働時の振る舞いを明示する
       （**fail closedを既定にし、暗黙fallbackで成功扱いしない**）
 - [ ] 親別matrix（Claude親・Codex親）での登録・疎通をisolated HOMEで検証する
