@@ -342,7 +342,12 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     mcp_entry／sensor_attribution・overall failed→exit 1・read-only・秘密なし）。既存`doctor --json`は
     RC3特性化凍結のため不変更の加算面。focused 4 test＋Lattice `npm run ci` green。
     doctor化石化は非クリティカルとしてmaintenance queueへ記録
-- [ ] **opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する
+- [x] **opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する
+  - 2026-07-18完了: `lattice runtime-errors <snapshot|ack|diagnostics|resolve|reopen|compact> --json`
+    （schema `lattice.runtime_errors.v1`・Caveat同型契約）。opt-in＝工場共有
+    `factory-reporter.json`の`collection.enabled`のみ・OFF時はstate不接触。固定catalog 5 code＋
+    fingerprint集約で生message不保存、cursor/ack、resolved+ack済み30日compact、POSIX owner-only
+    fail closed。observerはCLI内部故障とMCP起動失敗の実在境界2本へ接続。focused 6 test green
 - [x] 配布形態を裁定する（npm package化 or repo直CLI）
   - オーナー裁定 2026-07-18「配布形式はNPM」＝npm package化で確定
 - [ ] npm配布の配線: package名の確定、`bin/agents-update.sh`のPACKAGES追加、
