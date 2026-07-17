@@ -177,14 +177,19 @@ L0 ベースライン（直轄化・CI green・現状固定）
           ADR 0048の教訓（定義→測定→検証の順）に従い、witnessコスト実測で真値インスタンスを
           採ってから要否・設計を裁定する。**真値実例採取済み**: `tests/install/clean-home.sh`・
           `tests/hooks/smoke.sh`が`bin/orchestrate-run.mjs`をshell経由で実行（affected不可視）
-- [ ] 改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が
+- [x] 改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が
       exact一致**すること、かつwitnessコストがL1実測比で有意に下がること。
       どちらも満たさないなら改良を成功扱いしない
       — 前半は**2026-07-17達成**: dotagents clone（`73947b3`）再indexで
       `affected lib/orchestrate/control-record.mjs` = 真値7件とexact一致
       （FP0/FN0）。動的経路は `helpers.mjs →(imports/file-path/0.95)→
       control-record.mjs` の実在辺で裏付け確認済み（名前一致の偶然でない）。
-      witnessコスト比較は未測定（残件）
+      — 後半も**2026-07-17達成**（Lattice
+      [L2比較evidence](../../Lattice/docs/evidence/2026-07-17-l2-witness-cost-comparison.md)・`e954a8f`）:
+      Stage 0同一ターゲット3系がすべて真値とexact一致（T1系7件・T2系0→6件・T4系2→3件でFN解消）。
+      コスト低減の実体は「drift調査60秒/周の消滅」＋「偽陽性写経以外に通らない非dispatchable
+      行き止まりの解消」＋「T2系の表現不能→直接記載可能」。成立範囲はimport／動的import／spawn
+      結合クラスで、(c2)クラスは残件のとおり
 - [x] focused gate → 関連gate → Lattice `npm run ci` green
   - **2026-07-17時点green（(c1)まで反映）**: root node:test 290/290・sensor vitest
     147 files/2476 passed/fail 0・check pass・ci exit 0。gate実行でP1級既存欠陥を発見・修理:
