@@ -206,6 +206,17 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 - [ ] `make ci` → 対象端末の `./install.sh --profile <official|legacy>` / config dry-run/apply / 同じ profile を指定した `./bin/verify-install.sh --profile <official|legacy>` → pathspec コミット → オーナー GO → push（実端末 apply は H1 待ち）
 - [ ] 知識還流（caveat/rag）・プラン正本のチェック消化
 - [ ] 他端末波及チェックリスト（pull → `./install.sh --profile official` → Claude `settings.json` 断片マージ / Codex applier の dry-run→承認済み apply → `./bin/verify-install.sh --profile official` → 実火1件）— 全端末済みでプランを archive へ
+  - FOX WSL2（2026-07-17 実施）: pull・install・C1 断片マージ・applier apply・verify OK・Claude 実火
+    （`claude -p` hooks 発火・Fable 5 応答）まで完了。**ただし Codex hook trust 承認直後に
+    Windows「アプリ選択」ダイアログ無限増殖が発生**（caveat
+    `codex/wsl2-codex-app-server-shell-script-hooks-windows` が正）。応急処置として
+    `~/.codex/hooks.json` から callout/advisory の .sh hook を除去済み（backup:
+    `~/.codex/hooks.json.bak-popup-*`）＝**FOX の Codex 側 callout/advisory は意図的に無効・
+    verify-install が advisory 不在 FAIL を出すのは既知の一時状態。無条件に再適用しない**。
+- [ ] **WSL2 interop 安全化**: `apply-codex-config` が書く hook command を interpreter 明示起動
+    （`/bin/bash <path>` 等）または node shim へ変更し、WSL interop の拡張子 dispatch に乗らない
+    形へ直してから FOX の Codex hook を再有効化する（再有効化は Windows ダイアログ非発生の
+    実火確認まで含めて閉じる）
 
 ## 検証方法
 

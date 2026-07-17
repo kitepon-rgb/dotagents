@@ -96,6 +96,9 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
 - [ ] `./install.sh` → `./bin/verify-install.sh` OK（override 非空があれば FAIL 名指しに従う）
 - [ ] docs/05 §3 の V2 routing 必須断片適用（custom role の個別 `[agents.<name>]` 登録は不要）
 - [ ] Codex 新セッション実測（schema に `agent_type`／`fork_turns="none"`／3 role の routing-check）
+  - FOX WSL2 は 2026-07-17 の Windows ダイアログ無限増殖（caveat
+    `codex/wsl2-codex-app-server-shell-script-hooks-windows`）により Codex 実測を保留。
+    interop 安全化（plan_callout-hooks.md Phase 5 の新 TODO）後に実施する。
 
 ## 検証（end-to-end）
 
