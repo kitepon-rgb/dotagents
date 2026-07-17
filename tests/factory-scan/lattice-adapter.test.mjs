@@ -3,7 +3,11 @@ import { createHash } from 'node:crypto';
 import test from 'node:test';
 
 import { latticeProduct } from '../../lib/factory/scan.mjs';
-import { collectLatticeRuntimeErrors } from '../../lib/factory/runtime-errors.mjs';
+import {
+  acknowledgeRuntimeErrors,
+  acknowledgementBundle,
+  collectLatticeRuntimeErrors,
+} from '../../lib/factory/runtime-errors.mjs';
 
 const OK_CHECKS = [
   { id: 'package_version', status: 'ok', detail: '0.1.0' },
@@ -64,6 +68,10 @@ test('privacy negative: 絶対path・token様文字列を含むdetailは転記�
     'auth failed with Bearer abc123',
     'key sk_live_abcDEF123 rejected',
     'C:\\Users\\kite secret',
+    'token ghp_abcDEF123 rejected',
+    'pat github_pat_abcDEF123 rejected',
+    '-----BEGIN RSA PRIVATE KEY----- leaked',
+    'line1\nline2',
   ]) {
     const value = diagnostics();
     value.checks[3] = { id: 'mcp_entry', status: 'ok', detail: leak };
@@ -133,6 +141,22 @@ test('catalog逸脱（未知code・template改変）はfail closedする', async
   tampered.runtime_errors[0].message_template = 'tampered template';
   tampered.runtime_errors[0].fingerprint = latticeFingerprint('run_store', 'LATTICE.RUN_STORE_IO_FAILED', 'tampered template');
   await assert.rejects(collectLatticeRuntimeErrors({ runner: runnerFor(tampered) }), { code: 'E_FACTORY_RUNTIME_ERRORS' });
+});
+
+test('ack round-trip: lattice ack応答（snapshot同型）を検証しcursor不足を拒否する', async () => {
+  const projection = await collectLatticeRuntimeErrors({ runner: runnerFor(snapshotValue()) });
+  const bundle = acknowledgementBundle('report-1', [projection.acknowledgement]);
+
+  const acked = snapshotValue();
+  acked.cursor.acknowledged_through = 2;
+  acked.diagnostics.pending_count = 0;
+  await acknowledgeRuntimeErrors(bundle, { runner: runnerFor(acked) });
+
+  // ack応答のacknowledged_throughが要求cursor未満なら拒否する。
+  await assert.rejects(
+    acknowledgeRuntimeErrors(bundle, { runner: runnerFor(snapshotValue()) }),
+    { code: 'E_FACTORY_RUNTIME_ERRORS' },
+  );
 });
 
 test('collection disabledは空projection（collection_disabled）で返しackを作らない', async () => {

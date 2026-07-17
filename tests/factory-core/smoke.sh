@@ -49,7 +49,7 @@ exit 64
 EOF
 chmod +x "$BIN_DIR/uv"
 
-for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp; do
+for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp lattice; do
   cat > "$BIN_DIR/$command" <<'EOF'
 #!/bin/sh
 [ "$1" = --version ] && exit 0
@@ -94,7 +94,7 @@ assert_rejected() {
   fi
 }
 
-# updater の curated package は同名重複を許さず、8製品の導入面を必須化する。
+# updater の curated package は同名重複を許さず、コア製品の導入面を必須化する。
 for package in \
   caveat-cli throughline claude-spotter gpt-connector aiterm-mcp \
   codex-sidecar-cli codex-sidecar-core codex-sidecar-mcp '@colbymchenry/codegraph' '@quolu/lattice'; do
@@ -132,7 +132,7 @@ mv "$BIN_DIR/spotter" "$BIN_DIR/spotter.off"
 assert_rejected 'spotter CLI 欠落'
 mv "$BIN_DIR/spotter.off" "$BIN_DIR/spotter"
 
-for command in aiterm-mcp codex-sidecar-mcp; do
+for command in aiterm-mcp codex-sidecar-mcp lattice; do
   mv "$BIN_DIR/$command" "$BIN_DIR/$command.off"
   assert_rejected "$command CLI 欠落"
   mv "$BIN_DIR/$command.off" "$BIN_DIR/$command"

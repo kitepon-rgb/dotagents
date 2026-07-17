@@ -385,10 +385,28 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     オンボーディングへ導入行追記。本host実導入（`/opt/homebrew/bin/lattice` 0.1.0）→
     `verify-install --profile official` OK→`make ci` exit 0。他hostは週次`agents-update`が
     次回実行で自動導入（PACKAGES経由）
+- [ ] **Lattice v0.2.0 publish（H承認待ちcarry-over）**: 未公開のmaintenance wave 4件
+      （sensor require偽陰性fix・patch bind強化・**cli_error.v2＋doctor退役＝breaking**）を含む。
+      repo側version bumpは実施済み（0.1.0のまま公開物と別内容になるhazard解消）。publish時は
+      目的・影響・rollback説明→H承認→full gate→publish→latest確認の作法（README変更管理）に従う
 - [x] コア一覧の更新: 第10枠はObserver予約済み（wire v3）。**Latticeは第11**として
       PLAN.md／AGENTS.md／README.mdを更新する（Codegraph退役完了までは入替でなく追加）
   - 2026-07-18完了: 3文書へ「第11・編入中・Observer第10予約・入替でなく追加」を最小追記。
     8製品CLI必須list（README §0/検証）はnpm配線waveまで不変（未配布CLIを必須化しない）
+
+#### L6 Phase gate記録（2026-07-18完遂）
+
+- maintenance wave 4件消化後、**主継承refuter 1回**＝条件付き→残2件（契約台帳のadapter記述stale・
+  v0.2.0 publishの追跡可能TODO化＋version bump）を即時消化して支持へ。全[x]注記は実commitと
+  一致・wire v3混入なし・publish整合を独立確認済み
+- **クロスprovider検証**（codex_review×high・dotagents側）＝high 2件を採用・是正:
+  ①lattice ack応答の検証分岐欠落→caveat同型分岐＋ack round-trip test、②factory-core smokeの
+  隔離fixtureにlattice欠落→fixture＋欠落negative追加。privacy negative 4様式追加。
+  curated package数の期待も14へ追従
+- **重大な検証事故の是正**: バックグラウンドgateを`cmd | tail`で実行しexit codeがtailに
+  差し替わっていた（赤gateをgreen誤認・caveat `gate-cmd-tail-exit-code-tail-gate-green`へ公開還流）。
+  全gateをリダイレクト＋真exit形で取り直し、最終状態は**両repoともfull CI真exit 0**
+  （Lattice `be45f68`・dotagentsは本commit時点）
 
 ### Phase L7 — wire v4（Codegraph退役）
 

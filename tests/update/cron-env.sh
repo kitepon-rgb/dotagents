@@ -126,8 +126,8 @@ if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   fail '正常fixtureのagents-updateが失敗した'
 fi
 
-[ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
-  || fail 'curated package 13件を fake npm へ渡していない'
+[ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq 14 ] \
+  || fail 'curated package 14件を fake npm へ渡していない'
 [ "$(grep -c '^normal:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
   || fail 'markitdown を fake uv tool upgrade へ1件渡していない'
 [ "$(grep -c '^normal:--config '"$REPORTER_CONFIG"' --post-update$' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
@@ -273,7 +273,7 @@ if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   cat "$TEST_HOME/distributed-symlink.out" >&2
   fail '配布symlink経由のagents-updateが失敗した'
 fi
-[ "$(grep -c '^distributed-symlink:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+[ "$(grep -c '^distributed-symlink:' "$TEST_HOME/npm-calls.log")" -eq 14 ] \
   || fail '配布symlink経由でcurated packageをfake npmへ渡していない'
 if grep -q 'MODULE_NOT_FOUND' "$TEST_HOME/distributed-symlink.out"; then
   fail '配布symlink経由でledger helperを誤った拡張子付きpathへ解決した'
@@ -288,7 +288,7 @@ if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/fail.out" 2>&1; then
   fail '途中の npm install 失敗を成功扱いした'
 fi
-[ "$(grep -c '^npm-fail:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+[ "$(grep -c '^npm-fail:' "$TEST_HOME/npm-calls.log")" -eq 14 ] \
   || fail '途中失敗後も残り package を更新しなかった'
 grep -q '^FAILED: claude-spotter$' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
   || fail '失敗した package 名を log に残さない'
@@ -308,7 +308,7 @@ if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/uv-missing.out" 2>&1; then
   fail 'uv 不在を成功扱いした'
 fi
-[ "$(grep -c '^uv-missing:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+[ "$(grep -c '^uv-missing:' "$TEST_HOME/npm-calls.log")" -eq 14 ] \
   || fail 'uv 不在時に npm の残件を更新しなかった'
 [ "$(grep -c '^uv-missing:' "$TEST_HOME/reporter-calls.log")" -eq 2 ] \
   || fail 'uv 不在時に factory reporter を実行しなかった'
@@ -323,7 +323,7 @@ if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/uv-fail.out" 2>&1; then
   fail 'uv tool upgrade 失敗を成功扱いした'
 fi
-[ "$(grep -c '^uv-fail:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+[ "$(grep -c '^uv-fail:' "$TEST_HOME/npm-calls.log")" -eq 14 ] \
   || fail 'uv tool upgrade 失敗時に npm の残件を更新しなかった'
 [ "$(grep -c '^uv-fail:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
   || fail 'uv tool upgrade を実行していない'
@@ -339,7 +339,7 @@ if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/report-fail.out" 2>&1; then
   fail 'factory reporter 失敗を成功扱いした'
 fi
-[ "$(grep -c '^report-fail:' "$TEST_HOME/npm-calls.log")" -eq 13 ] \
+[ "$(grep -c '^report-fail:' "$TEST_HOME/npm-calls.log")" -eq 14 ] \
   || fail 'reporter 失敗の試験で更新処理を省略した'
 grep -q '^agents-update result: update=success report=failed$' "$TEST_HOME/report-fail.out" \
   || fail '更新成功とreport失敗を区別していない'

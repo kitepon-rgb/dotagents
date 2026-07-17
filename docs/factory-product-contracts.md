@@ -87,7 +87,9 @@
   （schema `lattice.runtime_errors.v1`・opt-in＝工場共有`factory-reporter.json`の`collection.enabled`・
   Caveat同型契約）。run store・sensor index・runtime error storeのstate/schema/migrationはLattice所有で、
   dotagentsは直接解釈しない。
-- 現adapter: **未実装**（本編入planのL6「dotagents側adapter＋privacy negative fixture」で実装する）。
+- 現adapter: 実装済み・**wire v3 reportへ未enroll**（enrollmentはL7 wire v4）。diagnosticsは
+  `latticeProduct`（`lib/factory/scan.mjs`・exact schema・overall/exit整合・detailの秘密/絶対path拒否）、
+  runtime errorは`collectLatticeRuntimeErrors`（固定catalog 5 code検証・ack round-trip接続）。
   編入契約・claim境界はLattice `docs/01_integration-package.md`と
   Lattice ADR 0051（条件付きsupport）が正。
 - 表現/禁止: 生message・絶対path・repo/prompt内容をreportへ転記しない（storeは固定catalogの
