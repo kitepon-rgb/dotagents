@@ -197,9 +197,14 @@ for key, expected_value in expected.items():
     if expected_value is not None and actual.get(key) != expected_value:
         errors.append(f"{key}: expected={expected_value!r}, actual={actual.get(key)!r}")
 
-expected_instructions = role_config["developer_instructions"].strip()
-developer_text = "\n".join(developer_texts)
-if expected_instructions not in developer_text:
+def normalize_newlines(value: str) -> str:
+    return value.replace("\r\n", "\n").replace("\r", "\n")
+
+
+expected_instructions = normalize_newlines(role_config["developer_instructions"]).strip()
+developer_text = normalize_newlines("\n".join(developer_texts))
+instructions_applied = expected_instructions in developer_text
+if not instructions_applied:
     errors.append("developer_instructions: role TOML の本文が developer message に存在しない")
 
 sandbox_mismatch = expected_sandbox is not None and actual.get("sandbox") != expected_sandbox
@@ -212,7 +217,7 @@ print(f"rollout: {rollout_path}")
 print(f"agent_path: {expected_agent_path}")
 for key in ("agent_role", "model", "effort", "sandbox"):
     print(f"{key}: {actual.get(key)}")
-print(f"developer_instructions: {'applied' if expected_instructions in developer_text else 'missing'}")
+print(f"developer_instructions: {'applied' if instructions_applied else 'missing'}")
 if sandbox_mismatch and not require_sandbox:
     print(
         f"WARN: sandbox は role TOML と不一致（expected={expected_sandbox!r}, "

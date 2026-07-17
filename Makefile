@@ -59,7 +59,8 @@ test-factory-scan: ## 工場9製品scanの公開CLI・privacy・platform契約�
 	node --test tests/factory-scan/*.test.mjs
 
 test-orchestrate: ## orchestration control record の契約を検証
-	node --test tests/orchestrate/*.test.mjs
+	env -u TEMP -u TMP TMPDIR=/tmp node --test tests/orchestrate/*.test.mjs
+	env -u TEMP -u TMP TMPDIR=/tmp bash tests/orchestrate/agent-routing-verifier.sh
 
 ci: lint test-constitution test-install test-observer-hook-config test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate ## ローカル/CI 共通の全ゲート
 

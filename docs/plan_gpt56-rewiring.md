@@ -67,6 +67,11 @@ GPT-5.6 世代（Sol/Terra/Luna）と Grok 4.5 / Composer 2.5 の登場で、モ
     不一致なら本タスクを渡さない
   - [x] `make lint` → `install.sh` → `verify-install.sh` → 新規 Codex セッションで
     implementer/refuter/sorter の E2E smoke を green にする
+- [x] **routing verifierのCRLF偽陰性修正（2026-07-17 LiveTR実利用で再現）**:
+  role TOMLのinstructionsが子へCRLFで注入された場合も、改行差だけで`missing`にしない。
+  実際の欠落は引き続き拒否する回帰テストを追加。WSLへ継承されたWindows `TEMP`でControl Record
+  testが別pathを読む問題もtest target内のPOSIX一時directory固定で除去した。173件＋routing test green、
+  LiveTRの実rolloutも`developer_instructions: applied`へ復旧
 - [ ] **別論点（上流）**: spawn 応答へ実効 role/model/effort/sandbox を載せる。role の `sandbox_mode` を
   親 permission profile で上書きする 0.144.1 の仕様／文書不一致を解消する
 - [x] **憲法過剰圧縮の是正（2026-07-11）**: Codex 固有差分の分離時に共通原則まで削った問題を解消する
