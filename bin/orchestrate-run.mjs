@@ -74,7 +74,12 @@ if (args.length === 1 && args[0] === "--help") {
       if (!phase.configured) throw new api.ControlRecordError("PHASE_GATE_NOT_RECORDED", "record phase gate before the first task");
     }
     const result = await (brief ? api.statusBrief : commands.get(command))(input);
-    process.stdout.write(`${JSON.stringify({ ok: true, command, result })}\n`);
+    if (command === "resume-check") {
+      const summary = { outcome: result.outcome, blocking_count: result.blocking_reasons.length, review_count: result.review_reasons.length };
+      process.stdout.write(`${JSON.stringify({ ok: true, command, summary, result })}\n`);
+    } else {
+      process.stdout.write(`${JSON.stringify({ ok: true, command, result })}\n`);
+    }
   } catch (error) {
     if (error instanceof api.ControlRecordError) {
       const inputError = new Set(["INVALID_INPUT", "INVALID_SCHEMA", "INVALID_SCOPE", "INPUT_PATH_UNSAFE"]);

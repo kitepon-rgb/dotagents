@@ -2692,6 +2692,11 @@ test("record-only layerはprovider/network/dispatch/cancelを実行せず、CLI�
   assert.equal(brief.status, 0); assert.equal(JSON.parse(brief.stdout).command, "status --brief");
   const resume = spawnOrchestrate(["resume-check", "--input", input], { env: protectedEnv });
   assert.equal(resume.status, 0); assert.equal(JSON.parse(resume.stdout).command, "resume-check");
+  const resumeParsed = JSON.parse(resume.stdout);
+  assert.equal(resumeParsed.summary.outcome, resumeParsed.result.outcome);
+  assert.equal(resumeParsed.summary.blocking_count, resumeParsed.result.blocking_reasons.length);
+  assert.equal(resumeParsed.summary.review_count, resumeParsed.result.review_reasons.length);
+  assert.deepEqual(Object.keys(resumeParsed), ["ok", "command", "summary", "result"]);
   const cliControl = "cli-record-only";
   const cliInitInput = join(base, "cli-init.json"); await writeJson(cliInitInput, { cwd: repo.root, control_id: cliControl, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const cliInit = spawnOrchestrate(["init", "--input", cliInitInput], { env: protectedEnv });
@@ -3707,4 +3712,35 @@ test("未commitのfile evidenceは修正後も従来どおりfail closed（履�
   const missing = await api.resumeCheck({ cwd: repo.root, control_id: "adr60" });
   assert.equal(missing.outcome, "blocked");
   assert.ok(missing.blocking_reasons.some((e) => e.code === "evidence-missing" && e.subject_id === ref));
+});
+
+test("同一manifest内でfile型とdecision型のevidenceが同じ更新後drift状況でも対称にretained-historyへ救済される", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const fileRef = "docs/dual-evidence-file.md"; const fileOldBody = "dual evidence file v1\n"; const fileNewBody = "dual evidence file v2\n";
+  const decisionRef = "docs/dual-evidence-decision.md"; const decisionOldBody = "dual evidence decision v1\n"; const decisionNewBody = "dual evidence decision v2\n";
+  await writeFile(join(repo.root, fileRef), fileOldBody);
+  await writeFile(join(repo.root, decisionRef), decisionOldBody);
+  runGit(repo.root, ["add", fileRef, decisionRef]);
+  runGit(repo.root, ["commit", "-q", "-m", "add dual evidence refs"]);
+  const fileProof = { type: "file", ref: fileRef, digest: createHash("sha256").update(fileOldBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
+  const decisionProof = { type: "decision", ref: decisionRef, digest: createHash("sha256").update(decisionOldBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
+  const init = await api.init({ cwd: repo.root, control_id: "adr60-dual", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "adr60-dual", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "adr60-dual-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const template = makeWorkerRun();
+  const capabilities = template.workflow_capabilities.map((entry, index) => ({ ...entry, evidence: index % 2 === 0 ? fileProof : decisionProof }));
+  await api.workerRunRecord({
+    cwd: repo.root, control_id: "adr60-dual", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "adr60-dual-worker", task_id: "adr60-dual-task", assignment_id: "adr60-dual-assignment", write_mode: "none", workspace_cwd: repo.root, workflow_capabilities: capabilities, execution_verification: { ...template.execution_verification, evidence: { type: "executor-receipt", ref: "connector:test:adr60-dual", digest: "f".repeat(64), observed_at: "2026-07-14T00:00:00.000Z" } }, lineage: { ...template.lineage, root_assignment_id: "adr60-dual-assignment" } }),
+  });
+  await writeFile(join(repo.root, fileRef), fileNewBody);
+  await writeFile(join(repo.root, decisionRef), decisionNewBody);
+  const result = await api.resumeCheck({ cwd: repo.root, control_id: "adr60-dual" });
+  const fileEntry = result.evidence_retention.local.find((e) => e.ref === fileRef);
+  const decisionEntry = result.evidence_retention.local.find((e) => e.ref === decisionRef);
+  assert.equal(fileEntry.status, "retained-history");
+  assert.equal(fileEntry.error_code, "RETAINED_IN_GIT_HISTORY");
+  assert.equal(decisionEntry.status, "retained-history");
+  assert.equal(decisionEntry.error_code, "RETAINED_IN_GIT_HISTORY");
+  assert.ok(!result.blocking_reasons.some((e) => e.subject_kind === "evidence"));
 });
