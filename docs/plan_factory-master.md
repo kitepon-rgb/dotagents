@@ -598,6 +598,11 @@ Observer `docs/plan_observer.md`
 
 以下は主レーンを遮らない。対象repoを触る機会、またはH条件が整った時に消化する。
 
+- [ ] Control RecordのWSL/DrvFs境界を安全に裁定する。`metadata`なしでWindowsドライブ上のrepoを扱うと
+  state directoryが`0777`となり、`init`が`STATE_PATH_UNSAFE`でfail closedすることをLiveTR監査で再現した。
+  `metadata`を有効化してもLinux modeはWindows ACLを制限しないため、`0700`だけで安全扱いしない。
+  Windows-backed repoを明示unsupportedにするpreflight/runbook、またはowner-onlyを実証できる安全な
+  state配置・project bindingを設計し、WSL fixtureで通常repoとdirty workspaceのControl初期化を固定する。
 - [ ] GitHub側のみのrepo 20件超の終活裁定を行う。削除・archiveはオーナー承認後だけ行う。
 - [ ] [P4メモリ昇格queue](queue_memory-promotion.md)を各repoの次回作業時に消化する。
 - [ ] npm Publishing accessの2FA／token禁止締めをオーナー画面で行う（H）。
