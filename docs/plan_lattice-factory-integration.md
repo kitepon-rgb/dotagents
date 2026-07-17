@@ -427,19 +427,28 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 
 2026-07-18にRC4 plan（Lattice `docs/archive/plan_lattice_rc4_dotagents_dogfood.md`）から移管。所有repoはすべてLattice:
 
-- [ ] sensor: Lua/Luau/Rubyの`require()`検出が`visitNode`フック実装のため関数本体内requireを拾えない
+- [x] sensor: Lua/Luau/Rubyの`require()`検出が`visitNode`フック実装のため関数本体内requireを拾えない
       （偽陰性・JS/TSと同型の穴）。対処は`extractCall`合流点への移設。最小再現: 関数内`require 'mod'`を
       indexしimports辺が出ないこと（所有: Lattice sensor/）
-- [ ] CLI: `lattice plan compile`のtyped失敗が`cli_error.v1`の`code`/`message`だけを出し、compile resultの
+  - 2026-07-18完了（Lattice `efc8299`・implementer委譲→親diff受入）: extractCall合流点へ分岐追加・
+    二重emit構造排除・回帰test 6件・sensor 2487 test green
+- [x] CLI: `lattice plan compile`のtyped失敗が`cli_error.v1`の`code`/`message`だけを出し、compile resultの
       `detail`（BOUNDARY_UNKNOWNのunknown内訳等）を落とす。対処候補: `cli_error.v1`へ`detail`追加
       （schema変更＝ADR 0044 Decision 8のenvelope正式化と同時に裁定）（所有: Lattice src/runtime-cli.mjs）
-- [ ] CLI: `lattice doctor --json`（bootstrap diagnostics）が化石化——`references.plan`が消滅済み
+  - 2026-07-18完了（Lattice `56e4cf7`・ADR 0052＝fable refuter条件付き通し5条件反映）: 実因は
+    CliContractError constructorのdetail未配線。`lattice.cli_error.v2`新設（非空plain objectのみ
+    detail発行・stdout重複コードは省略）。v0.2.0 publishは別途Hでcarry over
+- [x] CLI: `lattice doctor --json`（bootstrap diagnostics）が化石化——`references.plan`が消滅済み
       `docs/plan_lattice.md`を指し、`implementation`の3 flagが実装済みの現状と不一致。RC3特性化で
       挙動凍結されているため、schema v2化 or 廃止をcharacterization更新と同時に裁定
       （2026-07-18 L6 diagnostics実装時に発見。所有: Lattice src/bootstrap.mjs）
-- [ ] artifact: `patches_bound_to_accepted_receipts`検査がpath照合のみ（保存`checkpoint_digest`未検証・
+  - 2026-07-18完了（Lattice `56e4cf7`・ADR 0052 Decision 2）: 廃止＝exit 2化・bootstrap資産削除・
+    characterization/checkスクリプト同wave更新。後継正本はfactory-diagnostics
+- [x] artifact: `patches_bound_to_accepted_receipts`検査がpath照合のみ（保存`checkpoint_digest`未検証・
       receipt content digestとの突合なし）＝patch取り違え・破損がpath一致なら通る。digest照合へ強化
       （ADR 0051 Decision 4。所有: Lattice src/rc4-stage1-dogfood.mjs系）
+  - 2026-07-18完了（Lattice `4bbb3d8`）: checkpoint_digest/todo_id照合＋patch sha256自己束縛
+    （世代判定・fail-openなし）。tamper 3様態test・実v4-landing 19/19維持
 
 ## 5. 既知の罠
 
