@@ -451,7 +451,11 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
    - [x] `events=ready`なのにsummary=`unverified`となるproducer矛盾を製品repoのcharacterization→修正→patch releaseで閉じた。Throughline `f928c13`、v0.6.3 tag `fc83ddf`、公開記録`fe8ea87`、focused 15/15を[ADR 0013](adr/0013-throughline-diagnostics-product-receipt.md)で受け入れた
    - [ ] main-serverへ正規hookを導入し、factory diagnosticsを再観測する（実host applyはH）
    - [ ] Macのhandoff readinessを実配布物で再観測する（実host scan/reportはR2 host receiptへ合流）
-   - [ ] FOX WSL2でv0.6.3以降のproducer出力を再観測し、旧`events=ready`／summary=`unverified`観測を解消する（実host scan/reportはR2 host receiptへ合流）
+   - [x] FOX WSL2でv0.6.3以降のproducer出力を再観測し、旧`events=ready`／summary=`unverified`観測を解消する（実host scan/reportはR2 host receiptへ合流）
+     - 2026-07-17 FOX WSL2実機（read-only `throughline factory-diagnostics --json` v0.6.3）: `overall.status=ready`・
+       `hooks.events`（userPromptSubmit/postToolUse/stop）全`ready`で整合し、旧`events=ready`／summary=`unverified`矛盾は解消。
+       残る`connectors.claude=unverified`（reason=`diagnostic_unverified`）は1oの正当な非ブロッキングtuple（headless Claude connector）で別物。
+       formalなhost scan/report receiptはR2（H）へ合流。
 1n. [x] Windows共通command runnerのnpm shim解決を実物cmd-shim variantへ追従し、PATH／shimのfilesystem解決も5秒全体deadline内のkill可能helperへ隔離して、UNC・late spawn・悪意あるshimをfail-loudに拒否する
 1o. [x] native diagnosticsを単一overall checkへ潰さずThroughline／Spotter／aiterm-mcpのcomponent別checkへ安全に投影し、report/BugHubでは`unverified`を保持する。gateはdefault-denyのまま、Spotterの人手trust、Throughlineのadvisory evidence/Claude connector、headless aitermのPTY観測不能という完全tupleだけをnonblockingにする
 1p. [ ] Windows factory ACLのローカル修正を受け入れ、FOX Windows native実機receiptで閉じる
