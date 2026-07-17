@@ -203,6 +203,30 @@ test("gpt-connector observationはraw answerを保持せず、timeoutをunknown�
   assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...failed, error: { ...failed.error, extra: "not in ConsultFailure" } } }), code("INVALID_SCHEMA"));
 });
 
+test("gpt-connector成功result・失敗errorはConsultSnapshot/ConsultFailureの形状を厳格検証しfail closedする", () => {
+  const timestamps = { createdAt: "2026-07-14T00:00:00.000Z", updatedAt: "2026-07-14T00:01:00.000Z" };
+  const result = { text: "raw answer is accepted then discarded", status: "finished", endTurn: true, resolvedModel: "gpt-5.6", resolvedEffort: "high", sessionId: "123e4567-e89b-12d3-a456-426614174000", attachments: { count: 1, names: ["private.txt"], mimeTypes: ["text/plain"], readBack: "confirmed", retention: "unknown", cleanup: "deleted" }, archived: true };
+  const succeeded = { slug: "design-review-001", state: "succeeded", ...timestamps, result, error: null };
+  const errorValue = { code: "AUTH_REQUIRED", message: "raw error message is discarded", retry: "after_auth", partialUpload: { count: 1, cleanup: "failed" } };
+  const failed = { slug: "design-review-001", state: "failed", ...timestamps, result: null, error: errorValue };
+
+  // 1. sessionIdがUUID v4形式でない場合の拒否
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...succeeded, result: { ...result, sessionId: "not-a-uuid" } } }), code("INVALID_SCHEMA"));
+
+  // 2. attachments.countとnames/mimeTypes配列長の不一致検出
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...succeeded, result: { ...result, attachments: { ...result.attachments, count: 2 } } } }), code("INVALID_SCHEMA"));
+
+  // 3. attachments.cleanupの未知値拒否
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...succeeded, result: { ...result, attachments: { ...result.attachments, cleanup: "unknown_cleanup" } } } }), code("INVALID_SCHEMA"));
+
+  // 4. error.retryの未知値拒否
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...failed, error: { ...errorValue, retry: "unknown_retry" } } }), code("INVALID_SCHEMA"));
+
+  // 5. error.partialUpload.count/cleanupの不正値拒否
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...failed, error: { ...errorValue, partialUpload: { count: 0, cleanup: "failed" } } } }), code("INVALID_SCHEMA"));
+  assert.throws(() => adapters.projectGptConnectorObservation({ slug: "design-review-001", provider: { ...failed, error: { ...errorValue, partialUpload: { count: 1, cleanup: "unknown_cleanup" } } } }), code("INVALID_SCHEMA"));
+});
+
 test("claude-internalはappendix由来のunknown projectionだけを提供し、未確認dispatchを発明しない", () => {
   assert.deepEqual(adapters.projectClaudeInternalAppendixObservation({ observed_at: "2026-07-14T00:00:00.000Z" }), {
     schema_version: "dotagents.claude-internal.observation.v1", adapter_id: "claude-internal",
