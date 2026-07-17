@@ -338,8 +338,11 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 - [ ] **Lattice native factory diagnostics**を実装する（version・schema version・overall・check ID・
       秘密なしJSON・非0意味論）。自作製品の必須要件であり、dotagents側adapterより先行する
 - [ ] **opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する
-- [ ] 配布形態を裁定する（npm package化 or repo直CLI）。npmなら`bin/agents-update.sh`のPACKAGESへ追加し、
-      `tests/factory-core/smoke.sh`のgrep count強制を同一waveで更新する
+- [x] 配布形態を裁定する（npm package化 or repo直CLI）
+  - オーナー裁定 2026-07-18「配布形式はNPM」＝npm package化で確定
+- [ ] npm配布の配線: package名の確定、`bin/agents-update.sh`のPACKAGES追加、
+      `tests/factory-core/smoke.sh`のgrep count強制を同一waveで更新。**registry publishはH＝
+      目的・影響・rollback説明と実行時承認が別途必要**
 - [ ] `docs/factory-product-contracts.md`へLattice台帳を記録する（repo・所有・自作区分・version入口・
       正規diagnostics・state/schema/migration・runtime error・host/connector期待・修正先）
 - [ ] dotagents側adapter＋privacy negative fixtureを実装する
@@ -436,4 +439,5 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 - [ ] **WIP計数の解釈**: 憲法「active WIPは本筋1件＋緊急割込み1件まで」を、Lattice戦役とdotagents戦役の
       並走でオーナー単位で数えるかproject単位で数えるか。L5着地窓の設計に先行して必要
 - [ ] **Oracle rollback drill未完のまま2件目の退役を始めるか**（L7着手時）
-- [ ] **Lattice配布形態**（npm publish or repo直CLI）。L6の更新経路・install/verify設計が従属する
+- [x] **Lattice配布形態**（npm publish or repo直CLI）。L6の更新経路・install/verify設計が従属する
+  - オーナー裁定 2026-07-18「配布形式はNPM」
