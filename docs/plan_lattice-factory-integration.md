@@ -139,14 +139,33 @@ L0 ベースライン（直轄化・CI green・現状固定）
       fork repoの所有・release・version契約を台帳へ先行記録する。upstream追従方針
       （cherry-pick基準）を吸収実装時に明文化する（ADR 0048 Decision 4）
 - [ ] **グラフ構築のcorrectnessを改良する**（実測が特定した原因箇所。優先順）:
-      (a) 経路実在を検証しない名前一致フォールバック（`resolution/index.ts` Strategy 3）と
-      confidence非永続化（`edges`スキーマに列なし・低信頼辺が同格）を直す（偽陽性の除去）
-      (b) JS/TS extractionに動的import/require処理を追加し（機能自体が不在。Lua/R/Rubyに前例）、
-      定数畳み込みで`import(join(定数...))`を解決する（偽陰性の除去）
-      (c) call graph非可視の結合（spawn・shell・markdown・設定）を索引化する
+      - [x] (a) 経路実在を検証しない名前一致フォールバックとconfidence非永続化を直す（偽陽性の除去）
+        — **2026-07-17完了**（Lattice `da438ca`）。実装は2層設計: ①migration v9で
+        `edges.confidence`/`edges.resolved_by`列を永続化 ②file-level依存射影
+        （`getDependentFilePaths`等）に corroboration filter（経路非検証戦略
+        exact-match/fuzzy/instance-method/function-refのみのfile pairを除外。
+        `kind='imports'`は常にcorroborated・適用はimportが唯一の束縛手段である
+        js/ts/pythonのsource限定＝Go/Java/C#/Swiftのambient package参照は不問）
+        ③resolution Strategy 3には異言語族ゲートのみ追加（py↔js等。同一言語の
+        クロスファイル名前一致はZustand action・#359・#764・#1240・RN/Expoブリッジ
+        等の設計済み機能が依存するためresolutionでは殺さない）。
+        実測: affected 12件(TP6/FP6/FN1)→5件(FP0)
+      - [x] (b) JS/TS extractionに動的import/require処理を追加（偽陰性の除去）
+        — **2026-07-17完了**（Lattice `5498945`）。`extractCall`（2走査経路の唯一の
+        合流点。visitNodeフック前例では関数本体内へ届かない）にJS/TS限定分岐、
+        定数畳み込み（リテラル/template/同一ファイルconst束縛再帰/join・resolve/
+        import.meta.dirname・__dirname）、解決不能は衝突不可能センチネルで
+        unresolved可視化。`resolveViaImport`に相対specifier限定のraw-text解決分岐を
+        追加（拡張子なし`require('./x')`と静的import生specifierの既存の穴を同時に修理）
+      - [ ] (c) call graph非可視の結合（spawn・shell・markdown・設定）を索引化する
 - [ ] 改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が
       exact一致**すること、かつwitnessコストがL1実測比で有意に下がること。
       どちらも満たさないなら改良を成功扱いしない
+      — 前半は**2026-07-17達成**: dotagents clone（`73947b3`）再indexで
+      `affected lib/orchestrate/control-record.mjs` = 真値7件とexact一致
+      （FP0/FN0）。動的経路は `helpers.mjs →(imports/file-path/0.95)→
+      control-record.mjs` の実在辺で裏付け確認済み（名前一致の偶然でない）。
+      witnessコスト比較は未測定（残件）
 - [ ] focused gate → 関連gate → Lattice `npm run ci` green
 
 ### Phase L3 — Lattice MCP面新設
