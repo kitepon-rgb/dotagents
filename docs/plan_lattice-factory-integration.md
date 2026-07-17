@@ -173,10 +173,14 @@ L0 ベースライン（直轄化・CI green・現状固定）
           `spawn('git')`→同名シンボル誤edge）を検出し、再現テスト付きで修理済み。
           オラクル: `affected bin/orchestrate-run.mjs`＝真値6件exact一致（FP0/FN0・真値は
           親が独立grep確認）、`control-record.mjs` 7件回帰なし
-        - [ ] (c2) shell・markdown・設定 — sensorに文法自体が無く新規サブシステム。
-          ADR 0048の教訓（定義→測定→検証の順）に従い、witnessコスト実測で真値インスタンスを
-          採ってから要否・設計を裁定する。**真値実例採取済み**: `tests/install/clean-home.sh`・
-          `tests/hooks/smoke.sh`が`bin/orchestrate-run.mjs`をshell経由で実行（affected不可視）
+        - [x] (c2) shell・markdown・設定 — **作らない（オーナー裁定 2026-07-17）**。
+          根拠: ①編集競合の検出はwitnessの書込宣言の交差で行われsensorグラフと独立＝
+          shell/markdownの編集競合は(c2)なしで検出される ②漏れるのはaffectedテストの
+          自動観測のみで、manual witnessで補う運用が既存（RC3制約記録） ③実害実例は
+          shell結合3件（`tests/install/clean-home.sh`・`tests/hooks/smoke.sh`→
+          `bin/orchestrate-run.mjs`、`tests/skills/smoke.sh`→`executor-adapters.mjs`）と
+          少ない。**再燃条件**: Stage 1実測で見落とし起因の実害（回すべきテストの見逃し等）が
+          有意に出たら再評価する
 - [x] 改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が
       exact一致**すること、かつwitnessコストがL1実測比で有意に下がること。
       どちらも満たさないなら改良を成功扱いしない
