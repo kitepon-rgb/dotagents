@@ -414,6 +414,11 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 ### Phase L7 — wire v4（Codegraph退役）
 
 - [ ] 親計画のJ1（wire v3固定13製品）完了を確認してから着手する
+- [ ] **Lattice run運用面の正式化**（委譲契約「Lattice既定」の硬化前提・fable refuter差し戻し
+      2026-07-18の採用条件）: run store配置契約（`research/runs/rc3`ハードコードとcwd相対の解消・
+      対象repo側gitignore契約）、resume/close/abandon CLI面（STALE_BASEデッドロックの脱出経路）、
+      正式化後にorchestrate advisory hookへactive run可視化を追加し、実campaign 1件消化後に
+      既定→不変条件への硬化を裁定する
 - [ ] **shadow同等性gate**（Oracle前例331行の型）: session内code intelligenceの代表タスクを
       Lattice MCP経由と現行Codegraph MCP経由で同一入力shadow比較し、**同等以上を実証する**。
       判定者・fixture・受入基準を事前に定義する。満たせない用途が残るなら**部分退役に留め、残存配線を明示する**

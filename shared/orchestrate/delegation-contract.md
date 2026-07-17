@@ -10,10 +10,10 @@
 
 ## 並列化の検討とLattice既定
 
-- **検討の前に既存runと照合する**: 対象TODO集合がLatticeのactive run（run storeの`run_id`・plan・receipt）に既に属していないかを先に確認する。属しているなら新規compileでなく**同一runの回収・継続**（`run observe`／`run status`→resume）が正であり、再検討・再compile・二重dispatchをしない。素のTODO（plan文書・会話上のリスト）だけが新規検討の対象。
-- **着手時に独立に見えるTODOが2つ以上あるなら、並列dispatchの可否を一度検討して結論を出す**（直列の選択は可。無意識に直列へ流れることを禁じる）。判断材料はTODO間の独立性見込み・件数・待ち時間で足り、精密な交差分析は不要——それは次項の道具の仕事。**結論はcampaign単位で一度だけ**Control記録またはplanへ残し、同じTODO集合への再検討はその記録を出発点にする（毎セッションのゼロ再検討を禁じる）。なおpacketで単一TODOを受けたexecutorは本節の対象外（条件が発火しない＝入れ子検討をしない）。
-- **書込みを伴うworkerを2つ以上同時に走らせると決めたら、Lattice run経由（`lattice plan compile`→`run start`）を既定とする**。交差判定を親の自前判断で行わない（witness無しの「交差しないはず」が事故の源であり、判定はplan compileの競合検出に委ねる）。直列委譲（1 workerずつ）は本項の対象外。
-- Latticeが使えない環境・fail closedで止まった場合は、並列を諦めて直列へ落とすのが正で、自前判定での並列強行を回避策にしない。
+- **検討義務**: 着手時に独立に見えるTODOが2つ以上あるなら、並列dispatchの可否を一度検討して結論を出す（直列の選択は可。無意識の直列流れを禁じる）。結論はcampaign単位で一度だけControl記録またはplanへ残し、同じTODO集合への再検討はその記録を出発点にする。packetで単一TODOを受けたexecutorは本節の対象外。
+- **Lattice既定のscope**: **同一repoへ書込みするworkerを2つ以上同時に走らせる場合**は、Lattice run経由（`plan compile`→`run start`）を既定とする。交差判定を親の自前判断で行わない（witness無しの「交差しないはず」が事故の源。判定はplan compileの競合検出へ委ねる）。**別repoへの並列・read-only workerの並列・直列委譲は対象外**。最低安全契約の「writerは専用worktree」は並列時もそのまま適用され、本項はその上に競合判定を重ねるだけで置き換えない。
+- **既存runとの照合**: 着手前に対象repoのrun store（現契約ではrepo配下・端末ローカル）を`run status`／`run observe`で確認し、active runに属するTODOを二重dispatchしない。**継続・close面は現CLIに未実装**のため、中断runを引き継げない場合は旧runの放棄をControl記録またはplanへ明記してから新規runを作る（無言の放置・無言の二重起動の両方を禁じる）。
+- Latticeが使えない環境・fail closedで止まった場合は、並列を諦めて直列へ落とすのが正で、自前判定での並列強行を回避策にしない。本節の既定を不変条件（run外並列の契約違反化）へ硬化するのは、Lattice側のresume/close面とrun store配置契約の正式化、およびdotagents消費者としての実campaign 1件以上の消化後にL7 waveで裁定する。
 
 ## Delegation Packet（8点）
 
