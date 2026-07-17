@@ -1,6 +1,6 @@
-# 工場コア9製品＋基盤toolchain 3製品の有限契約台帳
+# 工場コア9製品（＋編入中Lattice）＋基盤toolchain 3製品の有限契約台帳
 
-更新日: 2026-07-13。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
+更新日: 2026-07-18。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
 ## 共通境界
 
@@ -75,6 +75,24 @@
 - diagnostics/state正本: `factory-diagnostics` の read-only JSON（top-level `status`、`factoryReadiness.schemaVersion="1"`、`overall`、`packageVersions.status`と3 package version整合、result schema/workflow/preset/model policy/read-only dry-run readiness）。`ready`は`status:ok`かつexit 0、`not_ready`/`unverified`は`status:failed`かつ非0。`unverified`はpackage情報を省略した最小shapeも正規。実agent/Codexを起動しない。
 - 現adapter: native JSONをschema allowlistで検証し、`ready`をpass/compatible、`not_ready`を固定fingerprintのfail/incompatible、`unverified`・schema不正・CLI不在をunverifiedへ射影する。installed versionは整合済みのCLI package versionだけを採用し、明示opt-inされた公開runtime error snapshot/ackも接続済み。
 - 表現/禁止: raw output、absolute path、prompt/context/file内容、preset名、token/env/log/result本文をreportへ転記しない。実agent起動をhealth扱いにしない。
+
+### `lattice`（編入中・L6）
+
+- 所有/修正先: 自作 / `kitepon-rgb/Lattice`。**第11コア**（第10枠はObserver予約・Codegraph退役完了までは入替でなく追加）。
+  version入口: `lattice --version`（＝`factory-diagnostics`の`version`と同一のpackage version）。
+- diagnostics/state正本: `lattice factory-diagnostics --json`（schema
+  `lattice.native_factory_diagnostics.v1`・check 5本＝package_version/node_runtime/cli_surface/
+  mcp_entry/sensor_attribution・overall `ok|failed`・failedは非0）。runtime errorは
+  `lattice runtime-errors snapshot --after-cursor 0 --limit 256 --json`／`ack <cursor> --json`
+  （schema `lattice.runtime_errors.v1`・opt-in＝工場共有`factory-reporter.json`の`collection.enabled`・
+  Caveat同型契約）。run store・sensor index・runtime error storeのstate/schema/migrationはLattice所有で、
+  dotagentsは直接解釈しない。
+- 現adapter: **未実装**（本編入planのL6「dotagents側adapter＋privacy negative fixture」で実装する）。
+  編入契約・claim境界はLattice `docs/01_integration-package.md`と
+  Lattice ADR 0051（条件付きsupport）が正。
+- 表現/禁止: 生message・絶対path・repo/prompt内容をreportへ転記しない（storeは固定catalogの
+  templateのみ保存）。Windows nativeはLattice runtime構造的unsupported（分離表現はhost matrix所有）。
+  診断のためにindex生成・run実行・provider起動を行わない。
 
 ### `servermanager`
 

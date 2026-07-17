@@ -353,8 +353,10 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 - [ ] npm配布の配線: package名の確定、`bin/agents-update.sh`のPACKAGES追加、
       `tests/factory-core/smoke.sh`のgrep count強制を同一waveで更新。**registry publishはH＝
       目的・影響・rollback説明と実行時承認が別途必要**
-- [ ] `docs/factory-product-contracts.md`へLattice台帳を記録する（repo・所有・自作区分・version入口・
+- [x] `docs/factory-product-contracts.md`へLattice台帳を記録する（repo・所有・自作区分・version入口・
       正規diagnostics・state/schema/migration・runtime error・host/connector期待・修正先）
+  - 2026-07-18完了: `lattice`台帳（編入中・第11明記・diagnostics/runtime error正本・adapter未実装の
+    明示・表現/禁止）。host/connector期待は共通境界どおりmatrix所有のため台帳へ複製せず
 - [ ] dotagents側adapter＋privacy negative fixtureを実装する
 - [ ] `docs/factory-host-product-matrix.md`へLattice行を追加する。**FOX Windows nativeはClaude/Codex/Grokの
       3 toolchainすべてunsupported＝executor依存のLattice runtimeが構造的に動かない**。gpt-connector行45型の
