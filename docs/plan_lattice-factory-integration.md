@@ -300,13 +300,21 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 
 ### Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定
 
-- [ ] 着地窓をオーナーと合意する。**queue 20 campaign実施窓・R3 wire v2 finalization・J1 wire v3実装waveと
+- [x] 着地窓をオーナーと合意する。**queue 20 campaign実施窓・R3 wire v2 finalization・J1 wire v3実装waveと
       排他**（同一ファイル群のwriter一本化）。lib/factory・schemas・docs/factory-*へ交差するpatchは
       v2 finalization receiptを失効させるためhold対象
-- [ ] batchごとにH gate承認を記録し、着地は**親のreview→pathspec commit経路のみ**（Latticeが直接
+- [x] batchごとにH gate承認を記録し、着地は**親のreview→pathspec commit経路のみ**（Latticeが直接
       commit/pushしない）。着地後は複数端末リポの掟どおり速やかにpushする
-- [ ] 最低3 batch（うち1つは並列2 TODO以上同時進行）を事故0で着地し、wall-clock・rework・手戻りを実測保存する
-- [ ] 着地ごとにdotagents正規gate（`make lint`／`make ci`）green・境界事故0を確認する
+  - 2026-07-18完了: 前段でP1欠陥（receiptにpatch本文なし）を発見・Lattice `b61ee3d`で即時修理→
+    着地run `v4-landing`（5/5受理・19 check green）→ 親が全5 patch実読review → batch H task 3件
+    （approval snapshot・Control rev 4-9でfinalize）→ pathspec commit→push。一次記録はLattice
+    [Stage 2着地evidence](../../Lattice/docs/evidence/2026-07-18-rc4-stage2-landing.md)
+- [x] 最低3 batch（うち1つは並列2 TODO以上同時進行）を事故0で着地し、wall-clock・rework・手戻りを実測保存する
+  - batch1=TC（`e117ac5`）・batch2=TD+TF並列受理対（`8a3befd`）・batch3=TA+TB conflict対統合
+    （`b248c46`）。事故0（apply失敗0・test fail 0・逸脱file 0）。着地本体≈15分・rework≈16分
+    （patch捕獲欠陥起因の再走・実測）
+- [x] 着地ごとにdotagents正規gate（`make lint`／`make ci`）green・境界事故0を確認する
+  - batchごとfocused＋lint PASS、最終`make ci` exit 0（隔離HOME Codex検証含む）
 - [ ] Phase gate: full CI・**`fable`×high refuter 1回**・クロスprovider検証1回・support/refute ADR・
       知識還流（caveat／rag）
 - [ ] **refuteなら編入・退役は発動しない**。correction planを立てて本計画のL6以降を凍結する
