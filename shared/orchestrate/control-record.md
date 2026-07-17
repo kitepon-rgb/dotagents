@@ -528,9 +528,17 @@ review_reasons
 - `dispatched | running | unknown`のWorker／Consultationは、opaque handleまたはconsultation handleを一覧へ戻し、
   所有Executorへの再照会が必要なため`review-required`とする。timeoutをfailedへ変換しない。
 - `file | decision` evidenceはproject rootの非symlink regular fileを合計64 MiBまで再hashする。欠損、
-  digest不一致、unsafe path、hash上限超過、読取中driftは`blocked`。同じdecision pathの現内容が
-  変わっていても、最大256 commitのgit履歴に同一path・regular blob・同一SHA-256が残る時だけ
-  `retained-history`として保持し、任意の別pathやhash不一致へfallbackしない。bareでworktree内容を
+  digest不一致、unsafe path、hash上限超過、読取中driftは`blocked`。現内容が変わっていても、
+  最大256 commitのgit履歴（到達可能ref）に同一path・regular blob・同一SHA-256が残る時だけ
+  `retained-history`として保持し、任意の別pathやhash不一致へfallbackしない（2026-07-17に
+  file型へも拡張。ADR 0060）。file型のpath消失＋履歴実在（archive退避等）は無音にせず
+  `evidence-retained-history-missing`として`review-required`へ出す。履歴に無いdigest（未commitの
+  dirty状態で観測した証拠）と256 commit超の深履歴は救済せず`blocked`のまま＝fail closed。
+  履歴走査は64 MiB共有budgetに含まれ、超過は`unsafe`→`blocked`へ落ちる。
+  **この救済はresume-checkの再開助言に限る**。finalization／archiveのfile型evidence検証は
+  不変Decision（docs/elastic-orchestrator-archive-decision-history.md 2026-07-15）どおり
+  厳格のまま変更しない——resume側とarchive側の非対称は意図であり、archive側の裁定変更は
+  親計画の予約裁定（archive退避とevidence解決の正典衝突）でだけ行う。bareでworktree内容を
   検証できないlocal evidenceだけは`review-required`。
 - `command | url | executor-receipt`は内容を複製せずtype/ref/digestだけをopaque一覧へ返す。v1 dogfood以前に
   provider URI（`native:`等）を誤って`decision`と記録したlegacy descriptorも内容をlocal fileと推測せず

@@ -265,11 +265,16 @@ Lattice編入のオーナー裁定（2026-07-17）:
     0700/0600判定は弱めず、mode-fidelity probeでcapable/incapableを判別し、incapableだけ
     `XDG_STATE_HOME`配下のbinding付き外部stateへ置く。ext4/APFSは挙動不変（既存112 test無修正green）。
     fixture 9本追加、正典は`shared/orchestrate/control-record.md`「state配置とmode-fidelity probe」節。
-- [ ] Control Recordの`type:"file"` evidenceがgit履歴照合されず（`decision`型のみ救済）、生きた文書を
+- [x] Control Recordの`type:"file"` evidenceがgit履歴照合されず（`decision`型のみ救済）、生きた文書を
   参照したControlが編集1回で恒久blockedになる欠陥を修理する（caveat
   `control-record-file-evidence-1-blocked-decision`が正。4 Control全部がblocked実測済み。
-  最小修正はcontrol-record.mjsの履歴照合ガードから`type==="decision"`を外すこと。契約クリティカルにつき
-  着手前に`fable`×high反証1回。archive退避とevidence解決の正典衝突は別途設計裁定）。
+  契約クリティカルにつき着手前に`fable`×high反証1回）。
+  - 2026-07-17消化: [ADR 0060](adr/0060-file-evidence-resume-history-retention.md)で契約変更として受入。
+    file型もresume限定で履歴救済、missing由来救済は`evidence-retained-history-missing`のreview信号、
+    finalization/archive側は不変Decision（2026-07-15）どおり厳格維持＝非対称は意図。fixture 3本追加、
+    126/126 green。実機でobserver-factoryの`docs/02_models.md`救済とelastic-v1のarchive退避2文書の
+    review降格を確認。残blockは未commit観測等の本物の証拠喪失のみ（黙らせない）。
+    **archive退避とevidence解決の正典衝突（finalization側）は未裁定のまま予約を維持**。
   - Observer O1の正規`task-finalize-record`で`docs/plan_observer.md`が受理され、リポ正典の
     「accept/reject/finalizationは不変ADR」を破れることを再現した。
   - Taskの`finalization_ref`とControlの`parent_decision.ref`を`docs/adr/*.md`へ限定し、可変planを

@@ -3653,3 +3653,58 @@ test("共有namespaceがsymlinkならfail closedする", async (t) => {
     await assert.rejects(api.init({ cwd: repo.root, control_id: "ns-symlink", objective_ref: "docs/p.md", actor_id: "parent", document_refs: ["docs/p.md"], budget: makeBudget() }), code("STATE_PATH_UNSAFE"));
   });
 });
+
+// ---- file evidence の resume 履歴保持（ADR 0060） ----
+
+async function retentionControlWithFileEvidence(t, { commit }) {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base));
+  const repo = await createGitRepo(base);
+  const ref = "docs/living-evidence.md"; const body = "living evidence v1\n";
+  await writeFile(join(repo.root, ref), body);
+  if (commit) { runGit(repo.root, ["add", ref]); runGit(repo.root, ["commit", "-q", "-m", "add living evidence"]); }
+  const digest = createHash("sha256").update(body).digest("hex");
+  const proof = { type: "file", ref, digest, observed_at: "2026-07-14T00:00:00.000Z" };
+  const init = await api.init({ cwd: repo.root, control_id: "adr60", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "adr60", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "adr60-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const template = makeWorkerRun();
+  await api.workerRunRecord({
+    cwd: repo.root, control_id: "adr60", actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "adr60-worker", task_id: "adr60-task", assignment_id: "adr60-assignment", write_mode: "none", workspace_cwd: repo.root, workflow_capabilities: template.workflow_capabilities.map((entry) => ({ ...entry, evidence: proof })), execution_verification: { ...template.execution_verification, evidence: { type: "executor-receipt", ref: "connector:test:adr60", digest: "f".repeat(64), observed_at: "2026-07-14T00:00:00.000Z" } }, lineage: { ...template.lineage, root_assignment_id: "adr60-assignment" } }),
+  });
+  return { repo, ref };
+}
+
+test("commit済みfile evidenceは参照先の更新後もretained-historyへ救済され、evidence起因でblockしない", async (t) => {
+  const { repo, ref } = await retentionControlWithFileEvidence(t, { commit: true });
+  await writeFile(join(repo.root, ref), "living evidence v2\n");
+  const result = await api.resumeCheck({ cwd: repo.root, control_id: "adr60" });
+  const entry = result.evidence_retention.local.find((e) => e.ref === ref);
+  assert.equal(entry.status, "retained-history");
+  assert.equal(entry.error_code, "RETAINED_IN_GIT_HISTORY");
+  assert.ok(!result.blocking_reasons.some((e) => e.subject_kind === "evidence"));
+  // driftは別チャンネル（dirty-state/workspace-content）がreviewとして拾う
+  assert.ok(result.review_reasons.some((e) => e.code === "control-dirty-state-changed" || e.code === "control-workspace-content-changed"));
+});
+
+test("commit済みfile evidenceのpath消失（archive退避相当）はretained-history＋reviewで、blockedにもreadyにもしない", async (t) => {
+  const { repo, ref } = await retentionControlWithFileEvidence(t, { commit: true });
+  await rm(join(repo.root, ref));
+  const result = await api.resumeCheck({ cwd: repo.root, control_id: "adr60" });
+  const entry = result.evidence_retention.local.find((e) => e.ref === ref);
+  assert.equal(entry.status, "retained-history");
+  assert.equal(entry.observed_digest, null);
+  assert.ok(!result.blocking_reasons.some((e) => e.subject_kind === "evidence"));
+  assert.ok(result.review_reasons.some((e) => e.code === "evidence-retained-history-missing" && e.subject_id === ref));
+});
+
+test("未commitのfile evidenceは修正後も従来どおりfail closed（履歴に無いdigestを救済しない）", async (t) => {
+  const { repo, ref } = await retentionControlWithFileEvidence(t, { commit: false });
+  await writeFile(join(repo.root, ref), "tampered\n");
+  const mismatch = await api.resumeCheck({ cwd: repo.root, control_id: "adr60" });
+  assert.equal(mismatch.outcome, "blocked");
+  assert.ok(mismatch.blocking_reasons.some((e) => e.code === "evidence-digest-mismatch" && e.subject_id === ref));
+  await rm(join(repo.root, ref));
+  const missing = await api.resumeCheck({ cwd: repo.root, control_id: "adr60" });
+  assert.equal(missing.outcome, "blocked");
+  assert.ok(missing.blocking_reasons.some((e) => e.code === "evidence-missing" && e.subject_id === ref));
+});
