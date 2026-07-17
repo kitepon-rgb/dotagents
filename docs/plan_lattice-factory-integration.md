@@ -135,9 +135,16 @@ L0 ベースライン（直轄化・CI green・現状固定）
     名前一致フォールバックの偶然（`imports`辺0本・`reject`名の`calls`辺8本）。
     **パラメータ調整では原理的に直らない**。0047の「upstream 3ヶ月停止」は誤り（現役repo）で、
     却下は残り2理由（depth無効・契約緩和拒否）で立つ。
-- [ ] fork時: MIT license notice・attribution（fork時点のupstream commitを記録）を維持し、
+- [x] fork時: MIT license notice・attribution（fork時点のupstream commitを記録）を維持し、
       fork repoの所有・release・version契約を台帳へ先行記録する。upstream追従方針
       （cherry-pick基準）を吸収実装時に明文化する（ADR 0048 Decision 4）
+  - **2026-07-17完了**: license/attribution/吸収時点commit（04ab45c）は吸収commit
+    （Lattice `ce16412`）の`sensor/NOTICE`で維持済み。追従方針（選択的cherry-pick・
+    取込基準3種・migration採番の振替・必要駆動監視・追従記録欄）はLattice `c09c32c`で
+    NOTICEへ明文化。**台帳先行記録は吸収裁定（ADR 0047）により対象消滅**——独立fork repoは
+    作られずsensorはLattice repo内部のため、所有・release・version契約はLattice本体の
+    台帳エントリに包含される。それは編入waveの仕事であり、本計画の禁止事項
+    「RC4 support前の台帳記録」に従いL6で行う
 - [ ] **グラフ構築のcorrectnessを改良する**（実測が特定した原因箇所。優先順）:
       - [x] (a) 経路実在を検証しない名前一致フォールバックとconfidence非永続化を直す（偽陽性の除去）
         — **2026-07-17完了**（Lattice `da438ca`）。実装は2層設計: ①migration v9で
