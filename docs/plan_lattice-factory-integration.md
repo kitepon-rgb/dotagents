@@ -26,7 +26,8 @@ Codegraph退役はwire v4の独立waveとして行う。
    AGENTS.md「dotagents統括AIが自作コア製品の正規repoへ必要な修正を行い、version更新・release準備・
    publish・公開後smokeまで管理する」恒久裁定の範囲。各repoの正典・release gate・独立履歴は守る。
 2. **CodegraphをLatticeへ完全吸収・置換する**。単独配線（host配線・MCP・session設定）は退役し、
-   Lattice内蔵sensorへ統合する。
+   Lattice内蔵sensorへ統合する。**Latticeは機能的後継としてCodegraphの立ち位置を継ぐ**
+   （オーナー裁定 2026-07-17・社会的位置づけを含む）。
 3. **Lattice MCP面を新設する**。現Codegraphの主用途＝session内対話的code intelligenceを継承する。
    これが無い限り退役は成立しない（現状のLatticeはCLI 6面のみ・対話query面なし・常駐なし）。
 4. **Codegraphの公開面・情報量が不足したらfork＋改良する**（MIT・notice維持）。call graph外結合
@@ -123,15 +124,24 @@ L0 ベースライン（直轄化・CI green・現状固定）
 - [ ] Stage 0 gate: witnessコスト閾値・unknown率・判定一致率を実測に基づき確定・記録し、
       Stage 1 targetを裁定する
 
-### Phase L2 — Codegraph fork裁定・改良
+### Phase L2 — Codegraph吸収・sensor改良
 
-- [ ] L1実測を根拠にfork要否を裁定する。**「不足していない」なら第三者利用のまま進み、fork しない**
-      （裁定を予断で決めない）。fork するなら理由・改良範囲・upstream追従コストの引受をADRへ記録する
-- [ ] fork時: MIT license notice維持、fork repoの所有・release・version契約を台帳へ先行記録する
-- [ ] **call graph外結合の索引化**を実装する（shell script・markdown・設定fileの意味的依存をグラフへ写す）。
-      対象・非対象を明文化し、witness自動導出がどこまで広がったかをL1のbaselineと同じ尺度で再実測する
-- [ ] 改良の受入は「witness手書きコストがL1実測比で有意に下がったこと」を数値で示す。
-      下がらないなら改良を成功扱いしない
+- [x] L1実測を根拠にfork要否を裁定する（予断で決めない）
+  - **2026-07-17裁定: fork＝吸収する**（オーナー裁定・Lattice [ADR 0047](../../Lattice/docs/adr/0047-codegraph-absorption-and-sensor-ownership.md)）。
+    Stage 0実測: `control-record.mjs`の真値4件に対しdepth=1→3件（偽陰性1）・depth=5（既定）→12件
+    （偽陽性8）で、**真値を返すdepthが存在しない**。グラフが両方向に壊れている（存在しないimport経路の辺／
+    計算パスの動的import未解決／spawn駆動の不可視結合）ため、**パラメータ調整では原理的に直らない**。
+    upstreamは3ヶ月停止（`git fetch`で確認）でPR到着をcritical pathに載せられない。
+    代案（depth表現追加）は機能せず、代案（契約緩和）はdrift検出＝中核主張を殺すため却下。
+- [ ] fork時: MIT license notice・attribution（upstream `841beea` 2026-04-30）を維持し、
+      fork repoの所有・release・version契約を台帳へ先行記録する
+- [ ] **グラフ構築のcorrectnessを改良する**（実測が示した優先順。当初想定の(c)が本命ではなかった）:
+      (a) 存在しないimport経路の辺を出さない（偽陽性の除去）
+      (b) 計算パスの動的import（`import(join(...))`等）を解決する（偽陰性の除去）
+      (c) call graph非可視の結合（spawn・shell・markdown・設定）を索引化する
+- [ ] 改良の受入は数値で示す: **Stage 0で確立した真値（import経路の実在検証）に対し`affected`が
+      exact一致**すること、かつwitnessコストがL1実測比で有意に下がること。
+      どちらも満たさないなら改良を成功扱いしない
 - [ ] focused gate → 関連gate → Lattice `npm run ci` green
 
 ### Phase L3 — Lattice MCP面新設
