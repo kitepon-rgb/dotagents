@@ -24,6 +24,14 @@ O4 live quota観測（Control `observer-factory-20260715` Task `o4-live-quota-ob
    typed error）で実態を固定した。CLIがutilizationを載せた場合の前方互換fixtureは通済み。
    **Anthropic laneのsnapshot取得は未達**——候補はCLI側のutilization追加、またはstatusline補助入口
    （`used_percentage`。設定変更＝別H）。両provider verifiedまでrate-aware自動配置は開始しない。
+3. **（同日追記・ADR 0059）Anthropic laneはstatusline入口でlive verifiedになった。** session限定
+   `--settings`のstatusline capture（global設定非変更）で実取得:
+   `five_hour {used_percentage: 31, resets_at: 1784257800}`／`seven_day {used_percentage:
+   28.999999999999996, resets_at: 1784275200}`。five_hourのresets_atは同日のstream
+   `rate_limit_event`と完全一致（相互整合）。FPノイズはbp整数化が吸収。正規観測entryは
+   `claude-statusline-rate-limits`へ切替え、stream event pathはCLIのutilization配信開始に備えた
+   前方互換として保持。**これで両providerのquota snapshot取得がlive verified**。statuslineは
+   対話TUIでだけ発火する（headless `-p`では発火しない）ことも実測で確認した。
 
 ## 失効注記（2026-07-16・原文は当時の実測として保持）
 

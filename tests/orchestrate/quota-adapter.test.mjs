@@ -4,7 +4,8 @@ import { test } from "node:test";
 import {
   QuotaAdapterError, QUOTA_OBSERVATION_ENTRIES, QUOTA_OBSERVATION_FAILURE_CODES,
   QUOTA_OBSERVATION_REQUEST_SCHEMA, buildQuotaObservationRequest, normalizeClaudeCliRateLimitEvent,
-  projectAnthropicRateLimitEvents, projectCodexTokenCountEvent, projectQuotaObservationFailure,
+  projectAnthropicRateLimitEvents, projectAnthropicStatuslineRateLimits, projectCodexTokenCountEvent,
+  projectQuotaObservationFailure,
 } from "../../lib/orchestrate/quota-adapter.mjs";
 import { quotaSnapshotDigest } from "../../lib/orchestrate/quota-snapshot.mjs";
 import { makeQuotaExecutor as makeExecutor } from "./helpers.mjs";
@@ -62,7 +63,8 @@ test("観測requestは秘密なしのproduct-owned entry記述だけを返す", 
     executor_scope: [claudeExecutor()],
   });
   assert.equal(request.schema_version, QUOTA_OBSERVATION_REQUEST_SCHEMA);
-  assert.equal(request.entry, "claude-agent-sdk-rate-limit-event");
+  // 2026-07-17 live実測: stream eventはutilization不在のため、成立する入口はstatusline（ADR 0059）
+  assert.equal(request.entry, "claude-statusline-rate-limits");
   assert.equal(request.credential_policy, "product-owned-session");
   assert.deepEqual(Object.keys(request).sort(), ["credential_policy", "entry", "executor_scope", "host_instance_id", "provider", "quota_pool_id", "schema_version"]);
   const codexRequest = buildQuotaObservationRequest({
@@ -70,7 +72,7 @@ test("観測requestは秘密なしのproduct-owned entry記述だけを返す", 
     executor_scope: [makeExecutor()],
   });
   assert.equal(codexRequest.entry, "codex-token-count-event");
-  assert.deepEqual(QUOTA_OBSERVATION_ENTRIES, { anthropic: "claude-agent-sdk-rate-limit-event", openai: "codex-token-count-event" });
+  assert.deepEqual(QUOTA_OBSERVATION_ENTRIES, { anthropic: "claude-statusline-rate-limits", openai: "codex-token-count-event" });
   // xAI・不明providerはv1対象外（ADR 0054非目標）
   assert.throws(() => buildQuotaObservationRequest({ provider: "xai", quota_pool_id: "x", host_instance_id: "h", executor_scope: [makeExecutor()] }), code("INVALID_SCHEMA"));
   assert.throws(() => buildQuotaObservationRequest({ provider: "anthropic", quota_pool_id: "a", host_instance_id: "h", executor_scope: [] }), code("INVALID_SCHEMA"));
@@ -224,6 +226,57 @@ test("Claude CLI 2.1.211のlive wire event（2026-07-17実測）は正規化さ�
   assert.throws(() => normalizeClaudeCliRateLimitEvent({ ...liveClaudeWireEvent(), isUsingOverage: "no" }), code("EVENT_MALFORMED"));
   assert.throws(() => normalizeClaudeCliRateLimitEvent({ ...liveClaudeWireEvent(), raw: {} }), code("EVENT_MALFORMED"));
   assert.equal(Object.hasOwn(normalized, "isUsingOverage"), false);
+});
+
+// 2026-07-17 live H実測（Claude Code 2.1.211・session限定--settings statusline capture）の
+// verbatim rate_limits。seven_dayのFPノイズ（28.999999999999996）も実測のまま。ADR 0059受入fixture。
+const liveStatuslineRateLimits = () => ({
+  five_hour: { used_percentage: 31, resets_at: 1784257800 },
+  seven_day: { used_percentage: 28.999999999999996, resets_at: 1784275200 },
+});
+
+test("Claude statusline rate_limits（2026-07-17実測）はused_percentageからsnapshotを作れる", () => {
+  const snapshot = projectAnthropicStatuslineRateLimits({
+    rate_limits: liveStatuslineRateLimits(),
+    quota_pool_id: "anthropic-sub-main", host_instance_id: "host-mac-main",
+    executor_scope: [claudeExecutor()], observed_at: "2026-07-16T23:54:00.000Z",
+  });
+  assert.equal(snapshot.provider, "anthropic");
+  assert.equal(snapshot.source, "app-ui");
+  // FPノイズはbp整数化で吸収される（28.999999999999996% → 2900bp使用 → 残7100bp）
+  assert.deepEqual(snapshot.windows, [
+    { window_id: "5h", duration_seconds: 18000, reset_at: "2026-07-17T03:10:00.000Z", remaining_bp: 6900, model_family_scope: null },
+    { window_id: "7d", duration_seconds: 604800, reset_at: "2026-07-17T08:00:00.000Z", remaining_bp: 7100, model_family_scope: null },
+  ]);
+  assert.match(quotaSnapshotDigest(snapshot), /^[a-f0-9]{64}$/);
+  // 各windowは独立に欠落しうる（公式契約）＝片方だけでもsnapshot成立
+  const fiveOnly = projectAnthropicStatuslineRateLimits({
+    rate_limits: { five_hour: { used_percentage: 31, resets_at: 1784257800 } },
+    quota_pool_id: "anthropic-sub-main", host_instance_id: "host-mac-main",
+    executor_scope: [claudeExecutor()], observed_at: "2026-07-16T23:54:00.000Z",
+  });
+  assert.deepEqual(fiveOnly.windows.map((window) => window.window_id), ["5h"]);
+  // 両方欠落＝最初のAPI応答前＝snapshotを作らない
+  assert.throws(() => projectAnthropicStatuslineRateLimits({
+    rate_limits: {}, quota_pool_id: "anthropic-sub-main", host_instance_id: "host-mac-main",
+    executor_scope: [claudeExecutor()], observed_at: "2026-07-16T23:54:00.000Z",
+  }), code("NO_QUOTA_WINDOWS"));
+  // 未知window・shape逸脱・単位/epochバグはfail loud
+  assert.throws(() => projectAnthropicStatuslineRateLimits({
+    rate_limits: { ...liveStatuslineRateLimits(), monthly: { used_percentage: 1, resets_at: 1784275200 } },
+    quota_pool_id: "anthropic-sub-main", host_instance_id: "host-mac-main",
+    executor_scope: [claudeExecutor()], observed_at: "2026-07-16T23:54:00.000Z",
+  }), code("INVALID_SCHEMA"));
+  assert.throws(() => projectAnthropicStatuslineRateLimits({
+    rate_limits: { five_hour: { used_percentage: 101, resets_at: 1784257800 } },
+    quota_pool_id: "anthropic-sub-main", host_instance_id: "host-mac-main",
+    executor_scope: [claudeExecutor()], observed_at: "2026-07-16T23:54:00.000Z",
+  }), code("EVENT_MALFORMED"));
+  assert.throws(() => projectAnthropicStatuslineRateLimits({
+    rate_limits: { five_hour: { used_percentage: 31, resets_at: 1784257800000 } },
+    quota_pool_id: "anthropic-sub-main", host_instance_id: "host-mac-main",
+    executor_scope: [claudeExecutor()], observed_at: "2026-07-16T23:54:00.000Z",
+  }), code("EVENT_MALFORMED"));
 });
 
 test("取得失敗のprojectionは必ずtyped errorになりsnapshotを作らない", () => {
