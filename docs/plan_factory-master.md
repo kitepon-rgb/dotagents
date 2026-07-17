@@ -34,6 +34,7 @@
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
 | [GPT-5.6再配線](plan_gpt56-rewiring.md) | role routing詳細。残る他端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
+| [Lattice編入](plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Active。2026-07-17に直轄化。L0ベースラインが次ready |
 | [メモリ昇格queue](queue_memory-promotion.md) | 各repo作業時の機会駆動queue | Active、主レーンを遮らない |
 
 CalloutとGPT-5.6の他端末チェックは、Codex全対応Wave 3の同じhost receiptを参照して閉じる。
@@ -204,28 +205,34 @@ queue 8は19eへ統合済みである。
   完了済み。残りはqueue 1〜3であり、同じ実装を作り直さない。
 - Observer repoの`docs/plan_observer.md`とADR 0044の既存dirtyは前セッションの未完成果として保全し、
   O1完了前には編集しない。
-- Latticeは別セッションの所有物であり、本計画の調査・実装・正典還流の対象外とする。
-  Lattice repo自体の開発・RC4遂行はLattice側統括の所掌のまま、dotagents側の連携条件だけを
-  下記裁定で持つ。
+- ~~Latticeは別セッションの所有物であり、本計画の調査・実装・正典還流の対象外とする。~~
+  **2026-07-17のオーナー裁定で失効**。Latticeはdotagentsの**コア製品**とし、Lattice repo自体の
+  開発・RC4遂行・正典還流を**dotagents統括の直轄**とする（AGENTS.md「自作コア製品の正規repoへ
+  必要な修正を行う」恒久裁定の範囲）。別セッションへの連絡・返答パッケージは不要になった。
+  詳細受入TODOは[Lattice編入計画](plan_lattice-factory-integration.md)が所有する。
 
-Lattice RC4連携のオーナー裁定（2026-07-17。連絡・質疑はオーナー経由）:
+Lattice編入のオーナー裁定（2026-07-17）:
 
-- Lattice側RC3完了報告とRC4 staged計画（Stage 0 read-only／Stage 1 disposable clone／
-  Stage 2 正規着地）を一次資料検証・反証3本の吸収後に受理した。
-- 将来方向: Latticeをコア編入し、**CodegraphをLatticeへ完全吸収・置換する**。前提として
-  Lattice MCP面の新設（session内code intelligenceの継承）と、Oracle退役前例に倣うshadow
-  同等性gateを編入パッケージ要件へ課す。Codegraph本体はMIT第三者としてLattice内部依存化。
+- Lattice RC3完了報告を一次資料検証（CI 290 green独立再現、manifest digest再計算一致、
+  改竄検出テスト実走）と反証3本の吸収後に受理した。RC4 staged計画（Stage 0 read-only／
+  Stage 1 disposable clone／Stage 2 正規着地）を実行計画として継承する。
+- **CodegraphをLatticeへ完全吸収・置換する**。前提としてLattice MCP面を新設し、session内
+  code intelligenceを継承する。Codegraph本体はMIT第三者だが、**公開面・情報量の不足が実測で
+  再現した場合はfork＋改良を行い**（notice維持）、Lattice内部の自作sensorとする。call graph外
+  結合（shell・markdown・設定）の索引化がwitness手書きコスト（RC3最重量・RC4の反証条件）を
+  根本から下げる本命であり、運用回避で埋めない。fork判断はStage 0の実測を根拠にする。
 - **wire v3は既裁定の固定13製品のまま凍結（A案）**。Lattice編入＋Codegraph退役はRC4 support後の
-  wire v4独立waveで行い、v3へ後付けしない。
-- RC4 Stage 0の題材は、凍結不要の運用合意（Latticeはread-only実測のみ・dotagents側の消化は
-  止めない・判定のstale化はそれ自体を実測記録とする）のもとactiveレーンのTODOから出す。
-- Stage 1のH承認には、隔離HOMEでのexecutor実行と、executor packetでの`install.sh`・
-  `spotter install`・`apply-codex-config`・`mcp add`系の実行禁止を必須条件として付す
-  （Lattice側ADR 0046へ反映依頼済み）。
+  wire v4独立waveで行い、v3へ後付けしない。退役手順はOracle前例（shadow同等性→host別cutover→
+  `retire`/`restore`入口→履歴保持のnot_applicable遷移）に倣う。
+- RC4 Stage 0の題材は、凍結不要の運用合意（read-only実測のみ・dotagents側の消化は止めない・
+  判定のstale化はそれ自体を実測記録とする）のもとactiveレーンのTODOから出す。
+- Stage 1は、隔離HOMEでのexecutor実行と、executor packetでの`install.sh`・`spotter install`・
+  `apply-codex-config`・`mcp add`系の実行禁止を必須条件とする（cloneが搬送するオンボーディング
+  正典にhost変更手順が含まれ、clone内`install.sh`実行はhost symlinkをtmpdirへ向ける）。
 - RC4中のdotagents実欠陥はBugHub経路とし、queue 22（Lattice source登録）を即着手する。
   登録完了までの暫定は常設割込ゲート＋maintenance queue経由。
 - `codex/rules/default.rules`のLattice向けallow 1行はRC3 planのarchive移動でstale確定し、
-  オーナー承認でdiscard済み（上記「非commit保全」裁定を更新・終結）。
+  オーナー承認でdiscard済み（「非commit保全」裁定を更新・終結）。
 
 ## 4. 実行TODO
 
