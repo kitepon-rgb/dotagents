@@ -84,20 +84,25 @@ L0 ベースライン（直轄化・CI green・現状固定）
 
 ## 4. 実行TODO（本計画がTODOを兼ねる）
 
-### Phase L0 — ベースライン・直轄化
+### Phase L0 — ベースライン・直轄化（2026-07-17完了）
 
-- [ ] Lattice repoの同期状態（origin差分・dirty・stash）を確認し、`npm run ci`のbaselineをgreenで固定する
-- [ ] Lattice `docs/plan_lattice.md`・`docs/00_product-contract.md`・ADR 0044/0045を実読し、
-      本計画との重複TODOを移管理由付きで閉じるか本書へ集約する
-- [ ] Lattice側RC4 plan（`docs/plan_lattice_rc4_dotagents_dogfood.md`）へ直轄化を反映する:
-      「Lattice側統括→dotagents側統括への依頼」構造を解体し、本書の裁定を親として参照させる
-- [ ] RC4 planのADR 0046起草時点の揺れ（header「RC4開始時」vs 本文「Stage 1開始時」）を
-      Stage 1開始時へ統一する。Stage 0はDecision 9.5非抵触のため先行してよい
-- [ ] ADR 0046（Decision 9.5のstage条件付き上書き）を起草する。**Stage 1の必須条件として
-      隔離HOMEとhost変更コマンド禁止（`install.sh`・`spotter install`・`apply-codex-config`・
-      `mcp add`系）をpacket契約へ焼き込む**
-- [ ] Control `lattice-integration-v1`を`init`し、risk=high・behavior lane（L0〜L1は
-      behavior-preserving）を`phase-gate-record`で固定してからTask記録へ進む
+- [x] Lattice repoの同期状態（origin差分・dirty・stash）を確認し、`npm run ci`のbaselineをgreenで固定する
+  - 実測: dirty/stashなし・**remoteゼロ**（54MB資産がMac 1台のみ）。オーナー承認のH操作で
+    private repo `github.com/kitepon-rgb/Lattice` を作成しpush（秘密走査・tracked 807 file確認済み）。
+    baseline: `npm run ci` 290/290 green＋check pass（70.1秒、ADR 0045記載値と一致）
+- [x] Lattice正典を実読し、重複TODOを集約する
+  - RC2 plan（`plan_lattice.md`・全72 TODO消化済み・Phase-supported・plan version stale）を
+    `docs/archive/2026-07-16-plan-lattice-research-campaign-2-v1-phase-supported.md`へ退避し、
+    AGENTS/PLAN/READMEの生きたリンクをRC4 plan＋本書へ更新。生きたTODOはRC4 planと本書だけになった
+- [x] Lattice側RC4 planへ直轄化を反映する（依頼構造の解体・親裁定参照・fork非目標の撤回・
+      Stage 0凍結不要合意とcaveat添付とlive repo init禁止・盲点定量化の焼き込み）
+- [x] ADR 0046のタイミングの揺れをStage 1開始時へ統一する
+- [x] ADR 0046を起草する（Lattice `docs/adr/0046-rc4-writer-target-stage-override.md`）。
+      Decision 9.5のstage条件付き上書き＋Stage 1の隔離HOME・host変更コマンド禁止packet契約。
+      以上4件はLattice `90a8a52`で収容・push済み
+- [x] Control `lattice-integration-v1`を`init`し、risk=high・behavior lane=behavior-preservingを
+      `phase-gate-record`で固定した（revision 1、resume-check `ready`・blocking 0。
+      修理済みControl Record（ADR 0060後）での初の実運用Control）
 
 ### Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）
 
