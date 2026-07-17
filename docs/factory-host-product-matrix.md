@@ -1,6 +1,6 @@
 # 工場 host × product 期待matrix
 
-更新日: 2026-07-13  
+更新日: 2026-07-18  
 正本: dotagents  
 対象: Mac、main-server、FOX WSL2、FOX Windows native
 
@@ -14,7 +14,9 @@
 
 ## 製品導入matrix
 
-端末能力を担う8製品は全現役hostへ常備する。ServerManagerのsource/runtimeはmain-serverだけが必須で、他hostは管理clientとして接続するだけである。Claude Code CLI／Codex CLI／Grok Buildはコアと別の基盤toolchainであり、version・update・compatibility管理対象である。
+端末能力を担うコア製品は全現役hostへ常備する（presence）。ただしhostの構造要因で成立しない**面**は、
+presenceと分離してその面だけを理由付き`unsupported`にする（gpt-connector行の「connectorだけunsupported」
+前例を一般化。2026-07-18裁定＝原則自体は維持し、面分離の明文だけを追加）。ServerManagerのsource/runtimeはmain-serverだけが必須で、他hostは管理clientとして接続するだけである。Claude Code CLI／Codex CLI／Grok Buildはコアと別の基盤toolchainであり、version・update・compatibility管理対象である。
 
 | product | Mac | main-server | FOX WSL2 | FOX Windows native | 欠落severity |
 |---|---|---|---|---|---|
@@ -26,6 +28,7 @@
 | gpt-connector | required | required | required | required | high |
 | aiterm-mcp | required | required | required | required | high |
 | codex-sidecar | required | required | required | required | high |
+| Lattice（編入中・第11） | required（wire v4 enrollまでreporter検査対象外） | 同左 | 同左 | CLI presenceのみrequired／**executor依存runtime面はunsupported**（Claude/Codex/Grok全toolchain不在の構造要因） | high（enroll後） |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
 | Claude Code CLI | required | required | required | unsupported | high |
 | Codex CLI | required | required | required | unsupported | high |
@@ -45,6 +48,7 @@
 | gpt-connector | MCP `gpt_connector` required。専用Chrome非対応hostはconnectorだけunsupported | MCP `gpt_connector` required。timeout後は sessions 回収 |
 | aiterm-mcp | MCP required | Codex/Grok/Composer用MCP required。native枠外の外部実行に使う |
 | codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う |
+| Lattice | MCP面（sensor 8 tool・`codegraph_*`名維持＝ADR 0049）はL7 wire v4 cutoverまで未配線。移行期間はCodegraph単独配線と二重配線を許す | 同左 |
 | ServerManager | connector not_applicable | connector not_applicable |
 
 Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。

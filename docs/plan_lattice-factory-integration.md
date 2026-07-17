@@ -365,13 +365,20 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     L7 wire v4の集合変更で行う。test 8本（privacy negative 4様・catalog逸脱・ENOENT・disabled含む）＋
     関連136 test＋lint green。実装中にLattice `state_schema_version`の数値/文字列非互換を検出し
     Lattice `6cfcd44`で是正
-- [ ] `docs/factory-host-product-matrix.md`へLattice行を追加する。**FOX Windows nativeはClaude/Codex/Grokの
+- [x] `docs/factory-host-product-matrix.md`へLattice行を追加する。**FOX Windows nativeはClaude/Codex/Grokの
       3 toolchainすべてunsupported＝executor依存のLattice runtimeが構造的に動かない**。gpt-connector行45型の
       分離（CLI presenceはrequired／runtime面はunsupported）を使い、matrix:17「8製品は全現役hostへ常備」
       原則の改訂要否を裁定する
-- [ ] install/verify（`bin/verify-install.sh`のCLI必須listほか）を更新する
-- [ ] コア一覧の更新: 第10枠はObserver予約済み（wire v3）。**Latticeは第11**として
+  - 2026-07-18完了: 製品導入行（編入中・wire v4 enrollまでreporter検査対象外・Windows nativeは
+    presence/runtime面分離）＋connector行（MCP面はL7 cutoverまで未配線・二重配線許容）。
+    **matrix:17裁定＝原則維持＋面分離の明文追加のみ**（gpt-connector前例の一般化）
+- [ ] install/verify（`bin/verify-install.sh`のCLI必須listほか）を更新する。
+      **順序注記（2026-07-18）**: npm publish前に必須listへ入れると全hostFAILするため、
+      npm配線wave（publish H承認・agents-update PACKAGES・smoke.sh更新）と同一waveで行う
+- [x] コア一覧の更新: 第10枠はObserver予約済み（wire v3）。**Latticeは第11**として
       PLAN.md／AGENTS.md／README.mdを更新する（Codegraph退役完了までは入替でなく追加）
+  - 2026-07-18完了: 3文書へ「第11・編入中・Observer第10予約・入替でなく追加」を最小追記。
+    8製品CLI必須list（README §0/検証）はnpm配線waveまで不変（未配布CLIを必須化しない）
 
 ### Phase L7 — wire v4（Codegraph退役）
 

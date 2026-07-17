@@ -20,7 +20,7 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 ### 開発工場の定義（所有境界）
 
 - **開発工場そのものはdotagents**。dotagentsを「工場の一部」「司令室だけ」「ServerManagerと並ぶ一方のcontrol plane」と再定義しない。全端末・全projectの規範、導入、更新、親別配線、互換契約、検証、上流追従をここが統括する。
-- 工場のコア管理対象は計9製品。端末能力を担う8製品（Caveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar）と、中央運用管理を担うServerManagerである。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとしてversion・update・compatibility管理対象にする。Oracleはv1互換・rollback専用であり、恒久コアではない。
+- 工場のコア管理対象は計9製品。端末能力を担う8製品（Caveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar）と、中央運用管理を担うServerManagerである。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとしてversion・update・compatibility管理対象にする。Oracleはv1互換・rollback専用であり、恒久コアではない。**Latticeは第11のコア製品として編入中**（第10枠はObserver予約・RC4条件付きsupport＝Lattice ADR 0051）。Codegraph退役（wire v4）完了までは入替でなく追加であり、編入の進行と契約は[導入plan](docs/plan_lattice-factory-integration.md)とLattice `docs/01_integration-package.md`が正。
 - **BugHubは独立した第10製品ではなく、ServerManager内部のコンポーネント**。既存の読み取り専用集約、報告元アプリによる重大度決定、`resolve` / `reopen`、`/ai`という契約を守り、8製品のversion・bug・compatibility結果を統括する連携先として活用する。
 - 各製品は自身のソース・状態・schema・migration・正規診断を所有する。dotagentsはそれらを複製せず統合契約を所有し、ServerManager/BugHubはdotagentsの代わりに工場方針を決めたり製品状態を直接書き換えたりしない。
 - オーナーは、dotagentsの統括AIが**自作コア製品**の正規repoへ必要な修正を行い、version更新、release準備、publish、公開後smokeまで管理することを明示許可している。これは責務範囲の恒久裁定であり、第三者製品のfork/patch許可や、本番deploy・credential・意図的障害・registry publish等のH操作に対する目的/影響/rollback説明と実行時承認を省略するものではない。各製品repoの正典・release gate・独立履歴を守る。
