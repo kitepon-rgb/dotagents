@@ -8,6 +8,12 @@
 - 子にbranch切替、commit、push、merge、rebase、reset、stash、他者変更のrevert、H操作、秘密の読取・転記をさせない。
 - timeoutは失敗でなく`unknown`として扱い、同一handleを正規入口で回収する。親が実diffと検証で受け入れ、未検証を成功扱いしない。
 
+## 並列化の検討とLattice既定
+
+- **着手時に独立に見えるTODOが2つ以上あるなら、並列dispatchの可否を一度検討して結論を出す**（直列の選択は可。無意識に直列へ流れることを禁じる）。判断材料はTODO間の独立性見込み・件数・待ち時間で足り、精密な交差分析は不要——それは次項の道具の仕事。
+- **書込みを伴うworkerを2つ以上同時に走らせると決めたら、Lattice run経由（`lattice plan compile`→`run start`）を既定とする**。交差判定を親の自前判断で行わない（witness無しの「交差しないはず」が事故の源であり、判定はplan compileの競合検出に委ねる）。直列委譲（1 workerずつ）は本項の対象外。
+- Latticeが使えない環境・fail closedで止まった場合は、並列を諦めて直列へ落とすのが正で、自前判定での並列強行を回避策にしない。
+
 ## Delegation Packet（8点）
 
 委譲前に次を明示する。どれかを省くと、そこから品質が漏れる。
