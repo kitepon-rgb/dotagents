@@ -266,16 +266,37 @@ L0 ベースライン（直轄化・CI green・現状固定）
 
 ### Phase L4 — RC4 Stage 1（disposable clone・H）
 
-- [ ] ADR 0046 commit後にControlを更新し、H task承認snapshotを記録する
-- [ ] **隔離HOMEでexecutorを実行する**。executor packetで`install.sh`・`spotter install`・
+**2026-07-17完遂**。一次記録はLattice
+[Stage 1 evidence](../../Lattice/docs/evidence/2026-07-17-rc4-stage1-dogfood.md)・
+artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lattice-rc4-dotagents-v1`
+（H task finalize済み・rev 3）。
+
+- [x] ADR 0046 commit後にControlを更新し、H task承認snapshotを記録する
+  - Control `lattice-rc4-dotagents-v1` init（risk=high・behavior-preserving）＋H task
+    `RC4-S1-stage1-dogfood-v1`（オーナー承認2026-07-17「OK 進めてくれ」snapshot）
+- [x] **隔離HOMEでexecutorを実行する**。executor packetで`install.sh`・`spotter install`・
       `apply-codex-config`・`mcp add`系の実行を禁止する（cloneはオンボーディング正典＝host変更手順を
       搬送し、clone内`install.sh`実行はhost symlinkをtmpdirへ向けて廃棄後にdangling化させる）
-- [ ] dotagents disposable clone（tmpdir配下・正規repo不着地）で実小粒タスクの閉ループを完遂する:
+  - 隔離HOMEは認証不能（credential取扱いは統括権限外・classifier遮断は正）のためオーナー裁定
+    「2でいい」でLattice [ADR 0050](../../Lattice/docs/adr/0050-stage1-executor-isolation-implementation.md)
+    の実装形へ確定: subagent executor＋packet `isolation_contract`（禁止コマンド焼き込み・
+    artifact機械検証）＋dispatch前後のhost fingerprint境界検証＋diff observer。残余リスク
+    （読取の帰属不能）はL5 refuter確認対象
+- [x] dotagents disposable clone（tmpdir配下・正規repo不着地）で実小粒タスクの閉ループを完遂する:
       観測→競合→hold→carry-over→vN+1→redispatch→受入。注入competition 1件以上＋自然発生も記録
-- [ ] control-record.mjs級の巨大file交差ケースを意図的に含め、Latticeの答え（serial判定／seam候補）と
+  - round 1（TA/TB/TC）: conflict serialization実証・3/3受理。round 2（TD/TF）: 注入
+    scope_violation→hold {TD}/continue {TF}→vN+1→carry-over受理→redispatch受理。
+    自然発生の記録＝TD executorの実API障害をunknownとして同一handle回収
+- [x] control-record.mjs級の巨大file交差ケースを意図的に含め、Latticeの答え（serial判定／seam候補）と
       親の納得度を記録する
-- [ ] artifact v3をatomic発行し、artifact-only verification green
-- [ ] Stage 2 gate: 境界事故0・受入品質・witnessコスト再実測（L2改良の効果を実戦で確認）
+  - TA×TB＝3,711行`control-record.test.mjs`共有write→serial判定。親裁定＝妥当・過剰serialなし・
+    見逃し0
+- [x] artifact v3をatomic発行し、artifact-only verification green
+  - `v3`＝16 check・`v3-hold`＝17 check（hold replay含む）いずれもgreen（Lattice `43c8351`）
+- [x] Stage 2 gate: 境界事故0・受入品質・witnessコスト再実測（L2改良の効果を実戦で確認）
+  - 境界事故0（dotagents正典dirty 0・`~/.claude`/`~/.agents`無変化・機械判定）・receipt 5/5
+    accepted・drift/写経0でwitnessは支配項にならず（支配項はexecutor 61〜512秒/件）。
+    **Stage 2進行可**。着地窓（L5）はオーナー合意待ち
 
 ### Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定
 
