@@ -335,8 +335,13 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
       秘匿情報は隔離HOME回帰が前提）を編入契約へ含める
   - 2026-07-18完了: Lattice [docs/01_integration-package.md](../../Lattice/docs/01_integration-package.md)
     （台帳形式・各契約の正典ADRへのポインタ集約・残余リスク恒久化条件と委譲項目を明記）
-- [ ] **Lattice native factory diagnostics**を実装する（version・schema version・overall・check ID・
+- [x] **Lattice native factory diagnostics**を実装する（version・schema version・overall・check ID・
       秘密なしJSON・非0意味論）。自作製品の必須要件であり、dotagents側adapterより先行する
+  - 2026-07-18完了: `lattice factory-diagnostics --json`（schema
+    `lattice.native_factory_diagnostics.v1`・check 5本＝package_version／node_runtime／cli_surface／
+    mcp_entry／sensor_attribution・overall failed→exit 1・read-only・秘密なし）。既存`doctor --json`は
+    RC3特性化凍結のため不変更の加算面。focused 4 test＋Lattice `npm run ci` green。
+    doctor化石化は非クリティカルとしてmaintenance queueへ記録
 - [ ] **opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する
 - [x] 配布形態を裁定する（npm package化 or repo直CLI）
   - オーナー裁定 2026-07-18「配布形式はNPM」＝npm package化で確定
@@ -397,6 +402,10 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 - [ ] CLI: `lattice plan compile`のtyped失敗が`cli_error.v1`の`code`/`message`だけを出し、compile resultの
       `detail`（BOUNDARY_UNKNOWNのunknown内訳等）を落とす。対処候補: `cli_error.v1`へ`detail`追加
       （schema変更＝ADR 0044 Decision 8のenvelope正式化と同時に裁定）（所有: Lattice src/runtime-cli.mjs）
+- [ ] CLI: `lattice doctor --json`（bootstrap diagnostics）が化石化——`references.plan`が消滅済み
+      `docs/plan_lattice.md`を指し、`implementation`の3 flagが実装済みの現状と不一致。RC3特性化で
+      挙動凍結されているため、schema v2化 or 廃止をcharacterization更新と同時に裁定
+      （2026-07-18 L6 diagnostics実装時に発見。所有: Lattice src/bootstrap.mjs）
 - [ ] artifact: `patches_bound_to_accepted_receipts`検査がpath照合のみ（保存`checkpoint_digest`未検証・
       receipt content digestとの突合なし）＝patch取り違え・破損がpath一致なら通る。digest照合へ強化
       （ADR 0051 Decision 4。所有: Lattice src/rc4-stage1-dogfood.mjs系）
