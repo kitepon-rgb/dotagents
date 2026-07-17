@@ -65,11 +65,11 @@ check() { # check <dst> <expect_src>
 verify_factory_core() {
   local project_root="${DOTAGENTS_FACTORY_PROJECT_ROOT:-$REPO}"
   local cli
-  for cli in caveat throughline spotter codegraph markitdown gpt-connector aiterm-mcp codex-sidecar-mcp; do
+  for cli in caveat throughline spotter codegraph markitdown gpt-connector aiterm-mcp codex-sidecar-mcp lattice; do
     if command -v "$cli" >/dev/null 2>&1; then
       echo "OK  factory core CLI: $cli → $(command -v "$cli")"
     else
-      echo "FAIL: factory core CLI '$cli' 不在（工場コア8製品は全端末必須）"
+      echo "FAIL: factory core CLI '$cli' 不在（工場コア8製品＋編入中Latticeは全端末必須）"
       fail=1
     fi
   done

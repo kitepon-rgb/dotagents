@@ -350,9 +350,15 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     fail closed。observerはCLI内部故障とMCP起動失敗の実在境界2本へ接続。focused 6 test green
 - [x] 配布形態を裁定する（npm package化 or repo直CLI）
   - オーナー裁定 2026-07-18「配布形式はNPM」＝npm package化で確定
-- [ ] npm配布の配線: package名の確定、`bin/agents-update.sh`のPACKAGES追加、
+- [x] npm配布の配線: package名の確定、`bin/agents-update.sh`のPACKAGES追加、
       `tests/factory-core/smoke.sh`のgrep count強制を同一waveで更新。**registry publishはH＝
       目的・影響・rollback説明と実行時承認が別途必要**
+  - 2026-07-18完了: H承認取得（オーナー「PublishしてOK」・名称希望latticeはregistry取得済みのため
+    **`@quolu/lattice`**で確定）。tarball pack smokeで`sensor/.gitignore`のdist/除外が配布物を
+    欠落させる欠陥を検出→`sensor/.npmignore`で上書き・dist再ビルド後にsmoke green→
+    Lattice `585c293`＋tag `v0.1.0`→`npm publish`（latest=0.1.0・MIT）→registry実install smoke green。
+    伝播遅延404の切り分けはcaveat `npm-package-publish-get-404-publish-over-probe`へ還流。
+    PACKAGES追加・smoke.sh count追加済み
 - [x] `docs/factory-product-contracts.md`へLattice台帳を記録する（repo・所有・自作区分・version入口・
       正規diagnostics・state/schema/migration・runtime error・host/connector期待・修正先）
   - 2026-07-18完了: `lattice`台帳（編入中・第11明記・diagnostics/runtime error正本・adapter未実装の
@@ -372,9 +378,13 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
   - 2026-07-18完了: 製品導入行（編入中・wire v4 enrollまでreporter検査対象外・Windows nativeは
     presence/runtime面分離）＋connector行（MCP面はL7 cutoverまで未配線・二重配線許容）。
     **matrix:17裁定＝原則維持＋面分離の明文追加のみ**（gpt-connector前例の一般化）
-- [ ] install/verify（`bin/verify-install.sh`のCLI必須listほか）を更新する。
+- [x] install/verify（`bin/verify-install.sh`のCLI必須listほか）を更新する。
       **順序注記（2026-07-18）**: npm publish前に必須listへ入れると全hostFAILするため、
       npm配線wave（publish H承認・agents-update PACKAGES・smoke.sh更新）と同一waveで行う
+  - 2026-07-18完了: verify-install CLI必須listへ`lattice`追加、README §0/検証節・AGENTS.md
+    オンボーディングへ導入行追記。本host実導入（`/opt/homebrew/bin/lattice` 0.1.0）→
+    `verify-install --profile official` OK→`make ci` exit 0。他hostは週次`agents-update`が
+    次回実行で自動導入（PACKAGES経由）
 - [x] コア一覧の更新: 第10枠はObserver予約済み（wire v3）。**Latticeは第11**として
       PLAN.md／AGENTS.md／README.mdを更新する（Codegraph退役完了までは入替でなく追加）
   - 2026-07-18完了: 3文書へ「第11・編入中・Observer第10予約・入替でなく追加」を最小追記。

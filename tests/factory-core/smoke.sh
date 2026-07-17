@@ -97,7 +97,7 @@ assert_rejected() {
 # updater の curated package は同名重複を許さず、8製品の導入面を必須化する。
 for package in \
   caveat-cli throughline claude-spotter gpt-connector aiterm-mcp \
-  codex-sidecar-cli codex-sidecar-core codex-sidecar-mcp '@colbymchenry/codegraph'; do
+  codex-sidecar-cli codex-sidecar-core codex-sidecar-mcp '@colbymchenry/codegraph' '@quolu/lattice'; do
   [ "$(grep -Ec "^[[:space:]]*'${package}'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
     || fail "agents-update の $package は1件でなければならない"
 done

@@ -159,7 +159,7 @@ Claude command の Codex 正規入口は slash command の模造ではなく、�
   ```
 - **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境。install.sh は実行した環境の `$HOME` に symlink を張る）。cron の起動は下の「自動アップデート」節参照
 - **ランタイム**: node>=22＋corepack・docker・python3（`command -v node docker` で存在確認、`node --version` が v22+、`docker info` が通ること。**python3 だけは実行判定 `python3 -c "print(1)"` で確認**——Windows のストア偽エイリアスは存在チェックを通り、黙って exit 0 を返す〔罠DB `windows-python3-store-exit-0`〕）
-- **CLI（必須）**: 基盤toolchainのClaude Code・Codex CLI、工場コア8製品のCaveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar。`command -v claude codex caveat throughline spotter codegraph markitdown gpt-connector aiterm-mcp codex-sidecar-mcp` で確認。Grok Buildは対応hostで確認する。MarkItDownの正規更新面は `uv tool`。
+- **CLI（必須）**: 基盤toolchainのClaude Code・Codex CLI、工場コア8製品のCaveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar、編入中第11のLattice（`npm i -g @quolu/lattice`）。`command -v claude codex caveat throughline spotter codegraph markitdown gpt-connector aiterm-mcp codex-sidecar-mcp lattice` で確認。Grok Buildは対応hostで確認する。MarkItDownの正規更新面は `uv tool`。
 - **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する（委譲は当面 Codex 主で回る＝必須ではない）
 - **MCP 用 CLI を先に入れる**（下の登録が参照する。`agents-update` が入れる各packageと同源）: `aiterm-mcp`・`caveat`・`codex-sidecar-mcp`・`gpt-connector-mcp`・`codegraph` が PATH にあること。Codex親もnative枠外の実行用にaitermとcodex-sidecarを登録する。登録・loginは端末configを変えるH操作。
 - **MCP（ユーザースコープ登録。上の CLI 導入後）**:

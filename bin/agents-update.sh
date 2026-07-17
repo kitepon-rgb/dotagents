@@ -87,6 +87,7 @@ PACKAGES=(
   'codex-sidecar-cli'
   'codex-sidecar-core'
   'codex-sidecar-mcp'
+  '@quolu/lattice'
   'pnpm'
   'throughline'
 )
