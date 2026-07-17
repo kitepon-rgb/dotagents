@@ -104,6 +104,22 @@ test("残量下限とpace飽和: reset直前の残量僅少poolは膨張paceで�
   assert.equal(saturatedEvaluation.min_pace_bp, DEFAULT_SELECTOR_POLICY.pace_cap_bp);
 });
 
+test("残量下限のちょうど境界: remaining_bp===min_remaining_bpは合格し、1bp下回ると失格する", () => {
+  // remaining_bp=200（既定min_remaining_bp）はちょうど境界 → 合格。remaining_time_ratio=0.6でmin_pace_bp=333
+  const atFloor = openaiPool({ windows: [makeWindow({ remaining_bp: 200 })] });
+  const decisionAtFloor = selectQuotaPool(makeInput({ snapshots: [atFloor, anthropicPool()] }));
+  const evalAtFloor = decisionAtFloor.pool_evaluations.find((entry) => entry.quota_pool_id === "openai-sub-main");
+  assert.equal(evalAtFloor.eligible, true);
+  assert.equal(evalAtFloor.exclusion_reason, null);
+  assert.equal(evalAtFloor.min_pace_bp, 333);
+  // remaining_bp=199は1bp下回る → remaining-floorで失格
+  const belowFloor = openaiPool({ windows: [makeWindow({ remaining_bp: 199 })] });
+  const decisionBelowFloor = selectQuotaPool(makeInput({ snapshots: [belowFloor, anthropicPool()] }));
+  const evalBelowFloor = decisionBelowFloor.pool_evaluations.find((entry) => entry.quota_pool_id === "openai-sub-main");
+  assert.equal(evalBelowFloor.eligible, false);
+  assert.equal(evalBelowFloor.exclusion_reason, "remaining-floor");
+});
+
 test("model_family_scope選別: 対象modelに適用されるwindowだけがpoolを縛る", () => {
   // anthropic: account全体5h＋opus専用weekly（残量枯渇）。mid-tier配置ではopus枠を無視する
   const anthropic = anthropicPool({

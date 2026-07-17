@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import {
   QuotaSnapshotError, quotaSnapshotDigest, validateQuotaSnapshot, validateQuotaSnapshotSet,
-  windowLengthSeconds,
+  validateQuotaSnapshotShape, windowLengthSeconds,
 } from "../../lib/orchestrate/quota-snapshot.mjs";
 import { makeQuotaExecutor as makeExecutor, makeQuotaSnapshot as makeSnapshot, makeQuotaWindow as makeWindow } from "./helpers.mjs";
 
@@ -57,6 +57,12 @@ test("snapshot setはpool ID重複とexecutorの複数pool帰属を拒否する"
   assert.throws(() => validateQuotaSnapshotSet([first, { ...second, executor_scope: [makeExecutor()] }]), code("INVALID_SCHEMA"));
   // set検証でもshape全通過後にwindow矛盾（順序固定）
   assert.throws(() => validateQuotaSnapshotSet([first, { ...second, windows: [makeWindow({ duration_seconds: 60 })] }]), code("WINDOW_CONTRADICTION"));
+});
+
+test("quota_snapshot.windowsはMAX_WINDOWS=16件まで通り17件目はINVALID_SCHEMAで拒否される", () => {
+  const makeUniqueWindows = (count) => Array.from({ length: count }, (_, index) => makeWindow({ window_id: `w${index}` }));
+  validateQuotaSnapshotShape(makeSnapshot({ windows: makeUniqueWindows(16) }));
+  assert.throws(() => validateQuotaSnapshotShape(makeSnapshot({ windows: makeUniqueWindows(17) })), code("INVALID_SCHEMA"));
 });
 
 test("digestはcanonical JSONで決定的・field順序に非依存", () => {
