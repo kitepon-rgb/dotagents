@@ -108,7 +108,7 @@ codex --profile work
 通常の正規入口は `apply-codex-config` である。既定は dry-run で、実端末には一切書かない。
 
 ```bash
-./bin/apply-codex-config --dry-run
+./bin/apply-codex-config.sh --dry-run
 ```
 
 差分は次の **9項目だけ**。model / effort / permissions / OAuth / trust / MCP / 既存他ツールの hook は対象外で、触れない。
@@ -121,7 +121,7 @@ codex --profile work
 `--apply` は端末設定を書き換えるので、dry-run の差分を確認し、対象端末への適用承認を得てからだけ実行する。
 
 ```bash
-./bin/apply-codex-config --apply
+./bin/apply-codex-config.sh --apply
 ./bin/verify-install.sh --profile official
 ```
 

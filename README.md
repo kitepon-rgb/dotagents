@@ -201,14 +201,14 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 
 ```bash
 ./install.sh --profile official
-./bin/apply-codex-config --dry-run
+./bin/apply-codex-config.sh --dry-run
 ```
 
 既定は公式 user skill 面 `$HOME/.agents/skills`。`--dry-run` は一切書き込まず、routing の必須2キー、
 callout hook 4イベント、SessionStartの`orchestrate-advisory-hook` 1件、`codex-lattice-gantt-hook session-start` 1件だけの差分を出す。対象端末への適用を承認した後だけ、次を実行する。
 
 ```bash
-./bin/apply-codex-config --apply
+./bin/apply-codex-config.sh --apply
 spotter install -y
 ./bin/verify-install.sh --profile official
 ```
