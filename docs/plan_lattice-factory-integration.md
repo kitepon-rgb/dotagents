@@ -454,9 +454,18 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 - [x] 読み取り専用集約・`resolve`／`reopen`・`/ai`の既存契約を壊さない
   - 同commitで検証: pull契約・resolve/reopen・/ai・v1経路は無変更。semantic検証を
     「送られた製品だけ」へ絞るguardのみ（v1は全product必須＝挙動不変）。npm test 74/74 green
-- [ ] 本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）。
+- [x] 本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）。
       ServerManager mainへのpushは2026-07-18オーナー承認済み・実施済み（`95831af..0bb3ef3`・
-      push前に両repoの対origin照合を実施）。残Hは本番deploy・canaryのみ
+      push前に両repoの対origin照合を実施）
+  - 2026-07-18完了（オーナー包括承認「承認が必要なものは全部承認判定」）: deploy.sh dry-run
+    （削除0・秘密なし）→--apply 2回（`0bb3ef3`→`a04c6ea`）。canaryは専用host `q22-canary`を
+    provision→v2 report 3連（lattice未送信互換200／lattice runtime_error warn→severity素通しで
+    issue化・expectation issueゼロ／明示resolutionでresolved遷移）→retire-host・credential
+    revoke・token破棄。副作用の実被弾1件を根本修理: deployの`--force-recreate`が旧containerの
+    手動network attachを消しOLTranslator pullがfetch failed→composeへ`license-server_default`
+    (external)を恒久宣言（ServerManager `a04c6ea`・caveat登録済み）。最終状態: pull_poll
+    pass（4source全true）・source_revision match。`factory_ingest: stale 3`はqueue 20未実施に
+    よるdeploy前からの既存状態でQ22の退行ではない
 
 ### Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）
 
