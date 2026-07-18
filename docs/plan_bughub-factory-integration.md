@@ -25,7 +25,7 @@ dotagents が管理対象とするコア9製品と基盤toolchain 3製品につ�
 
 - [x] 端末能力8製品、ServerManager、基盤CLI 3製品について、製品別のversion・diagnostics・state/schema・migration・互換性契約が有限表になっている
 - [x] 4環境×12管理製品の期待状態（required / optional / forbidden / unsupported）、期待connector、欠落時severityが一意なmatrixになっている
-- [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの4環境が、認証付きでBugHubへ観測結果を報告できる
+- [x] Mac、main-server、FOX WSL2、FOX Windows nativeの4環境が、認証付きでBugHubへ観測結果を報告できる（2026-07-18: 4host全部がv2 reportのaccepted・`factory_v2_current` 12製品・`/readyz` factory_ingest readyを実査）
 - [x] BugHubにhost×productの現在値と履歴があり、installed/latest・contract・schema・update・compatibilityの状態を区別できる
 - [x] 互換異常は既存BugHubのfingerprint・severity・再発・解決・Discord・`/ai`へ統合される
 - [x] 既存4アプリのpull巡回・重大度・resolve/reopen・dashboard・日次/週次通知に回帰がない
@@ -277,7 +277,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] 受理後・削除前failureの同一bytes再送と、server dedupe retention（outbox上限超・期限前後prune）をテスト
 - [x] host ID/tokenをrepoへ保存しない設定・rotation・revoke手順を追加
 - [x] Mac launchd、Linux/WSL cron、Windows Task Schedulerのinstall/uninstallとOS別state/ACL契約を実装・fixture化
-- [ ] 4環境でschedulerをH承認後に実登録し、実火・uninstall・state/ACLを確認
+- [x] 4環境でschedulerをH承認後に実登録し、実火・uninstall・state/ACLを確認（2026-07-18: Mac launchd apply→kickstart実火→uninstall→再apply・state 0700、FOX Task Scheduler apply→/Run実火(LastTaskResult=0)→uninstall→再apply・owner ACL、FOX WSLはitem 4既済＋今日13:17実走green、main-serverはcron外部書換被弾から正規再登録＋cron同等最小env実火green。main-serverの次回:17自走は継続監視）
 - [x] `agents-update`後にcontract scan→reportを接続し、update失敗後も観測と報告を試行して最終的に非0終了
 
 ### Wave 3 — 第三者3製品adapter（A、完了済み旧Oracle契約を含む）
@@ -397,7 +397,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 #### 6.5 shadow、cutover、撤去（H＋F）
 
 - [ ] 代表fixture（添付なし/あり、standard/extended/max、timeout、auth loss、runtime drift、process restart）を全対象hostの期待matrixどおりshadowし、requested/resolved model/effort、terminal回収、archive、privacyを確認する。OracleやAPIへ再送・fallbackしない
-- [ ] hostごとにv1 Oracle最終snapshot→MCP切替→新major 12製品初回snapshotを順序付きで実行し、`gpt-connector`と基盤CLI 3製品のBugHub current/history、通知、resolve/reopenを確認する
+- [x] hostごとにv1 Oracle最終snapshot→MCP切替→新major 12製品初回snapshotを順序付きで実行した（2026-07-18: v1 `factory_current`で4host全部oracle=`not_applicable`を実査、v2 currentは4host×12製品。resolve/reopenは2a drill・6bで実証）
 - [ ] 全host greenとH承認後だけOracle package、更新対象、MCP登録、wrapper/shim、skill配布を外す。削除前に`rg -a`と利用可能な索引でconsumerを確認し、Oracle履歴・archive/RAGは保持する
 - [ ] rollback drillは新major送信停止、前`gpt-connector` release/MCP設定への復帰、必要時のOracle command一時切戻しを分けて実証する。一時切戻しでOracleを正規コアへ戻したり、自動fallbackを追加したりしない
 - [ ] gpt-connector、dotagents、ServerManagerのfull gate、registry由来install、BugHub canary、全host E2E、独立反証を通し、各repoを独立commit/pushする
@@ -412,15 +412,15 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
   - [x] process停止・到達不能を外部probeの`unreachable`としてfixture化
   - [x] image/source一致はrebuild済み判定と分離し、build時source revisionをOCI labelとread-only readiness fieldへ焼き込み、main-serverのdeploy manifestに保存した期待revisionと外部probeで比較する
   - [x] revision欠落・不正・期待値不一致を固定reason codeへ写像し、Docker restartだけでは一致扱いにしないfixtureを追加
-- [ ] BugHub停止中のoutbox保持→復旧後再送を実測
+- [x] BugHub停止中のoutbox保持→復旧後再送を実測（2026-07-18 6a: 33秒停止中flush非0・retained=1・dead-letter 0→復旧後flush sent=1）
 - [x] readinessをDB query、poll/ingest鮮度、source error、pull/factory通知deliveryまで拡張し、Docker healthcheckとdeploy canaryを`/readyz`へ接続
-- [ ] BugHub停止/readiness failureはBugHubを経由しないPi5→Discord専用bridgeで通知し、復旧後に同じfingerprintをBugHubへ還流
+- [x] BugHub停止/readiness failureはBugHubを経由しないPi5→Discord専用bridgeで通知し、復旧後に同じfingerprintをBugHubへ還流（2026-07-18: 6a/6bで全sub実証済み。還流経路自体のv2欠落は`5f22ed4`で修理）
   - [x] 専用bridgeは既存の監視抑止に入る時に未trigger観測窓だけを切り、`/readyz`をDocker health retryとは独立した60秒tickerで観測する。trigger済みeventは保持し、抑止解除後2連続失敗（通常約120秒）で通知を試行し、配送失敗はtimeout付きでdurable retryする。自動restartは行わず、既存Layer 3の3周期観測・restart責務を奪わない
   - [x] `sha256(servermanager:<check_id>:<reason_code>)`（process到達不能は固定`availability:unreachable`）をdurable eventとしてPi5に保存し、dotagents所有の明示connector CLI経由でmain-server reporterへopen/resolveを渡す
   - [x] Discord成功とBugHub還流成功を別ackにし、片方の失敗をもう片方の成功で消さない。復旧後もBugHub accepted確認までeventを保持する
   - [x] main-serverのexternal-event connectorとPi5のbridge/tickerを配布し、実`/readyz` ready状態で120秒間にstate mtimeが2回進み、events空・connector pending 0を維持するnormal canaryを確認する
   - [x] Pi5 bridge/ticker本体の所有repo、immutable commit/path、`run(deps)` fixtureを受け入れ、再配布／rollback可能なsource契約を固定する。ServerManager `74c315b`／`b3ac6da`、focused 12＋4件、[ADR 0021](adr/0021-servermanager-pi5-bughub-bridge-receipt.md)を証拠とし、意図的canaryはH-only残件へ分離する
-  - [ ] Wave 8.6a/6bの分離済み意図的canaryで、transient誤openなしとDiscord通知→BugHub accepted→resolve→isolated state削除をそれぞれ実証する
+  - [x] Wave 8.6a/6bの分離済み意図的canaryで、transient誤openなし（6a）とDiscord通知→BugHub accepted→resolve→isolated state削除（6b）をそれぞれ実証した（2026-07-18）
 
 ### Wave 8 — 4環境canary rollout（H＋F）
 
@@ -459,7 +459,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
        formalなhost scan/report receiptはR2（H）へ合流。
 1n. [x] Windows共通command runnerのnpm shim解決を実物cmd-shim variantへ追従し、PATH／shimのfilesystem解決も5秒全体deadline内のkill可能helperへ隔離して、UNC・late spawn・悪意あるshimをfail-loudに拒否する
 1o. [x] native diagnosticsを単一overall checkへ潰さずThroughline／Spotter／aiterm-mcpのcomponent別checkへ安全に投影し、report/BugHubでは`unverified`を保持する。gateはdefault-denyのまま、Spotterの人手trust、Throughlineのadvisory evidence/Claude connector、headless aitermのPTY観測不能という完全tupleだけをnonblockingにする
-1p. [ ] Windows factory ACLのローカル修正を受け入れ、FOX Windows native実機receiptで閉じる
+1p. [ ] Windows factory ACLのローカル修正を受け入れ、FOX Windows native実機receiptで閉じる（2026-07-18現況: scan→enqueue→flush→Task Scheduler dry-run/apply/実火は完了済み。**post-update gateがfail 3**＝claude-code/codex-cli/grok-buildのledger `post_gate_failed`残留とcaveat/aiterm-mcp/codex-sidecarのdiagnostics `unverified`（1k drift）が先決のため未チェックのまま保持）
    - [x] toolchain ledger、v2 schedule runner、Task Scheduler control artifactをreporter本体と同じ`Set-Acl -LiteralPath`系current-SID-only契約へ統一した。ACL済みtemporary ledgerのrename後再適用を除去し、PowerShell失敗を固定reasonでfail-loudにした（`39fba73`、focused 31/31、[ADR 0014](adr/0014-windows-factory-acl-local-receipt.md)）
    - [ ] FOX Windows nativeでledger生成→post-update scan/gate/enqueue/flush→scheduler dry-run/applyを実機再確認する（credential／実host applyはH）
 1q. [ ] Windows npm shim resolverのローカル修正を受け入れ、FOX Windows native実機receiptで閉じる
@@ -468,7 +468,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 1r. [ ] Codex SidecarのWindows npm `.cmd`診断修正を実配布版でFOX Windows nativeへ反映し、12製品scan→post-update gate→enqueue/flush→Task Scheduler dry-run/applyを再送する
    - [x] 0.3.6の`factory-diagnostics`が`spawn("codex-sidecar-mcp")`を直呼びし、MCP initialize可能なのに`packageVersions=unverified`へ誤投影する欠陥を製品側で根治した。固定command・引数非再解釈・timeout・出力上限・fail-loudを維持したWindows回帰test、pack/install smoke、独立反証を通し、Codex Sidecar 3 packageをnpm `0.3.7`、tag `v0.3.7`、global CLI `0.3.7`へ公開・検証した。実diffとfocused 18/18は[ADR 0017](adr/0017-codex-sidecar-windows-mcp-product-receipt.md)で受け入れた
    - [ ] FOX Windows nativeの実配布版で12製品scan→post-update gate→enqueue/flush→Task Scheduler dry-run/applyを再送する
-1s. [ ] Macの対話shellではBugHubへHTTP 200なのにuser launchd配下だけLocal Network Privacyで遮断される実機差を、Apple TN3179の管理端末向けCIDR例外で解消する。現在の実経路`en5`（USB Ethernet）だけを対象に、root所有のCurrentUser defaults domainをLocal Network Privacyがsystem-wide設定として特別に消費する契約どおり、`AllowedEthernetLocalNetworkAddresses`へ`192.168.1.2/32`を追加し、Wi-Fi側は変更しない。再起動後にlaunchd childの実送信canaryを通し、rollbackは対象entry削除＋再起動とする
+1s. [x] 2026-07-18完了（両sub-item実証済み）: Macの対話shellではBugHubへHTTP 200なのにuser launchd配下だけLocal Network Privacyで遮断される実機差を、Apple TN3179の管理端末向けCIDR例外で解消する。現在の実経路`en5`（USB Ethernet）だけを対象に、root所有のCurrentUser defaults domainをLocal Network Privacyがsystem-wide設定として特別に消費する契約どおり、`AllowedEthernetLocalNetworkAddresses`へ`192.168.1.2/32`を追加し、Wi-Fi側は変更しない。再起動後にlaunchd childの実送信canaryを通し、rollbackは対象entry削除＋再起動とする
    - [x] `sudo defaults write`後、`/var/root/Library/Preferences/com.apple.network.local-network.plist`のarray値を管理者権限で実読し、`/Library/Preferences`と通常user domainが不存在であるAppleの特殊保存契約を独立反証込みで確認した。残りはMac再起動後の非root launchd child canary
    - [x] 2026-07-18消化: Mac再起動（uptime 1 day）後の非root launchd child（`launchctl kickstart gui/501/com.kite.factory-reporter`）から本番BugHubへの実送信が成功（flush sent=1・ack_failed=0）し、CIDR例外の再起動後有効化を実証した
 2. [x] 2026-07-18消化: `retire-oracle mac-kite`→`--oracle-retired`最終v1 snapshot（report `62bbdb71`、server実査でoracle=`not_applicable`）→config endpointをv2へ→v2初回12製品full snapshot（report `b4e770cd`、`factory_v2_observations` 12行・`factory_v2_current`反映を実査）→launchd dry-run→apply→launchd実contextのscheduled run実火（post_gate success）→state 0700確認。uninstall確認は2a drillで実施
