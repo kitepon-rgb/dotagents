@@ -74,6 +74,12 @@ record_toolchain() {
     --before "${2:-none}" --latest "${3:-none}" --operation "$4" --after "${5:-none}" \
     --post-gate "$6" --reason "$7" --observed-at "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
 }
+npm_install_spec() {
+  case "$1" in
+    @*/*@*|[!@]*@*) printf '%s' "$1" ;;
+    *) printf '%s@latest' "$1" ;;
+  esac
+}
 
 PACKAGES=(
   '@anthropic-ai/claude-code'
@@ -87,7 +93,7 @@ PACKAGES=(
   'codex-sidecar-cli'
   'codex-sidecar-core'
   'codex-sidecar-mcp'
-  '@quolu/lattice'
+  '@quolu/lattice@0.2.0' # G4受入まで固定pin・受入後@latestへ戻す（docs/plan_lattice-factory-integration.md）
   'pnpm'
   'throughline'
 )
@@ -144,7 +150,8 @@ UV_TOOLS=(
           fi
         fi
       fi
-      if [[ "$skip_install" -eq 0 ]] && ! npm install -g "${pkg}@latest"; then
+      install_spec="$(npm_install_spec "$pkg")"
+      if [[ "$skip_install" -eq 0 ]] && ! npm install -g "$install_spec"; then
         printf 'FAILED: %s\n' "$pkg"
         update_failed=1
         operation=failed; reason=install_failed
