@@ -109,6 +109,7 @@ done
   || fail 'Grok Build を npm package として更新してはならない'
 grep -Fq 'grok update --check --json' "$ROOT/bin/agents-update.sh" \
   || fail 'Grok Build の stable JSON update check がない'
+[ "$(grep -Ec '^  advisory:$' "$ROOT/.codex-sidecar.yml")" -eq 1 ] || fail 'codex-sidecar advisory preset がない'
 
 verify_core || fail '有効な factory core fixture が verify-install に拒否された'
 
