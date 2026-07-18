@@ -9,6 +9,21 @@ CLI_DIR="$(mktemp -d)"
 trap 'rm -rf "$HOME_FIXTURE" "$CLI_DIR"' EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
+file_stat() {
+  python3 - "$1" "$2" <<'PY'
+import os
+import stat
+import sys
+
+info = os.stat(sys.argv[1])
+values = {
+    "mode": format(stat.S_IMODE(info.st_mode), "o"),
+    "uid": str(info.st_uid),
+    "gid": str(info.st_gid),
+}
+print(values[sys.argv[2]])
+PY
+}
 HOOK="$HOME_FIXTURE/observer-parent-stop-hook"
 STATE_ROOT="$HOME_FIXTURE/observer-state"
 mkdir -p "$STATE_ROOT"
@@ -150,14 +165,14 @@ cat >"$RESTORE_HOME/.claude/settings.json" <<'EOF'
 EOF
 chmod 640 "$RESTORE_HOME/.claude/settings.json"
 restore_before="$(cat "$RESTORE_HOME/.claude/settings.json")"
-restore_uid="$(stat -f %u "$RESTORE_HOME/.claude/settings.json")"
-restore_gid="$(stat -f %g "$RESTORE_HOME/.claude/settings.json")"
+restore_uid="$(file_stat "$RESTORE_HOME/.claude/settings.json" uid)"
+restore_gid="$(file_stat "$RESTORE_HOME/.claude/settings.json" gid)"
 HOME="$RESTORE_HOME" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" \
   "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$RESTORE_HOME/observer-state" >/dev/null
 restore_archive="$(find "$RESTORE_HOME/Archives" -name '*.tar.gz' -print -quit)"
 [ -n "$restore_archive" ] || fail 'restore fixture backupがない'
-[ "$(stat -f %Lp "$RESTORE_HOME/.claude/settings.json")" = 640 ] || fail 'applyが既存modeを保持しない'
-[ "$(stat -f %Lp "$RESTORE_HOME/.codex/hooks.json")" = 600 ] || fail 'applyが新規configを0600にしない'
+[ "$(file_stat "$RESTORE_HOME/.claude/settings.json" mode)" = 640 ] || fail 'applyが既存modeを保持しない'
+[ "$(file_stat "$RESTORE_HOME/.codex/hooks.json" mode)" = 600 ] || fail 'applyが新規configを0600にしない'
 
 applied_claude="$(cat "$RESTORE_HOME/.claude/settings.json")"
 applied_codex="$(cat "$RESTORE_HOME/.codex/hooks.json")"
@@ -172,9 +187,9 @@ fi
 HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$restore_archive" >/dev/null
 [ "$(cat "$RESTORE_HOME/.claude/settings.json")" = "$restore_before" ] || fail 'restoreがClaude原文を戻さない'
 [ ! -e "$RESTORE_HOME/.codex/hooks.json" ] || fail 'restoreが元absentのCodex configを削除しない'
-[ "$(stat -f %Lp "$RESTORE_HOME/.claude/settings.json")" = 640 ] || fail 'restoreが元modeを戻さない'
-[ "$(stat -f %u "$RESTORE_HOME/.claude/settings.json")" = "$restore_uid" ] || fail 'restoreが元uidを戻さない'
-[ "$(stat -f %g "$RESTORE_HOME/.claude/settings.json")" = "$restore_gid" ] || fail 'restoreが元gidを戻さない'
+[ "$(file_stat "$RESTORE_HOME/.claude/settings.json" mode)" = 640 ] || fail 'restoreが元modeを戻さない'
+[ "$(file_stat "$RESTORE_HOME/.claude/settings.json" uid)" = "$restore_uid" ] || fail 'restoreが元uidを戻さない'
+[ "$(file_stat "$RESTORE_HOME/.claude/settings.json" gid)" = "$restore_gid" ] || fail 'restoreが元gidを戻さない'
 
 ln -s "$restore_archive" "$RESTORE_HOME/restore-link.tar.gz"
 if HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$RESTORE_HOME/restore-link.tar.gz" >/dev/null 2>&1
