@@ -10,6 +10,9 @@
 > 未収容 WIP（docs/00_overview.md・rag/INDEX.md = Bell News 統合の dirty）があり、incoming と
 > 交差して ff 不可。他レーンの WIP を stash/巻き込みしないため 3 行とも見送り。
 > OpenCClaw を触る次のセッション（WIP 収容後）で消化する。
+>
+> 2026-07-19注記: GitHub側ではOpenCClawがBellへ改名済み。未消化の3行は残したまま、消化先を
+> Bell repo（`~/Developer/bell`）として読む。
 
 - [ ] bellbot の `docker compose build` は npm 依存の増減を image に反映しないことがある——確実に反映するには `docker builder prune` で BuildKit キャッシュを消してから再ビルド → **デプロイ手順書（README/docs）へ**（出典: memory/reference_bellbot_image_npmci_cache_sticky.md）
 - [ ] Codex app-server tokenUsage の意味論: `total.totalTokens`=スレッド生涯の累積和（課金用）／`last.inputTokens`=直近ターンの入力＝**文脈オーバーフロー監視はこちら**（本番誤発火バグの実績あり）→ **Phase 10A-15 関連 docs へ**（出典: memory/reference_codex_tokenusage_total_vs_last.md）

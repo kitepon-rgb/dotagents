@@ -541,6 +541,12 @@ Observer `docs/plan_observer.md`
   - 取得不能はWave Aの`projectQuotaObservationFailure`（必ずtyped error）、他はWave Q/S fixtureで固定。
 - [ ] Control schemaとreceiptへselector decisionを束縛し、週次dogfoodで両社の消費ペースを評価する。
   - 束縛はWave V（v27 subject digest自動束縛）で完了。**残: Wave D週次dogfood＝実需開始時**。
+  - 2026-07-19オーナー裁定: あってもよいが、管理されない追加実装にはせずToDoとして追跡する。
+    v28設計調書は当日scratchpad `fm0542-design.md` を正とし、次の4 waveで進める。
+    - [ ] Wave S: schema/migrationを実装し、既存reader・rollbackとの互換を固定する。
+    - [ ] Wave A: adapter attestationを実装し、adapterが表明する事実と検証境界を固定する。
+    - [ ] Wave P: Delegation PacketとWorker Reportの相関を実装し、receiptまで追跡可能にする。
+    - [ ] Wave D: 週次の実需dogfoodで運用上の必要性と消費ペースを評価する。
 
 詳細: [Observer計画 Phase 4](plan_observer-factory-integration.md#phase-4-rate-aware-elastic-scheduler)
 
@@ -626,8 +632,15 @@ Observer `docs/plan_observer.md`
   先に上書きすると`artifact-status-record`が旧digest不一致でfail closedし、旧版byte列を回収しない限り
   supersede不能になることを再現した。更新前supersedeを強制する入口、版付きartifact ref、または旧blobを
   Control所有領域へ保存する方式を比較し、上書き後も履歴を捏造せず回収できるfixtureを固定する。
+  - 2026-07-19オーナー裁定「任せる」: 推奨案を採用する。content-digestを含む版付きpathでartifactを
+    保存し、current参照は原子的な世代交代で切り替える。設計調書は当日scratchpad `fm0625-design.md` を正とする。
+  - [ ] content-digest版付きpathと原子的世代交代を実装し、旧世代のbyte列を保持したsupersede/recovery fixtureを
+    固定する。
 - [ ] gpt-connector `browser start`のWindowServer収束deadline境界flake（`RUNTIME_DRIFT`／`CDP_UNAVAILABLE`間欠）を恒久対処する。真因診断・caveat登録済みで、launcherのtimeout延長またはgrace/retryを検討する（所有: gpt-connector repo）。
 - [ ] GitHub側のみのrepo 20件超の終活裁定を行う。削除・archiveはオーナー承認後だけ行う。
+  - 2026-07-19実施: `codex-link-p2p`、`CursorHub`、`SmartClaude`、`QuoLabo`を削除済み。
+    `OpenCClaw`はGitHub側で`Bell`へ改名済みのため対象外とし、localの旧cloneは撤去、
+    `~/Backups/OpenCClaw-final-20260719.tar.gz`へtar退避済み。
 - [ ] [P4メモリ昇格queue](queue_memory-promotion.md)を各repoの次回作業時に消化する。
 - [ ] npm Publishing accessの2FA／token禁止締めをオーナー画面で行う（H）。
 - [ ] Novel(forklore)統合済みbranchをlock解除・承認後に削除する。
