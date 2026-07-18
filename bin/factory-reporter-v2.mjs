@@ -39,12 +39,13 @@ if ($isDirectory) {
 } else {
   $inherit = [Security.AccessControl.InheritanceFlags]::None
 }
-$acl = Get-Acl -LiteralPath $p
+$item = Get-Item -LiteralPath $p
+$acl = $item.GetAccessControl('Access')
 $acl.SetAccessRuleProtection($true, $false)
 foreach ($existing in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existing) }
 $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inherit, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
 [void]$acl.AddAccessRule($rule)
-Set-Acl -LiteralPath $p -AclObject $acl`;
+$item.SetAccessControl($acl)`;
   const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script], {
     encoding: 'utf8',
     env: { ...process.env, DOTAGENTS_FACTORY_ACL_TARGET: path },

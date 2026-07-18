@@ -82,12 +82,13 @@ $p = $env:DOTAGENTS_FACTORY_ACL_TARGET
 if ([string]::IsNullOrWhiteSpace($p) -or -not (Test-Path -LiteralPath $p -PathType Container)) { throw 'ACL target is invalid' }
 $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
 $inherit = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
-$acl = Get-Acl -LiteralPath $p
+$item = Get-Item -LiteralPath $p
+$acl = $item.GetAccessControl('Access')
 $acl.SetAccessRuleProtection($true, $false)
 foreach ($existing in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existing) }
 $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inherit, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
 [void]$acl.AddAccessRule($rule)
-Set-Acl -LiteralPath $p -AclObject $acl`;
+$item.SetAccessControl($acl)`;
   return { file, content, commands: [['schtasks.exe', '/Create', '/TN', TASK_NAME, '/XML', file, '/F']], uninstall: [['schtasks.exe', '/Delete', '/TN', TASK_NAME, '/F']], acl: [['powershell.exe', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script]] };
 }
 
