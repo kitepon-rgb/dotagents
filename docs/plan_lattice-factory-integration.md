@@ -455,7 +455,8 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
   - 同commitで検証: pull契約・resolve/reopen・/ai・v1経路は無変更。semantic検証を
     「送られた製品だけ」へ絞るguardのみ（v1は全product必須＝挙動不変）。npm test 74/74 green
 - [ ] 本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）。
-      ServerManager mainへのpushもH承認に含める（`0bb3ef3`はローカルcommit済み）
+      ServerManager mainへのpushは2026-07-18オーナー承認済み・実施済み（`95831af..0bb3ef3`・
+      push前に両repoの対origin照合を実施）。残Hは本番deploy・canaryのみ
 
 ### Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）
 
