@@ -101,8 +101,8 @@ for package in \
   [ "$(grep -Ec "^[[:space:]]*'${package}'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
     || fail "agents-update の $package は1件でなければならない"
 done
-[ "$(grep -Ec "^[[:space:]]*'@quolu/lattice@0\.2\.0'[[:space:]]*#" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
-  || fail 'agents-update の @quolu/lattice は0.2.0固定pinでなければならない'
+[ "$(grep -Ec "^[[:space:]]*'@quolu/lattice@0\.3\.0'[[:space:]]*#" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
+  || fail 'agents-update の @quolu/lattice は0.3.0固定pinでなければならない'
 [ "$(grep -Ec "^[[:space:]]*'markitdown'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
   || fail 'agents-update の uv tool package markitdown は1件でなければならない'
 ! grep -Eq "^[[:space:]]*'grok(-build)?'[[:space:]]*$" "$ROOT/bin/agents-update.sh" \

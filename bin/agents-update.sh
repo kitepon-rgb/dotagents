@@ -93,7 +93,7 @@ PACKAGES=(
   'codex-sidecar-cli'
   'codex-sidecar-core'
   'codex-sidecar-mcp'
-  '@quolu/lattice@0.2.0' # G4受入まで固定pin・受入後@latestへ戻す（docs/plan_lattice-factory-integration.md）
+  '@quolu/lattice@0.3.0' # G4受入まで固定pin・受入後@latestへ戻す（docs/plan_lattice-factory-integration.md）
   'pnpm'
   'throughline'
 )
