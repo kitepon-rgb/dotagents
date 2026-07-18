@@ -525,6 +525,13 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
       （ADR 0051 Decision 4。所有: Lattice src/rc4-stage1-dogfood.mjs系）
   - 2026-07-18完了（Lattice `4bbb3d8`）: checkpoint_digest/todo_id照合＋patch sha256自己束縛
     （世代判定・fail-openなし）。tamper 3様態test・実v4-landing 19/19維持
+- [ ] runtime-contracts: `run_event.v1`の`recorded_at` validatorが「regex＋`Date.parse()`非NaN」のみで
+      実在しない暦日（`2026-02-30`→`2026-03-02`へ正規化）を受理する（`src/runtime-contracts.mjs:79-81`・
+      producer側`src/runtime-engine.mjs:57-62`も同穴・`src/seam-transform.mjs:232-234`の`observed_at`は
+      別系統の同種緩受理）。`recorded_at`は診断情報で順序・受理判断に不使用＝非クリティカル。strict化は
+      公開契約の受理集合縮小＋保存済み不正eventのreject化（digestに`recorded_at`束縛）を伴うため
+      **ADR改訂先行が必須**。G2の`todo_store.v1`族はstrict round-trip parserを初回契約から適用済みで対象外
+      （2026-07-18 G2-R1調査で発見。所有: Lattice src/runtime-contracts.mjs系）
 
 ## 5. 既知の罠
 
