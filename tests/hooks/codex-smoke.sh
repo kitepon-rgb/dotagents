@@ -131,7 +131,7 @@ EOF
 
 # --- X3/X5 user-prompt-submit（セッション1回のINFO ＋ pending drain） ---
 run x35-normal python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
-  && json && [[ "$RUN_OUT" == *'通常レーン'* && "$RUN_OUT" == *'Controlが不要'* ]] && pass x35-normal || fail_case x35-normal
+  && json && [[ "$RUN_OUT" == *'通常レーン'* && "$RUN_OUT" == *'対象限定commitだけで閉じます'* ]] && pass x35-normal || fail_case x35-normal
 
 run x35-silent python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
   && [ "$RUN_BYTES" -eq 0 ] && pass x35-silent || fail_case x35-silent

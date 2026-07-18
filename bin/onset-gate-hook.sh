@@ -16,7 +16,7 @@ from hook_state import safe_exists, safe_read, safe_touch, safe_unlink, state_di
 STATE_DIR = state_dir()
 if STATE_DIR is None:
     raise SystemExit(0)
-CONTEXT = "INFO: 統括レーン（計画に組込済みの中断・多段の受入連鎖・複数repo書込調整・裁定証跡のいずれかが着手時に確定する戦役）は、グローバル CLAUDE.md / AGENTS.md「作業レーンと統制」とorchestrate skillに従います。それ以外はすべて通常レーンで、docs plan、F/A/H宣言、Controlが不要です（Workerへの委譲・fan-out技法は通常レーンでも可）。このINFO自体は作業範囲を拡張しません。"
+CONTEXT = "INFO: 統括レーン（計画に組込済みの中断・多段の受入連鎖・複数repo書込調整・裁定証跡のいずれかが着手時に確定する戦役）は、グローバル CLAUDE.md / AGENTS.md「作業レーンと統制」とorchestrate skillに従います。それ以外はすべて通常レーンで、短い成功条件・focused test・対象限定commitだけで閉じます（委譲もfan-out技法も通常レーンで使えます）。このINFO自体は作業範囲を拡張しません。"
 
 
 def session_key(session_id):
