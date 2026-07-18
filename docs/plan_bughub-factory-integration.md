@@ -387,6 +387,7 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
 - [x] 旧Oracle wrapper/config/profileを`gpt-connector`へ流用せず、専用Chrome、product-owned state、model/effort明示、caller既知slug、timeout後`sessions`回収、暗黙fallback禁止を標準形として固定する
 - [x] `make ci`、official/legacy install、skill discovery、factory report v1/new-major fixtureをgreenにする
 - [ ] 新規Claude/Codex sessionで`gpt_connector` MCP surfaceを再読込し、両親からread-only diagnosticsをgreenにする（現在のCodex sessionは起動時cacheに旧Oracle surfaceが残るため再起動後に実施）
+  - [x] Claude親（Mac・2026-07-18新規session）: `gpt-connector.diagnostics.v1` overall=`ready`・authenticated・CDP connected。同sessionでClaude hook smoke／Codex hook smoke両方ALL PASS、callout hook C系の実火（SessionStart／UserPromptSubmit／PreToolUse各INFO初回発火・依頼範囲非拡張）も確認。Codex親の新規session実火はR2残E2Eで実施
 - [x] Codex親の委譲をnative／外部実行／相談の3レーンへ正典化し、外部子のtask ID・timeout回収・writer worktree隔離・git操作禁止・秘密/H非委譲・親受入れgateを`codex/AGENTS.md`、`orchestrate`、モデル表、Codex断片、host/product契約へ同期する（`1e8f9fb`、`make ci` green）
 - [ ] Codex親の`codex-sidecar`／aiterm connectorをsupportedとして導入・検証面へ配線し、installed→registered→verified→execution-verifiedを区別する。aitermのGrok/Composer各2回、別Codex、codex-sidecar、gpt-connectorの回収smokeを通すまでwriter利用をgreenにしない
   - [x] このMacのCodex親へ`codex-sidecar` 0.3.7をH承認下で登録し、MCP initialize、12 toolの`tools/list`、factory diagnostics `overall=ready`を確認してverifiedまで上げた。現sessionのtool面は起動時固定のためexecution-verifiedは新規sessionへ残す
