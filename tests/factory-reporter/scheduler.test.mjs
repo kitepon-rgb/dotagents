@@ -52,6 +52,32 @@ test('v2 runnerのWindows ACLはreporterと同じLiteralPath・current SID・継
 test('runnerはcollection=falseでもhost profileと実platformの不一致をfail closedする', async () => { const box = await sandbox(CURRENT_PROFILE === 'mac' ? 'windows-native' : 'mac', false); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /実行中platformと一致/); });
 test('runnerはprivate lock競合時にscan/enqueue/flushへ進まず非0にする', async () => { const box = await sandbox(CURRENT_PROFILE, true); await writeRunnerLock(box, process.pid); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /すでに実行中/); });
 test('runnerは旧directory lockをageだけで奪わず明示回収を要求する', async () => { const box = await sandbox(CURRENT_PROFILE, false, true); const lock = join(box.state, 'schedule.lock'); await mkdir(lock, { recursive: true }); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /明示回収/); await stat(lock); });
+test('runnerはlaunchd/cron最小PATHでも~/.local/binの製品CLIを補完解決し、明示PATHを先勝ちに保つ', { skip: process.platform === 'win32' }, async () => {
+  const { extendedSchedulerPath } = await import('../../lib/factory/scheduler-path.mjs');
+  const minimal = '/usr/bin:/bin:/usr/sbin:/sbin';
+  const extended = extendedSchedulerPath({ platform: 'darwin', path: minimal, execPath: '/opt/homebrew/bin/node', home: '/Users/u' });
+  assert.ok(extended.startsWith(`${minimal}:`));
+  assert.ok(extended.includes('/Users/u/.local/bin'));
+  assert.ok(extended.includes('/opt/homebrew/bin'));
+  assert.equal(extendedSchedulerPath({ platform: 'win32', path: 'C:\\x', execPath: '', home: '' }), 'C:\\x');
+  assert.equal(extendedSchedulerPath({ platform: 'linux', path: '/a:/opt/homebrew/bin', execPath: '/nvm/v1/bin/node', home: '/home/u' }).split(':').filter((p) => p === '/opt/homebrew/bin').length, 1);
+  const box = await sandbox(CURRENT_PROFILE, true, false);
+  const localBin = join(box.root, '.local', 'bin');
+  await mkdir(localBin, { recursive: true });
+  for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(localBin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); }
+  const git = join(localBin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755);
+  const minimalRun = await run(RUNNER, ['--config', box.config], box, { PATH: '/usr/bin:/bin:/usr/sbin:/sbin' });
+  assert.equal(minimalRun.code, 0, minimalRun.stderr);
+  const report = JSON.parse(await readFile(join(box.state, 'latest-report.json'), 'utf8'));
+  assert.notEqual(report.products.caveat.presence_status, 'missing');
+  const override = join(box.root, 'override-bin');
+  await mkdir(override);
+  const fake = join(override, 'caveat'); await writeFile(fake, '#!/bin/sh\nexit 7\n'); await chmod(fake, 0o755);
+  const overrideRun = await run(RUNNER, ['--config', box.config], box, { PATH: `${override}:/usr/bin:/bin:/usr/sbin:/sbin` });
+  assert.equal(overrideRun.code, 0, overrideRun.stderr);
+  const overrideReport = JSON.parse(await readFile(join(box.state, 'latest-report.json'), 'utf8'));
+  assert.notEqual(overrideReport.products.caveat.presence_status, 'missing');
+});
 test('runnerは原子的owner contenderの死んだPIDだけを掃除して再実行できる', async () => { const box = await sandbox(CURRENT_PROFILE, false, true); const child = spawn(process.execPath, ['-e', 'process.exit(0)']); const deadPid = child.pid; await new Promise((resolveClose) => child.on('close', resolveClose)); const dead = await writeRunnerLock(box, deadPid); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 0, result.stderr); assert.deepEqual(result.json, { ok: true, post_gate_status: 'success' }); await assert.rejects(lstat(dead)); assert.deepEqual((await readdir(box.state)).filter((name) => name.includes('schedule.lock.')), []); });
 test('runnerはowner完成後の固有hard-link公開とnonce一致cleanupで共有lock削除を避ける', async () => { const source = await readFile(RUNNER, 'utf8'); assert.match(source, /await link\(temporary, published\)/); assert.match(source, /current\?\.nonce === nonce/); assert.match(source, /schedule\\\.lock\\\.\[0-9a-f-\]\{36\}\\\.owner/); assert.doesNotMatch(source, /\.reclaim|oldEnough|mtimeMs/); });
 test('runnerは既存POSIX stateのgroup/other permissionを0700へ矯正する', async () => { const box = await sandbox(CURRENT_PROFILE, true); await chmod(await mkdir(box.state, { recursive: true }).then(() => box.state), 0o755); await writeRunnerLock(box, process.pid); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.equal((await stat(box.state)).mode & 0o777, 0o700); });
