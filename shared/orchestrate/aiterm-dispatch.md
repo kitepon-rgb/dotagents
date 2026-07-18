@@ -1,6 +1,6 @@
 # aiterm dispatch appendix（外部実行レーンの運用型）
 
-この文書は委譲契約（[delegation-contract.md](delegation-contract.md)）のhost共通dispatch appendixである。aiterm永続PTY経由で子エージェント（Codex/Claude/Grok/Composer）を外部実行レーンとして使う時の運用だけを定め、任務・安全・受入の共通契約は複製しない。実証: 2026-07-18 Lattice G2戦役（writer 4・read-only調査 7・refuter 1を単一親で統括、親の実作業ゼロ）。
+この文書は委譲契約（[delegation-contract.md](delegation-contract.md)）のhost共通dispatch appendixである。aiterm永続PTY経由で子エージェント（Codex/Claude/Grok/Composer）を外部実行レーンとして使う時の運用だけを定め、任務・安全・受入の共通契約は複製しない。
 
 ## 親の専任
 
