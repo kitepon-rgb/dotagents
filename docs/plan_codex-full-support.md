@@ -139,6 +139,8 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 
 ### Wave 3 — 現役端末 rollout と既存プラン閉鎖
 
+> 実行用チェックリスト（2026-07-18・Composer外部レーン下書き・典拠付き）: [docs/r2-e2e-checklist.md](r2-e2e-checklist.md)。Wave 3消化時にこれを使い、完了後は本checklistをarchiveへ退避する。
+
 - [x] 各現役端末で pull相当の同期→tar backup→install→config dry-run/apply→verify（FOX 2環境はGitHub認証切れのためローカルbundleで同期。remote同期はH待ち）
 - [x] NVM配下の npm をLinux / WSL2のcron最小PATHでも解決し、週次 `agents-update` の実走を固定
 - [ ] 各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS / Spotter監査）
