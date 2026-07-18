@@ -3,7 +3,7 @@
 <!-- 前提: GPT-5.6 世代（2026-07 時点）。defaults の正は docs/02_models.md。本ファイルの体裁・構成は
      docs/03_settings-fragments.md（Claude Code settings.json の推奨断片カタログ）を踏襲する -->
 
-`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベント、SessionStart advisory 1件だけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
+`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベント、SessionStart advisory 1件、SessionStart Lattice工程表案内1件だけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
 
 ## 1. 親既定モデル×エフォート（オーナー領分・情報提供のみ）
 
@@ -111,12 +111,12 @@ codex --profile work
 ./bin/apply-codex-config --dry-run
 ```
 
-差分は次の **8項目だけ**。model / effort / permissions / OAuth / trust / MCP / 既存他ツールの hook は対象外で、触れない。
+差分は次の **9項目だけ**。model / effort / permissions / OAuth / trust / MCP / 既存他ツールの hook は対象外で、触れない。
 
 | 対象 | 許可する変更 |
 |---|---|
 | `config.toml` | `[features.multi_agent_v2]` の `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"`。旧`[features].codex_hooks`があれば現行`hooks`へ移行し、両方あれば現行値を保持して旧キーだけ除去 |
-| `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handlerを各1件、およびSessionStartの`orchestrate-advisory-hook`を1件のcanonical entryに正規化 |
+| `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handlerを各1件、およびSessionStartの`orchestrate-advisory-hook`と`codex-lattice-gantt-hook session-start`を各1件のcanonical entryに正規化 |
 
 `--apply` は端末設定を書き換えるので、dry-run の差分を確認し、対象端末への適用承認を得てからだけ実行する。
 
@@ -130,7 +130,7 @@ codex --profile work
 - 既存・提案後の TOML は Codex CLI 自身の parser で検証する。不正なら fail-loud で書き込まない。
 - lifecycle hookの現行flagは`[features].hooks`。`codex_hooks`はdeprecated警告を出すため限定applierが除去し、hook機能を無効化するfallbackには使わない。
 - `config.toml` / `hooks.json` が symlink なら所有境界を壊さないため fail-loud にする。
-- inline comment と他 section / 他 hook は保持する。dotagents 自身の callout だけを、絶対パス・`type: command`・イベント別 `timeoutSec`・`async: false`・`statusMessage: null` の1件に畳む。
+- inline comment と他 section / 他 hook は保持する。dotagents 自身のcallout・advisory・Lattice工程表案内だけを、絶対パス・`type: command`・イベント別 `timeoutSec`・`async: false`・`statusMessage: null` の1件に畳む。
 - 変更がある時だけ `~/Archives/dotagents-codex-config-*.tar.gz` に backup を作る。directory は `0700`、archive と member は `0600`。`CODEX_HOME` が HOME 外でも archive 内は安全な相対名にする。
 - 2ファイルは temp へ先に prepare / fsync してから置換し、途中失敗なら既に置換した側も original へ rollback する。rollback 自体が失敗した場合は明示エラーで止まる。
 - `CODEX_HOME` は test や別 home 用に指定できる。実端末の通常値は `$HOME/.codex`。
@@ -157,7 +157,7 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 
 各 command は `$HOME/.local/bin/codex-callout-hook <subcommand>` という展開済み絶対パスで、matcher のない専用 entry に1件だけ置く。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
 
-`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話 Codex で trust を承認し、新規 session で X1 から実火確認する。`verify-install` は4イベントのcalloutとSessionStartの`orchestrate-advisory-hook`が各1件のcanonical entryであることを検証する。
+`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話 Codex で trust を承認し、新規 session で X1 から実火確認する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook session-start`が各1件のcanonical entryであることを検証する。
 
 ### Orchestrate advisory（SessionStart）
 
@@ -171,6 +171,20 @@ executor/provider/network/cancelを行わない。非git、CLI不在、timeout�
 stdout/stderr 0byte・exit 0で沈黙する。`DOTAGENTS_ORCHESTRATE_ADVISORY=off`で無効化でき、成功表示後だけ
 session×repoで一度表示するcache markerを置き、7日後にGCする。cache baseと`dotagents/hooks`がowner-owned
 directoryかつsymlinkでないことを先に確認し、不適合ならcacheを作成・変更せず沈黙する。
+
+### Lattice工程表案内（SessionStart）
+
+`codex-lattice-gantt-hook session-start`を同じSessionStartへ別entryとして追加する。commandは
+`$HOME/.local/bin/codex-lattice-gantt-hook session-start`の展開済み絶対path、`timeoutSec: 5`、
+`async: false`、`statusMessage: null`とする。Claude側と共通のread-only coreを使い、成功INFOだけを
+`hookSpecificOutput.additionalContext`へ包む。`source=startup|clear`ごとに発火し、スロットルしない。
+
+`lattice` CLI不在時は未導入INFOを一行返す。導入済みでstoreがないrepo、非git、`resume|compact`は
+沈黙する。storeが存在するのにtimeout、CLI失敗、`lattice.todo_status_result.v1`不一致なら、現在地を
+取得できない旨をINFO一行で返す。正規status取得時は
+`.lattice/generated/gantt.html`の絶対`file://` URIと`active`／`next-ready`を案内し、HTML未生成時も
+hook自身は生成しない。`DOTAGENTS_LATTICE_HOOK=off`で無効化できる。HTMLやstore journalを直接parseする
+fallbackは持たない。
 
 ### Spotter Codex hook（工場コア・Spotter所有）
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex routing、deprecated hook flag、dotagents callout hookを安全に適用する。"""
+"""Codex routingとdotagents所有hookを安全に適用する。"""
 
 import argparse
 import copy
@@ -33,6 +33,7 @@ HOOKS = {
     "Stop": ("stop", 10),
 }
 ADVISORY_HOOK = ("SessionStart", 5)
+LATTICE_HOOK = ("SessionStart", "session-start", 5)
 
 
 def parse_args() -> argparse.Namespace:
@@ -217,6 +218,42 @@ def update_hooks(data: dict, home: Path) -> dict:
             normalized.append(entry)
             continue
         hooks = [hook for hook in entry["hooks"] if not (isinstance(hook, dict) and is_advisory_command(hook.get("command"), hook_path, home))]
+        if hooks:
+            copied = dict(entry)
+            copied["hooks"] = hooks
+            normalized.append(copied)
+        elif set(entry) != {"hooks"}:
+            copied = dict(entry)
+            copied["hooks"] = []
+            normalized.append(copied)
+    normalized.append({"hooks": [canonical]})
+    data["hooks"][event] = normalized
+
+    event, subcommand, timeout = LATTICE_HOOK
+    hook_path = home / ".local/bin/codex-lattice-gantt-hook"
+    entries = data["hooks"].setdefault(event, [])
+    if not isinstance(entries, list):
+        raise ValueError(f"hooks.{event} は配列である必要がある")
+    canonical = {
+        "type": "command",
+        "command": f"{hook_path} {subcommand}",
+        "timeoutSec": timeout,
+        "async": False,
+        "statusMessage": None,
+    }
+    normalized = []
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("hooks"), list):
+            normalized.append(entry)
+            continue
+        hooks = [
+            hook
+            for hook in entry["hooks"]
+            if not (
+                isinstance(hook, dict)
+                and is_callout_command(hook.get("command"), hook_path, subcommand, home)
+            )
+        ]
         if hooks:
             copied = dict(entry)
             copied["hooks"] = hooks

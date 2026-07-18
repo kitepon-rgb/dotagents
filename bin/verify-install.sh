@@ -417,6 +417,29 @@ expected = {"type": "command", "command": None, "timeout": 5}
 if len(relevant) != 1 or len(canonical) != 1 or set(canonical[0]) != {"type", "command", "timeout"} or canonical[0].get("type") != expected["type"] or canonical[0].get("timeout") != expected["timeout"]:
     print("FAIL: Claude SessionStart の orchestrate-advisory-hook は canonical command / type=command / timeout=5 の1件である必要がある")
     raise SystemExit(1)
+
+lattice = (home / ".local/bin/lattice-gantt-hook").resolve(strict=False)
+relevant = []
+canonical = []
+for entry in data.get("hooks", {}).get("SessionStart", []):
+    if not isinstance(entry, dict):
+        continue
+    for hook in entry.get("hooks", []):
+        if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
+            continue
+        command = hook["command"]
+        if "lattice-gantt-hook" in command:
+            relevant.append(hook)
+        try:
+            executable, subcommand = command.rsplit(maxsplit=1)
+        except ValueError:
+            continue
+        normalized = Path(str(home) + executable[1:] if executable.startswith("~/") else executable).expanduser().resolve(strict=False)
+        if normalized == lattice and subcommand == "session-start":
+            canonical.append(hook)
+if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 5}:
+    print("FAIL: Claude SessionStart の lattice-gantt-hook session-start は canonical command / type=command / timeout=5 の1件である必要がある")
+    raise SystemExit(1)
 PY
 then
   fail=1
@@ -496,6 +519,39 @@ raise SystemExit(0 if matches == [expected] else 1)
 PY
 then
   echo "FAIL: Codex SessionStart に orchestrate-advisory-hook の正規 entry がない"
+  fail=1
+fi
+
+# Lattice工程表案内もSessionStartへ独立したcanonical entryで保持する。
+if [ -f "$codex_hooks" ] && ! python3 - "$codex_hooks" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+try:
+    data = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+    raise SystemExit(1)
+path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-lattice-gantt-hook")
+command = f"{path} session-start"
+expected = {"type": "command", "command": command, "timeoutSec": 5, "async": False, "statusMessage": None}
+relevant = []
+matches = []
+for entry in data.get("hooks", {}).get("SessionStart", []):
+    if not isinstance(entry, dict):
+        continue
+    for hook in entry.get("hooks", []):
+        if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
+            continue
+        if "codex-lattice-gantt-hook" in hook["command"]:
+            relevant.append(hook)
+        if hook["command"] == command:
+            matches.append(hook)
+raise SystemExit(0 if relevant == [expected] and matches == [expected] else 1)
+PY
+then
+  echo "FAIL: Codex SessionStart に codex-lattice-gantt-hook session-start の正規 entry がない"
   fail=1
 fi
 

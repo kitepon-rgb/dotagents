@@ -131,6 +131,29 @@ fi
 hook自身のcache markerは7日後に掃除する。cache baseと`dotagents/hooks`はowner directoryかつsymlink
 でないことを検査し、不適合時は作成・変更せず沈黙する。
 
+#### Lattice工程表案内（SessionStart・読み取り専用）
+
+`source=startup|clear`のたびに、Lattice工程表の安定パスとstore上の`active`／`next-ready`を短い
+INFOとして表示する。24時間スロットルは掛けない。hookは`lattice todo status`の
+`lattice.todo_status_result.v1`だけをstrictに読み、HTMLや`.lattice/todo/`を直接解釈せず、
+`lattice todo gantt`も自動実行しない。既存SessionStart entryを変更せず、次の1件だけ追加する。
+
+```bash
+S=~/.claude/settings.json
+if ! jq -e --arg home "$HOME" '[.hooks.SessionStart[]?.hooks[]? | select(.type=="command" and .timeout==5 and (.command=="~/.local/bin/lattice-gantt-hook session-start" or .command==($home+"/.local/bin/lattice-gantt-hook session-start"))] | length == 1' "$S" >/dev/null; then
+  cp "$S" "$S.bak-lattice-gantt"
+  tmp=$(mktemp)
+  jq '.hooks.SessionStart += [{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":5}]}]' "$S" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
+fi
+```
+
+`lattice` CLIが未導入のgit repoでは無言のno-opにせず、未導入で現在地を案内できない旨をINFO一行で
+返す。CLI導入済みで`.lattice/todo/`がないrepo、非git、`resume|compact`はstdout/stderr 0byte・exit 0。
+storeが存在するのにtimeout、CLI失敗、不正JSON／schema不一致なら、現在地を取得できない旨をINFO一行で返す。正規statusを取得でき、
+`.lattice/generated/gantt.html`がregular fileなら絶対`file://` URIを表示し、未生成なら予定URIと
+`lattice todo gantt`の明示実行を案内する。`DOTAGENTS_LATTICE_HOOK=off`で無効化できる。
+
 #### C3 プラン更新忘れ（Stop・rolling baseline で毎ターン判定）
 
 このターンで dirty/コミットの差分があるのに `docs/plan_*.md` が動いていなければ INFO を pending に保存する。Stop 自体には注入せず、次の自然な UserPromptSubmit で C4 が1回だけ配送する（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `stop` サブコマンド）。
@@ -166,6 +189,7 @@ fi
 - `DOTAGENTS_PLACEMENT_GATE=off` — C1 の初回委譲 INFO を無効化。
 - `DOTAGENTS_TODO_GATE=off` — C2 の棚卸しと C3 の pending 保存・配送を無効化。旧 `block` 値に特別な昇格動作はない。
 - `DOTAGENTS_ONSET_GATE=off` — C4 の初回案内 INFO を無効化。C3 pending の配送は `DOTAGENTS_TODO_GATE` 側で制御する。
+- `DOTAGENTS_LATTICE_HOOK=off` — SessionStartのLattice工程表案内を無効化。
 
 ## 適用チェック
 

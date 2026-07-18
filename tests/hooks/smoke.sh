@@ -236,5 +236,59 @@ EOF
 [ "$RUN_BYTES" -eq 0 ] && find "$STATE/dotagents/hooks" -maxdepth 1 -name "$TODO_ABSOLUTE_KEY.*.snapshot" -type f | grep -q . && pass c5-todo-session-key || fail_case c5-todo-session-key
 [ "$(find "$STATE" -maxdepth 1 -name 'outside-absolute.*.snapshot' -type f | wc -l | tr -d ' ')" -eq 0 ] && pass c5-todo-no-escape || fail_case c5-todo-no-escape
 
+# Lattice工程表SessionStart hook。共通coreの異常系とClaude plain stdoutを固定する。
+PYTHON_EXE=$(command -v python3)
+mkdir -p "$STATE/git-only" "$STATE/lattice-bin" "$STATE/non-git"
+ln -s "$(command -v git)" "$STATE/git-only/git"
+cat >"$STATE/lattice-bin/lattice" <<'EOF'
+#!/usr/bin/env bash
+[ "$*" = "todo status" ] || exit 2
+case "${LATTICE_TEST_MODE:-valid}" in
+  valid)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v1","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線"}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}' ;;
+  invalid) printf '%s\n' '{"schema":"wrong"}' ;;
+  flood) head -c 70000 /dev/zero | tr '\0' x ;;
+  failure) exit 1 ;;
+  timeout) sleep 4 ;;
+esac
+EOF
+chmod +x "$STATE/lattice-bin/lattice"
+run lattice-nongit-missing env PATH="$STATE/git-only" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-nongit","source":"startup","cwd":"$STATE/non-git"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-nongit-missing || fail_case lattice-nongit-missing
+run lattice-cli-missing env PATH="$STATE/git-only" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-missing","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'CLIが未導入'* ]] && pass lattice-cli-missing || fail_case lattice-cli-missing
+run lattice-store-missing env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-no-store","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-store-missing || fail_case lattice-store-missing
+mkdir -p "$REPO/.lattice/todo"
+run lattice-gantt-missing env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-no-gantt","source":"clear","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'未生成'* && "$RUN_OUT" == *'active=master/G4（dotagents側アクセス配線）'* && "$RUN_OUT" == *'next-ready=master/G5（authoring CLI）'* && "$RUN_OUT" == *'lattice todo gantt'* ]] && pass lattice-gantt-missing || fail_case lattice-gantt-missing
+mkdir -p "$REPO/.lattice/generated"; printf '%s\n' '<html></html>' >"$REPO/.lattice/generated/gantt.html"
+run lattice-valid env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-valid","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'file://'*'.lattice/generated/gantt.html'* && "$RUN_OUT" != *'未生成'* ]] && pass lattice-valid || fail_case lattice-valid
+for mode in invalid flood failure timeout; do
+  run "lattice-$mode" env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE="$mode" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-$mode","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+  [[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'storeは存在しますが lattice todo status で現在地を取得できませんでした'* && "$RUN_OUT" == *'CLIの版とstore整合を確認'* ]] && pass "lattice-$mode" || fail_case "lattice-$mode"
+done
+run lattice-resume env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-resume","source":"resume","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-resume || fail_case lattice-resume
+run lattice-off env PATH="$STATE/lattice-bin:$PATH" DOTAGENTS_LATTICE_HOOK=off "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-off","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-off || fail_case lattice-off
+
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'

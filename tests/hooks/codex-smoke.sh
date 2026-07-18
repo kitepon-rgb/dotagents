@@ -168,5 +168,33 @@ EOF
 done
 [ ! -e "$STATE/codex-absolute.codex-pending" ] && [ ! -e "$STATE/dotagents/codex-outside.codex-pending" ] && pass x6-session-key-no-escape || fail_case x6-session-key-no-escape
 
+# Codex frontendは共通Lattice coreのINFOをadditionalContextへ包む。
+PYTHON_EXE=$(command -v python3)
+mkdir -p "$STATE/git-only" "$STATE/lattice-bin" "$REPO/.lattice/todo" "$REPO/.lattice/generated"
+ln -s "$(command -v git)" "$STATE/git-only/git"
+cat >"$STATE/lattice-bin/lattice" <<'EOF'
+#!/usr/bin/env bash
+[ "$*" = "todo status" ] || exit 2
+if [ "${LATTICE_TEST_MODE:-valid}" = invalid ]; then
+  printf '%s\n' '{"schema":"wrong"}'
+else
+  printf '%s\n' '{"schema":"lattice.todo_status_result.v1","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線"}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}'
+fi
+EOF
+chmod +x "$STATE/lattice-bin/lattice"
+printf '%s\n' '<html></html>' >"$REPO/.lattice/generated/gantt.html"
+run lattice-codex-missing env PATH="$STATE/git-only" "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-missing","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'CLIが未導入'* ]] && pass lattice-codex-missing || fail_case lattice-codex-missing
+run lattice-codex-valid env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-valid","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'file://'* && "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-valid || fail_case lattice-codex-valid
+run lattice-codex-status-failure env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=invalid "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-status-failure","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'storeは存在しますが lattice todo status で現在地を取得できませんでした'* && "$RUN_OUT" == *'CLIの版とstore整合を確認'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-status-failure || fail_case lattice-codex-status-failure
+
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'

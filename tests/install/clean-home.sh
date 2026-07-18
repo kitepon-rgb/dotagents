@@ -33,7 +33,7 @@ hooks = true
 codex_hooks = true
 EOF
   cat >"$1/.codex/hooks.json" <<'EOF'
-{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"/custom/keep stop"}]},{"matcher":"never-match","hooks":[{"type":"command","command":"~/.local/bin/codex-callout-hook stop","async":true}]}]}}
+{"hooks":{"SessionStart":[{"matcher":"stale-lattice","hooks":[{"type":"command","command":"~/.local/bin/codex-lattice-gantt-hook session-start","timeoutSec":99,"async":true}]}],"Stop":[{"hooks":[{"type":"command","command":"/custom/keep stop"}]},{"matcher":"never-match","hooks":[{"type":"command","command":"~/.local/bin/codex-callout-hook stop","async":true}]}]}}
 EOF
 }
 apply_config() { HOME="$1" CODEX_HOME="$1/.codex" "$PYTHON_BIN" "$1/.local/bin/apply-codex-config" "$2"; }
@@ -102,7 +102,7 @@ verify_fixture_output="$(HOME="$OFFICIAL_HOME" DOTAGENTS_SKIP_FACTORY_CORE=1 "$V
 printf '%s\n' "$verify_fixture_output" | grep -Fq 'が共有委譲契約を参照していない' || fail 'Claude shared delegation reference の欠落を verify が検出しない'
 mkdir -p "$OFFICIAL_HOME/.claude"
 cat >"$OFFICIAL_HOME/.claude/settings.json" <<'EOF'
-{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}],"SessionStart":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]},{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]}],"Stop":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}],"UserPromptSubmit":[{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}],"PostToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/plan-gate-hook","timeout":5}]}]}}
+{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}],"SessionStart":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]},{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]},{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":5}]}],"Stop":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}],"UserPromptSubmit":[{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}],"PostToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/plan-gate-hook","timeout":5}]}]}}
 EOF
 verify "$OFFICIAL_HOME" official
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
@@ -137,7 +137,7 @@ import json
 import sys
 path = sys.argv[1]
 data = json.load(open(path, encoding="utf-8"))
-data["hooks"]["SessionStart"] = data["hooks"]["SessionStart"][:2]
+data["hooks"]["SessionStart"] = data["hooks"]["SessionStart"][:3]
 data["hooks"]["SessionStart"][1]["hooks"][0]["command"] = "echo ~/.local/bin/orchestrate-advisory-hook"
 json.dump(data, open(path, "w", encoding="utf-8"))
 PY
@@ -166,6 +166,56 @@ hook["timeout"] = 5
 json.dump(data, open(path, "w", encoding="utf-8"))
 PY
 verify "$OFFICIAL_HOME" official
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+data["hooks"]["SessionStart"][2]["hooks"][0]["unexpected"] = True
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if verify "$OFFICIAL_HOME" official >/dev/null 2>&1; then fail 'Claude Lattice hook の余計な field を verify が見逃した'; fi
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+del data["hooks"]["SessionStart"][2]["hooks"][0]["unexpected"]
+data["hooks"]["SessionStart"].append({"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":5}]})
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if verify "$OFFICIAL_HOME" official >/dev/null 2>&1; then fail 'Claude Lattice hook duplicate を verify が見逃した'; fi
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+data["hooks"]["SessionStart"] = data["hooks"]["SessionStart"][:3]
+data["hooks"]["SessionStart"][2]["hooks"][0]["command"] = "echo ~/.local/bin/lattice-gantt-hook session-start"
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if verify "$OFFICIAL_HOME" official >/dev/null 2>&1; then fail 'Claude Lattice echo/stale command を verify が見逃した'; fi
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" "$OFFICIAL_HOME" <<'PY'
+import json
+import sys
+from pathlib import Path
+path, home = sys.argv[1:]
+data = json.load(open(path, encoding="utf-8"))
+hook = data["hooks"]["SessionStart"][2]["hooks"][0]
+hook["command"] = str(Path(home).resolve() / ".local/bin/lattice-gantt-hook") + " session-start"
+hook["timeout"] = 4
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if verify "$OFFICIAL_HOME" official >/dev/null 2>&1; then fail 'Claude Lattice stale timeout を verify が見逃した'; fi
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+data["hooks"]["SessionStart"][2]["hooks"][0]["timeout"] = 5
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+verify "$OFFICIAL_HOME" official
 assert_link "$OFFICIAL_HOME/.agents/skills/orchestrate" "$ROOT/codex/skills/orchestrate"
 assert_link "$OFFICIAL_HOME/.agents/skills/run-observer-parent-watch" "$ROOT/codex/skills/run-observer-parent-watch"
 rm "$OFFICIAL_HOME/.agents/skills/run-observer-parent-watch"
@@ -190,6 +240,10 @@ raise SystemExit(0 if data.get("contract_version") == "dotagents.orchestrate.con
 PY
 assert_link "$OFFICIAL_HOME/.local/bin/orchestrate-advisory-hook" "$ROOT/bin/orchestrate-advisory-hook.sh"
 [ -x "$OFFICIAL_HOME/.local/bin/orchestrate-advisory-hook" ] || fail 'orchestrate-advisory-hook が実行可能でない'
+assert_link "$OFFICIAL_HOME/.local/bin/lattice-gantt-hook" "$ROOT/bin/lattice-gantt-hook.sh"
+assert_link "$OFFICIAL_HOME/.local/bin/codex-lattice-gantt-hook" "$ROOT/bin/codex-lattice-gantt-hook.sh"
+[ -x "$OFFICIAL_HOME/.local/bin/lattice-gantt-hook" ] || fail 'lattice-gantt-hook が実行可能でない'
+[ -x "$OFFICIAL_HOME/.local/bin/codex-lattice-gantt-hook" ] || fail 'codex-lattice-gantt-hook が実行可能でない'
 assert_link "$OFFICIAL_HOME/.local/bin/bughub-external-probe" "$ROOT/bin/bughub-external-probe.mjs"
 [ ! -e "$OFFICIAL_HOME/.codex/skills/orchestrate" ] || fail 'official が legacy skill 面を作った'
 grep -Fq 'model = "keep-me"' "$OFFICIAL_HOME/.codex/config.toml" || fail '既存 config を保持しない'
@@ -207,6 +261,17 @@ data = json.load(open(sys.argv[1], encoding="utf-8"))
 path = str(Path(sys.argv[2]).resolve() / ".local/bin/orchestrate-advisory-hook")
 expected = {"type":"command", "command":path, "timeoutSec":5, "async":False, "statusMessage":None}
 hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command") == path]
+raise SystemExit(0 if hooks == [expected] else 1)
+PY
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'SessionStart Lattice hook を正規設定しない'
+import json
+import sys
+from pathlib import Path
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+path = str(Path(sys.argv[2]).resolve() / ".local/bin/codex-lattice-gantt-hook")
+command = f"{path} session-start"
+expected = {"type":"command", "command":command, "timeoutSec":5, "async":False, "statusMessage":None}
+hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and "codex-lattice-gantt-hook" in h.get("command", "")]
 raise SystemExit(0 if hooks == [expected] else 1)
 PY
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" <<'PY' || fail 'matcher group から callout hook を分離しない'
