@@ -98,7 +98,7 @@ test('v2 gpt-connector ack bundleは受理後だけ実行する', async () => {
 
 test('Windows owner-only ACLはパスを明示注入し、SID取得・継承遮断・owner full controlを正規処理に含む', async () => {
   const source = await readSource(CLI, 'utf8');
-  assert.match(source, /DOTAGENTS_FACTORY_ACL_TARGET/); assert.match(source, /WindowsIdentity\]::GetCurrent\(\)\.User/); assert.match(source, /DirectorySecurity/); assert.match(source, /FileSecurity/); assert.doesNotMatch(source, /New-Object Security\.AccessControl\.FileSystemSecurity/); assert.match(source, /SetAccessRuleProtection\(\$true, \$false\)/); assert.match(source, /FileSystemAccessRule\]::new\(\$sid, \[Security\.AccessControl\.FileSystemRights\]::FullControl/); assert.match(source, /Set-Acl -LiteralPath \$p -AclObject \$acl/); assert.doesNotMatch(source, /\[IO\.(?:Directory|File)\]::SetAccessControl/); assert.match(source, /ownerOnlyAcl\(target\)/);
+  assert.match(source, /DOTAGENTS_FACTORY_ACL_TARGET/); assert.match(source, /WindowsIdentity\]::GetCurrent\(\)\.User/); assert.match(source, /Get-Acl -LiteralPath \$p/); assert.match(source, /RemoveAccessRuleAll/); assert.doesNotMatch(source, /New-Object Security\.AccessControl\.(?:Directory|File|FileSystem)Security/); assert.match(source, /SetAccessRuleProtection\(\$true, \$false\)/); assert.match(source, /FileSystemAccessRule\]::new\(\$sid, \[Security\.AccessControl\.FileSystemRights\]::FullControl/); assert.match(source, /Set-Acl -LiteralPath \$p -AclObject \$acl/); assert.doesNotMatch(source, /\[IO\.(?:Directory|File)\]::SetAccessControl/); assert.match(source, /ownerOnlyAcl\(target\)/);
 });
 
 test('v2 gpt-connector ack成功後だけoutboxを削除する', async () => {

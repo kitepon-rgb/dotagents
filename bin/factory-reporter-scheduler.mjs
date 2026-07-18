@@ -81,9 +81,10 @@ function artifact(target, config, location, wireMajor) {
 $p = $env:DOTAGENTS_FACTORY_ACL_TARGET
 if ([string]::IsNullOrWhiteSpace($p) -or -not (Test-Path -LiteralPath $p -PathType Container)) { throw 'ACL target is invalid' }
 $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
-$acl = New-Object Security.AccessControl.DirectorySecurity
-$acl.SetAccessRuleProtection($true, $false)
 $inherit = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
+$acl = Get-Acl -LiteralPath $p
+$acl.SetAccessRuleProtection($true, $false)
+foreach ($existing in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existing) }
 $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inherit, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
 [void]$acl.AddAccessRule($rule)
 Set-Acl -LiteralPath $p -AclObject $acl`;

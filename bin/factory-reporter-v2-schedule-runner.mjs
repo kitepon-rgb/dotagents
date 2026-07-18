@@ -23,13 +23,13 @@ if ([string]::IsNullOrWhiteSpace($p) -or -not (Test-Path -LiteralPath $p)) { thr
 $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
 $isDirectory = (Get-Item -LiteralPath $p).PSIsContainer
 if ($isDirectory) {
-  $acl = New-Object Security.AccessControl.DirectorySecurity
   $inherit = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
 } else {
-  $acl = New-Object Security.AccessControl.FileSecurity
   $inherit = [Security.AccessControl.InheritanceFlags]::None
 }
+$acl = Get-Acl -LiteralPath $p
 $acl.SetAccessRuleProtection($true, $false)
+foreach ($existing in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existing) }
 $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inherit, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
 [void]$acl.AddAccessRule($rule)
 Set-Acl -LiteralPath $p -AclObject $acl`;
