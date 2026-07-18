@@ -272,21 +272,24 @@ L0 ベースライン（直轄化・CI green・現状固定）
 Latticeへ工程表面を追加する。dotagentsは消費者として本節の受入契約を所有し、実装はLattice repo
 直轄で行う。
 
-- [ ] 2026-07-18 Grok外部レーン調査済み: 推奨は(a) inline SVG自前生成（依存ゼロ・純文字列構築・`lattice plan gantt`が単一自己完結HTMLを出力・wave段組みlayout・hard_need edgeからcritical path導出・status4色＋crit強調・data属性＋最小inline scriptでhover/filter）。ADR設計の入力とする
-- [ ] **要件をLattice側ADRとして裁定する（F・契約クリティカル）**: 工程表面の公開契約。
-      入力=既存`plan_input.v1`（ToDo候補）、出力=①critical path projection（plan_graphからの
-      純関数導出・digest束縛）②ブラウザ視認のガント出力（依存edge・critical path強調・
-      status色分けの静的HTML。外部CDN/SaaSへ依存しない自己完結）。**ToDoに変更がなくても
-      compile→描画だけを実行できる**read-only経路を第一級にする
-- [ ] dotagentsのToDo md（master plan queue・子計画チェックボックス）を`plan_input.v1`へ写像する
-      consumer adapterの範囲を裁定する（md直読をLattice本体に入れるか、dotagents側adapterで
-      構造化してから渡すか。所有境界: Latticeはschema、dotagentsは自planの書式）
-- [ ] status遷移面（着手/完了/blocked・evidence必須・**順序違反のfail closed**）を第二waveとして
-      設計する。ガント表示が先、enforcementが後（一度に作らない）
-- [ ] 非目標: 常駐サービス化・外部PM SaaS採用・Markdown正本との二重管理（表示と履歴は生成物、
-      正本は一つ）
-- [ ] 受入: dotagents master planの実workloadをガント表示し、クリティカルパスと現在地が
-      ブラウザで一目で判ること（オーナー目視受入）
+2026-07-18のCodex監査5レーン反映（Lattice `66549c2`・[監査evidence](../../Lattice/docs/evidence/2026-07-18-lg-codex-audit.md)）に伴い、
+本節の詳細TODOは実装側正本のG1〜G5へ**編入済み（SUPERSEDED）**。対応表:
+
+| 旧TODO（本節） | 現在の正本 |
+|---|---|
+| Grok調査（inline SVG推奨） | 編入済み→実装側§1（調査結果） |
+| Lattice側ADR裁定 | 編入済み→**G1**（「入力=既存`plan_input.v1`」の旧記述は監査で前提訂正済み。現行producerはhard dependencyを生成せず、依存は新store first-class fieldへ） |
+| ToDo md→`plan_input.v1`写像adapterの範囲裁定 | §1.5裁定で**常設写像は不採用**へ置換→一回きり移行変換=**G4**・定常authoring CLI=**G5** |
+| status遷移面の第二wave設計 | 編入済み→**G5**（enforcementの実体はCI/`todo verify`） |
+| 非目標の固定 | 編入済み→実装側§4 |
+
+dotagentsが所有し続けるのは受入と配線だけ:
+
+- [ ] G4受入: dotagents master planの実workloadをガント表示し、critical chain（名称はG1裁定）と
+      現在地がブラウザで一目で判ること（オーナー目視・受入証跡をevidenceへ）
+- [ ] dotagents側配線の受入: SessionStart案内hook・Stop WARN hook・settings断片・
+      `verify-install`/isolated HOME検証（実装正本はG4/G5、配線正本はdotagents）
+- [ ] cutover受入: 移行済みplanのcheckbox列廃止と憲法「計画文書の作法」規範化（G5と同一gate）
 
 ### Phase L4 — RC4 Stage 1（disposable clone・H）
 
