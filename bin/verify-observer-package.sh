@@ -36,10 +36,14 @@ esac
 [ -n "$EXPECTED_VERSION" ] || usage
 [[ "$EXPECTED_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] \
   || fail '--expected-version が不正です'
-[ -d "$PREFIX" ] && [ ! -L "$PREFIX" ] || fail 'prefixがregular directoryではありません'
+if [ ! -d "$PREFIX" ] || [ -L "$PREFIX" ]; then
+  fail 'prefixがregular directoryではありません'
+fi
 
 PACKAGE_ROOT="$PREFIX/lib/node_modules/observer"
-[ -d "$PACKAGE_ROOT" ] && [ ! -L "$PACKAGE_ROOT" ] || fail 'Observer packageが見つかりません'
+if [ ! -d "$PACKAGE_ROOT" ] || [ -L "$PACKAGE_ROOT" ]; then
+  fail 'Observer packageが見つかりません'
+fi
 
 for entry in \
   'observer:bin/observer.mjs' \
