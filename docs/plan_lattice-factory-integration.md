@@ -264,6 +264,29 @@ L0 ベースライン（直轄化・CI green・現状固定）
     sensor vitest 2481 passed・check pass）。L3成果はLattice `32f0383`（ADR 0049）・
     `34cac18`（wave1）・`dcd5b70`（wave2）
 
+### Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正）
+
+背景: 2026-07-18に「AIの規律ではToDoの順序・チェック消化を維持できない。工程表を管理する
+仕組みを作る」とオーナーが裁定した。外部PMツール（Plane等）は正本の二重化を生むため不採用とし、
+既にToDo→DAG（`lattice.plan_graph.v1`: immutable node・typed edge・capacity・join）を所有する
+Latticeへ工程表面を追加する。dotagentsは消費者として本節の受入契約を所有し、実装はLattice repo
+直轄で行う。
+
+- [ ] **要件をLattice側ADRとして裁定する（F・契約クリティカル）**: 工程表面の公開契約。
+      入力=既存`plan_input.v1`（ToDo候補）、出力=①critical path projection（plan_graphからの
+      純関数導出・digest束縛）②ブラウザ視認のガント出力（依存edge・critical path強調・
+      status色分けの静的HTML。外部CDN/SaaSへ依存しない自己完結）。**ToDoに変更がなくても
+      compile→描画だけを実行できる**read-only経路を第一級にする
+- [ ] dotagentsのToDo md（master plan queue・子計画チェックボックス）を`plan_input.v1`へ写像する
+      consumer adapterの範囲を裁定する（md直読をLattice本体に入れるか、dotagents側adapterで
+      構造化してから渡すか。所有境界: Latticeはschema、dotagentsは自planの書式）
+- [ ] status遷移面（着手/完了/blocked・evidence必須・**順序違反のfail closed**）を第二waveとして
+      設計する。ガント表示が先、enforcementが後（一度に作らない）
+- [ ] 非目標: 常駐サービス化・外部PM SaaS採用・Markdown正本との二重管理（表示と履歴は生成物、
+      正本は一つ）
+- [ ] 受入: dotagents master planの実workloadをガント表示し、クリティカルパスと現在地が
+      ブラウザで一目で判ること（オーナー目視受入）
+
 ### Phase L4 — RC4 Stage 1（disposable clone・H）
 
 **2026-07-17完遂**。一次記録はLattice

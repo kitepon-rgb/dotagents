@@ -101,6 +101,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19f | `DONE` | post-spawn/pre-ready failureを同じwatch identity／handleのlaunch cleanupへ接続する | Observer / 独立focused＋related gate |
 | 19g | `DONE` | 修理後HEADのfull regression、独立重監査、knowledge return、Control／receiptを閉じる | Observer → dotagents / O2 Phase gate |
 | 20 | `IN-PROGRESS` | 4 host統合campaignとBugHub意図的canaryを行う。H承認は2026-07-18オーナー包括裁定で充足。intentional crash／通信断だけは実施直前に目的・影響・rollbackを改めて申告してから実行する。**2026-07-18前半消化**（Control `r2-host-rollout-20260718`）: BugHub Wave 8のMac cutover（item 2）・Mac canary drill（2a）・launchd再起動後canary（1s）・FOX Windows native rollout（5）を完了し、本番`/readyz`全check ready。実被弾P1修理3件: scheduler最小PATHの3host current汚染（`8d17dcc`）、task XML UTF-16（`beab0c0`）、batch token ACL（`8c6469c`）。**2026-07-18後半**: 意図的canary 6a（33秒停止・誤通知ゼロ）・6b（Pi5直接経路確立→open→resolve E2E完走）を消化し、6bで検出したv2 external event還流欠落P1を`5f22ed4`で修理。**残**: 4host新規session E2E（Codex Wave 3。Mac Claude側は消化済み）、1k schema drift（Mac throughline `unverified`）、1m main-server hook導入、0b/1p/1q/1r receipt束ね、Wave 9 | dotagents / R2〜R3 H gate |
+| 23 | `READY` | Lattice工程表・ガント面（オーナー裁定 2026-07-18）。ToDo→plan_graphのcritical path projectionとブラウザGantt出力をLattice repo直轄で設計・実装する。受入契約は[Lattice編入計画 Phase LG](plan_lattice-factory-integration.md)。着手はqueue 20完了後（オーナーは繰上げ裁定可） | Lattice → dotagents / LG gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 | 22 | `DONE` | LatticeのBugHub source登録（adapter/schema/認証）を独立waveで行う。ServerManager `0bb3ef3`＋`a04c6ea`・本番deploy・canary実証・後片付けまで完了（2026-07-18包括承認） | ServerManager / 独立gate |
 
@@ -236,6 +237,9 @@ Lattice編入のオーナー裁定（2026-07-17）:
 
 ## 4. 実行TODO
 
+Phase節は**レーン別に区切り、各レーン内は上から実行順**に並べる。レーン間は並行であり、
+着手順の正本は§3「現在の実行queue」だけとする。順不同の受入束をこの節に作らない。
+
 ### Phase M0 — TODO統合
 
 - [x] 生計画を棚卸しし、実行順の正本を本書へ一本化する。
@@ -315,6 +319,8 @@ Lattice編入のオーナー裁定（2026-07-17）:
     dispatch相関、revision 40でstrict Report importまで回復した。受入証拠は
     [ADR 0037](adr/0037-control-late-dispatch-handle-correlation.md)。full regressionは工場Phase gateへ集約する。
 
+### Lane O — Observer製品（O1→O2→O3→O4。O1〜O3完了、O4はWave D dogfoodのみ残）
+
 ### Phase O1 — Throughline completed-turn feed（COMPLETE）
 
 - [x] Claude receiptとCodex `task_complete`から、rollback検知可能なhost-neutral completed chainを完成する。
@@ -332,35 +338,6 @@ Lattice編入のオーナー裁定（2026-07-17）:
 
 詳細: [Observer計画 Phase 1](plan_observer-factory-integration.md#phase-1-throughline両host-completed-turn-feed) ／
 Throughline `docs/14_observer_completed_turn_feed_plan.md`
-
-### Phase R1 — wire v2残欠陥（O1以降と並行可）
-
-- [x] registry公開版とdotagents adapterのschema drift、Throughline diagnostics、Windows ACL／npm shim、
-  Codex Sidecar実配布版の残件を製品所有repoで閉じる。
-  - [x] 基盤toolchain 3製品のregistry／Grok exact update契約を`fc3bf3f`で実装し、
-    [ADR 0012](adr/0012-toolchain-update-version-acceptance.md)で受け入れた。
-  - [x] Throughline diagnostics producer修正v0.6.3を
-    [ADR 0013](adr/0013-throughline-diagnostics-product-receipt.md)で受け入れた。host導入はR2へ残す。
-  - [x] Windows factory ACLのローカル3入口を`39fba73`で統一済みと確認し、
-    [ADR 0014](adr/0014-windows-factory-acl-local-receipt.md)で受け入れた。FOX実機receiptはR2へ残す。
-  - [x] Windows npm shimのPATHEXT／現行2スペースshapeを`5f781a8`／`5479a73`で修正済みと確認し、
-    [ADR 0015](adr/0015-windows-npm-shim-local-receipt.md)で受け入れた。FOX実機receiptはR2へ残す。
-  - [x] Spotter Windows Codex実行経路の製品修正v1.4.25を
-    [ADR 0016](adr/0016-spotter-windows-codex-product-receipt.md)で受け入れた。4 host実配布receiptはR2へ残す。
-  - [x] Codex Sidecar Windows MCP shim修正v0.3.7を
-    [ADR 0017](adr/0017-codex-sidecar-windows-mcp-product-receipt.md)で受け入れた。FOX実配布receiptはR2へ残す。
-  - [x] dotagentsのSidecar `auditor` presetとfactory v2 scannerのpreset名／dry-run exact検証を
-    `a35e987`、focused 10/10、[ADR 0020](adr/0020-sidecar-auditor-adapter-receipt.md)で受け入れた。
-- [x] BugHub自己監視のoutbox再送fixtureとPi5外部通知bridgeのH不要source契約を、意図的障害試験の
-  前まで完成する。Pi5本体のversioned source／fixture receipt欠落は
-  [ADR 0019](adr/0019-r1-local-closure-refutation.md)のP1としてR1へ戻した。
-  - [x] ServerManager所有のbridge／60秒ticker／`run(deps)` fixtureをimmutable commit/pathとfocused
-    12＋4件で[ADR 0021](adr/0021-servermanager-pi5-bughub-bridge-receipt.md)へ受け入れた。意図的障害と
-    実Discord／BugHub配送はR3のH gateへ残す。
-- [x] R1 full gateと一回の独立反証へのcorrectionを
-  [ADR 0022](adr/0022-r1-local-closure.md)で受け入れた。
-
-詳細: [BugHub計画 Wave 6〜8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
 
 ### Phase O2 — Observer製品完成
 
@@ -498,19 +475,6 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
 詳細: [Observer計画 Phase 2](plan_observer-factory-integration.md#phase-2-observer完成) ／
 Observer `docs/plan_observer.md`
 
-### Phase R2 — host単位の統合rollout
-
-- [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの各hostで、一回のcampaignとして
-  install/config/routing/hook/MCP/Throughline/factory reporterを検証する。
-- [ ] 4 hostのSidecar `auditor` diagnosticsと、R1でlocal受入したThroughline／Windows ACL／npm shim／
-  Spotter／Sidecarの実配布receiptを同じhost campaignで閉じる。
-- [ ] Callout HookとGPT-5.6再配線の他端末残件を、Codex全対応Wave 3の同じreceiptで閉じる。
-- [ ] 新規Claude/Codex sessionで`gpt_connector`、3 role routing、session handoff、Spotter project hookを実火する。
-- [ ] host固有のH操作、未対応、optional、blockedを混同せず端末台帳へ記録する。
-
-詳細: [Codex全対応 Wave 3](plan_codex-full-support.md#wave-3--現役端末-rollout-と既存プラン閉鎖) ／
-[BugHub計画 Wave 8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
-
 ### Phase O3 — Elastic provider対称化
 
 - [ ] Observer同社、相談役異社、一般Worker適応配置をshared orchestration契約へ固定する。
@@ -580,6 +544,50 @@ Observer `docs/plan_observer.md`
 
 詳細: [Observer計画 Phase 4](plan_observer-factory-integration.md#phase-4-rate-aware-elastic-scheduler)
 
+### Lane R — 既存工場rollout（R1→R2→R3。R1完了、R2進行中＝現在地、R3の一部はqueue 20が束ねて先行消化）
+
+### Phase R1 — wire v2残欠陥（O1以降と並行可）
+
+- [x] registry公開版とdotagents adapterのschema drift、Throughline diagnostics、Windows ACL／npm shim、
+  Codex Sidecar実配布版の残件を製品所有repoで閉じる。
+  - [x] 基盤toolchain 3製品のregistry／Grok exact update契約を`fc3bf3f`で実装し、
+    [ADR 0012](adr/0012-toolchain-update-version-acceptance.md)で受け入れた。
+  - [x] Throughline diagnostics producer修正v0.6.3を
+    [ADR 0013](adr/0013-throughline-diagnostics-product-receipt.md)で受け入れた。host導入はR2へ残す。
+  - [x] Windows factory ACLのローカル3入口を`39fba73`で統一済みと確認し、
+    [ADR 0014](adr/0014-windows-factory-acl-local-receipt.md)で受け入れた。FOX実機receiptはR2へ残す。
+  - [x] Windows npm shimのPATHEXT／現行2スペースshapeを`5f781a8`／`5479a73`で修正済みと確認し、
+    [ADR 0015](adr/0015-windows-npm-shim-local-receipt.md)で受け入れた。FOX実機receiptはR2へ残す。
+  - [x] Spotter Windows Codex実行経路の製品修正v1.4.25を
+    [ADR 0016](adr/0016-spotter-windows-codex-product-receipt.md)で受け入れた。4 host実配布receiptはR2へ残す。
+  - [x] Codex Sidecar Windows MCP shim修正v0.3.7を
+    [ADR 0017](adr/0017-codex-sidecar-windows-mcp-product-receipt.md)で受け入れた。FOX実配布receiptはR2へ残す。
+  - [x] dotagentsのSidecar `auditor` presetとfactory v2 scannerのpreset名／dry-run exact検証を
+    `a35e987`、focused 10/10、[ADR 0020](adr/0020-sidecar-auditor-adapter-receipt.md)で受け入れた。
+- [x] BugHub自己監視のoutbox再送fixtureとPi5外部通知bridgeのH不要source契約を、意図的障害試験の
+  前まで完成する。Pi5本体のversioned source／fixture receipt欠落は
+  [ADR 0019](adr/0019-r1-local-closure-refutation.md)のP1としてR1へ戻した。
+  - [x] ServerManager所有のbridge／60秒ticker／`run(deps)` fixtureをimmutable commit/pathとfocused
+    12＋4件で[ADR 0021](adr/0021-servermanager-pi5-bughub-bridge-receipt.md)へ受け入れた。意図的障害と
+    実Discord／BugHub配送はR3のH gateへ残す。
+- [x] R1 full gateと一回の独立反証へのcorrectionを
+  [ADR 0022](adr/0022-r1-local-closure.md)で受け入れた。
+
+詳細: [BugHub計画 Wave 6〜8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
+
+### Phase R2 — host単位の統合rollout
+
+- [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの各hostで、一回のcampaignとして
+  install/config/routing/hook/MCP/Throughline/factory reporterを検証する。
+- [ ] 4 hostのSidecar `auditor` diagnosticsと、R1でlocal受入したThroughline／Windows ACL／npm shim／
+  Spotter／Sidecarの実配布receiptを同じhost campaignで閉じる。
+- [ ] Callout HookとGPT-5.6再配線の他端末残件を、Codex全対応Wave 3の同じreceiptで閉じる。
+- [ ] 新規Claude/Codex sessionで`gpt_connector`、3 role routing、session handoff、Spotter project hookを実火する。
+- [ ] host固有のH操作、未対応、optional、blockedを混同せず端末台帳へ記録する。
+
+詳細: [Codex全対応 Wave 3](plan_codex-full-support.md#wave-3--現役端末-rollout-と既存プラン閉鎖) ／
+[BugHub計画 Wave 8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
+
 ### Phase R3 — wire v2 finalization
 
 - [ ] Mac/Windows scheduler、Oracle rollback drill、BugHub canary、outbox復旧、全host E2Eを完遂する。
@@ -588,6 +596,8 @@ Observer `docs/plan_observer.md`
 
 詳細: [BugHub計画 Wave 9](plan_bughub-factory-integration.md#wave-9--定常運用と完了) ／
 [Codex全対応 Wave 4](plan_codex-full-support.md#wave-4--最終監査と完了)
+
+### 合流 — J1（Lane O完了×Lane R完了の後）
 
 ### Phase J1 — Observer wire v3編入
 
