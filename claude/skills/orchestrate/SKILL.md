@@ -32,7 +32,7 @@ Claude appendixは、Claude固有入口から得たstatusをControlへ投影す�
 
 **レート予算**: 外部枠（Codex/Grok）とClaude内`sonnet`は対等候補とし、物量・隔離・quota残・準備コストで選ぶ（オーナー裁定 2026-07-16。配置の既定と effort ゲートは docs/02_models.md）。
 **並列dispatchの既定はLattice**: 独立に見えるTODOが2つ以上あれば並列化を一度検討し（無意識の直列流れ禁止）、**同一repoへ書込みするworkerを2つ以上同時に走らせるなら**`lattice plan compile`→`run start`経由を既定にする（別repo並列・read-only並列は対象外）。交差判定を親の自前判断でやらない。正本は[委譲契約](../../../shared/orchestrate/delegation-contract.md)「並列化の検討とLattice既定」。
-**継承の罠（最上位張り付き防止）**: Agent/Workflow の model 省略は親モデル継承＝親が最上位だと全子が最上位に張り付く。省略が許されるのは検証・反証・裁定系（L1 verify/Critic・L2・refuter）のみ。finder・dedup・整形・L3 物量は `model` と `effort` を決定表どおり毎回明示する。
+**継承の罠（最上位張り付き防止）**: Agent/Workflow の model 省略は親モデル継承＝親が最上位だと全子が最上位に張り付く。全役割で `model` と `effort` を決定表どおり毎回明示する——親と同値の指定は可、省略は不可（オーナー裁定 2026-07-18。正本は[委譲契約](../../../shared/orchestrate/delegation-contract.md)最低安全契約）。
 
 ## 協業ループ（Claude⇄外部AI・aiterm PTY で回す）
 

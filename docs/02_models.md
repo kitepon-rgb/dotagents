@@ -19,7 +19,7 @@
 
 | ティア | 解決規則（latest 型） | 2026-07-11 時点の解決例 | コスト感 |
 |---|---|---|---|
-| Claude 主 | セッション主モデル（model 省略＝継承） | オーナー指定（Opus 4.8 / Fable 5） | Anthropic 枠 |
+| Claude 主 | セッション主モデル（委譲時も同値のaliasを明示する＝省略継承は不可） | オーナー指定（Opus 4.8 / Fable 5） | Anthropic 枠 |
 | Claude 最上位 | floating alias `fable` | Fable 5 | Anthropic 枠・高コスト＝**スポット限定** |
 | Claude 中／軽 | floating alias `sonnet` / `haiku` | Sonnet 5 / Haiku 4.5 | Anthropic 枠 |
 | Codex 旗艦 | OpenAI 現行旗艦 | `gpt-5.6-sol` | 5（$5/$30 per Mtok） |
@@ -42,9 +42,9 @@
 | 統括・会話（親） | **オーナー指定** | **オーナー指定**（旗艦単体・proactive OFF を推奨） | — | — |
 | 裁定・契約クリティカル | 主 直轄（F）。**主が最上位でない時は最上位=`fable` をスポット諮問**（下記「最上位のスポット呼び」） | 親 直轄・直前だけ effort を上げる | —（難関形式推論は不向き） | 裁定の材料に consult 可 |
 | 監査・発見（finder・数で押す層） | `sonnet`×low・Workflow で明示 | 中位=`gpt-5.6-terra`×medium・codex_auditor/explore | **`grok-4.5`**・grok_agent / `grok -p`（並列 finder に好適） | — |
-| 反証・検証（リポ実読あり） | 主 継承×high・refuter。**契約クリティカル範囲は最上位=`fable`×high をスポットで明示** | 旗艦=`gpt-5.6-sol`×high・refuter 定義 / codex_risk_check | —（ハルシ増・形式推論弱） | — |
+| 反証・検証（リポ実読あり） | 主 同値明示×high・refuter。**契約クリティカル範囲は最上位=`fable`×high をスポットで明示** | 旗艦=`gpt-5.6-sol`×high・refuter 定義 / codex_risk_check | —（ハルシ増・形式推論弱） | — |
 | セカンドオピニオン（実読不要の純推論） | — | — | `grok-4.5` 可（実務的専門判断は首位級） | **第一選択**: `gpt_connector`（command=`gpt-connector-mcp`。正典は [06_gpt-connector.md](06_gpt-connector.md)） |
-| 設計（並列 Plan） | 主 継承×medium〜high | 旗艦×medium・codex_opinion | `grok-4.5`・実務判断の別視点 | 設計意見の別視点 |
+| 設計（並列 Plan） | 主 同値明示×medium〜high | 旗艦×medium・codex_opinion | `grok-4.5`・実務判断の別視点 | 設計意見の別視点 |
 | 実装物量（外部枠） | —（Claude枠の行と対等候補） | **中位=`gpt-5.6-terra`×medium**・codex_work / implementer 定義 | **`grok-composer-2.5-fast`**（仕様固定＋検証コマンド必須の委譲契約を厳守） | —（ChatGPT second-opinion laneは実装を担わない） |
 | 実装物量（Claude 枠・外部枠と対等） | `sonnet`×low〜medium・implementer | — | — | — |
 | 軽作業・分類・抽出 | `haiku`×low（次善） | 軽量=`gpt-5.6-luna`×low・sorter 定義 / codex_generate | composer 可 | — |
@@ -86,7 +86,7 @@
 ## 指定の作法
 
 - Claude Code 内では **floating alias（`fable` / `opus` / `sonnet` / `haiku`）のみ使用**。日付付き model ID を書いた時点で規約違反。
-- Agent / Workflow の **model 省略（＝主モデル継承）が許されるのは検証・反証・裁定系のみ**。finder・整形・物量は `model` と `effort` を決定表どおり**毎回明示**する——親が最上位のとき全子が張り付く継承の罠を踏まない。
+- Agent / Workflow の委譲は全役割で `model` と `effort` を**毎回明示**する——親と同値の指定は可、省略（＝主モデル継承）は不可（オーナー裁定 2026-07-18。正典は`shared/orchestrate/delegation-contract.md`最低安全契約）。親が最上位のとき全子が張り付く継承の罠を踏まない。
 - Codex に floating alias が無いため、`codex/agents/*.toml` と `.codex-sidecar.yml` は具体 slug を持つ**公認例外**（各ファイル冒頭の前提行が原則6 の grep に載る）。
 - 外部 CLI のバージョンは pin しない。CLI 自体は `agents-update`（週次）で latest 追従。
 
