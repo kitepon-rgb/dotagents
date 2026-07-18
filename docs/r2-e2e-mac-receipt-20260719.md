@@ -28,3 +28,16 @@ implementer子の自己申告はroleを`default`と述べたが、rollout JSONL�
 - routing 3 roleはgreen。
 - repo内 `apply-codex-config` コマンド表記の不一致はWave 3のcritical pathを直接塞ぐため、P1として正規入口へ統一する。
 - `--apply`、hook trust、publish、remote host変更は本receiptでは未実施。
+
+## Throughline代表smokeとmonitor修復
+
+- `throughline doctor --codex` で `.vscode/tasks.json` の `Throughline Monitor` が削除済みの
+  `/opt/homebrew/Cellar/node/26.4.0/bin/node` を参照する `registered but broken` を検出した。
+- `/tmp/dotagents-throughline-tasks-before-20260719.tar` に元ファイルを退避し、
+  `TERM_PROGRAM=vscode throughline codex-hook user-prompt-submit` を現在のCodex threadへ実火した。
+  Throughline自身の stale path repair により `node/26.5.0/bin/node` へ更新され、doctorは
+  `registered`、nodeと `throughline.mjs` はともに存在確認済みとなった。
+- 同一threadへの2回目hookは追加INFOなしで `status=ok`、`captured.status=captured`。
+  `codex-handoff-smoke` は `status=ready`、9 checksすべてpass、prompt 3658/12000 charsだった。
+- 生成されたmonitor commandをPTYで起動し、現在のCodex sessionを表示後、Ctrl+Cでexit 0を確認した。
+- 既にVS Codeで本folderを開いている場合は、反映のため `Developer: Reload Window` を1回実行する。
