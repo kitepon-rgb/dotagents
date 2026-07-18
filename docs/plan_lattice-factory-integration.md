@@ -303,6 +303,8 @@ CLI面（verify/snapshot --rebuild）・codegraph coverage分離の全6項目を
   - 進行中: ガントUI再設計（オーナー目視レビュー裁定7点）・master plan抽出JSON作成
 - [ ] dotagents側配線の受入: SessionStart案内hook・Stop WARN hook・settings断片・
       `verify-install`/isolated HOME検証（実装正本はG4/G5、配線正本はdotagents）
+  - 2026-07-19: G4受入前の固定pinを、npm・本host・正規repoで一致する検証済み
+    `@quolu/lattice@0.5.0`へ更新し、factory-core smokeの期待値も同じ座標へ同期した
   - SessionStartのLattice工程表案内をClaude/Codex両hook・settings断片・`verify-install`・
     isolated HOME検証へ配線済み（`ff70476`）。実host settings適用とCodex hook trustはH承認待ち
   - `agents-update`のversion付きpin対応と`@quolu/lattice@0.2.0`固定を実装済み（`8023336`）
