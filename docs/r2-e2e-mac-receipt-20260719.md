@@ -41,3 +41,17 @@ implementer子の自己申告はroleを`default`と述べたが、rollout JSONL�
   `codex-handoff-smoke` は `status=ready`、9 checksすべてpass、prompt 3658/12000 charsだった。
 - 生成されたmonitor commandをPTYで起動し、現在のCodex sessionを表示後、Ctrl+Cでexit 0を確認した。
 - 既にVS Codeで本folderを開いている場合は、反映のため `Developer: Reload Window` を1回実行する。
+
+## Spotter実火とCodex callout hook監査
+
+- Spotterの3 hookは各1件登録、compatible / canonical。runtime logはparse error 0。
+- この会話の連続した2 UserPromptSubmitに対応する `2026-07-18T18:07:39.621Z` と
+  `18:07:43.319Z` の `spotter.hook_event.v1` はともに `success`、`pass=true`、不足toolなし。
+  直近100行のうち18:00Z以降にerror/failureは無かった。
+- JSONL schemaにはCodex thread IDが無いため、現在threadとの直接相関ではなく、host、event、時刻、
+  連続メッセージ数による相関である。過去logのerror/skippedを現在の成功へ混在させない。
+- `tests/hooks/codex-smoke.sh` は全項目green。初回INFO、2回目沈黙、compact再武装、pending生成・
+  配送・削除の実装契約を隔離stateで確認した。
+- native Codexで連続したfrontend出力receiptがあるのはhistoric X5初回注入まで。X2初回INFO、
+  同session 2回目ゼロbyte、compact後1回、同一session Stopから次の自然なpromptへのpending 1回配送は
+  未観測のため、4条件全体をgreenにはしない。
