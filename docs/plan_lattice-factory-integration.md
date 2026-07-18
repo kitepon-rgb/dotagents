@@ -264,7 +264,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
     sensor vitest 2481 passed・check pass）。L3成果はLattice `32f0383`（ADR 0049）・
     `34cac18`（wave1）・`dcd5b70`（wave2）
 
-### Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正）
+### Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正。**実装側正本: Lattice `docs/plan_lattice_gantt.md`（2026-07-18起票・調査結果と G1〜G4 wave分割を収容）**）
 
 背景: 2026-07-18に「AIの規律ではToDoの順序・チェック消化を維持できない。工程表を管理する
 仕組みを作る」とオーナーが裁定した。外部PMツール（Plane等）は正本の二重化を生むため不採用とし、
