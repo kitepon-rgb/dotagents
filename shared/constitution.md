@@ -44,7 +44,7 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 
 ## 作業レーンと統制
 
-- **通常レーンが強い既定**（オーナー裁定 2026-07-16）: 作業は原則通常レーンで行い、短い成功条件・focused test・対象限定commitだけで閉じる。委譲・fan-out等の技法はどのレーンでも使える（委譲の最低安全契約は`shared/orchestrate/delegation-contract.md`）。
+- **通常レーンが強い既定**（オーナー裁定 2026-07-16）: 作業は原則通常レーンで行い、短い成功条件・focused test・対象限定commitだけで閉じる。委譲・fan-out等の技法はどのレーンでも使える（委譲の最低安全契約は`shared/orchestrate/delegation-contract.md`、aiterm子エージェント委譲の運用型＝完了受信・レーン構成・親専任は`shared/orchestrate/aiterm-dispatch.md`）。
 - **統括レーンになるのは次の4つのどれかが着手時点の事実として確定している作業だけ**（オーナー裁定 2026-07-18・ADR 0061）: ①計画に中断が組み込まれている（承認待ち・外部完了待ち・波間停止）②受入が多段に連鎖する③複数repoの書込みを調整する④裁定の検証可能な証跡が必要。該当したら`shared/orchestrate/contract.md`と`orchestrate`正典に従う。それ以外はすべて通常レーンで、予定外に途切れた時はhandoff（planへ現在地1行＋バトン）で閉じて通常レーンのまま終える。
 - **WIPとスレッド寿命**: active WIPは本筋1件＋緊急割込み1件まで。1スレッドは1成果または1 Phaseだけ。context compaction後は現在の原子的作業を閉じてhandoffを準備し、新Phaseは次のスレッドで始める。
 

@@ -11,7 +11,7 @@ description: 多エージェント/多モデル統括の標準型。統括レー
 
 ## Claude appendix（既存の運用詳細）
 
-以下はClaudeのWorkflow / Agent / codex-sidecar / aitermを使う場合の固有入口と配置強化策である。共通原則の二重管理はせず、製品中立の判断は上の共通契約に従う。
+以下はClaudeのWorkflow / Agent / codex-sidecar / aitermを使う場合の固有入口と配置強化策である。共通原則の二重管理はせず、製品中立の判断は上の共通契約に従う。**aitermで子エージェントレーンを張る前に[aiterm-dispatch.md](../../../shared/orchestrate/aiterm-dispatch.md)（完了受信・レーン構成・親専任の運用型）を読む。**
 
 Claude appendixは、Claude固有入口から得たstatusをControlへ投影するだけである。Claude内部の共通dispatch API、Executor state複製、新規operational admissionを前提にしない。既存manifestの定義・所有は変更しない。
 

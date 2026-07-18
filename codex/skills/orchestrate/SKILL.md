@@ -9,7 +9,7 @@ description: 統括レーン（①計画に中断が組込済み②受入が多�
 
 ## Codex appendix
 
-- nativeはrouting smokeの確認後に同一子へfollow-upし、必要時のみinterruptする。external executionはsidecar/aitermの固有task/session/job handleでdispatch・observe・resumeし、Controlには参照と観測だけを記録する。
+- nativeはrouting smokeの確認後に同一子へfollow-upし、必要時のみinterruptする。external executionはsidecar/aitermの固有task/session/job handleでdispatch・observe・resumeし、Controlには参照と観測だけを記録する。aitermレーンの運用型（完了受信・レーン構成・親専任）は[aiterm-dispatch.md](../../../shared/orchestrate/aiterm-dispatch.md)を先に読む。
 - Controlへ記録済みのnative Runを`agents.interrupt_agent`で止める時は、先に`worker-cancel-request`を記録する。interrupt receiptを回収してから`observe-worker=cancelled`へ進め、外部interruptを先行させない。
 - nativeへ実作業をfollow-upする前に、`delegation-packet`と`worker-report-skeleton`の出力をそれぞれ安全な一意pathへ保存し、follow-up本文で両方の実pathを明示する。schemaを親が要約転記したり、field一覧だけで代用したりしない。子には両原本を読んでskeletonのexact shapeを保ったまま埋めるよう指示し、pathを渡せない時はdispatchしない。
 - 統括レーンで委譲すると裁定したAは、tightに結合した作業ならCodex native、隔離、durable work、vendor固有機能、独立capacityが適合する時はsidecar/aitermを選ぶ。通常レーンは委譲を既定にしない。nativeでは`agent_type=<role>`と`fork_turns="none"`を指定し、最初のspawnはrouting smoke のみにする。
