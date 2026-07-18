@@ -298,8 +298,14 @@ CLI面（verify/snapshot --rebuild）・codegraph coverage分離の全6項目を
 
 - [ ] G4受入: dotagents master planの実workloadをガント表示し、**最長依存鎖**と現在地（active set）
       がブラウザで一目で判ること（オーナー目視・受入証跡をevidenceへ）
+  - Lattice側G4前進（参照）: 移行tool（`lattice.todo_extraction.v1`＋`todo migrate`、`1daaff2`）・
+    todo status CLI（`bf73689`）・`engines >=22.13 <25`（`7137f91`）を実装済み
+  - 進行中: ガントUI再設計（オーナー目視レビュー裁定7点）・master plan抽出JSON作成
 - [ ] dotagents側配線の受入: SessionStart案内hook・Stop WARN hook・settings断片・
       `verify-install`/isolated HOME検証（実装正本はG4/G5、配線正本はdotagents）
+  - SessionStartのLattice工程表案内をClaude/Codex両hook・settings断片・`verify-install`・
+    isolated HOME検証へ配線済み（`ff70476`）。実host settings適用とCodex hook trustはH承認待ち
+  - `agents-update`のversion付きpin対応と`@quolu/lattice@0.2.0`固定を実装済み（`8023336`）
 - [ ] cutover受入: 移行済みplanのcheckbox列廃止と憲法「計画文書の作法」規範化（G5と同一gate）
 
 ### Phase L4 — RC4 Stage 1（disposable clone・H）
