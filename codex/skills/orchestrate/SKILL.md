@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: 複数フェーズ・複数担当の大規模実装、監査、移行を Codex のnative・外部実行・相談レーンで安全に統括する時に使う。
+description: 統括レーン（①計画に中断が組込済み②受入が多段連鎖③複数repoの書込調整④裁定証跡が必要、のいずれか確定）の実装、監査、移行を Codex のnative・外部実行・相談レーンで安全に統括する時に使う。技法は通常レーンでも参照可、Control儀式は統括レーンだけ。
 ---
 
 # Orchestrate
