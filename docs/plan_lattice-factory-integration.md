@@ -285,8 +285,13 @@ Latticeへ工程表面を追加する。dotagentsは消費者として本節の�
 
 dotagentsが所有し続けるのは受入と配線だけ:
 
-- [ ] G4受入: dotagents master planの実workloadをガント表示し、critical chain（名称はG1裁定）と
-      現在地がブラウザで一目で判ること（オーナー目視・受入証跡をevidenceへ）
+**G1完了（2026-07-18）**: Lattice [ADR 0053](../../Lattice/docs/adr/0053-todo-store-and-gantt-surface.md)
+Accepted（`614c42b`）。3枚ガードレール（fable諮問・fable×high refuter・クロスprovider Codex
+sol×xhigh）の全指摘反映済み。主要裁定: 新`todo_store.v1`族・`lattice todo`名前空間・遷移6 kind
+（reopen含む）・「critical path」廃語→**「最長依存鎖」**・v1単一writer運用。次はG2（store実装）。
+
+- [ ] G4受入: dotagents master planの実workloadをガント表示し、**最長依存鎖**と現在地（active set）
+      がブラウザで一目で判ること（オーナー目視・受入証跡をevidenceへ）
 - [ ] dotagents側配線の受入: SessionStart案内hook・Stop WARN hook・settings断片・
       `verify-install`/isolated HOME検証（実装正本はG4/G5、配線正本はdotagents）
 - [ ] cutover受入: 移行済みplanのcheckbox列廃止と憲法「計画文書の作法」規範化（G5と同一gate）
