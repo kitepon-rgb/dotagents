@@ -100,7 +100,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19e-r15 | `DONE` | Codex app-serverの固有process group全体をboundedに終了し、group不在まで確認する | Observer / focused＋related gate |
 | 19f | `DONE` | post-spawn/pre-ready failureを同じwatch identity／handleのlaunch cleanupへ接続する | Observer / 独立focused＋related gate |
 | 19g | `DONE` | 修理後HEADのfull regression、独立重監査、knowledge return、Control／receiptを閉じる | Observer → dotagents / O2 Phase gate |
-| 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
+| 20 | `READY` | 4 host統合campaignとBugHub意図的canaryを行う。H承認は2026-07-18オーナー包括裁定（「承認が必要なものは全部承認判定でいい」）で充足。intentional crash／通信断だけは実施直前に目的・影響・rollbackを改めて申告してから実行する | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 | 22 | `DONE` | LatticeのBugHub source登録（adapter/schema/認証）を独立waveで行う。ServerManager `0bb3ef3`＋`a04c6ea`・本番deploy・canary実証・後片付けまで完了（2026-07-18包括承認） | ServerManager / 独立gate |
 
