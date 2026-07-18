@@ -15,6 +15,6 @@ description: 統括レーン（①計画に中断が組込済み②受入が多�
 - 統括レーンで委譲すると裁定したAは、tightに結合した作業ならCodex native、隔離、durable work、vendor固有機能、独立capacityが適合する時はsidecar/aitermを選ぶ。通常レーンは委譲を既定にしない。nativeでは`agent_type=<role>`と`fork_turns="none"`を指定し、最初のspawnはrouting smoke のみにする。
 - `verify-codex-agent-routing <role> <agent-path>` が role・model・effort・developer instructions の一致を確認してから、同じ子へ follow-up で実作業を渡す。
 - `implementer` は仕様固定の実装・テスト、`refuter` は読み取り専用の敵対的検証、`sorter` は読み取り専用の分類・抽出を担う。model と effort は role TOML によって決まり、呼び出し側が手指定しない。
-- native枠は工場全体の上限ではない。native枠が埋まった時、または隔離・独立枠・役割適合で有利な時は、external executionとして`codex-sidecar`またはaitermの`codex_agent` / `grok_agent` / `composer_agent`を積極利用する。Codex親から入れ子のCodexを起動してよい（オーナー恒久裁定 2026-07-14）。
+- native枠は工場全体の上限ではない。native枠が埋まった時、または隔離・独立枠・役割適合で有利な時は、external executionとして`codex-sidecar`またはaitermの`codex_agent` / `grok_agent` / `composer_agent`を積極利用する。Codex親から入れ子のCodexを起動してよい。
 - `gpt_connector` は親直轄のconsultation専用であり、Worker、external capacity、独立監査票、実装・shell・テストの担当として扱わない。timeout後は同じslugをsessionsで回収し、重複送信しない。
 - Codexの入口はinstalled / registered / verified / execution-verifiedを区別し、external writerにはexecution-verifiedの入口だけを使う。

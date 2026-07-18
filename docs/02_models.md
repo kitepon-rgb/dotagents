@@ -10,7 +10,7 @@
 
 | 枠 | 入口 | 特徴 |
 |---|---|---|
-| Anthropic | Claude Code 本体・Agent/Workflow・`sonnet`/`haiku` | 統括の窓＝有限資源。quota残を見つつ`sonnet`へ実装・finderを配ってよい（オーナー裁定 2026-07-16） |
+| Anthropic | Claude Code 本体・Agent/Workflow・`sonnet`/`haiku` | 統括の窓＝有限資源。quota残を見つつ`sonnet`へ実装・finderを配ってよい |
 | OpenAI **Codex** | codex CLI・codex-sidecar MCP・Codex ネイティブ子 | 物量の第一柱 |
 | OpenAI **ChatGPT** | **gpt-connector**（MCP ID `gpt_connector`・API fallback禁止） | Codex 枠と別勘定。実読不要の純推論はここが最得。Oracleは互換・rollback専用 |
 | xAI | grok CLI・aiterm の grok/composer agent | 完全独立枠。物量の第二柱＋並列 finder |
@@ -35,7 +35,7 @@
 - **Observerは親と同じprovider family**: Codex親にはCodex、Claude親にはClaudeを置く。同じアプリのUXと近い思考様式による伴走が目的であり、継続的な反証役として扱わない。
 - **親の相談役は原則として異なるprovider**: Codex親はClaude主モデル、Claude親はCodex旗艦を第一候補にし、provider固有の盲点を補う。相談役はWorkerやObserverへ混ぜない。
 - **一般Workerは適格候補間でrate-aware配置**: role、能力、独立性、F/A/Hを満たす候補だけを残し、残quotaを配置判断に使う。quota取得不能・stale時に架空値や暗黙fallbackで配置を成功扱いしない（rate-aware selectorは[Observer計画](plan_observer-factory-integration.md)の完了まで未提供）。
-- **Phase検証はクロスprovider**（オーナー裁定 2026-07-16）: Phase完了時の重い検証は、Claude親の成果をCodex（`codex_review`／`codex_risk_check`）が、Codex親の成果をClaude（`claude -p`）が1回検証する。TODO単位ではやらず親確認で足りる。指摘の採用・棄却は統括が裁定する。
+- **Phase検証はクロスprovider**: Phase完了時の重い検証は、Claude親の成果をCodex（`codex_review`／`codex_risk_check`）が、Codex親の成果をClaude（`claude -p`）が1回検証する。TODO単位ではやらず親確認で足りる。指摘の採用・棄却は統括が裁定する。
 
 | 役割 | Claude レーン | Codex レーン | xAI レーン | ChatGPT レーン |
 |---|---|---|---|---|
@@ -52,7 +52,7 @@
 
 ### 入口と使い分け
 
-- **Codex親の三レーン**（オーナー恒久裁定 2026-07-14）: ① native subagent＝repo密結合の通常作業、② external execution＝codex-sidecar（隔離・非対話）とaiterm（対話・永続PTY・別vendor枠）、③ consultation＝gpt-connector（相談専用）。nativeの同時枠上限を工場全体の上限にせず、Codex親から入れ子Codexを起動してよい。
+- **Codex親の三レーン**: ① native subagent＝repo密結合の通常作業、② external execution＝codex-sidecar（隔離・非対話）とaiterm（対話・永続PTY・別vendor枠）、③ consultation＝gpt-connector（相談専用）。nativeの同時枠上限を工場全体の上限にせず、Codex親から入れ子Codexを起動してよい。
 - **委譲の安全・回収・受入契約は[委譲契約](../shared/orchestrate/delegation-contract.md)が正本**。external writerに使えるのは execution-verified（installed→registered→verified→execution-verified の最終段）だけ。
 - **codex-sidecar**（非対話一括: `codex_work`/`codex_review`/`codex_explore`/`codex_opinion`/`codex_risk_check`/`codex_auditor`/`codex_generate`）: 端末 config.toml の model/effort を隔離 home に継承する＝`model`/`modelReasoningEffort`（low〜xhigh のみ）を**毎回明示**するか対象repoの`.codex-sidecar.yml` defaults に落とす（dotagents は中位×medium 設定済み）。隔離 home に AGENTS.md はコピーされない＝子は委譲契約プロンプトで統制する。
 - **aiterm**（対話: `codex_agent`/`grok_agent`/`composer_agent`）: codex_agent は`model`/`reasoning_effort`引数が端末ピンより優先され、起動応答が実効値と出所を明示する＝決定表どおり毎回明示して呼ぶ。レーンの運用型（完了受信・レーン構成・親専任）は[aiterm-dispatch](../shared/orchestrate/aiterm-dispatch.md)が正。grok/composer は隔離設計（OAuth のみ共有）。grok の`--effort`は headless（`grok -p`）専用で、対話TUIへの effort 指定は aiterm が起動前に拒否する。
@@ -86,7 +86,7 @@
 ## 指定の作法
 
 - Claude Code 内では **floating alias（`fable` / `opus` / `sonnet` / `haiku`）のみ使用**。日付付き model ID を書いた時点で規約違反。
-- Agent / Workflow の委譲は全役割で `model` と `effort` を**毎回明示**する——親と同値の指定は可、省略（＝主モデル継承）は不可（オーナー裁定 2026-07-18。正典は`shared/orchestrate/delegation-contract.md`最低安全契約）。親が最上位のとき全子が張り付く継承の罠を踏まない。
+- Agent / Workflow の委譲は全役割で `model` と `effort` を**毎回明示**する——親と同値の指定は可、省略（＝主モデル継承）は不可（正典は`shared/orchestrate/delegation-contract.md`最低安全契約）。親が最上位のとき全子が張り付く継承の罠を踏まない。
 - Codex に floating alias が無いため、`codex/agents/*.toml` と `.codex-sidecar.yml` は具体 slug を持つ**公認例外**（各ファイル冒頭の前提行が原則6 の grep に載る）。
 - 外部 CLI のバージョンは pin しない。CLI 自体は `agents-update`（週次）で latest 追従。
 

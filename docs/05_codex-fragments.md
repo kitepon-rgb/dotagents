@@ -180,7 +180,7 @@ directoryかつsymlinkでないことを先に確認し、不適合ならcache�
 
 ## 10. MCP の親別 matrix と登録 / 疎通
 
-MCP は親に応じて入口を分ける。Codex親はnative枠だけを工場全体の上限にせず、外部実行レーンで入れ子CodexとGrok/Composerを併用する（オーナー恒久裁定 2026-07-14）。
+MCP は親に応じて入口を分ける。Codex親はnative枠だけを工場全体の上限にせず、外部実行レーンで入れ子CodexとGrok/Composerを併用する。
 
 | 親 | core | 任意 / 認証依存 | 禁止 / 非採用 |
 |---|---|---|---|
