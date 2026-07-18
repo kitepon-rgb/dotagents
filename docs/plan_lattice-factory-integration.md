@@ -288,7 +288,13 @@ dotagentsが所有し続けるのは受入と配線だけ:
 **G1完了（2026-07-18）**: Lattice [ADR 0053](../../Lattice/docs/adr/0053-todo-store-and-gantt-surface.md)
 Accepted（`614c42b`）。3枚ガードレール（fable諮問・fable×high refuter・クロスprovider Codex
 sol×xhigh）の全指摘反映済み。主要裁定: 新`todo_store.v1`族・`lattice todo`名前空間・遷移6 kind
-（reopen含む）・「critical path」廃語→**「最長依存鎖」**・v1単一writer運用。次はG2（store実装）。
+（reopen含む）・「critical path」廃語→**「最長依存鎖」**・v1単一writer運用。
+
+**G2完了（2026-07-18）**: store契約コア・byte fixture・strict timestamp・`todo_chain.v1` projection・
+CLI面（verify/snapshot --rebuild）・codegraph coverage分離の全6項目をLattice mainへ受入
+（`103dbc1`まで）。ADR 0053は独立反証を受け同日追補（error taxonomy 3区分・exact wire化、`8ea0d24`）。
+既知incident: W1b workerの契約違反自律commit（証跡はLattice plan G2節・caveat記録済み）。
+次はG3（レンダラ。R5設計調書はセッションscratchpad・Markdown AST依存の裁定が着手時判断）。
 
 - [ ] G4受入: dotagents master planの実workloadをガント表示し、**最長依存鎖**と現在地（active set）
       がブラウザで一目で判ること（オーナー目視・受入証跡をevidenceへ）
