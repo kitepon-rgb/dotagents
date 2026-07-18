@@ -96,6 +96,9 @@ test('Caveat・Throughline・aitermの観測済みadapter契約だけを受理�
   const throughlineV9 = structuredClone(fixtures.throughline); throughlineV9.databaseSchema.databaseSchemaVersion = 9; throughlineV9.databaseSchema.supportedDatabaseSchemaVersion = 9;
   await setJson('throughline', throughlineV9); report = await scan();
   assert.equal(report.products.throughline.compatibility_status, 'compatible');
+  const throughlineV9Canonical = structuredClone(throughlineV9); throughlineV9Canonical.databaseSchema.schema = 'throughline.database.v9';
+  await setJson('throughline', throughlineV9Canonical); report = await scan();
+  assert.equal(report.products.throughline.compatibility_status, 'compatible');
   const throughlineV10 = structuredClone(throughlineV9); throughlineV10.databaseSchema.databaseSchemaVersion = 10; throughlineV10.databaseSchema.supportedDatabaseSchemaVersion = 10;
   await setJson('throughline', throughlineV10); report = await scan();
   assert.equal(report.products.throughline.checks[0].reason_code, 'native_diagnostics_schema');
