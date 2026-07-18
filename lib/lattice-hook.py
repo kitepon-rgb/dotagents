@@ -12,7 +12,10 @@ import tempfile
 
 
 CAPTURE_LIMIT = 64 * 1024
-STATUS_SCHEMA = "lattice.todo_status_result.v1"
+STATUS_SCHEMAS = {
+    "lattice.todo_status_result.v1",
+    "lattice.todo_status_result.v2",
+}
 IDENTIFIER = re.compile(r"^[0-9A-Za-z](?:[0-9A-Za-z._-]{0,127})$")
 DIGEST = re.compile(r"^[0-9a-f]{64}$")
 GANTT_REF = Path(".lattice/generated/gantt.html")
@@ -78,13 +81,40 @@ def identifier(value):
     return isinstance(value, str) and IDENTIFIER.fullmatch(value) is not None
 
 
-def task_entry(value):
+def dependency_entry(value):
+    if not isinstance(value, dict):
+        return False
+    keys = set(value)
+    # v2の同一project参照はproject_idを省略し、cross-project形は明示する。
+    if keys not in (
+        {"plan_key", "task_id"},
+        {"plan_key", "project_id", "task_id"},
+    ):
+        return False
     return (
-        isinstance(value, dict)
-        and set(value) == {"plan_key", "task_id", "label"}
-        and identifier(value.get("plan_key"))
+        identifier(value.get("plan_key"))
+        and identifier(value.get("task_id"))
+        and ("project_id" not in value or identifier(value.get("project_id")))
+    )
+
+
+def task_entry(value):
+    if not isinstance(value, dict):
+        return False
+    keys = set(value)
+    if keys not in (
+        {"plan_key", "task_id", "label"},
+        {"plan_key", "task_id", "label", "unmet_dependencies"},
+    ):
+        return False
+    return (
+        identifier(value.get("plan_key"))
         and identifier(value.get("task_id"))
         and bounded_text(value.get("label"), 160)
+        and (
+            "unmet_dependencies" not in value
+            or bounded_list(value.get("unmet_dependencies"), dependency_entry)
+        )
     )
 
 
@@ -136,7 +166,7 @@ def parse_status(raw):
     }
     if not isinstance(value, dict) or set(value) != expected:
         return None
-    if value.get("schema") != STATUS_SCHEMA or not identifier(value.get("project_id")):
+    if value.get("schema") not in STATUS_SCHEMAS or not identifier(value.get("project_id")):
         return None
     if not bounded_list(value.get("active_set"), task_entry):
         return None
@@ -207,10 +237,19 @@ def status_unavailable_message():
 
 
 def status_message(root, status_value):
+    dependency_count = 0
+    if status_value["schema"] == "lattice.todo_status_result.v2":
+        dependency_count = sum(
+            1 for entry in status_value["active_set"] if entry.get("unmet_dependencies")
+        )
+    dependency_note = (
+        f"未充足依存あり: active {dependency_count}件。" if dependency_count else ""
+    )
     return (
         f"INFO: Lattice工程表: {gantt_location(root)}。"
         f"現在地: active={task_summary(status_value['active_set'])}; "
         f"next-ready={task_summary(status_value['next_ready'])}。"
+        f"{dependency_note}"
         "工程正本は Lattice store、散文は linked Markdown。"
         "表示不能時は lattice todo gantt を明示実行してください。"
         "このINFOは依頼範囲を拡張しません。"

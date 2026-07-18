@@ -135,7 +135,7 @@ hook自身のcache markerは7日後に掃除する。cache baseと`dotagents/hoo
 
 `source=startup|clear`のたびに、Lattice工程表の安定パスとstore上の`active`／`next-ready`を短い
 INFOとして表示する。24時間スロットルは掛けない。hookは`lattice todo status`の
-`lattice.todo_status_result.v1`だけをstrictに読み、HTMLや`.lattice/todo/`を直接解釈せず、
+`lattice.todo_status_result.v1`／`v2`をstrictに読み、HTMLや`.lattice/todo/`を直接解釈せず、
 `lattice todo gantt`も自動実行しない。既存SessionStart entryを変更せず、次の1件だけ追加する。
 
 ```bash

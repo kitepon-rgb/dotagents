@@ -180,7 +180,7 @@ directoryかつsymlinkでないことを先に確認し、不適合ならcache�
 `hookSpecificOutput.additionalContext`へ包む。`source=startup|clear`ごとに発火し、スロットルしない。
 
 `lattice` CLI不在時は未導入INFOを一行返す。導入済みでstoreがないrepo、非git、`resume|compact`は
-沈黙する。storeが存在するのにtimeout、CLI失敗、`lattice.todo_status_result.v1`不一致なら、現在地を
+沈黙する。storeが存在するのにtimeout、CLI失敗、`lattice.todo_status_result.v1`／`v2`不一致なら、現在地を
 取得できない旨をINFO一行で返す。正規status取得時は
 `.lattice/generated/gantt.html`の絶対`file://` URIと`active`／`next-ready`を案内し、HTML未生成時も
 hook自身は生成しない。`DOTAGENTS_LATTICE_HOOK=off`で無効化できる。HTMLやstore journalを直接parseする
