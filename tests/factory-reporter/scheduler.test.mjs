@@ -52,6 +52,14 @@ test('v2 runnerのWindows ACLはreporterと同じLiteralPath・current SID・継
 test('runnerはcollection=falseでもhost profileと実platformの不一致をfail closedする', async () => { const box = await sandbox(CURRENT_PROFILE === 'mac' ? 'windows-native' : 'mac', false); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /実行中platformと一致/); });
 test('runnerはprivate lock競合時にscan/enqueue/flushへ進まず非0にする', async () => { const box = await sandbox(CURRENT_PROFILE, true); await writeRunnerLock(box, process.pid); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /すでに実行中/); });
 test('runnerは旧directory lockをageだけで奪わず明示回収を要求する', async () => { const box = await sandbox(CURRENT_PROFILE, false, true); const lock = join(box.state, 'schedule.lock'); await mkdir(lock, { recursive: true }); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /明示回収/); await stat(lock); });
+test('win32はtask XMLをBOM付きで書き、存在照会をlocaleテキストでなくGet-ScheduledTask exit codeで行う', async () => {
+  const source = await readFile(SCHEDULER, 'utf8');
+  assert.match(source, /target === 'win32' \? `\\ufeff\$\{spec\.content\}`/u);
+  assert.match(source, /Get-ScheduledTask -TaskName '\$\{TASK_NAME\}' -ErrorAction SilentlyContinue/u);
+  assert.match(source, /exit 3/u);
+  assert.doesNotMatch(source, /ABSENT_TASK/u);
+  assert.doesNotMatch(source, /schtasks\.exe', \['\/Query'/u);
+});
 test('runnerはlaunchd/cron最小PATHでも~/.local/binの製品CLIを補完解決し、明示PATHを先勝ちに保つ', { skip: process.platform === 'win32' }, async () => {
   const { extendedSchedulerPath } = await import('../../lib/factory/scheduler-path.mjs');
   const minimal = '/usr/bin:/bin:/usr/sbin:/sbin';

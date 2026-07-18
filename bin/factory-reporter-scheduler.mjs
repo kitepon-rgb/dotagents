@@ -14,7 +14,6 @@ const CRON_MARKER = '# dotagents-factory-reporter';
 const UNSAFE_PATH = /[\0\r\n]/;
 const NO_CRONTAB = /no crontab(?: for)?/i;
 const ABSENT_LAUNCHD = /could not find service|no such process|not found/i;
-const ABSENT_TASK = /cannot find (?:the )?(?:file|task)|does not exist|指定された.*(?:見つかりません|ありません)/i;
 
 function emit(value) { process.stdout.write(`${JSON.stringify(value)}\n`); }
 function fail(message) { process.stderr.write(`[factory-reporter-scheduler] ${message}\n`); emit({ ok: false, code: 'FACTORY_REPORTER_SCHEDULER_ERROR' }); process.exitCode = 1; }
@@ -105,16 +104,26 @@ export function nextCron(current, content, removeOnly) { const managed = content
 function replaceCron(content, removeOnly) { const current = readCrontab(); const result = spawnSync('crontab', ['-'], { input: nextCron(current, content, removeOnly), encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, 'crontab更新'); }
 function isAbsent(result, pattern) { return result.status !== 0 && pattern.test(`${result.stderr}\n${result.stdout}`); }
 
+// schtasksのconsole出力はOS localeのcodepage（日本語Windowsはcp932）で、UTF-8 decodeすると
+// mojibake化して不在文言regexが一致しない。存在判定はlocaleテキストに依存しない
+// PowerShell Get-ScheduledTaskのexit codeだけで行う。
+function windowsTaskExists() {
+  const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', `if (Get-ScheduledTask -TaskName '${TASK_NAME}' -ErrorAction SilentlyContinue) { exit 0 } else { exit 3 }`], { encoding: 'utf8', timeout: 15_000 });
+  if (result.status === 0) return true;
+  if (result.status === 3) return false;
+  throw commandError(result, 'Windows Task Scheduler照会');
+}
+
 async function apply(command, target, spec, location) {
   if (command === 'install') {
-    await ensurePrivateState(target, location.state, spec.acl); await ensurePrivateState(target, location.control, spec.acl); await mkdir(dirname(spec.file), { recursive: true, mode: 0o700 }); await writeFile(spec.file, spec.content, { mode: 0o600 });
+    await ensurePrivateState(target, location.state, spec.acl); await ensurePrivateState(target, location.control, spec.acl); await mkdir(dirname(spec.file), { recursive: true, mode: 0o700 }); await writeFile(spec.file, target === 'win32' ? `\ufeff${spec.content}` : spec.content, { mode: 0o600 });
     if (target === 'linux') { replaceCron(spec.content, false); await removeLegacyArtifacts(target, location); return; }
     if (target === 'darwin') { const probe = spawnSync('launchctl', ['print', spec.uninstall[0][2]], { encoding: 'utf8' }); if (probe.status === 0) { const stopped = spawnSync('launchctl', spec.uninstall[0].slice(1), { encoding: 'utf8' }); if (stopped.status !== 0) throw commandError(stopped, 'launchd既存scheduler停止'); } else if (!isAbsent(probe, ABSENT_LAUNCHD)) throw commandError(probe, 'launchd scheduler照会'); }
     const [bin, ...args] = spec.commands[0]; const result = spawnSync(bin, args, { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, `${bin}登録`); await removeLegacyArtifacts(target, location); return;
   }
   if (target === 'linux') replaceCron(spec.content, true);
   else if (target === 'darwin') { const probe = spawnSync('launchctl', ['print', spec.uninstall[0][2]], { encoding: 'utf8' }); if (probe.status === 0) { const result = spawnSync('launchctl', spec.uninstall[0].slice(1), { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, 'launchd解除'); } else if (!isAbsent(probe, ABSENT_LAUNCHD)) throw commandError(probe, 'launchd scheduler照会'); }
-  else { const query = spawnSync('schtasks.exe', ['/Query', '/TN', TASK_NAME], { encoding: 'utf8' }); if (query.status === 0) { const [bin, ...args] = spec.uninstall[0]; const result = spawnSync(bin, args, { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, 'Windows Task Scheduler解除'); } else if (!isAbsent(query, ABSENT_TASK)) throw commandError(query, 'Windows Task Scheduler照会'); }
+  else if (windowsTaskExists()) { const [bin, ...args] = spec.uninstall[0]; const result = spawnSync(bin, args, { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, 'Windows Task Scheduler解除'); }
   await rm(spec.file, { force: true }); await removeLegacyArtifacts(target, location);
 }
 
