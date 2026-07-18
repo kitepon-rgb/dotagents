@@ -3,6 +3,7 @@
 **task-id**: r2-e2e-checklist-draft-20260718  
 **性質**: テキスト報告のみ。ファイル書込・git操作・一切の変更禁止。  
 **典拠**:  
+
 - docs/plan_codex-full-support.md §7「新規 Codex session E2E」合格条件表  
 - docs/plan_codex-full-support.md Wave 3 項目（routing smoke、hooks実火、Throughline、Spotter hook_event、gpt-connector、spotter install）  
 - docs/05_codex-fragments.md のrouting smoke手順（V2断片適用・verify-codex-agent-routing・handshake-only spawn・fork_turns="none"）  
@@ -30,7 +31,7 @@
 | 検証項目 | 実行コマンド | 合格条件 |
 |----------|--------------|----------|
 | install | `./install.sh --profile official` | `linked:` 出力に公式面（$HOME/.agents/skills）の dotagents 対象 skill symlink が正しく表示。実ファイルは SKIP ログのみ |
-| config dry-run | `./bin/apply-codex-config --dry-run` | routing 必須2キー（[features.multi_agent_v2] hide_spawn_agent_metadata/tool_namespace）＋ callout hook 4イベント＋orchestrate-advisory-hook の差分のみ表示。差分0 または承認済み |
+| config dry-run | `./bin/apply-codex-config --dry-run` | routing 必須2キー（[features.multi_agent_v2] hide_spawn_agent_metadata/tool_namespace）＋ callout hook 4イベント＋orchestrate-advisory-hook＋codex-lattice-gantt-hook の差分のみ表示。差分0 または承認済み |
 | spotter install（dotagents project） | `spotter install -y` | `.spotter/marker.json` 生成、Claude 5 hook / Codex 3 hook / tool-db / Throughline context default-on が設定される |
 | verify-install | `./bin/verify-install.sh --profile official` | 全行 OK（FAIL行ゼロ）。factory core 8製品 CLI 存在、Caveat-Private git、MarkItDown uv tool、gpt-connector、Spotter marker、Throughline context、routing/hook canonical entry が green |
 | gpt_connector 診断（read-only） | `codex mcp list --json` / `codex mcp get gpt_connector --json` | `gpt_connector` が listed/connected。任意認証依存は理由付き WARN |
@@ -65,7 +66,7 @@
 | verify-install（SSH経由） | `ssh kite@ubuntu "cd ~/Developer/dotagents && ./bin/verify-install.sh --profile official"` | 全 OK（factory core 8製品、gpt-connector、Spotter、Throughline 等 green） |
 | gpt_connector 診断（SSH経由） | `ssh kite@ubuntu "cd ~/Developer/dotagents && codex mcp list --json && codex mcp get gpt_connector --json"` | Connected（Chrome 不在時は理由付き WARN） |
 
-### 対話セッション / H 操作必要項目
+### main-server対話セッション / H 操作必要項目
 
 | 検証項目 | 実行手順 | 合格条件 |
 |----------|----------|----------|
@@ -91,7 +92,7 @@
 | verify-install（SSH経由） | 同上 `... && ./bin/verify-install.sh --profile official` | 全 OK（factory core 8製品等 green） |
 | gpt_connector 診断（SSH経由） | 同上 `codex mcp list/get` | Connected（Chrome 不在時は WARN） |
 
-### 対話セッション / H 操作必要項目
+### WSL2対話セッション / H 操作必要項目
 
 | 検証項目 | 実行手順 | 合格条件 |
 |----------|----------|----------|
@@ -119,7 +120,7 @@
 | verify-install | 同上 `./bin/verify-install.sh --profile official` | 全 OK（factory core、Caveat-Private 205件、gpt-connector、Spotter、Throughline context 等 green） |
 | gpt_connector 診断 | 同上 `codex mcp list/get` | Connected（Oracle wrapper 修正済み確認） |
 
-### 対話セッション / H 操作必要項目
+### Windows native対話セッション / H 操作必要項目
 
 | 検証項目 | 実行手順 | 合格条件 |
 |----------|----------|----------|
@@ -132,6 +133,7 @@
 | Claude 回帰 | Claude Code 新規 session | 回帰なし |
 
 **特記事項（plan_codex-full-support.md Wave 3 実績より）**:
+
 - Windows 実機差（LF/UTF-8/native symlink/Task Scheduler）は CI 固定済み。
 - App の赤表示は `remote_codex_lookup` の PowerShell 既定シェル不整合。無効化して通常 SSH を使用。
 - 週次 Task Scheduler の agents-update 存在確認。

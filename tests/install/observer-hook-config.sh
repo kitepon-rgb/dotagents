@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# 呼出元Codexの一時CODEX_HOMEを継承せず、各fixtureのHOME配下だけを検証する。
+unset CODEX_HOME
 HOME_FIXTURE="$(mktemp -d)"
 CLI_DIR="$(mktemp -d)"
 trap 'rm -rf "$HOME_FIXTURE" "$CLI_DIR"' EXIT
