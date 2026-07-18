@@ -75,6 +75,39 @@ test('native diagnosticsの製品別不変条件と非0 exitを個別に拒否�
   await setJson('spotter', fixtures.spotter); await setAiterm(fixtures.aiterm, 1); report = await scan(); assert.equal(report.products['aiterm-mcp'].checks[0].reason_code, 'native_exit_mismatch');
 });
 
+test('Caveat・Throughline・aitermの観測済みadapter契約だけを受理する', { concurrency: false }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'factory-v2-adapter-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
+  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  const setJson = async (name, payload, exitCode = 0) => script(name, `echo '${JSON.stringify(payload)}'; exit ${exitCode}`);
+  const setAiterm = async (payload) => script('aiterm-mcp', `cat >/dev/null; echo '${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: JSON.stringify(payload) }] } })}'`);
+  for (const name of ['spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'claude', 'codex', 'npm', 'grok']) await script(name, 'exit 1');
+  const fixtures = nativeFixtures();
+  const scan = () => scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
+  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+
+  await setJson('caveat', caveatDiagnostic('not_ready'), 1); await setJson('throughline', fixtures.throughline); await setAiterm(fixtures.aiterm);
+  let report = await scan();
+  assert.equal(report.products.caveat.compatibility_status, 'incompatible');
+  assert.equal(report.products.caveat.checks[0].reason_code, 'native_not_ready');
+
+  await setJson('caveat', caveatDiagnostic(), 1); report = await scan();
+  assert.equal(report.products.caveat.checks[0].reason_code, 'native_exit_mismatch');
+
+  const throughlineV9 = structuredClone(fixtures.throughline); throughlineV9.databaseSchema.databaseSchemaVersion = 9; throughlineV9.databaseSchema.supportedDatabaseSchemaVersion = 9;
+  await setJson('throughline', throughlineV9); report = await scan();
+  assert.equal(report.products.throughline.compatibility_status, 'compatible');
+  const throughlineV10 = structuredClone(throughlineV9); throughlineV10.databaseSchema.databaseSchemaVersion = 10; throughlineV10.databaseSchema.supportedDatabaseSchemaVersion = 10;
+  await setJson('throughline', throughlineV10); report = await scan();
+  assert.equal(report.products.throughline.checks[0].reason_code, 'native_diagnostics_schema');
+
+  const aitermThreeVendors = structuredClone(fixtures.aiterm); aitermThreeVendors.vendor_dependencies.claude = { status: 'not_applicable', optional: true, required_for: ['claude_agent'] };
+  await setAiterm(aitermThreeVendors); report = await scan();
+  assert.equal(report.products['aiterm-mcp'].compatibility_status, 'compatible');
+  const aitermUnknownVendor = structuredClone(aitermThreeVendors); aitermUnknownVendor.vendor_dependencies.unknown = { status: 'not_applicable', optional: true, required_for: [] };
+  await setAiterm(aitermUnknownVendor); report = await scan();
+  assert.equal(report.products['aiterm-mcp'].checks[0].reason_code, 'native_diagnostics_schema');
+});
+
 test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull snapshotへ投影する', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
   const previousHome = process.env.HOME; process.env.HOME = root; t.after(() => { process.env.HOME = previousHome; });
