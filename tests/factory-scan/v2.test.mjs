@@ -191,3 +191,21 @@ test('collection有効時のgpt runtime snapshot失敗をdisabledへ丸めない
   const report = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, collectionEnabled: true });
   assert.ok(report.products['gpt-connector'].checks.some((item) => item.check_id === 'runtime_errors' && item.status === 'unverified' && item.reason_code === 'runtime_snapshot_unavailable'));
 });
+
+test('v2 ack bundleはgpt-connectorとservermanagerの2 entryまでを受理し、重複・未知productを拒否する', async () => {
+  const { validateAcknowledgementBundleV2, acknowledgeRuntimeErrorsV2 } = await import('../../lib/factory/runtime-errors.mjs');
+  const gpt = { product: 'gpt-connector', cursor: 1, command: 'gpt-connector', args: ['runtime-errors', 'ack', '1', '--json'] };
+  const sm = { product: 'servermanager', cursor: 2, command: 'factory-external-event', args: ['ack', '--cursor', '2', '--json'] };
+  const bundle = (acknowledgements) => ({ schema_version: '2.0', report_id: 'r', acknowledgements });
+  assert.equal(validateAcknowledgementBundleV2(bundle([gpt, sm]), 'r').acknowledgements.length, 2);
+  assert.equal(validateAcknowledgementBundleV2(bundle([sm]), 'r').acknowledgements.length, 1);
+  assert.throws(() => validateAcknowledgementBundleV2(bundle([sm, sm]), 'r'), /ack_bundle_v2/);
+  assert.throws(() => validateAcknowledgementBundleV2(bundle([{ ...sm, product: 'caveat', command: 'caveat' }]), 'r'), /ack_command_v2/);
+  assert.throws(() => validateAcknowledgementBundleV2(bundle([{ ...sm, command: 'rm' }]), 'r'), /ack_command_v2/);
+  const calls = [];
+  const runner = async (command, args) => { calls.push([command, ...args]); return { ok: true, stdout: command === 'factory-external-event' ? '{"ok":true,"acknowledged_through":2}' : '{"status":"acknowledged","acknowledgedThrough":1}' }; };
+  await acknowledgeRuntimeErrorsV2(bundle([gpt, sm]), { runner });
+  assert.deepEqual(calls, [['gpt-connector', 'runtime-errors', 'ack', '1', '--json'], ['factory-external-event', 'ack', '--cursor', '2', '--json']]);
+  const short = async () => ({ ok: true, stdout: '{"ok":true,"acknowledged_through":1}' });
+  await assert.rejects(acknowledgeRuntimeErrorsV2(bundle([sm]), { runner: short }), /ack_response_v2/);
+});
