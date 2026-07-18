@@ -484,6 +484,10 @@ checkの状態は`pass / fail / unsupported / unverified / skipped`を分ける�
    - **P1実被弾と根本修理（`5f22ed4`）**: v2 scanにv1の`mergeServerManagerExternal`統合が欠落しており、全host v2移行後はPi5 bridgeのoutage eventがBugHubへ届かない実ギャップを本canaryで検出（本番storeに7/13以降の未ack event 3件が滞留・bridge stateはconsecutive 4938まで積んでresolve不能だった）。server側v2 schemaは受理済みを実物確認のうえclient側を修理し、v2 ack bundleへservermanagerを拡張。related gate 94/94 green。旧3 eventは修理後の本番cronで自己回復する（open搬送→ack→bridge resolve→次cronで解消）
    - （旧記載）fixed 60秒ticker＋2連続failureの契約を変えず、open→resolve E2Eは別の隔離canaryとして実施する。Pi5 bridgeの公開`run(deps)`で本番stateをtemporary fileへ差し替え、2 synthetic observations（natural 2周期とは称さない）だけtransport failureを注入し、Discordは実module、connectorは実SSHへ委譲する。main-serverの`factory-external-event`とmanual v2 reporterも専用`XDG_STATE_HOME`へ隔離し、固定`servermanager/availability/unreachable`（high、同一fingerprint）のopen→BugHub accepted/ACKを確認する。復旧は実`/readyz`の200/readyだけを入力し、Discord success→同fingerprint resolve/ACK→isolated bridge state消去→次回本番scheduled full snapshotでreopenしないことと全環境のinstalled/latest/compat matrixを確認する
 
+### 2026-07-18検出: main-server crontab外部書換によるscheduled run停止（要オーナー裁定）
+
+6b検証中に、main-serverのfactory cron（毎時17分）が**2026-07-16 23:17を最後に発火していなかった**ことをsyslogで確定した。今日13:17時点のcrontabにはfactory行が不存在で、13:17〜13:22の間に何者かがcrontabを全置換し、旧型`/usr/bin/node`（main-serverには不存在）のfactory行が復活していた。毎分実行の`Bell/scripts/deploy-poller.sh`によるcrontab管理が競合している可能性が高い。dotagentsの`factory-reporter-scheduler install --apply`で正規のNVM node行へ再登録済み（`crontab`実査green）。**crontabの共同管理境界（Bell⇔dotagents⇔ServerManager pull行）はオーナー裁定待ち**として残す。dotagents側のcron契約はmarker行の自管理置換だけで、他行を保全する設計は維持している。
+
 ### Wave 9 — 定常運用と完了
 
 - [x] post-update gateと定期scanの頻度・timeout・通知cooldownを確定
