@@ -102,7 +102,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19g | `DONE` | 修理後HEADのfull regression、独立重監査、knowledge return、Control／receiptを閉じる | Observer → dotagents / O2 Phase gate |
 | 20 | `H-WAIT` | 4 host統合campaignとBugHub意図的canaryを行う | dotagents / R2〜R3 H gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
-| 22 | `READY` | LatticeのBugHub source登録（adapter/schema/認証）を独立waveで行う | ServerManager / 独立gate |
+| 22 | `H-WAIT` | LatticeのBugHub source登録（adapter/schema/認証）を独立waveで行う。repo側は完了（ServerManager `0bb3ef3`・test 74/74）、push・本番deploy/canaryがH | ServerManager / 独立gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。

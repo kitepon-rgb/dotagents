@@ -87,6 +87,9 @@
   （schema `lattice.runtime_errors.v1`・opt-in＝工場共有`factory-reporter.json`の`collection.enabled`・
   Caveat同型契約）。run store・sensor index・runtime error storeのstate/schema/migrationはLattice所有で、
   dotagentsは直接解釈しない。
+- BugHub server側: factory v2へ**server-first登録済み**（ServerManager `0bb3ef3`・required外の
+  任意key・期待matrix全profile `optional`・severity素通し・既存host credential。契約は
+  ServerManager `bughub/FACTORY_INTEGRATION.md` §4.1.1。本番deployは別途H）。
 - 現adapter: 実装済み・**wire v3 reportへ未enroll**（enrollmentはL7 wire v4）。diagnosticsは
   `latticeProduct`（`lib/factory/scan.mjs`・exact schema・overall/exit整合・detailの秘密/絶対path拒否）、
   runtime errorは`collectLatticeRuntimeErrors`（固定catalog 5 code検証・ack round-trip接続）。

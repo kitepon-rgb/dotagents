@@ -444,10 +444,18 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 
 ### 並行レーン Q22 — BugHub source登録（親queue 22）
 
-- [ ] ServerManager側でLatticeを報告元sourceとして登録する（adapter／schema／認証）。
+- [x] ServerManager側でLatticeを報告元sourceとして登録する（adapter／schema／認証）。
       **重大度は報告元＝Latticeの製品契約が決める**既存意味論を維持する
-- [ ] 読み取り専用集約・`resolve`／`reopen`・`/ai`の既存契約を壊さない
-- [ ] 本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）
+  - 2026-07-18完了（ServerManager `0bb3ef3`）: factory v2へ`lattice`をrequired外の
+    任意keyとしてserver-first登録（固定12製品full要求は不変＝既存client互換）。期待matrixは
+    全profile `optional`（requiredへの昇格はwire v4 enroll waveで裁定）。severityはLattice
+    `lattice.runtime_errors.v1`の値を素通し。認証は既存host-scoped credential＝新規面なし。
+    修正先repo登録`kitepon-rgb/Lattice`。契約本文はFACTORY_INTEGRATION.md §4.1.1
+- [x] 読み取り専用集約・`resolve`／`reopen`・`/ai`の既存契約を壊さない
+  - 同commitで検証: pull契約・resolve/reopen・/ai・v1経路は無変更。semantic検証を
+    「送られた製品だけ」へ絞るguardのみ（v1は全product必須＝挙動不変）。npm test 74/74 green
+- [ ] 本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）。
+      ServerManager mainへのpushもH承認に含める（`0bb3ef3`はローカルcommit済み）
 
 ### Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）
 
