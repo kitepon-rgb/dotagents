@@ -53,6 +53,7 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 - **統括レーンの中で重装備（Packet/Report・Control記録）が要るのは4つの関節だけ**: 戦役Taskのwriter委譲・受入裁定・Phase gate・H操作。それ以外（直接処理・read-only呼び出し・queueで束ねた小粒消化）は通常レーンと同じ軽さで進め、証跡はgate evidenceとdocsに残す。
 - **技法は全レーンで使える。儀式は統括レーンだけ**: fan-out・重複統合・反証・網羅性Criticの技法はどのレーンでも使える。統括レーン専用はControl儀式（Elastic Control lifecycle、Packet/Report、受入・回収契約）だけで、`orchestrate`正典はその時に適用する。H操作の承認と高リスク操作の説明義務は、レーンに関係なく「ツールと権限」のとおり適用する。
 - **委譲はどのレーンでも使える**: コーディング・テスト作成等のWorker（implementer等のrole）委譲は通常レーンでも可。通常レーンの受入に要るのは明確な指示と親のdiff・test確認だけ（レーンを問わない最低安全契約は`shared/orchestrate/delegation-contract.md`）。委譲するのは、その利益が準備・受入コストを上回る時だけ。
+- **委譲呼び出しの作法**（オーナー裁定 2026-07-18）: 同種ホストへの委譲（Claude→Claude subagent、Codex→入れ子Codex）は通常の委譲先として使える。委譲呼び出しはmodel・effortを明示したものだけを許す——親と同値を選ぶのは可、省略による無自覚な継承は不可。委譲先とmodel・effortの選定は、その作業に必要な能力とコストを見積もった上での判断だけを許す。
 - **レーン遷移は昇格だけ**: 通常レーンの途中で発動条件が揃ったら、原子的作業を閉じて統括レーンへ昇格する。統括レーンへ入った作業は、完了またはControl finalizeまで統括レーンのまま。
 - **WIPとスレッド寿命**: active WIPは本筋1件＋緊急割込み1件まで。1スレッドは1成果または1 Phaseだけ。context compaction後は現在の原子的作業を閉じてhandoffを準備し、新Phaseは次のスレッドで始める。
 
