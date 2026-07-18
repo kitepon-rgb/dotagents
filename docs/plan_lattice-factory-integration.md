@@ -272,6 +272,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
 Latticeへ工程表面を追加する。dotagentsは消費者として本節の受入契約を所有し、実装はLattice repo
 直轄で行う。
 
+- [ ] 2026-07-18 Grok外部レーン調査済み: 推奨は(a) inline SVG自前生成（依存ゼロ・純文字列構築・`lattice plan gantt`が単一自己完結HTMLを出力・wave段組みlayout・hard_need edgeからcritical path導出・status4色＋crit強調・data属性＋最小inline scriptでhover/filter）。ADR設計の入力とする
 - [ ] **要件をLattice側ADRとして裁定する（F・契約クリティカル）**: 工程表面の公開契約。
       入力=既存`plan_input.v1`（ToDo候補）、出力=①critical path projection（plan_graphからの
       純関数導出・digest束縛）②ブラウザ視認のガント出力（依存edge・critical path強調・
