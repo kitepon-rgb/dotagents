@@ -200,7 +200,11 @@ def is_script_command(
 
 
 def render_hook_command(parts: list[str]) -> str:
-    return subprocess.list2cmdline(parts) if os.name == "nt" else shlex.join(parts)
+    if os.name == "nt":
+        if any('"' in part for part in parts):
+            raise ValueError("Windows hook command token に quote は使用できません")
+        return " ".join(f'"{part}"' for part in parts)
+    return shlex.join(parts)
 
 
 def python_hook_command(hook_path: Path, *arguments: str) -> str:
