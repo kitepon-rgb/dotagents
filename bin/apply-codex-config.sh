@@ -35,8 +35,16 @@ HOOKS = {
 }
 ADVISORY_HOOK = ("SessionStart", 5)
 LATTICE_HOOK = ("SessionStart", "session-start", 6)
-PYTHON_HOOK_PREFIX = ("/usr/bin/env", "python3")
-SHELL_HOOK_PREFIX = ("/bin/sh",)
+PYTHON_HOOK_PREFIX = (
+    (str(Path(sys.executable).resolve()),)
+    if os.name == "nt"
+    else ("/usr/bin/env", "python3")
+)
+SHELL_HOOK_PREFIX = (
+    (str(Path(shutil.which("sh") or shutil.which("bash") or "sh").resolve()),)
+    if os.name == "nt"
+    else ("/bin/sh",)
+)
 
 
 def parse_args() -> argparse.Namespace:
