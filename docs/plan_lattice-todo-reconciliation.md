@@ -142,19 +142,21 @@ description / acceptance / priority / owner、start / block / unblock / done / r
 
 ### Phase 5 — source別登録・task-level校正
 
-- [ ] 移行直前に、コードフェンス外の番号付き項目を含むGFM checkbox全件を再集計し、baselineとの差分と除外理由を記録する
-  - pre-cutover観測は[全数証拠](evidence/2026-07-19-lattice-todo-precutover-inventory.md)へ固定済み。
-    store書込み直前に同じcommit／digestか再確認するため、本項は未完のまま維持する。
-- [ ] [plan_factory-master.md](plan_factory-master.md): 既存110 tasksをsource taskへ再対応付けし、抜け、重複、誤分割、title、status、lane、dependency、source anchorを校正する
-- [ ] [plan_bughub-factory-integration.md](plan_bughub-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正する
-- [ ] [plan_codex-full-support.md](plan_codex-full-support.md): 登録後、task-level mappingと状態・依存・内容を校正する
-- [ ] [plan_gpt56-rewiring.md](plan_gpt56-rewiring.md): 登録後、task-level mappingと状態・依存・内容を校正する
-- [ ] [plan_lattice-factory-integration.md](plan_lattice-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正し、既存dirtyを変更しない
-- [ ] [plan_observer-factory-integration.md](plan_observer-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正する
-- [ ] [queue_memory-promotion.md](queue_memory-promotion.md): 登録後、task-level mappingと状態・依存・内容を校正する
-- [ ] 各sourceについて、抜け、重複、誤分割、title、status、lane、dependency、source anchorを機械検査とAI実読の双方で照合する
-- [ ] 意味が一意に決まらない差異だけを、候補・根拠・影響を添えてオーナーへ確認する
-- [ ] 校正済みtaskだけを`reconciled`へ遷移し、未照合・不一致・blockedを完了へ丸めない
+- [x] 移行直前に、コードフェンス外の番号付き項目を含むGFM checkbox全件を再集計し、baselineとの差分と除外理由を記録する
+  - source commitとinventory digestを再照合し、656件（checked 505 / unchecked 151）からdriftなし。
+- [x] [plan_factory-master.md](plan_factory-master.md): 既存110 tasksをsource taskへ再対応付けし、抜け、重複、誤分割、title、status、lane、dependency、source anchorを校正する
+- [x] [plan_bughub-factory-integration.md](plan_bughub-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正する
+- [x] [plan_codex-full-support.md](plan_codex-full-support.md): 登録後、task-level mappingと状態・依存・内容を校正する
+- [x] [plan_gpt56-rewiring.md](plan_gpt56-rewiring.md): 登録後、task-level mappingと状態・依存・内容を校正する
+- [x] [plan_lattice-factory-integration.md](plan_lattice-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正し、既存dirtyを変更しない
+- [x] [plan_observer-factory-integration.md](plan_observer-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正する
+- [x] [queue_memory-promotion.md](queue_memory-promotion.md): 登録後、task-level mappingと状態・依存・内容を校正する
+- [x] 各sourceについて、抜け、重複、誤分割、title、status、lane、dependency、source anchorを機械検査とAI実読の双方で照合する
+- [x] 意味が一意に決まらない差異だけを、候補・根拠・影響を添えてオーナーへ確認する（該当差異なし）
+- [x] 校正済みtaskだけを`reconciled`へ遷移し、未照合・不一致・blockedを完了へ丸めない
+
+Phase 5の公開後receiptは
+[2026-07-19-lattice-wire-v4-cutover.md](evidence/2026-07-19-lattice-wire-v4-cutover.md)を正とする。
 
 ### Phase 6 — 自己閉包・cutover・archive
 
