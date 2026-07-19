@@ -474,7 +474,7 @@ hook_path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/co
 python_prefix = [str(Path(sys.executable).resolve())] if os.name == "nt" else ["/usr/bin/env", "python3"]
 for event, (subcommand, timeout) in required.items():
     parts = [*python_prefix, hook_path, subcommand]
-    command = " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
+    command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
     matches = [
         hook
         for entry in data.get("hooks", {}).get(event, [])
@@ -515,7 +515,7 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError):
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/orchestrate-advisory-hook")
 shell_prefix = str(Path(shutil.which("sh") or shutil.which("bash") or "sh").resolve()) if os.name == "nt" else "/bin/sh"
 parts = [shell_prefix, path]
-command = " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
+command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
 expected = {"type": "command", "command": command, "timeoutSec": 5, "async": False, "statusMessage": None}
 matches = [
     hook
@@ -546,7 +546,7 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError):
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-lattice-gantt-hook")
 python_prefix = [str(Path(sys.executable).resolve())] if os.name == "nt" else ["/usr/bin/env", "python3"]
 parts = [*python_prefix, path, "session-start"]
-command = " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
+command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
 expected = {"type": "command", "command": command, "timeoutSec": 6, "async": False, "statusMessage": None}
 relevant = []
 matches = []

@@ -158,12 +158,15 @@ def command_parts(command: object) -> list[str] | None:
     try:
         parts = shlex.split(command, posix=os.name != "nt")
         if os.name == "nt":
-            return [
+            parts = [
                 part[1:-1]
                 if len(part) >= 2 and part[0] == part[-1] and part[0] in ("'", '"')
                 else part
                 for part in parts
             ]
+            if parts[:1] == ["&"]:
+                parts = parts[1:]
+            return parts
         return parts
     except ValueError:
         return None
@@ -203,7 +206,9 @@ def render_hook_command(parts: list[str]) -> str:
     if os.name == "nt":
         if any('"' in part for part in parts):
             raise ValueError("Windows hook command token に quote は使用できません")
-        return " ".join(f'"{part}"' for part in parts)
+        # Codex は hook を現在の turn shell で実行する。Windows の PowerShell では
+        # quoted executable を command として呼ぶため先頭の call operator が必要。
+        return "& " + " ".join(f'"{part}"' for part in parts)
     return shlex.join(parts)
 
 

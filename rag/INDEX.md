@@ -20,6 +20,8 @@
 - [orchestration/bell-orchestration-map.md](orchestration/bell-orchestration-map.md) — 二レーン版オーケストレーション全景マップ（SVG＋解説）: 通常は親直で原子的に完了し、統括だけF/A/Hと利益のある委譲を使う。Elastic統括ゲートと回収契約は維持したv3（2026-07-16・確度高）
 - [codex/codex-full-support-foundations.md](codex/codex-full-support-foundations.md) — dotagents Codex 全対応の公式仕様基盤: 9監査面、公式 skill 面 `$HOME/.agents/skills`、legacy `~/.codex/skills` 実測、import は同期でなく検出器、plugin は二重管理防止を実証後に裁定。Wave 2 のclean HOME受入れとCI parser固定も記録（2026-07-12・確度高）
 - [codex/subagent-thread-limits.md](codex/subagent-thread-limits.md) — Codex subagentの公開設定 `agents.max_threads`（既定6）／`max_depth`（既定1）と、Desktopセッション側の低い実効上限を分離。旧「max_threadsは起動エラー」説を公式仕様で訂正（2026-07-13・確度はclaim別）
+- [codex/windows-hook-shell-contract.md](codex/windows-hook-shell-contract.md) — Codex 0.144.6のhookはturn shell経由。Windows PowerShellでquoted executableを起動するにはcall operator `&` が必要という正規形と実機受入条件（2026-07-20・確度高）
+- [codex/raw/openai-codex-hook-command-runner-0.144.6.md](codex/raw/openai-codex-hook-command-runner-0.144.6.md) — OpenAI Codex 0.144.6 hook command runner一次ソース verbatim（2026-07-20）
 - [codex/raw/openai-subagents-2026-07-13.md](codex/raw/openai-subagents-2026-07-13.md) — OpenAI公式 Subagents 文書のverbatim保存（2026-07-13）
 - [macos-launchd-local-network/apple-tn3179-launchd.md](macos-launchd-local-network/apple-tn3179-launchd.md) — macOS 15+のLaunchAgentはTerminal/SSH子と異なりLANがLocal Network Privacyで遮断される。Apple公式のresponsible code要件、短命alert既知問題、管理端末向けCIDR許可と再起動条件、Mac実機再現（2026-07-14・確度高）
 - [wsl-relay-recovery/wslrelay-banner-timeout.md](wsl-relay-recovery/wslrelay-banner-timeout.md) — Windowsのwslrelayがlocalhost:2222をlistenしてもWSL ssh.socketへ届かないbanner timeoutを実測。relay単体の公開再登録入口はなく、稼働processがある間はterminate/shutdownせずmaintenance windowで再起動する（2026-07-14・確度高）
