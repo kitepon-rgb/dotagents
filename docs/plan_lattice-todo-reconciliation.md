@@ -130,8 +130,8 @@ description / acceptance / priority / owner、start / block / unblock / done / r
 ### Phase 3 — release / install
 
 - [x] version、changelog、pack smoke、tarball install smoke、rollback手順をLattice repoで準備する
-- [ ] H承認後にpublishし、registry install smokeを通して対象hostへglobal installする
-- [ ] 公開後に`lattice todo status`、`verify`、`migrate`、authoring / reconcile CLIのsmokeを実施し、versionと契約を記録する
+- [x] H承認後にpublishし、registry install smokeを通して対象hostへglobal installする
+- [x] 公開後に`lattice todo status`、`verify`、`migrate`、authoring / reconcile CLIのsmokeを実施し、versionと契約を記録する
 
 ### Phase 4 — dotagents hook timeout・案内契約
 

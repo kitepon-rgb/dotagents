@@ -1,0 +1,1519 @@
+{
+  "schema": "lattice.todo_extraction.v2",
+  "project_id": "dotagents",
+  "plan_key": "gpt56-rewiring",
+  "plan_version": "cutover-53572f7c1f2872462c5facfe",
+  "actor": {
+    "host": "mac-kite",
+    "session": "lattice-wire-v4-cutover-20260719",
+    "agent": "codex-parent"
+  },
+  "recorded_at": "2026-07-19T10:00:00.000Z",
+  "tasks": [
+    {
+      "task_id": "gw-0039",
+      "title": "git fetch 照合・Oracle dirty 行の分離コミット（752f387、当時Oracle。現行標準はgpt-connector）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 39,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:39"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0040",
+      "title": "本ファイルの正本化（正本化ゲート）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 40,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:40"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0041",
+      "title": "step0: Codex CLI 更新 0.143.0→0.144.1＋ `codex features list` 記録（multi_agent=stable/true・multi_agent_v2=under development/false）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 41,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:41"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0042",
+      "title": "**F 直轄** `docs/02_models.md`: ティア語彙（slug 併記）・4レーン決定表・エスカレーションゲート・入口注記・世代交代手順 step2′",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 42,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:42"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0043",
+      "title": "**F 直轄** `codex/AGENTS.md` 新規（当初は約2KBへ過剰圧縮。2026-07-11 に共通憲法を復元し、Codex 固有差分だけを分離）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 43,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:43"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0044",
+      "title": "**F 直轄** `claude/CLAUDE.md`: 着手ゲートに配置1行宣言＋Codex 親規範ポインタ＋「親はオーナー領分」",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 44,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:44"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0045",
+      "title": "**F 直轄** `claude/skills/orchestrate/`: SKILL.md に継承の罠＋「配置はゲートで宣言」、workflow-templates.md 冒頭差し替え",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 45,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:45"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0046",
+      "title": "**A 委譲** `codex/agents/{implementer,refuter,sorter}.toml`（実バイナリで3必須キー・warning 無言無効化を裏取りの上作成）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 46,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:46"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0047",
+      "title": "**A 委譲** `.codex-sidecar.yml`（実装スキーマ裏取りで `project` 必須キーを発見・追加。defaults=terra×medium・safety_profile=generic・presets）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 47,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:47"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0048",
+      "title": "**A 委譲** `docs/05_codex-fragments.md`（8章。再検証で確度を明記: project_doc_max_bytes 既定値=確度低・max_threads 事故機序=確度中）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 48,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:48"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0049",
+      "title": "**A 委譲** `rag/models/gpt-5.6-family.md`・`xai-grok45-composer25.md`＋INDEX 2行（新発見: luna は ultra 非対応の5段・既定 medium）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 49,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:49"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0050",
+      "title": "**A 委譲** `install.sh`・`bin/verify-install.sh`（override 非空シャドー検出込み）・`.markdownlint-cli2.jsonc`",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 50,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:50"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0051",
+      "title": "**A 委譲** `AGENTS.md`・`README.md`・`docs/00_overview.md`・`docs/01_project-layout.md` 追従（統括レビューで手順6の因果誤り1件を修正）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 51,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:51"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0052",
+      "title": "`codex/rules/default.rules` 1行目（旧 Iron Rules 生成 allow）削除",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 52,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:52"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0053",
+      "title": "ゲート: `make lint`（0 errors）→ `./install.sh`（新リンク4本）→ `./bin/verify-install.sh`（OK）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 53,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:53"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0054",
+      "title": "実測: `~/.codex/AGENTS.md` → codex/AGENTS.md 張替確認／malformed role warning 無し／**明示委譲で implementer spawn・子が toml どおり gpt-5.6-terra で応答**（親 luna×low から）／通常 exec で自動委譲不発火",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 54,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:54"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0055",
+      "title": "実測（残）: sidecar の model 明示＋defaults フォールバック——`codex-sidecar diagnostics`（dry-run）で実測。引数なし→ defaults の terra×medium に解決（端末 Sol×ultra ピンは不漏出・modelPolicy.source=explicit）／`--model gpt-5.6-sol --model-reasoning-effort high` → 指定どおり解決（2026-07-11）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 55,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:55"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0056",
+      "title": "caveat 登録 4件（ultra の正体／override 無言シャドー／grok --effort headless 専用／sidecar のピン継承）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 56,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:56"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0057",
+      "title": "pathspec コミット → push",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 57,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:57"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0058",
+      "title": "aiterm 改修依頼リスト4件を aiterm プロジェクトへ起票（aiterm-mcp `docs/10_gpt56-model-alignment-plan.md`・コミット 17c46ae・push 済み。2026-07-11）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 58,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:58"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0059",
+      "title": "**事故是正（2026-07-11）**: VS Code の `multi_agent_v2` で `spawn_agent` から",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 59,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:59"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0062",
+      "title": "`hide_spawn_agent_metadata = false`＋`tool_namespace = \"agents\"` を全端末必須断片にする",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 62,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0059",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:62"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0063",
+      "title": "`task_name` と `agent_type`、`fork_turns=\"none\"` の役割を Codex 規範・端末設定正典へ焼き込む",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 63,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0059",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:63"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0064",
+      "title": "role 適用後の `agent_role / model / effort / sandbox` を実セッションから照合する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 64,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0059",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:64"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0066",
+      "title": "実作業は handshake-only spawn → 実効値照合 → follow-up task の2段階に限定し、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 66,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0059",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:66"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0068",
+      "title": "`make lint` → `install.sh` → `verify-install.sh` → 新規 Codex セッションで",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 68,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0059",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:68"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0070",
+      "title": "**routing verifierのCRLF偽陰性修正（2026-07-17 LiveTR実利用で再現）**:",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 70,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:70"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0075",
+      "title": "**別論点（上流）**: spawn 応答へ実効 role/model/effort/sandbox を載せる。role の `sandbox_mode` を",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 75,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:75"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0077",
+      "title": "**憲法過剰圧縮の是正（2026-07-11）**: Codex 固有差分の分離時に共通原則まで削った問題を解消する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 77,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:77"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0078",
+      "title": "`claude/CLAUDE.md` を基準に人格・応対・五原則・調査・計画・権限・大規模変更・git・報告を `codex/AGENTS.md` へ復元",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 78,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0077",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:78"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0079",
+      "title": "差分を Codex のモデル配置・委譲レーン・shell 入口・push 制約に限定（2026-07-14にnative／external execution／consultationへ拡張）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 79,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0077",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:79"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0080",
+      "title": "CLAUDE 側の「短い専用憲法がよい」という誤方針を撤回",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 80,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0077",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:80"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0081",
+      "title": "README 追従、diff 監査、lint・install・verify、新規セッション実読確認",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 81,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "gw-0077",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:81"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0082",
+      "title": "他端末波及（下記チェックリスト）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 82,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "実装チェックリスト"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:82"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0100",
+      "title": "git pull → `~/.codex/AGENTS.md`が実ファイルなら意図確認・退避（価値ある共通行は`shared/constitution.md`、Codex固有行は`codex/AGENTS.delta.md`へPRし、生成物を更新）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 100,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "他端末波及チェックリスト（端末ごと）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:100"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0101",
+      "title": "`./install.sh` → `./bin/verify-install.sh` OK（override 非空があれば FAIL 名指しに従う）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 101,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "他端末波及チェックリスト（端末ごと）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:101"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0102",
+      "title": "docs/05 §3 の V2 routing 必須断片適用（custom role の個別 `[agents.<name>]` 登録は不要）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 102,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "他端末波及チェックリスト（端末ごと）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:102"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "gw-0103",
+      "title": "Codex 新セッション実測（schema に `agent_type`／`fork_turns=\"none\"`／3 role の routing-check）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_gpt56-rewiring.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_gpt56-rewiring.md",
+        "origin_line": 103,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "プラン: GPT-5.6 世代対応オーケストレーション再配線",
+          "他端末波及チェックリスト（端末ごと）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_gpt56-rewiring.md:103"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    }
+  ],
+  "hard_dependencies": [],
+  "joins": [],
+  "extraction_digest": "1b0d871cfa3c7c95c5d05a931a671dde98bc8e5ccc3f34e8791fcbef7e398314"
+}
