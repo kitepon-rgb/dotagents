@@ -451,6 +451,7 @@ if [ ! -f "$codex_hooks" ]; then
 elif ! python3 - "$codex_hooks" <<'PY'
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -471,16 +472,17 @@ required = {
 missing = []
 hook_path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-callout-hook")
 for event, (subcommand, timeout) in required.items():
+    command = shlex.join(["/usr/bin/env", "python3", hook_path, subcommand])
     matches = [
         hook
         for entry in data.get("hooks", {}).get(event, [])
         if isinstance(entry, dict)
         for hook in entry.get("hooks", [])
-        if isinstance(hook, dict) and hook.get("command") == f"{hook_path} {subcommand}"
+        if isinstance(hook, dict) and hook.get("command") == command
     ]
     if len(matches) != 1 or matches[0] != {
         "type": "command",
-        "command": f"{hook_path} {subcommand}",
+        "command": command,
         "timeoutSec": timeout,
         "async": False,
         "statusMessage": None,
@@ -499,6 +501,7 @@ fi
 if [ -f "$codex_hooks" ] && ! python3 - "$codex_hooks" <<'PY'
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -507,13 +510,14 @@ try:
 except (OSError, UnicodeDecodeError, json.JSONDecodeError):
     raise SystemExit(1)
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/orchestrate-advisory-hook")
-expected = {"type": "command", "command": path, "timeoutSec": 5, "async": False, "statusMessage": None}
+command = shlex.join(["/bin/sh", path])
+expected = {"type": "command", "command": command, "timeoutSec": 5, "async": False, "statusMessage": None}
 matches = [
     hook
     for entry in data.get("hooks", {}).get("SessionStart", [])
     if isinstance(entry, dict)
     for hook in entry.get("hooks", [])
-    if isinstance(hook, dict) and hook.get("command") == path
+    if isinstance(hook, dict) and hook.get("command") == command
 ]
 raise SystemExit(0 if matches == [expected] else 1)
 PY
@@ -526,6 +530,7 @@ fi
 if [ -f "$codex_hooks" ] && ! python3 - "$codex_hooks" <<'PY'
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -534,7 +539,7 @@ try:
 except (OSError, UnicodeDecodeError, json.JSONDecodeError):
     raise SystemExit(1)
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-lattice-gantt-hook")
-command = f"{path} session-start"
+command = shlex.join(["/usr/bin/env", "python3", path, "session-start"])
 expected = {"type": "command", "command": command, "timeoutSec": 6, "async": False, "statusMessage": None}
 relevant = []
 matches = []

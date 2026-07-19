@@ -255,21 +255,24 @@ grep -Fq '/custom/keep stop' "$OFFICIAL_HOME/.codex/hooks.json" || fail '既存 
 assert_stop_count "$OFFICIAL_HOME/.codex/hooks.json" || fail '~ 表記の callout hook を重複追加した'
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'SessionStart advisory hook を正規設定しない'
 import json
+import shlex
 import sys
 from pathlib import Path
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 path = str(Path(sys.argv[2]).resolve() / ".local/bin/orchestrate-advisory-hook")
-expected = {"type":"command", "command":path, "timeoutSec":5, "async":False, "statusMessage":None}
-hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command") == path]
+command = shlex.join(["/bin/sh", path])
+expected = {"type":"command", "command":command, "timeoutSec":5, "async":False, "statusMessage":None}
+hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command") == command]
 raise SystemExit(0 if hooks == [expected] else 1)
 PY
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'SessionStart Lattice hook を正規設定しない'
 import json
+import shlex
 import sys
 from pathlib import Path
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 path = str(Path(sys.argv[2]).resolve() / ".local/bin/codex-lattice-gantt-hook")
-command = f"{path} session-start"
+command = shlex.join(["/usr/bin/env", "python3", path, "session-start"])
 expected = {"type":"command", "command":command, "timeoutSec":6, "async":False, "statusMessage":None}
 hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and "codex-lattice-gantt-hook" in h.get("command", "")]
 raise SystemExit(0 if hooks == [expected] else 1)
@@ -285,12 +288,14 @@ raise SystemExit(0 if matcher_entries and not matcher_entries[0]["hooks"] and le
 PY
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'callout hook を正規設定へ修正しない'
 import json
+import shlex
 import sys
 from pathlib import Path
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 hooks = [h for e in data["hooks"]["Stop"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command", "").endswith("codex-callout-hook stop")]
 hook_path = Path(sys.argv[2]).resolve() / ".local/bin/codex-callout-hook"
-expected = {"type":"command", "command":f"{hook_path} stop", "timeoutSec":10, "async":False, "statusMessage":None}
+command = shlex.join(["/usr/bin/env", "python3", str(hook_path), "stop"])
+expected = {"type":"command", "command":command, "timeoutSec":10, "async":False, "statusMessage":None}
 raise SystemExit(0 if hooks == [expected] else 1)
 PY
 archive_count="$(find "$OFFICIAL_HOME/Archives" -name '*.tar.gz' | wc -l | tr -d ' ')"

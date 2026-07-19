@@ -155,7 +155,7 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 | `UserPromptSubmit` | `codex-callout-hook user-prompt-submit` | X3 pending drain と X5 初回 / compact 後案内 | 5 |
 | `Stop` | `codex-callout-hook stop` | X4・rolling baseline で pending 保存 | 10 |
 
-各 command は `$HOME/.local/bin/codex-callout-hook <subcommand>` という展開済み絶対パスで、matcher のない専用 entry に1件だけ置く。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
+各 command は、WSL2 interop の拡張子dispatchへ落ちないよう、展開済み絶対pathのscriptを明示interpreterで起動する。Python製のcalloutとLattice案内は `/usr/bin/env python3 $HOME/.local/bin/<hook> ...`、shell製のorchestrate advisoryは `/bin/sh $HOME/.local/bin/orchestrate-advisory-hook` とし、matcher のない専用 entry に1件だけ置く。旧direct-exec表記はapplierが同一hookとして回収しcanonical表記へ置換する。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
 
 `~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話 Codex で trust を承認し、新規 session で X1 から実火確認する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook session-start`が各1件のcanonical entryであることを検証する。
 

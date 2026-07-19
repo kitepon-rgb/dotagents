@@ -203,9 +203,9 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
 
 - [x] verify-install.sh に配線検証（Claude 側配線＝既存 plan-gate 含む・Codex 側エントリ。python3 断片検証の既存型）（39f3a77・make lint green・実行 OK）
 - [x] AGENTS.md 手順5/6・README ランブックを profile / dry-run / applier / verify 契約へ更新
-- [ ] `make ci` → 対象端末の `./install.sh --profile <official|legacy>` / config dry-run/apply / 同じ profile を指定した `./bin/verify-install.sh --profile <official|legacy>` → pathspec コミット → オーナー GO → push（実端末 apply は H1 待ち）
-- [ ] 知識還流（caveat/rag）・プラン正本のチェック消化
-- [ ] 他端末波及チェックリスト（pull → `./install.sh --profile official` → Claude `settings.json` 断片マージ / Codex applier の dry-run→承認済み apply → `./bin/verify-install.sh --profile official` → 実火1件）— 全端末済みでプランを archive へ
+- Latticeへ移管済み（cf-0144 / cf-0163 / cf-0166へ重複統合）
+- Latticeへ移管済み（cf-0271 / cf-0157 / cf-0165へ重複統合）
+- Latticeへ移管済み（fm-0584 / cf-0155 / cf-0282へ重複統合）
   - FOX WSL2（2026-07-17 実施）: pull・install・C1 断片マージ・applier apply・verify OK・Claude 実火
     （`claude -p` hooks 発火・Fable 5 応答）まで完了。**ただし Codex hook trust 承認直後に
     Windows「アプリ選択」ダイアログ無限増殖が発生**（caveat
@@ -213,7 +213,7 @@ Codex hooks.json に matcher は無い＝**stdin 先頭 grep の fast-path で�
     `~/.codex/hooks.json` から callout/advisory の .sh hook を除去済み（backup:
     `~/.codex/hooks.json.bak-popup-*`）＝**FOX の Codex 側 callout/advisory は意図的に無効・
     verify-install が advisory 不在 FAIL を出すのは既知の一時状態。無条件に再適用しない**。
-- [ ] **WSL2 interop 安全化**: `apply-codex-config` が書く hook command を interpreter 明示起動
+- Latticeへ移管済み: `codex-full-support/cf-0282`
     （`/bin/bash <path>` 等）または node shim へ変更し、WSL interop の拡張子 dispatch に乗らない
     形へ直してから FOX の Codex hook を再有効化する（再有効化は Windows ダイアログ非発生の
     実火確認まで含めて閉じる）
