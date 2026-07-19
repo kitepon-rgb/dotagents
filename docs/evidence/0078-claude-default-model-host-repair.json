@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0078",
+  "repo_id": "self",
+  "path": "docs/adr/0078-claude-default-model-host-repair.md",
+  "git_blob_oid": "80e878b0f85d73607e219db7d506fcc8b53b4268",
+  "content_digest": "f60e22ce612249bf6418daf686aa5bdf37307f2b10eb1e93f689e27191137af4",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
