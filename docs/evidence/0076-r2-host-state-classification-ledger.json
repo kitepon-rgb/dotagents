@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0076",
+  "repo_id": "self",
+  "path": "docs/adr/0076-r2-host-state-classification-ledger.md",
+  "git_blob_oid": "911ca49f9feb763fb2fe5fb73445f4deabb5b4f5",
+  "content_digest": "1b90185d8927640bcb2e8c2861810054378a31d661c9784d32fffb929f87c0a7",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
