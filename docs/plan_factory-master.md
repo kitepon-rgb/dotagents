@@ -35,6 +35,7 @@
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
 | [GPT-5.6再配線](plan_gpt56-rewiring.md) | role routing詳細。残る他端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
 | [Lattice編入](plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Active。2026-07-17に直轄化。L0ベースラインが次ready |
+| [AIShell編入](plan_aishell-factory-integration.md) | AIShell第12コア化、native diagnostics、Mac統合、wire v5 | Active。A0契約固定中。wire v2〜v4は不変、正式enrollmentはwire v4完了後 |
 | [メモリ昇格queue](queue_memory-promotion.md) | 各repo作業時の機会駆動queue | Active、主レーンを遮らない |
 
 CalloutとGPT-5.6の他端末チェックは、Codex全対応Wave 3の同じhost receiptを参照して閉じる。
@@ -104,6 +105,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 23 | `READY` | Lattice工程表・ガント面（オーナー裁定 2026-07-18）。ToDo→plan_graphのcritical path projectionとブラウザGantt出力をLattice repo直轄で設計・実装する。受入契約は[Lattice編入計画 Phase LG](plan_lattice-factory-integration.md)。着手はqueue 20完了後（オーナーは繰上げ裁定可） | Lattice → dotagents / LG gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 | 22 | `DONE` | LatticeのBugHub source登録（adapter/schema/認証）を独立waveで行う。ServerManager `0bb3ef3`＋`a04c6ea`・本番deploy・canary実証・後片付けまで完了（2026-07-18包括承認） | ServerManager / 独立gate |
+| 24 | `IN-PROGRESS` | AIShellを第12コア製品へ編入する。native diagnosticsと既存wire非変更の統合準備を先行し、wire v5固定集合への正式enrollmentはLattice wire v4完了後に行う | AIShell → dotagents → ServerManager / A0〜A6 gate |
 
 H待ちはready queueへ混ぜない。現役hostへの設定適用、本番BugHub、credential/login、publish、deploy、
 意図的障害試験、pushは、目的・影響・rollbackを示してオーナー承認を得た後にだけ実行する。

@@ -1,6 +1,6 @@
-# 工場コア9製品（＋編入中Lattice）＋基盤toolchain 3製品の有限契約台帳
+# 工場コア9製品（＋編入中Lattice・AIShell）＋基盤toolchain 3製品の有限契約台帳
 
-更新日: 2026-07-18。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
+更新日: 2026-07-19。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
 ## 共通境界
 
@@ -105,3 +105,12 @@
 - diagnostics/state正本: 外部runnerのBugHub health、poll/ingest鮮度、DB migration、container/source一致、Pi5監視。SQLite migration/Pi5 runtimeはServerManager所有。
 - 現adapter: server profileではloopback `/readyz`とdeploy revision manifestを外部probeで照合し、DB/schema/pull/ingest/delivery/revisionの固定checkへ投影する。Pi5のdurable external eventは公開connector経由でsnapshot/ackし、非serverは`not_applicable`。
 - 禁止: BugHub自己申告だけで合格、dotagentsからDB直接読解。
+
+### `aishell`（編入中・第12）
+
+- 所有/修正先: 自作 / `kitepon-rgb/aishell`。**第12コア**（Observer第10枠、Lattice第11枠は不変）。version入口はMCP initializeの`serverInfo.version`と`factory_diagnostics.product.version`の一致。
+- diagnostics/state正本: read-only MCP `factory_diagnostics`（schema `aishell.native_factory_diagnostics.v1`）。platform、runtime configuration schema/migration、操作readiness、MCP、管理アプリbundleを返す。許可root・Git worktreeは件数だけで、path、activity、file本文、process argumentを返さない。
+- runtime schema: `aishell.runtime_configuration.v2`。旧単一`allowedRootPath`は製品側のcompatible-on-readで解釈し、dotagentsは`runtime.json`や`activity.jsonl`を直接読まない。
+- update/rollback: Apple Silicon Macだけ`@quolu/aishell@latest`をglobal更新し、package内`AIShell.app`と`aishell-mcp`を同版で扱う。rollbackは旧npm versionへ戻してMCP processを再起動する。
+- wire: v2/v3/v4固定集合へ後付けせず、ServerManager optional sourceを先行し、Lattice wire v4完了後のwire v5で正式enrollする。
+- 禁止: 非対応hostへの導入、shell/AppleScript/JXA fallback、`runtime_status`のpathをfactory reportへ転記、pauseを製品故障へ丸めること。

@@ -1,6 +1,6 @@
 # 工場 host × product 期待matrix
 
-更新日: 2026-07-18  
+更新日: 2026-07-19
 正本: dotagents  
 対象: Mac、main-server、FOX WSL2、FOX Windows native
 
@@ -29,6 +29,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | aiterm-mcp | required | required | required | required | high |
 | codex-sidecar | required | required | required | required | high |
 | Lattice（編入中・第11） | required（wire v4 enrollまでreporter検査対象外） | 同左 | 同左 | CLI presenceのみrequired／**executor依存runtime面はunsupported**（Claude/Codex/Grok全toolchain不在の構造要因） | high（enroll後） |
+| AIShell（編入中・第12） | required（Apple Silicon / macOS 15+。wire v5 enrollまでreporter検査対象外） | unsupported（macOS native API不在） | unsupported（同左） | unsupported（同左） | high（enroll後、対応Macのみ） |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
 | Claude Code CLI | required | required | required | unsupported | high |
 | Codex CLI | required | required | required | unsupported | high |
@@ -49,6 +50,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | aiterm-mcp | MCP required | Codex/Grok/Composer用MCP required。native枠外の外部実行に使う |
 | codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う |
 | Lattice | MCP面（sensor 8 tool・`codegraph_*`名維持＝ADR 0049）はL7 wire v4 cutoverまで未配線。移行期間はCodegraph単独配線と二重配線を許す | 同左 |
+| AIShell | unverified。実測完了までrequiredと宣言しない | MCP `aishell` required（Apple Silicon / macOS 15+のみ）。最初に`runtime_status`、工場監視はpath非露出の`factory_diagnostics`を使う |
 | ServerManager | connector not_applicable | connector not_applicable |
 
 Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。
