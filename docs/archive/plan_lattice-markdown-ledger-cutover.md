@@ -1,4 +1,4 @@
-# Lattice Markdown台帳切断・transactional source cutover計画
+# Lattice Markdown台帳切断・transactional source cutover計画（完了）
 
 日付: 2026-07-19
 

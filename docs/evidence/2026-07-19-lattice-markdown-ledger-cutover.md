@@ -47,4 +47,19 @@ fail-closedであり、0.6.5 publish/global install後にregistry版smokeを行�
 
 ## 公開後gate
 
-NPM publish、global install、registry版smokeは未実施。H承認後に結果を追記する。
+- NPM publish: `@quolu/lattice@0.6.5`（tag `latest`、public access）
+- registry shasum: `9ab336c84e057dd4acd79767d9449764d516aa99`
+- registry integrity:
+  `sha512-bDwAxbalry1A5VRB4rCCTecdjCKhWZSKgsUUbZGd+V1c9ETsWaHA8Ww8UXjs1LO0Kse4UtjBpB1ag+syFlvl7A==`
+- candidateとregistryのversion、shasum、integrity: 完全一致
+- global install: `@quolu/lattice@0.6.5`、`lattice --version` = `0.6.5`
+- registry版`todo verify`: 8 members、全reconciled、`snapshot_stale=false`
+  - result digest: `2b6e4914b62b031620f14b945dba21c30669f9e67fafc347d305f91c8d5af584`
+- registry版`todo status`: passed
+  - result digest: `32044bf233a9fd845dd8d67b6a20144dce5a6c63b9c651e56a6563495ccae695`
+- registry版`todo gantt`: renderer v7、archive fragment読取を含めpassed
+  - result digest: `dc1196d2d5488b6306e2b96eb095de35ba6a60f8690e327a0a289a8a6e73f070`
+- live source verifier: 7 files / 0 checkbox
+- `verify-install --profile official`: passed
+
+公開後gateはgreenである。
