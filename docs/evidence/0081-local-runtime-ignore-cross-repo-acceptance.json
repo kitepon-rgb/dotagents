@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0081",
+  "repo_id": "self",
+  "path": "docs/adr/0081-local-runtime-ignore-cross-repo-acceptance.md",
+  "git_blob_oid": "db418f27876158602d6efd1ff8d51c5157f3468f",
+  "content_digest": "1b544dcc04894120caec497989ca71f0f69114894d52408e9d43966f40d8e270",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
