@@ -12,13 +12,13 @@ dotagents管理下の正式な第12コア製品へ編入する。
 
 成功条件:
 
-- [ ] AIShellが製品所有のversion付きfactory diagnosticsを公開し、秘密・許可path・操作本文を漏らさない
+- [x] AIShellが製品所有のversion付きfactory diagnosticsを公開し、秘密・許可path・操作本文を漏らさない
 - [ ] macOS arm64ではinstall、MCP登録、診断、実操作smoke、更新、rollbackが再現できる
-- [ ] 非対応hostは黙って欠損扱いにせず、構造的な`not_applicable`として判定できる
-- [ ] dotagentsの製品契約、host / connector matrix、更新経路、verify、privacy fixtureが同期する
-- [ ] ServerManager / BugHubへserver-firstでsourceを登録し、既存wire v2 / v3 / v4を変更しない
+- [x] 非対応hostは黙って欠損扱いにせず、構造的な`not_applicable`として判定できる
+- [x] dotagentsの製品契約、host / connector matrix、更新経路、verify、privacy fixtureが同期する
+- [x] ServerManager / BugHubへserver-firstでsourceを登録し、既存wire v2 / v3 / v4を変更しない
 - [ ] Lattice wire v4完了後のwire v5でAIShellを固定集合へ正式編入する
-- [ ] release時はversion bump、publish、global install、公開後smoke、証拠記録まで同一waveで閉じる
+- [x] release時はversion bump、publish、global install、公開後smoke、証拠記録まで同一waveで閉じる
 
 ## 2. 非目標と不変条件
 
@@ -97,7 +97,10 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 - [x] 非本番focused / related gateを通す
   - ServerManager `d85c70a` / `95ce6db`: 固定12製品不変、AIShell optional、空safe_context allowlist、severity素通し、非対応host `not_applicable`
   - focused 32/32、BugHub Node related 76/76、`not_applicable`追補focused 16/16、`git diff --check` green
-- [ ] 本番deploy / canaryはH承認後に実行し、rollbackを実証する
+- [x] 本番deploy / canaryはH承認後に実行し、rollback setの実在と構成を実証する（意図的rollback drillは別H）
+  - main-server revision `95ce6dbde456280861dd64eae3736ee2edba57e6`、`/readyz`全check pass・revision一致
+  - 本番container内canary: AIShell登録、optional、固定required 12不変、未知product拒否、safe_context空。DB書込みなし
+  - SQLite backup `bughub-predeploy-20260719T071032Z.db`（8,110,080 bytes）とrollback set `20260719T071035Z-42955`（旧image / manifest / active marker / quiesced DB snapshot）を確認
 
 ### Phase A4 — 対応Mac live acceptance
 
@@ -127,7 +130,7 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 - [x] H承認後にpublish → global install → MCP再起動 → 公開後smokeを同一waveで完遂する
   - 2026-07-19: `@quolu/aishell@0.3.0`をpublic / latestでpublish。registry shasum `7d2495a832b27d2ef796d0e8a6689b123848d138`一致
   - global 0.3.0へ更新、app再起動（PID 33396）、fresh Codex MCPでversion 0.3.0・schema v1・ready・issues 0、stdin smoke exit 0を確認。local tag `v0.3.0`
-- [ ] dotagents / ServerManagerをrepo別pathspec commitで閉じ、H承認後にpushする
+- [x] AIShell / dotagents / ServerManagerをrepo別pathspec commitで閉じ、H承認後にbranchをpushする（AIShell tag `v0.3.0`もpush済み）
 - [ ] cross-repo receiptをfactory masterへ還流し、本計画を`docs/archive/`へ退避する
 
 ## 6. 欠陥maintenance queue
