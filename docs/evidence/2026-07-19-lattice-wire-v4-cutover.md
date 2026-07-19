@@ -4,8 +4,8 @@
 - source commit: `53572f7c1f2872462c5facfeaade95c331875cbc`
 - pre-write inventory digest: `28422ec39eb9bc9a9bbca959b841e2aacac2a58bbdd051e461de9f7f9c1e8cf3`
 - source inventory: 656 total / 505 checked / 151 unchecked
-- accepted release: `@quolu/lattice@0.6.3`
-- accepted global install: `lattice` 0.6.3
+- accepted release: `@quolu/lattice@0.6.4`
+- accepted global install: `lattice` 0.6.4
 
 ## Release corrections
 
@@ -13,11 +13,16 @@
 2. `0.6.1`で`prepack`時のsensor buildを必須化し、公開tarballを修正。
 3. `0.6.2`でsuccessor revisionに`carry_reconciled_metadata`を明示した。
 4. cutover実データが`0a. [x]` / `6A. [ ]`形式の検証漏れを発見したため、`0.6.3`で修正して再公開・global installした。
+5. 653-task実storeで`todo status`が8.41秒かかりhookの内部5秒timeoutを超えたため、pinned source検証をread内でmemoizeした`0.6.4`を再公開・global installした。registry版は0.26秒で完了した。
 
 `0.6.3` registry integrityは
 `sha512-sbeimRVc47Vjped1gXdwak99aqQKl4iAKIJyfM/ndXdjJjh4f4Oy26Na+OOyUVf+Bdhm9LIbB2wJfQ2gL05TSA==`、
 shasumは`fdc9231d27db4d2877c89dbb186d87778dcba877`、候補tarball SHA-256は
 `8763ffac3ae9fbf3dddd8b62f5d69b48a4c41af4013e94d24e52b9b4e2c853be`である。
+
+最終採用した`0.6.4` registry integrityは
+`sha512-ELlcDN6FPKJ8XOQ3+Y0ybX/OirhKgkSydpYeX92IT+rEg8EsZevGVPTP6AOnw+EnAWrSxNOkAoWKaoeZS4Xjyg==`、
+shasumは`ae678ca0537bc2ebd06b8b9984f1da8fe8b3b782`である。
 
 ## Canonical store
 
@@ -74,3 +79,16 @@ Browser skillによるローカル`file://`表示はbrowser URL policyにより�
 
 修理後のglobal `aiterm-mcp@0.19.1`を新規PTYで確認し、同一send内の2コマンドが
 `line-one` / `line-two`を欠落なく出力した。以後のcutover shell操作はこのPTYを使用した。
+
+## Host hook acceptance
+
+- `./install.sh --profile official`: `lattice-todo-inventory`を含む配布symlinkを再同期
+- Claude SessionStart: canonical command 1件 / timeout 6
+- Codex SessionStart: canonical command 1件 / timeoutSec 6
+- `verify-install --profile official`: green
+- Claude実hook: Gantt URL、active、next-ready、依存、`reconciled=7`をplain INFOで出力
+- Codex実hook: 同じ案内を`hookSpecificOutput.additionalContext`へ出力
+- 両hook: registry版`0.6.4`でexit 0、内部5秒timeout以内
+- rollback:
+  - Claude: `/Users/kite/Archives/dotagents-claude-settings-20260719T114606Z.tar.gz`
+  - Codex: `/Users/kite/Archives/dotagents-codex-config-20260719T114606Z.tar.gz`

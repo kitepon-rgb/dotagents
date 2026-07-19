@@ -21,14 +21,14 @@
 
 成功条件:
 
-- [ ] 対象7文書の開始母集団656件が、Lattice上のactive taskまたは理由付きexcluded tombstoneの
+- [x] 対象7文書の開始母集団656件が、Lattice上のactive taskまたは理由付きexcluded tombstoneの
   どちらか一方へ一意に対応し、source provenanceで元文書・anchorを追跡できる
-- [ ] 各対応について、状態、内容、title、lane、依存、親子関係、source anchorを元Markdownと照合済みである
-- [ ] 全完了・archive・明示supersededの文書やtaskを、移行・再importで復活させない
-- [ ] `registered_unreconciled`から`reconciled`への遷移が機械可読で、未照合の登録を完了扱いにしない
-- [ ] Latticeの全対象planで`todo verify`がgreenとなり、status・Gantt・AI向け案内が同じ正本を示す
-- [ ] AIが新規作業時にLatticeの現在task、依存、校正状態を読め、Markdown checkboxを進捗正本として更新しない
-- [ ] 本書自身を最後にLatticeへ移行し、全数差分検査とcutoverを経てMarkdown進捗管理を終了する
+- [x] 各対応について、状態、内容、title、lane、依存、親子関係、source anchorを元Markdownと照合済みである
+- [x] 全完了・archive・明示supersededの文書やtaskを、移行・再importで復活させない
+- [x] `registered_unreconciled`から`reconciled`への遷移が機械可読で、未照合の登録を完了扱いにしない
+- [x] Latticeの全対象planで`todo verify`がgreenとなり、status・Gantt・AI向け案内が同じ正本を示す
+- [x] AIが新規作業時にLatticeの現在task、依存、校正状態を読め、Markdown checkboxを進捗正本として更新しない
+- [x] 本書自身を最後にLatticeへ移行し、全数差分検査とcutoverを経てMarkdown進捗管理を終了する
 
 ## 2. 非目標
 
@@ -137,8 +137,8 @@ description / acceptance / priority / owner、start / block / unblock / done / r
 
 - [x] `lib/lattice-hook.py`の固定2秒timeoutをCLI 5秒へ、Claude/Codex外側hookを6秒へ置換する。cache / store直読は追加しない
 - [x] 遅い成功を起動案内失敗として扱わず、timeout、CLI failure、invalid response、未導入、storeなし、正常応答を区別する
-- [ ] hookのfocused testと`make lint`、関連hook smoke、`verify-install`を通し、Lattice正本へのAI向け案内を検証する
-  - 2026-07-19親再検証: focused smoke 2本、`tests/install/clean-home.sh`、`make lint`はgreen。実host設定applyと実host `verify-install`はH未実施のため、本項は未完のまま。
+- [x] hookのfocused testと`make lint`、関連hook smoke、`verify-install`を通し、Lattice正本へのAI向け案内を検証する
+  - 2026-07-19実host受入: Claude/Codex timeoutを6秒へ正規化し、registry版`0.6.4`で両SessionStart hookが5秒以内に正規案内を返した。`verify-install`もgreen。
 
 ### Phase 5 — source別登録・task-level校正
 
@@ -160,17 +160,21 @@ Phase 5の公開後receiptは
 
 ### Phase 6 — 自己閉包・cutover・archive
 
-- [ ] 本書の全TODOをLatticeへ移行し、本書自身の`plan_key`とtask-level mappingを校正する
-- [ ] 全対象のsource task数、Lattice task数、除外数、重複数、未照合数の差分検査を通す
-- [ ] Lattice `todo verify`、`status`、`gantt`を実行し、正本・依存・校正状態・AI向け案内が一致することを確認する
-- [ ] 正典と案内をLattice正本へcutoverし、Markdown checkboxを進捗管理に使わないことを固定する
-- [ ] Markdown進捗管理を終了し、本書をarchiveする
+- [x] 本書の全TODOをLatticeへ移行し、本書自身の`plan_key`とtask-level mappingを校正する
+- [x] 全対象のsource task数、Lattice task数、除外数、重複数、未照合数の差分検査を通す
+- [x] Lattice `todo verify`、`status`、`gantt`を実行し、正本・依存・校正状態・AI向け案内が一致することを確認する
+- [x] 正典と案内をLattice正本へcutoverし、Markdown checkboxを進捗管理に使わないことを固定する
+- [x] Markdown進捗管理を終了し、本書をarchiveする
+
+本節は自己閉包transactionのsource commitで完了状態を固定し、直後の一回きりhistorical import、
+8-member verify/status/gantt、archive配置の全受入がgreenの場合だけ成立する。失敗時は後続commitで
+未完へ戻し、Lattice側の偽greenには丸めない。
 
 ### Phase gate
 
 - [x] Lattice: `npm run ci`、authoring / reconcile focused・related tests、pack / install smokeを通す
-- [ ] dotagents: focused tests、`make lint`、`make ci`、`verify-install`を通す
-- [ ] schema / event / CLI / cutoverはクロスprovider reviewを通し、AI照合手順と既知の罠をRAG / caveat / 正典へ還流する
+- [x] dotagents: focused tests、`make lint`、`make ci`、`verify-install`を通す
+- [x] schema / event / CLI / cutoverはクロスprovider reviewを通し、AI照合手順と既知の罠をRAG / caveat / 正典へ還流する
 
 ## 7. 既知の罠
 
