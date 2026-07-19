@@ -53,6 +53,7 @@ def safe_mtime(path):
 
 
 def _open_fd(path, flags):
+    path = Path(path)
     flags |= getattr(os, "O_NOFOLLOW", 0)
     if os.name == "nt" and path.exists() and _safe_info(path) is None:
         return None
