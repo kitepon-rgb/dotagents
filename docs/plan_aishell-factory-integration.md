@@ -121,7 +121,8 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 
 ### Phase A6 — releaseと完了
 
-- [ ] AIShell version bump、changelog / release note、package gateを準備する
+- [x] AIShell 0.3.0 version bump、release note、package gateを準備する
+  - AIShell `29ff528`: 新規公開toolを含むためSemVer minor。Swift 20/20、package整合性、candidate診断version 0.3.0、stdin smoke green
 - [ ] H承認後にpublish → global install → MCP再起動 → 公開後smokeを同一waveで完遂する
 - [ ] dotagents / ServerManagerをrepo別pathspec commitで閉じ、H承認後にpushする
 - [ ] cross-repo receiptをfactory masterへ還流し、本計画を`docs/archive/`へ退避する
