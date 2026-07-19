@@ -81,7 +81,10 @@ def safe_directory(path):
             return False
     except OSError:
         return False
-    return stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode) and info.st_uid == os.getuid() and not (info.st_mode & 0o022)
+    owner_and_mode_safe = os.name == "nt" or (
+        info.st_uid == os.getuid() and not (info.st_mode & 0o022)
+    )
+    return stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode) and owner_and_mode_safe
 
 
 def state_dir():
@@ -107,7 +110,8 @@ def safe_marker(path):
         return False
     except OSError:
         return None
-    if not (stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1):
+    owner_safe = os.name == "nt" or info.st_uid == os.getuid()
+    if not (stat.S_ISREG(info.st_mode) and owner_safe and info.st_nlink == 1):
         return None
     return True
 

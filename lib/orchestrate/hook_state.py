@@ -3,6 +3,13 @@ import stat
 from pathlib import Path
 
 
+def _owner_and_mode_safe(info):
+    if os.name == "nt":
+        # Windows の st_uid / POSIX mode bits は ACL を表現せず、常に 0 / 0777 相当になる。
+        return True
+    return info.st_uid == os.getuid() and not (info.st_mode & 0o022)
+
+
 def _safe_directory(path):
     try:
         info = path.lstat()
@@ -14,7 +21,7 @@ def _safe_directory(path):
             return False
     except OSError:
         return False
-    return stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode) and info.st_uid == os.getuid() and not (info.st_mode & 0o022)
+    return stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode) and _owner_and_mode_safe(info)
 
 
 def state_dir():
@@ -33,7 +40,7 @@ def _safe_info(path):
         info = os.lstat(path)
     except OSError:
         return None
-    return info if stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1 and not (info.st_mode & 0o022) else None
+    return info if stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and _owner_and_mode_safe(info) else None
 
 
 def safe_exists(path):
@@ -47,12 +54,14 @@ def safe_mtime(path):
 
 def _open_fd(path, flags):
     flags |= getattr(os, "O_NOFOLLOW", 0)
+    if os.name == "nt" and path.exists() and _safe_info(path) is None:
+        return None
     try:
         fd = os.open(path, flags, 0o600)
     except OSError:
         return None
     info = os.fstat(fd)
-    if not (stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1 and not (info.st_mode & 0o022)):
+    if not (stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and _owner_and_mode_safe(info)):
         os.close(fd)
         return None
     return fd
