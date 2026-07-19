@@ -60,11 +60,11 @@
 
 | 検証項目 | 実行コマンド | 合格条件 |
 |----------|--------------|----------|
-| install（SSH経由） | `ssh kite@ubuntu "cd ~/Developer/dotagents && ./install.sh --profile official"` | Mac と同じ linked: 出力 |
-| config dry-run（SSH経由） | `ssh kite@ubuntu "cd ~/Developer/dotagents && ./bin/apply-codex-config.sh --dry-run"` | routing＋callout hook 差分のみ。差分0 または H承認済み apply |
-| spotter install（SSH経由） | `ssh kite@ubuntu "cd ~/Developer/dotagents && spotter install -y"` | marker / hooks / Throughline context 設定完了 |
-| verify-install（SSH経由） | `ssh kite@ubuntu "cd ~/Developer/dotagents && ./bin/verify-install.sh --profile official"` | 全 OK（factory core 8製品、gpt-connector、Spotter、Throughline 等 green） |
-| gpt_connector 診断（SSH経由） | `ssh kite@ubuntu "cd ~/Developer/dotagents && codex mcp list --json && codex mcp get gpt_connector --json"` | Connected（Chrome 不在時は理由付き WARN） |
+| install（SSH経由） | `ssh main-server "cd ~/Developer/dotagents && ./install.sh --profile official"` | Mac と同じ linked: 出力 |
+| config dry-run（SSH経由） | `ssh main-server "cd ~/Developer/dotagents && ./bin/apply-codex-config.sh --dry-run"` | routing＋callout hook 差分のみ。差分0 または H承認済み apply |
+| spotter install（SSH経由） | `ssh main-server "cd ~/Developer/dotagents && spotter install -y"` | marker / hooks / Throughline context 設定完了 |
+| verify-install（SSH経由） | `ssh main-server "cd ~/Developer/dotagents && ./bin/verify-install.sh --profile official"` | 全 OK（factory core 8製品、gpt-connector、Spotter、Throughline 等 green） |
+| gpt_connector 診断（SSH経由） | `ssh main-server "cd ~/Developer/dotagents && codex mcp list --json && codex mcp get gpt_connector --json"` | Connected（Chrome 不在時は理由付き WARN） |
 
 ### main-server対話セッション / H 操作必要項目
 
@@ -86,7 +86,7 @@
 
 | 検証項目 | 実行コマンド | 合格条件 |
 |----------|--------------|----------|
-| install（SSH経由） | `ssh -J windows fox-wsl "cd /home/kite/Developer/dotagents && ./install.sh --profile official"` | linked: 公式面正 |
+| install（SSH経由） | `ssh -J windows-workstation fox-wsl "cd /home/kite/Developer/dotagents && ./install.sh --profile official"` | linked: 公式面正 |
 | config dry-run（SSH経由） | 同上 `... && ./bin/apply-codex-config.sh --dry-run` | routing＋callout 差分のみ |
 | spotter install（SSH経由） | 同上 `... && spotter install -y` | marker/hooks/Throughline context |
 | verify-install（SSH経由） | 同上 `... && ./bin/verify-install.sh --profile official` | 全 OK（factory core 8製品等 green） |
@@ -114,8 +114,8 @@
 
 | 検証項目 | 実行コマンド | 合格条件 |
 |----------|--------------|----------|
-| install | `ssh ...` またはローカル `cd C:\Users\kite_\Documents\Program\dotagents ; ./install.sh --profile official`（native symlink 有効） | linked: 公式面正。LF/UTF-8/MSYS path 差は CI 吸収済み |
-| config dry-run | 同上 `... && ./bin/apply-codex-config.sh --dry-run` | routing＋callout 差分のみ |
+| install | `ssh windows-workstation` から `C:\Program Files\Git\bin\bash.exe -lc 'cd /c/Users/kite_/Documents/Program/dotagents && ./install.sh --profile official'`（native symlink 有効） | linked: 公式面正。LF/UTF-8/MSYS path 差は CI 吸収済み |
+| config dry-run | 同じGit Bash入口で `./bin/apply-codex-config.sh --dry-run` | routing＋callout 差分のみ |
 | spotter install | 同上 `spotter install -y` | marker / Codex 3 hook canonical |
 | verify-install | 同上 `./bin/verify-install.sh --profile official` | 全 OK（factory core、Caveat-Private 205件、gpt-connector、Spotter、Throughline context 等 green） |
 | gpt_connector 診断 | 同上 `codex mcp list/get` | Connected（Oracle wrapper 修正済み確認） |
