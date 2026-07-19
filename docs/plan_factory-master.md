@@ -648,6 +648,7 @@ Observer `docs/plan_observer.md`
 - Latticeへ移管済み: fm-0634 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L117
 - Latticeへ移管済み: fm-0635 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L118
 - Latticeへ移管済み: fm-0636 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L119
+- Latticeへ移管済み: fm-0645 → docs/archive/lattice-source-ledger/factory-master-maintenance-cutover-20260720.md#L6
 
 ## 6. 全体完了条件
 
