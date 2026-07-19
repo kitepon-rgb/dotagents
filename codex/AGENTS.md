@@ -44,7 +44,12 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 ## 計画文書の作法
 
 - **正本化ゲートは統括レーンだけ**: 統括レーン（「作業レーンと統制」の機能条件に該当する戦役）は、実装前に対象projectの`docs/`へチェックボックス付きplanを置く。通常レーンは会話上の成功条件や内蔵planで足り、docsへ残さない理由の宣言も不要。
-- **統括planはTODOを兼ねる**: 消化チェックボックスを持たせ、方針と消化を別ファイルに分離しない。役目を終えたplan・完了台帳は`docs/archive/`へ退避し、`docs/`直下は生きた文書だけに保つ。
+- **Lattice接続済みprojectは工程状態をMarkdownへ二重化しない**: task、依存、状態、完了証拠の正本は
+  Lattice storeとし、統括plan Markdownは目的、思想、判断理由、非目標、受入条件、Lattice planへの導線を
+  所有する。新規・変更ToDoはLattice authoring transactionで更新し、Markdown checkboxから移転する時は
+  ToDo単位のsource cutoverを同じrevision transactionへ含める。移転済みcheckboxをlive文書へ残したり、
+  Markdownから暗黙再同期したりしない。Lattice未導入projectだけは従来どおり統括planのcheckboxをTODO正本に
+  してよい。役目を終えたplan・凍結台帳は`docs/archive/`へ退避し、`docs/`直下は生きた文書だけに保つ。
 
 ## 作業レーンと統制
 

@@ -93,21 +93,21 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 0: 正本・baseline・入口実測
 
-- [x] ObserverをCodex限定からClaude／Codex両hostへ広げるオーナー裁定を本計画へ固定する。
-- [x] Observer／相談役／一般Worker／Phase監査の配置目的を分離する。
-- [x] rate-aware配置の目的を「各providerのresetまでに理想ペースで枠を使う」と定義する。
-- [x] dotagents、Observer、Throughline、ServerManagerのbaselineと既存dirty所有を再確認し、変更waveごとのpathspecを固定する。
+- Latticeへ移管済み: of-0096 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L120
+- Latticeへ移管済み: of-0097 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L121
+- Latticeへ移管済み: of-0098 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L122
+- Latticeへ移管済み: of-0099 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L123
   - dotagents: Observer関連は`PLAN.md`、`docs/02_models.md`、`docs/plan_bughub-factory-integration.md`、本計画。WSL relay RAGと`tmp/pdfs`は別作業として分離する。
   - Observer: 全24ファイルが初回commit前だった。秘密候補とstage後whitespaceを検査・修正し、16 testとsyntaxをgreenにしてbaseline commit `7b699c8`へ固定した。remoteは未設定。
   - Throughline: Observer計画と索引だけがdirtyだった。既存full testは615 pass／0 fail／1 skip。2026-07-15のオーナーGOでsource holdを解除し、この同一baselineをPhase 1で再利用して実装を開始した。
   - ServerManager: BugHub restart loop復旧commit `08d47ca`／`776a7c1`を独立push・deploy済み。本計画のwire v3までは追加変更しない。
-- [x] 4 repoそれぞれにactive planを参照する独立Controlを初期化し、cross-repo receiptの保存形式を本計画へ固定する。
+- Latticeへ移管済み: of-0104 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L6
   - dotagents: `observer-factory-20260715` → `docs/plan_observer-factory-integration.md`
   - Observer: `observer-independent-foundation-20260714` → `docs/plan_observer.md`
   - Throughline: `observer-feed-20260715` → `docs/14_observer_completed_turn_feed_plan.md`
   - ServerManager: `factory-wire-v2-20260715` → `bughub/docs/FACTORY_V2_ROLLOUT_PLAN.md`
   - cross-repo receiptは本計画に`repo`、`control_id`、`task_id`、成果物ref／digest、親Decision、受入時刻を記録し、別repoのTask依存へ偽装しない。
-- [x] cancelled TaskがControl finalizationを永久に阻害するlifecycle矛盾を修正する。
+- Latticeへ移管済み: of-0110 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L7
   - 正規`task-cancel-record`後も`control-finalize`が全Taskの`task-finalize`を要求する一方、cancelled Taskへの
     `task-finalize`は`INVALID_TRANSITION`で拒否されることをObserver Control revision 60で再現した。
   - Control閉鎖条件、`status --brief`のunresolved集合、将来receipt容量予約では、Taskを
@@ -117,7 +117,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     二重掲載されず、既存の取消拒否testが残ることを証明する。
   - `closedTaskIds`をControl閉鎖、brief、receipt予約の3面で共用し、254件目のreceiptまで使用した境界fixtureを含む
     focused 5/5を通した。cancelled依存のadmission規則とcancelled Taskへの`task-finalize`拒否は変更していない。
-- [x] archiveのfinalization証拠検証でも、旧Decision digestのbounded git履歴保持を認める。
+- Latticeへ移管済み: of-0120 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L8
   - Observer foundation Control revision 71の正規`archive`で、過去に可変`docs/plan_observer.md`を使った
     Task finalization receiptが`EVIDENCE_DIGEST_MISMATCH`となり、Controlがfinalizedのまま閉鎖不能になることを再現した。
   - `resume-check`で既に採用済みの「同一repo・同一path・regular blob・完全一致SHA-256・最大256 commit・
@@ -127,57 +127,57 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
   - `verifyFinalizationRetention`へ既存のbounded履歴探索を接続し、履歴に旧版がある`type=file`を一度拒否した後、
     current bytesを復元した同じControlだけがarchiveできるfocused 1/1を通した。
   - 完了記録: `docs/elastic-orchestrator-archive-decision-history.md`。
-- [x] 各provider矢印をlaneへ固定する。
+- Latticeへ移管済み: of-0130 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L9
   - Observer: Worker／Consultationではなく、製品固有runtime＋同provider host adapter。
   - Codex→Claude Worker: 新設する`claude-native` execution adapter。
   - Codex→Claude相談: workspaceを持たないClaude Consultation adapter。
   - Claude→Codex相談: workspaceを持たないCodex Consultation adapter。既存sidecarを使う場合もconsultation schemaへ投影する。
   - `claude-internal`: dispatch不能なhost projectionのまま維持する。
-- [x] rate-aware証拠はControl schemaをversion upして束縛する方針を採用する。quota snapshot／selector decision／pool reservationをcandidate digestとreceiptへ含め、旧v25 active Controlの継続読取、v26新規作成、migration／rollbackを同じTODOで固定する。
+- Latticeへ移管済み: of-0136 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L10
   - 訂正（2026-07-16）: rate-aware selector用のversionは[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)で**v27**へ変更した。v26はO3 Consultation多provider化が取る。本行の「v26新規作成」は当時の予約記録として保持する。
-- [x] quota poolの最小identityと並行予約規則を固定する。
+- Latticeへ移管済み: of-0138 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L11
   - snapshotは非秘密の`quota_pool_id`、`host_instance_id`、対象executor集合を持つ。
   - windowは`window_id`、`starts_at`または`duration_seconds`、`reset_at`を持つ。
   - v1は同一poolのplacementを直列化し、一回の選択ごとにsnapshot再取得を要求する。reset境界で旧snapshot／reservationを失効させる。
-- [x] v1親identityを`project target + host identity + parent thread hash + completed-turn cursor`とする。
+- Latticeへ移管済み: of-0142 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L12
   - hostに信頼できるsession終了eventがなく、Throughline monitor stateも表示用TTLであるため、active
     lease／epochを推測実装しない。一project一活動親をv1前提とし、Throughlineが検出した
     `ambiguous_parent`はfail closedにする。将来leaseは正式lifecycle証拠とmigrationを持つ別waveで追加する。
-- [x] Observerの起動責任を、ユーザーの明示指示を受けた現在親に固定する。
+- Latticeへ移管済み: of-0146 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L13
   - install／SessionStart／project openから暗黙起動せず、親が同providerの正式background／child入口を使う。
   - provider child起動前にObserver所有stateで一target一watchを確保し、二重起動、後勝ちtakeover、
     推測TTLによるlock奪取、自動再起動を禁止する。停止もユーザーの明示指示を親が処理する。
   - 正本: Observer `docs/adr/0002-explicit-parent-launch.md`（commit `0a47f22`）。
-- [x] Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostで基礎characterizationする。
+- Latticeへ移管済み: of-0151 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L14
   - 公式契約ではmain turnの`Stop.last_assistant_message`、API失敗の`StopFailure`、background sessionのjob ID／`agents --json`／`logs`／`stop`／`respawn`まで確認した。
   - 2026-07-15にMax accountへ認証し、Haiku 4.5／plan権限でheadless `result/end_turn`、同じsession IDのresume、`SessionStart:resume`、background job `busy/working → idle/done → stop`を実測した。`--bg`と`--print`は明示競合するため、Observerはbackground job handle、Workerはstream-json `result`を別契約で扱う。
   - Claude completed turnはfinal assistant、process exit、mtimeで推測せず、Throughline Stop hookがpair capture後にatomic publishする製品所有receiptへ束縛する。Claude `/rewind`はforkなので同一conversation rollback surfaceを作らない。
   - この完了はheadless／resume／background lifecycleの基礎characterizationだけを指す。既存background jobへの
     公開非対話request、job `sessionId`／Stop `session_id`相関、Observer所有の隔離result capture、
     terminal exact result readは未実証であり、queue 19cを閉じない。
-- [x] Codex親からClaudeをWorker／相談役として呼ぶ正規入口を棚卸しし、installed→registered→verified→execution-verifiedを分ける。
+- Latticeへ移管済み: of-0158 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L15
   - headless `claude -p --output-format stream-json`＋session resumeと、read-only background sessionを入口候補に固定した。
   - 現行aiterm callable toolにClaude Agentはなく、Elastic adapter catalogも`claude-internal` projection-only。Claude CLI自体は認証後のheadless／resume／background smokeに成功してexecution-verifiedだが、Elastic adapterは未登録である。
-- [ ] Claude親からCodex旗艦を相談役として呼ぶ正規入口とtimeout回収を実測する。
-- [x] Claude／Codexの残quota、window、reset時刻を取得できる公式またはprovider-owned入口を調査し、取得不能も結論として記録する。
+- Latticeへ移管済み: of-0161 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L16
+- Latticeへ移管済み: of-0162 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L17
   - Claude公式は5h／7dの`used_percentage`と`resets_at`、Agent SDKのmodel別7日枠を持つ。
   - 認証後のprovider-owned `rate_limit_event`で週次利用率76%、reset `2026-07-17T08:00:00Z`、overage未使用を実測した。5時間枠は当該eventに現れなかったため、存在を推測せずwindow欠落として扱う。
   - Codex CLI 0.144.3のproduct-owned eventで週次10080分枠、used 2%、reset `2026-07-21T20:37:04Z`を非秘密fieldだけで実測した。
-- [x] 調査した外部仕様を各一次ソースからRAGへ保存し、`rag/INDEX.md`へ追記する。
+- Latticeへ移管済み: of-0166 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L18
   - `rag/orchestration/provider-quota-and-claude-runtime.md`とraw一次ソース6件へ保存した。
 
 **Gate:** 未実測host挙動やquota値を実装済み扱いせず、正規入口と失敗時の見え方が裁定される。OpenAI／Anthropic双方のquota入口がverified以上にならない場合、rate-aware部分をblockedとしてowner再裁定へ戻し、推測実装へ進まない。
 
 ### Phase 1: Throughline両host completed-turn feed
 
-- [x] Throughline側正本TODOをCodex専用からClaude／Codex共通契約へ更新する。
+- Latticeへ移管済み: of-0173 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L19
   - `docs/14_observer_completed_turn_feed_plan.md`、ADR 0002／0003へClaude Stop receipt、Codex `task_complete`、completed pair chain、host-neutral cursor境界を固定した。Claude receipt実装はThroughline commit `b585e98`、cursor裁定は`682fed2`。
-- [x] host-neutral cursorへproject identity、host／thread hash、host固有の完了証拠を束縛し、
+- Latticeへ移管済み: of-0175 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L20
   detected ambiguityをfail closedにする。v1前提外の一般的な複数活動親をmtime／PID／TTLで推測しない。
-- [x] Codexは`task_complete`、ClaudeはPhase 0で実証した完了証拠だけを採用し、mtimeや進行中projectionを完了扱いしない。
-- [x] snapshot／delta／thread switch／host switch／resync／projection pending／paginationをblack-box固定する。
-- [x] Observer以外にも再利用できるJSON-only read／wait CLI、cancel、timeout境界、65秒超live waitを両hostで検証する。
-- [x] Throughline既存Claude pathとCodex pathの回帰gateを通し、独立commit／rollback単位を保つ。
+- Latticeへ移管済み: of-0177 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L21
+- Latticeへ移管済み: of-0178 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L22
+- Latticeへ移管済み: of-0179 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L23
+- Latticeへ移管済み: of-0180 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L24
   - 両host live fixture 2/2（68.442秒）、関連gate 130/130、full 661件中660成功・Windows限定1 skip。
   - 独立監査で検出したClaude複数turn receipt欠落とPOSIX project case誤照合は、Throughline
     `02a809f`／`88fafaf`で独立修正し、focused 28/28を通した。監査時点のFAILEDはControlでreject保持した。
@@ -188,112 +188,112 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 2: Observer完成
 
-- [x] Observer runtimeをhost-neutral SupervisorとCodex／Claude host adapterへ分離する。
-  - [x] model operation journal core、lock／completed locator／planned rollover／processed cleanup補正を
+- Latticeへ移管済み: of-0191 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L25
+  - Latticeへ移管済み: of-0192 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L26
     Observer `4c3cc03`／`8afebca`、ADR 0049／0053で受け入れた。
-  - [x] deterministic message ID、record-first receipt、strict recoveryを持つmodel operation専用
+  - Latticeへ移管済み: of-0194 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L27
     Mailbox exact replayをObserver `0e7a005`、ADR 0052で受け入れた。
-  - [x] Supervisorのissue／recover／apply／finalize統合をObserver `c226cc9`、focused 15/15、
+  - Latticeへ移管済み: of-0196 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L28
     関連gate 47/47、ADR 0054、Control revision 62で受け入れた。
-  - [x] provider固有result journal coreとSupervisor cleanup順序をObserver `4443ff9`／`3600876`、
+  - Latticeへ移管済み: of-0198 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L29
     ADR 0056／0057で受け入れた。
-  - [x] AI wait loopとSupervisorの二重所有を解消し、Codexをcycleごとの`turn/start`とexact result回収へ
+  - Latticeへ移管済み: of-0200 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L30
     訂正した。Observer `3f35dbb`、focused 38/38、Supervisor関連16/16、ADR 0060／0061で受け入れた。
-  - [x] 外部Supervisor production callerを一target一process／一cycle一stepで接続する。timeoutではAIを起動せず、
+  - Latticeへ移管済み: of-0202 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L31
     record-first operationからprovider request／result／apply／cursor commitを駆動する。
-    - [x] `applyCycle`／`finalizeAppliedCycle`をdurable cycle input／operation時刻へ束縛し、advisoryの
+    - Latticeへ移管済み: of-0204 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L32
       Mailbox exact replayとapplied後cleanupへ接続した。Observer `fc51157`、ADR 0062／0063、関連40/40で受け入れた。
-    - [x] 一target一process lock、evidence input、Codex provider callback、sanitized receiptを束ねる一step callerを
+    - Latticeへ移管済み: of-0206 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L33
       Observer `0ca7abe`、ADR 0064／0065、関連44/44で受け入れた。
-    - [x] verified Throughline clientとpre-initialized Codex app-server sessionを所有する外部process／CLIへ
+    - Latticeへ移管済み: of-0208 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L34
       一step coreを配線し、timeout／cancel／fault／explicit stop loopを固定した。Observer `77cbae4`／
       `4e29398`／`6d03b71`／`96ccad7`、corrective `dda8567`／`f7efa09`、最終関連70/70、
       ADR 0066〜0069、計画commit `e2adbca`で受け入れた。実host requestはH gateへ残す。
-  - [x] **SUPERSEDED:** Claude公開非対話background routeをunsupportedとして閉じ、Codex app-serverと
+  - Latticeへ移管済み: of-0212 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L35
     Aiterm公開Claude sessionのdelivery／session相関／StopをH gateで実証した。
-- [x] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
+- Latticeへ移管済み: of-0214 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L36
   host不明またはThroughlineの`ambiguous_parent`はfail closedにする。
-- [x] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。
+- Latticeへ移管済み: of-0216 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L37
   active watchが既にある場合は`already_active`で停止し、暗黙起動、二重起動、後勝ちtakeoverを行わない。
-- [x] Codex ObserverとClaude Observerで同じwatch／status／stop UXを提供する。
-- [x] Observer hostのproject identityを、監視対象ごとの作業folderではなく単一のObserver repo rootへ固定する。
+- Latticeへ移管済み: of-0218 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L38
+- Latticeへ移管済み: of-0219 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L39
   - Observer rootの`AGENTS.md`／`CLAUDE.md`が伴走者、read-only、既定沈黙、一サイクル一件、同providerという
     静的役割を所有し、起動ごとのpromptはtarget、watch、cursor等の可変情報だけを渡す。
   - targetの`project_root`はchild start envelopeとSupervisor state照合にだけ使い、host `cwd`、一時git repo、アプリ上の
     project identityへ投影しない。正本: Observer ADR 0017、commit `6abd9e6`。
-- [x] **SUPERSEDED:** 旧Claude background adapterのargv／private job recoveryは採用せず、Aiterm公開
+- Latticeへ移管済み: of-0224 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L40
   `claude_agent`／`claude_turn`／`pty_close`契約へ置換した。旧案では、
   terminal receiptのowner、作成時点、atomic保存、job ID／result digest相関、再開手順を耐久契約として実装する。
   即時完了、terminal直前のadapter crash、実行中adapter restart、daemon消失、失敗terminalを独立fixtureにし、
   terminal後に`claude logs <id>`の`control.sock`が失われても成功や空結果へ丸めず、Claude private job state直読を標準fallbackにしない。
   raw `claude logs`はアカウント／利用状況表示を含み得るため親出力、Control、Observer stateへ流さず、子process内で
   allowlist済みのjob ID、terminal state、result digest、観測時刻だけを構造化receiptへ抽出する。後追いmaskを安全境界にしない。
-- [x] production Observer AIのtool allowlistを空にし、Throughline wait／read、project読取、shell／file toolを
+- Latticeへ移管済み: of-0231 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L41
   AIへ公開しない。既存Observer MCP serverは削除せず、compatibility／diagnostics上の存廃をPhase 2内の別Taskで裁定する。
-- [x] **SUPERSEDED:** 旧Claude backgroundの`agents --json` stop案はAiterm公開session terminalへ置換した。旧案では、
+- Latticeへ移管済み: of-0233 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L42
   command receiptとterminal state観測を分離する。stop確認不能では同じjob IDを再観測し、terminal不明なら`stopping`を維持する。
-- [x] **SUPERSEDED:** 旧Claude background隔離案はcampaign専用Aiterm runtimeと設定transactionへ置換した。旧案では、
+- Latticeへ移管済み: of-0235 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L43
   project fingerprint不変を確認する。65秒超の実行中jobでstop、子process残存なし、再stop、親／launcher再起動後の状態を実証する。
-- [x] project-local Stop hookはmatching provider resultのcaptureだけを行い、block continuationを返さない。
+- Latticeへ移管済み: of-0237 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L44
   次cycleは外部Supervisorが開始し、親Mailbox hook adapterは別責務の高速配送員として維持する。
-- [x] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
-- [x] read-only、誤配送防止、crash recovery、faulted停止、installer／verify／rollbackを両hostで完遂する。
-  - [x] Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。
+- Latticeへ移管済み: of-0239 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L45
+- Latticeへ移管済み: of-0240 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L46
+  - Latticeへ移管済み: of-0241 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L47
     Observer CLIがClaude／Codex別のcanonical `Stop` entryを所有し、dotagentsはmessage、Mailbox、routing、renderを
     再実装しない。CLI不在、schema不一致、candidate不正はfail loudにする。
-    - [x] Observer側P3-4b1のrepo、Control、commit、immutable ADR digest、親受入時刻をcross-repo receiptへ固定した。
+    - Latticeへ移管済み: of-0244 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L48
       - 正本: [ADR 0007](adr/0007-observer-hook-config-cross-repo-receipt.md)。
     - dotagents実装・受入: commit `2fb48cb`、Control report import revision 45、parent accept revision 46。
       正本: [ADR 0008](adr/0008-observer-hook-config-transaction-adapter.md)。
-  - [x] 既定dry-run、既存hook保持、Observer entry各一件への正規化、Claude `settings.json`とCodex `hooks.json`の
+  - Latticeへ移管済み: of-0248 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L49
     二file prepare／backup／atomic replace／途中失敗時rollbackをclean HOME fixtureで固定する。
     trust、model、effort、permission、credential、Spotter等の他製品hookは変更しない。
     focused gate `bash tests/install/observer-hook-config.sh`と`make lint-py`を通し、専用targetを`make ci`へ配線した。
-  - [x] P5-2aとしてObserver製品manifest、sanitized diagnostics、4 executable binと、dotagentsの
+  - Latticeへ移管済み: of-0252 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L50
     isolated npm install→reinstall→verify→rollbackを閉じた。Observer `630c5ff`／`b45c07a`／`d03495d`、
     dotagents `894799b`、Observer ADR 0099〜0100をcross-repo receiptとする。
-  - [x] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
+  - Latticeへ移管済み: of-0255 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L51
     保護集合、cleanup失敗時の再実行決定性を隔離fixtureで閉じた。Observer
     `1d045df`／`8b49493`／`876fe5c`、ADR 0101〜0102を受入receiptとする。
-  - [x] P5-1b／P3-4cのlive H実施前に、両host prerequisite、必須相関証拠、停止条件、
+  - Latticeへ移管済み: of-0258 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L52
     rollback、収集禁止情報をversioned preflight receiptとrunbookへ固定する。
     Observer `50b4e86`／`bbe407d`／`80b06f0`と
     [cross-repo receipt](adr/0023-observer-live-preflight-receipt.md)で受け入れた。
-  - [x] Codex parent caller coreとinitial generation bootstrapをObserver製品repoで閉じた。
+  - Latticeへ移管済み: of-0262 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L53
     Observer `133cf37`／`286a6db`／`8f5fb90`、focused 9/9、related 77/77、`npm run check` green、
     [受入receipt](adr/0025-observer-codex-parent-caller-core-receipt.md)。
-  - [x] Codex parent entry／配布をdotagentsのisolated HOME gateで閉じた。
+  - Latticeへ移管済み: of-0265 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L54
     Observer `659924c`／`0690ee0`／`41a031d`、dotagents `21bc352`、focused 12/12、related 25/25、
     isolated install／verify／rollback、[受入receipt](adr/0026-observer-codex-parent-entry-distribution-receipt.md)。
-  - [x] Claude characterization専用の隔離Stop capture、sanitized receipt、prepare／verify／cleanup
+  - Latticeへ移管済み: of-0268 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L55
     harnessをObserver製品repoのfixtureで先に閉じた。親Mailbox hookをresult captureへ流用しない。
     Observer `f40b672`、dotagents `78c358b`、focused 10/10、related 26/26、package／isolated
     install gateを[ADR 0028](adr/0028-observer-claude-characterization-harness-receipt.md)で受け入れた。
-  - [x] 上記harness完成後、Claude公開非対話reply／result readをH characterizationし、旧background job routeの
+  - Latticeへ移管済み: of-0272 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L56
     unsupportedを証拠化した上で、実証済みAiterm公開面だけでClaude callerを実装してdual-host live Hへ進む
     （[queue correction](adr/0024-observer-parent-caller-queue-correction.md)）。最初のlive Hと診断receipt後の再Hで
     hook invocation、job／session、Stop payloadはconfirmedとなったが、canonical resultは
     `E_CLAUDE_CHARACTERIZATION_RESULT_INVALID`、reply／terminal exact resultはunsupportedだったため、
     旧background job callerを[ADR 0032](adr/0032-observer-claude-live-recharacterization-blocked.md)で閉じ、
     19c3以降のAiterm対話routeへ置換した。
-    - [x] Stop未発火とstdin／payload／result不正を区別するraw-free diagnostic receiptをObserverで閉じた。
+    - Latticeへ移管済み: of-0279 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L57
       Observer `f239a07`、focused 9/9、related 29/29、`npm run check` green、
       [ADR 0031](adr/0031-observer-claude-diagnostic-receipt-acceptance.md)を受入証拠とする。
-    - [x] diagnostic receipt受入後、別H承認で一つのClaude job／Haiku requestだけを再characterizeした。
+    - Latticeへ移管済み: of-0282 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L58
       terminal、cleanup、project／host settings不変はconfirmed、追加spawnと明示stopは不要だった。
       必要な公開delivery／result contractが現れるまでcallerを部分実装しない。
-    - [x] Aitermの永続PTYへ対話型`claude_agent`を追加し、同じ利用者可視sessionへの初回／follow-up、
+    - Latticeへ移管済み: of-0285 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L59
       Stop完了、operation相関付きexact result、timeout後回収、interrupt／closeを公開契約として閉じる。
       Throughline L2をObserver自身の継続理解の代替にせず、Supervisorは非AI transport制御へ限定する
       （Aiterm `dd43c40`／`3842ff2`、focused 1/1、related 122/122、full 262/262、独立反証後green、
       [ADR 0033](adr/0033-observer-persistent-context-and-aiterm-claude-route.md)）。
-    - [x] Aiterm公開面だけでClaude production callerを実装し、同じ永続Claude sessionへcompleted turnを
+    - Latticeへ移管済み: of-0290 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L60
       順次投入する。generation rollover／same-provider parent rebindではstructured close後に別sessionへ切り替え、
       launch response lossは相関済み`claude_agent` exact replayだけで回収する。completed turnごとの
       `claude -p`／fresh evaluatorは禁止する。Observer `7bfafa4`、focused 20/20、related 50/50、
       full 393/393、Control revision 62／20 archiveを
       [ADR 0038](adr/0038-observer-claude-generation-lifecycle-receipt.md)で受け入れた。
-    - [x] **CORRECTION — 受入完了:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
+    - Latticeへ移管済み: of-0296 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L61
       dual-host campaignと同じ19e live Hで一度確認する。fixture成功をlive成功へ丸めず、model requestを伴うため
       明示承認後にだけ実行する。通常campaignは2026-07-16にオーナー承認済み。intentional crash／通信断は
       別承認のまま実施しない。Claude r12／Codex r11の通常系受入、設定のexact rollback、修理commitとgateは
@@ -305,46 +305,46 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
       Observer `1493b35`／ADR 0144、focused 16/16、related 68/68、full 412/412、P0/P1残存0、
       Control revision 26 archiveで閉じた。cross-repo receiptは
       [ADR 0042](adr/0042-observer-phase-o2-cross-repo-receipt.md)。
-    - [x] 19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline
+    - Latticeへ移管済み: of-0308 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L62
       `observer-read`疎通へ補正し、`apply-observer-hook-config`へ検証済みarchiveからの原子的restore、
       absent状態、mode／owner保持を追加する。rollback入口がgreenになるまで実HOMEへapplyしない。
-    - [x] 最初のClaude live attemptで再現したstate root不一致を根治する。Observer hook fragment／preflightと
+    - Latticeへ移管済み: of-0311 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L63
       dotagents adapterへ同じexplicit state rootを必須化し、旧root targetをcanonical一件へ置換する。
       失敗attemptは成功へ含めず、独立gate／commit後にqueue 19eへ戻る
       （[ADR 0024](adr/0024-observer-hook-state-root-binding.md)）。Observer focused 28/28、related 48/48、
       dotagents hook transaction／isolated package gate、対象docs lintはgreen。
-    - [x] state root修理後に再現したThroughline capture実行物不一致を閉じる。Aiterm Claude parent
+    - Latticeへ移管済み: of-0316 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L64
       controllerのPATH先頭をcampaign prefixへ固定し、bare `throughline process-turn`とabsolute
       `observer-read`を同じcandidateへ束縛する。失敗attemptは成功へ含めず、global updateや
       手動transcript投入へfallbackしない（[ADR 0025](adr/0025-throughline-capture-runtime-binding.md)）。
-    - [x] PATH補正後に判明したAiterm runtime共有を閉じる。campaign専用0700 `TMPDIR`とcandidate-first
+    - Latticeへ移管済み: of-0320 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L65
       PATHでfresh tmux serverを作り、global tmux serverのstale環境を再利用しない。global socket／session／
       packageは変更せず、candidate自然Stopのreceiptと`observer-read` completed turnで受け入れる
       （[ADR 0026](adr/0026-aiterm-campaign-runtime-isolation.md)）。
-    - [x] 専用runtimeのUnix socket長境界を閉じる。campaign root直下の短い0700 `r2`を使い、
+    - Latticeへ移管済み: of-0324 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L66
       実物`<TMPDIR>/claude-tmux-sockets/claude.sock`をmacOSで94 bytesとlaunch前に実測した。
       105-byte pathの失敗attemptは成功へ含めず、global runtimeへfallbackしない。ADR 0027の
       予測名／92 bytesは[ADR 0028](adr/0028-queue19e-socket-and-stop-flush-correction.md)で訂正する。
-    - [x] 短い専用runtimeで再現したThroughline Stop transcript flush raceを閉じる。Aiterm session、
+    - Latticeへ移管済み: of-0328 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L67
       candidate-first PATH、実Claude `end_turn`、Stop hook error 0は成立したが、final assistant行の
       transcript可視化前にone-shot backfillしてDB本文／receiptが0件になった。Throughline commit
       `a46b915`でbounded barrierを独立実装し、focused 14/14、subprocess 2/2、related 78/78を通した。
       失敗attemptは成功へ含めず、修理済みcandidate再梱包後に19eを再開する
       （[ADR 0028](adr/0028-queue19e-socket-and-stop-flush-correction.md)）。
-    - [x] 修理済みcandidateの自然Stop receipt後に再現したinstalled Observer package root不一致を閉じる。
+    - Latticeへ移管済み: of-0334 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L68
       CLIだけが末尾`/`付きrootを作り、preflightと実parent callerが分岐していた。Observer
       commit `33eb05a`でcanonical directoryへ一意化し、focused 15/15、related 35/35、package verify、
       installed module smoke `providers=2 root_count=1 canonical=true`を通した。失敗attemptは成功へ含めず、
       再pack済みcandidateから19eを再開する（Observer ADR 0133）。
-    - [x] canonical root修理後に再現したThroughline completed timestamp境界を閉じる。Throughline
+    - Latticeへ移管済み: of-0339 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L69
       `observer_read.v1`の正規整数msをObserver evidenceのcanonical `.sssZ`へevidence collectorで一度だけ
       変換し、文字列、負数、範囲外値はfail closedにする。Observer commit `d84c969`、focused 9/9、
       related 42/42、package verify、実feed installed smoke
       `feed_turns=1 snapshot_turns=1 canonical=true`がgreen。失敗attemptは成功へ含めず19eを再開する
       （Observer ADR 0134）。
-  - [x] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
+  - Latticeへ移管済み: of-0345 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L70
     live host成功へ丸めない。通常系19eで実施後、最初のarchiveとdigest／mode／ownerが一致する設定へ復元した。
-- [x] Codex／Claude E2EとPhase監査を通し、Observer側Phase O2の受け入れ条件を閉じる。
+- Latticeへ移管済み: of-0347 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L71
   - Observer `1493b35`／ADR 0144、Control revision 26 archive、focused 16/16、related 68/68、
     full 412/412、独立重監査P0/P1残存0を受け入れた。次ready TODOはPhase 3。
 
@@ -352,48 +352,48 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 3: Elasticのprovider対称化
 
-- [x] shared orchestration契約へ「Observer同社／相談役異社／一般Worker適応配置」を反映する。
+- Latticeへ移管済み: of-0355 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L72
   - `shared/orchestrate/contract.md`「知能の配置原則（provider対称）」節を新設（`209e2df`と同wave、
     受入[ADR 0050](adr/0050-o3-placement-policy-and-switch-fixtures-acceptance.md)）。役割→モデルの
     解決は`docs/02_models.md`単独のまま、providerとの関係だけを契約化した。
-- [x] Codex親からClaude Worker／相談役を呼ぶadapter、handle、observe、resume、failure mappingを実装する。
+- Latticeへ移管済み: of-0359 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L73
   - Worker laneは`claude-native@v1`（[ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)）、
     相談役laneは`claude-native@consult-v1`（同一UUID resume・`--tools ""`全tool無効・cwd非複製、
     `50d79d5`、受入[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)）。
     いずれもprojection純関数で、実model live dispatchはH gateへ残置。
-- [x] Claude親からCodex相談役を呼ぶ経路を既存sidecar／native境界と整合させる。
+- Latticeへ移管済み: of-0364 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L74
   - `codex-sidecar@consult-v1`＝同期read-only `codex_opinion`（製品契約: `readonly:true`・
     `projectRoot`必須・effort `low|medium|high|xhigh`）。durable handleを捏造せず
     `consultation_handle:null`固定、write系引数非生成、caller観測error/timeoutで終端可（`50d79d5`）。
-- [x] Consultationを`gpt-connector`固定からlane別adapterへ拡張し、Workerと別collectionのまま維持する。ObserverをControlのWorker票やConsultation票へ混ぜない。
+- Latticeへ移管済み: of-0368 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L75
   - Control schema v26のconnector closed enum＋typed `consultation_handle`、v25継続mutation、
     明示`control-migrate`（rollbackは非gpt不在時のみ）、brief/resume-check v7、failure supportの
     adapter_id×lane keying、consultation observationのworker projection遮断まで`50d79d5`で実装。
     ADR 0045 Gateの全focused fixture固定、related 127/127・fail 0・skip 0、`make lint-js` green。
     受入は[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)。
-- [x] provider障害時の別社切替は新Runとして記録し、fallback元の成功へ偽装しない。
+- Latticeへ移管済み: of-0374 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L76
   - Consultation切替をv26実fixtureで固定（gpt failed終端後のみ同一assignmentでclaude-native新record可、
     元recordのstate・handle・terminal_evidence不変、nonterminal/completed中は`ASSIGNMENT_ACTIVE`、
     ID再利用は`DUPLICATE_ID`。`209e2df`）。Worker側は既存のfallback宣言（v20/v21）が正のまま。
-- [x] role別の適格provider集合と、親と異なる相談役をplacement fixtureで固定する。
+- Latticeへ移管済み: of-0378 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L77
   - `lib/orchestrate/placement-policy.mjs`（observer=same／consultant=cross-first／worker=adaptive、
     connector→family分類、fail-closed）と、policy＝v26 connector enum＝catalog consultation laneの
     三者一致fixture（`209e2df`、related 132/132・fail 0・skip 0）。相談役異社は第一候補原則で
     あり強制拒否にしない（同社ChatGPT相談laneを保全）。
-- [x] O3実装境界を先に固定する。
+- Latticeへ移管済み: of-0383 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L78
   - [ADR 0043](adr/0043-o3-claude-provider-adapter-boundary.md)で、既存v25 Worker契約を変えない
     `claude-native` adapterを最初の独立単位とし、Consultationの多provider schema変更を別gateにした。
   - Claude Code 2.1.211の`--bare`はOAuth／keychainを読まないためsubscription routeへ使わず、
     `--continue`、推測session、`--fallback-model`、`claude-internal` dispatch転用も禁止する。
   - baselineはorchestration関連115/115、fail 0、skip 0。実model request／network／credentialは未実施。
-- [x] `claude-native` Worker adapterのstart／same-session resume／observation／timeout unknown／failure
+- Latticeへ移管済み: of-0389 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L79
   mappingを純粋projectionとして実装し、禁止flagと別session fallbackをfocused testで拒否する。
   - dotagents `4a3c9a7`（adapter＋focused test＋Control handle UUID厳格化）、`1573fce`（監査検出の
     大文字UUID非対称修理）。変更後focused 5/5、related gate（executor-adapters＋executor-contracts＋
     control-record）117/117・fail 0・skip 0、`make lint-js` green。argv契約はClaude Code 2.1.211の
     実CLI helpと照合済み。受入は[ADR 0044](adr/0044-o3-claude-native-adapter-acceptance.md)。
     実model request／login／credential／network dispatchは未実施。
-- [x] ConsultationのClaude session ID／Codex handleをv25の`slug`へ読み替えず、旧v25継続読取、
+- Latticeへ移管済み: of-0396 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L80
   型付きhandle、migration／rollback、O4のv26予約とのversion順を不変ADRで裁定する。
   - [ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)で裁定。O3=v26／O4=v27、
     connector別`consultation_handle`（gpt=slug、claude-native=同一UUID、sidecar=null）、
@@ -401,7 +401,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     failure supportのlane別keying、sidecar同期consultの終端evidence条件化を固定した。
     独立refuter 2票（互換視点・実装可能性視点）を通し、採用7群・棄却4群を件数遷移付きで
     ADRへ記録した。実装は`50d79d5`で完了（受入[ADR 0049](adr/0049-o3-consultation-v26-implementation-acceptance.md)）。
-- [x] 既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、
+- Latticeへ移管済み: of-0404 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L81
   `claude -p` allowはO3権限規則として別scope／別commitで閉じる。保護指定pathを本adapter commitへ混ぜない。
   - `0170f00`（WSL relay RAG＋INDEX行）、`cd2ea3a`（mcp-observer INDEX行追補）、`cffb342`
     （`claude -p` allow。model H承認ではない）。CDC中間物はrag raw保存・出典URL・消費者ゼロを
@@ -419,7 +419,7 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 
 ### Phase 3 maintenance queue
 
-- [x] consultationのplanned→terminal脱出経路を設計裁定する（既存v25契約の欠陥。取消済みTaskの
+- Latticeへ移管済み: of-0422 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L82
   planned consultationがControl finalizeを恒久ブロックする。記録元:
   [ADR 0051](adr/0051-o3-phase-audit-record.md)）。
   - [ADR 0053](adr/0053-consultation-orphaned-planned-closure-exemption.md)で裁定・実装。
@@ -437,30 +437,30 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
 > cancelled state・migration/rollback）、実装wave Q/S/V/A/Dの分割を固定した。
 > 以下のTODOはADR 0054の裁定に従って実装する。
 
-- [x] `quota_pool_id`、`host_instance_id`、対象executor集合、`provider`、`windows[]`（`remaining_bp`、`starts_at`または`duration_seconds`、`reset_at`、`model_family_scope`）、`observed_at`、`source`、`confidence`を持つquota snapshot契約を定義する。
+- Latticeへ移管済み: of-0440 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L83
   - [ADR 0054](adr/0054-o4-rate-aware-scheduler-design.md) Decision 1で裁定（refuter指摘により
     remaining_ratioをbasis points整数へ、model_familyをwindow単位scopeへ、window_length検証を追加）。
     validator実装はWave Q。
-- [x] OpenAI／Anthropic adapterでquota snapshotを取得し、秘密、cookie、token、account内部stateをControlへ複製しない。
+- Latticeへ移管済み: of-0444 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L84
   - request/projection純関数と秘密非複製は`lib/orchestrate/quota-adapter.mjs`（受入[ADR 0057](adr/0057-o4-wave-a-acceptance.md)）。
     live H実測で**OpenAI verified**（実token_count往復・[ADR 0058](adr/0058-o4-live-quota-observation-acceptance.md)）、
     **Anthropic verified**（statusline `used_percentage`入口・実capture往復・
     [ADR 0059](adr/0059-o4-statusline-quota-entry-acceptance.md)。stream eventはutilization不在を
     `UTILIZATION_UNAVAILABLE`で実態固定し前方互換pathとして保持）。自動配置の開始はWave D。
-- [x] 異なるreset時刻をUTCで正規化し、`pace_ratio`と最も逼迫したwindowを計算する純粋selectorを実装する。
+- Latticeへ移管済み: of-0450 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L85
   - `lib/orchestrate/rate-selector.mjs`（`83236c4`、受入[ADR 0055](adr/0055-o4-wave-qs-acceptance.md)）。
     canonical ISO UTC強制・model_family_scope選別・残量下限・pace飽和・量子化tie-break。
-- [x] role適格候補だけを入力にし、Observer／相談役／F作業を自動均衡対象から除外する。
+- Latticeへ移管済み: of-0453 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L86
   - placement語彙`{observer, consultant, worker}`で受け、observer/consultantは`ROLE_NOT_BALANCED`、
     親直轄Fは語彙外（既存`EXECUTOR_FORBIDDEN`が担保。ADR 0054裁定）。
-- [x] 会社間の頻繁な切替を防ぐhysteresis、quota pool単位lock、選択ごとのsnapshot再取得、reset時失効、同率時の決定的tie-breakを実装する。
+- Latticeへ移管済み: of-0456 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L87
   - hysteresis・鮮度強制（選択ごと再取得）・reset失効・決定的tie-breakは`83236c4`で実装・fixture固定済み。
     quota pool単位lockはWave Aでlock-owners機構再利用のpool leaseとして配線し、selector_decision付き
     placement-reserveへ保持必須を課した（受入[ADR 0057](adr/0057-o4-wave-a-acceptance.md)）。
-- [x] stale／取得失敗／残量ゼロ／window矛盾／reset境界／時差／一社のみ適格をfail-loud fixtureで固定する。
+- Latticeへ移管済み: of-0460 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L88
   - 取得失敗以外の6項目は`83236c4`のWave Q/S fixtureで固定済み。取得失敗はWave Aの
     `projectQuotaObservationFailure`（必ずtyped error・closed語彙）fixtureで固定（受入[ADR 0057](adr/0057-o4-wave-a-acceptance.md)）。
-- [x] Control schema v27（[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)でv26はO3
+- Latticeへ移管済み: of-0463 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L89
   Consultation多provider化へ割当済み）へ使用snapshot digest、quota pool、評価時刻、選択理由、
   reservationを持つselector decisionを追加し、candidate digest／receiptへ束縛する。旧version reader
   継続、v27新規作成、migration／rollback fixtureを同時に通す。
@@ -468,82 +468,82 @@ Wave 1A〜1Cは書込範囲とgateを分離して並行可能とする。wire v2
     optional keyとしてplacement-reserve subject digestへ自動束縛（改竄の恒久検出をfixture固定）。
     v27はconsultation `cancelled` state（`consultation-cancel`・ADR 0053除外のretire）も導入。
     reader {v25,v26,v27}継続・隣接migration/条件付きrollback・full 152/152・fail 0・skip 0。
-- [ ] 実消費と選択結果を週次で評価し、両社がreset時に過不足なく使われるかdogfood記録を残す。
+- Latticeへ移管済み: of-0471 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L90
 
 **Gate:** 架空quotaやsilent fallbackなしで、適格Workerを日割り余裕のあるproviderへ再現可能に配置できる。
 
 ### Phase 5: 工場wire v3とBugHub編入
 
-- [ ] 既存wire v2計画の全残件が現行12製品契約のまま完遂されたfinalization receiptを確認する。
-- [ ] wire v3を固定13製品（端末能力9製品＋ServerManager＋基盤toolchain 3種）として設計する。
-- [ ] Observerのversion、native diagnostics、runtime error、host／connector matrix、更新経路、adapter、fixture、rollbackを追加する。
-- [ ] BugHub schema、期待matrix、scanner、reporter、read-only集約をv3へ更新する。
-- [ ] 未対応hostは`missing`へ誤投影せず、契約どおり`unsupported`／`not_applicable`／`unverified`を使い分ける。
-- [ ] v2 clientとの互換、v3 migration、image rebuild、rollbackをServerManager側正本TODOで閉じる。
-- [ ] Observer受け入れ完了後にだけPLAN／AGENTS／READMEの工場コア一覧を9製品から10製品へ更新する。
+- Latticeへ移管済み: of-0477 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L91
+- Latticeへ移管済み: of-0478 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L92
+- Latticeへ移管済み: of-0479 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L93
+- Latticeへ移管済み: of-0480 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L94
+- Latticeへ移管済み: of-0481 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L95
+- Latticeへ移管済み: of-0482 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L96
+- Latticeへ移管済み: of-0483 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L97
 
 **Gate:** Observerが独立製品の所有境界を保ったまま、工場の更新・診断・bug・compatibility管理へ入る。
 
 ### Phase 6: Elastic orchestration dogfood receipt集約と完了監査
 
-- [ ] Phase 1以降のA作業を各repoのControl／Task／Packet／Worker Report／親受入で運用し、Codex偏重や回収不能を観測する。
-- [ ] 各委譲前に入口availability、role、provider、quota snapshot、reservationを記録する。
-- [ ] timeoutは同一handleで回収し、同一taskを重複起動しない。
-- [ ] 正規入口で再現したオーケストレーション欠陥はdotagentsの本計画TODOへ追加し、独立gate／独立commitで即修正してからObserver本筋へ戻る。
-  - [x] worktreeで未作成のTask `doc_ref`を渡した時、内部`git hash-object`失敗を`GIT_FAILURE`へ誤分類せず、利用者が直せる`IO_FAILURE: task document is unavailable`として返す。
+- Latticeへ移管済み: of-0489 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L98
+- Latticeへ移管済み: of-0490 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L99
+- Latticeへ移管済み: of-0491 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L100
+- Latticeへ移管済み: of-0492 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L101
+  - Latticeへ移管済み: of-0493 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L102
     - focused test 1/1 PASS、Observer実Controlの同じ入力で`IO_FAILURE`を再確認した。
-  - [x] Claude background CLIの可変長flagがpromptを取り込むargv順序と、terminal後の一時daemon終了により`claude logs <id>`が
+  - Latticeへ移管済み: of-0495 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L103
     `control.sock`不在になる運用摩擦を再現した。Observer ADR 0010へ失敗2件と成功1件を固定し、Phase 2のhost adapter TODOへ
     bounded receipt収集とprivate state非依存を追加した。adapter実装とcrash回収gateは未完のまま維持する。
-  - [x] Claude backgroundでMCP toolを`--tools`だけへ指定すると`dontAsk`が拒否すること、`--allowedTools`へ同toolをexact追加すると
+  - Latticeへ移管済み: of-0498 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L104
     75秒超`working`を維持して実行中stopできることを再現した。再stopは成功receiptを返さず、公開一覧は`stopped`を保持したため、
     Phase 2へ公開／無人許可の分離、terminal先行確認、stop receiptとstate観測の分離を追加した。実adapterは未完のまま維持する。
-  - [x] `claude logs`がObserverの必要情報以外のアカウント／利用状況表示を含み得ることを再確認した。raw出力を保存・親表示せず、
+  - Latticeへ移管済み: of-0501 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L105
     子process内のallowlist抽出だけを構造化receiptへ返す出力衛生をPhase 2へ追加した。sanitizing adapter testは未完のまま維持する。
-  - [x] Delegation Packetの`report_template`が最上位field名しか示さず、native implementerがnested evidence／validationを
+  - Latticeへ移管済み: of-0503 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L106
     strict schemaどおり返せない運用摩擦を解消する。保存済みpacketからexactなWorker Report skeletonを生成するread-only入口を追加し、
     packetとskeletonをdispatch前に保存して子へ渡す。親の手補正を標準運用にせず、生成物を埋めたreportがそのままimportできるfocused fixtureを通す。
     - `worker-report-skeleton`を追加し、correlation、executor handle、validation refs、nested evidence shapeをprefillする。
       write Runはbaseline確定後のadmittedだけに制限し、active回収でも同じdigestを維持する。focused test 1/1 PASS。
-  - [x] Codex native follow-upで保存済みpacket／skeletonを要約転記すると、子がstrict nested shapeを再発明して
+  - Latticeへ移管済み: of-0508 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L107
     `worker-report-import`不能になる運用摩擦を防ぐ。follow-upには両artifactの実pathを明示し、子へ原本を読ませる。
     pathを渡せない時はdispatchせず、schemaの説明文だけで代用しない。新しいschema／自動dispatch／個別testは増やさない。
     - Codex `orchestrate` appendixへ原本path必須、要約転記禁止、pathなしdispatch禁止を追加した。
-  - [x] write Runのplanned時にDelegation Packetを生成すると、admit時のbaseline HEAD確定でpacket digestが変わり、
+  - Latticeへ移管済み: of-0512 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L108
     active report相関に使えなくなる契約不整合を直す。write Runはadmitted後だけpacket生成を許し、read Runのplanned生成は維持する。
     - planned writerを`INVALID_TRANSITION`で拒否し、admitted packetとactive回収skeletonのdigest一致を固定した。
       関連focused gateは各1/1 PASS。
-  - [x] Worker Report skeletonが`observed_at`を一般的なRFC 3339と案内する一方、strict importerは
+  - Latticeへ移管済み: of-0516 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L109
     ミリ秒付きUTC canonical ISO-8601だけを受理する不整合を直す。placeholder自身へ
     `YYYY-MM-DDTHH:mm:ss.sssZ`を明示し、実native Reportを親の手補正なしでimportできる形へ戻す。
     - focused test 1/1 PASS。正本: [ADR 0006](adr/0006-worker-report-canonical-timestamp-guidance.md)。
-  - [x] TODO完了候補時に一度だけ、親が標準経路外の手補正・証拠再構成・代替回収の有無を確認する。
+  - Latticeへ移管済み: of-0520 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L110
     有った場合は最終成功で握り潰さず、所有repoの`docs/`正本TODOを登録または参照してから本筋へ戻る。
     専用receipt／schema／個別testは増やさず、TODO単位の共有契約として固定する。
-  - [x] Worker Reportの親受入を`reject`した時、native implementerが完了報告を撤回したままTaskも終了する運用摩擦を直す。
+  - Latticeへ移管済み: of-0523 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L111
     report import前の受入差分は同じTask／Run相関／executor handleで再作業し、正式reject後は同じTask／assignmentの
     新しいretry Runへ再配置する。rejected Runを再dispatchせず、具体的blockerがある時だけ証拠付きで停止する契約を
     共有の委譲正典へ固定した。専用schemaや反復監査は追加しない。
-  - [x] Control記録済みnative Runへの`agents.interrupt_agent`を、親が`worker-cancel-request`より先に実行した順序誤りを再発防止する。Codex appendixへcancel request先行、interrupt receipt回収、`observe-worker=cancelled`の順を固定した。今回のRunは順序違反をDecisionに明記したrev52とterminal receiptのrev53で閉じ、成功へ丸めていない。
-  - [x] Observer repoで`codex-sidecar`の正規dry-runを実行すると、project-ownedな`.codex-sidecar.yml`がなく
+  - Latticeへ移管済み: of-0527 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L112
+  - Latticeへ移管済み: of-0528 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L113
     `CONFIG_NOT_FOUND`でfail loudになる統合欠落を解消した。Observerの所有境界内へpath allowlist、read-only preset、
     隔離worktree writer、`gpt-5.6-terra/medium`の明示policyを追加し、秘密、login、host設定変更、実Codex呼出なしで
     `diagnostics=ok`、review `dry-run`、factory diagnostics `overall=ready`を確認した（Observer commit `33bde15`）。
     実writer利用は別のexecution-verified gateまで進めない。
-  - [x] Control finalizationは完了済みphase gateを必須にするのに、公開CLIが未設定のまま最初のTaskを記録でき、
+  - Latticeへ移管済み: of-0533 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L114
     全Task完了後まで失敗を遅延させる運用摩擦を解消する。`control-init`直後・最初の`task-record`前に
     `phase-gate-record`を必須とする共有契約へ更新し、公開CLIは未設定を早期にfail loudする。
     - 公開CLIは`PHASE_GATE_NOT_RECORDED`で拒否し、phase記録後のTask作成とrecord-only非実行境界を
       focused test 1/1で確認した。内部library APIは既存Control／fixture互換のため変更していない。
-  - [x] Worker Reportの証拠時刻がimport時刻より約33分未来でもControlが受理する欠陥を、Observer
+  - Latticeへ移管済み: of-0538 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L115
     Supervisor統合Runのrevision 55で再現した。異host間のclock skewを5分まで許容し、それを超える
     `evidence[].observed_at`と`validation_results[].evidence.observed_at`を`EVIDENCE_FROM_FUTURE`で
     拒否するようdotagents `d6702b6`で修正した。旧Runはrevision 56でrejectし、同一assignmentの
     retry Reportを正時刻でrevision 60にimport、revision 61でacceptした。
-- [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
-- [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
-- [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。
-- [ ] 4 repoのTask finalization、cross-repo receipt、Phase監査を集約し、各Controlをfinalize／archiveする。
+- Latticeへ移管済み: of-0543 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L116
+- Latticeへ移管済み: of-0544 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L117
+- Latticeへ移管済み: of-0545 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L118
+- Latticeへ移管済み: of-0546 → docs/archive/lattice-source-ledger/observer-factory-integration-cutover-20260719.md#L119
 
 Dogfood記録（2026-07-15）:
 

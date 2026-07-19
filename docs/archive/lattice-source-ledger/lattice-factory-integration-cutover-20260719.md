@@ -1,0 +1,87 @@
+# Lattice ToDo archive
+Plan: lattice-factory-integration
+Batch: ledger-cutover-20260719
+Revision: b09aaa8aac7608227333a8be6231673c95dac335465b1930e9dfcfc586769284
+
+- [x] ADR 0046のタイミングの揺れをStage 1開始時へ統一する
+- [x] ADR 0046を起草する（Lattice `docs/adr/0046-rc4-writer-target-stage-override.md`）。
+- [x] Control `lattice-integration-v1`を`init`し、risk=high・behavior lane=behavior-preservingを
+- [x] 題材batch（6〜10件・control-record.mjs系／adapter系／docs系混在）をactiveレーンのTODOから選定し、
+- [x] batch定義evidenceへdotagents私有caveatの該当エントリを添付する
+- [x] 各TODOのboundary witnessを実作成し、**作成時間・参照証拠・書けなかった項目を1件ずつ実測**する
+- [x] Codegraph indexは**Lattice側clone/copy上にだけ**作る。dotagents正規repoに`.codegraph/`は無く
+- [x] `lattice plan compile`のconflict/wave/unknown判定を親が1件ずつ妥当／過剰serial／見逃しで裁定し、
+- [x] call graph非可視結合（shell hooks・markdown憲法・巨大単一file）がwitnessで表現できたかを個別記録し、
+- [x] Stage 0 gate: witnessコスト閾値・unknown率・判定一致率を実測に基づき確定・記録し、
+- [x] L1実測を根拠にfork要否を裁定する（予断で決めない）
+- [x] fork時: MIT license notice・attribution（fork時点のupstream commitを記録）を維持し、
+- [ ] **グラフ構築のcorrectnessを改良する**（実測が特定した原因箇所。優先順）:
+      - [x] (a) 経路実在を検証しない名前一致フォールバックとconfidence非永続化を直す（偽陽性の除去）
+      - [x] (b) JS/TS extractionに動的import/require処理を追加（偽陰性の除去）
+      - [ ] (c) call graph非可視の結合（spawn・shell・markdown・設定）を索引化する
+        - [x] (c1) spawn系（JS/TSのchild_process起動）— **2026-07-17完了**（Lattice `6c82461`）。
+        - [x] (c2) shell・markdown・設定 — **作らない（オーナー裁定 2026-07-17）**。
+- [x] 改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が
+- [x] focused gate → 関連gate → Lattice `npm run ci` green
+- [x] MCP面の公開契約を設計・裁定する（F）: tool面（`codegraph_explore`相当の後継）、schema、
+- [x] 「常駐サービス化はしない」非目標とMCP server提供の両立を明文化する（MCP serverはsession寿命の
+- [x] MCP面を実装し、index不在project・未対応host・Lattice非稼働時の振る舞いを明示する
+  - [x] wave1（2026-07-17・Lattice `34cac18`）: 製品同一性の分離（version `1.4.1-lattice.1`・
+  - [x] wave2（2026-07-17・Lattice `dcd5b70`）: 別bin `lattice-mcp`（内部daemon再invoke受理・
+- [x] 親別matrix（Claude親・Codex親）での登録・疎通をisolated HOMEで検証する
+- [x] focused／関連gate green
+- [ ] G4受入: dotagents master planの実workloadをガント表示し、**最長依存鎖**と現在地（active set）
+  - [x] dotagents所有の`.lattice/todo/gantt-presentation.json`へ`plan_key + lane`別の正式名・説明を登録する
+  - [x] Lattice local sourceで実110件を再生成し、工程番号→canonical `factory-master/fm-NNNN`の一意対応、
+  - [ ] generated HTMLがnetwork 0・keyboard操作・狭幅表示を維持し、tracked store bytesを変えないことを確認する
+- [ ] dotagents側配線の受入: SessionStart案内hook・Stop WARN hook・settings断片・
+- [ ] cutover受入: 移行済みplanのcheckbox列廃止と憲法「計画文書の作法」規範化（G5と同一gate）
+- [x] ADR 0046 commit後にControlを更新し、H task承認snapshotを記録する
+- [x] **隔離HOMEでexecutorを実行する**。executor packetで`install.sh`・`spotter install`・
+- [x] dotagents disposable clone（tmpdir配下・正規repo不着地）で実小粒タスクの閉ループを完遂する:
+- [x] control-record.mjs級の巨大file交差ケースを意図的に含め、Latticeの答え（serial判定／seam候補）と
+- [x] artifact v3をatomic発行し、artifact-only verification green
+- [x] Stage 2 gate: 境界事故0・受入品質・witnessコスト再実測（L2改良の効果を実戦で確認）
+- [x] 着地窓をオーナーと合意する。**queue 20 campaign実施窓・R3 wire v2 finalization・J1 wire v3実装waveと
+- [x] batchごとにH gate承認を記録し、着地は**親のreview→pathspec commit経路のみ**（Latticeが直接
+- [x] 最低3 batch（うち1つは並列2 TODO以上同時進行）を事故0で着地し、wall-clock・rework・手戻りを実測保存する
+- [x] 着地ごとにdotagents正規gate（`make lint`／`make ci`）green・境界事故0を確認する
+- [x] Phase gate: full CI・**`fable`×high refuter 1回**・クロスprovider検証1回・support/refute ADR・
+- [x] **refuteなら編入・退役は発動しない**。correction planを立てて本計画のL6以降を凍結する
+- [x] **Lattice編入パッケージ要件を文書化する**（RC4 planからのcarry-over・ADR 0051 Decision 6）:
+- [x] **Lattice native factory diagnostics**を実装する（version・schema version・overall・check ID・
+- [x] **opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する
+- [x] 配布形態を裁定する（npm package化 or repo直CLI）
+- [x] npm配布の配線: package名の確定、`bin/agents-update.sh`のPACKAGES追加、
+- [x] `docs/factory-product-contracts.md`へLattice台帳を記録する（repo・所有・自作区分・version入口・
+- [x] dotagents側adapter＋privacy negative fixtureを実装する
+- [x] `docs/factory-host-product-matrix.md`へLattice行を追加する。**FOX Windows nativeはClaude/Codex/Grokの
+- [x] install/verify（`bin/verify-install.sh`のCLI必須listほか）を更新する。
+- [x] **Lattice v0.2.0 publish（H承認待ちcarry-over）**: 未公開のmaintenance wave 4件
+- [x] コア一覧の更新: 第10枠はObserver予約済み（wire v3）。**Latticeは第11**として
+- [ ] 親計画のJ1（wire v3固定13製品）完了を確認してから着手する
+- [ ] **Lattice run運用面の正式化**（委譲契約「Lattice既定」の硬化前提・fable refuter差し戻し
+- [ ] **shadow同等性gate**（Oracle前例331行の型）: session内code intelligenceの代表タスクを
+- [ ] wire v4を設計する（固定製品集合の変更＝wire major）。`docs/factory-reporter-runbook.md` §11の
+- [ ] `lib/factory/contract.mjs`のV4_PRODUCT_IDS、`lib/factory/v4.mjs` adapter、
+- [ ] host別cutover状態と`retire-codegraph`／`restore-codegraph`入口を実装する（global booleanにしない）
+- [ ] 消費者ゼロ確認: `rg -a`＋索引併用。**削除検証ツール自身がcodegraphである**ため、
+- [ ] 退役点の全数消化: `docs/05_codex-fragments.md`（両親matrix・addコマンド・疎通規則）、
+- [ ] BugHub履歴は物理削除せず`not_applicable`遷移。server期待matrixから外す時期と旧report受理期間を明示する
+- [ ] 各現役hostのMCP解除（H・Mac／main-server／FOX WSL2の3host。Windows nativeは親不在のため
+- [ ] rollback drill（wire v4送信停止・前release復帰・一時切戻し）を分離して実証する。
+- [ ] Phase gate: full CI・独立反証・knowledge return・Control finalize → 本計画を`docs/archive/`へ
+- [x] ServerManager側でLatticeを報告元sourceとして登録する（adapter／schema／認証）。
+- [x] 読み取り専用集約・`resolve`／`reopen`・`/ai`の既存契約を壊さない
+- [x] 本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）。
+- [x] sensor: Lua/Luau/Rubyの`require()`検出が`visitNode`フック実装のため関数本体内requireを拾えない
+- [x] CLI: `lattice plan compile`のtyped失敗が`cli_error.v1`の`code`/`message`だけを出し、compile resultの
+- [x] CLI: `lattice doctor --json`（bootstrap diagnostics）が化石化——`references.plan`が消滅済み
+- [x] artifact: `patches_bound_to_accepted_receipts`検査がpath照合のみ（保存`checkpoint_digest`未検証・
+- [ ] runtime-contracts: `run_event.v1`の`recorded_at` validatorが「regex＋`Date.parse()`非NaN」のみで
+- [ ] **WIP計数の解釈**: 憲法「active WIPは本筋1件＋緊急割込み1件まで」を、Lattice戦役とdotagents戦役の
+- [ ] **Oracle rollback drill未完のまま2件目の退役を始めるか**（L7着手時）
+- [x] **Lattice配布形態**（npm publish or repo直CLI）。L6の更新経路・install/verify設計が従属する
+- [x] Lattice repoの同期状態（origin差分・dirty・stash）を確認し、`npm run ci`のbaselineをgreenで固定する
+- [x] Lattice正典を実読し、重複TODOを集約する
+- [x] Lattice側RC4 planへ直轄化を反映する（依頼構造の解体・親裁定参照・fork非目標の撤回・

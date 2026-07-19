@@ -2,6 +2,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -115,19 +116,47 @@ export function inventorySources({
   return inventory;
 }
 
+export function verifyLiveSourceCutover({
+  repoRoot = process.cwd(), sourceRefs = DEFAULT_SOURCE_REFS,
+} = {}) {
+  const root = path.resolve(repoRoot);
+  if (!Array.isArray(sourceRefs) || sourceRefs.length === 0
+    || sourceRefs.some((sourceRef) => !safeRef(sourceRef))
+    || new Set(sourceRefs).size !== sourceRefs.length) {
+    throw new TypeError('source refs must be unique safe repo-relative paths');
+  }
+  const violations = sourceRefs.flatMap((sourceRef) => parseMarkdownInventory(
+    readFileSync(path.resolve(root, sourceRef)),
+  ).map(({ line }) => `${sourceRef}#L${line}`));
+  if (violations.length > 0) {
+    throw new Error(`registered live Markdown must not contain checkbox TODO: ${violations.join(', ')}`);
+  }
+  return { schema: 'dotagents.lattice_live_source_cutover_verify.v1',
+    source_count: sourceRefs.length, checkbox_count: 0 };
+}
+
 function parseArgs(argv) {
   let summary = false;
+  let verifyCutover = false;
   let sourceCommit = 'HEAD';
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === '--summary') summary = true;
+    else if (argv[index] === '--verify-cutover') verifyCutover = true;
     else if (argv[index] === '--source-commit' && index + 1 < argv.length) sourceCommit = argv[++index];
     else throw new TypeError(`unsupported argument: ${argv[index]}`);
   }
-  return { summary, sourceCommit };
+  if (verifyCutover && (summary || sourceCommit !== 'HEAD')) {
+    throw new TypeError('--verify-cutover cannot be combined with inventory options');
+  }
+  return { summary, sourceCommit, verifyCutover };
 }
 
 function main() {
-  const { summary, sourceCommit } = parseArgs(process.argv.slice(2));
+  const { summary, sourceCommit, verifyCutover } = parseArgs(process.argv.slice(2));
+  if (verifyCutover) {
+    process.stdout.write(`${JSON.stringify(verifyLiveSourceCutover())}\n`);
+    return;
+  }
   const inventory = inventorySources({ sourceCommit });
   const output = summary ? {
     schema: inventory.schema,

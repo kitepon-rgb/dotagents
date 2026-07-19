@@ -17,16 +17,16 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 
 ## 1. 完了条件（本計画が TODO を兼ねる）
 
-- [ ] Codex の9面（AGENTS_MD / CONFIG / SKILLS / PLUGINS / MCP_SERVER_CONFIG / SUBAGENTS / HOOKS / COMMANDS / SESSIONS）に未裁定行がない
-- [ ] Claude の主要 workflow 3件に Codex の正規入口があり、Claude 固有ツールを誤って呼ばない
-- [ ] Codex の公式 user skill 面 `$HOME/.agents/skills` から対象 skill を利用できる
-- [ ] 規範・skills・subagents・hooks・必須 MCP・session 継続を新規 Codex session で実測済み
-- [ ] 工場コア8製品が全現役端末に導入・更新され、親別matrixどおり疎通し、Spotter限定発火・Throughline context・Codegraph／MarkItDown／gpt-connector／aiterm／sidecar代表 E2E が green
-- [ ] ServerManagerを中央管理コアとしてdotagentsの管理対象へ接続し、BugHubを独立製品へ分離せずversion・bug・互換結果の統括に再利用する
-- [ ] 現役端末すべてで clone/pull→install→必須設定→verify→代表 E2E が green
-- [ ] Claude 側の skill/command/agent/hook に回帰がない
-- [ ] 既存 Codex 関連プランの重複 TODO を完了または移管理由付きで閉じている
-- [ ] 最終反証・CI・push を終え、本ファイルを `docs/archive/` へ移している
+- Latticeへ移管済み: cf-0020 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L52
+- Latticeへ移管済み: cf-0021 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L53
+- Latticeへ移管済み: cf-0022 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L56
+- Latticeへ移管済み: cf-0023 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L57
+- Latticeへ移管済み: cf-0024 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L58
+- Latticeへ移管済み: cf-0025 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L59
+- Latticeへ移管済み: cf-0026 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L60
+- Latticeへ移管済み: cf-0027 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L64
+- Latticeへ移管済み: cf-0028 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L72
+- Latticeへ移管済み: cf-0029 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L75
 
 ## 2. 根拠
 
@@ -85,49 +85,49 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 
 ### Wave 0 — ベースラインと有限化（挙動不変）
 
-- [ ] 現役端末×Codex入口（desktop / CLI / IDE 等）をオーナーと確定し、存在しない端末・入口を推測で追加しない
-- [x] `git fetch`、ahead/behind、dirty、stash を記録
-- [x] `make lint`、Claude/Codex hook smoke、`install.sh`、`verify-install.sh` を green にする。hook baseline は初回 INFO・同セッション2回目沈黙・compact 後1回再武装・Stop pending の次回1回配送・deny/ask/block 不在を保存
-- [x] `/import` または `externalAgentConfig/detect` を**検出だけ**実行し、9面の差を保存（import禁止）
-- [ ] 各現役入口の新規 Claude/Codex session で skills・agents・MCP・hooks baseline を保存
-- [x] AGENTS の実効 byte budget と、人格・計画・F/A/H・git・報告の先頭/末尾カナリアが実読されることを保存
-- [x] README に9面の小さな対応表を追加（配布対象だけ。docs/rag/bin全件の第三台帳は作らない）
-- [x] rollback: Wave 0 の文書・baseline 差分だけを独立 commit とし、その commit 単位で revert
+- Latticeへ移管済み: cf-0088 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L76
+- Latticeへ移管済み: cf-0089 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L77
+- Latticeへ移管済み: cf-0090 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L78
+- Latticeへ移管済み: cf-0091 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L79
+- Latticeへ移管済み: cf-0092 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L80
+- Latticeへ移管済み: cf-0093 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L81
+- Latticeへ移管済み: cf-0094 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L82
+- Latticeへ移管済み: cf-0095 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L83
 
 ### Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）
 
-- [x] `orchestrate` の共通契約 reference を追加（既存ディレクトリの移動・改名なし）
-- [x] Claude 入口を Claude Workflow/外部枠 appendix として整理
-- [x] Codex の symlink adapter を製品固有 skill ディレクトリへ置換し、native agents/routing を使う
-- [x] `audit-gauntlet` Codex skill を追加し、2票反証と件数遷移を fixture で検証
-- [x] `auto-deploy-on-push` Codex skill を追加し、高リスク操作の説明・H承認・rollback を固定
-- [x] `polish-github`・`oracle` は既存対応との差分監査のみ。必要がなければ「変更なし」を記録（当時Oracle。現行の通常ChatGPT入口はgpt-connector）
-- [x] Claude command 3件→Codex skill 入口の対応表を README に追加
-- [ ] 全対象 skill の frontmatter、明示 invocation、代表暗黙 invocation を新規 session で確認
-- [x] rollback: Wave 1 を独立 commit とし、revert で旧 orchestrate symlink を復元可能にする
+- Latticeへ移管済み: cf-0099 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L84
+- Latticeへ移管済み: cf-0100 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L6
+- Latticeへ移管済み: cf-0101 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L7
+- Latticeへ移管済み: cf-0102 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L8
+- Latticeへ移管済み: cf-0103 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L9
+- Latticeへ移管済み: cf-0104 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L10
+- Latticeへ移管済み: cf-0105 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L11
+- Latticeへ移管済み: cf-0106 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L12
+- Latticeへ移管済み: cf-0107 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L13
 
 ### Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）
 
-- [x] `install.sh` が Codex skill を公式 `$HOME/.agents/skills` へ既定で symlink 配布
-- [x] 古い入口用に explicit legacy profile を用意し、通常実行で公式/legacy を同時配布しない
-- [ ] 移行 probe で同名重複と優先順位を実測し、各入口が一つの面だけから同一 canonical content を読む状態を合格条件にする
-- [ ] dotagents 所有の旧 legacy symlink は dry-run一覧→backup→H承認後に対象限定で外し、他の local skill を保存（この Mac は完了、他端末は一覧確定後）
-- [x] `verify-install.sh` が選択 profile、公式面/legacy面、リンク先、重複、`AGENTS.override.md` shadow を区別して検証
-- [x] clean temporary HOME で repo配布と静的設定 fixture を検証する CI を追加
-- [x] Claude/Codex hook smoke を `make lint` / GitHub Actions の明示ゲートへ昇格し、初回 INFO・2回目沈黙・compact 再武装・pending 1回配送・旧 deny/ask/block 不在を固定
-- [x] 既存 `verify-install.sh` を読み取り診断の唯一の入口として維持（別の汎用 check tool は作らない）
-- [x] routing 必須2キーと dotagents hook entry だけを、backup→dry-run→冪等追加できる適用スクリプトを追加
-- [x] model、permissions、既存他tool hooks、OAuth、trust は変更せず、診断＋H手順に残す
-- [x] 親別 MCP matrix を作成
+- Latticeへ移管済み: cf-0111 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L14
+- Latticeへ移管済み: cf-0112 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L15
+- Latticeへ移管済み: cf-0113 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L16
+- Latticeへ移管済み: cf-0114 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L17
+- Latticeへ移管済み: cf-0115 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L18
+- Latticeへ移管済み: cf-0116 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L19
+- Latticeへ移管済み: cf-0117 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L20
+- Latticeへ移管済み: cf-0118 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L21
+- Latticeへ移管済み: cf-0119 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L22
+- Latticeへ移管済み: cf-0120 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L23
+- Latticeへ移管済み: cf-0121 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L24
   - Claude 親: codex-sidecar、aiterm、caveat、codegraph、gpt_connector
   - Codex 親: native subagents、codex-sidecar、aiterm（Codex/Grok/Composer用）、caveat、codegraph、gpt_connector/OpenAI Docs（2026-07-14 supersession）
-- [x] `codex mcp` の登録・list・疎通、STDIO env closed-mode、必須/任意/親で禁止をランブック化
-- [ ] Throughline/codex-thread-handoff-smoke の代表 capture/restore/handoff を実測（本体改造・sessions同期はしない。capture/handoff は成功、restore は上流 mismatch で未達）
-- [ ] 工場コア8製品を onboarding・README・親別matrix・`verify-install` に必須化し、Spotter project契約とCodegraph／MarkItDown／gpt-connector／aiterm／sidecar代表疎通を検証する
-- [ ] clean HOME fixture で8製品のCLI・NPM/`uv tool`更新package・設定schema・所有権境界を固定し、外部製品の状態や実装をdotagentsへ複製しない
-- [ ] `agents-update` は1製品失敗をログへ残し、残りを続行した後に非0終了する。更新後のcompatibility gateを `make ci` に固定する
-- [x] `max_threads` / `max_depth` は公式公開設定（既定6/1）として記録し、通常は未設定、必要時だけ新規sessionで実効上限を検証する契約へ訂正（2026-07-13）
-- [x] rollback: 追加 symlink と設定追記だけを戻し、端末バックアップから復元可能にする
+- Latticeへ移管済み: cf-0124 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L25
+- Latticeへ移管済み: cf-0125 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L26
+- Latticeへ移管済み: cf-0126 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L27
+- Latticeへ移管済み: cf-0127 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L28
+- Latticeへ移管済み: cf-0128 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L29
+- Latticeへ移管済み: cf-0129 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L30
+- Latticeへ移管済み: cf-0130 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L31
 
 #### Wave 2 の安全実装・実測（2026-07-12）
 
@@ -141,29 +141,29 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 
 > 実行用チェックリスト（2026-07-18・Composer外部レーン下書き・典拠付き）: [docs/r2-e2e-checklist.md](r2-e2e-checklist.md)。Wave 3消化時にこれを使い、完了後は本checklistをarchiveへ退避する。
 
-- [x] 各現役端末で pull相当の同期→tar backup→install→config dry-run/apply→verify（FOX 2環境はGitHub認証切れのためローカルbundleで同期。remote同期はH待ち）
-- [x] NVM配下の npm をLinux / WSL2のcron最小PATHでも解決し、週次 `agents-update` の実走を固定
-- [ ] 各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS / Spotter監査）
-- [ ] 端末で共有できる routing/MCP 証拠は入口ごとの台帳から同じ証拠へ参照し、未実施を共有扱いにしない
-- [ ] 各端末で implementer/refuter/sorter の routing smoke＋親側 verifier green
-- [ ] 各入口で Codex hooks の初回 INFO・同セッション2回目沈黙・compact 再武装・Stop pending の次回1回配送を実火し、代表 skill、Throughline、gpt-connector consultation の代表 smoke を成功させる。gpt-connector は model+effortを明示し、timeout後sessionsも確認する。明示エラーは FAIL/blocker であり合格にしない
-- [ ] 各対象projectで `spotter install` → marker／Claude 5 hook／Codex 3 hook／Claude・Codex別tool-db／Throughline context default-onを確認し、新規sessionで `spotter.hook_event.v1` を実火する
-- [ ] 任意 MCP/OAuth は未認証を FAIL にせず、理由付き WARN と H 手順を記録
-- [ ] Claude の skill/command/agent/hook smoke を再実行し回帰なしを確認
-- [ ] `plan_gpt56-rewiring.md` の他端末 routing TODO を本 wave の実測で消化
-- [ ] 同プランの sandbox上書き/spawn応答上流問題は non-blocking の独立追跡として残す
-- [ ] `plan_callout-hooks.md` Phase 6 の INFO 契約を baseline とし、README・全ゲートは Wave 2、他端末実火は本 wave で消化
-- [ ] PLAN.md の「Codex skill 一覧目視」を閉じる
-- [ ] 端末台帳を完成し、完了した既存プランを archive へ移す
-- [ ] rollback: 問題端末だけ旧commit＋backupへ戻し、他端末のgreenを巻き戻さない
+- Latticeへ移管済み: cf-0144 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L32
+- Latticeへ移管済み: cf-0145 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L33
+- Latticeへ移管済み: cf-0146 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L34
+- Latticeへ移管済み: cf-0147 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L35
+- Latticeへ移管済み: cf-0148 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L36
+- Latticeへ移管済み: cf-0149 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L37
+- Latticeへ移管済み: cf-0150 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L38
+- Latticeへ移管済み: cf-0151 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L39
+- Latticeへ移管済み: cf-0152 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L40
+- Latticeへ移管済み: cf-0153 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L41
+- Latticeへ移管済み: cf-0154 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L42
+- Latticeへ移管済み: cf-0155 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L43
+- Latticeへ移管済み: cf-0156 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L44
+- Latticeへ移管済み: cf-0157 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L45
+- Latticeへ移管済み: cf-0158 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L46
 
 ### Wave 4 — 最終監査と完了
 
-- [ ] existence/value の独立2票＋網羅性 Critic
-- [ ] `make lint`、全 smoke、clean HOME、install/verify、GitHub Actions green
-- [ ] 項目ごとに実施/スキップ理由・変更ファイル・端末別検証を報告
-- [ ] 本計画を `docs/archive/` へ移し、archive を含めて lint/status を再確認
-- [ ] archive を含む対象だけ pathspec commit→push→origin/main 同期確認
+- Latticeへ移管済み: cf-0162 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L47
+- Latticeへ移管済み: cf-0163 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L48
+- Latticeへ移管済み: cf-0164 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L49
+- Latticeへ移管済み: cf-0165 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L50
+- Latticeへ移管済み: cf-0166 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L51
 
 ## 7. 新規 Codex session E2E
 
@@ -212,8 +212,8 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 - `~/Developer/dotagents` へprivate repoをcloneし、origin/main同期・stash 0・shallow=false・clean・着手前 `make ci` greenを確認した。GitHub資格情報はheadless環境の `~/.config/gh/hosts.yml` にmode 0600で保存される。
 - tar backup後にofficial install、Codex routing / hooks、Claude必須hook 5本、Caveat-Private、親別MCP、MarkItDown、週次cronを配線した。`verify-install --profile official` と対象5 skill discoveryは当時の契約でgreen。Chrome不在のためOracle MCPは未配線であり、2026-07-13の工場コア再分類後は未完了として再検証対象に戻す。
 - 稼働監査はsystemd failed 0、containerd active・restart count 0、全Docker container running、healthcheck対象全件healthy。メインサーバーはオーナー裁定により常時稼働工場として正式採用した。
-- [x] cron最小PATHではNVM配下のnpmを解決できない実測欠陥を正本スクリプトで修正。NVM復元・npm不在時のfail-loud・fake npm 13件を `tests/update/cron-env.sh` と `make ci` で固定した。
-- [ ] Codex App remote project `/home/kite/Developer/dotagents` のhook trust、新規session、skill / routing / Throughline、Claude回帰を実火する。
+- Latticeへ移管済み: cf-0215 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L54
+- Latticeへ移管済み: cf-0216 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L55
 
 ### Wave 3 rollout 実績（2026-07-13・FOX WSL2）
 
@@ -264,18 +264,18 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 
 ## 11. 調査・反証記録
 
-- [x] git fetch、origin/main、dirty、stash を確認
-- [x] `rag/INDEX.md` と caveat を検索
-- [x] リポ資産を9面＋配布/検証/文書/OSで棚卸し
-- [x] OpenAI 公式 docs と Codex CLI 0.144.1 の端末実測を突合
-- [x] 公式調査を `rag/codex/` と INDEX へ還流
-- [x] existence 票: SESSIONS既対応、plugin command不存在、plugin hook仕様矛盾、既存プラン移管先、max_threads既対応を訂正
-- [x] value 票: 全面shared、全資産manifest、plugin実験、汎用applier、routing/hooks再実装を棄却または縮小
-- [x] Critic: SESSIONS合否、archive順序、AGENTS末尾実読、skill面一意性、端末×入口E2Eを補強
-- [x] 統括裁定: 実在するギャップ4 wave＋最終監査へ縮約
+- Latticeへ移管済み: cf-0267 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L61
+- Latticeへ移管済み: cf-0268 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L62
+- Latticeへ移管済み: cf-0269 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L63
+- Latticeへ移管済み: cf-0270 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L65
+- Latticeへ移管済み: cf-0271 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L66
+- Latticeへ移管済み: cf-0272 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L67
+- Latticeへ移管済み: cf-0273 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L68
+- Latticeへ移管済み: cf-0274 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L69
+- Latticeへ移管済み: cf-0275 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L70
 
 ## 12. オーナー承認ゲート
 
-- [x] **GO** 本計画で実装開始（既存ディレクトリの移動・改名は含まない）
-- [ ] **H1** 現役端末×入口一覧、変更してよい必須設定キー/hook entry、dotagents所有legacy symlink移行の一括 rollout 承認（この Mac の official 面移行と push は 2026-07-12 承認済み。他端末一覧は未確定）
-- [ ] hook trust、MCP OAuth 等の各端末 UI 操作
+- Latticeへ移管済み: cf-0279 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L71
+- Latticeへ移管済み: cf-0280 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L73
+- Latticeへ移管済み: cf-0281 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L74

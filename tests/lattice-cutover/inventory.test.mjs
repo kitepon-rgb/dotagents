@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { inventorySources } from '../../bin/lattice-todo-inventory.mjs';
+import { inventorySources, verifyLiveSourceCutover } from '../../bin/lattice-todo-inventory.mjs';
 
 const git = (root, args) => execFileSync('git', args, {
   cwd: root,
@@ -62,4 +62,17 @@ test('HEAD blobだけからcode fence外のbullet・番号付きcheckboxを安�
 test('unsafeまたは重複source refをfail closedに拒否する', () => {
   assert.throws(() => inventorySources({ sourceRefs: ['../secret.md'] }), /safe repo-relative/u);
   assert.throws(() => inventorySources({ sourceRefs: ['docs/a.md', 'docs/a.md'] }), /unique safe/u);
+});
+
+test('Lattice登録済みlive Markdownへのcheckbox再導入をworktree bytesで拒否する', async (context) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'lattice-source-cutover-'));
+  context.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(path.join(root, 'docs'));
+  await writeFile(path.join(root, 'docs/plan.md'), '# Plan\n<!-- Latticeへ移管済み: T1 -->\n');
+  assert.deepEqual(verifyLiveSourceCutover({ repoRoot: root, sourceRefs: ['docs/plan.md'] }), {
+    schema: 'dotagents.lattice_live_source_cutover_verify.v1', source_count: 1, checkbox_count: 0,
+  });
+  await writeFile(path.join(root, 'docs/plan.md'), '# Plan\n- [ ] 復活\n');
+  assert.throws(() => verifyLiveSourceCutover({ repoRoot: root, sourceRefs: ['docs/plan.md'] }),
+    /docs\/plan\.md#L2/u);
 });

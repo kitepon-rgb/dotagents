@@ -64,6 +64,7 @@ test-orchestrate: ## orchestration control record の契約を検証
 
 test-lattice-cutover: ## Lattice wire v4 cutover inventoryの固定blob・GFM抽出契約を検証
 	node --test tests/lattice-cutover/*.test.mjs
+	node bin/lattice-todo-inventory.mjs --verify-cutover
 
 ci: lint test-constitution test-install test-observer-hook-config test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate test-lattice-cutover ## ローカル/CI 共通の全ゲート
 

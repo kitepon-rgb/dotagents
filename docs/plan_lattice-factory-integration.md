@@ -87,21 +87,21 @@ L0 ベースライン（直轄化・CI green・現状固定）
 
 ### Phase L0 — ベースライン・直轄化（2026-07-17完了）
 
-- [x] Lattice repoの同期状態（origin差分・dirty・stash）を確認し、`npm run ci`のbaselineをgreenで固定する
+- Latticeへ移管済み: lf-0090 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L85
   - 実測: dirty/stashなし・**remoteゼロ**（54MB資産がMac 1台のみ）。オーナー承認のH操作で
     private repo `github.com/kitepon-rgb/Lattice` を作成しpush（秘密走査・tracked 807 file確認済み）。
     baseline: `npm run ci` 290/290 green＋check pass（70.1秒、ADR 0045記載値と一致）
-- [x] Lattice正典を実読し、重複TODOを集約する
+- Latticeへ移管済み: lf-0094 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L86
   - RC2 plan（`plan_lattice.md`・全72 TODO消化済み・Phase-supported・plan version stale）を
     `docs/archive/2026-07-16-plan-lattice-research-campaign-2-v1-phase-supported.md`へ退避し、
     AGENTS/PLAN/READMEの生きたリンクをRC4 plan＋本書へ更新。生きたTODOはRC4 planと本書だけになった
-- [x] Lattice側RC4 planへ直轄化を反映する（依頼構造の解体・親裁定参照・fork非目標の撤回・
+- Latticeへ移管済み: lf-0098 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L87
       Stage 0凍結不要合意とcaveat添付とlive repo init禁止・盲点定量化の焼き込み）
-- [x] ADR 0046のタイミングの揺れをStage 1開始時へ統一する
-- [x] ADR 0046を起草する（Lattice `docs/adr/0046-rc4-writer-target-stage-override.md`）。
+- Latticeへ移管済み: lf-0100 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L6
+- Latticeへ移管済み: lf-0101 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L7
       Decision 9.5のstage条件付き上書き＋Stage 1の隔離HOME・host変更コマンド禁止packet契約。
       以上4件はLattice `90a8a52`で収容・push済み
-- [x] Control `lattice-integration-v1`を`init`し、risk=high・behavior lane=behavior-preservingを
+- Latticeへ移管済み: lf-0104 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L8
       `phase-gate-record`で固定した（revision 1、resume-check `ready`・blocking 0。
       修理済みControl Record（ADR 0060後）での初の実運用Control）
 
@@ -111,33 +111,33 @@ L0 ベースライン（直轄化・CI green・現状固定）
 後半（compile判定裁定〜gate）は改良前sensorのAFFECTED_TEST_DRIFT停止で持ち越され、L2/L3完了後の
 2026-07-17に改良後sensorで消化した（Phase順の入替はsensor欠陥起因・evidenceに機序記録あり）。
 
-- [x] 題材batch（6〜10件・control-record.mjs系／adapter系／docs系混在）をactiveレーンのTODOから選定し、
+- Latticeへ移管済み: lf-0114 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L9
       選定根拠をevidenceへ記録する。**凍結不要の運用合意**: Latticeはread-only判定のみ、dotagents側の
       消化は止めない、判定のstale化はそれ自体を実測記録とする
   - Lattice [batch定義](../../Lattice/docs/evidence/2026-07-17-rc4-stage0-batch.md)（T1〜T6・オーナーGO）
-- [x] batch定義evidenceへdotagents私有caveatの該当エントリを添付する
+- Latticeへ移管済み: lf-0118 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L10
       （`orchestrate-run-worker-run-record-approach-family-ref-null`＝`lineage.approach_family_ref: null`が
       BUDGET_UNKNOWNで拒否される、`orchestrate-run-cli-internal-error-lib`＝INTERNAL_ERRORは未適用と限らない）
   - batch定義evidence「添付caveat」節（5エントリ）
-- [x] 各TODOのboundary witnessを実作成し、**作成時間・参照証拠・書けなかった項目を1件ずつ実測**する
+- Latticeへ移管済み: lf-0122 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L11
       （丸め・事後推定禁止）
   - Lattice [witness実測](../../Lattice/docs/evidence/2026-07-17-rc4-stage0-witness-cost.md)
     （17〜36秒/件・ADR 0048真値訂正）
-- [x] Codegraph indexは**Lattice側clone/copy上にだけ**作る。dotagents正規repoに`.codegraph/`は無く
+- Latticeへ移管済み: lf-0126 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L12
       gitignore対象外のため、live repoでの`codegraph init`は書込ゼロ契約違反かつdirtyを生む
   - 前半＝Stage 0 clone（`73947b3`）、後半＝scratchpad clone（`c3640f4`）とも遵守。正規repoは無dirty
-- [x] `lattice plan compile`のconflict/wave/unknown判定を親が1件ずつ妥当／過剰serial／見逃しで裁定し、
+- Latticeへ移管済み: lf-0129 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L13
       **見逃し0件を確認する**（見逃しは即refute条件）
   - **2026-07-17完了**: Lattice
     [compile判定裁定](../../Lattice/docs/evidence/2026-07-17-rc4-stage0-compile-adjudication.md)。
     request A（T1+T2+T4）dispatchable＝conflict 3件全て妥当・waves `[[T1,T4],[T2]]`妥当・過剰serial 0・
     独立grep全数照合で**見逃し0**。request B（全6件）BOUNDARY_UNKNOWN＝unknown分類一致6/6。
     witness束縛の作法3点（共有writeの両own・covering query必須・同一targetは単一query_id）を実測で確定
-- [x] call graph非可視結合（shell hooks・markdown憲法・巨大単一file）がwitnessで表現できたかを個別記録し、
+- Latticeへ移管済み: lf-0136 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L14
       **Codegraph盲点の発生頻度を定量化する**（L2 fork判断の一次データ）
   - 前半実測がADR 0047/0048のfork判断一次データ。後半でmd主体は`codegraph_empty` typed unknown、
     shell結合は(c2)クラス実例3件のまま（L2裁定どおり・再燃条件はStage 1実測）
-- [x] Stage 0 gate: witnessコスト閾値・unknown率・判定一致率を実測に基づき確定・記録し、
+- Latticeへ移管済み: lf-0140 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L15
       Stage 1 targetを裁定する
   - **2026-07-17裁定**（compile判定裁定evidence §7）: witness≤3分/件・drift写経0・dispatchable系
     unknown率0・判定一致100%維持。Stage 1 target＝dotagents disposable cloneへ直行、dispatchable
@@ -146,7 +146,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
 
 ### Phase L2 — Codegraph吸収・sensor改良
 
-- [x] L1実測を根拠にfork要否を裁定する（予断で決めない）
+- Latticeへ移管済み: lf-0149 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L16
   - **2026-07-17裁定: fork＝吸収する**（オーナー裁定・Lattice [ADR 0047](../../Lattice/docs/adr/0047-codegraph-absorption-and-sensor-ownership.md)）。
     Stage 0実測（数値はLattice [ADR 0048](../../Lattice/docs/adr/0048-stage0-ground-truth-correction.md)で訂正済み）:
     `control-record.mjs`の真値7件（推移的import閉包＋動的import）に対しdepth=1→3件（偽陰性4）・
@@ -155,7 +155,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
     名前一致フォールバックの偶然（`imports`辺0本・`reject`名の`calls`辺8本）。
     **パラメータ調整では原理的に直らない**。0047の「upstream 3ヶ月停止」は誤り（現役repo）で、
     却下は残り2理由（depth無効・契約緩和拒否）で立つ。
-- [x] fork時: MIT license notice・attribution（fork時点のupstream commitを記録）を維持し、
+- Latticeへ移管済み: lf-0158 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L17
       fork repoの所有・release・version契約を台帳へ先行記録する。upstream追従方針
       （cherry-pick基準）を吸収実装時に明文化する（ADR 0048 Decision 4）
   - **2026-07-17完了**: license/attribution/吸収時点commit（04ab45c）は吸収commit
@@ -165,8 +165,8 @@ L0 ベースライン（直轄化・CI green・現状固定）
     作られずsensorはLattice repo内部のため、所有・release・version契約はLattice本体の
     台帳エントリに包含される。それは編入waveの仕事であり、本計画の禁止事項
     「RC4 support前の台帳記録」に従いL6で行う
-- [ ] **グラフ構築のcorrectnessを改良する**（実測が特定した原因箇所。優先順）:
-      - [x] (a) 経路実在を検証しない名前一致フォールバックとconfidence非永続化を直す（偽陽性の除去）
+- Latticeへ移管済み: lf-0168 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L18
+      - Latticeへ移管済み: lf-0169 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L19
         — **2026-07-17完了**（Lattice `da438ca`）。実装は2層設計: ①migration v9で
         `edges.confidence`/`edges.resolved_by`列を永続化 ②file-level依存射影
         （`getDependentFilePaths`等）に corroboration filter（経路非検証戦略
@@ -177,15 +177,15 @@ L0 ベースライン（直轄化・CI green・現状固定）
         クロスファイル名前一致はZustand action・#359・#764・#1240・RN/Expoブリッジ
         等の設計済み機能が依存するためresolutionでは殺さない）。
         実測: affected 12件(TP6/FP6/FN1)→5件(FP0)
-      - [x] (b) JS/TS extractionに動的import/require処理を追加（偽陰性の除去）
+      - Latticeへ移管済み: lf-0180 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L20
         — **2026-07-17完了**（Lattice `5498945`）。`extractCall`（2走査経路の唯一の
         合流点。visitNodeフック前例では関数本体内へ届かない）にJS/TS限定分岐、
         定数畳み込み（リテラル/template/同一ファイルconst束縛再帰/join・resolve/
         import.meta.dirname・__dirname）、解決不能は衝突不可能センチネルで
         unresolved可視化。`resolveViaImport`に相対specifier限定のraw-text解決分岐を
         追加（拡張子なし`require('./x')`と静的import生specifierの既存の穴を同時に修理）
-      - [ ] (c) call graph非可視の結合（spawn・shell・markdown・設定）を索引化する
-        - [x] (c1) spawn系（JS/TSのchild_process起動）— **2026-07-17完了**（Lattice `6c82461`）。
+      - Latticeへ移管済み: lf-0187 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L21
+        - Latticeへ移管済み: lf-0188 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L22
           新edge kind `invokes`（`resolved_by='spawn-path'`・confidence 0.95）。束縛検証付き検出
           （`spawn`/`spawnSync`/`execFile`/`execFileSync`/`fork`。`exec`系のshell文字列解析は
           スコープ外と明記）＋(b)の定数畳み込み再利用＋resolver専用ゲート。親レビューで
@@ -193,7 +193,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
           `spawn('git')`→同名シンボル誤edge）を検出し、再現テスト付きで修理済み。
           オラクル: `affected bin/orchestrate-run.mjs`＝真値6件exact一致（FP0/FN0・真値は
           親が独立grep確認）、`control-record.mjs` 7件回帰なし
-        - [x] (c2) shell・markdown・設定 — **作らない（オーナー裁定 2026-07-17）**。
+        - Latticeへ移管済み: lf-0196 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L23
           根拠: ①編集競合の検出はwitnessの書込宣言の交差で行われsensorグラフと独立＝
           shell/markdownの編集競合は(c2)なしで検出される ②漏れるのはaffectedテストの
           自動観測のみで、manual witnessで補う運用が既存（RC3制約記録） ③実害実例は
@@ -201,7 +201,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
           `bin/orchestrate-run.mjs`、`tests/skills/smoke.sh`→`executor-adapters.mjs`）と
           少ない。**再燃条件**: Stage 1実測で見落とし起因の実害（回すべきテストの見逃し等）が
           有意に出たら再評価する
-- [x] 改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が
+- Latticeへ移管済み: lf-0204 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L24
       exact一致**すること、かつwitnessコストがL1実測比で有意に下がること。
       どちらも満たさないなら改良を成功扱いしない
       — 前半は**2026-07-17達成**: dotagents clone（`73947b3`）再indexで
@@ -214,7 +214,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
       コスト低減の実体は「drift調査60秒/周の消滅」＋「偽陽性写経以外に通らない非dispatchable
       行き止まりの解消」＋「T2系の表現不能→直接記載可能」。成立範囲はimport／動的import／spawn
       結合クラスで、(c2)クラスは残件のとおり
-- [x] focused gate → 関連gate → Lattice `npm run ci` green
+- Latticeへ移管済み: lf-0217 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L25
   - **2026-07-17時点green（(c1)まで反映）**: root node:test 290/290・sensor vitest
     147 files/2476 passed/fail 0・check pass・ci exit 0。gate実行でP1級既存欠陥を発見・修理:
     吸収commit `ce16412`以降、root ciの無指定globがsensor/__tests__のvitest専用TSテストを
@@ -223,7 +223,7 @@ L0 ベースライン（直轄化・CI green・現状固定）
 
 ### Phase L3 — Lattice MCP面新設
 
-- [x] MCP面の公開契約を設計・裁定する（F）: tool面（`codegraph_explore`相当の後継）、schema、
+- Latticeへ移管済み: lf-0226 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L26
       versioned JSON、error意味論、既存CLI 6面との責務分離。**契約クリティカル＝`fable`スポット諮問＋
       `fable`×high refuter 1回＋クロスprovider `codex_opinion` 1回**
   - **2026-07-17完了**: Lattice [ADR 0049](../../Lattice/docs/adr/0049-lattice-mcp-surface-contract.md)
@@ -236,30 +236,30 @@ L0 ベースライン（直轄化・CI green・現状固定）
     （upstream self-upgrade・既定ON telemetryの無効化）、typed degradation
     （direct切替事由の列挙制・DB破損系fail closed・mode機械可読化）、別bin `lattice-mcp`、
     併走期間のhost単位排他とoffline record/replay比較
-- [x] 「常駐サービス化はしない」非目標とMCP server提供の両立を明文化する（MCP serverはsession寿命の
+- Latticeへ移管済み: lf-0239 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L27
       stdio server であり、自動dispatch常駐basicとは別物）
   - **2026-07-17裁定済み**（ADR 0049 Decision 9: session寿命stdio＋refcount/idle-timeout自動終了の
     cache工程・書込範囲の限定列挙）。00_product-contract.mdへの追記は実装waveで行う（ADR Consequences）
-- [x] MCP面を実装し、index不在project・未対応host・Lattice非稼働時の振る舞いを明示する
+- Latticeへ移管済み: lf-0243 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L28
       （**fail closedを既定にし、暗黙fallbackで成功扱いしない**）
-  - [x] wave1（2026-07-17・Lattice `34cac18`）: 製品同一性の分離（version `1.4.1-lattice.1`・
+  - Latticeへ移管済み: lf-0245 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L29
         sentinel起動時fail・daemon registry `~/.lattice/sensor/`・socket `lattice-sensor-` prefix）＋
         外部通信遮断（update-check/upgrade/telemetry/beta-signup無効化）。smoke実測: serverInfoが
         lattice版を名乗り、daemon recordはLattice側registryのみへ書込。ci green（root 290・
         sensor 2476・exit 0）
-  - [x] wave2（2026-07-17・Lattice `dcd5b70`）: 別bin `lattice-mcp`（内部daemon再invoke受理・
+  - Latticeへ移管済み: lf-0250 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L30
         exit契約・stdout純度テスト）・`codegraph_status`のmode/reason機械可読化・hello二分法
         （異製品`foreign-product`はfail closed・同製品版差は`version-skew` degrade）・
         DB open失敗の`IndexOpenError`化（index不在guidanceはDecision 6のまま維持）。
         検収実測: sensor vitest 2481 passed/fail 0・bin integration green・ci exit 0。
         親レビュー特記: workerがOOMガードバイパス（lattice-mcpがCLI経由のNode 25.x V8対策を
         通らない）をスコープ外発見として別タスク化——L3残検証と合わせて扱う
-- [x] 親別matrix（Claude親・Codex親）での登録・疎通をisolated HOMEで検証する
+- Latticeへ移管済み: lf-0257 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L31
   - **2026-07-17完了**: Claude親=isolated HOMEで`claude mcp add lattice -- node …/bin/lattice-mcp.mjs`
     →`claude mcp list`で**✔ Connected**（live MCP handshake実証）。Codex親=isolated HOMEで
     `codex mcp add`→`codex mcp list`でenabled登録確認（Codex sessionでのlive疎通は実端末適用の
     H検証時に併せて行う）。実端末への登録はH（L6/L7）のまま
-- [x] focused／関連gate green
+- Latticeへ移管済み: lf-0262 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L32
   - **2026-07-17時点green**: wave2検収でLattice `npm run ci` exit 0（root 294 tests・
     sensor vitest 2481 passed・check pass）。L3成果はLattice `32f0383`（ADR 0049）・
     `34cac18`（wave1）・`dcd5b70`（wave2）
@@ -296,7 +296,7 @@ CLI面（verify/snapshot --rebuild）・codegraph coverage分離の全6項目を
 既知incident: W1b workerの契約違反自律commit（証跡はLattice plan G2節・caveat記録済み）。
 次はG3（レンダラ。R5設計調書はセッションscratchpad・Markdown AST依存の裁定が着手時判断）。
 
-- [ ] G4受入: dotagents master planの実workloadをガント表示し、**最長依存鎖**と現在地（active set）
+- Latticeへ移管済み: lf-0299 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L33
       がブラウザで一目で判ること（オーナー目視・受入証跡をevidenceへ）
   - Lattice側G4前進（参照）: 移行tool（`lattice.todo_extraction.v1`＋`todo migrate`、`1daaff2`）・
     todo status CLI（`bf73689`）・`engines >=22.13 <25`（`7137f91`）を実装済み
@@ -304,24 +304,24 @@ CLI面（verify/snapshot --rebuild）・codegraph coverage分離の全6項目を
     元Markdown全文＋anchor WARN 38件の露出によりG4最終受入はreject。Lattice renderer v7で、
     人とAIが「工程551」のように参照できる表示、lane正式名、選択工程detail、store由来の
     元Markdown形式全工程一覧へ再設計する
-  - [x] dotagents所有の`.lattice/todo/gantt-presentation.json`へ`plan_key + lane`別の正式名・説明を登録する
-  - [x] Lattice local sourceで実110件を再生成し、工程番号→canonical `factory-master/fm-NNNN`の一意対応、
+  - Latticeへ移管済み: lf-0307 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L34
+  - Latticeへ移管済み: lf-0308 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L35
         12カテゴリの意味、前提／後続navigation、store由来全工程一覧110件（工程0328全文題名を含む）、
         72 verified／36 digest mismatch／2 anchor missingを確認する
-  - [ ] generated HTMLがnetwork 0・keyboard操作・狭幅表示を維持し、tracked store bytesを変えないことを確認する
+  - Latticeへ移管済み: lf-0311 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L36
     - 2026-07-19機械検証（Lattice `docs/evidence/2026-07-19-gantt-renderer-v7-mechanical-acceptance.md`）:
       network参照0、keyboard／狭幅契約を含むLattice focused 23/23、
       `todo verify` green、manifest／plan／snapshot／journal bytes不変。in-app browserが`file://`を
       policy拒否したため、実ブラウザのkeyboard／狭幅表示とオーナー目視だけ未受入。
   - completion工程の依存不足はUIで隠さず、正しい前提を裁定したsuccessor plan再compileの別課題とする
-- [ ] dotagents側配線の受入: SessionStart案内hook・Stop WARN hook・settings断片・
+- Latticeへ移管済み: lf-0317 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L37
       `verify-install`/isolated HOME検証（実装正本はG4/G5、配線正本はdotagents）
   - 2026-07-19: G4受入前の固定pinを、npm・本host・正規repoで一致する検証済み
     `@quolu/lattice@0.5.0`へ更新し、factory-core smokeの期待値も同じ座標へ同期した
   - SessionStartのLattice工程表案内をClaude/Codex両hook・settings断片・`verify-install`・
     isolated HOME検証へ配線済み（`ff70476`）。実host settings適用とCodex hook trustはH承認待ち
   - `agents-update`のversion付きpin対応と`@quolu/lattice@0.2.0`固定を実装済み（`8023336`）
-- [ ] cutover受入: 移行済みplanのcheckbox列廃止と憲法「計画文書の作法」規範化（G5と同一gate）
+- Latticeへ移管済み: lf-0324 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L38
 
 ### Phase L4 — RC4 Stage 1（disposable clone・H）
 
@@ -330,10 +330,10 @@ CLI面（verify/snapshot --rebuild）・codegraph coverage分離の全6項目を
 artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lattice-rc4-dotagents-v1`
 （H task finalize済み・rev 3）。
 
-- [x] ADR 0046 commit後にControlを更新し、H task承認snapshotを記録する
+- Latticeへ移管済み: lf-0333 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L39
   - Control `lattice-rc4-dotagents-v1` init（risk=high・behavior-preserving）＋H task
     `RC4-S1-stage1-dogfood-v1`（オーナー承認2026-07-17「OK 進めてくれ」snapshot）
-- [x] **隔離HOMEでexecutorを実行する**。executor packetで`install.sh`・`spotter install`・
+- Latticeへ移管済み: lf-0336 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L40
       `apply-codex-config`・`mcp add`系の実行を禁止する（cloneはオンボーディング正典＝host変更手順を
       搬送し、clone内`install.sh`実行はhost symlinkをtmpdirへ向けて廃棄後にdangling化させる）
   - 隔離HOMEは認証不能（credential取扱いは統括権限外・classifier遮断は正）のためオーナー裁定
@@ -341,40 +341,40 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     の実装形へ確定: subagent executor＋packet `isolation_contract`（禁止コマンド焼き込み・
     artifact機械検証）＋dispatch前後のhost fingerprint境界検証＋diff observer。残余リスク
     （読取の帰属不能）はL5 refuter確認対象
-- [x] dotagents disposable clone（tmpdir配下・正規repo不着地）で実小粒タスクの閉ループを完遂する:
+- Latticeへ移管済み: lf-0344 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L41
       観測→競合→hold→carry-over→vN+1→redispatch→受入。注入competition 1件以上＋自然発生も記録
   - round 1（TA/TB/TC）: conflict serialization実証・3/3受理。round 2（TD/TF）: 注入
     scope_violation→hold {TD}/continue {TF}→vN+1→carry-over受理→redispatch受理。
     自然発生の記録＝TD executorの実API障害をunknownとして同一handle回収
-- [x] control-record.mjs級の巨大file交差ケースを意図的に含め、Latticeの答え（serial判定／seam候補）と
+- Latticeへ移管済み: lf-0349 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L42
       親の納得度を記録する
   - TA×TB＝3,711行`control-record.test.mjs`共有write→serial判定。親裁定＝妥当・過剰serialなし・
     見逃し0
-- [x] artifact v3をatomic発行し、artifact-only verification green
+- Latticeへ移管済み: lf-0353 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L43
   - `v3`＝16 check・`v3-hold`＝17 check（hold replay含む）いずれもgreen（Lattice `43c8351`）
-- [x] Stage 2 gate: 境界事故0・受入品質・witnessコスト再実測（L2改良の効果を実戦で確認）
+- Latticeへ移管済み: lf-0355 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L44
   - 境界事故0（dotagents正典dirty 0・`~/.claude`/`~/.agents`無変化・機械判定）・receipt 5/5
     accepted・drift/写経0でwitnessは支配項にならず（支配項はexecutor 61〜512秒/件）。
     **Stage 2進行可**。着地窓（L5）はオーナー合意待ち
 
 ### Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定
 
-- [x] 着地窓をオーナーと合意する。**queue 20 campaign実施窓・R3 wire v2 finalization・J1 wire v3実装waveと
+- Latticeへ移管済み: lf-0362 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L45
       排他**（同一ファイル群のwriter一本化）。lib/factory・schemas・docs/factory-*へ交差するpatchは
       v2 finalization receiptを失効させるためhold対象
-- [x] batchごとにH gate承認を記録し、着地は**親のreview→pathspec commit経路のみ**（Latticeが直接
+- Latticeへ移管済み: lf-0365 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L46
       commit/pushしない）。着地後は複数端末リポの掟どおり速やかにpushする
   - 2026-07-18完了: 前段でP1欠陥（receiptにpatch本文なし）を発見・Lattice `b61ee3d`で即時修理→
     着地run `v4-landing`（5/5受理・19 check green）→ 親が全5 patch実読review → batch H task 3件
     （approval snapshot・Control rev 4-9でfinalize）→ pathspec commit→push。一次記録はLattice
     [Stage 2着地evidence](../../Lattice/docs/evidence/2026-07-18-rc4-stage2-landing.md)
-- [x] 最低3 batch（うち1つは並列2 TODO以上同時進行）を事故0で着地し、wall-clock・rework・手戻りを実測保存する
+- Latticeへ移管済み: lf-0371 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L47
   - batch1=TC（`e117ac5`）・batch2=TD+TF並列受理対（`8a3befd`）・batch3=TA+TB conflict対統合
     （`b248c46`）。事故0（apply失敗0・test fail 0・逸脱file 0）。着地本体≈15分・rework≈16分
     （patch捕獲欠陥起因の再走・実測）
-- [x] 着地ごとにdotagents正規gate（`make lint`／`make ci`）green・境界事故0を確認する
+- Latticeへ移管済み: lf-0375 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L48
   - batchごとfocused＋lint PASS、最終`make ci` exit 0（隔離HOME Codex検証含む）
-- [x] Phase gate: full CI・**`fable`×high refuter 1回**・クロスprovider検証1回・support/refute ADR・
+- Latticeへ移管済み: lf-0377 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L49
       知識還流（caveat／rag）
   - 2026-07-18完了: full CI両repo green・refuter=**条件付きsupport**（核心数値は独立再検証で全裏付き・
     反証条件4種不成立）・クロスprovider（codex_review指摘2件採用→契約正典へresume-check envelope例外
@@ -382,34 +382,34 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     一次記録はLattice [L5 Phase gate evidence](../../Lattice/docs/evidence/2026-07-18-rc4-l5-phase-gate.md)、
     裁定はLattice [ADR 0051](../../Lattice/docs/adr/0051-rc4-phase-gate-support.md)（claim境界・
     lane裁定・残余リスク恒久化条件を含む）。Control `lattice-rc4-dotagents-v1` finalize・archive済み
-- [x] **refuteなら編入・退役は発動しない**。correction planを立てて本計画のL6以降を凍結する
+- Latticeへ移管済み: lf-0385 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L50
   - supportで閉じたため不発動。L6凍結解除（ADR 0051 Decision 1）
 
 ### Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）
 
-- [x] **Lattice編入パッケージ要件を文書化する**（RC4 planからのcarry-over・ADR 0051 Decision 6）:
+- Latticeへ移管済み: lf-0390 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L51
       CLI 6面の安定契約（ADR 0044 Decision 8）、schema一覧、run store／artifact規約、
       executor adapter契約、Codegraph同梱方針（正規CLI/SDK・MIT notice維持）。
       **ADR 0051 Decision 5の残余リスク恒久化条件**（subagent executor形態は公開repo内容のみ・
       秘匿情報は隔離HOME回帰が前提）を編入契約へ含める
   - 2026-07-18完了: Lattice [docs/01_integration-package.md](../../Lattice/docs/01_integration-package.md)
     （台帳形式・各契約の正典ADRへのポインタ集約・残余リスク恒久化条件と委譲項目を明記）
-- [x] **Lattice native factory diagnostics**を実装する（version・schema version・overall・check ID・
+- Latticeへ移管済み: lf-0397 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L52
       秘密なしJSON・非0意味論）。自作製品の必須要件であり、dotagents側adapterより先行する
   - 2026-07-18完了: `lattice factory-diagnostics --json`（schema
     `lattice.native_factory_diagnostics.v1`・check 5本＝package_version／node_runtime／cli_surface／
     mcp_entry／sensor_attribution・overall failed→exit 1・read-only・秘密なし）。既存`doctor --json`は
     RC3特性化凍結のため不変更の加算面。focused 4 test＋Lattice `npm run ci` green。
     doctor化石化は非クリティカルとしてmaintenance queueへ記録
-- [x] **opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する
+- Latticeへ移管済み: lf-0404 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L53
   - 2026-07-18完了: `lattice runtime-errors <snapshot|ack|diagnostics|resolve|reopen|compact> --json`
     （schema `lattice.runtime_errors.v1`・Caveat同型契約）。opt-in＝工場共有
     `factory-reporter.json`の`collection.enabled`のみ・OFF時はstate不接触。固定catalog 5 code＋
     fingerprint集約で生message不保存、cursor/ack、resolved+ack済み30日compact、POSIX owner-only
     fail closed。observerはCLI内部故障とMCP起動失敗の実在境界2本へ接続。focused 6 test green
-- [x] 配布形態を裁定する（npm package化 or repo直CLI）
+- Latticeへ移管済み: lf-0410 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L54
   - オーナー裁定 2026-07-18「配布形式はNPM」＝npm package化で確定
-- [x] npm配布の配線: package名の確定、`bin/agents-update.sh`のPACKAGES追加、
+- Latticeへ移管済み: lf-0412 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L55
       `tests/factory-core/smoke.sh`のgrep count強制を同一waveで更新。**registry publishはH＝
       目的・影響・rollback説明と実行時承認が別途必要**
   - 2026-07-18完了: H承認取得（オーナー「PublishしてOK」・名称希望latticeはregistry取得済みのため
@@ -418,11 +418,11 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     Lattice `585c293`＋tag `v0.1.0`→`npm publish`（latest=0.1.0・MIT）→registry実install smoke green。
     伝播遅延404の切り分けはcaveat `npm-package-publish-get-404-publish-over-probe`へ還流。
     PACKAGES追加・smoke.sh count追加済み
-- [x] `docs/factory-product-contracts.md`へLattice台帳を記録する（repo・所有・自作区分・version入口・
+- Latticeへ移管済み: lf-0421 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L56
       正規diagnostics・state/schema/migration・runtime error・host/connector期待・修正先）
   - 2026-07-18完了: `lattice`台帳（編入中・第11明記・diagnostics/runtime error正本・adapter未実装の
     明示・表現/禁止）。host/connector期待は共通境界どおりmatrix所有のため台帳へ複製せず
-- [x] dotagents側adapter＋privacy negative fixtureを実装する
+- Latticeへ移管済み: lf-0425 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L57
   - 2026-07-18完了: diagnostics projection `latticeProduct`（scan.mjs・exact schema検証・overall/exit/
     check集計の整合検査・detailの秘密/絶対path拒否）＋runtime error adapter
     `collectLatticeRuntimeErrors`（runtime-errors.mjs・固定catalog 5 code検証・ack bundle対応）。
@@ -430,28 +430,28 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
     L7 wire v4の集合変更で行う。test 8本（privacy negative 4様・catalog逸脱・ENOENT・disabled含む）＋
     関連136 test＋lint green。実装中にLattice `state_schema_version`の数値/文字列非互換を検出し
     Lattice `6cfcd44`で是正
-- [x] `docs/factory-host-product-matrix.md`へLattice行を追加する。**FOX Windows nativeはClaude/Codex/Grokの
+- Latticeへ移管済み: lf-0433 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L58
       3 toolchainすべてunsupported＝executor依存のLattice runtimeが構造的に動かない**。gpt-connector行45型の
       分離（CLI presenceはrequired／runtime面はunsupported）を使い、matrix:17「8製品は全現役hostへ常備」
       原則の改訂要否を裁定する
   - 2026-07-18完了: 製品導入行（編入中・wire v4 enrollまでreporter検査対象外・Windows nativeは
     presence/runtime面分離）＋connector行（MCP面はL7 cutoverまで未配線・二重配線許容）。
     **matrix:17裁定＝原則維持＋面分離の明文追加のみ**（gpt-connector前例の一般化）
-- [x] install/verify（`bin/verify-install.sh`のCLI必須listほか）を更新する。
+- Latticeへ移管済み: lf-0440 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L59
       **順序注記（2026-07-18）**: npm publish前に必須listへ入れると全hostFAILするため、
       npm配線wave（publish H承認・agents-update PACKAGES・smoke.sh更新）と同一waveで行う
   - 2026-07-18完了: verify-install CLI必須listへ`lattice`追加、README §0/検証節・AGENTS.md
     オンボーディングへ導入行追記。本host実導入（`/opt/homebrew/bin/lattice` 0.1.0）→
     `verify-install --profile official` OK→`make ci` exit 0。他hostは週次`agents-update`が
     次回実行で自動導入（PACKAGES経由）
-- [x] **Lattice v0.2.0 publish（H承認待ちcarry-over）**: 未公開のmaintenance wave 4件
+- Latticeへ移管済み: lf-0447 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L60
       （sensor require偽陰性fix・patch bind強化・**cli_error.v2＋doctor退役＝breaking**）を含む。
       repo側version bumpは実施済み（0.1.0のまま公開物と別内容になるhazard解消）。publish時は
       目的・影響・rollback説明→H承認→full gate→publish→latest確認の作法（README変更管理）に従う
   - 2026-07-18完了: H承認（オーナー「承認する 進めろ」）→pack隔離smoke green（doctor exit 2含む）→
     tag `v0.2.0`→publish→latest=0.2.0確認→本host更新（`lattice --version`=0.2.0・diagnostics ok）。
     他hostは週次agents-updateで自動追従
-- [x] コア一覧の更新: 第10枠はObserver予約済み（wire v3）。**Latticeは第11**として
+- Latticeへ移管済み: lf-0454 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L61
       PLAN.md／AGENTS.md／README.mdを更新する（Codegraph退役完了までは入替でなく追加）
   - 2026-07-18完了: 3文書へ「第11・編入中・Observer第10予約・入替でなく追加」を最小追記。
     8製品CLI必須list（README §0/検証）はnpm配線waveまで不変（未配布CLIを必須化しない）
@@ -472,48 +472,48 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 
 ### Phase L7 — wire v4（Codegraph退役）
 
-- [ ] 親計画のJ1（wire v3固定13製品）完了を確認してから着手する
-- [ ] **Lattice run運用面の正式化**（委譲契約「Lattice既定」の硬化前提・fable refuter差し戻し
+- Latticeへ移管済み: lf-0475 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L62
+- Latticeへ移管済み: lf-0476 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L63
       2026-07-18の採用条件）: run store配置契約（`research/runs/rc3`ハードコードとcwd相対の解消・
       対象repo側gitignore契約）、resume/close/abandon CLI面（STALE_BASEデッドロックの脱出経路）、
       正式化後にorchestrate advisory hookへactive run可視化を追加し、実campaign 1件消化後に
       既定→不変条件への硬化を裁定する
-- [ ] **shadow同等性gate**（Oracle前例331行の型）: session内code intelligenceの代表タスクを
+- Latticeへ移管済み: lf-0481 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L64
       Lattice MCP経由と現行Codegraph MCP経由で同一入力shadow比較し、**同等以上を実証する**。
       判定者・fixture・受入基準を事前に定義する。満たせない用途が残るなら**部分退役に留め、残存配線を明示する**
-- [ ] wire v4を設計する（固定製品集合の変更＝wire major）。`docs/factory-reporter-runbook.md` §11の
+- Latticeへ移管済み: lf-0484 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L65
       server-first・別endpoint・dual-run・canary後retireに従う
-- [ ] `lib/factory/contract.mjs`のV4_PRODUCT_IDS、`lib/factory/v4.mjs` adapter、
+- Latticeへ移管済み: lf-0486 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L66
       `schemas/factory-report-v4.schema.json`（exact keys）、`tests/factory-scan`／`factory-reporter`系の
       集合deepEqualを同一waveで更新する
-- [ ] host別cutover状態と`retire-codegraph`／`restore-codegraph`入口を実装する（global booleanにしない）
-- [ ] 消費者ゼロ確認: `rg -a`＋索引併用。**削除検証ツール自身がcodegraphである**ため、
+- Latticeへ移管済み: lf-0489 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L67
+- Latticeへ移管済み: lf-0490 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L68
       `shared/constitution.md:68`・`docs/01_project-layout.md:41`の道具指名をLattice MCPへ差し替える
       （憲法は`shared/constitution.md`を編集し`node bin/render-global-constitution.mjs --write`で生成物を更新。
       生成物を直接編集しない）
-- [ ] 退役点の全数消化: `docs/05_codex-fragments.md`（両親matrix・addコマンド・疎通規則）、
+- Latticeへ移管済み: lf-0494 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L69
       README.md 109/161/168/231、AGENTS.md 23/36、PLAN.md 13、`bin/agents-update.sh:83`、
       `bin/verify-install.sh:68`、`bin/factory-reporter-v2-schedule-runner.mjs:126`のrequired
-- [ ] BugHub履歴は物理削除せず`not_applicable`遷移。server期待matrixから外す時期と旧report受理期間を明示する
-- [ ] 各現役hostのMCP解除（H・Mac／main-server／FOX WSL2の3host。Windows nativeは親不在のため
+- Latticeへ移管済み: lf-0497 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L70
+- Latticeへ移管済み: lf-0498 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L71
       npm global撤去とmatrix期待変更のみ）
-- [ ] rollback drill（wire v4送信停止・前release復帰・一時切戻し）を分離して実証する。
+- Latticeへ移管済み: lf-0500 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L72
       **一時切戻しでCodegraphを正規コアへ戻さない**（Oracle前例の作法）
-- [ ] Phase gate: full CI・独立反証・knowledge return・Control finalize → 本計画を`docs/archive/`へ
+- Latticeへ移管済み: lf-0502 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L73
 
 ### 並行レーン Q22 — BugHub source登録（親queue 22）
 
-- [x] ServerManager側でLatticeを報告元sourceとして登録する（adapter／schema／認証）。
+- Latticeへ移管済み: lf-0506 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L74
       **重大度は報告元＝Latticeの製品契約が決める**既存意味論を維持する
   - 2026-07-18完了（ServerManager `0bb3ef3`）: factory v2へ`lattice`をrequired外の
     任意keyとしてserver-first登録（固定12製品full要求は不変＝既存client互換）。期待matrixは
     全profile `optional`（requiredへの昇格はwire v4 enroll waveで裁定）。severityはLattice
     `lattice.runtime_errors.v1`の値を素通し。認証は既存host-scoped credential＝新規面なし。
     修正先repo登録`kitepon-rgb/Lattice`。契約本文はFACTORY_INTEGRATION.md §4.1.1
-- [x] 読み取り専用集約・`resolve`／`reopen`・`/ai`の既存契約を壊さない
+- Latticeへ移管済み: lf-0513 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L75
   - 同commitで検証: pull契約・resolve/reopen・/ai・v1経路は無変更。semantic検証を
     「送られた製品だけ」へ絞るguardのみ（v1は全product必須＝挙動不変）。npm test 74/74 green
-- [x] 本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）。
+- Latticeへ移管済み: lf-0516 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L76
       ServerManager mainへのpushは2026-07-18オーナー承認済み・実施済み（`95831af..0bb3ef3`・
       push前に両repoの対origin照合を実施）
   - 2026-07-18完了（オーナー包括承認「承認が必要なものは全部承認判定」）: deploy.sh dry-run
@@ -530,29 +530,29 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 
 2026-07-18にRC4 plan（Lattice `docs/archive/plan_lattice_rc4_dotagents_dogfood.md`）から移管。所有repoはすべてLattice:
 
-- [x] sensor: Lua/Luau/Rubyの`require()`検出が`visitNode`フック実装のため関数本体内requireを拾えない
+- Latticeへ移管済み: lf-0533 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L77
       （偽陰性・JS/TSと同型の穴）。対処は`extractCall`合流点への移設。最小再現: 関数内`require 'mod'`を
       indexしimports辺が出ないこと（所有: Lattice sensor/）
   - 2026-07-18完了（Lattice `efc8299`・implementer委譲→親diff受入）: extractCall合流点へ分岐追加・
     二重emit構造排除・回帰test 6件・sensor 2487 test green
-- [x] CLI: `lattice plan compile`のtyped失敗が`cli_error.v1`の`code`/`message`だけを出し、compile resultの
+- Latticeへ移管済み: lf-0538 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L78
       `detail`（BOUNDARY_UNKNOWNのunknown内訳等）を落とす。対処候補: `cli_error.v1`へ`detail`追加
       （schema変更＝ADR 0044 Decision 8のenvelope正式化と同時に裁定）（所有: Lattice src/runtime-cli.mjs）
   - 2026-07-18完了（Lattice `56e4cf7`・ADR 0052＝fable refuter条件付き通し5条件反映）: 実因は
     CliContractError constructorのdetail未配線。`lattice.cli_error.v2`新設（非空plain objectのみ
     detail発行・stdout重複コードは省略）。v0.2.0 publishは別途Hでcarry over
-- [x] CLI: `lattice doctor --json`（bootstrap diagnostics）が化石化——`references.plan`が消滅済み
+- Latticeへ移管済み: lf-0544 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L79
       `docs/plan_lattice.md`を指し、`implementation`の3 flagが実装済みの現状と不一致。RC3特性化で
       挙動凍結されているため、schema v2化 or 廃止をcharacterization更新と同時に裁定
       （2026-07-18 L6 diagnostics実装時に発見。所有: Lattice src/bootstrap.mjs）
   - 2026-07-18完了（Lattice `56e4cf7`・ADR 0052 Decision 2）: 廃止＝exit 2化・bootstrap資産削除・
     characterization/checkスクリプト同wave更新。後継正本はfactory-diagnostics
-- [x] artifact: `patches_bound_to_accepted_receipts`検査がpath照合のみ（保存`checkpoint_digest`未検証・
+- Latticeへ移管済み: lf-0550 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L80
       receipt content digestとの突合なし）＝patch取り違え・破損がpath一致なら通る。digest照合へ強化
       （ADR 0051 Decision 4。所有: Lattice src/rc4-stage1-dogfood.mjs系）
   - 2026-07-18完了（Lattice `4bbb3d8`）: checkpoint_digest/todo_id照合＋patch sha256自己束縛
     （世代判定・fail-openなし）。tamper 3様態test・実v4-landing 19/19維持
-- [ ] runtime-contracts: `run_event.v1`の`recorded_at` validatorが「regex＋`Date.parse()`非NaN」のみで
+- Latticeへ移管済み: lf-0555 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L81
       実在しない暦日（`2026-02-30`→`2026-03-02`へ正規化）を受理する（`src/runtime-contracts.mjs:79-81`・
       producer側`src/runtime-engine.mjs:57-62`も同穴・`src/seam-transform.mjs:232-234`の`observed_at`は
       別系統の同種緩受理）。`recorded_at`は診断情報で順序・受理判断に不使用＝非クリティカル。strict化は
@@ -595,8 +595,8 @@ artifact `v3`（16 check green）／`v3-hold`（17 check green）・Control `lat
 
 ## 7. 未裁定（オーナー領分・着手前に確認する）
 
-- [ ] **WIP計数の解釈**: 憲法「active WIPは本筋1件＋緊急割込み1件まで」を、Lattice戦役とdotagents戦役の
+- Latticeへ移管済み: lf-0598 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L82
       並走でオーナー単位で数えるかproject単位で数えるか。L5着地窓の設計に先行して必要
-- [ ] **Oracle rollback drill未完のまま2件目の退役を始めるか**（L7着手時）
-- [x] **Lattice配布形態**（npm publish or repo直CLI）。L6の更新経路・install/verify設計が従属する
+- Latticeへ移管済み: lf-0600 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L83
+- Latticeへ移管済み: lf-0601 → docs/archive/lattice-source-ledger/lattice-factory-integration-cutover-20260719.md#L84
   - オーナー裁定 2026-07-18「配布形式はNPM」

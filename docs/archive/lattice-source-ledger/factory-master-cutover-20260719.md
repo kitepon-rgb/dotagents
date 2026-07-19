@@ -1,0 +1,124 @@
+# Lattice ToDo archive
+Plan: factory-master
+Batch: ledger-cutover-20260719
+Revision: 2ad74df868333a53a8919c1f36e87e0213e0b3dd81afdc195946241accb3b863
+
+- [x] 生計画を棚卸しし、実行順の正本を本書へ一本化する。
+- [x] `PLAN.md`の個別残件を本書へ移管し、憲章と実行TODOを分離する。
+- [x] 子計画を削除せず、詳細受入台帳として本書へ従属させる。
+- [x] R1 full gateで再現したMarkdown空行lint 3件を、内容を変えず最小修正してfocused lintを通す。
+- [x] Decision証拠を可変plan/TODOからwave専用の不変ADRへ分離する規約を、リポ正典へ固定する。
+- [x] active RunのDelegation Packetを再dispatchなしで回収できるread-only公開入口を追加する。
+- [x] active fixed Worker中の非交差fast-forward commitを安全に検証し、Report回収不能を解消する。
+- [x] `boundedArray`が空の必須配列を「arrayでない」と誤診する問題を修正し、必要最小件数を名指しする。
+- [x] Control finalizationが可変planをDecision証拠として受理する欠陥を修正する。
+- [x] mode非忠実FS（WSL2 metadata無しDrvFS/9p）上のrepoでControl Record initが
+- [x] Control Recordの`type:"file"` evidenceがgit履歴照合されず（`decision`型のみ救済）、生きた文書を
+- [x] 未作成fallback Decisionのエラー期待を`IO_FAILURE`契約へ揃える。
+- [x] Worker Report importが許容clock skewを超える未来の証拠時刻を受理する欠陥を修正する。
+- [x] completed writer Runを棄却する時までcurrent workspace fingerprint一致を要求し、workspace進行後に
+- [x] Placement予約時に`executor_handle=null`だったnative Workerへdispatch相関handleを記録すると、
+- [x] Claude receiptとCodex `task_complete`から、rollback検知可能なhost-neutral completed chainを完成する。
+- [x] DB projection、`projection_pending`、pagination、JSON-only read/wait、cancel、timeoutを完成する。
+- [x] 65秒超live waitとClaude/Codex E2Eを通し、Phase full gateを一回だけ実行する。
+- [x] Throughline側Controlをfinalizeし、成果commitとADR digestをObserver計画へ還流する。
+- [x] host-neutral SupervisorとClaude/Codex host adapterを完成する。
+  - [x] planned rollover、parent rebind、generation faultを別transaction／receiptとして
+  - [x] P2-5の旧Observer MCP write条件をADR 0060後のSupervisor所有境界へ補正し、
+  - [x] materiality、evidence、novelty、actionability、timingとdedupe／cooldownを
+  - [x] Codexのread-only generation terminal観測とhost-neutral一command一step bindingを実装する。
+  - [x] model request送信結果不明をhost lifecycleと別journalで回収する。
+    - [x] host-neutral model operation journal coreと回収不能window補正をObserver
+    - [x] model operation専用Mailbox exact replayをObserver `0e7a005`、ADR 0052で受け入れた。
+    - [x] Supervisorをissue／recover／apply／finalizeの四境界へ統合する。
+    - [x] Claude／Codexのexact operation result readをprovider固有journalへ実装し、送信結果不明を
+      - [x] provider journal coreをObserver `4443ff9`、両host focused 10/10、ADR 0056で受け入れた。
+      - [x] generic completed後のprovider cleanupをSupervisorへ接続し、cleanup成功後だけapplyする順序を
+      - [x] 同じlogical generationへcycle入力を一度だけ配送するrequest contractを先に固定する。
+        - [x] **SUPERSEDED:** host-neutral canonical cycle requestとCodexの`thread/read baseline -> turn/steer -> exact ACK` fixtureを
+        - [x] 外部Supervisor単一所有とCodexの
+        - [x] 外部Supervisor production callerを一target一process／一cycle一stepで接続し、timeoutではAIを
+          - [x] `applyCycle`／`finalizeAppliedCycle`をdurable cycle input／operation時刻へ束縛し、advisoryの
+          - [x] 一target一process lock、evidence input、Codex provider callback、`runSupervisorCycle`、sanitized receiptを
+          - [x] verified Throughline clientとpre-initialized Codex app-server sessionを所有する外部process／CLIへ
+        - [x] **SUPERSEDED:** Claude background jobへの公開非対話reply ACKはunsupportedと確定した。Claude Code 2.1.210の
+      - [x] Codexはcycleごとのthread／session／turn／cwdとexact result、ClaudeはAiterm公開session／Stopと
+      - [x] production caller fixtureの後、実model request、hook trust、session相関をlive H gateで一度だけ実証する。
+- [x] ユーザーの明示指示を受けた親だけが同provider Observerを起動し、一target一watchを確保する。
+  - [x] 非Hの公開`observer watch`／`watch start|status|stop` handlerを実装し、親context、
+  - [x] dotagents／installerから現在親の実host actionを注入し、live spawn／stopをP5-1b H gateで受け入れる。
+- [x] 親identity、同provider配置、同一UX、明示停止、Mailbox配送、crash recovery、installer/rollbackを完成する。
+  - [x] Observer MCPをread-only compatibility／diagnosticsとして維持し、決定的な
+  - [x] P5-2aとしてversioned製品manifest、sanitized verify、隔離install／reinstall／rollbackを閉じた。
+  - [x] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
+  - [x] P5-1b／P3-4cのdual-host live H campaign前に、binary／version／公開host surface／
+  - [x] Codex production parent caller、current parent／initial generation bootstrap、同一app-server
+  - [x] 現在Codex親からexact contextを注入するparent entryをdotagentsへ配布し、isolated HOMEで閉じる。
+  - [x] Claudeの公開対話delivery／exact result readをAitermで完成し、その公開面だけで
+    - [x] Aiterm queue 19c3で`claude_agent`の永続session、初回／follow-up、Stop完了、operation相関付き
+    - [x] queue 19dでAiterm公開面だけをClaude production callerへ接続する。
+      - [x] 19d-a: Aiterm stdio MCPのversion／tool schema／executable identityを固定し、`claude_turn`の
+      - [x] 19d-b: `claude.session`のpromptless launch、record-first journal、明示拒否／transport unknown分離、
+      - [x] 19d-c: Claude provider runtimeをproduction step、非AI Supervisor process、親caller、CLIへ
+      - [x] 19d-d: rollback／parent rebindのstop／relaunch／recoveryをAiterm公開toolだけへ接続した。
+    - [x] queue 19eで実Claude初回／follow-up各1 turn、Stop、exact result、timeoutなしの通常回収、
+- [x] 伴走者としての既定沈黙、一サイクル一件、dedupe/cooldownをE2Eで固定する。
+  - [x] P5-1aとしてCodex completed cycleからsemantic decision、Mailbox、parent Stopまでを実coreで貫通し、
+  - [x] Claude／Codexのproduction request、session相関、hook trust、通常停止をP5-1bのH gateで受け入れる。
+- [x] Observer側ControlとPhase監査を閉じる。
+- [ ] Observer同社、相談役異社、一般Worker適応配置をshared orchestration契約へ固定する。
+- [x] Codex→Claude execution/consultationとClaude→Codex consultationのhandle、observe、resume、
+- [x] provider障害時の切替を別Runとして記録し、fallback元の成功へ偽装しない。
+- [x] O3の最初の実装境界を、既存v25 Worker契約へ`claude-native`純粋adapterを追加するwaveと、
+- [x] `claude-native` Worker adapterのrequest／observation／failure projectionをfocused gateで実装する。
+- [x] Consultation多provider化はv25 `slug`へのhandle詰込みを禁止し、旧v25 reader、型付きhandle、
+- [x] 既存未コミットを別セッション由来として放置しない。WSL relay RAGはPhase R2未収容成果、
+- [x] live H gateでO3を完了する（オーナー承認必須）: claude-native consult/worker・`codex_opinion`の
+- [x] 設計を不変ADRで裁定する: quota snapshot契約・純粋selector仕様・Control schema v27
+- [x] provider-owned quota snapshot、window正規化、`pace_ratio`、hysteresis、pool lock、reservationを実装する。
+- [x] stale、取得不能、矛盾、reset境界、残量ゼロをfail loudにし、架空値や暗黙fallbackを使わない。
+- [ ] Control schemaとreceiptへselector decisionを束縛し、週次dogfoodで両社の消費ペースを評価する。
+    - [ ] Wave S: schema/migrationを実装し、既存reader・rollbackとの互換を固定する。
+    - [ ] Wave A: adapter attestationを実装し、adapterが表明する事実と検証境界を固定する。
+    - [ ] Wave P: Delegation PacketとWorker Reportの相関を実装し、receiptまで追跡可能にする。
+    - [ ] Wave D: 週次の実需dogfoodで運用上の必要性と消費ペースを評価する。
+- [x] registry公開版とdotagents adapterのschema drift、Throughline diagnostics、Windows ACL／npm shim、
+  - [x] 基盤toolchain 3製品のregistry／Grok exact update契約を`fc3bf3f`で実装し、
+  - [x] Throughline diagnostics producer修正v0.6.3を
+  - [x] Windows factory ACLのローカル3入口を`39fba73`で統一済みと確認し、
+  - [x] Windows npm shimのPATHEXT／現行2スペースshapeを`5f781a8`／`5479a73`で修正済みと確認し、
+  - [x] Spotter Windows Codex実行経路の製品修正v1.4.25を
+  - [x] Codex Sidecar Windows MCP shim修正v0.3.7を
+  - [x] dotagentsのSidecar `auditor` presetとfactory v2 scannerのpreset名／dry-run exact検証を
+- [x] BugHub自己監視のoutbox再送fixtureとPi5外部通知bridgeのH不要source契約を、意図的障害試験の
+  - [x] ServerManager所有のbridge／60秒ticker／`run(deps)` fixtureをimmutable commit/pathとfocused
+- [x] R1 full gateと一回の独立反証へのcorrectionを
+- [ ] Mac、main-server、FOX WSL2、FOX Windows nativeの各hostで、一回のcampaignとして
+- [ ] 4 hostのSidecar `auditor` diagnosticsと、R1でlocal受入したThroughline／Windows ACL／npm shim／
+- [ ] Callout HookとGPT-5.6再配線の他端末残件を、Codex全対応Wave 3の同じreceiptで閉じる。
+- [ ] 新規Claude/Codex sessionで`gpt_connector`、3 role routing、session handoff、Spotter project hookを実火する。
+- [ ] host固有のH操作、未対応、optional、blockedを混同せず端末台帳へ記録する。
+- [ ] Mac/Windows scheduler、Oracle rollback drill、BugHub canary、outbox復旧、全host E2Eを完遂する。
+- [ ] Callout、GPT-5.6再配線、Codex全対応の子計画を同じhost証拠で閉じてarchiveする。
+- [ ] wire v2固定12製品のfull gate、独立反証、finalization receiptを一回ずつ通す。
+- [ ] O2〜O4のObserver/Elastic受入と、R3のwire v2 finalization receiptをjoinする。
+- [ ] 固定13製品wire v3、Observer diagnostics/runtime error、host matrix、BugHub schema、installer、
+- [ ] Observer受入後にだけPLAN/AGENTS/READMEのコア一覧を9製品から10製品へ更新する。
+- [ ] 全repoの独立gate、全host E2E、Phase監査、knowledge returnを完遂し、子計画と本書をarchiveする。
+- [x] Control RecordのWSL/DrvFs境界を安全に裁定する。`metadata`なしでWindowsドライブ上のrepoを扱うと
+- [ ] 同一pathのartifact更新を安全に世代交代できる契約を決める。LiveTR監査で、current artifactの文書を
+  - [ ] content-digest版付きpathと原子的世代交代を実装し、旧世代のbyte列を保持したsupersede/recovery fixtureを
+- [ ] gpt-connector `browser start`のWindowServer収束deadline境界flake（`RUNTIME_DRIFT`／`CDP_UNAVAILABLE`間欠）を恒久対処する。真因診断・caveat登録済みで、launcherのtimeout延長またはgrace/retryを検討する（所有: gpt-connector repo）。
+- [ ] GitHub側のみのrepo 20件超の終活裁定を行う。削除・archiveはオーナー承認後だけ行う。
+- [ ] [P4メモリ昇格queue](queue_memory-promotion.md)を各repoの次回作業時に消化する。
+- [ ] npm Publishing accessの2FA／token禁止締めをオーナー画面で行う（H）。
+- [ ] Novel(forklore)統合済みbranchをlock解除・承認後に削除する。
+- [ ] permission allowlistを主要repoへ横展開する（H確認後）。
+- [ ] このMacの端末メモリからrepo正典への昇格実施を確認する。
+- [ ] Throughline `.agents/`とWebAICoding `.playwright-mcp/`を各repoの`.gitignore`へ追加する。
+- [ ] SmartClaude-UpdateToolsを`agents-update`へ統合するかFOX Windowsで裁定する。
+- [ ] 本書のPhase O1〜O4、R1〜R3、J1がすべてgreenである。
+- [ ] 子計画の未完TODOがゼロで、完了した子計画がarchiveへ退避されている。
+- [ ] 全現役hostの証拠が一回のhost campaignへ集約され、重複full regressionがない。
+- [ ] H操作の目的、影響、rollback、承認記録が各receiptに残っている。
+- [ ] repoごとの独立commit/rollbackを保ち、明示承認されたpush後にremoteと同期している。
