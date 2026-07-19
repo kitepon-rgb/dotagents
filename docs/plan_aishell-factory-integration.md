@@ -90,11 +90,13 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 
 ### Phase A3 — ServerManager / BugHub server-first
 
-- [ ] ServerManager側の現行source registry、expectation matrix、schema migrationを実読する
-- [ ] AIShell sourceを既存固定集合外のoptional sourceとして登録する
-- [ ] AIShell専用diagnostics ingestionとprivacy rejection fixtureを追加する
-- [ ] 未対応hostをmissingでなく`not_applicable`へ遷移させる
-- [ ] 非本番focused / related gateを通す
+- [x] ServerManager側の現行source registry、expectation matrix、schema migrationを実読する
+- [x] AIShell sourceを既存固定集合外のoptional sourceとして登録する
+- [x] AIShell専用diagnostics ingestionとprivacy rejection fixtureを追加する
+- [x] 未対応hostをmissingでなく`not_applicable`へ遷移させる
+- [x] 非本番focused / related gateを通す
+  - ServerManager `d85c70a` / `95ce6db`: 固定12製品不変、AIShell optional、空safe_context allowlist、severity素通し、非対応host `not_applicable`
+  - focused 32/32、BugHub Node related 76/76、`not_applicable`追補focused 16/16、`git diff --check` green
 - [ ] 本番deploy / canaryはH承認後に実行し、rollbackを実証する
 
 ### Phase A4 — 対応Mac live acceptance
