@@ -80,6 +80,11 @@
 
 - 所有/修正先: 自作 / `kitepon-rgb/Lattice`。**第11コア**（第10枠はObserver予約・Codegraph退役完了までは入替でなく追加）。
   version入口: `lattice --version`（＝`factory-diagnostics`の`version`と同一のpackage version）。
+- project工程discovery正本: `lattice status --json`（schema `lattice.project_status.v1`、state
+  `uninitialized|ready|active_run|invalid`、canonical store、active plan/run、`can_create_plan`、
+  `next_action`）。未初期化はexit 0、invalidはexit 1。初期authoringは
+  `lattice plan create --input <ref>`、入力schemaは`lattice plan create --schema --json`で取得する。
+  `.lattice/`の有無を接続判定へ使わず、invalidをMarkdownへfallbackしない。
 - diagnostics/state正本: `lattice factory-diagnostics --json`（schema
   `lattice.native_factory_diagnostics.v1`・check 5本＝package_version/node_runtime/cli_surface/
   mcp_entry/sensor_attribution・overall `ok|failed`・failedは非0）。runtime errorは
