@@ -1,0 +1,71 @@
+{
+  "schema": "lattice.todo_gantt_presentation.v1",
+  "project_id": "dotagents",
+  "plans": [
+    {
+      "plan_key": "factory-master",
+      "lanes": [
+        {
+          "lane": "M0",
+          "name": "TODO統合",
+          "description": "生計画を棚卸しし、実行TODOの正本をfactory master planへ統合する工程。"
+        },
+        {
+          "lane": "interrupt",
+          "name": "常設割込ゲート",
+          "description": "正規運用で再現した工場欠陥を、本筋の保持位置を守りながら独立gateで根治する工程。"
+        },
+        {
+          "lane": "O1",
+          "name": "Throughline completed-turn feed",
+          "description": "ClaudeとCodexのcompleted turnをhost-neutral feedとしてObserverへ供給する工程。"
+        },
+        {
+          "lane": "O2",
+          "name": "Observer製品完成",
+          "description": "Supervisor、host adapter、semantic gate、model operation回収を備えたObserverを完成する工程。"
+        },
+        {
+          "lane": "O3",
+          "name": "Elastic provider対称化",
+          "description": "Observer、相談役、一般Workerの配置をprovider対称な工場契約へ揃える工程。"
+        },
+        {
+          "lane": "O4",
+          "name": "rate-aware scheduler",
+          "description": "provider quotaと消費ペースを観測し、配置判断へ束縛するschedulerをdogfoodする工程。"
+        },
+        {
+          "lane": "R1",
+          "name": "wire v2残欠陥",
+          "description": "wire v2のschema drift、診断、Windows、配布adapterの残欠陥を所有repoで閉じる工程。"
+        },
+        {
+          "lane": "R2",
+          "name": "host単位の統合rollout",
+          "description": "factory wire v2をhost単位で展開し、実機receiptと互換性を確認する工程。"
+        },
+        {
+          "lane": "R3",
+          "name": "wire v2 finalization",
+          "description": "wire v2の最終化、実配送、障害時挙動、全host受入を閉じる工程。"
+        },
+        {
+          "lane": "J1",
+          "name": "Observer wire v3編入",
+          "description": "ObserverとElasticの受入をwire v2 finalizationへ合流し、wire v3へ編入する工程。"
+        },
+        {
+          "lane": "maintenance",
+          "name": "主キャンペーン後の保守",
+          "description": "主キャンペーンを遮らない保守項目を、対象repoやH条件が整った時に消化する工程。"
+        },
+        {
+          "lane": "completion",
+          "name": "全体完了条件",
+          "description": "全repo・全hostのgate、監査、knowledge returnを終えて計画を完了する工程。"
+        }
+      ]
+    }
+  ]
+}

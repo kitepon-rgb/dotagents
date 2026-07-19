@@ -300,7 +300,20 @@ CLI面（verify/snapshot --rebuild）・codegraph coverage分離の全6項目を
       がブラウザで一目で判ること（オーナー目視・受入証跡をevidenceへ）
   - Lattice側G4前進（参照）: 移行tool（`lattice.todo_extraction.v1`＋`todo migrate`、`1daaff2`）・
     todo status CLI（`bf73689`）・`engines >=22.13 <25`（`7137f91`）を実装済み
-  - 進行中: ガントUI再設計（オーナー目視レビュー裁定7点）・master plan抽出JSON作成
+  - 2026-07-19実workload再検分: 依存ツリーは採用するが、内部ID・lane略号・題名切詰め・
+    元Markdown全文＋anchor WARN 38件の露出によりG4最終受入はreject。Lattice renderer v7で、
+    人とAIが「工程551」のように参照できる表示、lane正式名、選択工程detail、store由来の
+    元Markdown形式全工程一覧へ再設計する
+  - [x] dotagents所有の`.lattice/todo/gantt-presentation.json`へ`plan_key + lane`別の正式名・説明を登録する
+  - [x] Lattice local sourceで実110件を再生成し、工程番号→canonical `factory-master/fm-NNNN`の一意対応、
+        12カテゴリの意味、前提／後続navigation、store由来全工程一覧110件（工程0328全文題名を含む）、
+        72 verified／36 digest mismatch／2 anchor missingを確認する
+  - [ ] generated HTMLがnetwork 0・keyboard操作・狭幅表示を維持し、tracked store bytesを変えないことを確認する
+    - 2026-07-19機械検証（Lattice `docs/evidence/2026-07-19-gantt-renderer-v7-mechanical-acceptance.md`）:
+      network参照0、keyboard／狭幅契約を含むLattice focused 23/23、
+      `todo verify` green、manifest／plan／snapshot／journal bytes不変。in-app browserが`file://`を
+      policy拒否したため、実ブラウザのkeyboard／狭幅表示とオーナー目視だけ未受入。
+  - completion工程の依存不足はUIで隠さず、正しい前提を裁定したsuccessor plan再compileの別課題とする
 - [ ] dotagents側配線の受入: SessionStart案内hook・Stop WARN hook・settings断片・
       `verify-install`/isolated HOME検証（実装正本はG4/G5、配線正本はdotagents）
   - 2026-07-19: G4受入前の固定pinを、npm・本host・正規repoで一致する検証済み
