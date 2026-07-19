@@ -100,10 +100,12 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 ### Phase A4 — 対応Mac live acceptance
 
 - [ ] candidate packageを隔離prefixへ入れ、Codex MCPでlive handshakeする
-- [ ] `runtime_status`、worktree自動認識、read / write前提条件、直接process実行をsmokeする
-- [ ] diagnosticsがpath / command / contentを漏らさないことを実レスポンスで確認する
+- [x] `runtime_status`、worktree自動認識、read / write前提条件、直接process実行をsmokeする
+  - 実測: 新規AIShell/dotagents worktreeを自動認識。誤SHA-256更新は拒否、正しいSHA-256更新は成功し、fixtureはTrashへ回収した
+- [x] diagnosticsがpath / command / contentを漏らさないことを実レスポンスで確認する
+  - 実測: release packageの実MCP 21 tool handshakeでschema v1・ready・issues空、`/Users/`と`allowedRootPaths`非露出
 - [ ] pause / resume、許可root不足、manager誘導を通常状態へ戻せる範囲で確認する
-- [ ] 製品欠陥が再現した場合は重大度規則に従い、AIShell repoで修理して再受入する
+- [x] この受入範囲でAIShell製品欠陥は再現しなかった（`/bin/bash`拒否は公開禁止契約どおり）
 
 ### Phase A5 — wire v5正式編入
 
