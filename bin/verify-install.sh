@@ -452,6 +452,7 @@ elif ! python3 - "$codex_hooks" <<'PY'
 import json
 import os
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -473,7 +474,8 @@ missing = []
 hook_path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-callout-hook")
 python_prefix = [str(Path(sys.executable).resolve())] if os.name == "nt" else ["/usr/bin/env", "python3"]
 for event, (subcommand, timeout) in required.items():
-    command = shlex.join([*python_prefix, hook_path, subcommand])
+    parts = [*python_prefix, hook_path, subcommand]
+    command = subprocess.list2cmdline(parts) if os.name == "nt" else shlex.join(parts)
     matches = [
         hook
         for entry in data.get("hooks", {}).get(event, [])
@@ -504,6 +506,7 @@ import json
 import os
 import shlex
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -513,7 +516,8 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError):
     raise SystemExit(1)
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/orchestrate-advisory-hook")
 shell_prefix = str(Path(shutil.which("sh") or shutil.which("bash") or "sh").resolve()) if os.name == "nt" else "/bin/sh"
-command = shlex.join([shell_prefix, path])
+parts = [shell_prefix, path]
+command = subprocess.list2cmdline(parts) if os.name == "nt" else shlex.join(parts)
 expected = {"type": "command", "command": command, "timeoutSec": 5, "async": False, "statusMessage": None}
 matches = [
     hook
@@ -534,6 +538,7 @@ if [ -f "$codex_hooks" ] && ! python3 - "$codex_hooks" <<'PY'
 import json
 import os
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -543,7 +548,8 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError):
     raise SystemExit(1)
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-lattice-gantt-hook")
 python_prefix = [str(Path(sys.executable).resolve())] if os.name == "nt" else ["/usr/bin/env", "python3"]
-command = shlex.join([*python_prefix, path, "session-start"])
+parts = [*python_prefix, path, "session-start"]
+command = subprocess.list2cmdline(parts) if os.name == "nt" else shlex.join(parts)
 expected = {"type": "command", "command": command, "timeoutSec": 6, "async": False, "statusMessage": None}
 relevant = []
 matches = []

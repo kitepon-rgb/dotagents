@@ -156,7 +156,15 @@ def command_parts(command: object) -> list[str] | None:
     if not isinstance(command, str):
         return None
     try:
-        return shlex.split(command)
+        parts = shlex.split(command, posix=os.name != "nt")
+        if os.name == "nt":
+            return [
+                part[1:-1]
+                if len(part) >= 2 and part[0] == part[-1] and part[0] in ("'", '"')
+                else part
+                for part in parts
+            ]
+        return parts
     except ValueError:
         return None
 
@@ -191,12 +199,16 @@ def is_script_command(
     return False
 
 
+def render_hook_command(parts: list[str]) -> str:
+    return subprocess.list2cmdline(parts) if os.name == "nt" else shlex.join(parts)
+
+
 def python_hook_command(hook_path: Path, *arguments: str) -> str:
-    return shlex.join([*PYTHON_HOOK_PREFIX, str(hook_path), *arguments])
+    return render_hook_command([*PYTHON_HOOK_PREFIX, str(hook_path), *arguments])
 
 
 def shell_hook_command(hook_path: Path, *arguments: str) -> str:
-    return shlex.join([*SHELL_HOOK_PREFIX, str(hook_path), *arguments])
+    return render_hook_command([*SHELL_HOOK_PREFIX, str(hook_path), *arguments])
 
 
 def is_callout_command(command: object, hook_path: Path, subcommand: str, home: Path) -> bool:
