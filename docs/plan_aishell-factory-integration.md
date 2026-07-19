@@ -82,11 +82,11 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 - [x] `factory-product-contracts.md`へ所有repo、version、diagnostics、state、migration、error、rollbackを追加する
 - [x] host matrixへmacOS arm64 required、他host `unsupported`の構造理由を追加する
 - [x] connector matrixはCodex MCPの実測契約を追加し、Claudeは実測までunverifiedとする
-- [ ] `agents-update.sh`へ`@quolu/aishell@latest`を追加し、失敗時は製品名付き非0終了を維持する
-- [ ] install / verify / Codex config断片へ冪等なAIShell登録・診断を追加する
-- [ ] AIShell diagnostics adapter、privacy fixture、supported / unsupported fixtureを追加する
-- [ ] `V2_PRODUCT_IDS`、wire v3 / v4固定集合が不変である回帰testを追加する
-- [ ] focused test → related gateを通す
+- [x] `agents-update.sh`へdarwin/arm64限定の`@quolu/aishell@latest`を追加し、非対応hostでinstallしない
+- [x] update / verify / Codex config断片へ冪等なAIShell導入・登録・診断契約を追加する
+- [x] AIShell diagnostics adapter、privacy fixture、supported / unsupported fixtureを追加する
+- [x] 既存の`V2_PRODUCT_IDS`固定12製品回帰を通し、AIShellをwire v2〜v4へenrollしていないことを確認する
+- [x] focused adapter 5/5、v2関連20/20、factory-core smoke、cron update fixtureを通す
 
 ### Phase A3 — ServerManager / BugHub server-first
 

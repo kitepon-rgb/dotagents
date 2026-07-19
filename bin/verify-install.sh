@@ -74,6 +74,17 @@ verify_factory_core() {
     fi
   done
 
+  if [ "$(uname -s 2>/dev/null || true)" = Darwin ] && [ "$(uname -m 2>/dev/null || true)" = arm64 ]; then
+    if command -v aishell-mcp >/dev/null 2>&1; then
+      echo "OK  factory core CLI: aishell-mcp → $(command -v aishell-mcp)"
+    else
+      echo "FAIL: factory core CLI 'aishell-mcp' 不在（AIShell第12コアはApple Silicon Macで必須）"
+      fail=1
+    fi
+  else
+    echo "OK  factory core CLI: aishell-mcp → unsupported（darwin/arm64専用）"
+  fi
+
   if ! command -v uv >/dev/null 2>&1; then
     echo "FAIL: uv 不在（MarkItDownの正規 tool 所有面を検証・更新できない）"
     fail=1

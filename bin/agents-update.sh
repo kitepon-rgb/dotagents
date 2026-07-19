@@ -21,8 +21,10 @@ if ! command -v npm >/dev/null 2>&1 && [[ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]];
 fi
 
 runtime_os="${OS:-}"
+runtime_arch='unknown'
 if command -v uname >/dev/null 2>&1; then
   runtime_os="$(uname -s)"
+  runtime_arch="$(uname -m)"
 fi
 case "$runtime_os" in
   MINGW*|MSYS*|Windows_NT)
@@ -97,6 +99,14 @@ PACKAGES=(
   'pnpm'
   'throughline'
 )
+
+# AIShellはnpm package自体がdarwin/arm64限定。非対応hostでinstall失敗を起こさず、
+# host matrixどおり構造的unsupportedとして扱う。
+if [[ "$runtime_os" = Darwin && "$runtime_arch" = arm64 ]]; then
+  PACKAGES+=(
+    '@quolu/aishell'
+  )
+fi
 
 UV_TOOLS=(
   'markitdown'
