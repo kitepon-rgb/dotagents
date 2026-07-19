@@ -107,7 +107,8 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
   - 実測: 新規AIShell/dotagents worktreeを自動認識。誤SHA-256更新は拒否、正しいSHA-256更新は成功し、fixtureはTrashへ回収した
 - [x] diagnosticsがpath / command / contentを漏らさないことを実レスポンスで確認する
   - 実測: release packageの実MCP 21 tool handshakeでschema v1・ready・issues空、`/Users/`と`allowedRootPaths`非露出
-- [ ] pause / resume、許可root不足、manager誘導を通常状態へ戻せる範囲で確認する
+- [x] pause / resume、許可root不足、manager誘導を通常状態へ戻せる範囲で確認する
+  - 実測: 管理画面で停止→`isPaused=true`・通常操作拒否・`runtime_open_manager`誘導→再開。4 root保持、`isPaused=false`、file操作復帰を確認した
 - [x] 受入中に再現したstdin EOF欠陥をAIShell `8219f8c`で修理し、全20/20、release package、candidate実MCP `/bin/cat`（92ms・exit 0・timeoutなし）を確認した（`/bin/bash`拒否は公開禁止契約どおり）
 
 ### Phase A5 — wire v5正式編入
@@ -123,7 +124,9 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 
 - [x] AIShell 0.3.0 version bump、release note、package gateを準備する
   - AIShell `29ff528`: 新規公開toolを含むためSemVer minor。Swift 20/20、package整合性、candidate診断version 0.3.0、stdin smoke green
-- [ ] H承認後にpublish → global install → MCP再起動 → 公開後smokeを同一waveで完遂する
+- [x] H承認後にpublish → global install → MCP再起動 → 公開後smokeを同一waveで完遂する
+  - 2026-07-19: `@quolu/aishell@0.3.0`をpublic / latestでpublish。registry shasum `7d2495a832b27d2ef796d0e8a6689b123848d138`一致
+  - global 0.3.0へ更新、app再起動（PID 33396）、fresh Codex MCPでversion 0.3.0・schema v1・ready・issues 0、stdin smoke exit 0を確認。local tag `v0.3.0`
 - [ ] dotagents / ServerManagerをrepo別pathspec commitで閉じ、H承認後にpushする
 - [ ] cross-repo receiptをfactory masterへ還流し、本計画を`docs/archive/`へ退避する
 
