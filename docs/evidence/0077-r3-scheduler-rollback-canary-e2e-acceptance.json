@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0077",
+  "repo_id": "self",
+  "path": "docs/adr/0077-r3-scheduler-rollback-canary-e2e-acceptance.md",
+  "git_blob_oid": "dc9c548f26c8a863d66ddb3f68ec58c1213c0f27",
+  "content_digest": "f5bd055fe1f09b5c0f4c7eb0664d26bbef2cf9c46eb86b6feb46c205ee32b2aa",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
