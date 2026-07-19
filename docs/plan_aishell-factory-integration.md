@@ -101,13 +101,14 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 
 ### Phase A4 — 対応Mac live acceptance
 
-- [ ] candidate packageを隔離prefixへ入れ、Codex MCPでlive handshakeする
+- [x] candidate packageを隔離prefixへ入れ、Codex MCPでlive handshakeする
+  - 実測: worktree `dist/AIShell.app` のcandidateを一時config overrideで登録し、Codex実セッションが`aishell_candidate.factory_diagnostics`を1回だけ完了。schema v1、ready、issues 0、privacy非露出を確認した
 - [x] `runtime_status`、worktree自動認識、read / write前提条件、直接process実行をsmokeする
   - 実測: 新規AIShell/dotagents worktreeを自動認識。誤SHA-256更新は拒否、正しいSHA-256更新は成功し、fixtureはTrashへ回収した
 - [x] diagnosticsがpath / command / contentを漏らさないことを実レスポンスで確認する
   - 実測: release packageの実MCP 21 tool handshakeでschema v1・ready・issues空、`/Users/`と`allowedRootPaths`非露出
 - [ ] pause / resume、許可root不足、manager誘導を通常状態へ戻せる範囲で確認する
-- [x] この受入範囲でAIShell製品欠陥は再現しなかった（`/bin/bash`拒否は公開禁止契約どおり）
+- [x] 受入中に再現したstdin EOF欠陥をAIShell `8219f8c`で修理し、全20/20、release package、candidate実MCP `/bin/cat`（92ms・exit 0・timeoutなし）を確認した（`/bin/bash`拒否は公開禁止契約どおり）
 
 ### Phase A5 — wire v5正式編入
 
@@ -133,7 +134,7 @@ maintenance waveで重複統合して修理する。
 
 | 状態 | 重大度 | 最小再現 | 影響 | 所有箇所 |
 |---|---|---|---|---|
-| — | — | 現在なし | — | — |
+| 修理済み (`8219f8c`) | P1 | 常駐AIShell `process_run`でstdinを読む`codex exec` / `/bin/cat`を起動するとEOFが届かずtimeout | Codex CLI等のstdin readerを正規入口から実行できない | AIShell `NativeProcessService` |
 
 ## 7. rollback
 
