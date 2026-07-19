@@ -1,0 +1,2703 @@
+{
+  "schema": "lattice.todo_extraction.v2",
+  "project_id": "dotagents",
+  "plan_key": "lattice-todo-reconciliation",
+  "plan_version": "cutover-56b342954cfa267abb0222e9",
+  "actor": {
+    "host": "mac-kite",
+    "session": "lattice-wire-v4-cutover-20260719",
+    "agent": "codex-parent"
+  },
+  "recorded_at": "2026-07-19T12:00:00.000Z",
+  "tasks": [
+    {
+      "task_id": "ltr-0001",
+      "title": "対象7文書の開始母集団656件が、Lattice上のactive taskまたは理由付きexcluded tombstoneの",
+      "lane": "acceptance",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 24,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "1. 目的と成功条件"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:24"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0002",
+      "title": "各対応について、状態、内容、title、lane、依存、親子関係、source anchorを元Markdownと照合済みである",
+      "lane": "acceptance",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 26,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "1. 目的と成功条件"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:26"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0003",
+      "title": "全完了・archive・明示supersededの文書やtaskを、移行・再importで復活させない",
+      "lane": "acceptance",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 27,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "1. 目的と成功条件"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:27"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0004",
+      "title": "`registered_unreconciled`から`reconciled`への遷移が機械可読で、未照合の登録を完了扱いにしない",
+      "lane": "acceptance",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 28,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "1. 目的と成功条件"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:28"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0005",
+      "title": "Latticeの全対象planで`todo verify`がgreenとなり、status・Gantt・AI向け案内が同じ正本を示す",
+      "lane": "acceptance",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 29,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "1. 目的と成功条件"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:29"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0006",
+      "title": "AIが新規作業時にLatticeの現在task、依存、校正状態を読め、Markdown checkboxを進捗正本として更新しない",
+      "lane": "acceptance",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 30,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "1. 目的と成功条件"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:30"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0007",
+      "title": "本書自身を最後にLatticeへ移行し、全数差分検査とcutoverを経てMarkdown進捗管理を終了する",
+      "lane": "acceptance",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 31,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "1. 目的と成功条件"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:31"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0008",
+      "title": "dotagents / Latticeの`main == origin/main`、対象外dirty、編集境界を開始時baselineとして記録する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 89,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:89"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0009",
+      "title": "対象7文書、未完151 / 完了505 / 全656、archive 28件、superseded / archive参照の除外を確定する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 90,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:90"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0010",
+      "title": "番号付きGFM checkboxを含む全checkbox抽出で、BugHub planの旧集計が29件不足していたことを訂正する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 91,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:91"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0011",
+      "title": "現storeが`factory-master`のみで110 tasks、67 hard dependencies、done 83 / pending 24 / in-progress 3、imported 86、`evidence_unverified` 0であることを記録する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 92,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:92"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0012",
+      "title": "dotagents内の`lattice.todo_extraction.v1|v2`を検索し、実artifactが`docs/migration/g4-extraction-factory-master.json`の1件だけ、`lattice.todo_migrate_result.v1`保存物がゼロであることを確認する。残る6 plan＋queueは抽出artifact生成から必要と記録する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 93,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:93"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0013",
+      "title": "Lattice公開todo CLIが`status`、`verify`、`snapshot --rebuild`、`gantt`、`migrate`だけであることを監査する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 94,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:94"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0014",
+      "title": "公開authoring / revise / reconcile CLIがなく、内部APIには`appendTodoEvent(start/block/unblock/done/reopen等)`と`createSuccessorTodoPlan`があることを記録する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 95,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:95"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0015",
+      "title": "description / priority / owner / acceptance / 親子 / reconciled状態が現schemaにないことを記録する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 96,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:96"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0016",
+      "title": "`lattice todo status`の実時間5回が2.83〜4.26秒で、dotagents `lib/lattice-hook.py`の固定2秒timeoutが起動案内失敗を再現することを記録する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 97,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:97"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0017",
+      "title": "本書を一時台帳として作成する",
+      "lane": "discovery",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 98,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 0 — baseline・棚卸し"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:98"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0018",
+      "title": "Lattice repoで`todo revise`を1 planのfull desired-state successor発行に限定し、patch、部分CRUD、",
+      "lane": "contract",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 102,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 1 — authoring / reconciliation契約とADR追補"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:102"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0019",
+      "title": "`lattice.todo_revision.v1`、`todo_plan.v3`の`parent_task_id`、`todo_event.v2` genesis、",
+      "lane": "contract",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 104,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 1 — authoring / reconciliation契約とADR追補"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:104"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0020",
+      "title": "predecessor CAS、legacy v1/v2 bytes・digest・journal不変、plan単位all-or-nothing、",
+      "lane": "contract",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 107,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 1 — authoring / reconciliation契約とADR追補"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:107"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0021",
+      "title": "Codegraph吸収後のsensor / graph情報は依存候補の補助根拠に限定し、source / plan / store digestを",
+      "lane": "contract",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 109,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 1 — authoring / reconciliation契約とADR追補"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:109"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0022",
+      "title": "Opus refuterの反証を受け、対象656件すべてをactive taskまたは理由付きexcluded tombstoneへ",
+      "lane": "contract",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 111,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 1 — authoring / reconciliation契約とADR追補"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:111"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0023",
+      "title": "ADR 0055のfixtureを先行し、v1 event raw bytes、v3 plan / v2 genesis dispatch、state carry / reset / removed、",
+      "lane": "implementation",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 120,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 2 — safety test、実装、CI"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:120"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0024",
+      "title": "v3 planとv2 genesis reader / writerを追加する。ただし既存v1/v2 store bytes / digest / journalを",
+      "lane": "implementation",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 122,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 2 — safety test、実装、CI"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:122"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0025",
+      "title": "Lattice本体へ`todo revise`公開CLI、successor transaction、projection、status / verifyの",
+      "lane": "implementation",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 124,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 2 — safety test、実装、CI"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:124"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0026",
+      "title": "stale predecessor、source digest不一致、anchor drift、全完了・archive・superseded除外、依存削除、",
+      "lane": "implementation",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 126,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 2 — safety test、実装、CI"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:126"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0027",
+      "title": "focused、related、`npm run ci`を通し、契約critical差分はクロスprovider反証を受ける",
+      "lane": "implementation",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 128,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 2 — safety test、実装、CI"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:128"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0028",
+      "title": "version、changelog、pack smoke、tarball install smoke、rollback手順をLattice repoで準備する",
+      "lane": "release",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 132,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 3 — release / install"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:132"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0029",
+      "title": "H承認後にpublishし、registry install smokeを通して対象hostへglobal installする",
+      "lane": "release",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 133,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 3 — release / install"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:133"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0030",
+      "title": "公開後に`lattice todo status`、`verify`、`migrate`、authoring / reconcile CLIのsmokeを実施し、versionと契約を記録する",
+      "lane": "release",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 134,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 3 — release / install"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:134"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0031",
+      "title": "`lib/lattice-hook.py`の固定2秒timeoutをCLI 5秒へ、Claude/Codex外側hookを6秒へ置換する。cache / store直読は追加しない",
+      "lane": "hooks",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 138,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 4 — dotagents hook timeout・案内契約"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:138"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0032",
+      "title": "遅い成功を起動案内失敗として扱わず、timeout、CLI failure、invalid response、未導入、storeなし、正常応答を区別する",
+      "lane": "hooks",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 139,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 4 — dotagents hook timeout・案内契約"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:139"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0033",
+      "title": "hookのfocused testと`make lint`、関連hook smoke、`verify-install`を通し、Lattice正本へのAI向け案内を検証する",
+      "lane": "hooks",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 140,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 4 — dotagents hook timeout・案内契約"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:140"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0034",
+      "title": "移行直前に、コードフェンス外の番号付き項目を含むGFM checkbox全件を再集計し、baselineとの差分と除外理由を記録する",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 145,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:145"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0035",
+      "title": "[plan_factory-master.md](plan_factory-master.md): 既存110 tasksをsource taskへ再対応付けし、抜け、重複、誤分割、title、status、lane、dependency、source anchorを校正する",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 147,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:147"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0036",
+      "title": "[plan_bughub-factory-integration.md](plan_bughub-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正する",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 148,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:148"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0037",
+      "title": "[plan_codex-full-support.md](plan_codex-full-support.md): 登録後、task-level mappingと状態・依存・内容を校正する",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 149,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:149"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0038",
+      "title": "[plan_gpt56-rewiring.md](plan_gpt56-rewiring.md): 登録後、task-level mappingと状態・依存・内容を校正する",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 150,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:150"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0039",
+      "title": "[plan_lattice-factory-integration.md](plan_lattice-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正し、既存dirtyを変更しない",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 151,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:151"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0040",
+      "title": "[plan_observer-factory-integration.md](plan_observer-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正する",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 152,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:152"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0041",
+      "title": "[queue_memory-promotion.md](queue_memory-promotion.md): 登録後、task-level mappingと状態・依存・内容を校正する",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 153,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:153"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0042",
+      "title": "各sourceについて、抜け、重複、誤分割、title、status、lane、dependency、source anchorを機械検査とAI実読の双方で照合する",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 154,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:154"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0043",
+      "title": "意味が一意に決まらない差異だけを、候補・根拠・影響を添えてオーナーへ確認する（該当差異なし）",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 155,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:155"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0044",
+      "title": "校正済みtaskだけを`reconciled`へ遷移し、未照合・不一致・blockedを完了へ丸めない",
+      "lane": "calibration",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 156,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 5 — source別登録・task-level校正"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:156"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0045",
+      "title": "本書の全TODOをLatticeへ移行し、本書自身の`plan_key`とtask-level mappingを校正する",
+      "lane": "cutover",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 163,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 6 — 自己閉包・cutover・archive"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:163"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0046",
+      "title": "全対象のsource task数、Lattice task数、除外数、重複数、未照合数の差分検査を通す",
+      "lane": "cutover",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 164,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 6 — 自己閉包・cutover・archive"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:164"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0047",
+      "title": "Lattice `todo verify`、`status`、`gantt`を実行し、正本・依存・校正状態・AI向け案内が一致することを確認する",
+      "lane": "cutover",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 165,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 6 — 自己閉包・cutover・archive"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:165"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0048",
+      "title": "正典と案内をLattice正本へcutoverし、Markdown checkboxを進捗管理に使わないことを固定する",
+      "lane": "cutover",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 166,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 6 — 自己閉包・cutover・archive"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:166"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0049",
+      "title": "Markdown進捗管理を終了し、本書をarchiveする",
+      "lane": "cutover",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 167,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase 6 — 自己閉包・cutover・archive"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:167"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0050",
+      "title": "Lattice: `npm run ci`、authoring / reconcile focused・related tests、pack / install smokeを通す",
+      "lane": "gate",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 175,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase gate"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:175"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0051",
+      "title": "dotagents: focused tests、`make lint`、`make ci`、`verify-install`を通す",
+      "lane": "gate",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 176,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase gate"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:176"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    },
+    {
+      "task_id": "ltr-0052",
+      "title": "schema / event / CLI / cutoverはクロスprovider reviewを通し、AI照合手順と既知の罠をRAG / caveat / 正典へ還流する",
+      "lane": "gate",
+      "narrative_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/archive/plan_lattice-todo-reconciliation.md",
+        "origin_line": 177,
+        "source_commit": "56b342954cfa267abb0222e97efb17b0167eb229",
+        "heading_path": [
+          "Lattice TODO全転記・照合計画",
+          "6. 実行TODO",
+          "Phase gate"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/archive/plan_lattice-todo-reconciliation.md:177"
+        ],
+        "notes": [
+          "self_closure_of_completed_cutover_plan",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=source_order_linearized"
+        ]
+      }
+    }
+  ],
+  "hard_dependencies": [
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0001"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0002"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0002"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0003"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0003"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0004"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0004"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0005"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0005"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0006"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0006"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0007"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0007"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0008"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0008"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0009"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0009"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0010"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0010"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0011"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0011"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0012"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0012"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0013"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0013"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0014"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0014"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0015"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0015"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0016"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0016"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0017"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0017"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0018"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0018"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0019"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0019"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0020"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0020"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0021"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0021"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0022"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0022"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0023"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0023"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0024"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0024"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0025"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0025"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0026"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0026"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0027"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0027"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0028"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0028"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0029"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0029"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0030"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0030"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0031"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0031"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0032"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0032"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0033"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0033"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0034"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0034"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0035"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0035"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0036"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0036"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0037"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0037"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0038"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0038"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0039"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0039"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0040"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0040"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0041"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0041"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0042"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0042"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0043"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0043"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0044"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0044"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0045"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0045"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0046"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0046"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0047"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0047"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0048"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0048"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0049"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0049"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0050"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0050"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0051"
+      }
+    },
+    {
+      "from": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0051"
+      },
+      "to": {
+        "project_id": "dotagents",
+        "plan_key": "lattice-todo-reconciliation",
+        "task_id": "ltr-0052"
+      }
+    }
+  ],
+  "joins": [],
+  "extraction_digest": "a1e7b90f91775dfd809d2a130f651f504b5942a15552fbe489a9a539e6dec026"
+}

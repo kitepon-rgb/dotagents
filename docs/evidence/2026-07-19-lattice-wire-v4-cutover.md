@@ -2,6 +2,7 @@
 
 - observed: 2026-07-19 JST
 - source commit: `53572f7c1f2872462c5facfeaade95c331875cbc`
+- self-closure source commit: `56b342954cfa267abb0222e97efb17b0167eb229`
 - pre-write inventory digest: `28422ec39eb9bc9a9bbca959b841e2aacac2a58bbdd051e461de9f7f9c1e8cf3`
 - source inventory: 656 total / 505 checked / 151 unchecked
 - accepted release: `@quolu/lattice@0.6.4`
@@ -33,21 +34,28 @@ shasumは`ae678ca0537bc2ebd06b8b9984f1da8fe8b3b782`である。
 | `factory-master` | 116 | 72 | 83 | 30 | 3 |
 | `gpt56-rewiring` | 38 | 0 | 32 | 6 | 0 |
 | `lattice-factory-integration` | 82 | 0 | 61 | 21 | 0 |
+| `lattice-todo-reconciliation` | 52 | 51 | 52 | 0 | 0 |
 | `memory-promotion-queue` | 17 | 0 | 12 | 5 | 0 |
 | `observer-factory-integration` | 118 | 0 | 101 | 17 | 0 |
 
-- active total: 653 = 503 done + 147 pending + 3 in-progress
+- active total: 705 = 555 done + 147 pending + 3 in-progress
 - excluded tombstones: 3 = 2 checked + 1 unchecked
-- source equality: 653 active + 3 excluded = 656 source checkboxes
-- checked equality: 503 active done + 2 excluded checked = 505 source checked
+- source equality: 705 active + 3 excluded = 708 source checkboxes（開始母集団656件 + 自己閉包52件）
+- checked equality: 555 active done + 2 excluded checked = 557 source checked
 - unchecked equality: 147 pending + 3 in-progress + 1 excluded unchecked = 151 source unchecked
 - duplicate: 0
 - unresolved: 0
-- all 7 heads: `reconciled`
+- all 8 heads: `reconciled`
 
 `factory-master` successorは`rev-0e670efc8c658075ba983921`、revision digestは
 `307686259c8f6abd2bf7c562e5098d6929a14a392f1aa90e4caef7da0aeb1ab7`。
 既存110 tasksに6 tasksと5 hard dependenciesを追加し、active 116 / dependencies 72とした。
+
+完了済みの本reconciliation plan自身も、固定commitの52 checkboxesを
+`lattice-todo-reconciliation`としてimportした。全52件をhistorical done、source順の51 hard dependenciesで
+拘束し、successor `rev-80418e3688a6fe9556a8fefc`へ
+`carry_reconciled_metadata`して自己閉包した。revision digestは
+`3fe3ec1167fcdb4f3d0534e4ca707b0e9753e3654d1053eb9165429b267483b6`である。
 
 ## Machine verification
 
@@ -55,22 +63,22 @@ shasumは`ae678ca0537bc2ebd06b8b9984f1da8fe8b3b782`である。
   - active set: 3
   - next ready: 133
   - blocked: 0
-  - result digest: `ba44c8a3615cedfba8d722a0d36cb018890f9a56e43e6ace7277ef89e1082325`
+  - result digest: `008ca579149570e8b533de8a8d73dae0f7d721785c349e419a971694d8576047`
 - `lattice.todo_verify_result.v2`
-  - verified members: 7
+  - verified members: 8
   - `snapshot_stale=false`
-  - result digest: `53eb14e75504de4fb91a54ca581cd3a8af20348c56ff606a0cdf59890b23bfcb`
+  - result digest: `ec137767fcf50cd7141079e960a36d5cd4a78ea2e1d52b8130aac7b4d62a14d9`
 
 ## Gantt
 
 - schema: `lattice.todo_gantt_result.v1`
 - renderer: `lattice.todo_gantt_renderer.v7`
-- manifest digest: `c0b2ff8885ddde719d15f195e2167913bb627a9d013dc3db19d46ffdcccb9195`
-- narrative bindings digest: `d26d77dcdfbee2a4629adc68fc1c90bdaef5538c688d241ffbedd2ef73f1120c`
-- chain digest: `fe71130649e7f5c7140473cf7217521248d1695b4afc3a71be0133ac9a893575`
-- layout digest: `b8133c79ed74187dcf1913b62e254018c3c0c37b2156f137d52d972c2e72012a`
-- HTML digest: `a4f117d9b7079e953def3498dc1d2fabff6de02cd5f1af26dd8afc3073c11a17`
-- result digest: `89490e8aed06d5c353225600aa41293708bcdcc6cfb0173e8e33968577a5bad8`
+- manifest digest: `83ab534ddff48ab3b3ede834905519beedbedb6f53b688388a96e26538ba1451`
+- narrative bindings digest: `21e3198de48c7eeabb3b464543e20cddabbdcbd61ef0a8a7411576e93fb35146`
+- chain digest: `b7c77c6e7252ee1b74b19d69e192cc1e7df3b739789685e009beef0f4219930a`
+- layout digest: `2e87c3873e6e7294964de7114a99fa0de7a7d83e92eb446bb1b39c691e070fe3`
+- HTML digest: `4dfcb06757eca5332720d6c98f74a484418c89c475ed2a982f7ecdb41c5c3ae8`
+- result digest: `f58aa5f9cb9023a64dbc89d858bc23c89d0194eb6674279519a6ffe4cff862b5`
 
 Browser skillによるローカル`file://`表示はbrowser URL policyにより拒否されたため、迂回していない。
 視覚受入はオーナーの「工程表の見え方はまぁOK」を根拠とし、生成物は上記digestと機械検証で固定した。
@@ -86,7 +94,7 @@ Browser skillによるローカル`file://`表示はbrowser URL policyにより�
 - Claude SessionStart: canonical command 1件 / timeout 6
 - Codex SessionStart: canonical command 1件 / timeoutSec 6
 - `verify-install --profile official`: green
-- Claude実hook: Gantt URL、active、next-ready、依存、`reconciled=7`をplain INFOで出力
+- Claude実hook: Gantt URL、active、next-ready、依存、`reconciled=8`をplain INFOで出力
 - Codex実hook: 同じ案内を`hookSpecificOutput.additionalContext`へ出力
 - 両hook: registry版`0.6.4`でexit 0、内部5秒timeout以内
 - rollback:

@@ -19,3 +19,11 @@
 
 各artifactの`extraction_digest`、件数、公開CLIによる受入結果は
 [`2026-07-19-lattice-child-plan-calibration.md`](../evidence/2026-07-19-lattice-child-plan-calibration.md)を正とする。
+
+cutover完了後は、アーカイブしたreconciliation plan自身の52 checkboxesもsource commit
+`56b342954cfa267abb0222e97efb17b0167eb229`へ固定し、
+[`lattice-todo-reconciliation.json`](lattice-todo-reconciliation.json)でhistorical doneとして登録した。
+source順を51 hard dependenciesで保持し、
+[`revisions/lattice-todo-reconciliation.json`](revisions/lattice-todo-reconciliation.json)で
+`lattice.todo_plan.v3` successorへ校正している。最終件数とdigestは
+[`2026-07-19-lattice-wire-v4-cutover.md`](../evidence/2026-07-19-lattice-wire-v4-cutover.md)を正とする。
