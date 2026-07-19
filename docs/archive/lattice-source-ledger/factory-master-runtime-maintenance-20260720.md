@@ -12,3 +12,5 @@
 - [ ] `fm-0651`: Caveat のWindows native Codex hook installerがquoted Node commandへPowerShell call operator `&`を付けず失敗するため、製品repoでfocused test、version bump、NPM publish、global install、公開後smokeまで閉じる。
 - [ ] `fm-0652`: FOX Windows nativeの`node_repl` MCPがWSL path `/mnt/c/.../node_repl.exe`をcommandへ保持するhost不整合を正規生成元で修正し、native pathで接続smokeを通す。
 - [ ] `fm-0653`: FOX Windows native Codex 0.144.6のmodels cacheが`supports_reasoning_summaries`欠落で読めず、refresh child processもtimeoutする状態を公式更新・cache再生成経路で直して新規session警告ゼロを確認する。
+- [ ] `fm-0654`: Throughlineに未収容で残っていたCodex Desktop handoff deep-link（`codex://threads/<thread-id>`）実装を実Desktop E2E smokeで検証し、`0.8.3`としてversion bump、CI、NPM publish、global install、公開後smokeまで閉じる。
+- [ ] `fm-0655`: Throughline CLIとCodex hookの並行起動でDB初期化時の`PRAGMA journal_mode = WAL`が`ERR_SQLITE_ERROR: database is locked`になる欠陥を最小再現し、bounded contention処理と並行process testを追加して`0.8.3` release waveで閉じる。
