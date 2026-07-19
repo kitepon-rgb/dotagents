@@ -51,12 +51,12 @@
 | [plan_codex-full-support.md](plan_codex-full-support.md) | 40 / 39 | `codex-full-support` | 未登録 |
 | [plan_factory-master.md](plan_factory-master.md) | 34 / 85 | `factory-master` | 登録済み・未再照合 |
 | [plan_gpt56-rewiring.md](plan_gpt56-rewiring.md) | 6 / 32 | `gpt56-rewiring` | 未登録 |
-| [plan_lattice-factory-integration.md](plan_lattice-factory-integration.md) | 23 / 59 | `lattice-factory-integration` | 未登録 |
+| [plan_lattice-factory-integration.md](plan_lattice-factory-integration.md) | 21 / 61 | `lattice-factory-integration` | 未登録 |
 | [plan_observer-factory-integration.md](plan_observer-factory-integration.md) | 17 / 101 | `observer-factory-integration` | 未登録 |
 | [queue_memory-promotion.md](queue_memory-promotion.md) | 5 / 12 | `memory-promotion-queue` | 未登録 |
 | 本書（最後にのみ移行） | 作成後に再集計 | `lattice-todo-reconciliation` | 自己閉包待ち |
 
-開始時合計は未完153、完了503、全656である。除外は`docs/archive/`の28件、明示supersededの
+開始時合計は未完151、完了505、全656である。除外は`docs/archive/`の28件、明示supersededの
 `plan_callout-hooks.md`、archive参照だけを残す`plan_elastic-orchestrator.md`である。将来の再棚卸しでは、
 「archive配下」「全完了」「明示superseded」を除外条件として機械的にも確認する。
 
@@ -87,7 +87,7 @@ sourceとのtask-level再照合を要する開始点である。
 ### Phase 0 — baseline・棚卸し
 
 - [x] dotagents / Latticeの`main == origin/main`、対象外dirty、編集境界を開始時baselineとして記録する
-- [x] 対象7文書、未完153 / 完了503 / 全656、archive 28件、superseded / archive参照の除外を確定する
+- [x] 対象7文書、未完151 / 完了505 / 全656、archive 28件、superseded / archive参照の除外を確定する
 - [x] 番号付きGFM checkboxを含む全checkbox抽出で、BugHub planの旧集計が29件不足していたことを訂正する
 - [x] 現storeが`factory-master`のみで110 tasks、67 hard dependencies、done 83 / pending 24 / in-progress 3、imported 86、`evidence_unverified` 0であることを記録する
 - [x] dotagents内の`lattice.todo_extraction.v1|v2`を検索し、実artifactが`docs/migration/g4-extraction-factory-master.json`の1件だけ、`lattice.todo_migrate_result.v1`保存物がゼロであることを確認する。残る6 plan＋queueは抽出artifact生成から必要と記録する
@@ -143,6 +143,8 @@ description / acceptance / priority / owner、start / block / unblock / done / r
 ### Phase 5 — source別登録・task-level校正
 
 - [ ] 移行直前に、コードフェンス外の番号付き項目を含むGFM checkbox全件を再集計し、baselineとの差分と除外理由を記録する
+  - pre-cutover観測は[全数証拠](evidence/2026-07-19-lattice-todo-precutover-inventory.md)へ固定済み。
+    store書込み直前に同じcommit／digestか再確認するため、本項は未完のまま維持する。
 - [ ] [plan_factory-master.md](plan_factory-master.md): 既存110 tasksをsource taskへ再対応付けし、抜け、重複、誤分割、title、status、lane、dependency、source anchorを校正する
 - [ ] [plan_bughub-factory-integration.md](plan_bughub-factory-integration.md): 登録後、task-level mappingと状態・依存・内容を校正する
 - [ ] [plan_codex-full-support.md](plan_codex-full-support.md): 登録後、task-level mappingと状態・依存・内容を校正する
@@ -194,7 +196,7 @@ description / acceptance / priority / owner、start / block / unblock / done / r
 
 ## 9. 初回着手結果（2026-07-19）
 
-開始時に対象7文書と153未完 / 503完了 / 全656を確定した。BugHub planの`0b. [ ]`等の番号付きcheckboxを
+開始時に対象7文書と151未完 / 505完了 / 全656を確定した。BugHub planの`0b. [ ]`等の番号付きcheckboxを
 旧来の行頭bullet限定集計が29件落としていたため、コードフェンス外の全GFM checkboxを対象に訂正した。Lattice storeには`factory-master`だけが登録され、
 110 tasks・67 hard dependencies・snapshot done 83 / pending 24 / in-progress 3・imported 86・
 `evidence_unverified` 0である。`lattice todo status`は実時間5回で2.83〜4.26秒を要し、dotagents hookの
@@ -219,7 +221,7 @@ acceptance、親子、reconciled状態を表すschemaがない。この不足機
 オーナー指示で作業を中止し、次セッションへ引き継ぐ。
 
 - 確定した目的: 登録後はLatticeがTODO正本であり、Markdownは照合元とする。削除、re-migrate、Markdownへのfallbackは禁止する。
-- 訂正済み母集団: 現役7文書は未完153 / 完了503 / 全656。BugHubの番号付きcheckboxを旧集計が29件落としていた。
+- 訂正済み母集団: 現役7文書は未完151 / 完了505 / 全656。BugHubの番号付きcheckboxを旧集計が29件落とし、Lattice計画の既存2完了を未完へ誤分類していた。
 - 現store: `factory-master`は110 tasks、done 83 / pending 24 / in-progress 3、dependencies 67、sequence 86。内部整合はgreen。現行Markdownとの差は、新規未登録6件（`fm-0546`、`fm-0547`、`fm-0548`、`fm-0549`、`fm-0637`、`fm-0639`候補）、anchor null 2件（`fm-0584`、`fm-0594`）、依存前段pendingなのに後段in-progressのambiguousな2系列（`fm-0584→0585`、`fm-0586→0593`）である。明示除外3件（`fm-0375`、`fm-0396`、`fm-0480`）を復活させない。
 - 採用した最小契約: `todo revise`のfull desired-state successor、state carry / reset_pending / removed、`plan.v3`は`parent_task_id`だけ、plan-levelの`registered_unreconciled→reconciled`、active＋excluded tombstone＝source全数、successor crash-retry。初回非目標はcommand_id、multi-plan atomic、MCP、dry-run、merge、description、acceptance。transition verbsは後続とする。
 - Opus refuterはこの最小契約を支持した。成功条件は「全656件がactive taskまたは理由付きexclusion tombstone」であることへ訂正が必要。
