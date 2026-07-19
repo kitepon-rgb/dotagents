@@ -89,11 +89,16 @@ test("実repoの共通契約とhost固有契約を交差させず保持する", 
   assert.match(common, /全hostで既定として aiterm-mcp の永続PTY/);
   assert.match(common, /host標準の単発shellツール可/);
 
-  // 両deltaは空（見出しのみ）を保ち、生成物に固有差分節を作らない（オーナー裁定 2026-07-16）
+  // Claude deltaは空のまま、Codex固有のnative子／aiterm境界だけをCodex deltaに置く
+  // （オーナー裁定 2026-07-19）。共通憲法やClaude生成物へ交差させない。
   assert.equal(claudeDelta.trim(), "# Claude Code固有差分");
-  assert.equal(codexDelta.trim(), "# Codex固有差分");
+  assert.match(codexDelta, /^# Codex固有差分$/m);
+  assert.match(codexDelta, /Codex親がCodex子を呼ぶ時はnative sub-agentを既定/);
+  assert.match(codexDelta, /aitermを永続shellとして使うことと、aitermからCodex子を起動することを混同しない/);
   assert.doesNotMatch(claude, /固有差分/);
-  assert.doesNotMatch(codex, /固有差分/);
+  assert.match(codex, /^## Codex固有差分$/m);
+  assert.match(codex, /Codex親がCodex子を呼ぶ時はnative sub-agentを既定/);
+  assert.doesNotMatch(common, /Codex親がCodex子を呼ぶ時はnative sub-agentを既定/);
 
   // 共通契約は共通正本にだけ存在し、hostへ依存する記述を含まない
   assert.match(common, /project側を優先する/);
