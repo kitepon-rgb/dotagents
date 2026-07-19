@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0080",
+  "repo_id": "self",
+  "path": "docs/adr/0080-codex-skill-surface-cross-host-acceptance.md",
+  "git_blob_oid": "9b89b59356d9a8fec60d4749533448c7cbd3a7c4",
+  "content_digest": "14c119bca87a02847874b18d5f2c4a16d6129d4a62c84937d5a904d02e76a926",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
