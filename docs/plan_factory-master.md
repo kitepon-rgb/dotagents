@@ -633,7 +633,8 @@ Observer `docs/plan_observer.md`
   supersede不能になることを再現した。更新前supersedeを強制する入口、版付きartifact ref、または旧blobを
   Control所有領域へ保存する方式を比較し、上書き後も履歴を捏造せず回収できるfixtureを固定する。
   - 2026-07-19オーナー裁定「任せる」: 推奨案を採用する。content-digestを含む版付きpathでartifactを
-    保存し、current参照は原子的な世代交代で切り替える。設計調書は当日scratchpad `fm0625-design.md` を正とする。
+    保存し、current参照は原子的な世代交代で切り替える。実装契約と棄却案は
+    [ADR 0083](adr/0083-artifact-generation-v28.md)を正とし、v28の単一composite receiptで固定した。
   - Latticeへ移管済み: fm-0637 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L110
     固定する。
 - Latticeへ移管済み: fm-0639 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L111

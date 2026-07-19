@@ -135,7 +135,10 @@ test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを�
 test("すべてのI/O APIはcwdを必須にし、non-gitを拒否してbareをread-onlyとして初期化する", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const nonGit = await createNonGitDir(base); const source = await createGitRepo(base, "bare-source");
-  await symlink("control-record-plan.md", join(source.root, "docs", "bare-link.md")); runGit(source.root, ["add", "docs/bare-link.md"]); runGit(source.root, ["commit", "-q", "-m", "add bare symlink fixture"]);
+  const bareArtifactDigest = createHash("sha256").update("# Control Record fixture plan\n").digest("hex"); const bareArtifactRef = `docs/control-record-plan.${bareArtifactDigest}.md`;
+  await writeFile(join(source.root, bareArtifactRef), "# Control Record fixture plan\n");
+  const bareLinkDigest = createHash("sha256").update("control-record-plan.md").digest("hex"); const bareLinkRef = `docs/bare-link.${bareLinkDigest}.md`;
+  await symlink("control-record-plan.md", join(source.root, bareLinkRef)); runGit(source.root, ["add", bareArtifactRef, bareLinkRef]); runGit(source.root, ["commit", "-q", "-m", "add bare artifact fixtures"]);
   const bare = await createBareRepo(base, source);
   await assert.rejects(api.init({ control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"], budget: makeBudget() }), code("INVALID_INPUT"));
   await assert.rejects(api.init({ cwd: nonGit, control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"], budget: makeBudget() }), code("NOT_GIT_REPOSITORY"));
@@ -143,11 +146,9 @@ test("すべてのI/O APIはcwdを必須にし、non-gitを拒否してbareをre
   assert.equal(bareControl.manifest.declaration.project_root_realpath, null);
   const read = await api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareControl.revision, task: makeTask({ task_id: "bare-read", effect: "read", write_scope: [] }) });
   assert.equal(read.manifest.tasks[0].effect, "read");
-  const bareArtifactDigest = createHash("sha256").update("# Control Record fixture plan\n").digest("hex");
-  const bareArtifact = await api.artifactRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: read.revision, artifact: { artifact_id: "bare-artifact", artifact_kind: "decision", artifact_ref: "docs/control-record-plan.md", artifact_digest: bareArtifactDigest, status: "current" } });
+  const bareArtifact = await api.artifactRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: read.revision, artifact: { artifact_id: "bare-artifact", artifact_kind: "decision", artifact_ref: bareArtifactRef, artifact_digest: bareArtifactDigest, status: "current" } });
   assert.equal(bareArtifact.manifest.artifacts[0].artifact_digest, bareArtifactDigest);
-  const bareLinkDigest = createHash("sha256").update("control-record-plan.md").digest("hex");
-  await assert.rejects(api.artifactRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareArtifact.revision, artifact: { artifact_id: "bare-link", artifact_kind: "decision", artifact_ref: "docs/bare-link.md", artifact_digest: bareLinkDigest, status: "current" } }), code("STATE_PATH_UNSAFE"));
+  await assert.rejects(api.artifactRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareArtifact.revision, artifact: { artifact_id: "bare-link", artifact_kind: "decision", artifact_ref: bareLinkRef, artifact_digest: bareLinkDigest, status: "current" } }), code("STATE_PATH_UNSAFE"));
   await assert.rejects(api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareArtifact.revision, task: makeTask() }), code("BARE_WRITE_FORBIDDEN"));
 });
 
@@ -1731,16 +1732,17 @@ test("Worker lineageは親子・root assignment・context・入力digestを事�
 
 test("docs artifactは4種別のdigest付き投影だけを記録し、親status更新と改竄検出を行う", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "artifact-control" });
-  const ref = "docs/artifact.md"; await writeFile(join(repo.root, ref), "# artifact\n"); const digest = createHash("sha256").update("# artifact\n").digest("hex");
+  const digest = createHash("sha256").update("# artifact\n").digest("hex"); const ref = `docs/artifact.${digest}.md`; await writeFile(join(repo.root, ref), "# artifact\n");
   let revision = result.revision;
   for (const artifact_kind of ["finding", "approach", "gap", "decision"]) {
     const recorded = await api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: `artifact-${artifact_kind}`, artifact_kind, artifact_ref: ref, artifact_digest: digest, status: "current" } });
     revision = recorded.revision;
   }
   await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-outside-docs", artifact_kind: "finding", artifact_ref: "README.md", artifact_digest: digest, status: "current" } }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-mutable-ref", artifact_kind: "finding", artifact_ref: "docs/artifact-mutable.md", artifact_digest: digest, status: "current" } }), code("INVALID_SCHEMA"));
   await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-forged-metadata", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current", recorded_by: "forged" } }), code("INVALID_SCHEMA"));
-  await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-missing", artifact_kind: "finding", artifact_ref: "docs/missing-artifact.md", artifact_digest: digest, status: "current" } }), code("ARTIFACT_UNAVAILABLE"));
-  const linkRef = "docs/artifact-link.md"; await symlink("artifact.md", join(repo.root, linkRef));
+  await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-missing", artifact_kind: "finding", artifact_ref: `docs/missing-artifact.${digest}.md`, artifact_digest: digest, status: "current" } }), code("ARTIFACT_UNAVAILABLE"));
+  const linkRef = `docs/artifact-link.${digest}.md`; await symlink(`artifact.${digest}.md`, join(repo.root, linkRef));
   await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: "artifact-link", artifact_kind: "finding", artifact_ref: linkRef, artifact_digest: digest, status: "current" } }), code("STATE_PATH_UNSAFE"));
   await rm(join(repo.root, linkRef));
   const sharingPolicy = { ...makeWorkerRun().lineage.context_policy, share_existing_findings: true };
@@ -1758,9 +1760,49 @@ test("docs artifactは4種別のdigest付き投影だけを記録し、親status
   assert.equal((await api.resumeCheck({ cwd: repo.root, control_id: "artifact-control" })).outcome, "blocked");
 });
 
+test("artifact世代交代はdigest版付きpathの旧版を保持しcurrentを原子的に切り替える", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "artifact-generation" });
+  const oldBody = "# finding generation 1\n"; const oldDigest = createHash("sha256").update(oldBody).digest("hex");
+  const oldRef = `docs/findings/release-audit.${oldDigest}.md`; await mkdir(join(repo.root, "docs/findings"), { recursive: true }); await writeFile(join(repo.root, oldRef), oldBody);
+  const recorded = await api.artifactRecord({ cwd: repo.root, control_id: "artifact-generation", actor_id: "parent", expected_revision: result.revision, artifact: { artifact_id: "release-audit-v1", artifact_kind: "finding", artifact_ref: oldRef, artifact_digest: oldDigest, status: "current" } });
+  const newBody = "# finding generation 2\n"; const newDigest = createHash("sha256").update(newBody).digest("hex");
+  const newRef = `docs/findings/release-audit.${newDigest}.md`; await writeFile(join(repo.root, newRef), newBody);
+  const generated = await api.artifactGenerationRecord({ cwd: repo.root, control_id: "artifact-generation", actor_id: "parent", expected_revision: recorded.revision, superseded_artifact_id: "release-audit-v1", artifact: { artifact_id: "release-audit-v2", artifact_kind: "finding", artifact_ref: newRef, artifact_digest: newDigest, status: "current" } });
+  assert.equal(generated.revision, recorded.revision + 1);
+  assert.equal(generated.manifest.artifacts.find((entry) => entry.artifact_id === "release-audit-v1").status, "superseded");
+  assert.equal(generated.manifest.artifacts.find((entry) => entry.artifact_id === "release-audit-v2").status, "current");
+  assert.deepEqual(generated.manifest.transition_receipts.slice(-1).map((entry) => [entry.operation, entry.subject.id]), [["artifact-generation-record", "release-audit-v1"]]);
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "artifact-generation" });
+  assert.deepEqual(resumed.artifact_retention.map((entry) => [entry.artifact_id, entry.status]), [["release-audit-v1", "retained"], ["release-audit-v2", "retained"]]);
+  const tamperedReceipt = structuredClone(generated.manifest); tamperedReceipt.transition_receipts.at(-1).subject_digest = "a".repeat(64); assert.throws(() => api.validateManifest(tamperedReceipt), code("INVALID_SCHEMA"));
+  const tamperedSuccessor = structuredClone(generated.manifest); tamperedSuccessor.artifacts.find((entry) => entry.artifact_id === "release-audit-v2").artifact_ref = `docs/findings/forged.${newDigest}.md`; assert.throws(() => api.validateManifest(tamperedSuccessor), code("INVALID_SCHEMA"));
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "artifact-generation", actor_id: "parent", expected_revision: generated.revision, target_schema_version: "dotagents.orchestration-control.v27" }), code("ROLLBACK_UNSUPPORTED"));
+});
+
+test("artifact世代交代はmutable pathと旧版上書きを拒否しexact byte復元後だけ再試行できる", async (t) => {
+  const { repo, result } = await initialized(t, { control_id: "artifact-generation-recovery" });
+  const legacySchema = await api.controlMigrate({ cwd: repo.root, control_id: "artifact-generation-recovery", actor_id: "parent", expected_revision: result.revision, target_schema_version: "dotagents.orchestration-control.v27" });
+  const legacyBody = "# legacy\n"; const legacyDigest = createHash("sha256").update(legacyBody).digest("hex"); const legacyRef = "docs/legacy.md"; await writeFile(join(repo.root, legacyRef), legacyBody);
+  const legacy = await api.artifactRecord({ cwd: repo.root, control_id: "artifact-generation-recovery", actor_id: "parent", expected_revision: legacySchema.revision, artifact: { artifact_id: "legacy-v1", artifact_kind: "finding", artifact_ref: legacyRef, artifact_digest: legacyDigest, status: "current" } });
+  const nextBody = "# next\n"; const nextDigest = createHash("sha256").update(nextBody).digest("hex"); const nextRef = `docs/next.${nextDigest}.md`; await writeFile(join(repo.root, nextRef), nextBody);
+  await assert.rejects(api.artifactGenerationRecord({ cwd: repo.root, control_id: "artifact-generation-recovery", actor_id: "parent", expected_revision: legacy.revision, superseded_artifact_id: "legacy-v1", artifact: { artifact_id: "legacy-v2", artifact_kind: "finding", artifact_ref: nextRef, artifact_digest: nextDigest, status: "current" } }), code("SCHEMA_UPGRADE_REQUIRED"));
+  const currentSchema = await api.controlMigrate({ cwd: repo.root, control_id: "artifact-generation-recovery", actor_id: "parent", expected_revision: legacy.revision, target_schema_version: "dotagents.orchestration-control.v28" });
+  await assert.rejects(api.artifactGenerationRecord({ cwd: repo.root, control_id: "artifact-generation-recovery", actor_id: "parent", expected_revision: currentSchema.revision, superseded_artifact_id: "legacy-v1", artifact: { artifact_id: "legacy-v2", artifact_kind: "finding", artifact_ref: nextRef, artifact_digest: nextDigest, status: "current" } }), code("INVALID_SCHEMA"));
+
+  const oldBody = "# immutable generation 1\n"; const oldDigest = createHash("sha256").update(oldBody).digest("hex"); const oldRef = `docs/immutable.${oldDigest}.md`; await writeFile(join(repo.root, oldRef), oldBody);
+  const old = await api.artifactRecord({ cwd: repo.root, control_id: "artifact-generation-recovery", actor_id: "parent", expected_revision: currentSchema.revision, artifact: { artifact_id: "immutable-v1", artifact_kind: "finding", artifact_ref: oldRef, artifact_digest: oldDigest, status: "current" } });
+  await writeFile(join(repo.root, oldRef), "# overwritten\n");
+  const generationInput = { cwd: repo.root, control_id: "artifact-generation-recovery", actor_id: "parent", expected_revision: old.revision, superseded_artifact_id: "immutable-v1", artifact: { artifact_id: "immutable-v2", artifact_kind: "finding", artifact_ref: nextRef, artifact_digest: nextDigest, status: "current" } };
+  await assert.rejects(api.artifactGenerationRecord(generationInput), code("ARTIFACT_DIGEST_MISMATCH"));
+  assert.equal((await api.artifactStatus({ cwd: repo.root, control_id: "artifact-generation-recovery", artifact_id: "immutable-v1" })).status, "current");
+  await writeFile(join(repo.root, oldRef), oldBody);
+  const recovered = await api.artifactGenerationRecord(generationInput);
+  assert.equal(recovered.manifest.artifacts.find((entry) => entry.artifact_id === "immutable-v1").status, "superseded");
+});
+
 test("Finding共有はcontext policyと現行digestを実行境界で検査しlineageをreceiptへ束縛する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "finding-share-boundary" });
-  const ref = "docs/shared-finding.md"; const body = "# shared finding\n"; await writeFile(join(repo.root, ref), body); const digest = createHash("sha256").update(body).digest("hex");
+  const body = "# shared finding\n"; const digest = createHash("sha256").update(body).digest("hex"); const ref = `docs/shared-finding.${digest}.md`; await writeFile(join(repo.root, ref), body);
   const first = await api.artifactRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: result.revision, artifact: { artifact_id: "shared-finding-a", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
   const second = await api.artifactRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: first.revision, artifact: { artifact_id: "shared-finding-b", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
   const sharingPolicy = { ...makeWorkerRun().lineage.context_policy, share_existing_findings: true };
@@ -1786,7 +1828,7 @@ test("Finding共有はcontext policyと現行digestを実行境界で検査しli
 test("artifact CLIはrecord/status更新/参照だけを行い外部providerを起動しない", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
   const init = await api.init({ cwd: repo.root, control_id: "artifact-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const body = "# CLI artifact\n"; const ref = "docs/cli-artifact.md"; await writeFile(join(repo.root, ref), body); const digest = createHash("sha256").update(body).digest("hex");
+  const body = "# CLI artifact\n"; const digest = createHash("sha256").update(body).digest("hex"); const ref = `docs/cli-artifact.${digest}.md`; await writeFile(join(repo.root, ref), body);
   const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` };
   const recordInput = join(base, "artifact-record.json"); await writeJson(recordInput, { cwd: repo.root, control_id: "artifact-cli", actor_id: "parent", expected_revision: init.revision, artifact: { artifact_id: "cli-artifact", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
   const recorded = spawnOrchestrate(["artifact-record", "--input", recordInput], { env }); assert.equal(recorded.status, 0); const recordResult = JSON.parse(recorded.stdout).result;
@@ -1794,6 +1836,18 @@ test("artifact CLIはrecord/status更新/参照だけを行い外部providerを�
   const updated = spawnOrchestrate(["artifact-status-record", "--input", updateInput], { env }); assert.equal(updated.status, 0);
   const statusInput = join(base, "artifact-status.json"); await writeJson(statusInput, { cwd: repo.root, control_id: "artifact-cli", artifact_id: "cli-artifact" });
   const status = spawnOrchestrate(["artifact-status", "--input", statusInput], { env }); assert.equal(status.status, 0); assert.equal(JSON.parse(status.stdout).result.status, "closed");
+  await assert.rejects(access(sentinel.log));
+});
+
+test("artifact generation CLIは1 revisionのcomposite receiptだけを記録し外部providerを起動しない", async (t) => {
+  const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
+  const init = await api.init({ cwd: repo.root, control_id: "artifact-generation-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const oldBody = "# cli generation 1\n"; const oldDigest = createHash("sha256").update(oldBody).digest("hex"); const oldRef = `docs/cli-generation.${oldDigest}.md`; await writeFile(join(repo.root, oldRef), oldBody);
+  const old = await api.artifactRecord({ cwd: repo.root, control_id: "artifact-generation-cli", actor_id: "parent", expected_revision: init.revision, artifact: { artifact_id: "cli-generation-v1", artifact_kind: "finding", artifact_ref: oldRef, artifact_digest: oldDigest, status: "current" } });
+  const newBody = "# cli generation 2\n"; const newDigest = createHash("sha256").update(newBody).digest("hex"); const newRef = `docs/cli-generation.${newDigest}.md`; await writeFile(join(repo.root, newRef), newBody);
+  const input = join(base, "artifact-generation.json"); await writeJson(input, { cwd: repo.root, control_id: "artifact-generation-cli", actor_id: "parent", expected_revision: old.revision, superseded_artifact_id: "cli-generation-v1", artifact: { artifact_id: "cli-generation-v2", artifact_kind: "finding", artifact_ref: newRef, artifact_digest: newDigest, status: "current" } });
+  const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` }; const generated = spawnOrchestrate(["artifact-generation-record", "--input", input], { env }); assert.equal(generated.status, 0);
+  const result = JSON.parse(generated.stdout).result; assert.equal(result.revision, old.revision + 1); assert.equal(result.manifest.transition_receipts.at(-1).operation, "artifact-generation-record");
   await assert.rejects(access(sentinel.log));
 });
 
@@ -1805,8 +1859,8 @@ test("governed approach familyはblock/reopenで新規入口だけを止め、ar
   ];
   let revision = result.revision;
   for (const [artifact_id, artifact_kind, body] of artifacts) {
-    const artifact_ref = `docs/${artifact_id}.md`; await writeFile(join(repo.root, artifact_ref), body);
-    const recorded = await api.artifactRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: revision, artifact: { artifact_id, artifact_kind, artifact_ref, artifact_digest: createHash("sha256").update(body).digest("hex"), status: "current" } });
+    const artifact_digest = createHash("sha256").update(body).digest("hex"); const artifact_ref = `docs/${artifact_id}.${artifact_digest}.md`; await writeFile(join(repo.root, artifact_ref), body);
+    const recorded = await api.artifactRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: revision, artifact: { artifact_id, artifact_kind, artifact_ref, artifact_digest, status: "current" } });
     revision = recorded.revision;
   }
   const policy = makeWorkerRun().lineage.context_policy;
@@ -1837,8 +1891,8 @@ test("governed approach familyはblock/reopenで新規入口だけを止め、ar
 
 test("approach family governanceのcontext mismatchとartifact kind不足をfail closedにする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "family-negative" });
-  const body = "# finding\n"; await writeFile(join(repo.root, "docs/family-finding.md"), body);
-  const artifact = await api.artifactRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: result.revision, artifact: { artifact_id: "family-finding", artifact_kind: "finding", artifact_ref: "docs/family-finding.md", artifact_digest: createHash("sha256").update(body).digest("hex"), status: "current" } });
+  const body = "# finding\n"; const artifact_digest = createHash("sha256").update(body).digest("hex"); const artifact_ref = `docs/family-finding.${artifact_digest}.md`; await writeFile(join(repo.root, artifact_ref), body);
+  const artifact = await api.artifactRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: result.revision, artifact: { artifact_id: "family-finding", artifact_kind: "finding", artifact_ref, artifact_digest, status: "current" } });
   const governedPolicy = makeWorkerRun().lineage.context_policy;
   const family = await api.approachFamilyGovernanceRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: artifact.revision, approach_family_ref: "implementation-primary", context_policy: governedPolicy });
   await assert.rejects(api.approachFamilyBlock({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: family.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "family-finding", basis_artifact_ids: ["family-finding"] }), code("ARTIFACT_INVALID"));
@@ -1857,8 +1911,8 @@ test("approach family CLIはrecord/block/reopen/statusだけを行い外部provi
   ];
   let revision = init.revision;
   for (const [artifact_id, artifact_kind, body] of artifactSpecs) {
-    const artifact_ref = `docs/${artifact_id}.md`; await writeFile(join(repo.root, artifact_ref), body);
-    const recordedArtifact = await api.artifactRecord({ cwd: repo.root, control_id: "family-cli", actor_id: "parent", expected_revision: revision, artifact: { artifact_id, artifact_kind, artifact_ref, artifact_digest: createHash("sha256").update(body).digest("hex"), status: "current" } });
+    const artifact_digest = createHash("sha256").update(body).digest("hex"); const artifact_ref = `docs/${artifact_id}.${artifact_digest}.md`; await writeFile(join(repo.root, artifact_ref), body);
+    const recordedArtifact = await api.artifactRecord({ cwd: repo.root, control_id: "family-cli", actor_id: "parent", expected_revision: revision, artifact: { artifact_id, artifact_kind, artifact_ref, artifact_digest, status: "current" } });
     revision = recordedArtifact.revision;
   }
   const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` }; const policy = makeWorkerRun().lineage.context_policy;
@@ -1877,8 +1931,8 @@ test("approach family CLIはrecord/block/reopen/statusだけを行い外部provi
 
 test("DedupとFinding価値は親が裁定し票数・severity・独立性scoreをschemaへ持ち込めない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "parent-semantic-verdict" });
-  const body = "# semantic finding\n"; const artifact_ref = "docs/semantic-finding.md"; await writeFile(join(repo.root, artifact_ref), body);
-  const baseArtifact = { artifact_id: "semantic-finding", artifact_kind: "finding", artifact_ref, artifact_digest: createHash("sha256").update(body).digest("hex"), status: "current" };
+  const body = "# semantic finding\n"; const artifact_digest = createHash("sha256").update(body).digest("hex"); const artifact_ref = `docs/semantic-finding.${artifact_digest}.md`; await writeFile(join(repo.root, artifact_ref), body);
+  const baseArtifact = { artifact_id: "semantic-finding", artifact_kind: "finding", artifact_ref, artifact_digest, status: "current" };
   for (const forbidden of [{ severity: "critical" }, { votes: 3 }, { quorum: 2 }, { semantic_dedup_score: 0.95 }]) {
     await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: result.revision, artifact: { ...baseArtifact, ...forbidden } }), code("INVALID_SCHEMA"));
   }
@@ -2819,6 +2873,7 @@ test("phase gate CLIはrecord/advance/statusだけを行い外部providerを起�
 const V25 = "dotagents.orchestration-control.v25";
 const V26 = "dotagents.orchestration-control.v26";
 const V27 = "dotagents.orchestration-control.v27";
+const V28 = "dotagents.orchestration-control.v28";
 
 /** v26 Control（v26世代init産物）を再現する: cancelled不在のconsultation shapeはv27と同一で、schema定数だけが異なる。 */
 async function downgradeControlToV26(repo, controlId) {
@@ -2848,7 +2903,7 @@ async function consultationTaskRecorded(t, controlId) {
 test("typed schema initはtyped consultation_handleの多provider consultationを固定しshape違反をfail closedにする", async (t) => {
   const { repo, revision } = await consultationTaskRecorded(t, "v26-multiprovider");
   const sessionId = "123e4567-e89b-42d3-a456-426614174000";
-  assert.equal((await api.status({ cwd: repo.root, control_id: "v26-multiprovider" })).schema_version, V27);
+  assert.equal((await api.status({ cwd: repo.root, control_id: "v26-multiprovider" })).schema_version, V28);
   const claude = await api.consultationRecord({
     cwd: repo.root, control_id: "v26-multiprovider", actor_id: "parent", expected_revision: revision,
     consultation: makeConsultation({ consultation_id: "claude-consult", assignment_id: "claude-consult-assignment", connector: "claude-native", consultation_handle: { session_id: sessionId } }),
@@ -2915,7 +2970,7 @@ test("control-migrateはv25→v26を決定的に一回で行い非gpt consultati
   await downgradeControlToV25(repo, "migrate-control");
   const recorded = await api.consultationRecord({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: revision, consultation: makeConsultationV25() });
   await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V25 }), code("INVALID_TRANSITION"));
-  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: "dotagents.orchestration-control.v28" }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: "dotagents.orchestration-control.v29" }), code("INVALID_SCHEMA"));
   // v25→v27の直行migrationは存在しない（隣接version限定・ADR 0054）
   await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V27 }), code("INVALID_TRANSITION"));
   const migrated = await api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V26 });
@@ -2967,7 +3022,7 @@ test("receipt容量際のcontrol-migrateは架空の空きを作らずCONTROL_CA
   manifest.record_revision = 253;
   manifest.last_update = { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" };
   await writeJson((await controlStatePaths(repo.commonDir, "migrate-capacity")).manifest, manifest);
-  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-capacity", actor_id: "parent", expected_revision: 253, target_schema_version: V26 }), code("CONTROL_CAPACITY_RESERVED"));
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-capacity", actor_id: "parent", expected_revision: 253, target_schema_version: V27 }), code("CONTROL_CAPACITY_RESERVED"));
 });
 
 test("consult-v1契約はWorker laneの実行者としてoperationally knownにならない", async (t) => {
@@ -3202,7 +3257,8 @@ const makeSelectorDecision = (overrides = {}) => ({
 });
 
 test("v27のconsultation-cancelはplannedだけをDecision証拠付きで終端し観測経由の偽装を許さない", async (t) => {
-  const { repo, revision } = await consultationTaskRecorded(t, "v27-cancel");
+  const { repo, revision: v28Revision } = await consultationTaskRecorded(t, "v27-cancel");
+  const v27 = await api.controlMigrate({ cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: v28Revision, target_schema_version: V27 }); const revision = v27.revision;
   const recorded = await api.consultationRecord({
     cwd: repo.root, control_id: "v27-cancel", actor_id: "parent", expected_revision: revision,
     consultation: makeConsultation({ consultation_id: "cancel-me", assignment_id: "cancel-assignment" }),
@@ -3330,8 +3386,9 @@ test("migration ladderはv25→v26→v27を一段ずつ進み孤児plannedだけ
 
 test("selector_decisionはv27のplacement reservationへoptional keyとして束縛されv26では拒否される", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "selector-placement" });
+  const v27 = await api.controlMigrate({ cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: result.revision, target_schema_version: V27 });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: v27.revision,
     task: makeTask({ task_id: "selector-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const registry = await api.registryObservationRecord({

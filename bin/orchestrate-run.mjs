@@ -16,7 +16,7 @@ const commands = new Map([
   ["worker-report-skeleton", api.workerReportSkeletonForWorker],
   ["worker-report-import", api.importWorkerReport],
   ["campaign-record", api.campaignRecord], ["campaign-status", api.campaignStatus], ["campaign-release", api.releaseCampaign],
-  ["artifact-record", api.artifactRecord], ["artifact-status", api.artifactStatus], ["artifact-status-record", api.artifactStatusRecord],
+  ["artifact-record", api.artifactRecord], ["artifact-status", api.artifactStatus], ["artifact-status-record", api.artifactStatusRecord], ["artifact-generation-record", api.artifactGenerationRecord],
   ["approach-family-record", api.approachFamilyGovernanceRecord], ["approach-family-status", api.approachFamilyStatus], ["approach-family-block", api.approachFamilyBlock], ["approach-family-reopen", api.approachFamilyReopen],
   ["phase-gate-record", api.phaseGateRecord], ["phase-gate-status", api.phaseGateStatus], ["phase-gate-advance", api.phaseGateAdvance],
   ["resume-check", api.resumeCheck],

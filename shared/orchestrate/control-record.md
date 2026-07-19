@@ -157,7 +157,7 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は`{v25, v26, v27}`のclosed setをreaderが受理し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+- `schema_version`は`{v25, v26, v27, v28}`のclosed setをreaderが受理し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -173,10 +173,11 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   v25契約でTask／Control finalizationのsubject digest、文書evidence、Campaign親裁定境界をfail closedにした。
   v26はConsultationの`slug`をconnector別typed `consultation_handle`へ置換し、connectorを
   closed enumへ拡張した（ADR 0045）。v27はConsultationへ`cancelled` state（`consultation-cancel`）を、
-  placement reservationへoptional keyの`selector_decision`を追加した（ADR 0054）。新規initは
-  v27で作成する。旧version active Controlは読取もmutationも従来契約のまま継続し、旧manifestを
+  placement reservationへoptional keyの`selector_decision`を追加した（ADR 0054）。v28はdigest版付き
+  docs artifactと単一receiptの原子的世代交代を追加した（ADR 0083）。新規initはv28で作成する。
+  旧version active Controlは読取もmutationも従来契約のまま継続し、旧manifestを
   黙って書き換えない。versionの移動は明示の`control-migrate`だけが**隣接version間で**行い
-  （v25→v27の直行なし）、mutation時の自動昇格を`SCHEMA_UPGRADE_REQUIRED`で拒否する。
+  （v25→v27、v26→v28の直行なし）、mutation時の自動昇格を`SCHEMA_UPGRADE_REQUIRED`で拒否する。
   上記closed set外のversionは`INVALID_SCHEMA`で停止する。version判定は単一version等値でなく
   集合判定で行い、新versionを黙って旧契約へ落とさない。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
@@ -468,7 +469,7 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
 }
 ```
 
-v27ではrate-aware selectorの決定（`dotagents.selector-decision.v1`——選択pool・4要素executor
+v27以降ではrate-aware selectorの決定（`dotagents.selector-decision.v1`——選択pool・4要素executor
 envelope・評価時刻・reason・pool評価・snapshot evidence・reservation）を**optional keyの
 `selector_decision`**として同objectへ保存できる（ADR 0054）。常在keyのnull可にはしない——
 reservation objectはcanonical JSON全体が作成時receiptの`subject_digest`へ束縛されるため、
@@ -619,7 +620,7 @@ cancelled_at`を追加する。Task本体はimmutableのまま、取消記録を
   恒久拒否されplanned→terminal遷移が存在しないため、Control finalization準備・closing receipt
   容量予約・campaign all-terminal判定の3箇所で孤児として除外する。stateは`planned`のまま
   書き換えず監査可能に保ち、`dispatched`以降のConsultationは従来どおりterminalへの回収を
-  必須とする。**v27ではこの除外は適用されない**——明示の脱出経路は`consultation-cancel`であり、
+  必須とする。**v27以降ではこの除外は適用されない**——明示の脱出経路は`consultation-cancel`であり、
   孤児plannedは親が取り消すまでfinalizeを正しくブロックする（ADR 0054）。
 - 取消時点で存在するWorker／Consultationのstate、opaque handle、write reservationを変更しない。
   Task取消だけでExecutor上の処理をcancelled扱いにせず、既存Runは所有Executorの観測で閉じる。
@@ -1142,7 +1143,7 @@ Consultationも`planned`ではobservation／decision／terminal evidenceが空�
 ## Schema migration（control-migrate）
 
 version移動は暗黙に行わず、明示コマンド`control-migrate`だけが**隣接version間**で一回ずつ行う
-（v25↔v26: ADR 0045／v26↔v27: ADR 0054。v25→v27の直行は`INVALID_TRANSITION`）。
+（v25↔v26: ADR 0045／v26↔v27: ADR 0054／v27↔v28: ADR 0083。隣接しない直行は`INVALID_TRANSITION`）。
 
 - **v26→v27**: 取消済みTaskの孤児planned consultationを決定的に`cancelled`へ変換する
   （control-migrate receiptは既存不変量どおりevidence空＝変換の発生時点のみを証する。
@@ -1152,6 +1153,10 @@ version移動は暗黙に行わず、明示コマンド`control-migrate`だけ�
   （`consultation-cancel` receiptを持つcancelled）が1件でもあれば`ROLLBACK_UNSUPPORTED`。
   migration産cancelled（cancelled∧当該task取消済み∧cancel receiptなし）は決定的に`planned`へ
   復元し、v26ではADR 0053の除外が再び有効になる。分類不能なcancelledはfail loud。
+- **v27→v28**: artifact descriptorを黙って書き換えず、そのまま移行する。既存の非版付きrefは
+  読取可能だが、新しいgenerationのpredecessorには使えない。v28の新規artifactはdigest版付きrefだけを受理する。
+- **v28→v27 rollback**: `artifact-generation-record` receiptが1件でもあれば`ROLLBACK_UNSUPPORTED`。
+  generation未使用ならdescriptorを変えずに戻せる。
 
 - 決定的変換: 各consultationの`slug: s`→`consultation_handle: { slug: s }`。connectorは既存の
   `gpt-connector`のまま、他collectionは不変。`record_revision`を+1し、transition receiptへ
@@ -1234,6 +1239,13 @@ Finding／Approach／Gap／Decisionの意味と本文はdocs artifactが正本�
 record時とstatus更新時に安全なbounded readでSHA-256を再計算し、path・digestの不一致、欠落、symlink、
 非regular fileを拒否する。refとdigestは不変で、内容更新は新IDで記録する。本文、severity、票数、
 semantic dedup、関連候補は保存しない。`shared_artifact_ids`は同一Controlのfindingだけを参照できる。
+v28の新規`artifact-record`はSHA-256全文をbasenameへ含む版付きrefだけを受理する。同じ論理artifactの
+世代交代には`artifact-generation-record`を使う。旧・新refは各SHA-256全文をbasenameへ含む別path、
+新artifact ID、同じkind、異なるdigestでなければならない。入口はglobal lock内で両方の通常fileとdigestを
+検証し、旧currentの`superseded`と新currentのdescriptorを`dotagents.artifact-generation.v1` digestへ
+結合した単一receiptを同じ1 revisionへ記録し、manifestを1回のatomic renameでcommitする。したがって中間状態は
+公開されず、旧版byte列を保持したままcurrentが切り替わる。旧版を先に上書きした場合は履歴や別pathへ
+fallbackせず`ARTIFACT_DIGEST_MISMATCH`でfail closedし、同一版付きpathへexact byte列を復元してから再試行する。
 新規placement／manual Worker record、planned admission、Delegation Packet生成では参照先本文のdigestを
 再検証する。bare repositoryでもtree modeを確認し、regular blob以外を受理しない。
 Findingの実在性・価値、semantic dedup、独立性の充足は親AIがdocs正本と実証を読んで裁定する。
@@ -1280,7 +1292,7 @@ Registry由来のcapacity warning、`truncated`だけを持つ。各配列はcan
 初期CLI `orchestrate-run` は次の記録・純粋検証だけを行う。
 
 ```text
-init, status, status --brief, resume-check, advisory-snapshot, control-migrate, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, delegation-packet-recover, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
+init, status, status --brief, resume-check, advisory-snapshot, control-migrate, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, delegation-packet-recover, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, artifact-generation-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
 admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, consultation-cancel, conflict-check,
 accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 ```
@@ -1350,6 +1362,8 @@ phaseGateAdvance({ cwd, control_id, actor_id, expected_revision,
 artifactRecord({ cwd, control_id, actor_id, expected_revision, artifact })
 artifactStatus({ cwd, control_id, artifact_id })
 artifactStatusRecord({ cwd, control_id, actor_id, expected_revision, artifact_id, status })
+artifactGenerationRecord({ cwd, control_id, actor_id, expected_revision,
+                           superseded_artifact_id, artifact })
 approachFamilyGovernanceRecord({ cwd, control_id, actor_id, expected_revision,
                                  approach_family_ref, context_policy })
 approachFamilyStatus({ cwd, control_id, approach_family_ref })
