@@ -437,8 +437,8 @@ for entry in data.get("hooks", {}).get("SessionStart", []):
         normalized = Path(str(home) + executable[1:] if executable.startswith("~/") else executable).expanduser().resolve(strict=False)
         if normalized == lattice and subcommand == "session-start":
             canonical.append(hook)
-if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 5}:
-    print("FAIL: Claude SessionStart の lattice-gantt-hook session-start は canonical command / type=command / timeout=5 の1件である必要がある")
+if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 6}:
+    print("FAIL: Claude SessionStart の lattice-gantt-hook session-start は canonical command / type=command / timeout=6 の1件である必要がある")
     raise SystemExit(1)
 PY
 then
@@ -535,7 +535,7 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError):
     raise SystemExit(1)
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-lattice-gantt-hook")
 command = f"{path} session-start"
-expected = {"type": "command", "command": command, "timeoutSec": 5, "async": False, "statusMessage": None}
+expected = {"type": "command", "command": command, "timeoutSec": 6, "async": False, "statusMessage": None}
 relevant = []
 matches = []
 for entry in data.get("hooks", {}).get("SessionStart", []):

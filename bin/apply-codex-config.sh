@@ -33,7 +33,7 @@ HOOKS = {
     "Stop": ("stop", 10),
 }
 ADVISORY_HOOK = ("SessionStart", 5)
-LATTICE_HOOK = ("SessionStart", "session-start", 5)
+LATTICE_HOOK = ("SessionStart", "session-start", 6)
 
 
 def parse_args() -> argparse.Namespace:

@@ -140,17 +140,18 @@ INFOとして表示する。24時間スロットルは掛けない。hookは`lat
 
 ```bash
 S=~/.claude/settings.json
-if ! jq -e --arg home "$HOME" '[.hooks.SessionStart[]?.hooks[]? | select(.type=="command" and .timeout==5 and (.command=="~/.local/bin/lattice-gantt-hook session-start" or .command==($home+"/.local/bin/lattice-gantt-hook session-start"))] | length == 1' "$S" >/dev/null; then
+if ! jq -e --arg home "$HOME" '[.hooks.SessionStart[]?.hooks[]? | select(.type=="command" and .timeout==6 and (.command=="~/.local/bin/lattice-gantt-hook session-start" or .command==($home+"/.local/bin/lattice-gantt-hook session-start"))] | length == 1' "$S" >/dev/null; then
   cp "$S" "$S.bak-lattice-gantt"
   tmp=$(mktemp)
-  jq '.hooks.SessionStart += [{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":5}]}]' "$S" > "$tmp" \
+  jq '.hooks.SessionStart += [{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":6}]}]' "$S" > "$tmp" \
     && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
 fi
 ```
 
 `lattice` CLIが未導入のgit repoでは無言のno-opにせず、未導入で現在地を案内できない旨をINFO一行で
 返す。CLI導入済みで`.lattice/todo/`がないrepo、非git、`resume|compact`はstdout/stderr 0byte・exit 0。
-storeが存在するのにtimeout、CLI失敗、不正JSON／schema不一致なら、現在地を取得できない旨をINFO一行で返す。正規statusを取得でき、
+storeが存在するのにtimeoutなら「status取得が期限超過」、CLI失敗なら「CLI実行失敗」、不正JSON／schema不一致なら
+「status応答を検証できない」と区別したINFO一行を返す。正規statusを取得でき、
 `.lattice/generated/gantt.html`がregular fileなら絶対`file://` URIを表示し、未生成なら予定URIと
 `lattice todo gantt`の明示実行を案内する。`DOTAGENTS_LATTICE_HOOK=off`で無効化できる。
 

@@ -102,7 +102,7 @@ verify_fixture_output="$(HOME="$OFFICIAL_HOME" DOTAGENTS_SKIP_FACTORY_CORE=1 "$V
 printf '%s\n' "$verify_fixture_output" | grep -Fq 'が共有委譲契約を参照していない' || fail 'Claude shared delegation reference の欠落を verify が検出しない'
 mkdir -p "$OFFICIAL_HOME/.claude"
 cat >"$OFFICIAL_HOME/.claude/settings.json" <<'EOF'
-{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}],"SessionStart":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]},{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]},{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":5}]}],"Stop":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}],"UserPromptSubmit":[{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}],"PostToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/plan-gate-hook","timeout":5}]}]}}
+{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}],"SessionStart":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]},{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]},{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":6}]}],"Stop":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}],"UserPromptSubmit":[{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}],"PostToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/plan-gate-hook","timeout":5}]}]}}
 EOF
 verify "$OFFICIAL_HOME" official
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
@@ -212,7 +212,7 @@ import json
 import sys
 path = sys.argv[1]
 data = json.load(open(path, encoding="utf-8"))
-data["hooks"]["SessionStart"][2]["hooks"][0]["timeout"] = 5
+data["hooks"]["SessionStart"][2]["hooks"][0]["timeout"] = 6
 json.dump(data, open(path, "w", encoding="utf-8"))
 PY
 verify "$OFFICIAL_HOME" official
@@ -270,7 +270,7 @@ from pathlib import Path
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 path = str(Path(sys.argv[2]).resolve() / ".local/bin/codex-lattice-gantt-hook")
 command = f"{path} session-start"
-expected = {"type":"command", "command":command, "timeoutSec":5, "async":False, "statusMessage":None}
+expected = {"type":"command", "command":command, "timeoutSec":6, "async":False, "statusMessage":None}
 hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and "codex-lattice-gantt-hook" in h.get("command", "")]
 raise SystemExit(0 if hooks == [expected] else 1)
 PY

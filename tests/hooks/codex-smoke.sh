@@ -180,10 +180,17 @@ case "${LATTICE_TEST_MODE:-valid_v1}" in
     printf '%s\n' '{"schema":"lattice.todo_status_result.v1","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線"}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}' ;;
   valid_v2)
     printf '%s\n' '{"schema":"lattice.todo_status_result.v2","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]},{"plan_key":"master","task_id":"G6","label":"host rollout","unmet_dependencies":[{"plan_key":"master","task_id":"G3"},{"plan_key":"master","project_id":"dotagents","task_id":"G2"}]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}' ;;
+  valid_v3)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v3","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},{"plan_key":"queue","plan_version":"v1","through_sequence":0,"journal_head_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","reconciliation_state":"registered_unreconciled","revision_digest":null,"reconciliation_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
+  slow_success)
+    sleep 3
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v1","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線"}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}' ;;
   invalid)
     printf '%s\n' '{"schema":"wrong"}' ;;
   invalid_dependency)
     printf '%s\n' '{"schema":"lattice.todo_status_result.v2","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[{"plan_key":"master","task_id":"G3","extra":"rejected"}]}],"next_ready":[],"blocked":[],"member_heads":[],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}' ;;
+  failure) exit 1 ;;
+  timeout) sleep 6 ;;
 esac
 EOF
 chmod +x "$STATE/lattice-bin/lattice"
@@ -200,12 +207,28 @@ run lattice-codex-valid-v2 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE
 {"session_id":"lattice-codex-valid-v2","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'未充足依存あり: active 1件'* && "$RUN_OUT" != *'取得できませんでした'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-valid-v2 || fail_case lattice-codex-valid-v2
+run lattice-codex-valid-v3 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=valid_v3 "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-valid-v3","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'校正状態: reconciled=1, unreconciled=1'* && "$RUN_OUT" != *'取得できませんでした'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-valid-v3 || fail_case lattice-codex-valid-v3
+run lattice-codex-slow-success env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-slow-success","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" != *'取得できませんでした'* ]] && pass lattice-codex-slow-success || fail_case lattice-codex-slow-success
 for mode in invalid invalid_dependency; do
   run "lattice-codex-$mode" env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE="$mode" "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-$mode","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-  json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'storeは存在しますが lattice todo status で現在地を取得できませんでした'* && "$RUN_OUT" == *'CLIの版とstore整合を確認'* && "$RUN_OUT" != *permissionDecision* ]] && pass "lattice-codex-$mode" || fail_case "lattice-codex-$mode"
+  json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'status応答を検証できない'* && "$RUN_OUT" == *'CLIの版とstore整合を確認'* && "$RUN_OUT" != *permissionDecision* ]] && pass "lattice-codex-$mode" || fail_case "lattice-codex-$mode"
 done
+run lattice-codex-failure env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=failure "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-failure","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'CLI実行失敗'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-failure || fail_case lattice-codex-failure
+run lattice-codex-timeout env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=timeout "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-timeout","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'status取得が期限超過'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-timeout || fail_case lattice-codex-timeout
 
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'

@@ -175,13 +175,13 @@ directoryかつsymlinkでないことを先に確認し、不適合ならcache�
 ### Lattice工程表案内（SessionStart）
 
 `codex-lattice-gantt-hook session-start`を同じSessionStartへ別entryとして追加する。commandは
-`$HOME/.local/bin/codex-lattice-gantt-hook session-start`の展開済み絶対path、`timeoutSec: 5`、
+`$HOME/.local/bin/codex-lattice-gantt-hook session-start`の展開済み絶対path、`timeoutSec: 6`、
 `async: false`、`statusMessage: null`とする。Claude側と共通のread-only coreを使い、成功INFOだけを
 `hookSpecificOutput.additionalContext`へ包む。`source=startup|clear`ごとに発火し、スロットルしない。
 
 `lattice` CLI不在時は未導入INFOを一行返す。導入済みでstoreがないrepo、非git、`resume|compact`は
-沈黙する。storeが存在するのにtimeout、CLI失敗、`lattice.todo_status_result.v1`／`v2`不一致なら、現在地を
-取得できない旨をINFO一行で返す。正規status取得時は
+沈黙する。storeが存在するのにtimeoutなら「status取得が期限超過」、CLI失敗なら「CLI実行失敗」、
+`lattice.todo_status_result.v1`／`v2`／`v3`不一致なら「status応答を検証できない」と区別したINFO一行を返す。正規status取得時は
 `.lattice/generated/gantt.html`の絶対`file://` URIと`active`／`next-ready`を案内し、HTML未生成時も
 hook自身は生成しない。`DOTAGENTS_LATTICE_HOOK=off`で無効化できる。HTMLやstore journalを直接parseする
 fallbackは持たない。
