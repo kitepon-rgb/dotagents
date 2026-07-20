@@ -9,22 +9,22 @@
     {
       "host": "Mac",
       "entry": "interactive-codex-cli",
-      "status": "verified"
+      "status": "partial"
     },
     {
       "host": "main-server",
       "entry": "interactive-codex-cli",
-      "status": "verified"
+      "status": "partial"
     },
     {
       "host": "main-server",
       "entry": "codex-app-remote",
-      "status": "verified"
+      "status": "partial"
     },
     {
       "host": "FOX WSL2",
       "entry": "interactive-codex-cli",
-      "status": "verified"
+      "status": "partial"
     },
     {
       "host": "FOX Windows native",
