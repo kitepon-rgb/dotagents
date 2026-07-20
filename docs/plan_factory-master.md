@@ -34,7 +34,7 @@
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
 | [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
 | [GPT-5.6再配線](plan_gpt56-rewiring.md) | role routing詳細。残る他端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
-| [Lattice編入](plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Active。2026-07-17に直轄化。L0ベースラインが次ready |
+| [Lattice編入](archive/plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Completed。Lattice 0.8.0、Codegraph退役、4 host cutoverまで完了 |
 | [メモリ昇格queue](queue_memory-promotion.md) | 各repo作業時の機会駆動queue | Active、主レーンを遮らない |
 
 CalloutとGPT-5.6の他端末チェックは、Codex全対応Wave 3の同じhost receiptを参照して閉じる。
@@ -101,7 +101,7 @@ Lane OとLane Rはrepoと検証gateが交差しない範囲で並行できる。
 | 19f | `DONE` | post-spawn/pre-ready failureを同じwatch identity／handleのlaunch cleanupへ接続する | Observer / 独立focused＋related gate |
 | 19g | `DONE` | 修理後HEADのfull regression、独立重監査、knowledge return、Control／receiptを閉じる | Observer → dotagents / O2 Phase gate |
 | 20 | `IN-PROGRESS` | 4 host統合campaignとBugHub意図的canaryを行う。H承認は2026-07-18オーナー包括裁定で充足。intentional crash／通信断だけは実施直前に目的・影響・rollbackを改めて申告してから実行する。**2026-07-18前半消化**（Control `r2-host-rollout-20260718`）: BugHub Wave 8のMac cutover（item 2）・Mac canary drill（2a）・launchd再起動後canary（1s）・FOX Windows native rollout（5）を完了し、本番`/readyz`全check ready。実被弾P1修理3件: scheduler最小PATHの3host current汚染（`8d17dcc`）、task XML UTF-16（`beab0c0`）、batch token ACL（`8c6469c`）。**2026-07-18後半**: 意図的canary 6a（33秒停止・誤通知ゼロ）・6b（Pi5直接経路確立→open→resolve E2E完走）を消化し、6bで検出したv2 external event還流欠落P1を`5f22ed4`で修理。**Mac E2E（Wave 3）**: 非対話5項目（install／config dry-run／Spotter install／verify-install全green／`gpt_connector`診断）を消化し、実host hook適用は同日オーナーGOでClaude settings＋`apply-codex-config --apply`をbackup付きで完了。対話項目はThroughline smoke（capture／handoff）と`gpt_connector` consult smoke（復旧後再実行）が成功した。routing 3 role失敗はaiterm-mcp managed `CODEX_HOME`の`agents/*.toml`継承欠落が真因と診断し、aiterm-mcp 0.18.2で修理・publish・global installまで完了。再実火は起動済みMCP serverが旧版のため新sessionで行う。hooks実火未検出も同根の可能性があり、新規hookのtrust承認（H、`codex /hooks`のUI承認）待ち。**Lattice工程表**: factory-master 110 taskのstore初回登録（`2ac6c20`）と実ガント生成を確認。**残**: 4host新規session E2E（Codex Wave 3。Mac Claude側は消化済み）、1k schema drift（Mac throughline `unverified`）、1m main-server hook導入、0b/1p/1q/1r receipt束ね、Wave 9 | dotagents / R2〜R3 H gate |
-| 23 | `READY` | Lattice工程表・ガント面（オーナー裁定 2026-07-18）。ToDo→plan_graphのcritical path projectionとブラウザGantt出力をLattice repo直轄で設計・実装する。受入契約は[Lattice編入計画 Phase LG](plan_lattice-factory-integration.md)。着手はqueue 20完了後（オーナーは繰上げ裁定可） | Lattice → dotagents / LG gate |
+| 23 | `DONE` | Lattice工程表・ガント面（オーナー裁定 2026-07-18）。critical path projection、ブラウザGantt、source cutover、discovery、run運用面まで受入済み。[完了記録](archive/plan_lattice-factory-integration.md) | Lattice → dotagents / LG gate |
 | 21 | `JOIN` | O2〜O4とR2〜R3を閉じ、wire v3へ合流 | 本書のJ1 gate |
 | 22 | `DONE` | LatticeのBugHub source登録（adapter/schema/認証）を独立waveで行う。ServerManager `0bb3ef3`＋`a04c6ea`・本番deploy・canary実証・後片付けまで完了（2026-07-18包括承認） | ServerManager / 独立gate |
 
@@ -210,7 +210,7 @@ queue 8は19eへ統合済みである。
   **2026-07-17のオーナー裁定で失効**。Latticeはdotagentsの**コア製品**とし、Lattice repo自体の
   開発・RC4遂行・正典還流を**dotagents統括の直轄**とする（AGENTS.md「自作コア製品の正規repoへ
   必要な修正を行う」恒久裁定の範囲）。別セッションへの連絡・返答パッケージは不要になった。
-  詳細受入TODOは[Lattice編入計画](plan_lattice-factory-integration.md)が所有する。
+  詳細受入記録は[Lattice編入完了plan](archive/plan_lattice-factory-integration.md)が所有する。
 
 Lattice編入のオーナー裁定（2026-07-17）:
 

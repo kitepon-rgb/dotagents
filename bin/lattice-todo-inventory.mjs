@@ -11,7 +11,6 @@ export const DEFAULT_SOURCE_REFS = Object.freeze([
   'docs/plan_bughub-factory-integration.md',
   'docs/plan_codex-full-support.md',
   'docs/plan_gpt56-rewiring.md',
-  'docs/plan_lattice-factory-integration.md',
   'docs/plan_observer-factory-integration.md',
   'docs/queue_memory-promotion.md',
 ]);

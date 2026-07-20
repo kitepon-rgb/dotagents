@@ -108,7 +108,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
 | 工場コア | Caveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar（dotagents 外） | 罠知識／セッション継続／未使用ツール監査・工程graph＋コード構造理解／資料変換／ChatGPT相談／PTY・外部枠／Claude・Codex親からの隔離Codex実行を担う必須8製品。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理する。Oracleは互換・rollback専用 |
 | 中央管理コア | ServerManager（dotagents 外） | dotagentsが管理・連携する第9製品。内部のBugHubをversion・bug・compatibility結果の統括に使う。BugHubを独立した第10製品へ分離しない |
-| コード構造・工程graph | Lattice（dotagents外） | 現役コア8製品の1つ。Codegraphを完全吸収した正式後継で、`lattice-mcp`と同梱sensorを所有する。独立Codegraphはretired／not_applicable履歴だけを保持。進行・契約は[導入plan](docs/plan_lattice-factory-integration.md)が正 |
+| コード構造・工程graph | Lattice（dotagents外） | 現役コア8製品の1つ。Codegraphを完全吸収した正式後継で、`lattice-mcp`と同梱sensorを所有する。独立Codegraphはretired／not_applicable履歴だけを保持。[導入完了記録](docs/archive/plan_lattice-factory-integration.md) |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
 
