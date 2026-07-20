@@ -26,3 +26,6 @@ __pycache__/
 # the markdown itself; the viewer's settings stay local. See PLAN.md 原則7.
 .obsidian/
 .lattice/generated/
+
+# Lattice同梱sensorのproject-local index（生成・再構築可能）
+.codegraph/
