@@ -1,34 +1,42 @@
-# cf-0146 現役5入口の新規session E2E進捗
+# cf-0146 現役5入口の新規session E2E受入
 
 - 実施日: 2026-07-21
 - 対象: `codex-full-support/cf-0146`
 - 入口正本: [Codex全対応計画 §8](../plan_codex-full-support.md#8-端末台帳)
-- 結論: tracked証拠だけでは完了入口は0/5。4入口は一部の面だけ実測済み、FOX Windows native CLIは基盤toolchain blockerにより追加でblocked。
+- 結論: 5/5入口でAGENTS・SKILLS・HOOKS・SESSIONS・Spotter監査を入口固有に確認した。
 
-## 入口別の証拠
+## 入口別結果
 
-| 入口 | AGENTS | SKILLS | HOOKS | SESSIONS | Spotter | 判定 |
-|---|---|---|---|---|---|---|
-| Mac 対話CLI | 実読済み | 明示・暗黙invocation済み | lifecycle済み。入口固有PreToolUse/Stop pendingなし | resume済み。Throughline restore mismatch | 新規session IDとのevent相関なし | `partial` |
-| main-server 対話CLI | 直接記録なし | tracked ADRは要約止まり | lifecycle済み。入口固有Stop pendingなし | Throughline handoffなし | 同session時間窓のevent相関あり | `partial` |
-| main-server App Remote | 直接記録なし | skill/routing実火 | Stop pending済み。compact再武装なし | host shell handoffのみ、restore未達 | Remote thread IDとのevent直接相関なし | `partial` |
-| FOX WSL2 対話CLI | 直接記録なし | tracked ADRは要約止まり | lifecycle済み。入口固有PreToolUse/Stop pendingなし | Throughline handoffなし | 新規promptのevent実火済み | `partial` |
-| FOX Windows native 対話CLI | 未回収 | skillsだけ部分回収 | dotagents calloutだけ実火 | resume未達 | 新規Codex event未達 | `blocked` |
+| 入口 | AGENTS / SKILLS | HOOKS | SESSIONS | Spotter | 判定 |
+|---|---|---|---|---|---|
+| Mac 対話CLI | ベル・日本語、公式skill面と明示/暗黙invocation | lifecycle全契約green | 新規・resume、closed session restore 2 cycleとも5/5/5 | Codex event実火、parse/runtime errorなし | `accepted` |
+| main-server 対話CLI | session `019f81ce-8f43-7b53-b376-8bdcef297d9e`で実読 | 4/4/4、エラーなし | Throughline ready/current thread一致 | event 113、Codex 60、parse/runtime error 0 | `accepted` |
+| main-server App Remote | thread `019f8058-c640-7b11-b51a-14b9b920e892`で実読・skill明示/暗黙実火 | trusted、UserPrompt/Stop実火 | multi-turn継続、Stop capture、context refresh ready | Spotter developer context配送をtranscriptで確認 | `accepted` |
+| FOX WSL2 対話CLI | session `019f81c9-41c0-7412-9bfe-8404c673a7d5`で実読 | 4/4/4、エラーなし | Throughline ready/current thread一致 | event 61、Codex 15、parse/runtime error 0 | `accepted` |
+| FOX Windows native 対話CLI | session `019f81e1-6914-7a12-a855-f3cb2f153d00`でベル・日本語と6 skill実読 | 4/4/4、SessionStart完了、timeout/invalid JSON再発なし | 新規sessionとresume IDを回収 | v1.4.28、event 42、parse/runtime error 0 | `accepted` |
 
-主要な直接証拠は次のとおり。
+## Windows blockerの解消
 
-- Mac新規session 6面: [ADR 0093](../adr/0093-cf0023-new-codex-session-acceptance.md)
-- Mac skill明示・暗黙invocation: [ADR 0102](../adr/0102-cf0106-skill-invocation-acceptance.md)
-- main-server App Remote: [ADR 0105](../adr/0105-cf0216-main-server-remote-acceptance.md)
-- main-server CLI runtime: [runtime receipt](2026-07-21-cf0216-main-server-codex-cli-runtime.json)
-- WSL2 baselineとWindows境界: [ADR 0099](../adr/0099-cf0092-partial-baseline-and-windows-blocker.md)
-- Mac・main-server・WSL2 hook lifecycle: [cf-0149 progress](2026-07-21-cf0149-codex-hook-lifecycle-progress.md)
-- Mac・main-server・WSL2 Spotter: [cf-0150 progress](2026-07-21-cf0150-spotter-cross-host-progress.md)
+旧Windows sessionではSpotter SessionStartの5秒超過と、dotagents Lattice案内の非ASCII JSONが
+同時に失敗していた。次の所有境界で修理した。
 
-## 未達と境界
+- Spotter `1.4.28` (`c137c3e`): SessionStart timeoutを30秒へ変更し、旧5秒設定を診断・再installで正規化。
+  local 533 tests（531 pass / 2 platform skip）、68-file pack、GitHub Actions run `29787330046` 6/6、
+  npm `latest`、tag / GitHub Release、4 host配布を確認した。
+- dotagents `dd08248`: `lib/lattice-hook.py`のCodex JSONをASCII安全化し、hook smokeを更新。
+  Windowsには最終dotagents push前の同一差分を先行配布したため、cloneは当該1ファイルだけ一時dirtyである。
+  最終push後のpullで同一blobへ収束する。
 
-FOX Windows nativeではCodex CLI 0.144.6のmodels cache schema error後に同一新規sessionのresumeが完了せず、agents・MCP・hooksの直接証拠を回収できない。既存`cf-0092`がこのblockerを所有する。基盤toolchain本体はdotagentsの修理・maintenance登録対象外である。
+修理後のWindows新規sessionでは、起動時に`SessionStart hook (completed)`を確認し、旧
+`hook timed out after 5s`と`invalid session start JSON output`はどちらも出なかった。read-only E2Eは
+`CF0146_WINDOWS_E2E_1428_OK`で完了した。
 
-Windows以外も入口固有の不足を持つ。汎用focused smoke、別入口、累計ledger、trackedでないworker receiptを合格証拠へ代用しない。したがって`cf-0146`全体をWindowsだけのblockerとして過小評価せず、上表の不足をすべてblock理由へ残す。
+## 証拠境界
 
-Lattice製品は変更していない。廃止済み`codex-rc`は実行・調査・復旧していない。ユーザー所有の未追跡`docs/evidence/fixtures/`は読まず、変更・stageもしない。
+- App Remoteはmain-server上のrollout JSONLを直接検索し、同一threadのAGENTS/skill実読、trusted hooks、
+  Throughline current thread/DB一致、Spotter context、multi-turn完了を確認した。UI上のINFO可視性だけを
+  合格条件へ過大拡張していない。
+- deeperなThroughline capture/restore/handoff品質は代表試験`cf-0125`が所有する。各入口の
+  `SESSIONS`は新規sessionの成立、継続、入口で利用可能なcapture/context相関を確認した。
+- Lattice製品は変更していない。廃止済み`codex-rc`は実行・調査・復旧していない。
+- ユーザー所有の未追跡`docs/evidence/fixtures/`は読まず、変更・stageしていない。
