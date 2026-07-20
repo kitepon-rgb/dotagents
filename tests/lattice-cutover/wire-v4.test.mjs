@@ -31,6 +31,15 @@ test('wire v4 acknowledgementはLatticeをtyped contractで受理する', () => 
   }, 'report-1'));
 });
 
+test('wire v4のaiterm MCP transportはJSON-RPC 2.0を使う', async () => {
+  const source = await readFile(new URL('../../lib/factory/v4.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('async function aiterm(');
+  const end = source.indexOf('\nasync function gpt(', start);
+  const implementation = source.slice(start, end);
+  assert.match(implementation, /jsonrpc: '2\.0'/u);
+  assert.doesNotMatch(implementation, /jsonrpc: '4\.0'/u);
+});
+
 test('導入・更新契約はretired Codegraphを再導入しない', async () => {
   const updater = await readFile(new URL('../../bin/agents-update.sh', import.meta.url), 'utf8');
   const verifier = await readFile(new URL('../../bin/verify-install.sh', import.meta.url), 'utf8');
