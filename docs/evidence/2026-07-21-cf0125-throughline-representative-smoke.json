@@ -1,0 +1,53 @@
+{
+  "schema": "dotagents.throughline_representative_smoke.v1",
+  "captured_at": "2026-07-20T19:36:51Z",
+  "task": "codex-full-support/cf-0125",
+  "throughline_version": "0.8.7",
+  "codex_thread_id": "019f7df0-71de-7b71-9488-fd86f0af989a",
+  "session_id": "codex:019f7df0-71de-7b71-9488-fd86f0af989a",
+  "capture": {
+    "status": "captured",
+    "source": "codex-rollout",
+    "captured_turns": 32,
+    "captured_rows": 46,
+    "corrupt_rows": 0
+  },
+  "handoff": {
+    "structural_smoke": "ready",
+    "execute_status": "started",
+    "reason": "new_thread_handoff_started",
+    "new_thread_id": "019f8107-58d7-7333-9dd1-7776bf422f84",
+    "delivery": "developer-item",
+    "current_thread_mutated": false,
+    "open_host": "none"
+  },
+  "restore": {
+    "status": "app-server-restart-mismatch",
+    "reason": "fresh_app_server_restore_counts_mismatch",
+    "proof_scope": "app_server_process_restart_only",
+    "restart_safe": false,
+    "expected_turns": 31,
+    "cycles": [
+      {
+        "cycle": 1,
+        "read_turns": 32,
+        "resumed_turns": 32,
+        "turns_list_turns": 33
+      },
+      {
+        "cycle": 2,
+        "read_turns": 33,
+        "resumed_turns": 33,
+        "turns_list_turns": 34
+      }
+    ],
+    "restore_safety": "ok",
+    "blocking_conclusion": "captureとhandoffは成功したが、fresh app-server間のturn数が一致しないためrestore受入は未達。成功扱いせず再試行を停止する。"
+  },
+  "scope": {
+    "throughline_product_modified": false,
+    "lattice_product_modified": false,
+    "codex_rc_used": false,
+    "fixtures_accessed": false
+  }
+}
