@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0110",
+  "repo_id": "self",
+  "path": "docs/adr/0110-cf0157-ledger-and-archive-boundary-correction.md",
+  "git_blob_oid": "7f6e124232f994652b529c1c58a467a5c190815c",
+  "content_digest": "68dd93ec0f33acb2c4d06fa1938ac5b0f9d0a08d5bdf1fcaa5c2b0071899498c",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
