@@ -66,6 +66,14 @@ else {
 }
 PY
 chmod +x "$STATE/advisory-bin/orchestrate-run"
+cat >"$STATE/advisory-bin/lattice" <<'JS'
+const fs = require("fs");
+const path = require("path");
+const mode = fs.readFileSync(path.join(__dirname, "mode"), "utf8").trim() || "valid";
+const active = mode === "empty" ? [] : [{ run_id: "lattice-run-a", run_ref: ".lattice/runs/lattice-run-a", base_sha: "a".repeat(40), executor_adapter: "scripted" }];
+console.log(JSON.stringify({ schema: "lattice.run_list.v1", active_runs: active, result_digest: "b".repeat(64) }));
+JS
+chmod +x "$STATE/advisory-bin/lattice"
 set_advisory_mode() { printf '%s\n' "$1" >"$STATE/advisory-bin/mode"; }
 cat >"$REPO/bin/orchestrate-run.mjs" <<'EOF'
 #!/usr/bin/env bash
@@ -96,7 +104,7 @@ set_advisory_mode valid
 run advisory-success env PATH="$STATE/sentinel:$PATH" GIT_DIR="$STATE/not-a-git" PYTHONPATH="$STATE/poison" NODE_OPTIONS="--require=$STATE/poison/node-options.js" ADVISORY_NODE_OPTIONS_LOG="$STATE/node-options.log" ADVISORY_RUNTIME_LOG="$STATE/runtime.log" ADVISORY_SENTINEL_LOG="$STATE/provider.log" ADVISORY_MALICIOUS_LOG="$STATE/malicious.log" "$ADVISORY" <<EOF
 {"session_id":"advisory-1","cwd":"$HOOK_REPO"}
 EOF
-json && [[ "$RUN_OUT" == *"active Control: control-a"* && "$RUN_OUT" == *"unknown Run: worker:worker-a"* && "$RUN_OUT" != *"permissionDecision"* ]] && pass advisory-success || fail_case advisory-success
+json && [[ "$RUN_OUT" == *"active Lattice run: lattice-run-a"* && "$RUN_OUT" == *"active Control: control-a"* && "$RUN_OUT" == *"unknown Run: worker:worker-a"* && "$RUN_OUT" != *"permissionDecision"* ]] && pass advisory-success || fail_case advisory-success
 [ ! -e "$STATE/provider.log" ] && pass advisory-no-provider || fail_case advisory-no-provider
 [ ! -e "$STATE/malicious.log" ] && pass advisory-no-repo-cli || fail_case advisory-no-repo-cli
 [ ! -e "$STATE/runtime.log" ] && [ ! -e "$STATE/node-options.log" ] && pass advisory-no-parent-runtime || fail_case advisory-no-parent-runtime

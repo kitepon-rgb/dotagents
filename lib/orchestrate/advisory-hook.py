@@ -19,6 +19,7 @@ CACHE_TTL_SECONDS = 7 * 24 * 60 * 60
 SYSTEM_PATHS = ("/usr/bin", "/bin", "/usr/sbin", "/sbin")
 GIT_CANDIDATES = ("/usr/bin/git", "/opt/homebrew/bin/git", "/usr/local/bin/git")
 NODE_CANDIDATES = ("/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node")
+LATTICE_CANDIDATES = ("/opt/homebrew/bin/lattice", "/usr/local/bin/lattice")
 
 
 def trusted_executable(candidates):
@@ -143,6 +144,20 @@ def cli_candidates(invoked_dir, source_dir):
     return result
 
 
+def lattice_candidates(invoked_dir):
+    candidates = [Path(invoked_dir) / "lattice", *(Path(value) for value in LATTICE_CANDIDATES)]
+    result = []
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve(strict=True)
+            info = resolved.stat()
+            if stat.S_ISREG(info.st_mode) and os.access(resolved, os.X_OK) and resolved not in result:
+                result.append(resolved)
+        except OSError:
+            pass
+    return result
+
+
 def stop_process(process):
     if process.poll() is not None:
         return
@@ -212,6 +227,31 @@ def run_cli(node, cli, payload, deadline):
                 pass
 
 
+def active_lattice_runs(node, cli, cwd, deadline):
+    try:
+        result = subprocess.run(
+            [str(node), str(cli), "run", "list", "--json"], cwd=cwd,
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            timeout=remaining(deadline, 0.75), check=False, env=safe_env((node, cli)),
+        )
+        if result.returncode != 0 or result.stderr or len(result.stdout) > CAPTURE_LIMIT:
+            return None
+        value = json.loads(result.stdout.decode("utf-8", "strict"))
+        if not isinstance(value, dict) or set(value) != {"schema", "active_runs", "result_digest"} or value.get("schema") != "lattice.run_list.v1":
+            return None
+        runs = value.get("active_runs")
+        expected = {"run_id", "run_ref", "base_sha", "executor_adapter"}
+        if not isinstance(runs, list) or len(runs) > 256 or not all(
+            isinstance(entry, dict) and set(entry) == expected
+            and all(isinstance(entry.get(key), str) and 0 < len(entry[key]) <= 256 for key in expected)
+            for entry in runs
+        ):
+            return None
+        return [entry["run_id"] for entry in runs]
+    except (OSError, UnicodeError, json.JSONDecodeError, subprocess.TimeoutExpired):
+        return None
+
+
 def ids(values):
     return values if isinstance(values, list) and len(values) <= 256 and all(isinstance(value, str) and 0 < len(value) <= 128 for value in values) else None
 
@@ -244,8 +284,9 @@ def section(label, values):
     return None if not values else f"{label}: {', '.join(values[:3])}{' …' if len(values) > 3 else ''}"
 
 
-def format_context(snapshot):
+def format_context(snapshot, lattice_runs=()):
     sections = [
+        section("active Lattice run", list(lattice_runs)),
         section("active Control", snapshot["active_control_ids"]),
         section("unknown Run", [f"worker:{entry}" for entry in snapshot["unknown"]["worker_run_ids"]] + [f"consultation:{entry}" for entry in snapshot["unknown"]["consultation_ids"]]),
         section("未回収", [f"worker:{entry}" for entry in snapshot["uncollected"]["worker_run_ids"]] + [f"consultation:{entry}" for entry in snapshot["uncollected"]["consultation_ids"]]),
@@ -294,7 +335,12 @@ def main():
             snapshot = snapshot_from_output(run_cli(node, cli, {"cwd": str(root), "evaluated_at": canonical_now()}, deadline) or b"")
             if snapshot is not None:
                 break
-        context = format_context(snapshot) if snapshot is not None else None
+        lattice_runs = None
+        for lattice in lattice_candidates(sys.argv[1]):
+            lattice_runs = active_lattice_runs(node, lattice, str(root), deadline)
+            if lattice_runs is not None:
+                break
+        context = format_context(snapshot, lattice_runs or ()) if snapshot is not None else None
         if context is None or time.monotonic() >= deadline:
             return
         sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": context}}, ensure_ascii=False) + "\n")
