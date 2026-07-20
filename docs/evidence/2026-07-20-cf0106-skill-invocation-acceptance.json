@@ -1,0 +1,56 @@
+{
+  "schema_version": "dotagents.skill-invocation-acceptance.v1",
+  "task": "codex-full-support/cf-0106",
+  "observed_at": "2026-07-20T11:58:42.000Z",
+  "host": "mac-kite",
+  "model": "gpt-5.6-sol",
+  "official_skills": [
+    "auto-deploy-on-push",
+    "gpt-connector",
+    "oracle",
+    "orchestrate",
+    "polish-github",
+    "run-observer-parent-watch"
+  ],
+  "lanes": [
+    {
+      "lane": "static",
+      "session_ref": "019f7f5a-41de-79d1-bc98-3b60411eda18",
+      "result_digest": "b12eaf52f9acafb6e951f61f756b2342550b0c8b9abc654919fa5f57544c164e",
+      "outcome": "passed",
+      "observations": ["6 frontmatter exact names", "6 non-empty descriptions", "official surface lists exactly 6 dotagents-owned skills"]
+    },
+    {
+      "lane": "explicit-a",
+      "session_ref_sha256": "e4e8c5c3e870f2d872e871739f5b933b8f5e50808207722b8c294d20d8f78515",
+      "transcript_digest": "1a97fd6884d44ae2b4804627a9455dcf1c62a845ad2fb1fee9f88dbce4ab975a",
+      "result_digest": "54c1df68979e15eca7992ff54b43b4be691c2b6af548b5a0a434a978d25fa944",
+      "outcome": "passed",
+      "selected_skills": ["auto-deploy-on-push", "gpt-connector", "oracle"],
+      "tool_call_items": 0
+    },
+    {
+      "lane": "explicit-b",
+      "session_ref_sanitized": "019f7f5a…74fdc",
+      "transcript_digest": "732b6fa53eea2426d3ff88ee15b892bd73339660c24161ed7b8e7893387da731",
+      "result_digest": "732b6fa53eea2426d3ff88ee15b892bd73339660c24161ed7b8e7893387da731",
+      "outcome": "passed",
+      "selected_skills": ["orchestrate", "polish-github", "run-observer-parent-watch"],
+      "tool_call_items": 0
+    },
+    {
+      "lane": "implicit",
+      "session_ref": "019f7f62-000b-74d3-9b0b-2128e78a1976",
+      "transcript_digest": "d6689b2a12294e17fc78f997624ab79d00f1997e408bc4503122fb8f30a2b1b2",
+      "result_digest": "a9d5cb2f9ead1812afac68cfb2d2759ded72c3840b6634b034a2c7240539f833",
+      "outcome": "passed",
+      "selected_skill": "polish-github",
+      "go_before_change": false,
+      "recovery_note": "The first ephemeral session selected polish-github but did not persist its final response. A single persistent recovery session reran the exact natural-language prompt; the failed session was not counted as accepted evidence."
+    }
+  ],
+  "workspace_status_digest_before_after": "6afdaafc8cfaef72e768a11e48d51547ff0865465f27cda60c3597127fea276d",
+  "workspace_changed_by_workers": false,
+  "lattice_product_modified": false,
+  "codex_rc_used": false
+}
