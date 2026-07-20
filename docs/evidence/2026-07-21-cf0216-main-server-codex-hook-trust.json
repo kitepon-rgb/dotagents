@@ -1,0 +1,68 @@
+{
+  "schema": "dotagents.cf0216.codex-hook-trust.v1",
+  "captured_at": "2026-07-20T16:17:21Z",
+  "host": "main-server",
+  "project_path": "/home/kite/Developer/dotagents",
+  "project_head": "a0e77059d7a4aa1ed1800abf2c9a3ee280b0b2a1",
+  "codex_version": "codex-cli 0.144.6",
+  "trust_surface": "interactive Codex CLI /hooks",
+  "authorization": "owner-approved H operation in the active goal",
+  "hook_config": {
+    "path": "/home/kite/.codex/hooks.json",
+    "sha256": "e7449911142eee8e9846ce532632428fef47b7579e3780b1498a1b5676d3a074"
+  },
+  "review": {
+    "method": "Each hook definition was opened and its command was checked before pressing t; trust-all was not used.",
+    "review_required_before": 15,
+    "review_required_after": 0,
+    "events": {
+      "PreToolUse": {
+        "installed": 1,
+        "active": 1,
+        "commands": [
+          "/usr/bin/env python3 /home/kite/.local/bin/codex-callout-hook pre-tool-use"
+        ]
+      },
+      "PostToolUse": {
+        "installed": 2,
+        "active": 2,
+        "commands": [
+          "/home/kite/.nvm/versions/node/v24.14.1/bin/node /home/kite/.nvm/versions/node/v24.14.1/lib/node_modules/throughline/bin/throughline.mjs codex-hook post-tool-use",
+          "/home/kite/.nvm/versions/node/v24.14.1/bin/node /home/kite/.nvm/versions/node/v24.14.1/bin/caveat codex-hook post-tool-use"
+        ]
+      },
+      "SessionStart": {
+        "installed": 4,
+        "active": 4,
+        "commands": [
+          "\"/home/kite/.nvm/versions/node/v24.14.1/bin/node\" \"/home/kite/.nvm/versions/node/v24.14.1/lib/node_modules/claude-spotter/bin/spotter.mjs\" codex-hook session-start",
+          "/usr/bin/env python3 /home/kite/.local/bin/codex-callout-hook session-start",
+          "/bin/sh /home/kite/.local/bin/orchestrate-advisory-hook",
+          "/usr/bin/env python3 /home/kite/.local/bin/codex-lattice-gantt-hook session-start"
+        ]
+      },
+      "UserPromptSubmit": {
+        "installed": 4,
+        "active": 4,
+        "commands": [
+          "/home/kite/.nvm/versions/node/v24.14.1/bin/node /home/kite/.nvm/versions/node/v24.14.1/lib/node_modules/throughline/bin/throughline.mjs codex-hook user-prompt-submit",
+          "\"/home/kite/.nvm/versions/node/v24.14.1/bin/node\" \"/home/kite/.nvm/versions/node/v24.14.1/lib/node_modules/claude-spotter/bin/spotter.mjs\" codex-hook user-prompt-submit",
+          "/home/kite/.nvm/versions/node/v24.14.1/bin/node /home/kite/.nvm/versions/node/v24.14.1/bin/caveat codex-hook user-prompt-submit",
+          "/usr/bin/env python3 /home/kite/.local/bin/codex-callout-hook user-prompt-submit"
+        ]
+      },
+      "Stop": {
+        "installed": 4,
+        "active": 4,
+        "commands": [
+          "/home/kite/.nvm/versions/node/v24.14.1/bin/node /home/kite/.nvm/versions/node/v24.14.1/lib/node_modules/throughline/bin/throughline.mjs codex-hook stop",
+          "\"/home/kite/.nvm/versions/node/v24.14.1/bin/node\" \"/home/kite/.nvm/versions/node/v24.14.1/lib/node_modules/claude-spotter/bin/spotter.mjs\" codex-hook stop",
+          "/home/kite/.nvm/versions/node/v24.14.1/bin/node /home/kite/.nvm/versions/node/v24.14.1/bin/caveat codex-hook stop",
+          "/usr/bin/env python3 /home/kite/.local/bin/codex-callout-hook stop"
+        ]
+      }
+    }
+  },
+  "result": "accepted",
+  "remaining_acceptance": "Create a new Codex App Remote task after trust and verify runtime hook delivery there."
+}

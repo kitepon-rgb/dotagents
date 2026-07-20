@@ -188,7 +188,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|
 | この端末 | macOS | desktop | official | [x] | [x] | dry-run差分0（apply不要） | [x] official | [ ] | [ ] | skill discovery green、新規 session E2E待ち |
 | この端末 | macOS | CLI | official（同端末） | 同端末参照 | 同端末参照 | 同端末参照 | 同端末参照 | [ ] | 同端末参照 | skill discovery green、新規 session E2E待ち |
-| main-server | Ubuntu 26.04 | Codex App SSH / CLI | official | [x] | [x] | routing＋hooks適用 | [x] official | [ ] | [ ] | 基盤green、hook trust・新規session E2E待ち |
+| main-server | Ubuntu 26.04 | Codex App SSH / CLI | official | [x] | [x] | routing＋hooks適用 | [x] official | [ ] | [x] | cf-0216のCLI `/hooks`個別trust、App Remote新規thread、skill/routing、Stop pending、Throughline新thread handoff、Claude回帰はgreen。compact後callout再武装を含む横断E2Eはcf-0149で継続（[実測証跡](evidence/2026-07-21-cf0216-main-server-codex-app-remote.json)） |
 | FOX | Windows native | Codex App SSH / native | official | [x] | [x] | routing＋hooks適用 | [x] official | [ ] | smoke [x] | 基盤green、App SSH表示・新規session E2E待ち |
 | FOX | WSL2 Ubuntu 26.04 | CLI | official | [x] | [x] | routing＋hooks適用 | [x] official | [ ] | smoke [x] | 基盤green、新規session E2E待ち |
 
@@ -212,6 +212,7 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 - `~/Developer/dotagents` へprivate repoをcloneし、origin/main同期・stash 0・shallow=false・clean・着手前 `make ci` greenを確認した。GitHub資格情報はheadless環境の `~/.config/gh/hosts.yml` にmode 0600で保存される。
 - tar backup後にofficial install、Codex routing / hooks、Claude必須hook 5本、Caveat-Private、親別MCP、MarkItDown、週次cronを配線した。`verify-install --profile official` と対象5 skill discoveryは当時の契約でgreen。Chrome不在のためOracle MCPは未配線であり、2026-07-13の工場コア再分類後は未完了として再検証対象に戻す。
 - 稼働監査はsystemd failed 0、containerd active・restart count 0、全Docker container running、healthcheck対象全件healthy。メインサーバーはオーナー裁定により常時稼働工場として正式採用した。
+- 2026-07-21の再実火では、CLI `/hooks` の15件個別trust、Codex App Remote新規thread、初回INFO／2回目沈黙、3 role routing verifier、dotagents配布skill、Stop pendingの1回配送、Claude新規session回帰がgreen。Throughline handoffはApp turnのsandboxでは`~/.codex/sessions`を書けないことを切り分け、main-server host shellから新thread `019f80f0-c1ca-7152-9a72-a815da1ab092`を作成しdeveloper handoff itemを確認した。compact後callout再武装だけは同一Desktop接続で未証明のため、横断工程`cf-0149`で継続する。詳細は[単一Remote証跡](evidence/2026-07-21-cf0216-main-server-codex-app-remote.json)。
 - Latticeへ移管済み: cf-0215 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L54
 - Latticeへ移管済み: cf-0216 → docs/archive/lattice-source-ledger/codex-full-support-cutover-20260719.md#L55
 

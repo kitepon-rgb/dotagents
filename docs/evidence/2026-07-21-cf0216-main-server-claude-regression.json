@@ -1,0 +1,47 @@
+{
+  "schema_version": "dotagents.cf0216-claude-regression.v1",
+  "task": "codex-full-support/cf-0216",
+  "observed_at": "2026-07-20T15:54:21.000Z",
+  "host": "main-server",
+  "project_root": "/home/kite/Developer/dotagents",
+  "session_id": "923f0a2d-1d48-40cb-b712-8a787d02f47f",
+  "session_lifecycle": {
+    "created_once_in_initial_run": true,
+    "creation_receipt_digest": "91e648588aaa1b805c7d7bdddd27f0866e69c779943b8fc674f642a02d874072",
+    "retried_by_same_session_resume_only": true
+  },
+  "authentication": {
+    "loggedIn": true,
+    "authMethod": "claude.ai"
+  },
+  "acceptance": {
+    "outcome": "passed",
+    "worker_result_digest": "9c69bc4d67e97c24f0ba1b32fba5832feff35839ff5944a278b991aad539556e",
+    "worker_report_digest": "e5f4fe2cacbf779888f9f585d53f47c687d00f1c2fd53ae838c39f9465a72330",
+    "checks": [
+      "global CLAUDE.md read",
+      "orchestrate skill read",
+      "minimal implementer delegation",
+      "aiterm diagnostics",
+      "caveat_search",
+      "Spotter UserPromptSubmit feedback",
+      "Spotter Stop receipt"
+    ]
+  },
+  "parent_verification": {
+    "remote_head": "a0e77059d7a4aa1ed1800abf2c9a3ee280b0b2a1",
+    "remote_status_clean": true,
+    "raw_transcript_shared": false,
+    "bounded_pattern_counts": {
+      "claude_spotter": 30,
+      "UserPromptSubmit": 31,
+      "IMPLEMENTER_PROBE_OK": 9,
+      "aiterm_diagnostics": 24,
+      "caveat_search": 24
+    }
+  },
+  "workspace_changed_by_worker": false,
+  "lattice_product_modified": false,
+  "codex_rc_used": false,
+  "fixtures_read_or_modified": false
+}

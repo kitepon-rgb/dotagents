@@ -70,7 +70,7 @@
 
 | 検証項目 | 実行手順 | 合格条件 |
 |----------|----------|----------|
-| hook trust | Codex App Remote connection（main-server）でプロジェクトを開き、hooks.json の callout / advisory / Spotter 3 hook を trust 承認 | trust 完了（UI 操作＝H） |
+| hook trust | main-serverの対話Codex CLIでプロジェクトを開き、`/hooks`からcallout / advisory / Spotter 3 hookをreviewしてtrust。続けてCodex App Remoteの新規threadで実火 | CLI trust完了＋App Remote実火（H）。App／IDEへ`/hooks`を送らない（ADR 0104） |
 | routing smoke（3 role） | Codex App remote または SSH CLI で新規 session。agent_type=xxx + fork_turns="none" で handshake-only spawn → `verify-codex-agent-routing <role> /root/...`（3回） | 3 role すべて "routing-check: OK" |
 | hooks 初回INFO / 2回目沈黙 / compact再武装 / Stop pending配送 | 同上 session で SessionStart / update_plan / prompt / Stop を順に発火 | Phase 6 INFO 契約どおり（初回INFO・2回目沈黙・compact後1回・pending 1回配送） |
 | Throughline 代表 smoke | 同 session 内で codex-capture / codex-handoff-smoke | capture/handoff 成功 |
@@ -96,7 +96,7 @@
 
 | 検証項目 | 実行手順 | 合格条件 |
 |----------|----------|----------|
-| hook trust | WSL2 側の Codex CLI / App 経由で trust 承認（Windows ダイアログ注意） | trust 完了。**現時点で callout/advisory は一時無効化（interop バグ既知）**。interop 安全化後に再適用・再確認 |
+| hook trust | WSL2側の対話Codex CLIで`/hooks`からtrust承認（Windowsダイアログ注意）。Appはtrust後の実火だけ | trust 完了。**現時点で callout/advisory は一時無効化（interop バグ既知）**。interop 安全化後に再適用・再確認 |
 | routing smoke（3 role） | WSL2 Codex CLI で新規 session。handshake-only spawn + `verify-codex-agent-routing <role> /root/...`（3回） | 3 role "routing-check: OK" |
 | hooks 初回INFO 等実火 | 同 session でイベント発火（interop 安全化後） | Phase 6 INFO 契約（初回INFO・沈黙・再武装・pending配送） |
 | Throughline 代表 smoke | 同上 | capture/handoff 成功 |
@@ -124,7 +124,7 @@
 
 | 検証項目 | 実行手順 | 合格条件 |
 |----------|----------|----------|
-| hook trust | Codex App（windows-workstation）または native CLI でプロジェクトを開き trust 承認 | trust 完了（App SSH 赤表示は既知・通常 SSH を正規入口とする） |
+| hook trust | windows-workstationのnative対話Codex CLIで`/hooks`からtrust承認。Appはtrust後の実火だけ | trust 完了（App SSH 赤表示は既知・通常 SSH を正規入口とする） |
 | routing smoke（3 role） | 新規 native Codex session。agent_type + fork_turns="none" で handshake-only spawn → `verify-codex-agent-routing <role> /root/...`（3回） | 3 role "routing-check: OK" |
 | hooks 初回INFO / 2回目沈黙 / compact再武装 / Stop pending配送 | 同 session で SessionStart / update_plan / prompt / Stop を発火 | Phase 6 INFO 契約どおり |
 | Throughline 代表 smoke | 同 session 内で codex-capture / codex-handoff-smoke | capture/handoff 成功 |

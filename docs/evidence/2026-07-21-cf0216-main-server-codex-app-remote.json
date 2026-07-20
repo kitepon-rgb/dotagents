@@ -1,0 +1,197 @@
+{
+  "schema_version": "dotagents.cf0216-codex-app-remote.v1",
+  "task": "codex-full-support/cf-0216",
+  "observed_at": "2026-07-20T19:11:31.183Z",
+  "host": "main-server",
+  "project_root": "/home/kite/Developer/dotagents",
+  "remote_project": {
+    "project_id": "c7181f2b-b637-416c-a065-69e39920633f",
+    "host_id": "remote-ssh-discovered:main-server",
+    "task_title": "テスト用？",
+    "thread_id": "019f8058-c640-7b11-b51a-14b9b920e892",
+    "originator": "Codex Desktop",
+    "initial_cli_version": "0.144.1",
+    "git_head": "a0e77059d7a4aa1ed1800abf2c9a3ee280b0b2a1"
+  },
+  "transcript": {
+    "path": "/home/kite/.codex/sessions/2026/07/21/rollout-2026-07-21T01-25-29-019f8058-c640-7b11-b51a-14b9b920e892.jsonl",
+    "bytes": 992989,
+    "sha256": "1360b5313072900193900c3008faf3604191c64aa83d4d728fd0b2bfc2ea318e",
+    "raw_copy_committed": false
+  },
+  "checks": [
+    {
+      "name": "new_remote_thread_and_initial_hook_context",
+      "outcome": "passed",
+      "turn_id": "019f8058-d338-7711-9989-5d9b000da540",
+      "evidence": "Codex Desktop originator、remote cwd、SessionStart Lattice/Spotter/orchestrate context、UserPromptSubmit Spotter contextを同一transcriptで確認"
+    },
+    {
+      "name": "same_thread_second_prompt_silence",
+      "outcome": "passed",
+      "turn_id": "019f80c5-885c-76a0-80c0-b567f770800f",
+      "evidence": "追加callout INFOなし、remote worktree clean、CF0216_APP_E2E_2_OK"
+    },
+    {
+      "name": "compact_event",
+      "outcome": "passed",
+      "evidence": "2026-07-20T18:28:06Zにcompactedとcontext_compactedを記録"
+    },
+    {
+      "name": "compact_rearm_same_app_connection",
+      "outcome": "not_proven",
+      "turn_id": "019f80cf-8de8-77c2-81e6-3d763d1cc29b",
+      "evidence": "post-compact turnで見えたのはUserPromptSubmit Spotter INFOのみ。独立app-server resumeはSessionStart再発火を伴うため、同一Desktop接続のcompact再武装の代証にしない",
+      "follow_up_task": "codex-full-support/cf-0149"
+    },
+    {
+      "name": "native_role_routing",
+      "outcome": "passed",
+      "turn_id": "019f80e8-8ab8-7a41-969e-d841bc229a24",
+      "roles": [
+        {
+          "role": "implementer",
+          "agent_path": "/root/cf0216_final_implementer",
+          "model": "gpt-5.6-terra",
+          "effort": "medium",
+          "developer_instructions": "applied",
+          "verifier": "routing-check: OK"
+        },
+        {
+          "role": "refuter",
+          "agent_path": "/root/cf0216_final_refuter",
+          "model": "gpt-5.6-sol",
+          "effort": "high",
+          "developer_instructions": "applied",
+          "verifier": "routing-check: OK"
+        },
+        {
+          "role": "sorter",
+          "agent_path": "/root/cf0216_final_sorter",
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "developer_instructions": "applied",
+          "verifier": "routing-check: OK"
+        }
+      ]
+    },
+    {
+      "name": "dotagents_user_skill_runtime",
+      "outcome": "passed",
+      "turn_id": "019f80e8-8ab8-7a41-969e-d841bc229a24",
+      "skill": "orchestrate",
+      "skill_path": "/home/kite/Developer/dotagents/codex/skills/orchestrate/SKILL.md"
+    },
+    {
+      "name": "implicit_throughline_skill_and_capture",
+      "outcome": "passed",
+      "turn_id": "019f80d5-00d6-7183-b829-27b954b950b5",
+      "evidence": "自然言語診断からthroughline workflowを選択。doctorでhooks trusted、context refresh ready、current threadと最新DB session一致"
+    },
+    {
+      "name": "stop_pending_one_shot_delivery",
+      "outcome": "passed",
+      "turn_ids": [
+        "019f80d7-c1ee-79d1-86e3-b3891b64d525",
+        "019f80d8-6c86-7d00-9a2c-dea48d4a38a4",
+        "019f80d9-2790-7310-bd3a-d3896808a161",
+        "019f80d9-d5d8-73c2-aae5-e9f1f63bfc51"
+      ],
+      "evidence": "一時untracked fileの作成後、次turnにpending INFOを1回配送し、cleanup pending配送後の最終turnで沈黙。probeは削除されremote clean"
+    },
+    {
+      "name": "throughline_new_thread_handoff",
+      "outcome": "passed",
+      "source_thread_id": "019f8058-c640-7b11-b51a-14b9b920e892",
+      "new_thread_id": "019f80f0-c1ca-7152-9a72-a815da1ab092",
+      "execution_surface": "main-server host shell",
+      "open_host": "none",
+      "desktop_open": "skipped_remote_linux_boundary",
+      "desktop_url": "codex://threads/019f80f0-c1ca-7152-9a72-a815da1ab092",
+      "resume_command": "codex resume 019f80f0-c1ca-7152-9a72-a815da1ab092 --no-alt-screen",
+      "new_transcript": {
+        "path": "/home/kite/.codex/sessions/2026/07/21/rollout-2026-07-21T04-11-29-019f80f0-c1ca-7152-9a72-a815da1ab092.jsonl",
+        "bytes": 122458,
+        "sha256": "5f5ec149f9d5bd0a129a7b479159a6ca3859e6041207abb2548180a9156e85ed",
+        "developer_handoff_item_present": true
+      },
+      "failed_harness_attempts": [
+        {
+          "turn_id": "019f80ea-6197-7002-8851-5b88bc016cb0",
+          "sandbox": "readOnly",
+          "reason": "~/.codex/sessionsへの新thread永続化がsandbox外"
+        },
+        {
+          "turn_id": "019f80ef-aeb7-7ea0-a0ed-298eb1a58e8a",
+          "sandbox": "workspaceWrite",
+          "reason": "writable rootがrepoと/tmpに限定され、~/.codex/sessionsは依然sandbox外"
+        }
+      ],
+      "product_bug": false
+    },
+    {
+      "name": "gpt_connector_main_server_consultation",
+      "outcome": "skipped_unsupported",
+      "evidence": "modelsはCDP_UNAVAILABLE、browser startはnon-macOS INVALID_INPUT。Oracleや通常Chromeへfallbackせず、ADR 0103のtask boundaryどおり扱った"
+    }
+  ],
+  "hook_notifications_from_app_server_turns": {
+    "post_compact": {
+      "started": 15,
+      "completed": 15
+    },
+    "routing_skill_final": {
+      "started": 42,
+      "completed": 42
+    },
+    "throughline_handoff_final": {
+      "started": 24,
+      "completed": 24
+    },
+    "throughline_handoff_corrected_sandbox_attempt": {
+      "started": 21,
+      "completed": 21
+    }
+  },
+  "remote_final_state": {
+    "git_status_short": "",
+    "git_head": "a0e77059d7a4aa1ed1800abf2c9a3ee280b0b2a1",
+    "temporary_probe_absent": true
+  },
+  "validation": {
+    "spotter_diagnostics": {
+      "command": "spotter diagnostics logs --project /home/kite/Developer/dotagents --json",
+      "hook_event_count": 95,
+      "parse_errors": 0,
+      "codex_event_count": 44,
+      "pre_tool_use_count": 15,
+      "runtime_error_records": 0,
+      "open_runtime_errors": 0
+    },
+    "lattice_verify": {
+      "outcome": "passed",
+      "plan_version": "rev-fda51d893463c87bac2e3186",
+      "revision_digest": "31b9d8db176038242aefc33739c498f3a10716a56dffa5dbb53bfa0d2c930a04",
+      "reconciliation_state": "reconciled"
+    },
+    "make_lint": "passed"
+  },
+  "maintenance_findings": [
+    {
+      "owner": "dotagents",
+      "finding": "Stop pendingのdirty→clean cleanup表示が現行clean porcelainを再集計し、0ファイル／コミット0と表示する",
+      "lattice_task": "codex-full-support/cf-0283",
+      "lattice_revision": "rev-fda51d893463c87bac2e3186"
+    }
+  ],
+  "related_evidence": [
+    "docs/evidence/2026-07-21-cf0216-main-server-remote-preflight.json",
+    "docs/evidence/2026-07-21-cf0216-main-server-codex-hook-trust.json",
+    "docs/evidence/2026-07-21-cf0216-main-server-codex-cli-runtime.json",
+    "docs/evidence/2026-07-21-cf0216-main-server-claude-regression.json"
+  ],
+  "overall_outcome": "passed_with_compact_rearm_follow_up",
+  "lattice_product_modified": false,
+  "codex_rc_used": false,
+  "fixtures_read_or_modified": false
+}

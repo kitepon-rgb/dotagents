@@ -135,7 +135,7 @@ codex --profile work
 - 2ファイルは temp へ先に prepare / fsync してから置換し、途中失敗なら既に置換した側も original へ rollback する。rollback 自体が失敗した場合は明示エラーで止まる。
 - `CODEX_HOME` は test や別 home 用に指定できる。実端末の通常値は `$HOME/.codex`。
 
-同じ状態へ2回適用しても変更も backup も増えない。hook trust の UI 承認、OAuth login、MCP の登録はこの script の責務外である。
+同じ状態へ2回適用しても変更も backup も増えない。hook trust の対話Codex CLI `/hooks`承認、OAuth login、MCP の登録はこの script の責務外である。Codex App／IDEへ`/hooks`を送ってもtrust入口にはならない（[ADR 0104](adr/0104-cf0216-hook-trust-surface-correction.md)）。
 
 ## 8. 旧 `~/.codex/AGENTS.md` の退避・置換手順
 
@@ -157,7 +157,7 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 
 各 command は、WSL2 interop の拡張子dispatchへ落ちないよう、展開済み絶対pathのscriptを明示interpreterで起動する。POSIXではPython製のcalloutとLattice案内を `/usr/bin/env python3 $HOME/.local/bin/<hook> ...`、shell製のorchestrate advisoryを `/bin/sh $HOME/.local/bin/orchestrate-advisory-hook` とする。Windows nativeではPowerShellのcall operator `&` に続けてapplier自身の`python.exe`とGit for Windowsの`sh.exe`を絶対pathで固定し、全tokenを二重引用符で囲む。Codex hook runnerは現在のturn shellを使うため、`&`がquoted executableの呼出しを成立させ、引用はspaceとbackslashを保つ。各hookはmatcherのない専用entryに1件だけ置き、旧direct-exec表記はapplierが同一hookとして回収してhost別canonical表記へ置換する。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
 
-`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話 Codex で trust を承認し、新規 session で X1 から実火確認する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook session-start`が各1件のcanonical entryであることを検証する。
+`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話Codex CLIの`/hooks`でtrustを承認し、新規sessionでX1から実火確認する。App／IDE入口を受け入れる場合も、同じuser homeのCLIでtrustした後、その入口の新規sessionで実火する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook session-start`が各1件のcanonical entryであることを検証する。
 
 ### Orchestrate advisory（SessionStart）
 
@@ -190,7 +190,7 @@ fallbackは持たない。
 
 対象projectで `spotter install -y` を実行する。Spotterがuser-level `SessionStart` / `UserPromptSubmit` / `Stop` の3本を同期command schemaでcanonical化し、projectの `.spotter/marker.json` がある時だけ発火する。`SessionStart` を `async:true` にしない（Codex CLI 0.144.1はasync hookをskipする）。dotagentsの `apply-codex-config` はSpotter entryを保持し、再実装・削除・trust変更をしない。
 
-検証は `spotter codex-hook diagnostics --project <project>` で `installed / compatible / canonical` を確認した後、対話Codexの `/hooks` で3本をreviewし、新規sessionで `.spotter/hook-events.jsonl` の `spotter.hook_event.v1` を実火する。機械診断の `configured-unverified` は設定合格であって、trust・実火完了を意味しない。
+検証は `spotter codex-hook diagnostics --project <project>` で `installed / compatible / canonical` を確認した後、対話Codex CLIの`/hooks`で3本をreviewし、新規sessionで `.spotter/hook-events.jsonl` の `spotter.hook_event.v1` を実火する。App／IDEでは`/hooks`をtrust入口にせず、CLI trust後にその入口の新規sessionを使う。機械診断の `configured-unverified` は設定合格であって、trust・実火完了を意味しない。
 
 ## 10. MCP の親別 matrix と登録 / 疎通
 

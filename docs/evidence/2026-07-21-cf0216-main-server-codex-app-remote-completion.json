@@ -1,0 +1,9 @@
+{
+  "evidence_id": "cf-0216-main-server-app-remote",
+  "repo_id": "self",
+  "path": "docs/evidence/2026-07-21-cf0216-main-server-codex-app-remote.json",
+  "git_blob_oid": "f1fe2d37786a0d8d46789f1ec7cde799d7a86fff",
+  "content_digest": "94c9acb5a1651e400abcf460d2bed4ad706565da86a5cef1b00f056cccf12b96",
+  "media_type": "application/json",
+  "anchor_digest": null
+}

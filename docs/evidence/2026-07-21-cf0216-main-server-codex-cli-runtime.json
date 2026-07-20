@@ -1,0 +1,64 @@
+{
+  "schema": "dotagents.cf0216.codex-cli-runtime.v1",
+  "captured_at": "2026-07-20T16:23:07Z",
+  "host": "main-server",
+  "project_path": "/home/kite/Developer/dotagents",
+  "entry": "interactive Codex CLI started after hook trust",
+  "codex_session_id": "019f8053-e6b8-70c3-af03-7c81f3c865c3",
+  "probe": {
+    "prompt": "Run pwd only and return the result; do not change files.",
+    "tool": "exec_command",
+    "expected_cwd": "/home/kite/Developer/dotagents",
+    "remote_worktree_clean_after": true
+  },
+  "tui_observation": {
+    "SessionStart": {
+      "configured": 4,
+      "ran": 4,
+      "completed_banner_seen": true
+    },
+    "UserPromptSubmit": {
+      "configured": 4,
+      "ran": 4,
+      "completed_banner_seen": true
+    },
+    "PreToolUse": {
+      "configured": 1,
+      "ran": 1
+    },
+    "PostToolUse": {
+      "configured": 2,
+      "ran": 2
+    },
+    "Stop": {
+      "configured": 4,
+      "ran": 4
+    }
+  },
+  "spotter_evidence": {
+    "path": "/home/kite/Developer/dotagents/.spotter/hook-events.jsonl",
+    "schema": "spotter.hook_event.v1",
+    "window_start": "2026-07-20T16:20:10Z",
+    "first_event": "2026-07-20T16:20:50.488Z",
+    "last_event": "2026-07-20T16:21:09.388Z",
+    "count": 3,
+    "hooks": {
+      "SessionStart": 1,
+      "UserPromptSubmit": 1,
+      "Stop": 1
+    },
+    "statuses": {
+      "refresh_spawned": 1,
+      "skipped": 1,
+      "success": 1
+    }
+  },
+  "transcript": {
+    "path": "/home/kite/.codex/sessions/2026/07/21/rollout-2026-07-21T01-20-10-019f8053-e6b8-70c3-af03-7c81f3c865c3.jsonl",
+    "bytes": 87909,
+    "sha256": "eeec783f1cd4cf45d13eb71a086318ca5d34e6c685a2cfc56b7ff42a580cae43",
+    "raw_content_copied": false
+  },
+  "result": "accepted as CLI runtime preflight",
+  "scope_note": "This does not replace the required Codex App Remote new-task E2E."
+}
