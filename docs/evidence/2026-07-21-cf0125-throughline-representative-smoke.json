@@ -48,6 +48,6 @@
     "throughline_product_modified": false,
     "lattice_product_modified": false,
     "codex_rc_used": false,
-    "fixtures_accessed": false
+    "fixtures_modified_or_staged": false
   }
 }
