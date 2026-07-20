@@ -112,6 +112,29 @@ run x4-warn python3 "$HOOK" stop <<EOF
 EOF
 [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/$(session_key t1).codex-pending" ] && pass x4-warn || fail_case x4-warn
 
+# dirty snapshot から同一HEADのcleanへ戻った時も、直前の変更pathを保持して0ファイルと誤表示しない。
+git -C "$REPO" restore source.txt
+run x4-dirty-clean python3 "$HOOK" stop <<EOF
+{"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
+EOF
+pending=$(cat "$STATE/dotagents/hooks/$(session_key t1).codex-pending")
+[ "$RUN_BYTES" -eq 0 ] && [[ "$pending" == *'1 ファイルの作業差分を解消'* && "$pending" != *'0 ファイル'* ]] && pass x4-dirty-clean || fail_case x4-dirty-clean
+
+# 配布前の2行snapshotでも、dirty→cleanを0ファイルとは表示しない。
+printf '%s\n' legacy >>"$REPO/source.txt"
+run x4-legacy-baseline python3 "$HOOK" stop <<EOF
+{"session_id":"t-legacy","cwd":"$HOOK_REPO","stop_hook_active":false}
+EOF
+legacy_snapshot=$(find "$STATE/dotagents/hooks" -maxdepth 1 -name "$(session_key t-legacy).*codex-snapshot" -print -quit)
+sed -n '1,2p' "$legacy_snapshot" >"$legacy_snapshot.old"
+mv "$legacy_snapshot.old" "$legacy_snapshot"
+git -C "$REPO" restore source.txt
+run x4-legacy-dirty-clean python3 "$HOOK" stop <<EOF
+{"session_id":"t-legacy","cwd":"$HOOK_REPO","stop_hook_active":false}
+EOF
+pending=$(cat "$STATE/dotagents/hooks/$(session_key t-legacy).codex-pending")
+[ "$RUN_BYTES" -eq 0 ] && [[ "$pending" == *'dirtyだった作業差分を解消'* && "$pending" != *'0 ファイル'* ]] && pass x4-legacy-dirty-clean || fail_case x4-legacy-dirty-clean
+
 run x4-active python3 "$HOOK" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":true}
 EOF

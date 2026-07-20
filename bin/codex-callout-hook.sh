@@ -68,8 +68,9 @@ def snapshot_path(session_id, repo_key):
     return os.path.join(STATE_DIR, f"{session_key(session_id)}.{repo_key}.codex-snapshot")
 
 
-def write_snapshot(path, porcelain_hash, head):
-    safe_write(path, f"{porcelain_hash}\n{head}\n")
+def write_snapshot(path, porcelain_hash, head, porcelain=""):
+    paths = json.dumps(sorted(status_paths(porcelain)), ensure_ascii=False)
+    safe_write(path, f"{porcelain_hash}\n{head}\n{paths}\n")
 
 
 def plan_files(root):
@@ -105,10 +106,10 @@ def session_start(data):
                 pass
     if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
         return
-    root, repo_key, porcelain_hash, head, _ = repo_info(cwd)
+    root, repo_key, porcelain_hash, head, porcelain = repo_info(cwd)
     snap = snapshot_path(session_id, repo_key)
     if not safe_exists(snap):
-        write_snapshot(snap, porcelain_hash, head)
+        write_snapshot(snap, porcelain_hash, head, porcelain)
     if source not in ("startup", "clear"):
         return
     # stocktake はリポキーのみ＝Claude 側 C2 と意図的に共有（同一リポの棚卸し表示を統合抑制）
@@ -219,31 +220,44 @@ def stop(data):
     key = session_key(session_id)
     snap = snapshot_path(session_id, repo_key)
     if not safe_exists(snap):
-        write_snapshot(snap, porcelain_hash, head)
+        write_snapshot(snap, porcelain_hash, head, porcelain)
         return
     try:
-        old_porcelain, old_head = (safe_read(snap) or "").splitlines()[:2]
-    except ValueError:
-        write_snapshot(snap, porcelain_hash, head)
+        snapshot = (safe_read(snap) or "").splitlines()
+        old_porcelain, old_head = snapshot[:2]
+        old_paths = set()
+        if len(snapshot) >= 3:
+            stored_paths = json.loads(snapshot[2])
+            if not isinstance(stored_paths, list) or not all(isinstance(path, str) for path in stored_paths):
+                raise ValueError
+            old_paths.update(stored_paths)
+    except (ValueError, json.JSONDecodeError):
+        write_snapshot(snap, porcelain_hash, head, porcelain)
         return
     if old_porcelain == porcelain_hash and old_head == head:
-        write_snapshot(snap, porcelain_hash, head)
+        write_snapshot(snap, porcelain_hash, head, porcelain)
         return
     paths = status_paths(porcelain)
+    cleanup = not porcelain and old_porcelain != hashlib.sha1(b"").hexdigest() and old_head == head
+    if cleanup:
+        paths.update(old_paths)
     commits = 0
     if old_head != head:
         try:
             paths.update(filter(None, run_git(root, "diff", "--name-only", old_head, head).splitlines()))
             commits = int(run_git(root, "rev-list", "--count", f"{old_head}..{head}").strip())
         except Exception:
-            write_snapshot(snap, porcelain_hash, head)
+            write_snapshot(snap, porcelain_hash, head, porcelain)
             return
     plans = ["docs/" + name for name in plan_files(root) if name.startswith("plan_")]
-    write_snapshot(snap, porcelain_hash, head)
+    write_snapshot(snap, porcelain_hash, head, porcelain)
     if not plans or any(path in paths for path in plans):
         return
     gc()
-    summary = f"{len(paths)} ファイル/コミット {commits}"
+    if cleanup:
+        summary = f"{len(paths)} ファイルの作業差分を解消/コミット {commits}" if paths else f"dirtyだった作業差分を解消/コミット {commits}"
+    else:
+        summary = f"{len(paths)} ファイル/コミット {commits}"
     message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。この差分が当該planに属する統括レーンなら進捗を反映し、無関係な通常レーンなら更新不要です。この情報は依頼範囲を広げません。"
     safe_write(os.path.join(STATE_DIR, f"{key}.codex-pending"), message + "\n")
 
