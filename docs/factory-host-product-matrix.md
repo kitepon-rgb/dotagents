@@ -1,7 +1,7 @@
 # 工場 host × product 期待matrix
 
-更新日: 2026-07-18  
-正本: dotagents  
+更新日: 2026-07-20
+正本: dotagents
 対象: Mac、main-server、FOX WSL2、FOX Windows native
 
 ## 判定語彙
@@ -23,12 +23,11 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | Caveat | required | required | required | required | high |
 | Throughline | required | required | required | required | high |
 | Spotter | required | required | required | required | high |
-| Codegraph | required | required | required | required | high |
 | MarkItDown | required | required | required | required | high |
 | gpt-connector | required | required | required | required | high |
 | aiterm-mcp | required | required | required | required | high |
 | codex-sidecar | required | required | required | required | high |
-| Lattice（編入中・第11） | required（wire v4 enrollまでreporter検査対象外） | 同左 | 同左 | CLI presenceのみrequired／**executor依存runtime面はunsupported**（Claude/Codex/Grok全toolchain不在の構造要因） | high（enroll後） |
+| Lattice | required | required | required | required | high |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
 | Claude Code CLI | required | required | required | unsupported | high |
 | Codex CLI | required | required | required | unsupported | high |
@@ -43,13 +42,16 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | Caveat | MCP＋4 hooks required | native 3 hooks required（MCP不要） |
 | Throughline | hook/CLI required | hook/skill/CLI required |
 | Spotter | 対象projectで明示install required | 対象projectで明示install required |
-| Codegraph | MCP required | MCP required |
 | MarkItDown | CLI required | CLI required |
 | gpt-connector | MCP `gpt_connector` required。専用Chrome非対応hostはconnectorだけunsupported | MCP `gpt_connector` required。timeout後は sessions 回収 |
 | aiterm-mcp | MCP required | Codex/Grok/Composer用MCP required。native枠外の外部実行に使う |
 | codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う |
 | Lattice | required。`lattice-mcp`のsensor 8 toolを配線。`codegraph_*`互換名はLattice提供者identityを返す | 同左。Windows nativeは親CLIを運用する端末だけMCP登録 |
 | ServerManager | connector not_applicable | connector not_applicable |
+
+独立Codegraphは全hostで退役済みであり、製品・connector期待matrixへ含めない。BugHubの既存履歴だけを
+`not_applicable`として保持する。Latticeの`codegraph_*` tool名はLattice所有の入力互換ABIであり、
+独立Codegraph MCP登録を意味しない。
 
 Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。
 

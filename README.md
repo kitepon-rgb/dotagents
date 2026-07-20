@@ -106,7 +106,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
 | bin | `apply-codex-config.sh` | routing 2キー、dotagents callout hook 4イベント、SessionStart advisory 1件、SessionStart Lattice工程表案内1件だけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
-| 工場コア | Caveat／Throughline／Spotter／Codegraph／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar（dotagents 外） | 罠知識／セッション継続／未使用ツール監査／コード構造理解／資料変換／ChatGPT相談／PTY・外部枠／Claude・Codex親からの隔離Codex実行を担う必須8製品。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理する。Oracleは互換・rollback専用 |
+| 工場コア | Caveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar（dotagents 外） | 罠知識／セッション継続／未使用ツール監査・工程graph＋コード構造理解／資料変換／ChatGPT相談／PTY・外部枠／Claude・Codex親からの隔離Codex実行を担う必須8製品。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理する。Oracleは互換・rollback専用 |
 | 中央管理コア | ServerManager（dotagents 外） | dotagentsが管理・連携する第9製品。内部のBugHubをversion・bug・compatibility結果の統括に使う。BugHubを独立した第10製品へ分離しない |
 | コード構造・工程graph | Lattice（dotagents外） | 現役コア8製品の1つ。Codegraphを完全吸収した正式後継で、`lattice-mcp`と同梱sensorを所有する。独立Codegraphはretired／not_applicable履歴だけを保持。進行・契約は[導入plan](docs/plan_lattice-factory-integration.md)が正 |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
@@ -124,7 +124,7 @@ Claude command の Codex 正規入口は slash command の模造ではなく、�
 コア9製品の追加・削除・第三者化・所有移管は、`PRODUCT_IDS`や表の1行だけを変えて終わりにしない。変更前に対象repo、所有者、自作/第三者区分、version入口、正規diagnostics、state/schema/migration、runtime error、host/connector期待、修正先repoを [有限契約台帳](docs/factory-product-contracts.md) へ記録する。
 
 1. 追加は、製品側の正規入口（第三者は公開CLI/APIだけ）を確定し、host matrix、更新経路、adapter、BugHubの固定product集合と期待matrix、privacy fixture、install/verifyを同じ独立waveで追加する。自作製品はnative diagnosticsを先に作り、dotagentsが内部DBを推測しない。
-2. 削除は、`rg -a`とcodegraph等でconsumerを確認し、scheduler/outbox/runtime cursorを停止・drainしてから行う。BugHubの履歴を物理削除せず、移行中の旧clientは対象を`not_applicable`で報告し、server期待matrixから外す時期とclient/server双方が旧reportを扱う期間を明示する。
+2. 削除は、`rg -a`とLattice sensorでconsumerを確認し、scheduler/outbox/runtime cursorを停止・drainしてから行う。BugHubの履歴を物理削除せず、移行中の旧clientは対象を`not_applicable`で報告し、server期待matrixから外す時期とclient/server双方が旧reportを扱う期間を明示する。
 3. 第三者化は、製品repoへのinstrumentation・内部state解釈・fork/patchを撤去し、version範囲付きblack-box adapterへ切り替える。追従不能な状態は`unsupported`または`unverified`であり、greenへ丸めない。
 4. 所有移管は、source/state/schemaの所有者、release/update経路、修正先repo、credential責務を更新する。dotagentsが持つのは統合契約であり、製品のsourceやstateを無断で移動しない。基準path・repo移動はこの変更とは別にオーナーの明示承認を取る。
 5. wire schema majorを変える時は [factory reporterランブック](docs/factory-reporter-runbook.md#11-bughub-wire-schema-major互換matrix) のserver-first・別endpoint・dual-run手順を使う。全repoを独立commit/rollback可能にし、各full gateとcanary後にだけ旧majorをretireする。
@@ -230,7 +230,7 @@ permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを�
 
 ## 自動アップデート（常設・全端末必須）
 
-`~/.local/bin/agents-update` が curated CLI / SDK / MCP 群 (Claude Code / Codex CLI / gpt-connector / aiterm-mcp / Codex Sidecar / Throughline / Caveat / Codegraph / claude-spotter / Anthropic SDK / pnpm) をNPM `@latest`へ、MarkItDownを `uv tool upgrade` で更新する。**「推奨」ではなく常設が必須**（2026-07-04 実測: この一手を省いた端末では旧世代の自動更新が別リストで回り続け、真実が二重化していた）。1製品でも更新に失敗したら製品名をログへ残し、残り製品の更新と更新後のfactory contract scan/reportを継続する。更新処理とreporterの成否は別々に記録し、どちらか一方でも失敗ならジョブを非0終了する。reporterは明示opt-in設定に従い、収集OFFならscan前、送信OFFならnetwork前で停止する。詳細は [factory reporterランブック](docs/factory-reporter-runbook.md#9-agents-updateとの接続) を参照。
+`~/.local/bin/agents-update` が curated CLI / SDK / MCP 群 (Claude Code / Codex CLI / gpt-connector / aiterm-mcp / Codex Sidecar / Throughline / Caveat / Lattice / claude-spotter / Anthropic SDK / pnpm) をNPM `@latest`へ、MarkItDownを `uv tool upgrade` で更新する。**「推奨」ではなく常設が必須**（2026-07-04 実測: この一手を省いた端末では旧世代の自動更新が別リストで回り続け、真実が二重化していた）。1製品でも更新に失敗したら製品名をログへ残し、残り製品の更新と更新後のfactory contract scan/reportを継続する。更新処理とreporterの成否は別々に記録し、どちらか一方でも失敗ならジョブを非0終了する。reporterは明示opt-in設定に従い、収集OFFならscan前、送信OFFならnetwork前で停止する。詳細は [factory reporterランブック](docs/factory-reporter-runbook.md#9-agents-updateとの接続) を参照。
 
 **Step 0 — 旧自動更新の撲滅（一つの真実）**: 先に古い npm 自動更新が居ないか掃引し、居たら停止・撤去する。
 
