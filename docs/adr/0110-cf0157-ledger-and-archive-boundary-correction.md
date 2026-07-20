@@ -30,4 +30,3 @@ Latticeへの明示移管」に限定して完了とする。`cf-0024`、`cf-028
 - 現役製品台帳: Latticeを含み、独立Codegraphを含まない
 
 Lattice製品repoは変更していない。廃止済み`codex-rc`は利用していない。
-

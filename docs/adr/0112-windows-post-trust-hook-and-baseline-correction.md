@@ -41,4 +41,3 @@ post-trust sessionではSpotter以外を含むhookの一部`Failed`表示が残�
 
 core MCPはSTDIOでありOAuth非適用。任意・認証依存MCPのOAuthは実施しておらずWARNのまま保持する。
 Lattice製品repoは変更していない。廃止済み`codex-rc`とユーザー所有fixtureは未使用である。
-

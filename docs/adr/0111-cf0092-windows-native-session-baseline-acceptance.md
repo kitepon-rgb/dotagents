@@ -46,4 +46,3 @@ sessionの自動実火ではledgerが増えなかった。この差分は`cf-015
 
 Lattice製品repoは変更していない。廃止済み`codex-rc`は利用していない。ユーザー所有fixtureは
 未読・未変更・未stageである。
-

@@ -37,4 +37,3 @@ Codex App Remoteでhook INFOが会話画面へ配送されなかった事象は�
 Throughline handoffの受入へ拡張しない。
 
 Lattice製品repoは変更していない。廃止済み`codex-rc`は利用していない。
-
