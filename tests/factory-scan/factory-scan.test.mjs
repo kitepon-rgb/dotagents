@@ -435,7 +435,7 @@ if [ "$1" = "--version" ]; then
   echo '${stdout}'
 else
   echo diagnostic >> '${calls}'
-  ${product.id === 'codegraph' ? "echo '{\"initialized\":true}'" : product.id === 'oracle' ? "echo '{\"healthy\":true}'" : "echo 'converted'"}
+  ${product.id === 'oracle' ? "echo '{\"healthy\":true}'" : "echo 'converted'"}
 fi`);
       await writeFile(box.config, JSON.stringify(validConfig()));
 

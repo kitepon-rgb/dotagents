@@ -38,5 +38,7 @@ test('導入・更新契約はretired Codegraphを再導入しない', async () 
   assert.doesNotMatch(updater, /@colbymchenry\/codegraph/u);
   assert.match(verifier, /retired Codegraph command remains on PATH/u);
   assert.doesNotMatch(scheduler.match(/const required = \[[^\]]+\]/u)?.[0] ?? '', /codegraph/u);
+  const legacyScheduler = await readFile(new URL('../../bin/factory-reporter-v2-schedule-runner.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(legacyScheduler.match(/const required = \[[^\]]+\]/u)?.[0] ?? '', /codegraph/u);
   assert.match(scheduler.match(/const required = \[[^\]]+\]/u)?.[0] ?? '', /lattice/u);
 });

@@ -8,12 +8,12 @@
 
 ## Host別cutover
 
-| host | Lattice | Claude/Codex MCP | Codegraph package/command/process | daemon registry |
-|---|---|---|---|---|
-| Mac | 0.7.0 | `lattice`登録、実Claude sessionでtool実行 | 撤去、0件 | 旧73 recordをowner-only rollback backupへ移動、現0件 |
-| main-server | 0.7.0 | `lattice`登録・接続・JSON-RPC smoke | 撤去、0件 | 旧recordなし |
-| FOX WSL2 | 0.7.0 | `lattice`登録・接続・JSON-RPC smoke | 撤去、0件 | 旧1 recordをrollback backupへ移動、現0件 |
-| FOX Windows | 0.7.0 | `lattice`登録・接続、sensor init | 撤去、0件 | 旧recordなし |
+| host | Lattice | Claude/Codex MCP | Codegraph package/command/process | daemon registry | wire v4 canary |
+|---|---|---|---|---|---|
+| Mac | 0.7.0 | `lattice`登録、実Claude sessionでtool実行 | 撤去、0件 | 旧73 recordをowner-only rollback backupへ移動、現0件 | `8ad2ab44`、success |
+| main-server | 0.7.0 | `lattice`登録・接続・JSON-RPC smoke | 撤去、0件 | 旧recordなし | `9e0885a5`、success |
+| FOX WSL2 | 0.7.0 | `lattice`登録・接続・JSON-RPC smoke | 撤去、0件 | 旧1 recordをrollback backupへ移動、現0件 | `ba4237bb`、success |
+| FOX Windows | 0.7.0 | `lattice`登録・接続、sensor init | 撤去、0件 | 旧recordなし | `38a9037a`、success |
 
 ## 実session証拠
 
@@ -33,6 +33,10 @@ Connectedであることを確認した。
 | 禁止: PATH command、外部package/SDK、MCP登録、process、daemon、更新・install対象、required製品 | 0件 | fail-closed検査対象 |
 | 許可: LICENSE、NOTICE、fork attribution、不変ADR、archive、移行証拠、v1/v2履歴欄 | 残置 | 改竄・削除しない |
 | 要裁定: `codegraph_*` tool名、`.codegraph/` storage、`CODEGRAPH_*` internal ABI | 残置 | ADR 0047/0049/0059どおりLattice所有identityを返す互換面 |
+
+旧wire v1/v2はschema上の履歴欄だけを保ち、Codegraphを実行せず`not_applicable`へ固定した。v1の到達不能だった
+診断分岐も削除し、v2 schedulerのrequired集合からCodegraphを除外した。一回限りのv2退役report
+`5183a649-0355-4acc-b4a7-aba9f4daa0e7`をBugHubが受理した後、全hostをwire v4 canaryへ切り替えた。
 
 ## Rollback
 
