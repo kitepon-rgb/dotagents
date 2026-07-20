@@ -1,0 +1,9 @@
+{
+  "evidence_id": "cf0157-host-ledger-and-plan-archive",
+  "repo_id": "self",
+  "path": "docs/evidence/2026-07-21-cf0157-host-ledger-and-plan-archive.json",
+  "git_blob_oid": "8aa82910dac7c73bb10826531e17afe42c93ecb5",
+  "content_digest": "83168565c826bdc98eaa194f67a063119acbd66a18bc5834425bccea43bbd06c",
+  "media_type": "application/json",
+  "anchor_digest": null
+}
