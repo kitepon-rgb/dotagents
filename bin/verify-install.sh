@@ -65,14 +65,19 @@ check() { # check <dst> <expect_src>
 verify_factory_core() {
   local project_root="${DOTAGENTS_FACTORY_PROJECT_ROOT:-$REPO}"
   local cli
-  for cli in caveat throughline spotter codegraph markitdown gpt-connector aiterm-mcp codex-sidecar-mcp lattice; do
+  for cli in caveat throughline spotter lattice markitdown gpt-connector aiterm-mcp codex-sidecar-mcp; do
     if command -v "$cli" >/dev/null 2>&1; then
       echo "OK  factory core CLI: $cli → $(command -v "$cli")"
     else
-      echo "FAIL: factory core CLI '$cli' 不在（工場コア8製品＋編入中Latticeは全端末必須）"
+      echo "FAIL: factory core CLI '$cli' 不在（現役工場コア8製品は全端末必須）"
       fail=1
     fi
   done
+
+  if command -v codegraph >/dev/null 2>&1; then
+    echo "FAIL: retired Codegraph command remains on PATH: $(command -v codegraph)"
+    fail=1
+  fi
 
   if ! command -v uv >/dev/null 2>&1; then
     echo "FAIL: uv 不在（MarkItDownの正規 tool 所有面を検証・更新できない）"

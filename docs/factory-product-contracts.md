@@ -1,6 +1,6 @@
-# 工場コア9製品（＋編入中Lattice）＋基盤toolchain 3製品の有限契約台帳
+# 工場コア9製品＋基盤toolchain 3製品の有限契約台帳
 
-更新日: 2026-07-18。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
+更新日: 2026-07-20。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
 ## 共通境界
 
@@ -33,13 +33,12 @@
 - 現adapter: native JSONのversion、marker schema、overallと、明示opt-inされた公開runtime error snapshot/ackを接続済み。
 - 表現/禁止: 対象外projectは`not_applicable`、対象で診断不能は`unverified`。全project自動activation、tool DB直接読解は禁止。
 
-### `codegraph`
+### `lattice`
 
-- 所有/修正先: 第三者 / `kitepon-rgb/dotagents`外付けadapter。version入口: `codegraph --version`。
-- diagnostics/state正本: 既存indexの`codegraph status --json`を試行。現CLI helpは`status`のみを保証し、JSONが得られた場合だけ`initialized`を判定する。`.codegraph/`はupstream所有。
-- 対応version: stable `>=1.4.0 <1.5.0`（build metadata付きは許容、prereleaseは未検証で範囲外）。範囲外は`installed`を保った`index=unsupported:upstream_version_unsupported`、version取得不能・形式drift・CLI不在は`unverified:version_unverified`として診断を実行しない。
-- 現adapter: 対応versionだけ診断を実行し、`initialized:true`なら`index=pass`、falseなら`skipped:not_indexed`、診断出力が非JSONまたはshape非対応なら`index=unverified`。version範囲外の`unsupported`とは区別する。
-- 禁止: `codegraph init`/index自動作成、内部index解析。
+- 所有/修正先: 自作 / `kitepon-rgb/Lattice`。version入口: `lattice --version`。
+- diagnostics/state正本: `lattice factory-diagnostics --json`と`lattice runtime-errors snapshot|ack ... --json`。コード構造面は同梱sensorと`lattice-mcp`だけから提供する。
+- 現adapter: native JSONをexact allowlistで検証し、wire v4の正式製品`lattice`へ射影する。sensorのindex不在・破損・version不整合はtyped failure／guidanceであり、外部Codegraphへfallbackしない。
+- 互換: `codegraph_*` MCP tool名は入力互換名としてのみ残し、provider／sensor_owner=`lattice`とLattice系列versionを返す。独立Codegraph package、PATH command、MCP登録、daemon、SDK依存は禁止。
 
 ### `markitdown`
 

@@ -36,7 +36,7 @@ case "$runtime_os" in
 esac
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/agents-update.log"
-FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v2-schedule-runner}"
+FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v4-schedule-runner}"
 script_source="${BASH_SOURCE[0]}"
 while [ -h "$script_source" ]; do
   case "$script_source" in */*) script_parent=${script_source%/*} ;; *) script_parent=. ;; esac
@@ -86,14 +86,13 @@ PACKAGES=(
   '@openai/codex'
   'gpt-connector'
   '@anthropic-ai/sdk'
-  '@colbymchenry/codegraph'
   'aiterm-mcp'
   'caveat-cli'
   'claude-spotter'
   'codex-sidecar-cli'
   'codex-sidecar-core'
   'codex-sidecar-mcp'
-  '@quolu/lattice' # G4受入済み。通常のregistry @latest更新へ戻す
+  '@quolu/lattice'
   'pnpm'
   'throughline'
 )

@@ -48,7 +48,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | gpt-connector | MCP `gpt_connector` required。専用Chrome非対応hostはconnectorだけunsupported | MCP `gpt_connector` required。timeout後は sessions 回収 |
 | aiterm-mcp | MCP required | Codex/Grok/Composer用MCP required。native枠外の外部実行に使う |
 | codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う |
-| Lattice | MCP面（sensor 8 tool・`codegraph_*`名維持＝ADR 0049）はL7 wire v4 cutoverまで未配線。移行期間はCodegraph単独配線と二重配線を許す | 同左 |
+| Lattice | required。`lattice-mcp`のsensor 8 toolを配線。`codegraph_*`互換名はLattice提供者identityを返す | 同左。Windows nativeは親CLIを運用する端末だけMCP登録 |
 | ServerManager | connector not_applicable | connector not_applicable |
 
 Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。

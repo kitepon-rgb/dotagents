@@ -198,8 +198,8 @@ MCP は親に応じて入口を分ける。Codex親はnative枠だけを工場�
 
 | 親 | core | 任意 / 認証依存 | 禁止 / 非採用 |
 |---|---|---|---|
-| Claude Code | `codex-sidecar`、`aiterm`、`gpt_connector`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | — |
-| Codex | native subagents、`codex-sidecar`、`aiterm`（Codex / Grok / Composer）、`gpt_connector`、`caveat`、`codegraph` | OpenAI Docs等の認証依存追加面 | — |
+| Claude Code | `codex-sidecar`、`aiterm`、`gpt_connector`、`caveat`、`lattice` | OpenAI Docs等の認証依存追加面 | — |
+| Codex | native subagents、`codex-sidecar`、`aiterm`（Codex / Grok / Composer）、`gpt_connector`、`caveat`、`lattice` | OpenAI Docs等の認証依存追加面 | — |
 
 利用可能性はinstalled（CLI存在）→registered（親へconnector登録）→verified（read-only疎通）→execution-verified（実タスク完遂と回収）で区別する。外部writerに使うのはexecution-verifiedだけ。timeoutは状態不明として同じtask IDのsession/jobを回収し、稼働中の重複起動をしない。
 
@@ -214,7 +214,7 @@ codex mcp get caveat --json
 
 ```bash
 codex mcp add caveat -- caveat mcp-server
-codex mcp add codegraph -- codegraph serve --mcp
+codex mcp add lattice -- lattice-mcp
 codex mcp add aiterm -- aiterm-mcp
 codex mcp add codex-sidecar -- codex-sidecar-mcp
 codex mcp add gpt_connector -- gpt-connector-mcp
@@ -222,7 +222,7 @@ codex mcp add gpt_connector -- gpt-connector-mcp
 
 STDIO の environment は closed-mode として扱う。親 shell の値が必要だと推測して継承に頼らず、`mcp_servers.<id>.env` / `env_vars` に必要最小限を明示する。secret をコマンド行・repo・会話ログに書かない。OAuth は `codex mcp login <name>` を対話 H の下で行い、未認証の任意 MCP は理由付き WARN とする。
 
-疎通は書込みを伴わない最小操作で確認する。`caveat_search`、OpenAI Docs 検索、`aiterm` の session list は read-only。`codegraph` は既存 `.codegraph/` index がある project にだけ query し、index が無ければ `codegraph init` を勝手に実行しない。gpt-connectorの `sessions` はread-onlyだが、Chat送信は依頼に必要な時だけ行う。Oracleは互換・rollback時だけ参照する。
+疎通は書込みを伴わない最小操作で確認する。`caveat_search`、OpenAI Docs検索、`aiterm`のsession listはread-only。コード構造面は`lattice-mcp`だけを使い、indexが無ければtyped guidanceに従う。独立Codegraphをfallback起動しない。gpt-connectorの`sessions`はread-onlyだが、Chat送信は依頼に必要な時だけ行う。Oracleは互換・rollback時だけ参照する。
 
 ## Observer parent Stop hook
 
