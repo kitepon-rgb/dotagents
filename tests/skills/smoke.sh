@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 contains() { rg -Fq "$2" "$1" || fail "$1 に $2 がない"; }
+absent() { ! rg -Fq "$2" "$1" || fail "$1 に Claude 固有入口 $2 が残っている"; }
 assert_order() {
   local file="$1"
   shift
@@ -64,7 +65,7 @@ if not set(sys.argv[2:]).issubset(keys):
 PY
 }
 
-for skill in orchestrate auto-deploy-on-push run-observer-parent-watch; do
+for skill in orchestrate auto-deploy-on-push polish-github run-observer-parent-watch; do
   file="$ROOT/codex/skills/$skill/SKILL.md"
   [ -f "$file" ] || fail "$file がない"
   frontmatter_is_name_and_description_only "$file"
@@ -128,6 +129,30 @@ contains "$deploy" '秘密値は表示・収集・保存しない'
 contains "$deploy" '秘密をログ・文書・commit に含めない'
 contains "$deploy" '実本番操作は明示承認されたものだけ実行する'
 contains "$deploy" '../../../claude/skills/auto-deploy-on-push/SKILL.md'
+
+polish="$ROOT/codex/skills/polish-github/SKILL.md"
+contains "$polish" '~/Developer/dotagents/claude/commands/polish-github.md'
+contains "$polish" '正本が読めない場合はエラーとして報告'
+contains "$polish" '以下の要約だけで代行しない（フォールバック禁止）'
+
+# 現行の主要 workflow 3件と Codex 正規入口を固定する。
+contains "$ROOT/README.md" '| Claude skill | `orchestrate` |'
+contains "$ROOT/README.md" '| Codex skill | `orchestrate` |'
+contains "$ROOT/README.md" '| Claude skill | `auto-deploy-on-push` |'
+contains "$ROOT/README.md" '| Codex skill | `auto-deploy-on-push` |'
+contains "$ROOT/README.md" '| Claude command | `auto-deploy-on-push` / `polish-github` |'
+contains "$ROOT/README.md" '| Codex skill | `polish-github` |'
+contains "$ROOT/README.md" '| `/auto-deploy-on-push` | `$auto-deploy-on-push` |'
+contains "$ROOT/README.md" '| `/polish-github` | `$polish-github` |'
+[ ! -e "$ROOT/codex/skills/audit-gauntlet" ] || fail 'retired Codex skill audit-gauntlet が残っている'
+for file in \
+  "$ROOT/codex/skills/orchestrate/SKILL.md" \
+  "$ROOT/codex/skills/auto-deploy-on-push/SKILL.md" \
+  "$ROOT/codex/skills/polish-github/SKILL.md"; do
+  for claude_entry in AskUserQuestion EnterPlanMode ExitPlanMode TaskCreate TaskUpdate TodoWrite 'Agent(' 'Task(' 'Workflow('; do
+    absent "$file" "$claude_entry"
+  done
+done
 
 observer="$ROOT/codex/skills/run-observer-parent-watch/SKILL.md"
 contains "$observer" 'parent codex run'
