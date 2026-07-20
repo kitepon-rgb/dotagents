@@ -11,7 +11,7 @@
 
 dotagents を全端末の**開発工場そのもの**として、Claude Code と Codex のどちらを親にしても同じ工場原則・主要 workflow・委譲品質・端末再現性を得られる状態にする。ServerManagerをdotagentsと並ぶ別の工場またはcontrol planeとは定義しない。
 
-工場のコア管理対象は、端末能力を担う **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Codegraph（コード構造理解）／MarkItDown（外部資料変換）／gpt-connector（独立したChatGPT consultation）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude/Codex親からの隔離Codex実行）** の8製品と、中央の運用管理を担う **ServerManager** の計9製品とする。gpt-connector は MCP ID `gpt_connector`、command `gpt-connector-mcp`、専用Chrome、product-owned state、caller既知slug、model+effort明示、timeout後sessionsを正規契約とし、Oracle・APIへの暗黙fallbackを許さない。Oracleはv1互換または手動rollback時だけ扱う。**BugHubは独立した第10製品ではなくServerManager内部のバグ・version・互換性統括コンポーネント**である。dotagentsは各製品のソースと状態を所有せず、正規導入・更新・親別配線・互換検証・代表E2E・上流更新追従、およびServerManager/BugHubへの結果連携を所有する。
+工場のコア管理対象は、端末能力を担う **Caveat（罠知識）／Throughline（セッション継続）／Spotter（未使用ツール監査）／Lattice（工程・コード構造理解）／MarkItDown（外部資料変換）／gpt-connector（独立したChatGPT consultation）／aiterm-mcp（PTY・外部モデル枠）／codex-sidecar（Claude/Codex親からの隔離Codex実行）** の8製品と、中央の運用管理を担う **ServerManager** の計9製品とする。独立CodegraphはLatticeへ完全吸収済みであり、retired／not_applicableの履歴だけを保持して現役製品・依存・配線に含めない。gpt-connector は MCP ID `gpt_connector`、command `gpt-connector-mcp`、専用Chrome、product-owned state、caller既知slug、model+effort明示、timeout後sessionsを正規契約とし、Oracle・APIへの暗黙fallbackを許さない。Oracleはv1互換または手動rollback時だけ扱う。**BugHubは独立した第10製品ではなくServerManager内部のバグ・version・互換性統括コンポーネント**である。dotagentsは各製品のソースと状態を所有せず、正規導入・更新・親別配線・互換検証・代表E2E・上流更新追従、およびServerManager/BugHubへの結果連携を所有する。
 
 「全対応」はファイル数の左右対称ではなく**能力対称**を指す。製品固有機能は無理に移植せず、`対応 / 製品固有 / 非採用（理由）` のいずれかを明記できれば閉じる。
 
