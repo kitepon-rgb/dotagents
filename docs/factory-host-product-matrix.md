@@ -30,7 +30,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | Lattice | required | required | required | required | high |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
 | Claude Code CLI | required | required | required | unsupported | high |
-| Codex CLI | required | required | required | unsupported | high |
+| Codex CLI | required | required | required | required | high |
 | Grok Build | optional | optional | optional | unsupported | info |
 
 ## 親別connector matrix

@@ -79,7 +79,7 @@ apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-con
 
 ### 呼びかけ hook 群の配線断片（配置ゲート・TODO ゲート・着手案内）
 
-前提: `./install.sh` 済み（`~/.local/bin/{delegation-gate-hook,todo-gate-hook,onset-gate-hook}` が存在。`todo-gate-hook` はサブコマンド `session-start` / `stop` を取る）。現行の義務はグローバルCLAUDE.md／AGENTS.md、Hookの実装履歴は [docs/plan_callout-hooks.md](plan_callout-hooks.md) を参照する。4本とも `~/.claude/settings.json` にマージ（既存配列があればその配列へ足す、無ければ新規作成）。ライブ反映＝配線後の新セッション不要（hot-reload 実測済み）。
+前提: `./install.sh` 済み（`~/.local/bin/{delegation-gate-hook,todo-gate-hook,onset-gate-hook}` が存在。`todo-gate-hook` はサブコマンド `session-start` / `stop` を取る）。現行の義務はグローバルCLAUDE.md／AGENTS.md、Hookの実装履歴は [archive版](archive/plan_callout-hooks.md) を参照する。4本とも `~/.claude/settings.json` にマージ（既存配列があればその配列へ足す、無ければ新規作成）。ライブ反映＝配線後の新セッション不要（hot-reload 実測済み）。
 
 #### C1 配置ゲート（PreToolUse・委譲ツール呼び出し時）
 

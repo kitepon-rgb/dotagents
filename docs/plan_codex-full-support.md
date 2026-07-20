@@ -184,13 +184,15 @@ dotagents を全端末の**開発工場そのもの**として、Claude Code と
 
 現役端末×Codex入口は Wave 0 でオーナーと確定する。OS 種別だけから端末や入口の実在を推測しない。1行を1入口とし、端末共有の証拠は参照先を記録する。
 
-| 端末 | OS | Codex入口 | skill面 | backup | install | config | verify | Codex E2E | Claude回帰 | 結果 |
-|---|---|---|---|---:|---:|---:|---:|---:|---:|---|
-| この端末 | macOS | desktop | official | [x] | [x] | dry-run差分0（apply不要） | [x] official | [ ] | [ ] | skill discovery green、新規 session E2E待ち |
-| この端末 | macOS | CLI | official（同端末） | 同端末参照 | 同端末参照 | 同端末参照 | 同端末参照 | [ ] | 同端末参照 | skill discovery green、新規 session E2E待ち |
-| main-server | Ubuntu 26.04 | Codex App SSH / CLI | official | [x] | [x] | routing＋hooks適用 | [x] official | [ ] | [x] | cf-0216のCLI `/hooks`個別trust、App Remote新規thread、skill/routing、Stop pending、Throughline新thread handoff、Claude回帰はgreen。compact後callout再武装を含む横断E2Eはcf-0149で継続（[実測証跡](evidence/2026-07-21-cf0216-main-server-codex-app-remote.json)） |
-| FOX | Windows native | Codex App SSH / native | official | [x] | [x] | routing＋hooks適用 | [x] official | [ ] | smoke [x] | 基盤green、App SSH表示・新規session E2E待ち |
-| FOX | WSL2 Ubuntu 26.04 | CLI | official | [x] | [x] | routing＋hooks適用 | [x] official | [ ] | smoke [x] | 基盤green、新規session E2E待ち |
+| 端末 | OS | Codex入口 | skill面 | 端末共有基盤 | 入口固有E2E | 現在地 |
+|---|---|---|---|---|---|---|
+| Mac | macOS | 対話Codex CLI | official | install/config/verify受入済み | 新規session baseline、hook lifecycle、Spotter実火済み | `verified`。横断受入は`cf-0146`で集約（[baseline](adr/0093-cf0023-new-codex-session-acceptance.md)、[lifecycle](evidence/2026-07-21-cf0149-codex-hook-lifecycle-progress.md)） |
+| main-server | Ubuntu 26.04 | 対話Codex CLI | official | install/config/verify受入済み | runtime preflight、hook lifecycle、Spotter実火済み | `verified`。横断受入は`cf-0146`で集約（[runtime](evidence/2026-07-21-cf0216-main-server-codex-cli-runtime.json)、[lifecycle](evidence/2026-07-21-cf0149-codex-hook-lifecycle-progress.md)） |
+| main-server | Ubuntu 26.04 | Codex App Remote | official（同host） | main-server共有証拠を参照 | 新規thread、初回配送と2回目沈黙、Stop pending、skill/routing/Throughline、Claude回帰を実火 | `verified`。compact再武装だけ`cf-0149`へ分離（[ADR 0105](adr/0105-cf0216-main-server-remote-acceptance.md)） |
+| FOX | WSL2 Ubuntu 26.04 | 対話Codex CLI | official | install/config/verify受入済み | 新規session baseline、hook lifecycle、Spotter実火済み | `verified`。横断受入は`cf-0146`で集約（[ADR 0099](adr/0099-cf0092-partial-baseline-and-windows-blocker.md)、[lifecycle](evidence/2026-07-21-cf0149-codex-hook-lifecycle-progress.md)） |
+| FOX | Windows native | 対話Codex CLI | official | install/config/verify受入済み | 入口実在・routing・dotagents callout実火済み。新規session横断E2Eは未達 | `blocked`。Codex CLI models cache/toolchain blockerを`cf-0092`が所有（[ADR 0099](adr/0099-cf0092-partial-baseline-and-windows-blocker.md)） |
+
+Mac Desktop/IDEとFOX WSL2 App Remoteは、オーナーが現役入口として確定した証拠がないため推測で追加しない。FOX Windows Codex App SSHは上流不整合により非採用であり、実在するWindows native CLIと混同しない。
 
 ### Wave 3 preflight（2026-07-12・この端末・read-only）
 

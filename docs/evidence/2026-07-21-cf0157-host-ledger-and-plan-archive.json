@@ -1,0 +1,64 @@
+{
+  "schema": "dotagents.cf0157.acceptance.v1",
+  "task": "codex-full-support/cf-0157",
+  "recorded_at": "2026-07-21T05:47:18+09:00",
+  "result": "accepted",
+  "host_count": 4,
+  "entry_count": 5,
+  "entries": [
+    {
+      "host": "Mac",
+      "entry": "interactive-codex-cli",
+      "status": "verified"
+    },
+    {
+      "host": "main-server",
+      "entry": "interactive-codex-cli",
+      "status": "verified"
+    },
+    {
+      "host": "main-server",
+      "entry": "codex-app-remote",
+      "status": "verified"
+    },
+    {
+      "host": "FOX WSL2",
+      "entry": "interactive-codex-cli",
+      "status": "verified"
+    },
+    {
+      "host": "FOX Windows native",
+      "entry": "interactive-codex-cli",
+      "status": "blocked",
+      "owner_task": "codex-full-support/cf-0092"
+    }
+  ],
+  "not_registered_as_active_entries": [
+    "Mac Desktop/IDE: owner confirmation evidence absent",
+    "FOX WSL2 App Remote: owner confirmation evidence absent",
+    "FOX Windows Codex App SSH: upstream-incompatible and not adopted"
+  ],
+  "archived_plans": [
+    {
+      "plan": "gpt56-rewiring",
+      "lattice_state": "37/37 done",
+      "archive_ref": "docs/archive/plan_gpt56-rewiring.md",
+      "compatibility_stub": "docs/plan_gpt56-rewiring.md"
+    },
+    {
+      "plan": "callout-hooks",
+      "lattice_successor_tasks": "done",
+      "archive_ref": "docs/archive/plan_callout-hooks.md",
+      "compatibility_stub": "docs/plan_callout-hooks.md"
+    }
+  ],
+  "removed_redundant_stub": "docs/plan_lattice-factory-integration.md",
+  "canonical_archive": "docs/archive/plan_lattice-factory-integration.md",
+  "boundaries": {
+    "lattice_product_modified": false,
+    "codex_rc_used": false,
+    "user_fixture_read_or_modified": false,
+    "github_fetch_verified": false,
+    "github_fetch_note": "local gh token is invalid; no interactive credential request was delegated to the owner"
+  }
+}

@@ -31,7 +31,7 @@
 
 ## WSL2 固有裁定
 
-`docs/plan_callout-hooks.md` に記録された Windows の「アプリ選択」ダイアログ無限増殖を再発させないため、FOX WSL2 の Codex callout/advisoryは意図的に無効のまま維持する。`apply-codex-config` が interpreter 明示起動またはnode shimへ安全化され、Windowsダイアログ非発生の実火が確認されるまでは、dry-runに差分が出ても無条件applyしない。この欠落だけを `fm-0580` の通常install失敗へ混同しない。
+`docs/archive/plan_callout-hooks.md` に記録された Windows の「アプリ選択」ダイアログ無限増殖を再発させないため、FOX WSL2 の Codex callout/advisoryは意図的に無効のまま維持する。`apply-codex-config` が interpreter 明示起動またはnode shimへ安全化され、Windowsダイアログ非発生の実火が確認されるまでは、dry-runに差分が出ても無条件applyしない。この欠落だけを `fm-0580` の通常install失敗へ混同しない。
 
 ## 次のH操作境界
 

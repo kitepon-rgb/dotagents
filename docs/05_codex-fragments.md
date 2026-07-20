@@ -88,7 +88,7 @@ CLAUDE.md しか無いリポ（このリポ含む）に指示を届かせるた�
 
 ## 5. `AGENTS.override.md` の無言シャドー（地雷警告）
 
-`AGENTS.override.md`（非空）が存在すると、上記2の候補順により `AGENTS.md` は**無言でシャドー**される（エラーにならない）。dotagents の `verify-install.sh` はこれを名指しで検出する設計（`docs/plan_gpt56-rewiring.md` 実装チェックリスト該当）。
+`AGENTS.override.md`（非空）が存在すると、上記2の候補順により `AGENTS.md` は**無言でシャドー**される（エラーにならない）。dotagents の `verify-install.sh` はこれを名指しで検出する設計（`docs/archive/plan_gpt56-rewiring.md` 完了記録）。
 
 ## 6. プロファイル例（任意）
 
@@ -146,7 +146,7 @@ codex --profile work
 
 ## 9. hooks.json への呼びかけ hook 配線
 
-Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3／着手案内 C4）の Codex ミラーが X1-X5 である。現行の義務はグローバルAGENTS.md「作業レーンと統制」、実装履歴は [docs/plan_callout-hooks.md](plan_callout-hooks.md) を参照する。通常の配線は section 7 の `apply-codex-config` だけを使い、古い jq 手挿し断片を併用しない。
+Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3／着手案内 C4）の Codex ミラーが X1-X5 である。現行の義務はグローバルAGENTS.md「作業レーンと統制」、実装履歴は [archive版](archive/plan_callout-hooks.md) を参照する。通常の配線は section 7 の `apply-codex-config` だけを使い、古い jq 手挿し断片を併用しない。
 
 | イベント | command | 役割 | timeoutSec |
 |---|---|---|---:|

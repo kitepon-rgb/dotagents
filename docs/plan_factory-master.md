@@ -32,8 +32,8 @@
 | [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O2完了、O3 Elastic provider対称化が次ready |
 | [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1 local closure完了、実hostはR2、意図的canaryはR3で進める |
 | [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
-| [呼びかけHook](plan_callout-hooks.md) | hook詳細契約。残る実端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
-| [GPT-5.6再配線](plan_gpt56-rewiring.md) | role routing詳細。残る他端末展開はCodex全対応へ合流 | Active。独立着手せずR2の同一host receiptで閉じる |
+| [呼びかけHook](archive/plan_callout-hooks.md) | hook詳細契約。端末横断受入はCodex全対応へ移管 | Completed。実装task完了、履歴をarchive済み |
+| [GPT-5.6再配線](archive/plan_gpt56-rewiring.md) | role routing詳細。端末横断受入はCodex全対応へ移管 | Completed。Lattice 37 task完了、履歴をarchive済み |
 | [Lattice編入](archive/plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Completed。Lattice 0.8.0、Codegraph退役、4 host cutoverまで完了 |
 | [メモリ昇格queue](queue_memory-promotion.md) | 各repo作業時の機会駆動queue | Active、主レーンを遮らない |
 

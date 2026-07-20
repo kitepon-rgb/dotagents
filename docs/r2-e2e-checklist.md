@@ -7,7 +7,7 @@
 - docs/plan_codex-full-support.md §7「新規 Codex session E2E」合格条件表  
 - docs/plan_codex-full-support.md Wave 3 項目（routing smoke、hooks実火、Throughline、Spotter hook_event、gpt-connector、spotter install）  
 - docs/05_codex-fragments.md のrouting smoke手順（V2断片適用・verify-codex-agent-routing・handshake-only spawn・fork_turns="none"）  
-- docs/plan_callout-hooks.md Phase 6 INFO契約（初回INFO・同session2回目沈黙・compact後1回再武装・Stop pendingの次回1回配送）  
+- docs/archive/plan_callout-hooks.md Phase 6 INFO契約（初回INFO・同session2回目沈黙・compact後1回再武装・Stop pendingの次回1回配送）
 - 端末台帳（§8）と各Wave 3 rollout実績の残件  
 
 **4端末**: Mac（この端末）／main-server／FOX WSL2／FOX Windows native  
@@ -104,7 +104,7 @@
 | Spotter hook_event 実火 | spotter install 後 | spotter.hook_event.v1 記録 |
 | Claude 回帰 | Claude で新規 session | 回帰なし |
 
-**特記事項（plan_callout-hooks.md Phase 5 より）**: WSL2 interop 安全化（interpreter 明示起動等）完了まで Codex callout/advisory は意図的に無効。verify-install が advisory 不在 FAIL を出すのは既知の一時状態。
+**特記事項（archive/plan_callout-hooks.md Phase 5 より）**: WSL2 interop 安全化（interpreter 明示起動等）完了まで Codex callout/advisory は意図的に無効。verify-install が advisory 不在 FAIL を出すのは既知の一時状態。
 
 ---
 
