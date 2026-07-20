@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0107",
+  "repo_id": "self",
+  "path": "docs/adr/0107-cf0283-stop-pending-cleanup-acceptance.md",
+  "git_blob_oid": "0e022c3f4301e8e55aaf862596a3756a22181c26",
+  "content_digest": "e30ec20a44d39b0c8961bcbd7329e454f30e3d7523d25132eae68266b6e086e9",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
