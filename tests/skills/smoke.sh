@@ -35,6 +35,34 @@ frontmatter_is_name_and_description_only() {
     END { exit !(closed && count == 2 && seen["name"] && seen["description"]) }
   ' "$1" || fail "$1 の frontmatter は name/description だけではない"
 }
+frontmatter_has_keys() {
+  local file="$1"
+  shift
+  python3 - "$file" "$@" <<'PY' || fail "$file の frontmatter に必須キーがない"
+from pathlib import Path
+import sys
+
+lines = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+if not lines or lines[0] != "---":
+    raise SystemExit(1)
+
+keys = set()
+for line in lines[1:]:
+    if line == "---":
+        break
+    if ":" not in line:
+        raise SystemExit(1)
+    key, value = line.split(":", 1)
+    if not key or not value.strip():
+        raise SystemExit(1)
+    keys.add(key)
+else:
+    raise SystemExit(1)
+
+if not set(sys.argv[2:]).issubset(keys):
+    raise SystemExit(1)
+PY
+}
 
 for skill in orchestrate auto-deploy-on-push run-observer-parent-watch; do
   file="$ROOT/codex/skills/$skill/SKILL.md"
@@ -114,5 +142,45 @@ assert_order "$observer" \
   'PTY付きforeground' \
   'session ID' \
   'SIGINT'
+
+# 現行 Claude surface: 配布される skill / command / agent の入口契約だけを確認する。
+for skill in auto-deploy-on-push gpt-connector orchestrate; do
+  file="$ROOT/claude/skills/$skill/SKILL.md"
+  [ -f "$file" ] || fail "$file がない"
+  frontmatter_is_name_and_description_only "$file"
+  contains "$file" "name: $skill"
+done
+contains "$ROOT/claude/skills/auto-deploy-on-push/SKILL.md" 'GitHub Actions'
+# shellcheck disable=SC2016 # backticks are literal Markdown from the skill contract.
+contains "$ROOT/claude/skills/gpt-connector/SKILL.md" '正規MCP server IDは `gpt_connector`'
+contains "$ROOT/claude/skills/gpt-connector/SKILL.md" 'Oracle/OpenAI APIへの暗黙fallbackはしない'
+contains "$ROOT/claude/skills/orchestrate/SKILL.md" '共通契約'
+contains "$ROOT/claude/skills/orchestrate/SKILL.md" '委譲契約'
+contains "$ROOT/claude/skills/orchestrate/SKILL.md" 'references/workflow-templates.md'
+
+for command in auto-deploy-on-push polish-github; do
+  file="$ROOT/claude/commands/$command.md"
+  [ -f "$file" ] || fail "$file がない"
+  frontmatter_has_keys "$file" description
+done
+# shellcheck disable=SC2016 # backticks are literal Markdown from the command contract.
+contains "$ROOT/claude/commands/auto-deploy-on-push.md" 'スキル `auto-deploy-on-push`'
+contains "$ROOT/claude/commands/polish-github.md" '最初に **現状監査** だけ実行'
+contains "$ROOT/claude/commands/polish-github.md" 'ユーザーが GO サインを出してから着手する'
+
+for agent in implementer refuter; do
+  file="$ROOT/claude/agents/$agent.md"
+  [ -f "$file" ] || fail "$file がない"
+  frontmatter_has_keys "$file" name description
+  contains "$file" "name: $agent"
+done
+contains "$ROOT/claude/agents/implementer.md" 'model: sonnet'
+contains "$ROOT/claude/agents/implementer.md" 'git commit`・push は禁止'
+contains "$ROOT/claude/agents/refuter.md" '読み取り専用'
+contains "$ROOT/claude/agents/refuter.md" '書き込み禁止'
+
+[ ! -e "$ROOT/claude/skills/audit-gauntlet" ] || fail 'retired Claude skill audit-gauntlet が残っている'
+[ ! -e "$ROOT/claude/commands/audit-gauntlet.md" ] || fail 'retired Claude command audit-gauntlet が残っている'
+[ ! -e "$ROOT/claude/agents/audit-gauntlet.md" ] || fail 'retired Claude agent audit-gauntlet が残っている'
 
 echo 'skills smoke: OK'
