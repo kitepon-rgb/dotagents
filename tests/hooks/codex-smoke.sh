@@ -26,7 +26,9 @@ run() {
   if [ "$status" -ne 0 ] || [ -n "$RUN_ERR" ]; then fail_case "$name exit/stderr"; return 1; fi
   return 0
 }
-json() { printf '%s' "$RUN_OUT" | python3 -c 'import json,sys; json.load(sys.stdin)' >/dev/null 2>&1; }
+json() {
+  RUN_JSON_TEXT=$(printf '%s' "$RUN_OUT" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin), ensure_ascii=False))' 2>/dev/null)
+}
 session_key() { printf '%s' "$1" | python3 -c 'import hashlib,sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'; }
 
 # 対象外サブコマンド／引数なし → 沈黙
@@ -221,37 +223,40 @@ printf '%s\n' '<html></html>' >"$REPO/.lattice/generated/gantt.html"
 run lattice-codex-missing env PATH="$STATE/git-only" "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-missing","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'CLIが未導入'* ]] && pass lattice-codex-missing || fail_case lattice-codex-missing
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'CLIが未導入'* ]] && pass lattice-codex-missing || fail_case lattice-codex-missing
 run lattice-codex-valid env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-valid","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'file://'* && "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-valid || fail_case lattice-codex-valid
+json \
+  && printf '%s' "$RUN_OUT" | python3 -c 'import sys; sys.stdin.buffer.read().decode("ascii")' \
+  && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'file://'* && "$RUN_JSON_TEXT" == *'active=master/G4'* && "$RUN_OUT" == *'\u'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] \
+  && pass lattice-codex-valid || fail_case lattice-codex-valid
 run lattice-codex-valid-v2 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=valid_v2 "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-valid-v2","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'未充足依存あり: active 1件'* && "$RUN_OUT" != *'取得できませんでした'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-valid-v2 || fail_case lattice-codex-valid-v2
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'未充足依存あり: active 1件'* && "$RUN_JSON_TEXT" != *'取得できませんでした'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass lattice-codex-valid-v2 || fail_case lattice-codex-valid-v2
 run lattice-codex-valid-v3 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=valid_v3 "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-valid-v3","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'校正状態: reconciled=1, unreconciled=1'* && "$RUN_OUT" != *'取得できませんでした'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-valid-v3 || fail_case lattice-codex-valid-v3
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'校正状態: reconciled=1, unreconciled=1'* && "$RUN_JSON_TEXT" != *'取得できませんでした'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass lattice-codex-valid-v3 || fail_case lattice-codex-valid-v3
 run lattice-codex-slow-success env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-slow-success","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" != *'取得できませんでした'* ]] && pass lattice-codex-slow-success || fail_case lattice-codex-slow-success
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'active=master/G4'* && "$RUN_JSON_TEXT" != *'取得できませんでした'* ]] && pass lattice-codex-slow-success || fail_case lattice-codex-slow-success
 for mode in invalid invalid_dependency; do
   run "lattice-codex-$mode" env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE="$mode" "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-$mode","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-  json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'status応答を検証できない'* && "$RUN_OUT" == *'CLIの版とstore整合を確認'* && "$RUN_OUT" != *permissionDecision* ]] && pass "lattice-codex-$mode" || fail_case "lattice-codex-$mode"
+  json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'status応答を検証できない'* && "$RUN_JSON_TEXT" == *'CLIの版とstore整合を確認'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass "lattice-codex-$mode" || fail_case "lattice-codex-$mode"
 done
 run lattice-codex-failure env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=failure "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-failure","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'CLI実行失敗'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-failure || fail_case lattice-codex-failure
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'CLI実行失敗'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass lattice-codex-failure || fail_case lattice-codex-failure
 run lattice-codex-timeout env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=timeout "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-timeout","source":"startup","cwd":"$HOOK_REPO"}
 EOF
-json && [[ "$RUN_OUT" == *'additionalContext'* && "$RUN_OUT" == *'status取得が期限超過'* && "$RUN_OUT" != *permissionDecision* ]] && pass lattice-codex-timeout || fail_case lattice-codex-timeout
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'status取得が期限超過'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass lattice-codex-timeout || fail_case lattice-codex-timeout
 
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'

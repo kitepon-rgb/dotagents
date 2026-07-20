@@ -33,7 +33,8 @@ def emit(frontend, message):
                 "additionalContext": message,
             }
         }
-        sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        # Windows PowerShell 5.1経由でもCodexがJSONを誤復号しないようASCIIだけを出す。
+        sys.stdout.write(json.dumps(payload, ensure_ascii=True) + "\n")
     else:
         sys.stdout.write(message + "\n")
 
