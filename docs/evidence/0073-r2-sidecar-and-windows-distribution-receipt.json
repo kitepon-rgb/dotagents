@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0073",
+  "repo_id": "self",
+  "path": "docs/adr/0073-r2-sidecar-and-windows-distribution-receipt.md",
+  "git_blob_oid": "e54440bca477136e3ed7e63a976e64efbc8e3d48",
+  "content_digest": "0f34ec3e0010d94acd708bdc3acefba4150bcccfa25e05c5a2824027da132012",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
