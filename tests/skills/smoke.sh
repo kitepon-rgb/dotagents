@@ -131,19 +131,20 @@ contains "$deploy" '実本番操作は明示承認されたものだけ実行す
 contains "$deploy" '../../../claude/skills/auto-deploy-on-push/SKILL.md'
 
 polish="$ROOT/codex/skills/polish-github/SKILL.md"
-contains "$polish" '~/Developer/dotagents/claude/commands/polish-github.md'
+tilde="~"
+contains "$polish" "$tilde/Developer/dotagents/claude/commands/polish-github.md"
 contains "$polish" '正本が読めない場合はエラーとして報告'
 contains "$polish" '以下の要約だけで代行しない（フォールバック禁止）'
 
 # 現行の主要 workflow 3件と Codex 正規入口を固定する。
-contains "$ROOT/README.md" '| Claude skill | `orchestrate` |'
-contains "$ROOT/README.md" '| Codex skill | `orchestrate` |'
-contains "$ROOT/README.md" '| Claude skill | `auto-deploy-on-push` |'
-contains "$ROOT/README.md" '| Codex skill | `auto-deploy-on-push` |'
-contains "$ROOT/README.md" '| Claude command | `auto-deploy-on-push` / `polish-github` |'
-contains "$ROOT/README.md" '| Codex skill | `polish-github` |'
-contains "$ROOT/README.md" '| `/auto-deploy-on-push` | `$auto-deploy-on-push` |'
-contains "$ROOT/README.md" '| `/polish-github` | `$polish-github` |'
+contains "$ROOT/README.md" "| Claude skill | \`orchestrate\` |"
+contains "$ROOT/README.md" "| Codex skill | \`orchestrate\` |"
+contains "$ROOT/README.md" "| Claude skill | \`auto-deploy-on-push\` |"
+contains "$ROOT/README.md" "| Codex skill | \`auto-deploy-on-push\` |"
+contains "$ROOT/README.md" "| Claude command | \`auto-deploy-on-push\` / \`polish-github\` |"
+contains "$ROOT/README.md" "| Codex skill | \`polish-github\` |"
+contains "$ROOT/README.md" "| \`/auto-deploy-on-push\` | \`\$auto-deploy-on-push\` |"
+contains "$ROOT/README.md" "| \`/polish-github\` | \`\$polish-github\` |"
 [ ! -e "$ROOT/codex/skills/audit-gauntlet" ] || fail 'retired Codex skill audit-gauntlet が残っている'
 for file in \
   "$ROOT/codex/skills/orchestrate/SKILL.md" \
