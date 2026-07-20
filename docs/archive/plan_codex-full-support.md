@@ -1,6 +1,7 @@
 # dotagents Codex 全対応計画
 
-> 実行順と全体状態の親正本は[開発工場 統合マスター計画](plan_factory-master.md)。本書はCodex全端末配布・実火の詳細受入TODOを所有し、Callout／GPT-5.6再配線の他端末確認を同じhost receiptへ集約する。
+> アーカイブ注記（2026-07-21）: 詳細受入TODOはLatticeへ移管・実施済み。現行状態はLattice storeを参照する。
+> 実行順と全体状態の親正本は[開発工場 統合マスター計画](../plan_factory-master.md)。本書はCodex全端末配布・実火の詳細受入TODOを所有し、Callout／GPT-5.6再配線の他端末確認を同じhost receiptへ集約する。
 > 履歴注記（2026-07-14）: 本計画で追加した`audit-gauntlet`は、過大な結果を出すため
 > オーナー裁定で使用廃止・削除した。以下の記載は当時の実装履歴であり、現行の配布資産ではない。
 

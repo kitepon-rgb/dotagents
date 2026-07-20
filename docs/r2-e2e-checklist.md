@@ -4,8 +4,8 @@
 **性質**: テキスト報告のみ。ファイル書込・git操作・一切の変更禁止。  
 **典拠**:  
 
-- docs/plan_codex-full-support.md §7「新規 Codex session E2E」合格条件表  
-- docs/plan_codex-full-support.md Wave 3 項目（routing smoke、hooks実火、Throughline、Spotter hook_event、gpt-connector、spotter install）  
+- docs/archive/plan_codex-full-support.md §7「新規 Codex session E2E」合格条件表
+- docs/archive/plan_codex-full-support.md Wave 3 項目（routing smoke、hooks実火、Throughline、Spotter hook_event、gpt-connector、spotter install）
 - docs/05_codex-fragments.md のrouting smoke手順（V2断片適用・verify-codex-agent-routing・handshake-only spawn・fork_turns="none"）  
 - docs/archive/plan_callout-hooks.md Phase 6 INFO契約（初回INFO・同session2回目沈黙・compact後1回再武装・Stop pendingの次回1回配送）
 - 端末台帳（§8）と各Wave 3 rollout実績の残件  
@@ -132,7 +132,7 @@
 | Spotter hook_event 実火 | spotter install 後、同 session で操作 | spotter.hook_event.v1 記録 + diagnostics green |
 | Claude 回帰 | Claude Code 新規 session | 回帰なし |
 
-**特記事項（plan_codex-full-support.md Wave 3 実績より）**:
+**特記事項（archive/plan_codex-full-support.md Wave 3 実績より）**:
 
 - Windows 実機差（LF/UTF-8/native symlink/Task Scheduler）は CI 固定済み。
 - App の赤表示は `remote_codex_lookup` の PowerShell 既定シェル不整合。無効化して通常 SSH を使用。

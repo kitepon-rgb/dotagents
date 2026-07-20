@@ -31,7 +31,7 @@
 |---|---|---|
 | [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O2完了、O3 Elastic provider対称化が次ready |
 | [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1 local closure完了、実hostはR2、意図的canaryはR3で進める |
-| [Codex全対応](plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | Active。実端末作業はR2へ集約する |
+| [Codex全対応](archive/plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | 完了。工程履歴はarchive、状態正本はLattice store |
 | [呼びかけHook](archive/plan_callout-hooks.md) | hook詳細契約。端末横断受入はCodex全対応へ移管 | Completed。実装task完了、履歴をarchive済み |
 | [GPT-5.6再配線](archive/plan_gpt56-rewiring.md) | role routing詳細。端末横断受入はCodex全対応へ移管 | Completed。Lattice 37 task完了、履歴をarchive済み |
 | [Lattice編入](archive/plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Completed。Lattice 0.8.0、Codegraph退役、4 host cutoverまで完了 |
@@ -591,7 +591,7 @@ Observer `docs/plan_observer.md`
 - Latticeへ移管済み: fm-0585 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L99
 - Latticeへ移管済み: fm-0586 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L100
 
-詳細: [Codex全対応 Wave 3](plan_codex-full-support.md#wave-3--現役端末-rollout-と既存プラン閉鎖) ／
+詳細: [Codex全対応 Wave 3](archive/plan_codex-full-support.md#wave-3--現役端末-rollout-と既存プラン閉鎖) ／
 [BugHub計画 Wave 8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
 
 ### Phase R3 — wire v2 finalization
@@ -601,7 +601,7 @@ Observer `docs/plan_observer.md`
 - Latticeへ移管済み: fm-0595 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L103
 
 詳細: [BugHub計画 Wave 9](plan_bughub-factory-integration.md#wave-9--定常運用と完了) ／
-[Codex全対応 Wave 4](plan_codex-full-support.md#wave-4--最終監査と完了)
+[Codex全対応 Wave 4](archive/plan_codex-full-support.md#wave-4--最終監査と完了)
 
 ### 合流 — J1（Lane O完了×Lane R完了の後）
 

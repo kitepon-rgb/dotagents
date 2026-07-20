@@ -133,8 +133,8 @@ Claude command の Codex 正規入口は slash command の模造ではなく、�
 ### Codex 9面の対応状況
 
 「全対応」はファイル数の左右対称ではなく能力対称で判定する。合格条件・進捗・各面の状態は
-[Codex 全対応計画](docs/plan_codex-full-support.md) が正本で、現役4 host・5入口は同計画の
-[端末台帳](docs/plan_codex-full-support.md#8-端末台帳)を参照する（本 README には複製しない）。
+Codex全対応の工程状態はLattice storeが正本で、現役4 host・5入口の確定済み台帳は
+[アーカイブ済み計画](docs/archive/plan_codex-full-support.md#8-端末台帳)を参照する（本 README には複製しない）。
 
 | 面 | dotagents の正規入口 |
 |---|---|
