@@ -11,7 +11,9 @@
 
 ## 並列化の検討とLattice既定
 
+- **語義**: 本節の並列作業は、独立した複数ToDoを複数workerへ同時dispatchして実行することを指す。本体実装1件とその監査、親の作業とread-only観測、同一ToDo内の補助調査だけを「複数ToDoの並列化を実施した」証拠にしない。
 - **検討義務**: 着手時に独立に見えるTODOが2つ以上あるなら、並列dispatchの可否を一度検討して結論を出す（直列の選択は可。無意識の直列流れを禁じる）。結論はcampaign単位で一度だけControl記録またはplanへ残し、同じTODO集合への再検討はその記録を出発点にする。packetで単一TODOを受けたexecutorは本節の対象外。
+- **WIPとの関係**: campaign／Phaseが本筋WIP 1件を占め、その内部のactive ToDo／workerは追加の本筋WIPとして数えない。WIP上限だけを理由にready frontierを直列化してはならない。直列化は依存、scope競合、隔離不能、実capacity不足など当該frontier固有の理由で裁定する。
 - **Lattice既定のscope**: **同一repoへ書込みするworkerを2つ以上同時に走らせる場合**は、Lattice run経由（`plan compile`→`run start`）を既定とする。交差判定を親の自前判断で行わない（witness無しの「交差しないはず」が事故の源。判定はplan compileの競合検出へ委ねる）。**別repoへの並列・read-only workerの並列・直列委譲は対象外**。最低安全契約の「writerは専用worktree」は並列時もそのまま適用され、本項はその上に競合判定を重ねるだけで置き換えない。
 - **既存runとの照合**: 着手前に対象repoのrun store（現契約ではrepo配下・端末ローカル）を`run status`／`run observe`で確認し、active runに属するTODOを二重dispatchしない。**継続・close面は現CLIに未実装**のため、中断runを引き継げない場合は旧runの放棄をControl記録またはplanへ明記してから新規runを作る（無言の放置・無言の二重起動の両方を禁じる）。
 - Latticeが使えない環境・fail closedで止まった場合は、並列を諦めて直列へ落とすのが正で、自前判定での並列強行を回避策にしない。本節の既定を不変条件（run外並列の契約違反化）へ硬化するのは、Lattice側のresume/close面とrun store配置契約の正式化、およびdotagents消費者としての実campaign 1件以上の消化後にL7 waveで裁定する。
