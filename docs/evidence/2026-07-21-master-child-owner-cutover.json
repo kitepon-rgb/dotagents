@@ -1,0 +1,9 @@
+{
+  "evidence_id": "master-child-owner-cutover-20260721",
+  "repo_id": "self",
+  "path": "docs/evidence/2026-07-21-master-child-owner-cutover.md",
+  "git_blob_oid": "5df80ceb86c615f314f15df5b67d91f854064ec8",
+  "content_digest": "614e69af1813dfc1787f97d0a998b64b4f924efbe76a83edecce5882696dd3c8",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
