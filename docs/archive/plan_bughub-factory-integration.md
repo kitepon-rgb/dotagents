@@ -1,7 +1,7 @@
 # 工場コア9製品＋基盤CLI 3製品 BugHub 統合計画
 
 作成: 2026-07-13  
-状態: 実装中（Wave 0〜5のrepo実装は完了、実環境登録はWave 8へ継続。Oracle→gpt-connector置換と基盤CLI 3製品追加をWave 6へ収録し、Wave 7以降を継続中）
+状態: 完了・archive（2026-07-21。Lattice `bughub-factory-integration` の受入証拠を正本とする）
 対象工場: dotagents  
 中央管理製品: ServerManager（BugHub 内包）
 

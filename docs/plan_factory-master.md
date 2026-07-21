@@ -29,13 +29,13 @@
 
 | 子計画 | 親内の役割 | 2026-07-16時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | Active。O2完了、O3 Elastic provider対称化が次ready |
-| [BugHub工場統合](plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | Active。R1 local closure完了、実hostはR2、意図的canaryはR3で進める |
+| [Observer完成・Elastic改善](archive/plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | 終了。Observerは予約・RC4条件付きsupportのため未編入 |
+| [BugHub工場統合](archive/plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | 完了。最終gateとremote同期を証拠化してarchive済み |
 | [Codex全対応](archive/plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | 完了。工程履歴はarchive、状態正本はLattice store |
 | [呼びかけHook](archive/plan_callout-hooks.md) | hook詳細契約。端末横断受入はCodex全対応へ移管 | Completed。実装task完了、履歴をarchive済み |
 | [GPT-5.6再配線](archive/plan_gpt56-rewiring.md) | role routing詳細。端末横断受入はCodex全対応へ移管 | Completed。Lattice 37 task完了、履歴をarchive済み |
 | [Lattice編入](archive/plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Completed。Lattice 0.8.0、Codegraph退役、4 host cutoverまで完了 |
-| [メモリ昇格queue](queue_memory-promotion.md) | 各repo作業時の機会駆動queue | Active、主レーンを遮らない |
+| [メモリ昇格queue](archive/queue_memory-promotion.md) | 各repo作業時の機会駆動queue | 終了。現行コア外の旧依頼は根拠付きで閉じarchive済み |
 
 CalloutとGPT-5.6の他端末チェックは、Codex全対応Wave 3の同じhost receiptを参照して閉じる。
 hostごとにinstall、config、routing、hook、MCP、Throughline、factory reporterを一回のrolloutで
@@ -336,7 +336,7 @@ Phase節は**レーン別に区切り、各レーン内は上から実行順**�
   - Phase受入はThroughline ADR 0010、lane補正はADR 0011。監査修正Control revision 15、
     元closure Control revision 78でfinalizeし、Throughline計画commit `ebfc152`へ固定した。
 
-詳細: [Observer計画 Phase 1](plan_observer-factory-integration.md#phase-1-throughline両host-completed-turn-feed) ／
+詳細: [Observer計画 Phase 1](archive/plan_observer-factory-integration.md#phase-1-throughline両host-completed-turn-feed) ／
 Throughline `docs/14_observer_completed_turn_feed_plan.md`
 
 ### Phase O2 — Observer製品完成
@@ -472,7 +472,7 @@ Throughline `docs/14_observer_completed_turn_feed_plan.md`
   - Observer `1493b35`／ADR 0144、Control revision 26 archive、dotagents ADR 0042で
     cross-repo receiptを固定した。intentional faultと追加の実model live Hは実施していない。
 
-詳細: [Observer計画 Phase 2](plan_observer-factory-integration.md#phase-2-observer完成) ／
+詳細: [Observer計画 Phase 2](archive/plan_observer-factory-integration.md#phase-2-observer完成) ／
 Observer `docs/plan_observer.md`
 
 ### Phase O3 — Elastic provider対称化
@@ -523,7 +523,7 @@ Observer `docs/plan_observer.md`
     完全往復。受入は[ADR 0052](adr/0052-o3-live-h-gate-acceptance.md)。**Phase O3のGate充足**。
     execution-verified昇格は別手続きとして未主張（external writer禁止は不変）。
 
-詳細: [Observer計画 Phase 3](plan_observer-factory-integration.md#phase-3-elasticのprovider対称化)
+詳細: [Observer計画 Phase 3](archive/plan_observer-factory-integration.md#phase-3-elasticのprovider対称化)
 
 ### Phase O4 — rate-aware scheduler
 
@@ -548,7 +548,7 @@ Observer `docs/plan_observer.md`
     - Latticeへ移管済み: fm-0548 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L83
     - Latticeへ移管済み: fm-0549 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L84
 
-詳細: [Observer計画 Phase 4](plan_observer-factory-integration.md#phase-4-rate-aware-elastic-scheduler)
+詳細: [Observer計画 Phase 4](archive/plan_observer-factory-integration.md#phase-4-rate-aware-elastic-scheduler)
 
 ### Lane R — 既存工場rollout（R1→R2→R3。R1完了、R2進行中＝現在地、R3の一部はqueue 20が束ねて先行消化）
 
@@ -579,7 +579,7 @@ Observer `docs/plan_observer.md`
 - Latticeへ移管済み: fm-0573 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L95
   [ADR 0022](adr/0022-r1-local-closure.md)で受け入れた。
 
-詳細: [BugHub計画 Wave 6〜8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
+詳細: [BugHub計画 Wave 6〜8](archive/plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
 
 ### Phase R2 — host単位の統合rollout
 
@@ -592,7 +592,7 @@ Observer `docs/plan_observer.md`
 - Latticeへ移管済み: fm-0586 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L100
 
 詳細: [Codex全対応 Wave 3](archive/plan_codex-full-support.md#wave-3--現役端末-rollout-と既存プラン閉鎖) ／
-[BugHub計画 Wave 8](plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
+[BugHub計画 Wave 8](archive/plan_bughub-factory-integration.md#wave-8--4環境canary-rollouthf)
 
 ### Phase R3 — wire v2 finalization
 
@@ -600,7 +600,7 @@ Observer `docs/plan_observer.md`
 - Latticeへ移管済み: fm-0594 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L102
 - Latticeへ移管済み: fm-0595 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L103
 
-詳細: [BugHub計画 Wave 9](plan_bughub-factory-integration.md#wave-9--定常運用と完了) ／
+詳細: [BugHub計画 Wave 9](archive/plan_bughub-factory-integration.md#wave-9--定常運用と完了) ／
 [Codex全対応 Wave 4](archive/plan_codex-full-support.md#wave-4--最終監査と完了)
 
 ### 合流 — J1（Lane O完了×Lane R完了の後）
@@ -613,7 +613,7 @@ Observer `docs/plan_observer.md`
 - Latticeへ移管済み: fm-0607 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L106
 - Latticeへ移管済み: fm-0608 → docs/archive/lattice-source-ledger/factory-master-cutover-20260719.md#L107
 
-詳細: [Observer計画 Phase 5〜6](plan_observer-factory-integration.md#phase-5-工場wire-v3とbughub編入)
+詳細: [Observer計画 Phase 5〜6](archive/plan_observer-factory-integration.md#phase-5-工場wire-v3とbughub編入)
 
 ## 5. 主キャンペーン後の保守queue
 

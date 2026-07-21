@@ -20,7 +20,7 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | [../shared/orchestrate/contract.md](../shared/orchestrate/contract.md) | 両親共通のorchestrate use-not-use・Control lifecycle・統括ゲート |
 | [../shared/orchestrate/delegation-contract.md](../shared/orchestrate/delegation-contract.md) | 製品中立のDelegation Packet／Worker Reportと統括側受入契約 |
 | `plan_*.md` | 進行中の子計画（詳細TODO・受入条件。マスターの実行順に従い、完遂で `YYYY-MM_` 接頭辞にして archive へ） |
-| [queue_memory-promotion.md](queue_memory-promotion.md) | 端末メモリ→リポ正典への昇格待ち行列（全行消化で削除） |
+| [archive/queue_memory-promotion.md](archive/queue_memory-promotion.md) | 終了した端末メモリ→リポ正典への旧昇格待ち行列 |
 | [adr/](adr/) | このリポ自身の構造決定の記録 |
 | [archive/](archive/) | 役目を終えた文書（Fable 期キャンペーンの計画 v3・消化台帳一式） |
 

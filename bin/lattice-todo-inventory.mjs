@@ -9,8 +9,6 @@ import { fileURLToPath } from 'node:url';
 export const DEFAULT_SOURCE_REFS = Object.freeze([
   'PLAN.md',
   'docs/plan_factory-master.md',
-  'docs/plan_bughub-factory-integration.md',
-  'docs/queue_memory-promotion.md',
 ]);
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
