@@ -1997,7 +1997,13 @@ test("linked worktree共通dirでglobal lockとwrite競合を直列化し、non-
   ]);
   const fulfilled = [a, b].filter((x) => x.status === "fulfilled");
   const rejected = [a, b].filter((x) => x.status === "rejected");
-  assert.ok((fulfilled.length === 1 && rejected.length === 1 && ["LOCK_CONTENDED", "WRITE_CONFLICT"].includes(rejected[0].reason.code)) || (fulfilled.length === 0 && rejected.length === 2 && rejected.every((x) => x.reason.code === "LOCK_CONTENDED")));
+  assert.ok(
+    (fulfilled.length === 1 && rejected.length === 1 && ["LOCK_CONTENDED", "WRITE_CONFLICT"].includes(rejected[0].reason.code))
+      || (fulfilled.length === 0 && rejected.length === 2 && rejected.every((x) => x.reason.code === "LOCK_CONTENDED")),
+    `unexpected race result: ${JSON.stringify([a, b].map((result) => result.status === "fulfilled"
+      ? { status: result.status }
+      : { status: result.status, code: result.reason?.code, details: result.reason?.details }))}`,
+  );
   const linkedRevision = b.status === "fulfilled" ? b.value.revision : linkedRun.revision;
   const later = await api.taskRecord({ cwd: linked.root, control_id: "linked-control", actor_id: "parent", expected_revision: linkedRevision, task: makeTask({ task_id: "non-overlap", write_scope: [{ kind: "directory", path: "tests/orchestrate" }] }) });
   assert.equal(later.manifest.tasks.at(-1).task_id, "non-overlap");
