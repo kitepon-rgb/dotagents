@@ -10,7 +10,6 @@ export const DEFAULT_SOURCE_REFS = Object.freeze([
   'PLAN.md',
   'docs/plan_factory-master.md',
   'docs/plan_bughub-factory-integration.md',
-  'docs/plan_observer-factory-integration.md',
   'docs/queue_memory-promotion.md',
 ]);
 
