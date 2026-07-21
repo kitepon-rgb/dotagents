@@ -5,7 +5,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { inventorySources, verifyLiveSourceCutover } from '../../bin/lattice-todo-inventory.mjs';
+import {
+  DEFAULT_SOURCE_REFS,
+  inventorySources,
+  verifyLiveSourceCutover,
+} from '../../bin/lattice-todo-inventory.mjs';
 
 const git = (root, args) => execFileSync('git', args, {
   cwd: root,
@@ -17,6 +21,10 @@ const git = (root, args) => execFileSync('git', args, {
     GIT_COMMITTER_NAME: 'Fixture',
     GIT_COMMITTER_EMAIL: 'fixture@example.invalid',
   },
+});
+
+test('既定のlive source監査に憲章PLANを含める', () => {
+  assert.equal(DEFAULT_SOURCE_REFS.includes('PLAN.md'), true);
 });
 
 test('HEAD blobだけからcode fence外のbullet・番号付きcheckboxを安定集計する', async (context) => {
