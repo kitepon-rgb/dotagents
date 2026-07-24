@@ -617,6 +617,19 @@ Taskは意味と受入条件への参照であり、Executorへ直接結びつ�
 - `classification`は`F | A | H`、`effect`は`read | write`。Task自体へWorker／Consultationの
   実行laneを焼き込まない。同じTaskを独立WorkerとCritic Consultationの双方が参照できる。
 - readは`write_scope=[]`。writeは1件以上を必須とする。
+- **`external_source`（v30・ADR 0116）**: v25〜v29のtaskはキー**不在**が正規形、v30以降はキー存在を
+  必須とし`null`＝direct path（外部相関なし）。非nullは
+  `namespace / contract_version / external_id / immutable_digest`のexact 4キーclosed tupleだけを許し、
+  自由形式metadata・外部label・外部state・外部依存のcopyを拒否する。書けるのはtask-recordの一回だけで、
+  更新・差替のmutation面は存在しない（外部側driftはbindingの書換でなくdispatch直前の公開status再読と
+  digest照合で拒否する）。v29以下のmanifestへ`external_source`付きtask-recordは
+  `SCHEMA_UPGRADE_REQUIRED`。`lattice.todo` namespaceでは`external_id`を
+  `plan_key/plan_version/task_id`のcanonical合成、`immutable_digest`を対象memberの
+  `member_heads.revision_digest`とし、unreconciled member（`revision_digest`がnull）への
+  bindingを作らない。binding失効の正規回復路はtask-cancel-record＋新Taskの再recordだけとする。
+- **digest正規化（ADR 0116 Decision 2）**: `admission_digest`と`packet_digest`の双方で、
+  `external_source: null`はキー不在とdigest等価に正規化する。これによりv29→v30 migration
+  （全taskへ`null`付与）は既存taskのadmission_digestも走行中workerのpacket_digest照合も一切変えない。
 - Hは次のexact approval snapshotを必須とし、H以外では`null`を必須とする。親が承認の真正性と
   意味を確認し、Controlは対象operation digestと有効期限だけをadmission時に照合する。
 
@@ -1193,6 +1206,12 @@ version移動は暗黙に行わず、明示コマンド`control-migrate`だけ�
 - **v29→v28 rollback**: `lane_admission === null`（migration産）の場合だけkeyを削除して戻せる。
   non-null（init産）は`ROLLBACK_UNSUPPORTED`——宣言済みadmissionを黙って落とすことはできず、
   supported pathはv29 readerを残したまま新規利用を止めるbehavior rollbackである（ADR 0114 Decision 6）。
+- **v29→v30**: 全stored taskへ`external_source: null`を物理追加する。null bindingはdigest正規化で
+  キー不在と等価のため、admission_digestとpacket_digestは1つも変わらない＝走行中workerのreport回収を
+  migrationが破壊しない（ADR 0116 Decision 2）。
+- **v30→v29 rollback**: 全taskの`external_source`が`null`の場合だけkeyを削除して戻せる。非null
+  bindingが1件でもあれば`ROLLBACK_UNSUPPORTED`——受入に束縛された相関証拠を黙って落とせない
+  （ADR 0116 Decision 3）。
 
 - 決定的変換: 各consultationの`slug: s`→`consultation_handle: { slug: s }`。connectorは既存の
   `gpt-connector`のまま、他collectionは不変。`record_revision`を+1し、transition receiptへ

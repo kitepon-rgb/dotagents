@@ -3102,7 +3102,7 @@ test("control-migrateはv25→v26を決定的に一回で行い非gpt consultati
   await downgradeControlToV25(repo, "migrate-control");
   const recorded = await api.consultationRecord({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: revision, consultation: makeConsultationV25() });
   await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V25 }), code("INVALID_TRANSITION"));
-  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: "dotagents.orchestration-control.v30" }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: "dotagents.orchestration-control.v99" }), code("INVALID_SCHEMA"));
   // v25→v27の直行migrationは存在しない（隣接version限定・ADR 0054）
   await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V27 }), code("INVALID_TRANSITION"));
   const migrated = await api.controlMigrate({ cwd: repo.root, control_id: "migrate-control", actor_id: "parent", expected_revision: recorded.revision, target_schema_version: V26 });
@@ -3943,4 +3943,88 @@ test("同一manifest内でfile型とdecision型のevidenceが同じ更新後drif
   assert.equal(decisionEntry.status, "retained-history");
   assert.equal(decisionEntry.error_code, "RETAINED_IN_GIT_HISTORY");
   assert.ok(!result.blocking_reasons.some((e) => e.subject_kind === "evidence"));
+});
+
+// ── external_source binding（v30・ADR 0116）────────────────────────────────
+
+const V30 = "dotagents.orchestration-control.v30";
+
+const makeExternalSource = (overrides = {}) => ({
+  namespace: "lattice.todo",
+  contract_version: "lattice.todo_status_result.v4",
+  external_id: "factory-master/rev-5878b6b9d54eabb5f3309427/fm-0666",
+  immutable_digest: "a".repeat(64),
+  ...overrides,
+});
+
+async function v30PacketFixture(t, controlId) {
+  const { repo, result } = await initialized(t, { control_id: controlId });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "v30-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const worker = await api.workerRunRecord({
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: task.revision,
+    worker_run: makeWorkerRun({ worker_run_id: "v30-worker", task_id: "v30-task", assignment_id: "v30-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "v30-assignment" } }),
+  });
+  return { repo, revision: worker.revision };
+}
+
+test("v29→v30 migrationは全taskへnullを刻みadmission digestとpacket digestを1bitも変えない", async (t) => {
+  const { repo, revision } = await v30PacketFixture(t, "v30-migration");
+  const before = await readPersistedManifest(repo.commonDir, "v30-migration");
+  const beforeDigest = before.tasks[0].admission_digest;
+  const beforePacket = await api.delegationPacketForWorker({ cwd: repo.root, control_id: "v30-migration", worker_run_id: "v30-worker" });
+  const migrated = await api.controlMigrate({ cwd: repo.root, control_id: "v30-migration", actor_id: "parent", expected_revision: revision, target_schema_version: V30 });
+  assert.equal(migrated.manifest.schema_version, V30);
+  assert.equal(migrated.manifest.tasks[0].external_source, null);
+  assert.equal(migrated.manifest.tasks[0].admission_digest, beforeDigest);
+  // report importは現manifestからpacketを再計算して照合する＝migration跨ぎで一致しなければ
+  // 走行中workerのreportが恒久import不能になる（ADR 0116 Decision 2 / refuter指摘1）
+  const afterPacket = await api.delegationPacketForWorker({ cwd: repo.root, control_id: "v30-migration", worker_run_id: "v30-worker" });
+  assert.equal(afterPacket.packet_digest, beforePacket.packet_digest);
+  assert.deepEqual(await readPersistedManifest(repo.commonDir, "v30-migration"), migrated.manifest);
+});
+
+test("v30 task-recordはexternal_source keyを必須としclosed tupleだけを受ける", async (t) => {
+  const { repo, revision } = await v30PacketFixture(t, "v30-record");
+  const migrated = await api.controlMigrate({ cwd: repo.root, control_id: "v30-record", actor_id: "parent", expected_revision: revision, target_schema_version: V30 });
+  // key不在はv30で拒否（v25〜v29の正規形をv30へ持ち込まない）
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "v30-record", actor_id: "parent", expected_revision: migrated.revision, task: makeTask({ task_id: "v30-missing-key", effect: "read", write_scope: [] }) }), code("INVALID_SCHEMA"));
+  // null＝direct path。admission digestはkey不在時と等価（正規化）
+  const direct = await api.taskRecord({ cwd: repo.root, control_id: "v30-record", actor_id: "parent", expected_revision: migrated.revision, task: makeTask({ task_id: "v30-direct", effect: "read", write_scope: [], external_source: null }) });
+  const directStored = direct.manifest.tasks.find((entry) => entry.task_id === "v30-direct");
+  assert.equal(directStored.external_source, null);
+  const withoutKey = structuredClone(directStored); delete withoutKey.external_source;
+  assert.equal(directStored.admission_digest, taskAdmissionDigest(withoutKey));
+  // 非null closed tupleは保存されdigestへ入る
+  const bound = await api.taskRecord({ cwd: repo.root, control_id: "v30-record", actor_id: "parent", expected_revision: direct.revision, task: makeTask({ task_id: "v30-bound", effect: "read", write_scope: [], external_source: makeExternalSource() }) });
+  const boundStored = bound.manifest.tasks.find((entry) => entry.task_id === "v30-bound");
+  assert.deepEqual(boundStored.external_source, makeExternalSource());
+  assert.notEqual(boundStored.admission_digest, directStored.admission_digest);
+  // 余剰キー・自由形式metadata・不正digestは拒否
+  const reject = async (external_source) => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "v30-record", actor_id: "parent", expected_revision: bound.revision, task: makeTask({ task_id: "v30-invalid", effect: "read", write_scope: [], external_source }) }), code("INVALID_SCHEMA"));
+  await reject(makeExternalSource({ label: "free-form" }));
+  await reject(makeExternalSource({ immutable_digest: "not-a-digest" }));
+  await reject(makeExternalSource({ external_id: "/absolute/path" }));
+  await reject({ namespace: "lattice.todo" });
+  // 保存後のmanifest改竄（非null→null）はdigest不一致で検出される
+  const tampered = structuredClone(bound.manifest);
+  tampered.tasks.find((entry) => entry.task_id === "v30-bound").external_source = null;
+  assert.throws(() => api.validateManifest(tampered), code("INVALID_SCHEMA"));
+});
+
+test("v29以下のmanifestへのexternal_source付きtask-recordはSCHEMA_UPGRADE_REQUIREDになる", async (t) => {
+  const { repo, revision } = await v30PacketFixture(t, "v30-gate");
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "v30-gate", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "needs-v30", effect: "read", write_scope: [], external_source: null }) }), code("SCHEMA_UPGRADE_REQUIRED"));
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "v30-gate", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "needs-v30-bound", effect: "read", write_scope: [], external_source: makeExternalSource() }) }), code("SCHEMA_UPGRADE_REQUIRED"));
+});
+
+test("v30→v29 rollbackは全binding nullの時だけ可能で非null bindingが1件でもあれば拒否する", async (t) => {
+  const { repo, revision } = await v30PacketFixture(t, "v30-rollback");
+  const migrated = await api.controlMigrate({ cwd: repo.root, control_id: "v30-rollback", actor_id: "parent", expected_revision: revision, target_schema_version: V30 });
+  const rolledBack = await api.controlMigrate({ cwd: repo.root, control_id: "v30-rollback", actor_id: "parent", expected_revision: migrated.revision, target_schema_version: V29 });
+  assert.equal(rolledBack.manifest.schema_version, V29);
+  assert.ok(!Object.hasOwn(rolledBack.manifest.tasks[0], "external_source"));
+  const remigrated = await api.controlMigrate({ cwd: repo.root, control_id: "v30-rollback", actor_id: "parent", expected_revision: rolledBack.revision, target_schema_version: V30 });
+  const bound = await api.taskRecord({ cwd: repo.root, control_id: "v30-rollback", actor_id: "parent", expected_revision: remigrated.revision, task: makeTask({ task_id: "v30-rollback-bound", effect: "read", write_scope: [], external_source: makeExternalSource() }) });
+  await assert.rejects(api.controlMigrate({ cwd: repo.root, control_id: "v30-rollback", actor_id: "parent", expected_revision: bound.revision, target_schema_version: V29 }), code("ROLLBACK_UNSUPPORTED"));
 });

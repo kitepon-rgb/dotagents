@@ -77,6 +77,8 @@ export const canonicalDigest = (value) => createHash("sha256").update(canonicalJ
 export function taskAdmissionDigest(task) {
   const snapshot = structuredClone(task);
   delete snapshot.admission_digest;
+  // ADR 0116 Decision 2と同一の正規化: null external_sourceはキー不在とdigest等価。
+  if (snapshot.external_source === null) delete snapshot.external_source;
   return createHash("sha256").update(canonicalJson(snapshot)).digest("hex");
 }
 
