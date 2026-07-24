@@ -1,0 +1,9 @@
+{
+  "evidence_id": "wave1-fm0670-execution-path-composition",
+  "repo_id": "self",
+  "path": "docs/adr/0122-execution-path-composition.md",
+  "git_blob_oid": "65d74058f90cd5c2ad2e108a5233dfaff25a975c",
+  "content_digest": "89050097df6c22a87c02c61bee04b2e22ae5955e9a62534ad06c6eeebfcf6c71",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
