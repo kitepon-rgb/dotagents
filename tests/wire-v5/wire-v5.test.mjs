@@ -106,3 +106,20 @@ test('v5 reporterはv5専用のendpoint・outbox・stateだけを使う', async 
   assert.match(reporter, /'dotagents', 'factory-reporter-v5'/u);
   assert.doesNotMatch(reporter, /'dotagents', 'factory-reporter-v4'/u, 'v4のoutboxを列挙しない');
 });
+
+test('v5のcontract_versionは全製品でwire contract版を指す', async () => {
+  const source = await readFile(new URL('../../lib/factory/v5.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export async function scanV5WithAcknowledgements');
+  const body = source.slice(start);
+  // scan.mjs由来の製品はemptyProduct()のv1期の値'1.0'を持つため、wire版で上書きする。
+  for (const [id, needle] of [
+    ['lattice', "products.lattice = { ...empty(), ...(await latticeProduct({ cwd }, now)), contract_version: '5.0' }"],
+    ['aishell', "contract_version: '5.0'"],
+    ['servermanager', "contract_version: '5.0'"],
+  ]) {
+    const at = body.indexOf(`products.${id} =`);
+    assert.notEqual(at, -1, `${id}の組み立てがscanV5に存在する`);
+    assert.ok(body.slice(at, at + 400).includes("contract_version: '5.0'"),
+      `${id}のcontract_versionをwire版へ上書きする（${needle.slice(0, 20)}…）`);
+  }
+});
