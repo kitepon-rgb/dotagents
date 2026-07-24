@@ -36,7 +36,7 @@ BugHub test **89/89**（回帰test「退役製品のexpectation issueはfull sna
 
 ## wv5-0880 — contract_versionの意味が製品間で不揃い
 
-### 欠陥
+### 不整合
 
 `lib/factory/scan.mjs`の`emptyProduct()`が`contract_version: '1.0'`（v1期の値）を固定する。
 `latticeProduct` / `aishellProduct`はwire版で上書きしていたが、`serverManagerNative`だけ
@@ -50,7 +50,7 @@ v4時点のBugHub履歴でも`1.0`であり、**v5の回帰ではない**既存�
 `state_schema_version`が持つ（AIShellが`aishell.runtime_configuration.v2`を返す例）。
 v5でservermanagerもwire版へ上書きする。
 
-### 実測（修理後）
+### 実測（統一後）
 
 mac-kiteのv5 snapshot:
 
