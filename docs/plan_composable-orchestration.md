@@ -18,9 +18,9 @@ Status: implementation not started
 - 発見入口: `lattice status --json`
 - 工程入口: `lattice todo status --json`
 
-初期化済みstoreへ新しいplan membershipを追加する公開入口はLattice 0.12.7にないため、本戦役は
-既存`factory-master`のfull desired-state successorとして正本化する。`todo migrate`を新規authoringへ
-流用しない。新plan追加機能そのものは本戦役の目的ではない。
+初期化済みstoreへ新しいplan membershipを追加する公開入口はLattice 0.12.8にもないため（初期化済みstoreの
+`lattice status --json`は`can_create_plan: false`を返す）、本戦役は既存`factory-master`のfull desired-state
+successorとして正本化する。`todo migrate`を新規authoringへ流用しない。新plan追加機能そのものは本戦役の目的ではない。
 
 ## 目的
 
@@ -56,9 +56,11 @@ dotagentsのオーケストレーションを、強い部品が並んでいる�
 | Lattice run | boundary compile、worktree、子dispatch、receipt、resume/closeを所有 | 子ごとの結果をControlのstrict acceptanceへ投影していない |
 | 親dispatch | 親がExecutor固有入口を明示実行する | これは維持すべき境界であり、自動dispatchへ移さない |
 
-既知の前提不整合も、連携実装より先に閉じる。
+既知の前提不整合も、連携実装より先に閉じる。以下は2026-07-23 authoring時点の前提スナップショットであり、
+Wave 0（Lattice `factory-master` の fm-0660／fm-0661／fm-0662）で閉じる。各項目の解消状態と完了証拠の正本は
+Lattice storeにあり、本節へ逐次のcheckboxを複製しない。
 
-- 現行Lattice CLIは0.12.7で`lattice.todo_status_result.v4`を返すが、dotagents工程hookはv1〜v3だけを受理する。
+- 現行Lattice CLIは0.12.8で`lattice.todo_status_result.v4`を返すが、dotagents工程hookはv1〜v3だけを受理する。
 - `lattice status --json`が正規discovery入口だが、現hookには`.lattice/todo`の存在で早期判定する箇所がある。
 - `lattice run list --json`は現repoで`INVALID_RUN_STORE`を返すが、現advisoryは失敗を空集合へ丸める。
 - 委譲契約にはLatticeの`resume`／`close`が未実装という古い記述が残る。
