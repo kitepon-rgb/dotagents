@@ -30,6 +30,17 @@ role_file="$repo/codex/agents/$role.toml"
 sessions_dir="${CODEX_HOME:-$HOME/.codex}/sessions"
 max_age_seconds="${CODEX_AGENT_ROUTING_MAX_AGE_SECONDS:-300}"
 require_sandbox="${CODEX_AGENT_ROUTING_REQUIRE_SANDBOX:-0}"
+python_role_file="$role_file"
+python_sessions_dir="$sessions_dir"
+
+# Git Bash から Windows Python を起動する場合、MSYS の /c/... は pathlib で
+# Windows 絶対pathにならず、/root/... の agent_path は逆に自動変換してはいけない。
+# ファイル系だけ先に Windows path へ変換し、Python 呼出し時の暗黙変換を止める。
+if command -v cygpath >/dev/null 2>&1 \
+  && python3 -c 'import os, sys; sys.exit(0 if os.name == "nt" else 1)' >/dev/null 2>&1; then
+  python_role_file="$(cygpath -w "$role_file")"
+  python_sessions_dir="$(cygpath -w "$sessions_dir")"
+fi
 
 case "$require_sandbox" in
   0|1) ;;
@@ -45,7 +56,7 @@ if [ ! -d "$sessions_dir" ]; then
   exit 1
 fi
 
-python3 - "$role_file" "$sessions_dir" "$role" "$agent_path" "$max_age_seconds" "$require_sandbox" <<'PY'
+MSYS2_ARG_CONV_EXCL='*' python3 - "$python_role_file" "$python_sessions_dir" "$role" "$agent_path" "$max_age_seconds" "$require_sandbox" <<'PY'
 import json
 import re
 import sys

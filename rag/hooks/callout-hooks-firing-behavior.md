@@ -2,7 +2,7 @@
 
 **出典**: dotagents 呼びかけ hook 群（Claude 側 C1-C4／Codex 側 X1-X5）の Phase 1 プローブ（P1-P7）＋2026-07-12 実火観測。
 **確度**: reproduced（実機実測。Claude Code 現行版・codex-cli 0.144.1・gpt-5.6-sol）。
-**設計・裁定・反証の正典**: [docs/plan_callout-hooks.md](../../docs/plan_callout-hooks.md)（工場の設計文書＝いずれ archive。「hook が実際にどう発火するか」の実測は永続再利用するため本記事に残す）。
+**設計・裁定・反証の完了記録**: [archive版](../../docs/archive/plan_callout-hooks.md)（「hook が実際にどう発火するか」の実測は永続再利用するため本記事に残す）。
 
 ## なぜここにあるか
 
@@ -63,5 +63,5 @@
 
 ## 関連
 
-- 設計・裁定・反証: [docs/plan_callout-hooks.md](../../docs/plan_callout-hooks.md)
+- 設計・裁定・反証: [archive版](../../docs/archive/plan_callout-hooks.md)
 - caveat: `claude-code-hooks-no-hot-reload`（hot-reload 訂正）・`codex-cli-hooks-posttooluse-payload-omits-tool-outcome…`（Stop 制御反映の補足）・`codex-hooks-require-pascalcase-config-keys-and-transcript-backed-exit-codes`・`claude-code-hook-error-false-label`（stdin 未消費/stderr で偽 Hook Error）

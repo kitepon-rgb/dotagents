@@ -1,0 +1,9 @@
+{
+  "evidence_id": "toolchain-tracking-acceptance-20260720",
+  "repo_id": "self",
+  "path": "docs/evidence/2026-07-20-toolchain-tracking-acceptance.md",
+  "git_blob_oid": "f19d02f9fb662291ee60b3abfc35031e0a4a3723",
+  "content_digest": "d91f1013549368264b1f750454b0d0fa337d6e9d4a5a32d3f586e096fb282ca8",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

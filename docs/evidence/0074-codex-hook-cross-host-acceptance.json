@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0074",
+  "repo_id": "self",
+  "path": "docs/adr/0074-codex-hook-cross-host-acceptance.md",
+  "git_blob_oid": "3c739f1e771af19c37ca63982c3a126b4bb1f215",
+  "content_digest": "c9c31b08e66bb40ea6d00275452d58f40ff95826b09c8bb443a039cfc2b4e064",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

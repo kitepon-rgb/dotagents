@@ -15,10 +15,14 @@ CAPTURE_LIMIT = 64 * 1024
 STATUS_SCHEMAS = {
     "lattice.todo_status_result.v1",
     "lattice.todo_status_result.v2",
+    "lattice.todo_status_result.v3",
 }
 IDENTIFIER = re.compile(r"^[0-9A-Za-z](?:[0-9A-Za-z._-]{0,127})$")
 DIGEST = re.compile(r"^[0-9a-f]{64}$")
 GANTT_REF = Path(".lattice/generated/gantt.html")
+STATUS_TIMEOUT = "timeout"
+STATUS_EXECUTION_FAILED = "execution_failed"
+STATUS_INVALID_RESPONSE = "invalid_response"
 
 
 def emit(frontend, message):
@@ -29,7 +33,8 @@ def emit(frontend, message):
                 "additionalContext": message,
             }
         }
-        sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        # Windows PowerShell 5.1経由でもCodexがJSONを誤復号しないようASCIIだけを出す。
+        sys.stdout.write(json.dumps(payload, ensure_ascii=True) + "\n")
     else:
         sys.stdout.write(message + "\n")
 
@@ -128,16 +133,50 @@ def blocked_entry(value):
     )
 
 
-def member_head(value):
+def member_head(value, schema):
+    if not isinstance(value, dict):
+        return False
+    if schema in {"lattice.todo_status_result.v1", "lattice.todo_status_result.v2"}:
+        return (
+            set(value) == {"plan_key", "through_sequence", "journal_head_digest"}
+            and identifier(value.get("plan_key"))
+            and isinstance(value.get("through_sequence"), int)
+            and not isinstance(value.get("through_sequence"), bool)
+            and 0 <= value["through_sequence"] <= 9_007_199_254_740_991
+            and isinstance(value.get("journal_head_digest"), str)
+            and DIGEST.fullmatch(value["journal_head_digest"]) is not None
+        )
+    expected = {
+        "plan_key",
+        "plan_version",
+        "through_sequence",
+        "journal_head_digest",
+        "reconciliation_state",
+        "revision_digest",
+        "reconciliation_digest",
+    }
+    state = value.get("reconciliation_state")
+    revision = value.get("revision_digest")
     return (
-        isinstance(value, dict)
-        and set(value) == {"plan_key", "through_sequence", "journal_head_digest"}
+        set(value) == expected
         and identifier(value.get("plan_key"))
+        and identifier(value.get("plan_version"))
         and isinstance(value.get("through_sequence"), int)
         and not isinstance(value.get("through_sequence"), bool)
         and 0 <= value["through_sequence"] <= 9_007_199_254_740_991
         and isinstance(value.get("journal_head_digest"), str)
         and DIGEST.fullmatch(value["journal_head_digest"]) is not None
+        and state in {"registered_unreconciled", "reconciled"}
+        and (
+            (state == "registered_unreconciled" and revision is None)
+            or (
+                state == "reconciled"
+                and isinstance(revision, str)
+                and DIGEST.fullmatch(revision) is not None
+            )
+        )
+        and isinstance(value.get("reconciliation_digest"), str)
+        and DIGEST.fullmatch(value["reconciliation_digest"]) is not None
     )
 
 
@@ -174,7 +213,7 @@ def parse_status(raw):
         return None
     if not bounded_list(value.get("blocked"), blocked_entry):
         return None
-    if not bounded_list(value.get("member_heads"), member_head):
+    if not bounded_list(value.get("member_heads"), lambda entry: member_head(entry, value["schema"])):
         return None
     if not isinstance(value.get("result_digest"), str) or DIGEST.fullmatch(value["result_digest"]) is None:
         return None
@@ -190,16 +229,21 @@ def read_status(lattice, root):
                 stdin=subprocess.DEVNULL,
                 stdout=capture,
                 stderr=subprocess.DEVNULL,
-                timeout=2.0,
+                timeout=5.0,
                 check=False,
             )
             if result.returncode != 0:
-                return None
+                return None, STATUS_EXECUTION_FAILED
             capture.seek(0)
             raw = capture.read(CAPTURE_LIMIT + 1)
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    return parse_status(raw)
+    except subprocess.TimeoutExpired:
+        return None, STATUS_TIMEOUT
+    except OSError:
+        return None, STATUS_EXECUTION_FAILED
+    status_value = parse_status(raw)
+    if status_value is None:
+        return None, STATUS_INVALID_RESPONSE
+    return status_value, None
 
 
 def task_summary(entries):
@@ -229,27 +273,46 @@ def missing_cli_message():
     )
 
 
-def status_unavailable_message():
+def status_unavailable_message(reason):
+    if reason == STATUS_TIMEOUT:
+        detail = "status取得が期限超過しました。"
+    elif reason == STATUS_EXECUTION_FAILED:
+        detail = "CLI実行失敗のため現在地を取得できませんでした。"
+    else:
+        detail = "status応答を検証できないため現在地を取得できませんでした。"
     return (
-        "INFO: Lattice工程表: storeは存在しますが lattice todo status で現在地を取得できませんでした。"
+        f"INFO: Lattice工程表: storeは存在しますが {detail}"
         "lattice CLIの版とstore整合を確認してください。このINFOは依頼範囲を拡張しません。"
     )
 
 
 def status_message(root, status_value):
     dependency_count = 0
-    if status_value["schema"] == "lattice.todo_status_result.v2":
+    if status_value["schema"] in {
+        "lattice.todo_status_result.v2",
+        "lattice.todo_status_result.v3",
+    }:
         dependency_count = sum(
             1 for entry in status_value["active_set"] if entry.get("unmet_dependencies")
         )
     dependency_note = (
         f"未充足依存あり: active {dependency_count}件。" if dependency_count else ""
     )
+    reconciliation_note = ""
+    if status_value["schema"] == "lattice.todo_status_result.v3":
+        unreconciled = sum(
+            1
+            for entry in status_value["member_heads"]
+            if entry["reconciliation_state"] == "registered_unreconciled"
+        )
+        reconciled = len(status_value["member_heads"]) - unreconciled
+        reconciliation_note = f"校正状態: reconciled={reconciled}, unreconciled={unreconciled}。"
     return (
         f"INFO: Lattice工程表: {gantt_location(root)}。"
         f"現在地: active={task_summary(status_value['active_set'])}; "
         f"next-ready={task_summary(status_value['next_ready'])}。"
         f"{dependency_note}"
+        f"{reconciliation_note}"
         "工程正本は Lattice store、散文は linked Markdown。"
         "表示不能時は lattice todo gantt を明示実行してください。"
         "このINFOは依頼範囲を拡張しません。"
@@ -282,9 +345,9 @@ def main(frontend):
             return
         if not (root / ".lattice/todo").is_dir():
             return
-        status_value = read_status(lattice, root)
+        status_value, reason = read_status(lattice, root)
         if status_value is None:
-            emit(frontend, status_unavailable_message())
+            emit(frontend, status_unavailable_message(reason))
             return
         emit(frontend, status_message(root, status_value))
     except Exception:

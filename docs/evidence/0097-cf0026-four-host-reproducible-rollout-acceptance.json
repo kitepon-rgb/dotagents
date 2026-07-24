@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0097",
+  "repo_id": "self",
+  "path": "docs/adr/0097-cf0026-four-host-reproducible-rollout-acceptance.md",
+  "git_blob_oid": "1560cc1693c1572ba501efaa179932ddb953a192",
+  "content_digest": "edbdb5c29321f0247c0dab45a3bdc4b2ba3defa377df3075436abe9782e15073",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

@@ -32,7 +32,7 @@ cat > "$PROJECT/.claude/settings.json" <<'EOF'
 }
 EOF
 
-for command in caveat throughline codegraph markitdown; do
+for command in caveat throughline markitdown; do
   cat > "$BIN_DIR/$command" <<'EOF'
 #!/bin/sh
 exit 0
@@ -97,14 +97,16 @@ assert_rejected() {
 # updater の curated package は同名重複を許さず、コア製品の導入面を必須化する。
 for package in \
   caveat-cli throughline claude-spotter gpt-connector aiterm-mcp \
-  codex-sidecar-cli codex-sidecar-core codex-sidecar-mcp '@colbymchenry/codegraph'; do
+  codex-sidecar-cli codex-sidecar-core codex-sidecar-mcp; do
   [ "$(grep -Ec "^[[:space:]]*'${package}'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
     || fail "agents-update の $package は1件でなければならない"
 done
 [ "$(grep -Ec "^[[:space:]]*'@quolu/aishell'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
   || fail 'agents-update の @quolu/aishell はdarwin/arm64条件内に1件でなければならない'
-[ "$(grep -Ec "^[[:space:]]*'@quolu/lattice@0\.5\.0'[[:space:]]*#" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
-  || fail 'agents-update の @quolu/lattice は0.5.0固定pinでなければならない'
+[ "$(grep -Ec "^[[:space:]]*'@quolu/lattice'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
+  || fail 'agents-update の @quolu/lattice はregistry latest更新でなければならない'
+! grep -q '@colbymchenry/codegraph' "$ROOT/bin/agents-update.sh" \
+  || fail 'retired Codegraphをagents-updateへ残してはならない'
 [ "$(grep -Ec "^[[:space:]]*'markitdown'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
   || fail 'agents-update の uv tool package markitdown は1件でなければならない'
 ! grep -Eq "^[[:space:]]*'grok(-build)?'[[:space:]]*$" "$ROOT/bin/agents-update.sh" \
@@ -123,11 +125,17 @@ mv "$BIN_DIR/throughline" "$BIN_DIR/throughline.off"
 assert_rejected 'throughline CLI 欠落'
 mv "$BIN_DIR/throughline.off" "$BIN_DIR/throughline"
 
-for command in codegraph markitdown; do
-  mv "$BIN_DIR/$command" "$BIN_DIR/$command.off"
-  assert_rejected "$command CLI 欠落"
-  mv "$BIN_DIR/$command.off" "$BIN_DIR/$command"
-done
+mv "$BIN_DIR/markitdown" "$BIN_DIR/markitdown.off"
+assert_rejected 'markitdown CLI 欠落'
+mv "$BIN_DIR/markitdown.off" "$BIN_DIR/markitdown"
+
+cat > "$BIN_DIR/codegraph" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+chmod +x "$BIN_DIR/codegraph"
+assert_rejected 'retired codegraph CLI残存'
+rm "$BIN_DIR/codegraph"
 
 mv "$BIN_DIR/uv" "$BIN_DIR/uv.off"
 assert_rejected 'uv CLI 欠落'

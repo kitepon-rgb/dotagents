@@ -38,7 +38,7 @@ case "$runtime_os" in
 esac
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/agents-update.log"
-FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v2-schedule-runner}"
+FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v4-schedule-runner}"
 script_source="${BASH_SOURCE[0]}"
 while [ -h "$script_source" ]; do
   case "$script_source" in */*) script_parent=${script_source%/*} ;; *) script_parent=. ;; esac
@@ -54,6 +54,18 @@ TOOLCHAIN_LEDGER_FILE="${TOOLCHAIN_LEDGER_FILE:-$LOG_DIR/toolchain-ledger.json}"
 
 extract_semver() { node -e 'const s=require("fs").readFileSync(0,"utf8");const m=s.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?/);if(m)process.stdout.write(m[0]);'; }
 json_semver() { node -e 'let v;try{v=JSON.parse(require("fs").readFileSync(0,"utf8"))}catch{process.exit(1)};const x=v[process.argv[1]];if(typeof x!=="string"||!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(x))process.exit(1);process.stdout.write(x)' "$1"; }
+validate_throughline_migration() { node -e '
+  let v; try { v = JSON.parse(require("fs").readFileSync(0, "utf8")); } catch { process.exit(1); }
+  const exact = ["afterSchemaVersion", "beforeSchemaVersion", "schema", "status", "supportedSchemaVersion"];
+  if (!v || typeof v !== "object" || Array.isArray(v) || Object.keys(v).sort().join("\0") !== exact.sort().join("\0") ||
+      v.schema !== "throughline.database_migration.v1" || !["migrated", "already_current", "not_applicable"].includes(v.status) ||
+      !Number.isInteger(v.supportedSchemaVersion) || v.supportedSchemaVersion < 1) process.exit(1);
+  if (v.status === "not_applicable") process.exit(v.beforeSchemaVersion === null && v.afterSchemaVersion === null ? 0 : 1);
+  if (!Number.isInteger(v.beforeSchemaVersion) || !Number.isInteger(v.afterSchemaVersion) ||
+      v.afterSchemaVersion !== v.supportedSchemaVersion) process.exit(1);
+  if (v.status === "already_current") process.exit(v.beforeSchemaVersion === v.afterSchemaVersion ? 0 : 1);
+  process.exit(v.beforeSchemaVersion < v.afterSchemaVersion ? 0 : 1);
+'; }
 resolve_npm_global_bin() {
   local prefix bin
   prefix="$(npm prefix -g)" || return 1
@@ -88,14 +100,13 @@ PACKAGES=(
   '@openai/codex'
   'gpt-connector'
   '@anthropic-ai/sdk'
-  '@colbymchenry/codegraph'
   'aiterm-mcp'
   'caveat-cli'
   'claude-spotter'
   'codex-sidecar-cli'
   'codex-sidecar-core'
   'codex-sidecar-mcp'
-  '@quolu/lattice@0.5.0' # G4受入まで固定pin・受入後@latestへ戻す（docs/plan_lattice-factory-integration.md）
+  '@quolu/lattice'
   'pnpm'
   'throughline'
 )
@@ -165,6 +176,18 @@ UV_TOOLS=(
         printf 'FAILED: %s\n' "$pkg"
         update_failed=1
         operation=failed; reason=install_failed
+      fi
+      if [[ "$pkg" = throughline && "$operation" = success ]]; then
+        printf -- '--- throughline:database-migration ---\n'
+        throughline_migration_output="$(throughline migrate --json)"
+        throughline_migration_rc=$?
+        printf '%s\n' "$throughline_migration_output"
+        if [[ "$throughline_migration_rc" -ne 0 ]] ||
+          ! printf '%s' "$throughline_migration_output" | validate_throughline_migration; then
+          printf 'FAILED: throughline database migration\n'
+          update_failed=1
+          operation=failed; reason=migration_failed
+        fi
       fi
       if [[ -n "$product" ]]; then
         if [[ "$skip_install" -eq 0 && -n "$npm_global_bin" ]]; then

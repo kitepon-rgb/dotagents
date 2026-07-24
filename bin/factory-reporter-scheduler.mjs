@@ -27,7 +27,7 @@ function commandError(result, action) { return new Error(`${action}に失敗し�
 function locations(target, wireMajor) {
   const home = safePath(process.env.HOME || process.env.USERPROFILE || homedir(), 'HOME');
   const local = safePath(process.env.LOCALAPPDATA || join(home, 'AppData', 'Local'), 'LOCALAPPDATA');
-  const stateName = wireMajor === 'v1' ? 'factory-reporter' : 'factory-reporter-v2';
+  const stateName = wireMajor === 'v1' ? 'factory-reporter' : `factory-reporter-${wireMajor}`;
   if (target === 'win32') return { home, config: join(local, 'dotagents', 'factory-reporter', 'config.json'), state: join(local, 'dotagents', stateName), control: join(local, 'dotagents', 'factory-reporter-scheduler'), legacyStates: [join(local, 'dotagents', 'factory-reporter'), join(local, 'dotagents', 'factory-reporter-v2')] };
   const stateRoot = process.env.XDG_STATE_HOME ? join(safePath(process.env.XDG_STATE_HOME, 'XDG_STATE_HOME'), 'dotagents') : join(home, '.local', 'state', 'dotagents');
   return { home, config: process.env.XDG_CONFIG_HOME ? join(safePath(process.env.XDG_CONFIG_HOME, 'XDG_CONFIG_HOME'), 'dotagents', 'factory-reporter.json') : join(home, '.config', 'dotagents', 'factory-reporter.json'), state: join(stateRoot, stateName), control: join(stateRoot, 'factory-reporter-scheduler'), legacyStates: [join(stateRoot, 'factory-reporter'), join(stateRoot, 'factory-reporter-v2')] };
@@ -35,7 +35,7 @@ function locations(target, wireMajor) {
 
 function parseArgs(argv) {
   const [command, ...rest] = argv;
-  if (!['install', 'uninstall'].includes(command)) throw new Error('使い方: factory-reporter-scheduler install|uninstall [--dry-run|--apply] [--wire-major v1|v2] [--config <file>] [--platform darwin|linux|win32]');
+  if (!['install', 'uninstall'].includes(command)) throw new Error('使い方: factory-reporter-scheduler install|uninstall [--dry-run|--apply] [--wire-major v1|v2|v4] [--config <file>] [--platform darwin|linux|win32]');
   const options = {};
   for (let index = 0; index < rest.length; index++) {
     const key = rest[index];
@@ -45,8 +45,8 @@ function parseArgs(argv) {
   }
   const target = options['--platform'] || hostPlatform();
   if (!['darwin', 'linux', 'win32'].includes(target)) throw new Error('--platformはdarwin、linux、win32のいずれかです');
-  const wireMajor = options['--wire-major'] || 'v2';
-  if (!['v1', 'v2'].includes(wireMajor)) throw new Error('--wire-majorはv1またはv2です');
+  const wireMajor = options['--wire-major'] || 'v4';
+  if (!['v1', 'v2', 'v4'].includes(wireMajor)) throw new Error('--wire-majorはv1、v2、v4のいずれかです');
   if (options.mode === 'apply' && target !== hostPlatform()) throw new Error('--applyは実行中OSと異なる--platformを指定できません');
   return { command, target, config: options['--config'] && safePath(options['--config'], '--config'), wireMajor, dryRun: options.mode !== 'apply' };
 }
@@ -62,7 +62,8 @@ export function stableNodePath(target, executable = process.execPath, exists = e
   return stable;
 }
 function artifact(target, config, location, wireMajor) {
-  const node = stableNodePath(target); const runner = join(location.home, '.local', 'bin', wireMajor === 'v1' ? 'factory-reporter-schedule-runner' : 'factory-reporter-v2-schedule-runner'); const log = join(location.state, 'scheduler.log');
+  const runnerName = wireMajor === 'v1' ? 'factory-reporter-schedule-runner' : `factory-reporter-${wireMajor}-schedule-runner`;
+  const node = stableNodePath(target); const runner = join(location.home, '.local', 'bin', runnerName); const log = join(location.state, 'scheduler.log');
   [runner, log, config, location.state].forEach((value) => safePath(value, 'scheduler path'));
   if (target === 'darwin') {
     const file = join(location.home, 'Library', 'LaunchAgents', `${LABEL}.plist`);

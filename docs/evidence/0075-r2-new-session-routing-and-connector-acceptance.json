@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0075",
+  "repo_id": "self",
+  "path": "docs/adr/0075-r2-new-session-routing-and-connector-acceptance.md",
+  "git_blob_oid": "e8f1c2adae3285b89689aa485062dacd4015f22a",
+  "content_digest": "a89e5d522f01194b1e9dac8292099dfe8b4021d4845cd9978785f4f134ff7e85",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

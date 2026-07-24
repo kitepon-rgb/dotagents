@@ -56,7 +56,7 @@ Composer 2.5（2026-06-01 Grok Build 搭載・Kimi K2.5 基盤・Cursor 由来�
 - 既知の齟齬（前セッション調査・本セッション未再検証）:
   1. `grok_agent` の `--model grok-build` はハードコードされた stale 値（ライブカタログ = 本セッション実測の `~/.grok/models_cache.json` にも `grok-build` という slug は存在しない。現行は `grok-4.5`）。
   2. aiterm の `reasoning_effort` enum は grok の非対応段階（`xhigh`/`max`）を許容してしまう（grok 側の実際の対応段階は `low`/`medium`/`high` のみ、本セッション実測で確認）。
-  3. → aiterm プロジェクト側への改修依頼リストとして [[../../docs/plan_gpt56-rewiring.md]] に4件登録済み。
+  3. → aiterm プロジェクト側への改修依頼リストとして [[../../docs/archive/plan_gpt56-rewiring.md]] に4件登録済み。
 
 ## 出典アクセスの制約
 
@@ -66,4 +66,4 @@ x.ai/news・openai.com 系ページは本セッションでも 403 想定でア�
 
 - [[gpt-5.6-family.md]] — 同時期の Codex 側モデル世代（比較対象）
 - [[../../docs/02_models.md]] — 役割→ティア×effort 決定表（xAI レーンの解決例）
-- [[../../docs/plan_gpt56-rewiring.md]] — aiterm 改修依頼リストの正本
+- [[../../docs/archive/plan_gpt56-rewiring.md]] — aiterm 改修依頼の完了記録

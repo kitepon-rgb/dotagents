@@ -65,11 +65,11 @@ check() { # check <dst> <expect_src>
 verify_factory_core() {
   local project_root="${DOTAGENTS_FACTORY_PROJECT_ROOT:-$REPO}"
   local cli
-  for cli in caveat throughline spotter codegraph markitdown gpt-connector aiterm-mcp codex-sidecar-mcp lattice; do
+  for cli in caveat throughline spotter lattice markitdown gpt-connector aiterm-mcp codex-sidecar-mcp; do
     if command -v "$cli" >/dev/null 2>&1; then
       echo "OK  factory core CLI: $cli → $(command -v "$cli")"
     else
-      echo "FAIL: factory core CLI '$cli' 不在（工場コア8製品＋編入中Latticeは全端末必須）"
+      echo "FAIL: factory core CLI '$cli' 不在（現役工場コア8製品は全端末必須）"
       fail=1
     fi
   done
@@ -83,6 +83,11 @@ verify_factory_core() {
     fi
   else
     echo "OK  factory core CLI: aishell-mcp → unsupported（darwin/arm64専用）"
+  fi
+
+  if command -v codegraph >/dev/null 2>&1; then
+    echo "FAIL: retired Codegraph command remains on PATH: $(command -v codegraph)"
+    fail=1
   fi
 
   if ! command -v uv >/dev/null 2>&1; then
@@ -448,8 +453,8 @@ for entry in data.get("hooks", {}).get("SessionStart", []):
         normalized = Path(str(home) + executable[1:] if executable.startswith("~/") else executable).expanduser().resolve(strict=False)
         if normalized == lattice and subcommand == "session-start":
             canonical.append(hook)
-if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 5}:
-    print("FAIL: Claude SessionStart の lattice-gantt-hook session-start は canonical command / type=command / timeout=5 の1件である必要がある")
+if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 6}:
+    print("FAIL: Claude SessionStart の lattice-gantt-hook session-start は canonical command / type=command / timeout=6 の1件である必要がある")
     raise SystemExit(1)
 PY
 then
@@ -462,6 +467,7 @@ if [ ! -f "$codex_hooks" ]; then
 elif ! python3 - "$codex_hooks" <<'PY'
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -481,17 +487,20 @@ required = {
 }
 missing = []
 hook_path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-callout-hook")
+python_prefix = [str(Path(sys.executable).resolve())] if os.name == "nt" else ["/usr/bin/env", "python3"]
 for event, (subcommand, timeout) in required.items():
+    parts = [*python_prefix, hook_path, subcommand]
+    command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
     matches = [
         hook
         for entry in data.get("hooks", {}).get(event, [])
         if isinstance(entry, dict)
         for hook in entry.get("hooks", [])
-        if isinstance(hook, dict) and hook.get("command") == f"{hook_path} {subcommand}"
+        if isinstance(hook, dict) and hook.get("command") == command
     ]
     if len(matches) != 1 or matches[0] != {
         "type": "command",
-        "command": f"{hook_path} {subcommand}",
+        "command": command,
         "timeoutSec": timeout,
         "async": False,
         "statusMessage": None,
@@ -510,6 +519,8 @@ fi
 if [ -f "$codex_hooks" ] && ! python3 - "$codex_hooks" <<'PY'
 import json
 import os
+import shlex
+import shutil
 import sys
 from pathlib import Path
 
@@ -518,13 +529,16 @@ try:
 except (OSError, UnicodeDecodeError, json.JSONDecodeError):
     raise SystemExit(1)
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/orchestrate-advisory-hook")
-expected = {"type": "command", "command": path, "timeoutSec": 5, "async": False, "statusMessage": None}
+shell_prefix = str(Path(shutil.which("sh") or shutil.which("bash") or "sh").resolve()) if os.name == "nt" else "/bin/sh"
+parts = [shell_prefix, path]
+command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
+expected = {"type": "command", "command": command, "timeoutSec": 5, "async": False, "statusMessage": None}
 matches = [
     hook
     for entry in data.get("hooks", {}).get("SessionStart", [])
     if isinstance(entry, dict)
     for hook in entry.get("hooks", [])
-    if isinstance(hook, dict) and hook.get("command") == path
+    if isinstance(hook, dict) and hook.get("command") == command
 ]
 raise SystemExit(0 if matches == [expected] else 1)
 PY
@@ -537,6 +551,7 @@ fi
 if [ -f "$codex_hooks" ] && ! python3 - "$codex_hooks" <<'PY'
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -545,8 +560,10 @@ try:
 except (OSError, UnicodeDecodeError, json.JSONDecodeError):
     raise SystemExit(1)
 path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-lattice-gantt-hook")
-command = f"{path} session-start"
-expected = {"type": "command", "command": command, "timeoutSec": 5, "async": False, "statusMessage": None}
+python_prefix = [str(Path(sys.executable).resolve())] if os.name == "nt" else ["/usr/bin/env", "python3"]
+parts = [*python_prefix, path, "session-start"]
+command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
+expected = {"type": "command", "command": command, "timeoutSec": 6, "async": False, "statusMessage": None}
 relevant = []
 matches = []
 for entry in data.get("hooks", {}).get("SessionStart", []):

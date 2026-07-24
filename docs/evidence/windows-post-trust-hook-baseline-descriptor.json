@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0112",
+  "repo_id": "self",
+  "path": "docs/adr/0112-windows-post-trust-hook-and-baseline-correction.md",
+  "git_blob_oid": "098f6feb2c495ec3cc669fe4cd89ace9935a0f01",
+  "content_digest": "43bd5fb682930af6acff5b04253c09ee2fd0e19924edc4b00367db4500028a50",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

@@ -17,7 +17,7 @@ description: GitHub OSS の見栄え（メタデータ / README / Release / 画�
 ### 1. GitHub 側のメタデータ
 
 ```sh
-gh repo view --json description,homepageUrl,repositoryTopics,latestRelease,hasDiscussionsEnabled,openGraphImageUrl,usesCustomOpenGraphImage
+gh repo view --json nameWithOwner,defaultBranchRef,description,homepageUrl,repositoryTopics,latestRelease,hasDiscussionsEnabled,openGraphImageUrl,usesCustomOpenGraphImage,licenseInfo
 ```
 
 - `description` が古いバージョンの説明で止まっていないか
@@ -26,6 +26,21 @@ gh repo view --json description,homepageUrl,repositoryTopics,latestRelease,hasDi
 - `latestRelease` の tag が実装の最新と乖離していないか
 - Custom OG image があるか（無ければ作成提案）
 - Discussions が有効か
+- 公開repoなのにlicenseが未検出でないか
+- default branch名がREADME、docs URL、badge、workflow、配布metadataと一致するか
+
+### 1.5. 公開OSSの健全性
+
+```sh
+gh api repos/{owner}/{repo}/community/profile
+gh api repos/{owner}/{repo} --jq '{visibility,has_issues,has_projects,has_wiki,has_discussions,security_and_analysis}'
+```
+
+- Community ProfileのLICENSE / CONTRIBUTING / SECURITY / CODE_OF_CONDUCT / Issue template / PR templateを確認する
+- repoの成熟度と想定contributorに必要なものだけを提案し、100%表示を目的化しない
+- secret scanning、push protection、Dependabot security updatesの状態を確認する
+- Projects / Wiki / Discussionsは空の入口を惰性で有効化せず、READMEから案内できる運用先だけを残す
+- 公開repoでlicenseが無い状態は「利用条件未提示」として見栄えより先に明示する。license種類は推測せずユーザー裁定を得る
 
 ### 2. README の構造
 
@@ -66,7 +81,12 @@ gh release list --limit 20
 git log --oneline -30
 ```
 
-これらを突き合わせ、tag があるのに Release が無いバージョン、CHANGELOG にあるのに tag が無いバージョンを洗い出す。
+これらを突き合わせ、tag があるのに Release が無いバージョン、CHANGELOG にあるのに tag が無いバージョンを洗い出す。さらに次を確認する。
+
+- package manifest（`package.json`、language固有manifest等）の配布version、release notes、最新tag、latest Releaseが一致するか
+- 各release tagがdefault branchの祖先か。`git merge-base --is-ancestor <tag> <default-branch>`が非0なら、Release不足ではなく履歴整合問題として分離する
+- annotated / lightweight tag、tagが指すcommit、default branchとの差分を実物で確認する
+- tagのforce更新や付け替えは履歴改変として扱い、通常のRelease作成に混ぜず、影響とrollbackを説明して明示承認を得る
 
 ## 監査後にユーザーに出す提示形式
 
@@ -82,6 +102,8 @@ git log --oneline -30
 | F. README hero 画像 | 中 | 小〜中 | OG とトーンを揃えた縦横自由のビジュアル |
 | G. アーキ図 / フロー図 | 中 | 小 | 構造を 1 枚で伝える |
 | H. CI 緑化 | 小〜中 | 案件次第 | 失敗 job を root cause 特定して直す。元から壊れてた既存問題は別タスク扱い |
+| I. OSS健全性 | 大 | 小〜中 | LICENSE / SECURITY / CONTRIBUTING / Issue・PR導線、security設定 |
+| J. 履歴・配布整合 | 大 | 案件次第 | package / tag / default branch / Release / notesの対応を修復 |
 
 ユーザーに「どこから着手するか」を聞く。「全部やれ」「A+B だけ」等の指示を待つ。
 
@@ -154,6 +176,7 @@ git log --oneline -30
 
 - 何をやったか（軸ごと、簡潔に）
 - 残作業（Settings UI でしか触れない項目、ユーザー判断が要るもの）
+- tagがdefault branch外にある、license未裁定など、見栄えだけでは閉じない公開上のblocker
 - 告知物の選択肢を 1 度だけ提示:
   - 告知文の下書き（Show HN / X / Reddit / dev.to / Hacker News 等）
   - リリース告知 GIF（Slack 向け、GIF 作成 Skill）

@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0083",
+  "repo_id": "self",
+  "path": "docs/adr/0083-artifact-generation-v28.md",
+  "git_blob_oid": "e595b35bc9a1b81a6cc78b516305f2ae1bbb26ad",
+  "content_digest": "f9acfda5d6059c8b7df6544a405b7a9fe44bda079012844e6414eb92615d7bce",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

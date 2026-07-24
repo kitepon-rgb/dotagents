@@ -33,7 +33,7 @@
 | Grok Composer が"並ぶ第一選択"の物量 | 02_models.md:40 |
 | 統括ゲート（検証2票・refuter・迷ったら棄却） | orchestrate SKILL.md:74-76 |
 | 還流（push・memory/caveat/rag） | orchestrate SKILL.md:21（憲法8） |
-| ⚡ 呼びかけ hook が注入 | [docs/plan_callout-hooks.md](../../docs/plan_callout-hooks.md)・[callout-hooks-firing-behavior](../hooks/callout-hooks-firing-behavior.md) |
+| ⚡ 呼びかけ hook が注入 | [完了記録](../../docs/archive/plan_callout-hooks.md)・[callout-hooks-firing-behavior](../hooks/callout-hooks-firing-behavior.md) |
 
 ## 図に収めなかった奥行き（矛盾ではなく簡略化）
 

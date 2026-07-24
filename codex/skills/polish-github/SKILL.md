@@ -15,5 +15,6 @@ description: Use when the user asks to polish a GitHub repository's public OSS p
 
 1. **監査だけ先に実行**し、効果／コスト表で選択肢を提示。ユーザーの GO まで変更しない（「全部やれ」指示があれば一括可）。
 2. 不可逆・外部変異（push・tag・Release 作成・repo 設定・Settings 変更）は**実行前に一言告知**。
-3. 監査軸: メタデータ（description/topics/homepage/OG）・README 構造（1行 pitch・30秒例・比較表）・図（mermaid 優先）・CI バッジ・tag/Release/CHANGELOG 整合。
-4. 既存の長文は消さず `<details>` で折りたたむ。プロジェクトの性格と画像の派手さをマッチさせる。
+3. 監査軸: メタデータ（description/topics/homepage/OG/default branch/license）・README 構造（1行 pitch・30秒例・比較表）・図（mermaid 優先）・CI バッジ・Community Profile / security・package/tag/default branch/Release/CHANGELOG 整合。
+4. tagがdefault branchの祖先でない場合はRelease不足と混同せず、履歴整合問題として明示する。license種類やtag付け替えは推測で決めない。
+5. 既存の長文は消さず `<details>` で折りたたむ。プロジェクトの性格と画像の派手さをマッチさせる。

@@ -1,0 +1,9 @@
+{
+  "evidence_id": "unsafe-optional-maintenance-disposition-20260721",
+  "repo_id": "self",
+  "path": "docs/evidence/2026-07-21-unsafe-optional-maintenance-disposition.md",
+  "git_blob_oid": "9ae26bc559a108f3206adb44dfb648303446485c",
+  "content_digest": "5a6b452031fb19dfcb44be6f50214b336b1daaa6c7d89a0d2fb2b32d58ec72f5",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

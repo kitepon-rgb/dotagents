@@ -9,7 +9,7 @@ dotagents は**開発工場そのもの**。全プロジェクトに共通して
 - **規範**: ベルの共通憲法（`shared/constitution.md`正本＋host delta）・本憲章の原則・orchestrate（統括の型）・02_models.md（役割→モデル対応の唯一の参照点）・01_project-layout.md（フォルダ構成標準）
 - **同期ハブ**: install.sh が skill / command / agents / rule / bin / 罠DB を全端末へ symlink 配布。GitHub が真実の源
 - **知識台帳**: rag/（調査の複利棚）・docs/（決定と計画）。罠DB は Caveat 自身が管理（`~/.caveat/own` → private の Caveat-Private・v0.15+。dotagents 外）
-- **工場コア管理対象9製品**: 端末能力を担う8製品＝Caveat（罠知識）・Throughline（セッション継続）・Spotter（未使用ツール監査）・Codegraph（コード構造理解）・MarkItDown（外部資料の再利用可能化）・gpt-connector（ChatGPT接続）・aiterm-mcp（PTYと外部モデル枠）・codex-sidecar（Claude親からのCodex実行）、中央運用管理を担う1製品＝ServerManager。Claude Code CLI・Codex CLI・Grok Buildはコアではない基盤toolchainとしてversion・update・compatibility管理対象に置く。Oracleはv1互換・rollback専用。BugHubは独立製品でなくServerManager内部のversion・bug・compatibility統括コンポーネント。Lattice（並列TODO graphコンパイル・競合検出・隔離executor着地）は**第11コアとして編入中**＝第10枠はObserver予約、Codegraph退役完了までは入替でなく追加（[導入plan](docs/plan_lattice-factory-integration.md)が正）。
+- **工場コア管理対象9製品**: 端末能力を担う8製品＝Caveat（罠知識）・Throughline（セッション継続）・Spotter（未使用ツール監査）・Lattice（工程graphとコード構造理解）・MarkItDown（外部資料の再利用可能化）・gpt-connector（ChatGPT接続）・aiterm-mcp（PTYと外部モデル枠）・codex-sidecar（Claude親からのCodex実行）、中央運用管理を担う1製品＝ServerManager。LatticeはCodegraphを完全吸収した正式後継で、独立Codegraphはretired／not_applicableの履歴だけを保持する。Observerは予約・RC4条件付きsupportで未編入。Claude Code CLI・Codex CLI・Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用。BugHubはServerManager内部コンポーネント（[導入完了記録](docs/archive/plan_lattice-factory-integration.md)）。
 
 **範囲**: 本旨は「開発工場（環境）の最適化」。個々のプロダクトの品質監査・法務チェック・深いバグ探しは範囲外——それは「工場で作る製品の検品」であり、オーナーが個別に依頼した時だけ行う。各プロジェクトへの介入は原則、①GitHub 同期 ②フォルダ構成の標準化 ③CLAUDE.md ブラッシュアップ ④Spotter のproject-scoped有効化に絞る。Spotterは全projectで無条件発火させず、正規CLIが作るmarkerで対象を限定する。
 
@@ -28,9 +28,9 @@ dotagents は**開発工場そのもの**。全プロジェクトに共通して
 
 ## 文書の作法
 
-- **文書は3種に分類して管理する**: ①**趣旨**（本憲章・各リポの正典＝なぜ・何のため） ②**プラン**（趣旨を実現する計画。**TODO を兼ねる**） ③**役目を終えたもの**（実現済みプラン・完了台帳）。
-- **プランは必ずプロジェクトの docs/ に作る**。会話・端末メモリ・`~/.claude/plans` に置いて終わらせない。
-- **プランは TODO を兼ねる**: 消化チェックボックスをプラン自身に持ち、方針と消化を別ファイルに分離しない（v3 の分離運用は差し戻し済み＝[adr/0003](docs/adr/0003-campaign-close-plan-todo-merge.md)）。
+- **文書は3種に分類して管理する**: ①**趣旨**（本憲章・各リポの正典＝なぜ・何のため） ②**プラン**（統括レーンの目的・判断理由・非目標・受入条件とLattice工程への導線） ③**役目を終えたもの**（実現済みプラン・完了台帳）。
+- **統括レーンのプランはプロジェクトの docs/ に作る**。通常レーンは会話上の成功条件または内蔵planで足り、会話・端末メモリ・`~/.claude/plans` を工程正本にしない。
+- **実行TODOの正本はLattice typed discoveryで決める**: `lattice status --json` が`ready`／`active_run`ならtask・依存・状態・完了証拠はLattice storeだけに置き、Markdown checkboxへ二重化しない。`invalid`をMarkdownへfallbackさせない。Latticeを導入しない場合だけMarkdownを正本とする。
 - **役目を終えた文書は docs/archive/ へ退避**し、docs/ 直下は生きた文書だけに保つ。本憲章の旧版は [docs/archive/2026-07_plan-v3-fable-era.md](docs/archive/2026-07_plan-v3-fable-era.md)。
 - **時間見積を計画の制約・判断材料にしない**（AI の作業時間見積は実際の約20倍過大）。計画は順序・依存関係・承認ゲート（H）だけで組む。
 - 全端末で読む文書は**端末非依存・絶対日付・方針は理由ごと本文に**（「会話で決めた」「メモ参照」禁止＝根拠そのものを書く）。
@@ -46,4 +46,4 @@ dotagents は**開発工場そのもの**。全プロジェクトに共通して
 
 ## 残件
 
-- [ ] [開発工場 統合マスター計画](docs/plan_factory-master.md)を完遂する。Observer／Elastic／BugHub wire／Codex全端末展開と旧キャンペーン残件の実行順・現在地・合流条件は同計画だけを正とし、本憲章へ個別TODOを重複させない。
+- 工程正本: Lattice plan `factory-master`。[開発工場 統合マスター計画](docs/plan_factory-master.md)は目的・判断・受入条件とLattice工程への導線だけを持ち、本憲章へ個別TODOを重複させない。

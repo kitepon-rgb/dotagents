@@ -1,0 +1,9 @@
+{
+  "evidence_id": "adr-0072",
+  "repo_id": "self",
+  "path": "docs/adr/0072-r2-four-host-rollout-receipt.md",
+  "git_blob_oid": "cfe580947a44f007255beac79cdda4323d17e13a",
+  "content_digest": "19bd21b90618ba713db56c74af3ce232585b85fe91aae6d481a98126272fabc0",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

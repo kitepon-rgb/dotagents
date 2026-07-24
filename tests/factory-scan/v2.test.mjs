@@ -118,7 +118,10 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
   const claudeHook = (command, timeout) => ({ type: 'command', command, timeout });
   const claudeHooks = { hooks: { PreToolUse: [{ matcher: 'Agent|Task|Workflow|mcp__codex-sidecar__codex_.*|mcp__aiterm__(codex|grok|composer)_agent', hooks: [claudeHook('~/.local/bin/delegation-gate-hook', 5)] }], SessionStart: [{ hooks: [claudeHook('~/.local/bin/todo-gate-hook session-start', 10)] }], Stop: [{ hooks: [claudeHook('~/.local/bin/todo-gate-hook stop', 10)] }], UserPromptSubmit: [{ hooks: [claudeHook('~/.local/bin/onset-gate-hook', 5)] }], PostToolUse: [{ matcher: 'ExitPlanMode', hooks: [claudeHook('~/.local/bin/plan-gate-hook', 5)] }] } }; await writeFile(join(root, '.claude', 'settings.json'), JSON.stringify(claudeHooks));
   await writeFile(join(root, '.codex', 'config.toml'), '[features]\nhooks = true\n[features.multi_agent_v2]\nhide_spawn_agent_metadata = false\ntool_namespace = "agents"\n');
-  const codexHook = (subcommand, timeoutSec) => ({ type: 'command', command: `${join(root, '.local', 'bin', 'codex-callout-hook')} ${subcommand}`, timeoutSec, async: false, statusMessage: null }); const codexHooks = { hooks: { SessionStart: [{ hooks: [codexHook('session-start', 10)] }], PreToolUse: [{ hooks: [codexHook('pre-tool-use', 5)] }], UserPromptSubmit: [{ hooks: [codexHook('user-prompt-submit', 5)] }], Stop: [{ hooks: [codexHook('stop', 10)] }] } }; await writeFile(join(root, '.codex', 'hooks.json'), JSON.stringify(codexHooks));
+  const codexCommand = (subcommand) => process.platform === 'win32'
+    ? `& "C:\\Python\\python.exe" "${join(root, '.local', 'bin', 'codex-callout-hook')}" "${subcommand}"`
+    : `/usr/bin/env python3 ${join(root, '.local', 'bin', 'codex-callout-hook')} ${subcommand}`;
+  const codexHook = (subcommand, timeoutSec) => ({ type: 'command', command: codexCommand(subcommand), timeoutSec, async: false, statusMessage: null }); const codexHooks = { hooks: { SessionStart: [{ hooks: [codexHook('session-start', 10)] }], PreToolUse: [{ hooks: [codexHook('pre-tool-use', 5)] }], UserPromptSubmit: [{ hooks: [codexHook('user-prompt-submit', 5)] }], Stop: [{ hooks: [codexHook('stop', 10)] }] } }; await writeFile(join(root, '.codex', 'hooks.json'), JSON.stringify(codexHooks));
   const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
   await script('caveat', `echo '${JSON.stringify(caveatDiagnostic())}'`);
   const fixtures = nativeFixtures();
@@ -142,6 +145,8 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
   assert.equal(report.products['codex-cli'].installed_version, '0.144.3'); assert.equal(report.products['codex-cli'].latest_version, '0.144.3');
   assert.equal(report.products['grok-build'].checks[0].check_id, 'stable_update'); assert.equal(report.products['grok-build'].update_status, 'current');
   assert.equal(report.products['gpt-connector'].compatibility_status, 'compatible'); assert.equal(report.products.servermanager.presence_status, 'not_applicable');
+  assert.equal(report.products.codegraph.presence_status, 'not_applicable');
+  assert.deepEqual(report.products.codegraph.checks, []);
   assert.equal(report.products.caveat.compatibility_status, 'compatible');
   assert.deepEqual(report.products.throughline.checks.map((item) => item.check_id), ['database_schema', 'codex_hooks', 'capture', 'restore', 'handoff', 'evidence_restore_smoke', 'claude_connector']);
   assert.deepEqual(report.products.spotter.checks.map((item) => item.check_id), ['project_activation', 'marker_schema', 'throughline_context', 'claude_catalog', 'codex_catalog', 'audit_catalog_readiness', 'codex_hooks']);
@@ -155,6 +160,9 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
   const malformed = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, toolchainLedgerPath: ledgerPath });
   assert.equal(malformed.products['claude-code'].compatibility_status, 'incompatible'); assert.equal(malformed.products['codex-cli'].compatibility_status, 'incompatible');
   await writeFile(join(root, '.claude', 'settings.json'), JSON.stringify(claudeHooks));
+  const directCodex = structuredClone(codexHooks); directCodex.hooks.PreToolUse[0].hooks[0].command = `${join(root, '.local', 'bin', 'codex-callout-hook')} pre-tool-use`; await writeFile(join(root, '.codex', 'hooks.json'), JSON.stringify(directCodex));
+  const direct = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, toolchainLedgerPath: ledgerPath });
+  assert.equal(direct.products['codex-cli'].compatibility_status, 'incompatible');
   const duplicateCodex = structuredClone(codexHooks); duplicateCodex.hooks.PreToolUse.push({ matcher: 'never-match', hooks: [codexHook('pre-tool-use', 5)] }); await writeFile(join(root, '.codex', 'hooks.json'), JSON.stringify(duplicateCodex));
   await writeFile(join(root, '.codex', 'config.toml'), 'hooks = true\n[features]\nhooks = false\n[foo]\nhooks = true\n[features.multi_agent_v2]\nhide_spawn_agent_metadata = false\ntool_namespace = "agents"\n');
   const misplaced = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, toolchainLedgerPath: ledgerPath });

@@ -1,0 +1,9 @@
+{
+  "evidence_id": "npm-publishing-hardening-disposition-20260721",
+  "repo_id": "self",
+  "path": "docs/evidence/2026-07-21-npm-publishing-hardening-disposition.md",
+  "git_blob_oid": "673cdde5b1b5c4bf0df6df772fb369389a6eaa20",
+  "content_digest": "5becf00f36a3a4df79b0891aefacefdd6b193a2c08056f6b1751c87d238f9da4",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}

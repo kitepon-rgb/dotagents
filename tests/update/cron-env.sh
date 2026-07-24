@@ -64,6 +64,20 @@ cat > "$TEST_HOME/npm-global/bin/codex" <<'EOF'
 printf '%s:global-codex\n' "${RUN_ID:-default}" >> "$HOME/cli-calls.log"
 echo '0.144.3'
 EOF
+cat > "$TEST_HOME/npm-global/bin/throughline" <<'EOF'
+#!/bin/sh
+printf '%s:throughline:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/update-events.log"
+[ "$*" = 'migrate --json' ] || exit 64
+if [ "${THROUGHLINE_MIGRATE_FAIL:-0}" -eq 1 ]; then
+  echo '{"schema":"throughline.database_migration.v1","status":"error","code":"migration_failed"}'
+  exit 1
+fi
+if [ "${THROUGHLINE_MIGRATE_INVALID:-0}" -eq 1 ]; then
+  echo '{"schema":"throughline.database_migration.v1","status":"already_current"}'
+  exit 0
+fi
+echo '{"schema":"throughline.database_migration.v1","status":"already_current","beforeSchemaVersion":9,"afterSchemaVersion":9,"supportedSchemaVersion":9}'
+EOF
 cat > "$TEST_HOME/shadow-bin/claude" <<'EOF'
 #!/bin/sh
 printf '%s:shadow-claude\n' "${RUN_ID:-default}" >> "$HOME/cli-calls.log"
@@ -75,6 +89,7 @@ printf '%s:shadow-codex\n' "${RUN_ID:-default}" >> "$HOME/cli-calls.log"
 echo '0.144.2'
 EOF
 chmod +x "$TEST_HOME/npm-global/bin/claude" "$TEST_HOME/npm-global/bin/codex" \
+  "$TEST_HOME/npm-global/bin/throughline" \
   "$TEST_HOME/shadow-bin/claude" "$TEST_HOME/shadow-bin/codex"
 cat > "$TEST_HOME/.nvm/fake-bin/uv" <<'EOF'
 #!/bin/sh
@@ -126,20 +141,29 @@ if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   fail '正常fixtureのagents-updateが失敗した'
 fi
 
-expected_npm_packages=14
+expected_npm_packages=13
 if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then
-  expected_npm_packages=15
+  expected_npm_packages=14
 fi
 [ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq "$expected_npm_packages" ] \
   || fail "curated package ${expected_npm_packages}件を fake npm へ渡していない"
+if grep -q '@colbymchenry/codegraph' "$TEST_HOME/npm-calls.log"; then
+  fail 'retired Codegraphを更新対象へ再導入している'
+fi
 [ "$(grep -c '^normal:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
   || fail 'markitdown を fake uv tool upgrade へ1件渡していない'
+[ "$(grep -c '^normal:throughline:migrate --json$' "$TEST_HOME/update-events.log")" -eq 1 ] \
+  || fail 'Throughline更新直後に製品所有migrationを1回実行していない'
 [ "$(grep -c '^normal:--config '"$REPORTER_CONFIG"' --post-update$' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
   || fail '更新後に factory reporter を1回実行していない'
 [ "$(grep -c '^normal:--config '"$REPORTER_CONFIG"' --finalize-update$' "$TEST_HOME/reporter-calls.log")" -eq 1 ] \
   || fail 'gate確定後に最終update observationを1回実行していない'
 [ "$(tail -n 1 "$TEST_HOME/update-events.log")" = "reporter:--config $REPORTER_CONFIG --finalize-update" ] \
   || fail 'factory reporter が更新処理より前に実行された'
+normal_migration_line="$(grep -n '^normal:throughline:migrate --json$' "$TEST_HOME/update-events.log" | cut -d: -f1)"
+normal_report_line="$(grep -n "^reporter:--config $REPORTER_CONFIG --post-update$" "$TEST_HOME/update-events.log" | head -n 1 | cut -d: -f1)"
+[ "$normal_migration_line" -lt "$normal_report_line" ] \
+  || fail 'Throughline migrationより先にfactory reporterを実行した'
 grep -q '^normal:grok:update --check --json$' "$TEST_HOME/update-events.log" \
   || fail 'Grok stable update check を実行していない'
 grep -q '^normal:grok:update --stable$' "$TEST_HOME/update-events.log" \
@@ -303,6 +327,34 @@ grep -q '^npm-fail:install -g codex-sidecar-mcp@latest$' "$TEST_HOME/npm-calls.l
   || fail 'npm 失敗後も uv tool upgrade を継続しなかった'
 [ "$(grep -c '^npm-fail:' "$TEST_HOME/reporter-calls.log")" -eq 2 ] \
   || fail 'npm 失敗後に factory reporter を実行しなかった'
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" \
+  FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  RUN_ID=throughline-migrate-fail \
+  THROUGHLINE_MIGRATE_FAIL=1 \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/throughline-migrate-fail.out" 2>&1; then
+  fail 'Throughline migration失敗を更新成功扱いした'
+fi
+grep -q '^FAILED: throughline database migration$' "$TEST_HOME/throughline-migrate-fail.out" \
+  || fail 'Throughline migration失敗を名指ししない'
+[ "$(grep -c '^throughline-migrate-fail:' "$TEST_HOME/reporter-calls.log")" -eq 2 ] \
+  || fail 'Throughline migration失敗後もfactory reporterを実行していない'
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" \
+  FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  RUN_ID=throughline-migrate-invalid \
+  THROUGHLINE_MIGRATE_INVALID=1 \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/throughline-migrate-invalid.out" 2>&1; then
+  fail 'Throughline migrationの不正JSONを更新成功扱いした'
+fi
+grep -q '^FAILED: throughline database migration$' "$TEST_HOME/throughline-migrate-invalid.out" \
+  || fail 'Throughline migrationの不正JSONを名指ししない'
+[ "$(grep -c '^throughline-migrate-invalid:' "$TEST_HOME/reporter-calls.log")" -eq 2 ] \
+  || fail 'Throughline migrationの不正JSON後もfactory reporterを実行していない'
 
 mv "$TEST_HOME/.nvm/fake-bin/uv" "$TEST_HOME/.nvm/fake-bin/uv.off"
 if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \

@@ -7,6 +7,7 @@ import difflib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -33,7 +34,17 @@ HOOKS = {
     "Stop": ("stop", 10),
 }
 ADVISORY_HOOK = ("SessionStart", 5)
-LATTICE_HOOK = ("SessionStart", "session-start", 5)
+LATTICE_HOOK = ("SessionStart", "session-start", 6)
+PYTHON_HOOK_PREFIX = (
+    (str(Path(sys.executable).resolve()),)
+    if os.name == "nt"
+    else ("/usr/bin/env", "python3")
+)
+SHELL_HOOK_PREFIX = (
+    (str(Path(shutil.which("sh") or shutil.which("bash") or "sh").resolve()),)
+    if os.name == "nt"
+    else ("/bin/sh",)
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -141,30 +152,80 @@ def load_hooks(text: str, path: Path) -> dict:
     return data
 
 
-def is_callout_command(command: object, hook_path: Path, subcommand: str, home: Path) -> bool:
+def command_parts(command: object) -> list[str] | None:
     if not isinstance(command, str):
-        return False
+        return None
     try:
-        executable, actual_subcommand = command.rsplit(maxsplit=1)
+        parts = shlex.split(command, posix=os.name != "nt")
+        if os.name == "nt":
+            parts = [
+                part[1:-1]
+                if len(part) >= 2 and part[0] == part[-1] and part[0] in ("'", '"')
+                else part
+                for part in parts
+            ]
+            if parts[:1] == ["&"]:
+                parts = parts[1:]
+            return parts
+        return parts
     except ValueError:
+        return None
+
+
+def resolved_command_path(value: str, home: Path) -> Path:
+    if value == "~" or value.startswith("~/"):
+        value = str(home) + value[1:]
+    return Path(value).expanduser().resolve(strict=False)
+
+
+def is_script_command(
+    command: object,
+    hook_path: Path,
+    arguments: tuple[str, ...],
+    home: Path,
+    interpreter_prefix: tuple[str, ...],
+) -> bool:
+    parts = command_parts(command)
+    if parts is None:
         return False
-    if actual_subcommand != subcommand:
-        return False
-    if len(executable) >= 2 and executable[0] == executable[-1] and executable[0] in ("'", '"'):
-        executable = executable[1:-1]
-    if executable == "~" or executable.startswith("~/"):
-        executable = str(home) + executable[1:]
-    return Path(executable).expanduser().resolve(strict=False) == hook_path.expanduser().resolve(strict=False)
+    legacy = [str(hook_path), *arguments]
+    canonical = [*interpreter_prefix, str(hook_path), *arguments]
+    for candidate in (legacy, canonical):
+        if len(parts) == len(candidate) and parts[1:] == candidate[1:]:
+            if resolved_command_path(parts[0], home) == resolved_command_path(candidate[0], home):
+                return True
+        if interpreter_prefix and len(parts) == len(canonical) and parts[: len(interpreter_prefix)] == list(interpreter_prefix):
+            script_index = len(interpreter_prefix)
+            if (parts[script_index + 1:] == list(arguments)
+                    and resolved_command_path(parts[script_index], home) == hook_path.resolve(strict=False)):
+                return True
+    return False
+
+
+def render_hook_command(parts: list[str]) -> str:
+    if os.name == "nt":
+        if any('"' in part for part in parts):
+            raise ValueError("Windows hook command token に quote は使用できません")
+        # Codex は hook を現在の turn shell で実行する。Windows の PowerShell では
+        # quoted executable を command として呼ぶため先頭の call operator が必要。
+        return "& " + " ".join(f'"{part}"' for part in parts)
+    return shlex.join(parts)
+
+
+def python_hook_command(hook_path: Path, *arguments: str) -> str:
+    return render_hook_command([*PYTHON_HOOK_PREFIX, str(hook_path), *arguments])
+
+
+def shell_hook_command(hook_path: Path, *arguments: str) -> str:
+    return render_hook_command([*SHELL_HOOK_PREFIX, str(hook_path), *arguments])
+
+
+def is_callout_command(command: object, hook_path: Path, subcommand: str, home: Path) -> bool:
+    return is_script_command(command, hook_path, (subcommand,), home, PYTHON_HOOK_PREFIX)
 
 
 def is_advisory_command(command: object, hook_path: Path, home: Path) -> bool:
-    if not isinstance(command, str):
-        return False
-    if len(command) >= 2 and command[0] == command[-1] and command[0] in ("'", '"'):
-        command = command[1:-1]
-    if command == "~" or command.startswith("~/"):
-        command = str(home) + command[1:]
-    return Path(command).expanduser().resolve(strict=False) == hook_path.expanduser().resolve(strict=False)
+    return is_script_command(command, hook_path, (), home, SHELL_HOOK_PREFIX)
 
 
 def update_hooks(data: dict, home: Path) -> dict:
@@ -175,7 +236,7 @@ def update_hooks(data: dict, home: Path) -> dict:
             raise ValueError(f"hooks.{event} は配列である必要がある")
         canonical = {
             "type": "command",
-            "command": f"{hook_path} {subcommand}",
+            "command": python_hook_command(hook_path, subcommand),
             "timeoutSec": timeout,
             "async": False,
             "statusMessage": None,
@@ -207,7 +268,7 @@ def update_hooks(data: dict, home: Path) -> dict:
         raise ValueError(f"hooks.{event} は配列である必要がある")
     canonical = {
         "type": "command",
-        "command": str(hook_path),
+        "command": shell_hook_command(hook_path),
         "timeoutSec": timeout,
         "async": False,
         "statusMessage": None,
@@ -236,7 +297,7 @@ def update_hooks(data: dict, home: Path) -> dict:
         raise ValueError(f"hooks.{event} は配列である必要がある")
     canonical = {
         "type": "command",
-        "command": f"{hook_path} {subcommand}",
+        "command": python_hook_command(hook_path, subcommand),
         "timeoutSec": timeout,
         "async": False,
         "statusMessage": None,

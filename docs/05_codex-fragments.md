@@ -88,7 +88,7 @@ CLAUDE.md しか無いリポ（このリポ含む）に指示を届かせるた�
 
 ## 5. `AGENTS.override.md` の無言シャドー（地雷警告）
 
-`AGENTS.override.md`（非空）が存在すると、上記2の候補順により `AGENTS.md` は**無言でシャドー**される（エラーにならない）。dotagents の `verify-install.sh` はこれを名指しで検出する設計（`docs/plan_gpt56-rewiring.md` 実装チェックリスト該当）。
+`AGENTS.override.md`（非空）が存在すると、上記2の候補順により `AGENTS.md` は**無言でシャドー**される（エラーにならない）。dotagents の `verify-install.sh` はこれを名指しで検出する設計（`docs/archive/plan_gpt56-rewiring.md` 完了記録）。
 
 ## 6. プロファイル例（任意）
 
@@ -135,7 +135,7 @@ codex --profile work
 - 2ファイルは temp へ先に prepare / fsync してから置換し、途中失敗なら既に置換した側も original へ rollback する。rollback 自体が失敗した場合は明示エラーで止まる。
 - `CODEX_HOME` は test や別 home 用に指定できる。実端末の通常値は `$HOME/.codex`。
 
-同じ状態へ2回適用しても変更も backup も増えない。hook trust の UI 承認、OAuth login、MCP の登録はこの script の責務外である。
+同じ状態へ2回適用しても変更も backup も増えない。hook trust の対話Codex CLI `/hooks`承認、OAuth login、MCP の登録はこの script の責務外である。Codex App／IDEへ`/hooks`を送ってもtrust入口にはならない（[ADR 0104](adr/0104-cf0216-hook-trust-surface-correction.md)）。
 
 ## 8. 旧 `~/.codex/AGENTS.md` の退避・置換手順
 
@@ -146,7 +146,7 @@ codex --profile work
 
 ## 9. hooks.json への呼びかけ hook 配線
 
-Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3／着手案内 C4）の Codex ミラーが X1-X5 である。現行の義務はグローバルAGENTS.md「作業レーンと統制」、実装履歴は [docs/plan_callout-hooks.md](plan_callout-hooks.md) を参照する。通常の配線は section 7 の `apply-codex-config` だけを使い、古い jq 手挿し断片を併用しない。
+Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3／着手案内 C4）の Codex ミラーが X1-X5 である。現行の義務はグローバルAGENTS.md「作業レーンと統制」、実装履歴は [archive版](archive/plan_callout-hooks.md) を参照する。通常の配線は section 7 の `apply-codex-config` だけを使い、古い jq 手挿し断片を併用しない。
 
 | イベント | command | 役割 | timeoutSec |
 |---|---|---|---:|
@@ -155,9 +155,9 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 | `UserPromptSubmit` | `codex-callout-hook user-prompt-submit` | X3 pending drain と X5 初回 / compact 後案内 | 5 |
 | `Stop` | `codex-callout-hook stop` | X4・rolling baseline で pending 保存 | 10 |
 
-各 command は `$HOME/.local/bin/codex-callout-hook <subcommand>` という展開済み絶対パスで、matcher のない専用 entry に1件だけ置く。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
+各 command は、WSL2 interop の拡張子dispatchへ落ちないよう、展開済み絶対pathのscriptを明示interpreterで起動する。POSIXではPython製のcalloutとLattice案内を `/usr/bin/env python3 $HOME/.local/bin/<hook> ...`、shell製のorchestrate advisoryを `/bin/sh $HOME/.local/bin/orchestrate-advisory-hook` とする。Windows nativeではPowerShellのcall operator `&` に続けてapplier自身の`python.exe`とGit for Windowsの`sh.exe`を絶対pathで固定し、全tokenを二重引用符で囲む。Codex hook runnerは現在のturn shellを使うため、`&`がquoted executableの呼出しを成立させ、引用はspaceとbackslashを保つ。各hookはmatcherのない専用entryに1件だけ置き、旧direct-exec表記はapplierが同一hookとして回収してhost別canonical表記へ置換する。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
 
-`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話 Codex で trust を承認し、新規 session で X1 から実火確認する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook session-start`が各1件のcanonical entryであることを検証する。
+`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話Codex CLIの`/hooks`でtrustを承認し、新規sessionでX1から実火確認する。App／IDE入口を受け入れる場合も、同じuser homeのCLIでtrustした後、その入口の新規sessionで実火する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook session-start`が各1件のcanonical entryであることを検証する。
 
 ### Orchestrate advisory（SessionStart）
 
@@ -175,13 +175,13 @@ directoryかつsymlinkでないことを先に確認し、不適合ならcache�
 ### Lattice工程表案内（SessionStart）
 
 `codex-lattice-gantt-hook session-start`を同じSessionStartへ別entryとして追加する。commandは
-`$HOME/.local/bin/codex-lattice-gantt-hook session-start`の展開済み絶対path、`timeoutSec: 5`、
+`$HOME/.local/bin/codex-lattice-gantt-hook session-start`の展開済み絶対path、`timeoutSec: 6`、
 `async: false`、`statusMessage: null`とする。Claude側と共通のread-only coreを使い、成功INFOだけを
 `hookSpecificOutput.additionalContext`へ包む。`source=startup|clear`ごとに発火し、スロットルしない。
 
 `lattice` CLI不在時は未導入INFOを一行返す。導入済みでstoreがないrepo、非git、`resume|compact`は
-沈黙する。storeが存在するのにtimeout、CLI失敗、`lattice.todo_status_result.v1`／`v2`不一致なら、現在地を
-取得できない旨をINFO一行で返す。正規status取得時は
+沈黙する。storeが存在するのにtimeoutなら「status取得が期限超過」、CLI失敗なら「CLI実行失敗」、
+`lattice.todo_status_result.v1`／`v2`／`v3`不一致なら「status応答を検証できない」と区別したINFO一行を返す。正規status取得時は
 `.lattice/generated/gantt.html`の絶対`file://` URIと`active`／`next-ready`を案内し、HTML未生成時も
 hook自身は生成しない。`DOTAGENTS_LATTICE_HOOK=off`で無効化できる。HTMLやstore journalを直接parseする
 fallbackは持たない。
@@ -190,7 +190,7 @@ fallbackは持たない。
 
 対象projectで `spotter install -y` を実行する。Spotterがuser-level `SessionStart` / `UserPromptSubmit` / `Stop` の3本を同期command schemaでcanonical化し、projectの `.spotter/marker.json` がある時だけ発火する。`SessionStart` を `async:true` にしない（Codex CLI 0.144.1はasync hookをskipする）。dotagentsの `apply-codex-config` はSpotter entryを保持し、再実装・削除・trust変更をしない。
 
-検証は `spotter codex-hook diagnostics --project <project>` で `installed / compatible / canonical` を確認した後、対話Codexの `/hooks` で3本をreviewし、新規sessionで `.spotter/hook-events.jsonl` の `spotter.hook_event.v1` を実火する。機械診断の `configured-unverified` は設定合格であって、trust・実火完了を意味しない。
+検証は `spotter codex-hook diagnostics --project <project>` で `installed / compatible / canonical` を確認した後、対話Codex CLIの`/hooks`で3本をreviewし、新規sessionで `.spotter/hook-events.jsonl` の `spotter.hook_event.v1` を実火する。App／IDEでは`/hooks`をtrust入口にせず、CLI trust後にその入口の新規sessionを使う。機械診断の `configured-unverified` は設定合格であって、trust・実火完了を意味しない。
 
 ## 10. MCP の親別 matrix と登録 / 疎通
 
@@ -198,8 +198,8 @@ MCP は親に応じて入口を分ける。Codex親はnative枠だけを工場�
 
 | 親 | core | 任意 / 認証依存 | 禁止 / 非採用 |
 |---|---|---|---|
-| Claude Code | `codex-sidecar`、`aiterm`、`gpt_connector`、`caveat`、`codegraph` | AIShell（Claude親での疎通は未実測）、OpenAI Docs等の認証依存追加面 | — |
-| Codex | native subagents、`codex-sidecar`、`aiterm`（Codex / Grok / Composer）、`gpt_connector`、`caveat`、`codegraph`、AIShell（Apple Silicon / macOS 15+） | OpenAI Docs等の認証依存追加面 | 非対応hostのAIShell登録 |
+| Claude Code | `codex-sidecar`、`aiterm`、`gpt_connector`、`caveat`、`lattice`、`aishell`（Apple Silicon / macOS 15+） | OpenAI Docs等の認証依存追加面 | 非対応hostのAIShell登録 |
+| Codex | native subagents、`codex-sidecar`、`aiterm`（Codex / Grok / Composer）、`gpt_connector`、`caveat`、`lattice`、`aishell`（Apple Silicon / macOS 15+） | OpenAI Docs等の認証依存追加面 | 非対応hostのAIShell登録 |
 
 利用可能性はinstalled（CLI存在）→registered（親へconnector登録）→verified（read-only疎通）→execution-verified（実タスク完遂と回収）で区別する。外部writerに使うのはexecution-verifiedだけ。timeoutは状態不明として同じtask IDのsession/jobを回収し、稼働中の重複起動をしない。
 
@@ -214,16 +214,16 @@ codex mcp get caveat --json
 
 ```bash
 codex mcp add caveat -- caveat mcp-server
-codex mcp add codegraph -- codegraph serve --mcp
+codex mcp add lattice -- lattice-mcp
 codex mcp add aiterm -- aiterm-mcp
 codex mcp add codex-sidecar -- codex-sidecar-mcp
 codex mcp add gpt_connector -- gpt-connector-mcp
-codex mcp add aishell -- aishell-mcp
+codex mcp add aishell --env AISHELL_CAPABILITY_SET=expanded-v1 -- aishell-mcp
 ```
 
 STDIO の environment は closed-mode として扱う。親 shell の値が必要だと推測して継承に頼らず、`mcp_servers.<id>.env` / `env_vars` に必要最小限を明示する。secret をコマンド行・repo・会話ログに書かない。OAuth は `codex mcp login <name>` を対話 H の下で行い、未認証の任意 MCP は理由付き WARN とする。
 
-疎通は書込みを伴わない最小操作で確認する。`caveat_search`、OpenAI Docs 検索、`aiterm` の session list、AIShellの`factory_diagnostics`はread-only。AIShellの工場疎通ではpathを返す`runtime_status`で代用せず、schema `aishell.native_factory_diagnostics.v1`、product version、privacy 4項目falseを確認する。`codegraph` は既存 `.codegraph/` index がある project にだけ queryし、index が無ければ `codegraph init` を勝手に実行しない。gpt-connectorの `sessions` はread-onlyだが、Chat送信は依頼に必要な時だけ行う。Oracleは互換・rollback時だけ参照する。
+疎通は書込みを伴わない最小操作で確認する。`caveat_search`、OpenAI Docs検索、`aiterm`のsession listはread-only。コード構造面は`lattice-mcp`だけを使い、indexが無ければtyped guidanceに従う。独立Codegraphをfallback起動しない。AIShellは対話登録と工場疎通で入口を分ける——対話hostは`AISHELL_CAPABILITY_SET=expanded-v1`の高密度面へ登録し、工場疎通は`AISHELL_TOOL_PROFILE=factory`でだけ見える`factory_diagnostics`でschema `aishell.native_factory_diagnostics.v1`、product version、privacy 4項目falseを確認する。pathを返す`runtime_status`を工場疎通の代用にしない。gpt-connectorの`sessions`はread-onlyだが、Chat送信は依頼に必要な時だけ行う。Oracleは互換・rollback時だけ参照する。
 
 ## Observer parent Stop hook
 

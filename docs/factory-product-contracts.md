@@ -1,6 +1,6 @@
-# 工場コア9製品（＋編入中Lattice・AIShell）＋基盤toolchain 3製品の有限契約台帳
+# 工場コア10製品＋基盤toolchain 3製品の有限契約台帳
 
-更新日: 2026-07-19。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
+更新日: 2026-07-25。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
 ## 共通境界
 
@@ -33,13 +33,14 @@
 - 現adapter: native JSONのversion、marker schema、overallと、明示opt-inされた公開runtime error snapshot/ackを接続済み。
 - 表現/禁止: 対象外projectは`not_applicable`、対象で診断不能は`unverified`。全project自動activation、tool DB直接読解は禁止。
 
-### `codegraph`
+### `lattice`
 
-- 所有/修正先: 第三者 / `kitepon-rgb/dotagents`外付けadapter。version入口: `codegraph --version`。
-- diagnostics/state正本: 既存indexの`codegraph status --json`を試行。現CLI helpは`status`のみを保証し、JSONが得られた場合だけ`initialized`を判定する。`.codegraph/`はupstream所有。
-- 対応version: stable `>=1.4.0 <1.5.0`（build metadata付きは許容、prereleaseは未検証で範囲外）。範囲外は`installed`を保った`index=unsupported:upstream_version_unsupported`、version取得不能・形式drift・CLI不在は`unverified:version_unverified`として診断を実行しない。
-- 現adapter: 対応versionだけ診断を実行し、`initialized:true`なら`index=pass`、falseなら`skipped:not_indexed`、診断出力が非JSONまたはshape非対応なら`index=unverified`。version範囲外の`unsupported`とは区別する。
-- 禁止: `codegraph init`/index自動作成、内部index解析。
+- 所有/修正先: 自作 / `kitepon-rgb/Lattice`。端末能力を担う現役コア9製品の1つ。version入口は`lattice --version`（`factory-diagnostics`のpackage versionと一致）。
+- project工程discovery正本: `lattice status --json`（schema `lattice.project_status.v1`、state `uninitialized|ready|active_run|invalid`、canonical store、active plan/run、`can_create_plan`、`next_action`）。`.lattice/`の有無を接続判定へ使わず、invalidをMarkdownへfallbackしない。
+- diagnostics/state正本: `lattice factory-diagnostics --json`と`lattice runtime-errors snapshot|ack ... --json`。run store、sensor index、runtime error storeはLatticeが所有し、dotagentsは直接解釈しない。コード構造面は同梱sensorと`lattice-mcp`だけから提供する。
+- 現adapter: native JSONをexact allowlistで検証し、wire v4の正式製品`lattice`へ射影する。BugHubは4現役hostをwire v4へenroll済み。sensorのindex不在・破損・version不整合はtyped failure／guidanceであり、外部Codegraphへfallbackしない。
+- 互換: `codegraph_*` MCP tool名は入力互換名としてのみ残し、provider／sensor_owner=`lattice`とLattice系列versionを返す。独立Codegraph package、PATH command、MCP登録、daemon、SDK依存は禁止。
+- 表現/禁止: 生message・絶対path・repo/prompt内容をreportへ転記しない。診断のためにindex生成・run実行・provider起動を行わない。
 
 ### `markitdown`
 
@@ -76,29 +77,6 @@
 - 現adapter: native JSONをschema allowlistで検証し、`ready`をpass/compatible、`not_ready`を固定fingerprintのfail/incompatible、`unverified`・schema不正・CLI不在をunverifiedへ射影する。installed versionは整合済みのCLI package versionだけを採用し、明示opt-inされた公開runtime error snapshot/ackも接続済み。
 - 表現/禁止: raw output、absolute path、prompt/context/file内容、preset名、token/env/log/result本文をreportへ転記しない。実agent起動をhealth扱いにしない。
 
-### `lattice`（編入中・L6）
-
-- 所有/修正先: 自作 / `kitepon-rgb/Lattice`。**第11コア**（第10枠はObserver予約・Codegraph退役完了までは入替でなく追加）。
-  version入口: `lattice --version`（＝`factory-diagnostics`の`version`と同一のpackage version）。
-- diagnostics/state正本: `lattice factory-diagnostics --json`（schema
-  `lattice.native_factory_diagnostics.v1`・check 5本＝package_version/node_runtime/cli_surface/
-  mcp_entry/sensor_attribution・overall `ok|failed`・failedは非0）。runtime errorは
-  `lattice runtime-errors snapshot --after-cursor 0 --limit 256 --json`／`ack <cursor> --json`
-  （schema `lattice.runtime_errors.v1`・opt-in＝工場共有`factory-reporter.json`の`collection.enabled`・
-  Caveat同型契約）。run store・sensor index・runtime error storeのstate/schema/migrationはLattice所有で、
-  dotagentsは直接解釈しない。
-- BugHub server側: factory v2へ**server-first登録済み**（ServerManager `0bb3ef3`・required外の
-  任意key・期待matrix全profile `optional`・severity素通し・既存host credential。契約は
-  ServerManager `bughub/FACTORY_INTEGRATION.md` §4.1.1。本番deployは別途H）。
-- 現adapter: 実装済み・**wire v3 reportへ未enroll**（enrollmentはL7 wire v4）。diagnosticsは
-  `latticeProduct`（`lib/factory/scan.mjs`・exact schema・overall/exit整合・detailの秘密/絶対path拒否）、
-  runtime errorは`collectLatticeRuntimeErrors`（固定catalog 5 code検証・ack round-trip接続）。
-  編入契約・claim境界はLattice `docs/01_integration-package.md`と
-  Lattice ADR 0051（条件付きsupport）が正。
-- 表現/禁止: 生message・絶対path・repo/prompt内容をreportへ転記しない（storeは固定catalogの
-  templateのみ保存）。Windows nativeはLattice runtime構造的unsupported（分離表現はhost matrix所有）。
-  診断のためにindex生成・run実行・provider起動を行わない。
-
 ### `servermanager`
 
 - 所有/修正先: 自作 / `kitepon-rgb/ServerManager`。version入口: loopback readinessのpackage versionとbuild/deploy source revision。
@@ -106,10 +84,11 @@
 - 現adapter: server profileではloopback `/readyz`とdeploy revision manifestを外部probeで照合し、DB/schema/pull/ingest/delivery/revisionの固定checkへ投影する。Pi5のdurable external eventは公開connector経由でsnapshot/ackし、非serverは`not_applicable`。
 - 禁止: BugHub自己申告だけで合格、dotagentsからDB直接読解。
 
-### `aishell`（編入中・第12）
+### `aishell`
 
-- 所有/修正先: 自作 / `kitepon-rgb/aishell`。**第12コア**（Observer第10枠、Lattice第11枠は不変）。version入口はMCP initializeの`serverInfo.version`と`factory_diagnostics.product.version`の一致。
-- diagnostics/state正本: read-only MCP `factory_diagnostics`（schema `aishell.native_factory_diagnostics.v1`）。platform、runtime configuration schema/migration、操作readiness、MCP、管理アプリbundleを返す。許可root・Git worktreeは件数だけで、path、activity、file本文、process argumentを返さない。
+- 所有/修正先: 自作 / `kitepon-rgb/aishell`。端末能力を担う9製品目（Observerは予約枠のまま未編入）。version入口はMCP initializeの`serverInfo.version`と`factory_diagnostics.product.version`の一致で、Swift側`AIShellProduct.version`が単一正本、package.jsonとのdriftは`verify-npm-package.mjs`が検出する。
+- diagnostics/state正本: `AISHELL_TOOL_PROFILE=factory`でだけ公開されるread-only MCP `factory_diagnostics`（schema `aishell.native_factory_diagnostics.v1`）。platform、runtime configuration schema/migration、操作readiness、MCP、管理アプリbundleを返す。許可root・Git worktreeは件数だけで、path、activity、file本文、process argumentを返さない。
+- 公開面の分離: 対話hostは`AISHELL_CAPABILITY_SET=expanded-v1`の高密度11 tool面（製品が候補面と位置づける面であり、上流の変更に追従する）へ登録し、工場診断はfactory profileへ隔離する。既定7／expanded 11／full・legacy 25のどの一覧にも`factory_diagnostics`は現れず、profile外からは呼べない。factory profileとcapability setの併用は`FACTORY_PROFILE_CAPABILITY_SET_UNSUPPORTED`で拒否され、fallbackしない。
 - runtime schema: `aishell.runtime_configuration.v2`。旧単一`allowedRootPath`は製品側のcompatible-on-readで解釈し、dotagentsは`runtime.json`や`activity.jsonl`を直接読まない。
 - update/rollback: Apple Silicon Macだけ`@quolu/aishell@latest`をglobal更新し、package内`AIShell.app`と`aishell-mcp`を同版で扱う。rollbackは旧npm versionへ戻してMCP processを再起動する。
 - wire: v2/v3/v4固定集合へ後付けせず、ServerManager optional sourceを先行し、Lattice wire v4完了後のwire v5で正式enrollする。

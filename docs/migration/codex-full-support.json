@@ -1,0 +1,3114 @@
+{
+  "schema": "lattice.todo_extraction.v2",
+  "project_id": "dotagents",
+  "plan_key": "codex-full-support",
+  "plan_version": "cutover-53572f7c1f2872462c5facfe",
+  "actor": {
+    "host": "mac-kite",
+    "session": "lattice-wire-v4-cutover-20260719",
+    "agent": "codex-parent"
+  },
+  "recorded_at": "2026-07-19T10:00:00.000Z",
+  "tasks": [
+    {
+      "task_id": "cf-0020",
+      "title": "Codex の9面（AGENTS_MD / CONFIG / SKILLS / PLUGINS / MCP_SERVER_CONFIG / SUBAGENTS / HOOKS / COMMANDS / SESSIONS）に未裁定行がない",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 20,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:20"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0021",
+      "title": "Claude の主要 workflow 3件に Codex の正規入口があり、Claude 固有ツールを誤って呼ばない",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 21,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:21"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0022",
+      "title": "Codex の公式 user skill 面 `$HOME/.agents/skills` から対象 skill を利用できる",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 22,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:22"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0023",
+      "title": "規範・skills・subagents・hooks・必須 MCP・session 継続を新規 Codex session で実測済み",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 23,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:23"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0024",
+      "title": "工場コア8製品が全現役端末に導入・更新され、親別matrixどおり疎通し、Spotter限定発火・Throughline context・Codegraph／MarkItDown／gpt-connector／aiterm／sidecar代表 E2E が green",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 24,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:24"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0025",
+      "title": "ServerManagerを中央管理コアとしてdotagentsの管理対象へ接続し、BugHubを独立製品へ分離せずversion・bug・互換結果の統括に再利用する",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 25,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:25"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0026",
+      "title": "現役端末すべてで clone/pull→install→必須設定→verify→代表 E2E が green",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 26,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:26"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0027",
+      "title": "Claude 側の skill/command/agent/hook に回帰がない",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 27,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:27"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0028",
+      "title": "既存 Codex 関連プランの重複 TODO を完了または移管理由付きで閉じている",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 28,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:28"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0029",
+      "title": "最終反証・CI・push を終え、本ファイルを `docs/archive/` へ移している",
+      "lane": "acceptance",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 29,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "1. 完了条件（本計画が TODO を兼ねる）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:29"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0088",
+      "title": "現役端末×Codex入口（desktop / CLI / IDE 等）をオーナーと確定し、存在しない端末・入口を推測で追加しない",
+      "lane": "wave-0",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 88,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 0 — ベースラインと有限化（挙動不変）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:88"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0089",
+      "title": "`git fetch`、ahead/behind、dirty、stash を記録",
+      "lane": "wave-0",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 89,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 0 — ベースラインと有限化（挙動不変）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:89"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0090",
+      "title": "`make lint`、Claude/Codex hook smoke、`install.sh`、`verify-install.sh` を green にする。hook baseline は初回 INFO・同セッション2回目沈黙・compact 後1回再武装・Stop pending の次回1回配送・deny/ask/block 不在を保存",
+      "lane": "wave-0",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 90,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 0 — ベースラインと有限化（挙動不変）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:90"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0091",
+      "title": "`/import` または `externalAgentConfig/detect` を**検出だけ**実行し、9面の差を保存（import禁止）",
+      "lane": "wave-0",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 91,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 0 — ベースラインと有限化（挙動不変）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:91"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0092",
+      "title": "各現役入口の新規 Claude/Codex session で skills・agents・MCP・hooks baseline を保存",
+      "lane": "wave-0",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 92,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 0 — ベースラインと有限化（挙動不変）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:92"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0093",
+      "title": "AGENTS の実効 byte budget と、人格・計画・F/A/H・git・報告の先頭/末尾カナリアが実読されることを保存",
+      "lane": "wave-0",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 93,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 0 — ベースラインと有限化（挙動不変）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:93"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0094",
+      "title": "README に9面の小さな対応表を追加（配布対象だけ。docs/rag/bin全件の第三台帳は作らない）",
+      "lane": "wave-0",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 94,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 0 — ベースラインと有限化（挙動不変）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:94"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0095",
+      "title": "rollback: Wave 0 の文書・baseline 差分だけを独立 commit とし、その commit 単位で revert",
+      "lane": "wave-0",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 95,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 0 — ベースラインと有限化（挙動不変）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:95"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0099",
+      "title": "`orchestrate` の共通契約 reference を追加（既存ディレクトリの移動・改名なし）",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 99,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:99"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0100",
+      "title": "Claude 入口を Claude Workflow/外部枠 appendix として整理",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 100,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:100"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0101",
+      "title": "Codex の symlink adapter を製品固有 skill ディレクトリへ置換し、native agents/routing を使う",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 101,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:101"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0102",
+      "title": "`audit-gauntlet` Codex skill を追加し、2票反証と件数遷移を fixture で検証",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 102,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:102"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0103",
+      "title": "`auto-deploy-on-push` Codex skill を追加し、高リスク操作の説明・H承認・rollback を固定",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 103,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:103"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0104",
+      "title": "`polish-github`・`oracle` は既存対応との差分監査のみ。必要がなければ「変更なし」を記録（当時Oracle。現行の通常ChatGPT入口はgpt-connector）",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 104,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:104"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0105",
+      "title": "Claude command 3件→Codex skill 入口の対応表を README に追加",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 105,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:105"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0106",
+      "title": "全対象 skill の frontmatter、明示 invocation、代表暗黙 invocation を新規 session で確認",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 106,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:106"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0107",
+      "title": "rollback: Wave 1 を独立 commit とし、revert で旧 orchestrate symlink を復元可能にする",
+      "lane": "wave-1",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 107,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 1 — 実在する Workflow ギャップを閉じる（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:107"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0111",
+      "title": "`install.sh` が Codex skill を公式 `$HOME/.agents/skills` へ既定で symlink 配布",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 111,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:111"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0112",
+      "title": "古い入口用に explicit legacy profile を用意し、通常実行で公式/legacy を同時配布しない",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 112,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:112"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0113",
+      "title": "移行 probe で同名重複と優先順位を実測し、各入口が一つの面だけから同一 canonical content を読む状態を合格条件にする",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 113,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:113"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0114",
+      "title": "dotagents 所有の旧 legacy symlink は dry-run一覧→backup→H承認後に対象限定で外し、他の local skill を保存（この Mac は完了、他端末は一覧確定後）",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 114,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:114"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0115",
+      "title": "`verify-install.sh` が選択 profile、公式面/legacy面、リンク先、重複、`AGENTS.override.md` shadow を区別して検証",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 115,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:115"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0116",
+      "title": "clean temporary HOME で repo配布と静的設定 fixture を検証する CI を追加",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 116,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:116"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0117",
+      "title": "Claude/Codex hook smoke を `make lint` / GitHub Actions の明示ゲートへ昇格し、初回 INFO・2回目沈黙・compact 再武装・pending 1回配送・旧 deny/ask/block 不在を固定",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 117,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:117"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0118",
+      "title": "既存 `verify-install.sh` を読み取り診断の唯一の入口として維持（別の汎用 check tool は作らない）",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 118,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:118"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0119",
+      "title": "routing 必須2キーと dotagents hook entry だけを、backup→dry-run→冪等追加できる適用スクリプトを追加",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 119,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:119"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0120",
+      "title": "model、permissions、既存他tool hooks、OAuth、trust は変更せず、診断＋H手順に残す",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 120,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:120"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0121",
+      "title": "親別 MCP matrix を作成",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 121,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:121"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0124",
+      "title": "`codex mcp` の登録・list・疎通、STDIO env closed-mode、必須/任意/親で禁止をランブック化",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 124,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:124"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0125",
+      "title": "Throughline/codex-thread-handoff-smoke の代表 capture/restore/handoff を実測（本体改造・sessions同期はしない。capture/handoff は成功、restore は上流 mismatch で未達）",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 125,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:125"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0126",
+      "title": "工場コア8製品を onboarding・README・親別matrix・`verify-install` に必須化し、Spotter project契約とCodegraph／MarkItDown／gpt-connector／aiterm／sidecar代表疎通を検証する",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 126,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:126"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0127",
+      "title": "clean HOME fixture で8製品のCLI・NPM/`uv tool`更新package・設定schema・所有権境界を固定し、外部製品の状態や実装をdotagentsへ複製しない",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 127,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:127"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0128",
+      "title": "`agents-update` は1製品失敗をログへ残し、残りを続行した後に非0終了する。更新後のcompatibility gateを `make ci` に固定する",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 128,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:128"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0129",
+      "title": "`max_threads` / `max_depth` は公式公開設定（既定6/1）として記録し、通常は未設定、必要時だけ新規sessionで実効上限を検証する契約へ訂正（2026-07-13）",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 129,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:129"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0130",
+      "title": "rollback: 追加 symlink と設定追記だけを戻し、端末バックアップから復元可能にする",
+      "lane": "wave-2",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 130,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 2 — 配布・Config・MCP・継続の再現性（能力追加）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:130"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0144",
+      "title": "各現役端末で pull相当の同期→tar backup→install→config dry-run/apply→verify（FOX 2環境はGitHub認証切れのためローカルbundleで同期。remote同期はH待ち）",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 144,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:144"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0145",
+      "title": "NVM配下の npm をLinux / WSL2のcron最小PATHでも解決し、週次 `agents-update` の実走を固定",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 145,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:145"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0146",
+      "title": "各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS / Spotter監査）",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 146,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:146"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0147",
+      "title": "端末で共有できる routing/MCP 証拠は入口ごとの台帳から同じ証拠へ参照し、未実施を共有扱いにしない",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 147,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:147"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0148",
+      "title": "各端末で implementer/refuter/sorter の routing smoke＋親側 verifier green",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 148,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:148"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0149",
+      "title": "各入口で Codex hooks の初回 INFO・同セッション2回目沈黙・compact 再武装・Stop pending の次回1回配送を実火し、代表 skill、Throughline、gpt-connector consultation の代表 smoke を成功させる。gpt-connector は model+effortを明示し、timeout後sessionsも確認する。明示エラーは FAIL/blocker であり合格にしない",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 149,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:149"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0150",
+      "title": "各対象projectで `spotter install` → marker／Claude 5 hook／Codex 3 hook／Claude・Codex別tool-db／Throughline context default-onを確認し、新規sessionで `spotter.hook_event.v1` を実火する",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 150,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:150"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0151",
+      "title": "任意 MCP/OAuth は未認証を FAIL にせず、理由付き WARN と H 手順を記録",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 151,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:151"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0152",
+      "title": "Claude の skill/command/agent/hook smoke を再実行し回帰なしを確認",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 152,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:152"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0153",
+      "title": "`plan_gpt56-rewiring.md` の他端末 routing TODO を本 wave の実測で消化",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 153,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:153"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0154",
+      "title": "同プランの sandbox上書き/spawn応答上流問題は non-blocking の独立追跡として残す",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 154,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:154"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0155",
+      "title": "`plan_callout-hooks.md` Phase 6 の INFO 契約を baseline とし、README・全ゲートは Wave 2、他端末実火は本 wave で消化",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 155,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:155"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0156",
+      "title": "PLAN.md の「Codex skill 一覧目視」を閉じる",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 156,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:156"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0157",
+      "title": "端末台帳を完成し、完了した既存プランを archive へ移す",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 157,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:157"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0158",
+      "title": "rollback: 問題端末だけ旧commit＋backupへ戻し、他端末のgreenを巻き戻さない",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 158,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 3 — 現役端末 rollout と既存プラン閉鎖"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:158"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0162",
+      "title": "existence/value の独立2票＋網羅性 Critic",
+      "lane": "wave-4",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 162,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 4 — 最終監査と完了"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:162"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0163",
+      "title": "`make lint`、全 smoke、clean HOME、install/verify、GitHub Actions green",
+      "lane": "wave-4",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 163,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 4 — 最終監査と完了"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:163"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0164",
+      "title": "項目ごとに実施/スキップ理由・変更ファイル・端末別検証を報告",
+      "lane": "wave-4",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 164,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 4 — 最終監査と完了"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:164"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0165",
+      "title": "本計画を `docs/archive/` へ移し、archive を含めて lint/status を再確認",
+      "lane": "wave-4",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 165,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 4 — 最終監査と完了"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:165"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0166",
+      "title": "archive を含む対象だけ pathspec commit→push→origin/main 同期確認",
+      "lane": "wave-4",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 166,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "6. 実装 Wave",
+          "Wave 4 — 最終監査と完了"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:166"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0215",
+      "title": "cron最小PATHではNVM配下のnpmを解決できない実測欠陥を正本スクリプトで修正。NVM復元・npm不在時のfail-loud・fake npm 13件を `tests/update/cron-env.sh` と `make ci` で固定した。",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 215,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "8. 端末台帳",
+          "Wave 3 rollout 実績（2026-07-12・main-server）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:215"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0216",
+      "title": "Codex App remote project `/home/kite/Developer/dotagents` のhook trust、新規session、skill / routing / Throughline、Claude回帰を実火する。",
+      "lane": "wave-3",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 216,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "8. 端末台帳",
+          "Wave 3 rollout 実績（2026-07-12・main-server）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:216"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0267",
+      "title": "git fetch、origin/main、dirty、stash を確認",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 267,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:267"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0268",
+      "title": "`rag/INDEX.md` と caveat を検索",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 268,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:268"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0269",
+      "title": "リポ資産を9面＋配布/検証/文書/OSで棚卸し",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 269,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:269"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0270",
+      "title": "OpenAI 公式 docs と Codex CLI 0.144.1 の端末実測を突合",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 270,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:270"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0271",
+      "title": "公式調査を `rag/codex/` と INDEX へ還流",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 271,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:271"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0272",
+      "title": "existence 票: SESSIONS既対応、plugin command不存在、plugin hook仕様矛盾、既存プラン移管先、max_threads既対応を訂正",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 272,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:272"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0273",
+      "title": "value 票: 全面shared、全資産manifest、plugin実験、汎用applier、routing/hooks再実装を棄却または縮小",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 273,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:273"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0274",
+      "title": "Critic: SESSIONS合否、archive順序、AGENTS末尾実読、skill面一意性、端末×入口E2Eを補強",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 274,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:274"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0275",
+      "title": "統括裁定: 実在するギャップ4 wave＋最終監査へ縮約",
+      "lane": "audit",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 275,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "11. 調査・反証記録"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:275"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0279",
+      "title": "**GO** 本計画で実装開始（既存ディレクトリの移動・改名は含まない）",
+      "lane": "approval",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 279,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "12. オーナー承認ゲート"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:279"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0280",
+      "title": "**H1** 現役端末×入口一覧、変更してよい必須設定キー/hook entry、dotagents所有legacy symlink移行の一括 rollout 承認（この Mac の official 面移行と push は 2026-07-12 承認済み。他端末一覧は未確定）",
+      "lane": "approval",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 280,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "12. オーナー承認ゲート"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:280"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "cf-0281",
+      "title": "hook trust、MCP OAuth 等の各端末 UI 操作",
+      "lane": "approval",
+      "narrative_ref": "docs/plan_codex-full-support.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_codex-full-support.md",
+        "origin_line": 281,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "dotagents Codex 全対応計画",
+          "12. オーナー承認ゲート"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_codex-full-support.md:281"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    }
+  ],
+  "hard_dependencies": [],
+  "joins": [],
+  "extraction_digest": "892719cecb558ae46aebf87ec7beb438e07a61701657d899686dcb46501e5b13"
+}

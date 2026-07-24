@@ -26,6 +26,8 @@ const runnerFor = (diagnostic, ok = true) => async (command, args, options) => {
   assert.equal(command, 'aishell-mcp');
   assert.deepEqual(args, []);
   assert.match(options.input, /factory_diagnostics/);
+  // factory_diagnosticsは専用profileでだけ公開される。既定catalogで起動すると未定義toolになる。
+  assert.equal(options.env?.AISHELL_TOOL_PROFILE, 'factory');
   return {
     ok, stdout: `${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { structuredContent: diagnostic } })}\n`,
   };

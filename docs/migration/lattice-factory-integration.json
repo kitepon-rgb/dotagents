@@ -1,0 +1,3313 @@
+{
+  "schema": "lattice.todo_extraction.v2",
+  "project_id": "dotagents",
+  "plan_key": "lattice-factory-integration",
+  "plan_version": "cutover-53572f7c1f2872462c5facfe",
+  "actor": {
+    "host": "mac-kite",
+    "session": "lattice-wire-v4-cutover-20260719",
+    "agent": "codex-parent"
+  },
+  "recorded_at": "2026-07-19T10:00:00.000Z",
+  "tasks": [
+    {
+      "task_id": "lf-0090",
+      "title": "Lattice repoの同期状態（origin差分・dirty・stash）を確認し、`npm run ci`のbaselineをgreenで固定する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 90,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L0 — ベースライン・直轄化（2026-07-17完了）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:90"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0094",
+      "title": "Lattice正典を実読し、重複TODOを集約する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 94,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L0 — ベースライン・直轄化（2026-07-17完了）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:94"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0098",
+      "title": "Lattice側RC4 planへ直轄化を反映する（依頼構造の解体・親裁定参照・fork非目標の撤回・",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 98,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L0 — ベースライン・直轄化（2026-07-17完了）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:98"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0100",
+      "title": "ADR 0046のタイミングの揺れをStage 1開始時へ統一する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 100,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L0 — ベースライン・直轄化（2026-07-17完了）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:100"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0101",
+      "title": "ADR 0046を起草する（Lattice `docs/adr/0046-rc4-writer-target-stage-override.md`）。",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 101,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L0 — ベースライン・直轄化（2026-07-17完了）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:101"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0104",
+      "title": "Control `lattice-integration-v1`を`init`し、risk=high・behavior lane=behavior-preservingを",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 104,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L0 — ベースライン・直轄化（2026-07-17完了）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:104"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0114",
+      "title": "題材batch（6〜10件・control-record.mjs系／adapter系／docs系混在）をactiveレーンのTODOから選定し、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 114,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:114"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0118",
+      "title": "batch定義evidenceへdotagents私有caveatの該当エントリを添付する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 118,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:118"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0122",
+      "title": "各TODOのboundary witnessを実作成し、**作成時間・参照証拠・書けなかった項目を1件ずつ実測**する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 122,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:122"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0126",
+      "title": "Codegraph indexは**Lattice側clone/copy上にだけ**作る。dotagents正規repoに`.codegraph/`は無く",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 126,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:126"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0129",
+      "title": "`lattice plan compile`のconflict/wave/unknown判定を親が1件ずつ妥当／過剰serial／見逃しで裁定し、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 129,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:129"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0136",
+      "title": "call graph非可視結合（shell hooks・markdown憲法・巨大単一file）がwitnessで表現できたかを個別記録し、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 136,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:136"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0140",
+      "title": "Stage 0 gate: witnessコスト閾値・unknown率・判定一致率を実測に基づき確定・記録し、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 140,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L1 — RC4 Stage 0（read-only実測。書込は正規repoゼロ）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:140"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0149",
+      "title": "L1実測を根拠にfork要否を裁定する（予断で決めない）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 149,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:149"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0158",
+      "title": "fork時: MIT license notice・attribution（fork時点のupstream commitを記録）を維持し、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 158,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:158"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0168",
+      "title": "**グラフ構築のcorrectnessを改良する**（実測が特定した原因箇所。優先順）:",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 168,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:168"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0169",
+      "title": "(a) 経路実在を検証しない名前一致フォールバックとconfidence非永続化を直す（偽陽性の除去）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 169,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "lf-0168",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:169"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0180",
+      "title": "(b) JS/TS extractionに動的import/require処理を追加（偽陰性の除去）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 180,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "lf-0168",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:180"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0187",
+      "title": "(c) call graph非可視の結合（spawn・shell・markdown・設定）を索引化する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 187,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "lf-0168",
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:187"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0188",
+      "title": "(c1) spawn系（JS/TSのchild_process起動）— **2026-07-17完了**（Lattice `6c82461`）。",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 188,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "lf-0187",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:188"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0196",
+      "title": "(c2) shell・markdown・設定 — **作らない（オーナー裁定 2026-07-17）**。",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 196,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "lf-0187",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:196"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0204",
+      "title": "改良の受入は数値で示す: **ADR 0048の訂正後真値（7件・判定方法論固定済み）に対し`affected`が",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 204,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:204"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0217",
+      "title": "focused gate → 関連gate → Lattice `npm run ci` green",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 217,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L2 — Codegraph吸収・sensor改良"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:217"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0226",
+      "title": "MCP面の公開契約を設計・裁定する（F）: tool面（`codegraph_explore`相当の後継）、schema、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 226,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L3 — Lattice MCP面新設"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:226"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0239",
+      "title": "「常駐サービス化はしない」非目標とMCP server提供の両立を明文化する（MCP serverはsession寿命の",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 239,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L3 — Lattice MCP面新設"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:239"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0243",
+      "title": "MCP面を実装し、index不在project・未対応host・Lattice非稼働時の振る舞いを明示する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 243,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L3 — Lattice MCP面新設"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:243"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0245",
+      "title": "wave1（2026-07-17・Lattice `34cac18`）: 製品同一性の分離（version `1.4.1-lattice.1`・",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 245,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L3 — Lattice MCP面新設"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "lf-0243",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:245"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0250",
+      "title": "wave2（2026-07-17・Lattice `dcd5b70`）: 別bin `lattice-mcp`（内部daemon再invoke受理・",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 250,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L3 — Lattice MCP面新設"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "lf-0243",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:250"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0257",
+      "title": "親別matrix（Claude親・Codex親）での登録・疎通をisolated HOMEで検証する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 257,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L3 — Lattice MCP面新設"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:257"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0262",
+      "title": "focused／関連gate green",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 262,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L3 — Lattice MCP面新設"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:262"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0299",
+      "title": "G4受入: dotagents master planの実workloadをガント表示し、**最長依存鎖**と現在地（active set）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 299,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正。**実装側正本: Lattice `docs/plan_lattice_gantt.md`（2026-07-18起票・調査結果と G1〜G5 wave分割を収容。同日ブラッシュアップ済み: 工程store実装waveの追加・store×plan_graph関係のG1論点化・CLI規約追従）**）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:299"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0307",
+      "title": "dotagents所有の`.lattice/todo/gantt-presentation.json`へ`plan_key + lane`別の正式名・説明を登録する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 307,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正。**実装側正本: Lattice `docs/plan_lattice_gantt.md`（2026-07-18起票・調査結果と G1〜G5 wave分割を収容。同日ブラッシュアップ済み: 工程store実装waveの追加・store×plan_graph関係のG1論点化・CLI規約追従）**）"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "lf-0299",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:307"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0308",
+      "title": "Lattice local sourceで実110件を再生成し、工程番号→canonical `factory-master/fm-NNNN`の一意対応、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 308,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正。**実装側正本: Lattice `docs/plan_lattice_gantt.md`（2026-07-18起票・調査結果と G1〜G5 wave分割を収容。同日ブラッシュアップ済み: 工程store実装waveの追加・store×plan_graph関係のG1論点化・CLI規約追従）**）"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "lf-0299",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:308"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0311",
+      "title": "generated HTMLがnetwork 0・keyboard操作・狭幅表示を維持し、tracked store bytesを変えないことを確認する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 311,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正。**実装側正本: Lattice `docs/plan_lattice_gantt.md`（2026-07-18起票・調査結果と G1〜G5 wave分割を収容。同日ブラッシュアップ済み: 工程store実装waveの追加・store×plan_graph関係のG1論点化・CLI規約追従）**）"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "lf-0299",
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:311"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0317",
+      "title": "dotagents側配線の受入: SessionStart案内hook・Stop WARN hook・settings断片・",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 317,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正。**実装側正本: Lattice `docs/plan_lattice_gantt.md`（2026-07-18起票・調査結果と G1〜G5 wave分割を収容。同日ブラッシュアップ済み: 工程store実装waveの追加・store×plan_graph関係のG1論点化・CLI規約追従）**）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:317"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0324",
+      "title": "cutover受入: 移行済みplanのcheckbox列廃止と憲法「計画文書の作法」規範化（G5と同一gate）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 324,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase LG — 工程表・ガント面（オーナー裁定 2026-07-18。着手順は親queue 23が正。**実装側正本: Lattice `docs/plan_lattice_gantt.md`（2026-07-18起票・調査結果と G1〜G5 wave分割を収容。同日ブラッシュアップ済み: 工程store実装waveの追加・store×plan_graph関係のG1論点化・CLI規約追従）**）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:324"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0333",
+      "title": "ADR 0046 commit後にControlを更新し、H task承認snapshotを記録する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 333,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L4 — RC4 Stage 1（disposable clone・H）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:333"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0336",
+      "title": "**隔離HOMEでexecutorを実行する**。executor packetで`install.sh`・`spotter install`・",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 336,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L4 — RC4 Stage 1（disposable clone・H）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:336"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0344",
+      "title": "dotagents disposable clone（tmpdir配下・正規repo不着地）で実小粒タスクの閉ループを完遂する:",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 344,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L4 — RC4 Stage 1（disposable clone・H）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:344"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0349",
+      "title": "control-record.mjs級の巨大file交差ケースを意図的に含め、Latticeの答え（serial判定／seam候補）と",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 349,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L4 — RC4 Stage 1（disposable clone・H）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:349"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0353",
+      "title": "artifact v3をatomic発行し、artifact-only verification green",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 353,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L4 — RC4 Stage 1（disposable clone・H）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:353"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0355",
+      "title": "Stage 2 gate: 境界事故0・受入品質・witnessコスト再実測（L2改良の効果を実戦で確認）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 355,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L4 — RC4 Stage 1（disposable clone・H）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:355"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0362",
+      "title": "着地窓をオーナーと合意する。**queue 20 campaign実施窓・R3 wire v2 finalization・J1 wire v3実装waveと",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 362,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:362"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0365",
+      "title": "batchごとにH gate承認を記録し、着地は**親のreview→pathspec commit経路のみ**（Latticeが直接",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 365,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:365"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0371",
+      "title": "最低3 batch（うち1つは並列2 TODO以上同時進行）を事故0で着地し、wall-clock・rework・手戻りを実測保存する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 371,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:371"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0375",
+      "title": "着地ごとにdotagents正規gate（`make lint`／`make ci`）green・境界事故0を確認する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 375,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:375"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0377",
+      "title": "Phase gate: full CI・**`fable`×high refuter 1回**・クロスprovider検証1回・support/refute ADR・",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 377,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:377"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0385",
+      "title": "**refuteなら編入・退役は発動しない**。correction planを立てて本計画のL6以降を凍結する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 385,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L5 — RC4 Stage 2（正規着地・H）＋ support/refute裁定"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:385"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0390",
+      "title": "**Lattice編入パッケージ要件を文書化する**（RC4 planからのcarry-over・ADR 0051 Decision 6）:",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 390,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:390"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0397",
+      "title": "**Lattice native factory diagnostics**を実装する（version・schema version・overall・check ID・",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 397,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:397"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0404",
+      "title": "**opt-in runtime error store**（ack／cursor／retention、collection/reporting分離）を実装する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 404,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:404"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0410",
+      "title": "配布形態を裁定する（npm package化 or repo直CLI）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 410,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:410"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0412",
+      "title": "npm配布の配線: package名の確定、`bin/agents-update.sh`のPACKAGES追加、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 412,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:412"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0421",
+      "title": "`docs/factory-product-contracts.md`へLattice台帳を記録する（repo・所有・自作区分・version入口・",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 421,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:421"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0425",
+      "title": "dotagents側adapter＋privacy negative fixtureを実装する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 425,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:425"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0433",
+      "title": "`docs/factory-host-product-matrix.md`へLattice行を追加する。**FOX Windows nativeはClaude/Codex/Grokの",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 433,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:433"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0440",
+      "title": "install/verify（`bin/verify-install.sh`のCLI必須listほか）を更新する。",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 440,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:440"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0447",
+      "title": "**Lattice v0.2.0 publish（H承認待ちcarry-over）**: 未公開のmaintenance wave 4件",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 447,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:447"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0454",
+      "title": "コア一覧の更新: 第10枠はObserver予約済み（wire v3）。**Latticeは第11**として",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 454,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L6 — 編入wave（RC4 supportで閉じた場合のみ→2026-07-18 support確定・着手可）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:454"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0475",
+      "title": "親計画のJ1（wire v3固定13製品）完了を確認してから着手する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 475,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:475"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0476",
+      "title": "**Lattice run運用面の正式化**（委譲契約「Lattice既定」の硬化前提・fable refuter差し戻し",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 476,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:476"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0481",
+      "title": "**shadow同等性gate**（Oracle前例331行の型）: session内code intelligenceの代表タスクを",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 481,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:481"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0484",
+      "title": "wire v4を設計する（固定製品集合の変更＝wire major）。`docs/factory-reporter-runbook.md` §11の",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 484,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:484"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0486",
+      "title": "`lib/factory/contract.mjs`のV4_PRODUCT_IDS、`lib/factory/v4.mjs` adapter、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 486,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:486"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0489",
+      "title": "host別cutover状態と`retire-codegraph`／`restore-codegraph`入口を実装する（global booleanにしない）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 489,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:489"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0490",
+      "title": "消費者ゼロ確認: `rg -a`＋索引併用。**削除検証ツール自身がcodegraphである**ため、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 490,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:490"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0494",
+      "title": "退役点の全数消化: `docs/05_codex-fragments.md`（両親matrix・addコマンド・疎通規則）、",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 494,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:494"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0497",
+      "title": "BugHub履歴は物理削除せず`not_applicable`遷移。server期待matrixから外す時期と旧report受理期間を明示する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 497,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:497"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0498",
+      "title": "各現役hostのMCP解除（H・Mac／main-server／FOX WSL2の3host。Windows nativeは親不在のため",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 498,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:498"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0500",
+      "title": "rollback drill（wire v4送信停止・前release復帰・一時切戻し）を分離して実証する。",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 500,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:500"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0502",
+      "title": "Phase gate: full CI・独立反証・knowledge return・Control finalize → 本計画を`docs/archive/`へ",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 502,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Phase L7 — wire v4（Codegraph退役）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:502"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0506",
+      "title": "ServerManager側でLatticeを報告元sourceとして登録する（adapter／schema／認証）。",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 506,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "並行レーン Q22 — BugHub source登録（親queue 22）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:506"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0513",
+      "title": "読み取り専用集約・`resolve`／`reopen`・`/ai`の既存契約を壊さない",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 513,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "並行レーン Q22 — BugHub source登録（親queue 22）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:513"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0516",
+      "title": "本番BugHubへのschema変更・canaryはH承認後（目的・影響・rollbackを説明してから）。",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 516,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "並行レーン Q22 — BugHub source登録（親queue 22）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:516"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0533",
+      "title": "sensor: Lua/Luau/Rubyの`require()`検出が`visitNode`フック実装のため関数本体内requireを拾えない",
+      "lane": "maintenance",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 533,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:533"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0538",
+      "title": "CLI: `lattice plan compile`のtyped失敗が`cli_error.v1`の`code`/`message`だけを出し、compile resultの",
+      "lane": "maintenance",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 538,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:538"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0544",
+      "title": "CLI: `lattice doctor --json`（bootstrap diagnostics）が化石化——`references.plan`が消滅済み",
+      "lane": "maintenance",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 544,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:544"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0550",
+      "title": "artifact: `patches_bound_to_accepted_receipts`検査がpath照合のみ（保存`checkpoint_digest`未検証・",
+      "lane": "maintenance",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 550,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:550"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0555",
+      "title": "runtime-contracts: `run_event.v1`の`recorded_at` validatorが「regex＋`Date.parse()`非NaN」のみで",
+      "lane": "maintenance",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 555,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "4. 実行TODO（本計画がTODOを兼ねる）",
+          "Maintenance queue（非クリティカル欠陥。Phase通常TODO後・Phase監査前のmaintenance wave一回で処理）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:555"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0598",
+      "title": "**WIP計数の解釈**: 憲法「active WIPは本筋1件＋緊急割込み1件まで」を、Lattice戦役とdotagents戦役の",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 598,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "7. 未裁定（オーナー領分・着手前に確認する）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:598"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0600",
+      "title": "**Oracle rollback drill未完のまま2件目の退役を始めるか**（L7着手時）",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 600,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "7. 未裁定（オーナー領分・着手前に確認する）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:600"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "lf-0601",
+      "title": "**Lattice配布形態**（npm publish or repo直CLI）。L6の更新経路・install/verify設計が従属する",
+      "lane": "main",
+      "narrative_ref": "docs/plan_lattice-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_lattice-factory-integration.md",
+        "origin_line": 601,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Lattice編入・Codegraph吸収計画",
+          "7. 未裁定（オーナー領分・着手前に確認する）"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_lattice-factory-integration.md:601"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    }
+  ],
+  "hard_dependencies": [],
+  "joins": [],
+  "extraction_digest": "64fc9dcf5177473f624535e900f9a5ee1e4daf70935115b40ee6b47272c3515b"
+}

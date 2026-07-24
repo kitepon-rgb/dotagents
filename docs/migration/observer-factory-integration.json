@@ -1,0 +1,4804 @@
+{
+  "schema": "lattice.todo_extraction.v2",
+  "project_id": "dotagents",
+  "plan_key": "observer-factory-integration",
+  "plan_version": "cutover-53572f7c1f2872462c5facfe",
+  "actor": {
+    "host": "mac-kite",
+    "session": "lattice-wire-v4-cutover-20260719",
+    "agent": "codex-parent"
+  },
+  "recorded_at": "2026-07-19T10:00:00.000Z",
+  "tasks": [
+    {
+      "task_id": "of-0096",
+      "title": "ObserverをCodex限定からClaude／Codex両hostへ広げるオーナー裁定を本計画へ固定する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 96,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:96"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0097",
+      "title": "Observer／相談役／一般Worker／Phase監査の配置目的を分離する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 97,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:97"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0098",
+      "title": "rate-aware配置の目的を「各providerのresetまでに理想ペースで枠を使う」と定義する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 98,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:98"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0099",
+      "title": "dotagents、Observer、Throughline、ServerManagerのbaselineと既存dirty所有を再確認し、変更waveごとのpathspecを固定する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 99,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:99"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0104",
+      "title": "4 repoそれぞれにactive planを参照する独立Controlを初期化し、cross-repo receiptの保存形式を本計画へ固定する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 104,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:104"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0110",
+      "title": "cancelled TaskがControl finalizationを永久に阻害するlifecycle矛盾を修正する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 110,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:110"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0120",
+      "title": "archiveのfinalization証拠検証でも、旧Decision digestのbounded git履歴保持を認める。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 120,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:120"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0130",
+      "title": "各provider矢印をlaneへ固定する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 130,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:130"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0136",
+      "title": "rate-aware証拠はControl schemaをversion upして束縛する方針を採用する。quota snapshot／selector decision／pool reservationをcandidate digestとreceiptへ含め、旧v25 active Controlの継続読取、v26新規作成、migration／rollbackを同じTODOで固定する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 136,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:136"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0138",
+      "title": "quota poolの最小identityと並行予約規則を固定する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 138,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:138"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0142",
+      "title": "v1親identityを`project target + host identity + parent thread hash + completed-turn cursor`とする。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 142,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:142"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0146",
+      "title": "Observerの起動責任を、ユーザーの明示指示を受けた現在親に固定する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 146,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:146"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0151",
+      "title": "Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostで基礎characterizationする。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 151,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:151"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0158",
+      "title": "Codex親からClaudeをWorker／相談役として呼ぶ正規入口を棚卸しし、installed→registered→verified→execution-verifiedを分ける。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 158,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:158"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0161",
+      "title": "Claude親からCodex旗艦を相談役として呼ぶ正規入口とtimeout回収を実測する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 161,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:161"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0162",
+      "title": "Claude／Codexの残quota、window、reset時刻を取得できる公式またはprovider-owned入口を調査し、取得不能も結論として記録する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 162,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:162"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0166",
+      "title": "調査した外部仕様を各一次ソースからRAGへ保存し、`rag/INDEX.md`へ追記する。",
+      "lane": "phase-0",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 166,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 0: 正本・baseline・入口実測"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:166"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0173",
+      "title": "Throughline側正本TODOをCodex専用からClaude／Codex共通契約へ更新する。",
+      "lane": "phase-1",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 173,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 1: Throughline両host completed-turn feed"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:173"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0175",
+      "title": "host-neutral cursorへproject identity、host／thread hash、host固有の完了証拠を束縛し、",
+      "lane": "phase-1",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 175,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 1: Throughline両host completed-turn feed"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:175"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0177",
+      "title": "Codexは`task_complete`、ClaudeはPhase 0で実証した完了証拠だけを採用し、mtimeや進行中projectionを完了扱いしない。",
+      "lane": "phase-1",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 177,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 1: Throughline両host completed-turn feed"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:177"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0178",
+      "title": "snapshot／delta／thread switch／host switch／resync／projection pending／paginationをblack-box固定する。",
+      "lane": "phase-1",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 178,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 1: Throughline両host completed-turn feed"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:178"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0179",
+      "title": "Observer以外にも再利用できるJSON-only read／wait CLI、cancel、timeout境界、65秒超live waitを両hostで検証する。",
+      "lane": "phase-1",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 179,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 1: Throughline両host completed-turn feed"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:179"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0180",
+      "title": "Throughline既存Claude pathとCodex pathの回帰gateを通し、独立commit／rollback単位を保つ。",
+      "lane": "phase-1",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 180,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 1: Throughline両host completed-turn feed"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:180"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0191",
+      "title": "Observer runtimeをhost-neutral SupervisorとCodex／Claude host adapterへ分離する。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 191,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:191"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0192",
+      "title": "model operation journal core、lock／completed locator／planned rollover／processed cleanup補正を",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 192,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0191",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:192"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0194",
+      "title": "deterministic message ID、record-first receipt、strict recoveryを持つmodel operation専用",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 194,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0191",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:194"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0196",
+      "title": "Supervisorのissue／recover／apply／finalize統合をObserver `c226cc9`、focused 15/15、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 196,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0191",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:196"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0198",
+      "title": "provider固有result journal coreとSupervisor cleanup順序をObserver `4443ff9`／`3600876`、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 198,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0191",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:198"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0200",
+      "title": "AI wait loopとSupervisorの二重所有を解消し、Codexをcycleごとの`turn/start`とexact result回収へ",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 200,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0191",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:200"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0202",
+      "title": "外部Supervisor production callerを一target一process／一cycle一stepで接続する。timeoutではAIを起動せず、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 202,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0191",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:202"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0204",
+      "title": "`applyCycle`／`finalizeAppliedCycle`をdurable cycle input／operation時刻へ束縛し、advisoryの",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 204,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0202",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:204"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0206",
+      "title": "一target一process lock、evidence input、Codex provider callback、sanitized receiptを束ねる一step callerを",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 206,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0202",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:206"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0208",
+      "title": "verified Throughline clientとpre-initialized Codex app-server sessionを所有する外部process／CLIへ",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 208,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0202",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:208"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0212",
+      "title": "**SUPERSEDED:** Claude公開非対話background routeをunsupportedとして閉じ、Codex app-serverと",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 212,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0191",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:212"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0214",
+      "title": "parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 214,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:214"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0216",
+      "title": "ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 216,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:216"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0218",
+      "title": "Codex ObserverとClaude Observerで同じwatch／status／stop UXを提供する。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 218,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:218"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0219",
+      "title": "Observer hostのproject identityを、監視対象ごとの作業folderではなく単一のObserver repo rootへ固定する。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 219,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:219"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0224",
+      "title": "**SUPERSEDED:** 旧Claude background adapterのargv／private job recoveryは採用せず、Aiterm公開",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 224,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:224"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0231",
+      "title": "production Observer AIのtool allowlistを空にし、Throughline wait／read、project読取、shell／file toolを",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 231,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:231"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0233",
+      "title": "**SUPERSEDED:** 旧Claude backgroundの`agents --json` stop案はAiterm公開session terminalへ置換した。旧案では、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 233,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:233"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0235",
+      "title": "**SUPERSEDED:** 旧Claude background隔離案はcampaign専用Aiterm runtimeと設定transactionへ置換した。旧案では、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 235,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:235"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0237",
+      "title": "project-local Stop hookはmatching provider resultのcaptureだけを行い、block continuationを返さない。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 237,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:237"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0239",
+      "title": "Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 239,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:239"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0240",
+      "title": "read-only、誤配送防止、crash recovery、faulted停止、installer／verify／rollbackを両hostで完遂する。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 240,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:240"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0241",
+      "title": "Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 241,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:241"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0244",
+      "title": "Observer側P3-4b1のrepo、Control、commit、immutable ADR digest、親受入時刻をcross-repo receiptへ固定した。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 244,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0241",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:244"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0248",
+      "title": "既定dry-run、既存hook保持、Observer entry各一件への正規化、Claude `settings.json`とCodex `hooks.json`の",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 248,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:248"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0252",
+      "title": "P5-2aとしてObserver製品manifest、sanitized diagnostics、4 executable binと、dotagentsの",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 252,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:252"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0255",
+      "title": "P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 255,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:255"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0258",
+      "title": "P5-1b／P3-4cのlive H実施前に、両host prerequisite、必須相関証拠、停止条件、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 258,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:258"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0262",
+      "title": "Codex parent caller coreとinitial generation bootstrapをObserver製品repoで閉じた。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 262,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:262"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0265",
+      "title": "Codex parent entry／配布をdotagentsのisolated HOME gateで閉じた。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 265,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:265"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0268",
+      "title": "Claude characterization専用の隔離Stop capture、sanitized receipt、prepare／verify／cleanup",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 268,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:268"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0272",
+      "title": "上記harness完成後、Claude公開非対話reply／result readをH characterizationし、旧background job routeの",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 272,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:272"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0279",
+      "title": "Stop未発火とstdin／payload／result不正を区別するraw-free diagnostic receiptをObserverで閉じた。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 279,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:279"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0282",
+      "title": "diagnostic receipt受入後、別H承認で一つのClaude job／Haiku requestだけを再characterizeした。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 282,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:282"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0285",
+      "title": "Aitermの永続PTYへ対話型`claude_agent`を追加し、同じ利用者可視sessionへの初回／follow-up、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 285,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:285"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0290",
+      "title": "Aiterm公開面だけでClaude production callerを実装し、同じ永続Claude sessionへcompleted turnを",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 290,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:290"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0296",
+      "title": "**CORRECTION — 受入完了:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 296,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:296"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0308",
+      "title": "19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 308,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:308"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0311",
+      "title": "最初のClaude live attemptで再現したstate root不一致を根治する。Observer hook fragment／preflightと",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 311,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:311"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0316",
+      "title": "state root修理後に再現したThroughline capture実行物不一致を閉じる。Aiterm Claude parent",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 316,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:316"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0320",
+      "title": "PATH補正後に判明したAiterm runtime共有を閉じる。campaign専用0700 `TMPDIR`とcandidate-first",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 320,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:320"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0324",
+      "title": "専用runtimeのUnix socket長境界を閉じる。campaign root直下の短い0700 `r2`を使い、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 324,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:324"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0328",
+      "title": "短い専用runtimeで再現したThroughline Stop transcript flush raceを閉じる。Aiterm session、",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 328,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:328"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0334",
+      "title": "修理済みcandidateの自然Stop receipt後に再現したinstalled Observer package root不一致を閉じる。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 334,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:334"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0339",
+      "title": "canonical root修理後に再現したThroughline completed timestamp境界を閉じる。Throughline",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 339,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 2,
+        "parent_task_id": "of-0272",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:339"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0345",
+      "title": "actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 345,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0240",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:345"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0347",
+      "title": "Codex／Claude E2EとPhase監査を通し、Observer側Phase O2の受け入れ条件を閉じる。",
+      "lane": "phase-2",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 347,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 2: Observer完成"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:347"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0355",
+      "title": "shared orchestration契約へ「Observer同社／相談役異社／一般Worker適応配置」を反映する。",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 355,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:355"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0359",
+      "title": "Codex親からClaude Worker／相談役を呼ぶadapter、handle、observe、resume、failure mappingを実装する。",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 359,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:359"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0364",
+      "title": "Claude親からCodex相談役を呼ぶ経路を既存sidecar／native境界と整合させる。",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 364,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:364"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0368",
+      "title": "Consultationを`gpt-connector`固定からlane別adapterへ拡張し、Workerと別collectionのまま維持する。ObserverをControlのWorker票やConsultation票へ混ぜない。",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 368,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:368"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0374",
+      "title": "provider障害時の別社切替は新Runとして記録し、fallback元の成功へ偽装しない。",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 374,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:374"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0378",
+      "title": "role別の適格provider集合と、親と異なる相談役をplacement fixtureで固定する。",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 378,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:378"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0383",
+      "title": "O3実装境界を先に固定する。",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 383,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:383"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0389",
+      "title": "`claude-native` Worker adapterのstart／same-session resume／observation／timeout unknown／failure",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 389,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:389"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0396",
+      "title": "ConsultationのClaude session ID／Codex handleをv25の`slug`へ読み替えず、旧v25継続読取、",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 396,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:396"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0404",
+      "title": "既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 404,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3: Elasticのprovider対称化"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:404"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0422",
+      "title": "consultationのplanned→terminal脱出経路を設計裁定する（既存v25契約の欠陥。取消済みTaskの",
+      "lane": "phase-3",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 422,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 3 maintenance queue"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:422"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0440",
+      "title": "`quota_pool_id`、`host_instance_id`、対象executor集合、`provider`、`windows[]`（`remaining_bp`、`starts_at`または`duration_seconds`、`reset_at`、`model_family_scope`）、`observed_at`、`source`、`confidence`を持つquota snapshot契約を定義する。",
+      "lane": "phase-4",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 440,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 4: Rate-aware Elastic Scheduler"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:440"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0444",
+      "title": "OpenAI／Anthropic adapterでquota snapshotを取得し、秘密、cookie、token、account内部stateをControlへ複製しない。",
+      "lane": "phase-4",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 444,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 4: Rate-aware Elastic Scheduler"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:444"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0450",
+      "title": "異なるreset時刻をUTCで正規化し、`pace_ratio`と最も逼迫したwindowを計算する純粋selectorを実装する。",
+      "lane": "phase-4",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 450,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 4: Rate-aware Elastic Scheduler"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:450"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0453",
+      "title": "role適格候補だけを入力にし、Observer／相談役／F作業を自動均衡対象から除外する。",
+      "lane": "phase-4",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 453,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 4: Rate-aware Elastic Scheduler"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:453"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0456",
+      "title": "会社間の頻繁な切替を防ぐhysteresis、quota pool単位lock、選択ごとのsnapshot再取得、reset時失効、同率時の決定的tie-breakを実装する。",
+      "lane": "phase-4",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 456,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 4: Rate-aware Elastic Scheduler"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:456"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0460",
+      "title": "stale／取得失敗／残量ゼロ／window矛盾／reset境界／時差／一社のみ適格をfail-loud fixtureで固定する。",
+      "lane": "phase-4",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 460,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 4: Rate-aware Elastic Scheduler"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:460"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0463",
+      "title": "Control schema v27（[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)でv26はO3",
+      "lane": "phase-4",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 463,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 4: Rate-aware Elastic Scheduler"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:463"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0471",
+      "title": "実消費と選択結果を週次で評価し、両社がreset時に過不足なく使われるかdogfood記録を残す。",
+      "lane": "phase-4",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 471,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 4: Rate-aware Elastic Scheduler"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:471"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0477",
+      "title": "既存wire v2計画の全残件が現行12製品契約のまま完遂されたfinalization receiptを確認する。",
+      "lane": "phase-5",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 477,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 5: 工場wire v3とBugHub編入"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:477"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0478",
+      "title": "wire v3を固定13製品（端末能力9製品＋ServerManager＋基盤toolchain 3種）として設計する。",
+      "lane": "phase-5",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 478,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 5: 工場wire v3とBugHub編入"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:478"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0479",
+      "title": "Observerのversion、native diagnostics、runtime error、host／connector matrix、更新経路、adapter、fixture、rollbackを追加する。",
+      "lane": "phase-5",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 479,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 5: 工場wire v3とBugHub編入"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:479"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0480",
+      "title": "BugHub schema、期待matrix、scanner、reporter、read-only集約をv3へ更新する。",
+      "lane": "phase-5",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 480,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 5: 工場wire v3とBugHub編入"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:480"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0481",
+      "title": "未対応hostは`missing`へ誤投影せず、契約どおり`unsupported`／`not_applicable`／`unverified`を使い分ける。",
+      "lane": "phase-5",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 481,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 5: 工場wire v3とBugHub編入"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:481"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0482",
+      "title": "v2 clientとの互換、v3 migration、image rebuild、rollbackをServerManager側正本TODOで閉じる。",
+      "lane": "phase-5",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 482,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 5: 工場wire v3とBugHub編入"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:482"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0483",
+      "title": "Observer受け入れ完了後にだけPLAN／AGENTS／READMEの工場コア一覧を9製品から10製品へ更新する。",
+      "lane": "phase-5",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 483,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 5: 工場wire v3とBugHub編入"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:483"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0489",
+      "title": "Phase 1以降のA作業を各repoのControl／Task／Packet／Worker Report／親受入で運用し、Codex偏重や回収不能を観測する。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 489,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:489"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0490",
+      "title": "各委譲前に入口availability、role、provider、quota snapshot、reservationを記録する。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 490,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:490"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0491",
+      "title": "timeoutは同一handleで回収し、同一taskを重複起動しない。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 491,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:491"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0492",
+      "title": "正規入口で再現したオーケストレーション欠陥はdotagentsの本計画TODOへ追加し、独立gate／独立commitで即修正してからObserver本筋へ戻る。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 492,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:492"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0493",
+      "title": "worktreeで未作成のTask `doc_ref`を渡した時、内部`git hash-object`失敗を`GIT_FAILURE`へ誤分類せず、利用者が直せる`IO_FAILURE: task document is unavailable`として返す。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 493,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:493"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0495",
+      "title": "Claude background CLIの可変長flagがpromptを取り込むargv順序と、terminal後の一時daemon終了により`claude logs <id>`が",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 495,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:495"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0498",
+      "title": "Claude backgroundでMCP toolを`--tools`だけへ指定すると`dontAsk`が拒否すること、`--allowedTools`へ同toolをexact追加すると",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 498,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:498"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0501",
+      "title": "`claude logs`がObserverの必要情報以外のアカウント／利用状況表示を含み得ることを再確認した。raw出力を保存・親表示せず、",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 501,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:501"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0503",
+      "title": "Delegation Packetの`report_template`が最上位field名しか示さず、native implementerがnested evidence／validationを",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 503,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:503"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0508",
+      "title": "Codex native follow-upで保存済みpacket／skeletonを要約転記すると、子がstrict nested shapeを再発明して",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 508,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:508"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0512",
+      "title": "write Runのplanned時にDelegation Packetを生成すると、admit時のbaseline HEAD確定でpacket digestが変わり、",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 512,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:512"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0516",
+      "title": "Worker Report skeletonが`observed_at`を一般的なRFC 3339と案内する一方、strict importerは",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 516,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:516"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0520",
+      "title": "TODO完了候補時に一度だけ、親が標準経路外の手補正・証拠再構成・代替回収の有無を確認する。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 520,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:520"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0523",
+      "title": "Worker Reportの親受入を`reject`した時、native implementerが完了報告を撤回したままTaskも終了する運用摩擦を直す。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 523,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:523"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0527",
+      "title": "Control記録済みnative Runへの`agents.interrupt_agent`を、親が`worker-cancel-request`より先に実行した順序誤りを再発防止する。Codex appendixへcancel request先行、interrupt receipt回収、`observe-worker=cancelled`の順を固定した。今回のRunは順序違反をDecisionに明記したrev52とterminal receiptのrev53で閉じ、成功へ丸めていない。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 527,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:527"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0528",
+      "title": "Observer repoで`codex-sidecar`の正規dry-runを実行すると、project-ownedな`.codex-sidecar.yml`がなく",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 528,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:528"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0533",
+      "title": "Control finalizationは完了済みphase gateを必須にするのに、公開CLIが未設定のまま最初のTaskを記録でき、",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 533,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:533"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0538",
+      "title": "Worker Reportの証拠時刻がimport時刻より約33分未来でもControlが受理する欠陥を、Observer",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_done",
+      "start": null,
+      "completion": {
+        "done_mode": "historical_import",
+        "completed_at": "unknown_requires_evidence"
+      },
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 538,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 1,
+        "parent_task_id": "of-0492",
+        "checkbox_state": "checked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:538"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=checked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0543",
+      "title": "Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 543,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:543"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0544",
+      "title": "TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 544,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:544"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0545",
+      "title": "knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 545,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:545"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    },
+    {
+      "task_id": "of-0546",
+      "title": "4 repoのTask finalization、cross-repo receipt、Phase監査を集約し、各Controlをfinalize／archiveする。",
+      "lane": "phase-6",
+      "narrative_ref": "docs/plan_observer-factory-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "start": null,
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-factory-integration.md",
+        "origin_line": 546,
+        "source_commit": "53572f7c1f2872462c5facfeaade95c331875cbc",
+        "heading_path": [
+          "Observer完成・工場編入・Elastic配置改善計画",
+          "4. TODO",
+          "Phase 6: Elastic orchestration dogfood receipt集約と完了監査"
+        ],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "unchecked"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/plan_observer-factory-integration.md:546"
+        ],
+        "notes": [
+          "calibrated_checkbox_state=unchecked",
+          "title/source_anchor/parent=inventory_exact",
+          "hard_dependency_policy=factory-master_owns_execution_order",
+          "child_plan_explicit_hard_dependencies=none"
+        ]
+      }
+    }
+  ],
+  "hard_dependencies": [],
+  "joins": [],
+  "extraction_digest": "c2427c19623cfa1f0f823218efa1f90b830afb47ff6ca4b552fea76cf5cd2bc8"
+}

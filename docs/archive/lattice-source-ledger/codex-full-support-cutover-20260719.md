@@ -1,0 +1,84 @@
+# Lattice ToDo archive
+Plan: codex-full-support
+Batch: ledger-cutover-20260719
+Revision: e13750595e899970a418155e8b0f7c4121e4f1c8eaba6acca6e4db6a431e2b06
+
+- [x] Claude 入口を Claude Workflow/外部枠 appendix として整理
+- [x] Codex の symlink adapter を製品固有 skill ディレクトリへ置換し、native agents/routing を使う
+- [x] `audit-gauntlet` Codex skill を追加し、2票反証と件数遷移を fixture で検証
+- [x] `auto-deploy-on-push` Codex skill を追加し、高リスク操作の説明・H承認・rollback を固定
+- [x] `polish-github`・`oracle` は既存対応との差分監査のみ。必要がなければ「変更なし」を記録（当時Oracle。現行の通常ChatGPT入口はgpt-connector）
+- [x] Claude command 3件→Codex skill 入口の対応表を README に追加
+- [ ] 全対象 skill の frontmatter、明示 invocation、代表暗黙 invocation を新規 session で確認
+- [x] rollback: Wave 1 を独立 commit とし、revert で旧 orchestrate symlink を復元可能にする
+- [x] `install.sh` が Codex skill を公式 `$HOME/.agents/skills` へ既定で symlink 配布
+- [x] 古い入口用に explicit legacy profile を用意し、通常実行で公式/legacy を同時配布しない
+- [ ] 移行 probe で同名重複と優先順位を実測し、各入口が一つの面だけから同一 canonical content を読む状態を合格条件にする
+- [ ] dotagents 所有の旧 legacy symlink は dry-run一覧→backup→H承認後に対象限定で外し、他の local skill を保存（この Mac は完了、他端末は一覧確定後）
+- [x] `verify-install.sh` が選択 profile、公式面/legacy面、リンク先、重複、`AGENTS.override.md` shadow を区別して検証
+- [x] clean temporary HOME で repo配布と静的設定 fixture を検証する CI を追加
+- [x] Claude/Codex hook smoke を `make lint` / GitHub Actions の明示ゲートへ昇格し、初回 INFO・2回目沈黙・compact 再武装・pending 1回配送・旧 deny/ask/block 不在を固定
+- [x] 既存 `verify-install.sh` を読み取り診断の唯一の入口として維持（別の汎用 check tool は作らない）
+- [x] routing 必須2キーと dotagents hook entry だけを、backup→dry-run→冪等追加できる適用スクリプトを追加
+- [x] model、permissions、既存他tool hooks、OAuth、trust は変更せず、診断＋H手順に残す
+- [x] 親別 MCP matrix を作成
+- [x] `codex mcp` の登録・list・疎通、STDIO env closed-mode、必須/任意/親で禁止をランブック化
+- [ ] Throughline/codex-thread-handoff-smoke の代表 capture/restore/handoff を実測（本体改造・sessions同期はしない。capture/handoff は成功、restore は上流 mismatch で未達）
+- [ ] 工場コア8製品を onboarding・README・親別matrix・`verify-install` に必須化し、Spotter project契約とCodegraph／MarkItDown／gpt-connector／aiterm／sidecar代表疎通を検証する
+- [ ] clean HOME fixture で8製品のCLI・NPM/`uv tool`更新package・設定schema・所有権境界を固定し、外部製品の状態や実装をdotagentsへ複製しない
+- [ ] `agents-update` は1製品失敗をログへ残し、残りを続行した後に非0終了する。更新後のcompatibility gateを `make ci` に固定する
+- [x] `max_threads` / `max_depth` は公式公開設定（既定6/1）として記録し、通常は未設定、必要時だけ新規sessionで実効上限を検証する契約へ訂正（2026-07-13）
+- [x] rollback: 追加 symlink と設定追記だけを戻し、端末バックアップから復元可能にする
+- [x] 各現役端末で pull相当の同期→tar backup→install→config dry-run/apply→verify（FOX 2環境はGitHub認証切れのためローカルbundleで同期。remote同期はH待ち）
+- [x] NVM配下の npm をLinux / WSL2のcron最小PATHでも解決し、週次 `agents-update` の実走を固定
+- [ ] 各現役Codex入口で新規 session E2E（AGENTS / SKILLS / HOOKS / SESSIONS / Spotter監査）
+- [ ] 端末で共有できる routing/MCP 証拠は入口ごとの台帳から同じ証拠へ参照し、未実施を共有扱いにしない
+- [ ] 各端末で implementer/refuter/sorter の routing smoke＋親側 verifier green
+- [ ] 各入口で Codex hooks の初回 INFO・同セッション2回目沈黙・compact 再武装・Stop pending の次回1回配送を実火し、代表 skill、Throughline、gpt-connector consultation の代表 smoke を成功させる。gpt-connector は model+effortを明示し、timeout後sessionsも確認する。明示エラーは FAIL/blocker であり合格にしない
+- [ ] 各対象projectで `spotter install` → marker／Claude 5 hook／Codex 3 hook／Claude・Codex別tool-db／Throughline context default-onを確認し、新規sessionで `spotter.hook_event.v1` を実火する
+- [ ] 任意 MCP/OAuth は未認証を FAIL にせず、理由付き WARN と H 手順を記録
+- [ ] Claude の skill/command/agent/hook smoke を再実行し回帰なしを確認
+- [ ] `plan_gpt56-rewiring.md` の他端末 routing TODO を本 wave の実測で消化
+- [ ] 同プランの sandbox上書き/spawn応答上流問題は non-blocking の独立追跡として残す
+- [ ] `plan_callout-hooks.md` Phase 6 の INFO 契約を baseline とし、README・全ゲートは Wave 2、他端末実火は本 wave で消化
+- [ ] PLAN.md の「Codex skill 一覧目視」を閉じる
+- [ ] 端末台帳を完成し、完了した既存プランを archive へ移す
+- [ ] rollback: 問題端末だけ旧commit＋backupへ戻し、他端末のgreenを巻き戻さない
+- [ ] existence/value の独立2票＋網羅性 Critic
+- [ ] `make lint`、全 smoke、clean HOME、install/verify、GitHub Actions green
+- [ ] 項目ごとに実施/スキップ理由・変更ファイル・端末別検証を報告
+- [ ] 本計画を `docs/archive/` へ移し、archive を含めて lint/status を再確認
+- [ ] archive を含む対象だけ pathspec commit→push→origin/main 同期確認
+- [ ] Codex の9面（AGENTS_MD / CONFIG / SKILLS / PLUGINS / MCP_SERVER_CONFIG / SUBAGENTS / HOOKS / COMMANDS / SESSIONS）に未裁定行がない
+- [ ] Claude の主要 workflow 3件に Codex の正規入口があり、Claude 固有ツールを誤って呼ばない
+- [x] cron最小PATHではNVM配下のnpmを解決できない実測欠陥を正本スクリプトで修正。NVM復元・npm不在時のfail-loud・fake npm 13件を `tests/update/cron-env.sh` と `make ci` で固定した。
+- [ ] Codex App remote project `/home/kite/Developer/dotagents` のhook trust、新規session、skill / routing / Throughline、Claude回帰を実火する。
+- [ ] Codex の公式 user skill 面 `$HOME/.agents/skills` から対象 skill を利用できる
+- [ ] 規範・skills・subagents・hooks・必須 MCP・session 継続を新規 Codex session で実測済み
+- [ ] 工場コア8製品が全現役端末に導入・更新され、親別matrixどおり疎通し、Spotter限定発火・Throughline context・Codegraph／MarkItDown／gpt-connector／aiterm／sidecar代表 E2E が green
+- [ ] ServerManagerを中央管理コアとしてdotagentsの管理対象へ接続し、BugHubを独立製品へ分離せずversion・bug・互換結果の統括に再利用する
+- [ ] 現役端末すべてで clone/pull→install→必須設定→verify→代表 E2E が green
+- [x] git fetch、origin/main、dirty、stash を確認
+- [x] `rag/INDEX.md` と caveat を検索
+- [x] リポ資産を9面＋配布/検証/文書/OSで棚卸し
+- [ ] Claude 側の skill/command/agent/hook に回帰がない
+- [x] OpenAI 公式 docs と Codex CLI 0.144.1 の端末実測を突合
+- [x] 公式調査を `rag/codex/` と INDEX へ還流
+- [x] existence 票: SESSIONS既対応、plugin command不存在、plugin hook仕様矛盾、既存プラン移管先、max_threads既対応を訂正
+- [x] value 票: 全面shared、全資産manifest、plugin実験、汎用applier、routing/hooks再実装を棄却または縮小
+- [x] Critic: SESSIONS合否、archive順序、AGENTS末尾実読、skill面一意性、端末×入口E2Eを補強
+- [x] 統括裁定: 実在するギャップ4 wave＋最終監査へ縮約
+- [x] **GO** 本計画で実装開始（既存ディレクトリの移動・改名は含まない）
+- [ ] 既存 Codex 関連プランの重複 TODO を完了または移管理由付きで閉じている
+- [ ] **H1** 現役端末×入口一覧、変更してよい必須設定キー/hook entry、dotagents所有legacy symlink移行の一括 rollout 承認（この Mac の official 面移行と push は 2026-07-12 承認済み。他端末一覧は未確定）
+- [ ] hook trust、MCP OAuth 等の各端末 UI 操作
+- [ ] 最終反証・CI・push を終え、本ファイルを `docs/archive/` へ移している
+- [ ] 現役端末×Codex入口（desktop / CLI / IDE 等）をオーナーと確定し、存在しない端末・入口を推測で追加しない
+- [x] `git fetch`、ahead/behind、dirty、stash を記録
+- [x] `make lint`、Claude/Codex hook smoke、`install.sh`、`verify-install.sh` を green にする。hook baseline は初回 INFO・同セッション2回目沈黙・compact 後1回再武装・Stop pending の次回1回配送・deny/ask/block 不在を保存
+- [x] `/import` または `externalAgentConfig/detect` を**検出だけ**実行し、9面の差を保存（import禁止）
+- [ ] 各現役入口の新規 Claude/Codex session で skills・agents・MCP・hooks baseline を保存
+- [x] AGENTS の実効 byte budget と、人格・計画・F/A/H・git・報告の先頭/末尾カナリアが実読されることを保存
+- [x] README に9面の小さな対応表を追加（配布対象だけ。docs/rag/bin全件の第三台帳は作らない）
+- [x] rollback: Wave 0 の文書・baseline 差分だけを独立 commit とし、その commit 単位で revert
+- [x] `orchestrate` の共通契約 reference を追加（既存ディレクトリの移動・改名なし）

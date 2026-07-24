@@ -138,7 +138,8 @@ fi`);
   const report = JSON.parse(await readFile(box.output));
   assert.doesNotThrow(() => validateReport(report));
   assert.equal(Object.keys(report.products).length, 9);
-  assert.equal(report.products.codegraph.checks[0].reason_code, 'not_indexed');
+  assert.equal(report.products.codegraph.presence_status, 'not_applicable');
+  assert.deepEqual(report.products.codegraph.checks, []);
   assert.equal(report.products.markitdown.checks[0].status, 'pass');
   assert.equal(report.products.oracle.checks[0].status, 'pass');
   assert.equal(report.products.caveat.installed_version, '1.2.3');
@@ -374,7 +375,7 @@ test('host profileと実platformの不一致をreport生成前に拒否する', 
   assert.match(result.stderr, /実行platformが不一致/);
 });
 
-test('悪意あるversion出力・Oracle人間向け出力・Codegraph失敗をgreenへ丸めない', async (t) => {
+test('悪意あるversion出力・Oracle人間向け出力をgreenへ丸めずCodegraphは実行しない', async (t) => {
   const box = await sandbox(t);
   await installHealthyCommands(box);
   await box.script('caveat', "echo 'Bearer top-secret /Users/kite/private'");
@@ -388,8 +389,8 @@ if [ "$1" = "--version" ]; then echo 'codegraph 1.4.0'; else exit 9; fi`);
   assert.equal(result.code, 0, result.stderr);
   const report = JSON.parse(await readFile(box.output));
   assert.equal(report.products.caveat.presence_status, 'unverified');
-  assert.equal(report.products.codegraph.checks[0].status, 'unverified');
-  assert.equal(report.products.codegraph.checks[0].reason_code, undefined);
+  assert.equal(report.products.codegraph.presence_status, 'not_applicable');
+  assert.deepEqual(report.products.codegraph.checks, []);
   assert.equal(report.products.oracle.checks[0].status, 'unverified');
   assert.doesNotMatch(JSON.stringify(report), /top-secret|\/Users\/kite|human status/);
 });
@@ -412,7 +413,6 @@ if [ "$1" = "--version" ]; then echo 'oracle 0.16.0'; else echo '{"providers":[]
 
 test('第三者adapterは対応範囲外またはversion不明で診断を実行しない', async (t) => {
   const products = [
-    { id: 'codegraph', checkId: 'index', supported: '1.4.0+build.7', known: '1.4.1', drift: '1.5.0', prerelease: '1.4.0-rc.1' },
     { id: 'markitdown', checkId: 'local_fixture', supported: '0.1.0+build.7', known: 'markitdown 0.1.5', drift: '0.2.0', prerelease: '0.1.0-rc.1' },
     { id: 'oracle', checkId: 'doctor', supported: '0.16.0+build.7', known: '0.16.0', drift: '0.17.0', prerelease: '0.16.0-rc.1' },
   ];
@@ -435,7 +435,7 @@ if [ "$1" = "--version" ]; then
   echo '${stdout}'
 else
   echo diagnostic >> '${calls}'
-  ${product.id === 'codegraph' ? "echo '{\"initialized\":true}'" : product.id === 'oracle' ? "echo '{\"healthy\":true}'" : "echo 'converted'"}
+  ${product.id === 'oracle' ? "echo '{\"healthy\":true}'" : "echo 'converted'"}
 fi`);
       await writeFile(box.config, JSON.stringify(validConfig()));
 

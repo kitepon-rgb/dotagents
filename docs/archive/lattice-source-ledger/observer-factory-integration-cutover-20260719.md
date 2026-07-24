@@ -1,0 +1,123 @@
+# Lattice ToDo archive
+Plan: observer-factory-integration
+Batch: ledger-cutover-20260719
+Revision: 08a64804c2221378a5116e46f13c193f133149f586d4d8ea65a3a3b0183559fa
+
+- [x] 4 repoそれぞれにactive planを参照する独立Controlを初期化し、cross-repo receiptの保存形式を本計画へ固定する。
+- [x] cancelled TaskがControl finalizationを永久に阻害するlifecycle矛盾を修正する。
+- [x] archiveのfinalization証拠検証でも、旧Decision digestのbounded git履歴保持を認める。
+- [x] 各provider矢印をlaneへ固定する。
+- [x] rate-aware証拠はControl schemaをversion upして束縛する方針を採用する。quota snapshot／selector decision／pool reservationをcandidate digestとreceiptへ含め、旧v25 active Controlの継続読取、v26新規作成、migration／rollbackを同じTODOで固定する。
+- [x] quota poolの最小identityと並行予約規則を固定する。
+- [x] v1親identityを`project target + host identity + parent thread hash + completed-turn cursor`とする。
+- [x] Observerの起動責任を、ユーザーの明示指示を受けた現在親に固定する。
+- [x] Claude親からClaude Observerを継続させる正式event、payload、完了証拠、長時間wait、continuation、停止方法を実hostで基礎characterizationする。
+- [x] Codex親からClaudeをWorker／相談役として呼ぶ正規入口を棚卸しし、installed→registered→verified→execution-verifiedを分ける。
+- [ ] Claude親からCodex旗艦を相談役として呼ぶ正規入口とtimeout回収を実測する。
+- [x] Claude／Codexの残quota、window、reset時刻を取得できる公式またはprovider-owned入口を調査し、取得不能も結論として記録する。
+- [x] 調査した外部仕様を各一次ソースからRAGへ保存し、`rag/INDEX.md`へ追記する。
+- [x] Throughline側正本TODOをCodex専用からClaude／Codex共通契約へ更新する。
+- [x] host-neutral cursorへproject identity、host／thread hash、host固有の完了証拠を束縛し、
+- [x] Codexは`task_complete`、ClaudeはPhase 0で実証した完了証拠だけを採用し、mtimeや進行中projectionを完了扱いしない。
+- [x] snapshot／delta／thread switch／host switch／resync／projection pending／paginationをblack-box固定する。
+- [x] Observer以外にも再利用できるJSON-only read／wait CLI、cancel、timeout境界、65秒超live waitを両hostで検証する。
+- [x] Throughline既存Claude pathとCodex pathの回帰gateを通し、独立commit／rollback単位を保つ。
+- [x] Observer runtimeをhost-neutral SupervisorとCodex／Claude host adapterへ分離する。
+  - [x] model operation journal core、lock／completed locator／planned rollover／processed cleanup補正を
+  - [x] deterministic message ID、record-first receipt、strict recoveryを持つmodel operation専用
+  - [x] Supervisorのissue／recover／apply／finalize統合をObserver `c226cc9`、focused 15/15、
+  - [x] provider固有result journal coreとSupervisor cleanup順序をObserver `4443ff9`／`3600876`、
+  - [x] AI wait loopとSupervisorの二重所有を解消し、Codexをcycleごとの`turn/start`とexact result回収へ
+  - [x] 外部Supervisor production callerを一target一process／一cycle一stepで接続する。timeoutではAIを起動せず、
+    - [x] `applyCycle`／`finalizeAppliedCycle`をdurable cycle input／operation時刻へ束縛し、advisoryの
+    - [x] 一target一process lock、evidence input、Codex provider callback、sanitized receiptを束ねる一step callerを
+    - [x] verified Throughline clientとpre-initialized Codex app-server sessionを所有する外部process／CLIへ
+  - [x] **SUPERSEDED:** Claude公開非対話background routeをunsupportedとして閉じ、Codex app-serverと
+- [x] parent identityから現在親のhostを解決し、Observer modelを同じprovider familyへ固定する。
+- [x] ユーザーの明示指示を受けた親launcherだけが、provider child起動前に一target一watchを確保する。
+- [x] Codex ObserverとClaude Observerで同じwatch／status／stop UXを提供する。
+- [x] Observer hostのproject identityを、監視対象ごとの作業folderではなく単一のObserver repo rootへ固定する。
+- [x] **SUPERSEDED:** 旧Claude background adapterのargv／private job recoveryは採用せず、Aiterm公開
+- [x] production Observer AIのtool allowlistを空にし、Throughline wait／read、project読取、shell／file toolを
+- [x] **SUPERSEDED:** 旧Claude backgroundの`agents --json` stop案はAiterm公開session terminalへ置換した。旧案では、
+- [x] **SUPERSEDED:** 旧Claude background隔離案はcampaign専用Aiterm runtimeと設定transactionへ置換した。旧案では、
+- [x] project-local Stop hookはmatching provider resultのcaptureだけを行い、block continuationを返さない。
+- [x] Observer AIへ伴走者契約、既定沈黙、一サイクル一件、dedupe／cooldownを強制し、常時反証や第二の親への逸脱を拒否する。
+- [x] read-only、誤配送防止、crash recovery、faulted停止、installer／verify／rollbackを両hostで完遂する。
+  - [x] Observer ADR 0022のversioned fragment／read-only verifierをconsumeするdotagents adapterを実装する。
+    - [x] Observer側P3-4b1のrepo、Control、commit、immutable ADR digest、親受入時刻をcross-repo receiptへ固定した。
+  - [x] 既定dry-run、既存hook保持、Observer entry各一件への正規化、Claude `settings.json`とCodex `hooks.json`の
+  - [x] P5-2aとしてObserver製品manifest、sanitized diagnostics、4 executable binと、dotagentsの
+  - [x] P5-2bとして空Mailbox fast pathと通常waitの性能分布／閾値、completed receipt cleanupの
+  - [x] P5-1b／P3-4cのlive H実施前に、両host prerequisite、必須相関証拠、停止条件、
+  - [x] Codex parent caller coreとinitial generation bootstrapをObserver製品repoで閉じた。
+  - [x] Codex parent entry／配布をdotagentsのisolated HOME gateで閉じた。
+  - [x] Claude characterization専用の隔離Stop capture、sanitized receipt、prepare／verify／cleanup
+  - [x] 上記harness完成後、Claude公開非対話reply／result readをH characterizationし、旧background job routeの
+    - [x] Stop未発火とstdin／payload／result不正を区別するraw-free diagnostic receiptをObserverで閉じた。
+    - [x] diagnostic receipt受入後、別H承認で一つのClaude job／Haiku requestだけを再characterizeした。
+    - [x] Aitermの永続PTYへ対話型`claude_agent`を追加し、同じ利用者可視sessionへの初回／follow-up、
+    - [x] Aiterm公開面だけでClaude production callerを実装し、同じ永続Claude sessionへcompleted turnを
+    - [x] **CORRECTION — 受入完了:** 実Claude初回／follow-up各1 turn、Stop、exact result、session closeを
+    - [x] 19e開始前に、陳腐化したObserver preflight／runbookをAiterm production routeと実Throughline
+    - [x] 最初のClaude live attemptで再現したstate root不一致を根治する。Observer hook fragment／preflightと
+    - [x] state root修理後に再現したThroughline capture実行物不一致を閉じる。Aiterm Claude parent
+    - [x] PATH補正後に判明したAiterm runtime共有を閉じる。campaign専用0700 `TMPDIR`とcandidate-first
+    - [x] 専用runtimeのUnix socket長境界を閉じる。campaign root直下の短い0700 `r2`を使い、
+    - [x] 短い専用runtimeで再現したThroughline Stop transcript flush raceを閉じる。Aiterm session、
+    - [x] 修理済みcandidateの自然Stop receipt後に再現したinstalled Observer package root不一致を閉じる。
+    - [x] canonical root修理後に再現したThroughline completed timestamp境界を閉じる。Throughline
+  - [x] actual apply、hook trust、Claude／Codex実火はH gateとして分離し、isolated HOMEのapply／restore testを
+- [x] Codex／Claude E2EとPhase監査を通し、Observer側Phase O2の受け入れ条件を閉じる。
+- [x] shared orchestration契約へ「Observer同社／相談役異社／一般Worker適応配置」を反映する。
+- [x] Codex親からClaude Worker／相談役を呼ぶadapter、handle、observe、resume、failure mappingを実装する。
+- [x] Claude親からCodex相談役を呼ぶ経路を既存sidecar／native境界と整合させる。
+- [x] Consultationを`gpt-connector`固定からlane別adapterへ拡張し、Workerと別collectionのまま維持する。ObserverをControlのWorker票やConsultation票へ混ぜない。
+- [x] provider障害時の別社切替は新Runとして記録し、fallback元の成功へ偽装しない。
+- [x] role別の適格provider集合と、親と異なる相談役をplacement fixtureで固定する。
+- [x] O3実装境界を先に固定する。
+- [x] `claude-native` Worker adapterのstart／same-session resume／observation／timeout unknown／failure
+- [x] ConsultationのClaude session ID／Codex handleをv25の`slug`へ読み替えず、旧v25継続読取、
+- [x] 既存未コミットを収容する。WSL relay RAGはPhase R2、CDC PDF/PNGは正典還流済み中間物、
+- [x] consultationのplanned→terminal脱出経路を設計裁定する（既存v25契約の欠陥。取消済みTaskの
+- [x] `quota_pool_id`、`host_instance_id`、対象executor集合、`provider`、`windows[]`（`remaining_bp`、`starts_at`または`duration_seconds`、`reset_at`、`model_family_scope`）、`observed_at`、`source`、`confidence`を持つquota snapshot契約を定義する。
+- [x] OpenAI／Anthropic adapterでquota snapshotを取得し、秘密、cookie、token、account内部stateをControlへ複製しない。
+- [x] 異なるreset時刻をUTCで正規化し、`pace_ratio`と最も逼迫したwindowを計算する純粋selectorを実装する。
+- [x] role適格候補だけを入力にし、Observer／相談役／F作業を自動均衡対象から除外する。
+- [x] 会社間の頻繁な切替を防ぐhysteresis、quota pool単位lock、選択ごとのsnapshot再取得、reset時失効、同率時の決定的tie-breakを実装する。
+- [x] stale／取得失敗／残量ゼロ／window矛盾／reset境界／時差／一社のみ適格をfail-loud fixtureで固定する。
+- [x] Control schema v27（[ADR 0045](adr/0045-o3-consultation-multiprovider-schema.md)でv26はO3
+- [ ] 実消費と選択結果を週次で評価し、両社がreset時に過不足なく使われるかdogfood記録を残す。
+- [ ] 既存wire v2計画の全残件が現行12製品契約のまま完遂されたfinalization receiptを確認する。
+- [ ] wire v3を固定13製品（端末能力9製品＋ServerManager＋基盤toolchain 3種）として設計する。
+- [ ] Observerのversion、native diagnostics、runtime error、host／connector matrix、更新経路、adapter、fixture、rollbackを追加する。
+- [ ] BugHub schema、期待matrix、scanner、reporter、read-only集約をv3へ更新する。
+- [ ] 未対応hostは`missing`へ誤投影せず、契約どおり`unsupported`／`not_applicable`／`unverified`を使い分ける。
+- [ ] v2 clientとの互換、v3 migration、image rebuild、rollbackをServerManager側正本TODOで閉じる。
+- [ ] Observer受け入れ完了後にだけPLAN／AGENTS／READMEの工場コア一覧を9製品から10製品へ更新する。
+- [ ] Phase 1以降のA作業を各repoのControl／Task／Packet／Worker Report／親受入で運用し、Codex偏重や回収不能を観測する。
+- [ ] 各委譲前に入口availability、role、provider、quota snapshot、reservationを記録する。
+- [ ] timeoutは同一handleで回収し、同一taskを重複起動しない。
+- [ ] 正規入口で再現したオーケストレーション欠陥はdotagentsの本計画TODOへ追加し、独立gate／独立commitで即修正してからObserver本筋へ戻る。
+  - [x] worktreeで未作成のTask `doc_ref`を渡した時、内部`git hash-object`失敗を`GIT_FAILURE`へ誤分類せず、利用者が直せる`IO_FAILURE: task document is unavailable`として返す。
+  - [x] Claude background CLIの可変長flagがpromptを取り込むargv順序と、terminal後の一時daemon終了により`claude logs <id>`が
+  - [x] Claude backgroundでMCP toolを`--tools`だけへ指定すると`dontAsk`が拒否すること、`--allowedTools`へ同toolをexact追加すると
+  - [x] `claude logs`がObserverの必要情報以外のアカウント／利用状況表示を含み得ることを再確認した。raw出力を保存・親表示せず、
+  - [x] Delegation Packetの`report_template`が最上位field名しか示さず、native implementerがnested evidence／validationを
+  - [x] Codex native follow-upで保存済みpacket／skeletonを要約転記すると、子がstrict nested shapeを再発明して
+  - [x] write Runのplanned時にDelegation Packetを生成すると、admit時のbaseline HEAD確定でpacket digestが変わり、
+  - [x] Worker Report skeletonが`observed_at`を一般的なRFC 3339と案内する一方、strict importerは
+  - [x] TODO完了候補時に一度だけ、親が標準経路外の手補正・証拠再構成・代替回収の有無を確認する。
+  - [x] Worker Reportの親受入を`reject`した時、native implementerが完了報告を撤回したままTaskも終了する運用摩擦を直す。
+  - [x] Control記録済みnative Runへの`agents.interrupt_agent`を、親が`worker-cancel-request`より先に実行した順序誤りを再発防止する。Codex appendixへcancel request先行、interrupt receipt回収、`observe-worker=cancelled`の順を固定した。今回のRunは順序違反をDecisionに明記したrev52とterminal receiptのrev53で閉じ、成功へ丸めていない。
+  - [x] Observer repoで`codex-sidecar`の正規dry-runを実行すると、project-ownedな`.codex-sidecar.yml`がなく
+  - [x] Control finalizationは完了済みphase gateを必須にするのに、公開CLIが未設定のまま最初のTaskを記録でき、
+  - [x] Worker Reportの証拠時刻がimport時刻より約33分未来でもControlが受理する欠陥を、Observer
+- [ ] Claudeレーン失敗をCodexへの暗黙fallbackで隠さず、adapter／routingの根本原因を修正する。
+- [ ] TODO完了候補ごとに親がdiff、受け入れ条件、関連testを一回確認し、重い独立監査はPhaseごとに一回行う。
+- [ ] knowledge returnをRAG／caveat／正典へ還流し、本計画をarchiveする。
+- [ ] 4 repoのTask finalization、cross-repo receipt、Phase監査を集約し、各Controlをfinalize／archiveする。
+- [x] ObserverをCodex限定からClaude／Codex両hostへ広げるオーナー裁定を本計画へ固定する。
+- [x] Observer／相談役／一般Worker／Phase監査の配置目的を分離する。
+- [x] rate-aware配置の目的を「各providerのresetまでに理想ペースで枠を使う」と定義する。
+- [x] dotagents、Observer、Throughline、ServerManagerのbaselineと既存dirty所有を再確認し、変更waveごとのpathspecを固定する。

@@ -28,7 +28,7 @@ SHA-256だけで保持確認する実装が既にあるため、正典とarchive
 - 変更: `lib/orchestrate/control-record.mjs`
 - 契約: `shared/orchestrate/control-record.md`
 - 回帰: `tests/orchestrate/control-record.test.mjs`
-- 正本TODO: `docs/plan_observer-factory-integration.md`
+- 旧正本TODO（archive済み）: `docs/archive/plan_observer-factory-integration.md`
 - focused gate:
   `node --test --test-name-pattern='finalization.*history|history.*finalization' tests/orchestrate/control-record.test.mjs`
   — 1/1 PASS

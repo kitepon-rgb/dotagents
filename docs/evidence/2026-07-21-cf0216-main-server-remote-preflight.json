@@ -1,0 +1,51 @@
+{
+  "schema_version": "dotagents.cf0216-preflight.v1",
+  "task": "codex-full-support/cf-0216",
+  "observed_at": "2026-07-20T15:24:08.000Z",
+  "target": {
+    "host": "main-server",
+    "codex_surface": "Codex App Remote",
+    "project_root": "/home/kite/Developer/dotagents"
+  },
+  "readiness": {
+    "outcome": "passed",
+    "result_digest": "a058c4b52e02551bad60372d828907c60300de3169648209c3f77e282799c7dc",
+    "executor_receipt_digest": "9a97044000248e653fffbd68c0d62891756f33473ff931d00145d2a5c01d2ecd",
+    "facts": [
+      "main-server HEAD and origin/main matched a0e77059d7a4aa1ed1800abf2c9a3ee280b0b2a1",
+      "remote worktree was clean",
+      "verify-install --profile official passed"
+    ],
+    "limits": [
+      "readiness does not prove Codex App hook trust",
+      "readiness does not prove a Remote thread or hook lifecycle"
+    ]
+  },
+  "claude_regression": {
+    "outcome": "blocked",
+    "session_id": "923f0a2d-1d48-40cb-b712-8a787d02f47f",
+    "initial_failure_digest": "b3dbb40955e85b7511d171b8598d8b8a580eab336da6bb6027a985e70de029b0",
+    "current_auth_status": {
+      "loggedIn": false,
+      "authMethod": "none",
+      "digest": "b479c28f226eb53b96d1d0db618dd9575a94d4b3fdbe0e695c78938435bfde17"
+    },
+    "unmet_condition": "main-serverでclaude auth loginを完了し、同じsession_idをresumeする"
+  },
+  "codex_app_remote": {
+    "outcome": "not_started",
+    "selected_remote_host_id": "remote-ssh-discovered:main-server",
+    "matching_remote_projects": [],
+    "matching_remote_threads": null,
+    "state_projection_digest": "56b01617df097f176cb88f6c81039e90520f37a0ad3a4d5e11ab8cbac4ff06bb",
+    "unmet_conditions": [
+      "Codex Appでmain-serverの/home/kite/Developer/dotagentsをRemote projectとして開く",
+      "/hooksでproject hookをreviewしてtrustする",
+      "trust後に新規Remote threadを開始する"
+    ]
+  },
+  "workspace_changed_by_read_only_workers": false,
+  "lattice_product_modified": false,
+  "codex_rc_used": false,
+  "fixtures_read_or_modified": false
+}

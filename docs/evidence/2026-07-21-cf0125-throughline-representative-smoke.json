@@ -1,0 +1,72 @@
+{
+  "schema": "dotagents.throughline_representative_smoke.v1",
+  "captured_at": "2026-07-20T23:00:54Z",
+  "task": "codex-full-support/cf-0125",
+  "throughline_version": "0.8.7",
+  "codex_thread_id": "019f7df0-71de-7b71-9488-fd86f0af989a",
+  "session_id": "codex:019f7df0-71de-7b71-9488-fd86f0af989a",
+  "capture": {
+    "status": "captured",
+    "source": "codex-rollout",
+    "captured_turns": 32,
+    "captured_rows": 46,
+    "corrupt_rows": 0
+  },
+  "handoff": {
+    "structural_smoke": "ready",
+    "execute_status": "started",
+    "reason": "new_thread_handoff_started",
+    "new_thread_id": "019f8107-58d7-7333-9dd1-7776bf422f84",
+    "delivery": "developer-item",
+    "current_thread_mutated": false,
+    "open_host": "none"
+  },
+  "restore": {
+    "status": "app-server-restart-stable",
+    "reason": "fresh_app_server_restore_counts_stable",
+    "proof_scope": "app_server_process_restart_only",
+    "restart_safe": false,
+    "thread_id": "019f8136-44c0-7ba3-933e-8a85c09f2ac4",
+    "target_state": "closed_compacted_session",
+    "expected_turns": 5,
+    "cycles": [
+      {
+        "cycle": 1,
+        "read_turns": 5,
+        "resumed_turns": 5,
+        "turns_list_turns": 5,
+        "turns_list_complete": true,
+        "turn_count_check": "match"
+      },
+      {
+        "cycle": 2,
+        "read_turns": 5,
+        "resumed_turns": 5,
+        "turns_list_turns": 5,
+        "turns_list_complete": true,
+        "turn_count_check": "match"
+      }
+    ],
+    "restore_safety": "ok",
+    "restore_safety_risk_inspected": false,
+    "conclusion": "閉じたcompact済みsessionを対象にfresh app-server 2 cycleでrollout/read/resume/turns-listが全て5件一致した。",
+    "previous_attempt": {
+      "status": "app-server-restart-mismatch",
+      "reason": "fresh_app_server_restore_counts_mismatch",
+      "thread_id": "019f7df0-71de-7b71-9488-fd86f0af989a",
+      "target_state": "live_current_session",
+      "expected_turns": 31,
+      "observed_counts": [
+        [32, 32, 33],
+        [33, 33, 34]
+      ],
+      "disposition": "検査中にもturnが増えるlive current sessionを対象にした選定誤り。製品不具合として扱わない。"
+    }
+  },
+  "scope": {
+    "throughline_product_modified": false,
+    "lattice_product_modified": false,
+    "codex_rc_used": false,
+    "fixtures_modified_or_staged": false
+  }
+}
