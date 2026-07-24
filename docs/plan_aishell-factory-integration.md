@@ -98,9 +98,12 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
   - ServerManager `d85c70a` / `95ce6db`: 固定12製品不変、AIShell optional、空safe_context allowlist、severity素通し、非対応host `not_applicable`
   - focused 32/32、BugHub Node related 76/76、`not_applicable`追補focused 16/16、`git diff --check` green
 - [x] 本番deploy / canaryはH承認後に実行し、rollback setの実在と構成を実証する（意図的rollback drillは別H）
-  - main-server revision `95ce6dbde456280861dd64eae3736ee2edba57e6`、`/readyz`全check pass・revision一致
+  - 2026-07-19実施: main-server revision `95ce6dbde456280861dd64eae3736ee2edba57e6`、`/readyz`全check pass・revision一致
   - 本番container内canary: AIShell登録、optional、固定required 12不変、未知product拒否、safe_context空。DB書込みなし
   - SQLite backup `bughub-predeploy-20260719T071032Z.db`（8,110,080 bytes）とrollback set `20260719T071035Z-42955`（旧image / manifest / active marker / quiesced DB snapshot）を確認
+  - **2026-07-25時点でこの本番状態は存在しない**。deploy元branchがmainへ着地しないまま、mainがwire v4を受理してdeployされたため上書きされた。実測: 本番`source_revision`はmain HEADと一致し、mainの`bughub/`に`aishell`は0件。着地しないまま出す習慣が作業を失わせた2例目であり、規則は共通憲法「git・shell・ファイルの作法」へ記録済み
+- [x] 未着地branchを現mainへ再着地させる（ServerManager `16f96c1`。衝突なし、BugHub test 78/78、v2固定集合の凍結後編入という理由をコメントへ明確化。branchはlocal/remoteとも削除済み）
+- [x] 再deployは行わないと裁定する。dotagentsの`V2_PRODUCT_IDS`/`V4_PRODUCT_IDS`に`aishell`は0件で報告するclientが存在せず、server-first登録が効くのはwire v5から。本番はmain前進後も`ready`/`revision_match`で、次の通常deployが本変更を運ぶ
 
 ### Phase A4 — 対応Mac live acceptance
 
