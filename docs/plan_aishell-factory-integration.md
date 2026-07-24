@@ -3,7 +3,7 @@
 **状態:** Active
 **作成日:** 2026-07-19
 **対象:** AIShell、dotagents、ServerManager / BugHub、対応host
-**製品番号:** 第12コア製品
+**製品番号:** 端末能力9製品目（コア10製品）。旧「第12コア」表記はObserver/Latticeを別番号で数えた体系のもので廃止
 
 ## 1. 目的と成功条件
 
@@ -13,7 +13,7 @@ dotagents管理下の正式な第12コア製品へ編入する。
 成功条件:
 
 - [x] AIShellが製品所有のversion付きfactory diagnosticsを公開し、秘密・許可path・操作本文を漏らさない
-- [ ] macOS arm64ではinstall、MCP登録、診断、実操作smoke、更新、rollbackが再現できる
+- [x] macOS arm64ではinstall、MCP登録、診断、実操作smoke、更新、rollbackが再現できる（0.4.1で実測。証拠は[受入matrix](evidence/2026-07-25-aishell-factory-integration-close.md)）
 - [x] 非対応hostは黙って欠損扱いにせず、構造的な`not_applicable`として判定できる
 - [x] dotagentsの製品契約、host / connector matrix、更新経路、verify、privacy fixtureが同期する
 - [x] ServerManager / BugHubへserver-firstでsourceを登録し、既存wire v2 / v3 / v4を変更しない
@@ -131,7 +131,8 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
   - 2026-07-19: `@quolu/aishell@0.3.0`をpublic / latestでpublish。registry shasum `7d2495a832b27d2ef796d0e8a6689b123848d138`一致
   - global 0.3.0へ更新、app再起動（PID 33396）、fresh Codex MCPでversion 0.3.0・schema v1・ready・issues 0、stdin smoke exit 0を確認。local tag `v0.3.0`
 - [x] AIShell / dotagents / ServerManagerをrepo別pathspec commitで閉じ、H承認後にbranchをpushする（AIShell tag `v0.3.0`もpush済み）
-- [ ] cross-repo receiptをfactory masterへ還流し、本計画を`docs/archive/`へ退避する
+- [x] cross-repo receiptをfactory masterへ還流する（[受入matrix](evidence/2026-07-25-aishell-factory-integration-close.md)・[ADR 0118](adr/0118-aishell-factory-profile-and-control-v1-closure.md)）
+- [ ] ServerManager再着地とwire v5の完了後に本計画を`docs/archive/`へ退避する
 
 ## 6. 欠陥maintenance queue
 
@@ -142,6 +143,8 @@ maintenance waveで重複統合して修理する。
 | 状態 | 重大度 | 最小再現 | 影響 | 所有箇所 |
 |---|---|---|---|---|
 | 修理済み (`8219f8c`) | P1 | 常駐AIShell `process_run`でstdinを読む`codex exec` / `/bin/cat`を起動するとEOFが届かずtimeout | Codex CLI等のstdin readerを正規入口から実行できない | AIShell `NativeProcessService` |
+| 修理済み (0.4.1) | P1 | `aishell-mcp`をbare command名でPATH起動すると`manager.application_bundle_unavailable`／`ready:false` | MCP hostも工場adapterもこの起動形式を使うため、健全なinstallationが常にnot_ready判定 | AIShell `MCPServer.managerApplicationURL` |
+| 未着手 | 低 | 工場コアNPM 7製品のうち、publish対象commitが既定ブランチの祖先であることを検証するgateを持つのはAIShellだけ。Caveat／Throughline／Spotter／Lattice／codex-sidecarは`prepublishOnly`自体が無く、gpt-connector／aiterm-mcpはbuild/check用で祖先検証ではない | 孤児releaseを機械的に止められない。規範は共通憲法にあるため、実行者が規範を読む限り即時の危険はない | 各製品repo。reference実装はAIShell `scripts/verify-release-commit.mjs` |
 
 ## 7. rollback
 
