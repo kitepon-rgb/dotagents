@@ -1,0 +1,18 @@
+{
+  "schema": "dotagents.evidence.aiterm-codex-execution-verification.v1",
+  "observed_at": "2026-07-24T07:45:00.000Z",
+  "host": "mac-studio",
+  "adapter_id": "aiterm",
+  "instance_id": "interactive-session",
+  "entry": "mcp__aiterm__codex_agent",
+  "stage_claim": "execution-verified",
+  "basis": "同一セッションでaiterm codex_agentレーン5本が非ブロックdispatch→aiterm-wait受信→outcome=doneまで完走し、各レーンが指定された唯一の書込先ファイルへ実成果物を生成した。",
+  "runs": [
+    {"session_id": "wave1-fm0663-discovery", "model": "gpt-5.6-terra", "reasoning_effort": "medium", "outcome": "done", "vendor_session_id": "019f9304-6563-73f2-939a-55a0ffbe11c0", "completed_at": "2026-07-24T07:30:17.631Z", "artifact": "lane-a-fm0663-discovery.md"},
+    {"session_id": "wave1-fm0664-discovery", "model": "gpt-5.6-terra", "reasoning_effort": "medium", "outcome": "done", "vendor_session_id": "019f9304-e58f-7321-b651-05e72f13f12d", "completed_at": "2026-07-24T07:29:44.391Z", "artifact": "lane-b-fm0664-discovery.md"},
+    {"session_id": "wave1-refute-schema", "model": "gpt-5.6-sol", "reasoning_effort": "high", "outcome": "done", "artifact": "refute-schema.md"},
+    {"session_id": "wave1-refute-nongoal", "model": "gpt-5.6-sol", "reasoning_effort": "high", "outcome": "done", "vendor_session_id": "019f930f-557f-7b32-8c6b-1cc4b5a3b3ef", "completed_at": "2026-07-24T07:43:32.998Z", "artifact": "refute-nongoal.md"},
+    {"session_id": "wave1-refute-standalone", "model": "gpt-5.6-sol", "reasoning_effort": "high", "outcome": "done", "artifact": "refute-standalone.md"}
+  ],
+  "capacity_note": "aitermは対話PTYのlaneを本数制限なく保持できる。実測でwriter lane 1本＋read-only lane 5本の同時運用を確認済み。soft/hard inflightはhost資源依存でunknownとする。"
+}
