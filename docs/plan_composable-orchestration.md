@@ -189,7 +189,7 @@ flowchart TD
 
 ### LatticeからControlへの投影
 
-1. `lattice status --json`で`missing / uninitialized / ready / active_run / invalid`を区別する。
+1. `lattice status --json`で`uninitialized / ready / active_run / invalid`（CLI契約の4値）を区別し、CLI不在はstate値でなく`cli_unavailable`として別判別する（ADR 0116 refuter裁定で5値説を訂正）。
 2. `todo status`のexact schemaとfrontier digestを検証する。
 3. 親がready Taskを選び、Control Taskへclosedな外部Task bindingを固定する。
 4. 同一repo並列writerではLattice compile結果を先に得て、子ごとのscopeとTask identityを確定する。
