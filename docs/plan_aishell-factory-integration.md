@@ -231,7 +231,7 @@ maintenance waveで重複統合して修理する。
 | 修理済み (0.4.1) | P1 | `aishell-mcp`をbare command名でPATH起動すると`manager.application_bundle_unavailable`／`ready:false` | MCP hostも工場adapterもこの起動形式を使うため、健全なinstallationが常にnot_ready判定 | AIShell `MCPServer.managerApplicationURL` |
 | A5-PMへ登録 | 低 | `lattice todo revise-phase`へ`phase_todo_revision.v3`を渡し、先行planがphaseを持たない`todo_plan.v3`で`state_policy: carry`を指定すると、`phaseV3CarrySemantics`が先行taskをspreadして`phase_id: undefined`を作り、canonical化が素の`TypeError: todo artifact is not a JSON tree`で落ちる | typed errorでなくCONTRACT_VIOLATIONとして表面化するため原因が読めない。`reset_pending`で回避できるが、carryが正しい場面では回避手段が無い | Lattice `src/todo-store.mjs` `phaseV3CarrySemantics` |
 | A5-PMへ登録 | 低 | Lattice `docs/todo-extraction-v1.md`が「新規planのauthoringには`lattice plan create`を使用する」と書くが、`plan create`は空store専用で既存storeには`STORE_WRITE_CONFLICT: store_already_exists`を返す | 既存storeへ新規planを足す正しい入口（extraction→`todo migrate`）が製品文書から読み取れない | Lattice `docs/todo-extraction-v1.md` |
-| Lattice分はA5-PMへ登録 / 残5製品は既存裁定どおり次のrelease waveで | 低 | 工場コアNPM 7製品のうち、publish対象commitが既定ブランチの祖先であることを検証するgateを持つのはAIShellだけ。Caveat／Throughline／Spotter／Lattice／codex-sidecarは`prepublishOnly`自体が無く、gpt-connector／aiterm-mcpはbuild/check用で祖先検証ではない | 孤児releaseを機械的に止められない。規範は共通憲法にあるため、実行者が規範を読む限り即時の危険はない | 各製品repo。reference実装はAIShell `scripts/verify-release-commit.mjs` |
+| Lattice・gpt-connector導入済み / 残4製品は既存裁定どおり次のrelease waveで | 低 | 工場コアNPM 7製品のうち、publish対象commitが既定ブランチの祖先であることを検証するgateを持つのはAIShellだけ。Caveat／Throughline／Spotter／codex-sidecarは`prepublishOnly`自体が無く、aiterm-mcpはbuild/check用で祖先検証ではない（Lattice 0.12.9とgpt-connector 0.4.9で導入済み） | 孤児releaseを機械的に止められない。規範は共通憲法にあるため、実行者が規範を読む限り即時の危険はない | 各製品repo。reference実装はAIShell `scripts/verify-release-commit.mjs` |
 
 ## 7. rollback
 
