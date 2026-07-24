@@ -198,6 +198,16 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 - [x] AIShell / dotagents / ServerManagerをrepo別pathspec commitで閉じ、H承認後にbranchをpushする（AIShell tag `v0.3.0`もpush済み）
 - [x] cross-repo receiptをfactory masterへ還流する（[受入matrix](evidence/2026-07-25-aishell-factory-integration-close.md)・[ADR 0118](adr/0118-aishell-factory-profile-and-control-v1-closure.md)）
 
+#### A5-PM コア製品欠陥のmaintenance（gate: `maintenance-wave`）
+
+本waveで再現したコア製品の欠陥を、記録だけで終わらせず同一waveで修理する。所有repoが
+Latticeなので、wire v5本筋（dotagents / ServerManager）とはファイルが交差せず全期間並行できる。
+
+- Lattice `phaseV3CarrySemantics`を修理する。phaseを持たない先行planを`carry`した時に`phase_id: undefined`を作って素の`TypeError`で落ちる。characterization testを先に置き、typed `REVISION_INVALID`で拒否するか正しくcarryするかを裁定する（工程正本: Lattice aishell-factory-integration / wv5-0810）
+- Lattice `docs/todo-extraction-v1.md`の新規plan authoring入口を実装どおりに直す。既存storeはextraction→`todo migrate`、`plan create`は空store専用であることを明記する（工程正本: Lattice aishell-factory-integration / wv5-0820）
+- Lattice repoへpublish祖先gate（`verify-release-commit.mjs`＋`prepublishOnly`）を導入する。既存裁定「gate未実装の製品は次にそのrepoでrelease作業を行うwaveで同時に導入する」の適用であり、reference実装はAIShell（工程正本: Lattice aishell-factory-integration / wv5-0830）
+- 【H】Lattice repoのfocused / related gateを通し、version bump→publish→global install→公開後smoke→公開証跡記録までを同一waveで閉じる（工程正本: Lattice aishell-factory-integration / wv5-0840）
+
 #### A6-P7 受入証拠・ADR・知識還流とarchive（gate: `closeout-reflow`）
 
 - wire v5の受入matrixを`docs/evidence/`へ作成する。実測値だけを載せ、gateが実際に捕まえた欠陥も隠さず記録する（工程正本: Lattice aishell-factory-integration / wv5-0710）
@@ -215,9 +225,9 @@ maintenance waveで重複統合して修理する。
 |---|---|---|---|---|
 | 修理済み (`8219f8c`) | P1 | 常駐AIShell `process_run`でstdinを読む`codex exec` / `/bin/cat`を起動するとEOFが届かずtimeout | Codex CLI等のstdin readerを正規入口から実行できない | AIShell `NativeProcessService` |
 | 修理済み (0.4.1) | P1 | `aishell-mcp`をbare command名でPATH起動すると`manager.application_bundle_unavailable`／`ready:false` | MCP hostも工場adapterもこの起動形式を使うため、健全なinstallationが常にnot_ready判定 | AIShell `MCPServer.managerApplicationURL` |
-| 未着手 | 低 | `lattice todo revise-phase`へ`phase_todo_revision.v3`を渡し、先行planがphaseを持たない`todo_plan.v3`で`state_policy: carry`を指定すると、`phaseV3CarrySemantics`が先行taskをspreadして`phase_id: undefined`を作り、canonical化が素の`TypeError: todo artifact is not a JSON tree`で落ちる | typed errorでなくCONTRACT_VIOLATIONとして表面化するため原因が読めない。`reset_pending`で回避できるが、carryが正しい場面では回避手段が無い | Lattice `src/todo-store.mjs` `phaseV3CarrySemantics` |
-| 未着手 | 低 | Lattice `docs/todo-extraction-v1.md`が「新規planのauthoringには`lattice plan create`を使用する」と書くが、`plan create`は空store専用で既存storeには`STORE_WRITE_CONFLICT: store_already_exists`を返す | 既存storeへ新規planを足す正しい入口（extraction→`todo migrate`）が製品文書から読み取れない | Lattice `docs/todo-extraction-v1.md` |
-| 未着手 | 低 | 工場コアNPM 7製品のうち、publish対象commitが既定ブランチの祖先であることを検証するgateを持つのはAIShellだけ。Caveat／Throughline／Spotter／Lattice／codex-sidecarは`prepublishOnly`自体が無く、gpt-connector／aiterm-mcpはbuild/check用で祖先検証ではない | 孤児releaseを機械的に止められない。規範は共通憲法にあるため、実行者が規範を読む限り即時の危険はない | 各製品repo。reference実装はAIShell `scripts/verify-release-commit.mjs` |
+| A5-PMへ登録 | 低 | `lattice todo revise-phase`へ`phase_todo_revision.v3`を渡し、先行planがphaseを持たない`todo_plan.v3`で`state_policy: carry`を指定すると、`phaseV3CarrySemantics`が先行taskをspreadして`phase_id: undefined`を作り、canonical化が素の`TypeError: todo artifact is not a JSON tree`で落ちる | typed errorでなくCONTRACT_VIOLATIONとして表面化するため原因が読めない。`reset_pending`で回避できるが、carryが正しい場面では回避手段が無い | Lattice `src/todo-store.mjs` `phaseV3CarrySemantics` |
+| A5-PMへ登録 | 低 | Lattice `docs/todo-extraction-v1.md`が「新規planのauthoringには`lattice plan create`を使用する」と書くが、`plan create`は空store専用で既存storeには`STORE_WRITE_CONFLICT: store_already_exists`を返す | 既存storeへ新規planを足す正しい入口（extraction→`todo migrate`）が製品文書から読み取れない | Lattice `docs/todo-extraction-v1.md` |
+| Lattice分はA5-PMへ登録 / 残5製品は既存裁定どおり次のrelease waveで | 低 | 工場コアNPM 7製品のうち、publish対象commitが既定ブランチの祖先であることを検証するgateを持つのはAIShellだけ。Caveat／Throughline／Spotter／Lattice／codex-sidecarは`prepublishOnly`自体が無く、gpt-connector／aiterm-mcpはbuild/check用で祖先検証ではない | 孤児releaseを機械的に止められない。規範は共通憲法にあるため、実行者が規範を読む限り即時の危険はない | 各製品repo。reference実装はAIShell `scripts/verify-release-commit.mjs` |
 
 ## 7. rollback
 
