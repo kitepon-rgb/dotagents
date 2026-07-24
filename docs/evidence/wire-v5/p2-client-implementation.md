@@ -44,7 +44,16 @@ v4登録は無傷。また、v4 endpointを指したconfigで`--wire-major v5`�
 | gate | 結果 |
 |---|---|
 | `node --test tests/wire-v5/wire-v5.test.mjs` | **7/7 pass** |
-| `make ci` | 別掲（下記） |
+| `make ci` | **exit 0**（Codex CLIを使う隔離HOME testを含む全gate。wire v4 client testも非回帰で9/9） |
+| `./bin/verify-install.sh --profile official` | **OK**（下記の修正後） |
+
+### verify-installが捕まえたもの
+
+新しい配布CLI 3本（`factory-scan-v5` / `factory-reporter-v5` /
+`factory-reporter-v5-schedule-runner`）を追加した直後、`verify-install`は
+`FAIL: 配布CLIが実行不能`を3件出した。AGENTS.mdの「新規エントリ追加後は
+`./install.sh --profile <面>` を再実行が必要」どおり再実行して解消した。
+**新規エントリの配布漏れを機械が捕まえる設計が実際に働いた。**
 
 ## test作成中に自分で捕まえた誤り
 
