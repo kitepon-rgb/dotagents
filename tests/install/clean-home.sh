@@ -99,7 +99,9 @@ PY
 ln -s "$ROOT/codex" "$VERIFY_FIXTURE/codex"
 ln -s "$ROOT/shared" "$VERIFY_FIXTURE/shared"
 verify_fixture_output="$(HOME="$OFFICIAL_HOME" DOTAGENTS_SKIP_FACTORY_CORE=1 "$VERIFY_FIXTURE/bin/verify-install.sh" --profile official 2>&1 || true)"
-printf '%s\n' "$verify_fixture_output" | grep -Fq 'が共有委譲契約を参照していない' || fail 'Claude shared delegation reference の欠落を verify が検出しない'
+# pipefail下の`printf | grep -q`はgrepの早期exitでprintfがSIGPIPEになり、マッチ成功でも
+# パイプライン全体が非0になる（実被弾: 出力がpipe bufferを超えた環境で誤FAIL）。herestringで回避する。
+grep -Fq 'が共有委譲契約を参照していない' <<<"$verify_fixture_output" || fail 'Claude shared delegation reference の欠落を verify が検出しない'
 mkdir -p "$OFFICIAL_HOME/.claude"
 cat >"$OFFICIAL_HOME/.claude/settings.json" <<'EOF'
 {"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}],"SessionStart":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]},{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]},{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":6}]}],"Stop":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}],"UserPromptSubmit":[{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}],"PostToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/plan-gate-hook","timeout":5}]}]}}
@@ -236,7 +238,7 @@ help_json="$(node "$OFFICIAL_HOME/.local/bin/orchestrate-run" --help)"
 import json
 import sys
 data = json.loads(sys.argv[1])
-raise SystemExit(0 if data.get("contract_version") == "dotagents.orchestrate.control-record.v1" and data.get("mode") == "record-only" and data.get("external_execution") is False and "init" in data.get("commands", []) else 1)
+raise SystemExit(0 if data.get("contract_version") == "dotagents.orchestrate.control-record.v2" and data.get("mode") == "record-only" and data.get("external_execution") is False and "init" in data.get("commands", []) else 1)
 PY
 assert_link "$OFFICIAL_HOME/.local/bin/orchestrate-advisory-hook" "$ROOT/bin/orchestrate-advisory-hook.sh"
 [ -x "$OFFICIAL_HOME/.local/bin/orchestrate-advisory-hook" ] || fail 'orchestrate-advisory-hook が実行可能でない'

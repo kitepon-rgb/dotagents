@@ -8,6 +8,7 @@ import {
   evidence,
   loadControl,
   makeBudget,
+  makeLaneAdmission,
   makeTask,
   makeTempDir,
   makeWorkerRun,
@@ -30,6 +31,7 @@ test("Worker Report skeletonはnested strict shapeを固定し保存後そのま
     actor_id: "parent",
     document_refs: ["docs/control-record-plan.md"],
     budget: makeBudget(),
+    lane_admission: makeLaneAdmission(),
   });
   const validations = ["node --test focused.test.mjs", "git diff --check"];
   const phaseGate = await api.phaseGateRecord({

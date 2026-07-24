@@ -32,6 +32,22 @@ export const makeBudget = (overrides = {}) => ({
   ...overrides,
 });
 
+// control-record v2 init requires a lane admission declaration (ADR 0114). Default: condition④
+// (decision evidence required) true — the canonical reason a test Control exists at all.
+// The default decision digest is the REAL fixture-plan digest: lane admission decision evidence
+// participates in resume-check evidence retention like every other decision evidence, so a
+// fabricated digest would turn every resume-check test into evidence-digest-mismatch.
+const FIXTURE_PLAN_DIGEST = createHash("sha256").update("# Control Record fixture plan\n").digest("hex");
+export const makeLaneAdmission = ({ conditions = {}, decision, contract_version } = {}) => ({
+  contract_version: contract_version ?? "dotagents.lane-admission.v1",
+  conditions: {
+    planned_interruption: false, chained_acceptance: false,
+    multi_repo_write_coordination: false, decision_evidence_required: true,
+    ...conditions,
+  },
+  decision: decision ?? evidence("docs/control-record-plan.md", "decision", { digest: FIXTURE_PLAN_DIGEST }),
+});
+
 export const makeBudgetReservation = (overrides = {}) => ({
   wall_time_seconds: 3600,
   cost_microusd: 1000000,

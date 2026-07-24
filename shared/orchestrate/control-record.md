@@ -157,7 +157,33 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
 }
 ```
 
-- `schema_version`は`{v25, v26, v27, v28}`のclosed setをreaderが受理し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
+v29 manifestは上記に加えてtop-level `lane_admission`を必須とする（ADR 0114）:
+
+```json
+  "lane_admission": {
+    "contract_version": "dotagents.lane-admission.v1",
+    "conditions": {
+      "planned_interruption": false,
+      "chained_acceptance": false,
+      "multi_repo_write_coordination": false,
+      "decision_evidence_required": true
+    },
+    "decision": { "type": "decision", "ref": "docs/adr/0114-typed-lane-admission-contract.md", "digest": "…", "observed_at": "…" },
+    "declared_by": "parent-session-id",
+    "declared_at": "2026-07-14T00:00:00.000Z"
+  }
+```
+
+- `conditions`はADR 0061の4条件と1対1のexact booleanで、少なくとも1つがtrue（全falseはinitが
+  `LANE_ADMISSION_NOT_ORCHESTRATED`で拒否し、Controlを作らない）。`lane` fieldは保存しない——
+  Controlの存在自体が`orchestrated`の意味である。判断理由の自由文も保存しない——理由の正本は
+  `decision`（type=decision evidence）が指すdocs側にある（ADR 0113 Decision 3）。
+- `declared_by`は`declaration.created_by`と、`declared_at`は`declaration.created_at`と一致必須
+  （actor無相関の宣言をvalidにしない）。`null`はv28からのmigration産だけの形で、readerは
+  「migrate receiptがv29へ入っている場合だけnull可」を強制する。lane決定関数の入力は4 booleanの
+  exact recordだけで、文字列を受け取らない（非classifier保証は型境界による）。
+
+- `schema_version`は`{v25, v26, v27, v28, v29}`のclosed setをreaderが受理し、暗黙migrationしない。v2はWorkerの固定Executor文字列を
   versioned envelopeとworkflow参照へ置き換え、v3はworkflow capability snapshot、v4はBudget
   Envelope、v5はControl-level finalization、v6はH approval snapshot、v7はrole/effect policy
   snapshot、v8はbounded continuation、v9はignored/index fingerprint guard、v10はdurability
@@ -174,12 +200,15 @@ manifestは一つの統括作業を表す。許可key以外を拒否し、1 MiB�
   v26はConsultationの`slug`をconnector別typed `consultation_handle`へ置換し、connectorを
   closed enumへ拡張した（ADR 0045）。v27はConsultationへ`cancelled` state（`consultation-cancel`）を、
   placement reservationへoptional keyの`selector_decision`を追加した（ADR 0054）。v28はdigest版付き
-  docs artifactと単一receiptの原子的世代交代を追加した（ADR 0083）。新規initはv28で作成する。
+  docs artifactと単一receiptの原子的世代交代を追加した（ADR 0083）。v29はtop-levelへ
+  `lane_admission`を追加した（ADR 0114）: v25〜v28はkeyの**不在**が正規形で、v29だけkeyを必須とする。
+  新規initはv29で作成する。
   旧version active Controlは読取もmutationも従来契約のまま継続し、旧manifestを
   黙って書き換えない。versionの移動は明示の`control-migrate`だけが**隣接version間で**行い
   （v25→v27、v26→v28の直行なし）、mutation時の自動昇格を`SCHEMA_UPGRADE_REQUIRED`で拒否する。
-  上記closed set外のversionは`INVALID_SCHEMA`で停止する。version判定は単一version等値でなく
-  集合判定で行い、新versionを黙って旧契約へ落とさない。
+  上記closed set外のversionは`INVALID_SCHEMA`で停止する。version能力の判定は単一version等値でなく
+  **単調なpredicate**（当該機能を導入したversion以上）で行い、新versionを黙って旧契約へ落とさず、
+  version追加が既存能力を後退させない（ADR 0114 Decision 5）。
 - mutation成功ごとに`record_revision`を1増やす。全mutationは呼出側の
   `expected_revision`と現在値の一致を必須とする。
 - `status`は`active | archived`。Control-level finalization後はarchive以外のmutationを拒否し、
@@ -1143,7 +1172,9 @@ Consultationも`planned`ではobservation／decision／terminal evidenceが空�
 ## Schema migration（control-migrate）
 
 version移動は暗黙に行わず、明示コマンド`control-migrate`だけが**隣接version間**で一回ずつ行う
-（v25↔v26: ADR 0045／v26↔v27: ADR 0054／v27↔v28: ADR 0083。隣接しない直行は`INVALID_TRANSITION`）。
+（v25↔v26: ADR 0045／v26↔v27: ADR 0054／v27↔v28: ADR 0083／v28↔v29: ADR 0114。
+隣接しない直行は`INVALID_TRANSITION`）。各方向は明示分岐で変換し、未定義の組をcatch-allで
+別方向のrollbackとして扱わない。
 
 - **v26→v27**: 取消済みTaskの孤児planned consultationを決定的に`cancelled`へ変換する
   （control-migrate receiptは既存不変量どおりevidence空＝変換の発生時点のみを証する。
@@ -1157,6 +1188,11 @@ version移動は暗黙に行わず、明示コマンド`control-migrate`だけ�
   読取可能だが、新しいgenerationのpredecessorには使えない。v28の新規artifactはdigest版付きrefだけを受理する。
 - **v28→v27 rollback**: `artifact-generation-record` receiptが1件でもあれば`ROLLBACK_UNSUPPORTED`。
   generation未使用ならdescriptorを変えずに戻せる。
+- **v28→v29**: top-levelへ`lane_admission: null`を物理追加する。admission束縛はinit専用であり、
+  migrationは宣言を捏造しない——migration産のv29 Controlは恒久にnullを保つ（ADR 0114 Decision 4）。
+- **v29→v28 rollback**: `lane_admission === null`（migration産）の場合だけkeyを削除して戻せる。
+  non-null（init産）は`ROLLBACK_UNSUPPORTED`——宣言済みadmissionを黙って落とすことはできず、
+  supported pathはv29 readerを残したまま新規利用を止めるbehavior rollbackである（ADR 0114 Decision 6）。
 
 - 決定的変換: 各consultationの`slug: s`→`consultation_handle: { slug: s }`。connectorは既存の
   `gpt-connector`のまま、他collectionは不変。`record_revision`を+1し、transition receiptへ
@@ -1294,9 +1330,15 @@ Registry由来のcapacity warning、`truncated`だけを持つ。各配列はcan
 ```text
 init, status, status --brief, resume-check, advisory-snapshot, control-migrate, task-record, task-cancel-record, registry-observation-record, placement-dry-run, placement-reserve, delegation-packet, delegation-packet-recover, worker-report-import, worker-run-record, consultation-record, campaign-record, campaign-status, campaign-release, phase-gate-record, phase-gate-status, phase-gate-advance, artifact-record, artifact-status, artifact-status-record, artifact-generation-record, approach-family-record, approach-family-status, approach-family-block, approach-family-reopen,
 admit-worker, worker-workspace-bind, worker-cancel-request, observe-worker, observe-consultation, consultation-cancel, conflict-check,
-accept, reject, task-finalize-record, control-finalize, recover-lock, archive
+accept, reject, task-finalize-record, control-finalize, recover-lock, archive,
+quota-pool-lock-acquire, quota-pool-lock-release, lane-admission-evaluate
 ```
 
+- `--help`は`contract_version: "dotagents.orchestrate.control-record.v2"`を返す。v2は`init`の必須入力へ
+  `lane_admission`を加えた破壊的変更であり、v1形式のinit入力は`CONTRACT_VERSION_MISMATCH`で明示拒否する
+  （暗黙defaultで補完しない。ADR 0114 Decision 7）。
+- `lane-admission-evaluate`はfilesystem・git・state・cacheへ一切触れない純粋評価で、
+  `normal | orchestrated`の評価結果だけをstdoutへ返す。通常レーンの必須手順にしない（ADR 0114 Decision 8）。
 - mutation commandは`actor_id`と`expected_revision`を必須とする（init／recover-lockを除く）。
 - CLIは`orchestrate-run <command> --input <json-file>`と
   `orchestrate-run status --brief --input <json-file>`だけを受理する。`--help`以外の
@@ -1338,7 +1380,8 @@ accept, reject, task-finalize-record, control-finalize, recover-lock, archive
 `cwd`を必須とする。
 
 ```text
-init({ cwd, control_id, objective_ref, actor_id, document_refs, budget, predecessor_control_id? })
+init({ cwd, control_id, objective_ref, actor_id, document_refs, budget, lane_admission, predecessor_control_id? })
+laneAdmissionEvaluate({ conditions })
 status({ cwd, control_id })
 statusBrief({ cwd, control_id })
 advisorySnapshot({ cwd, evaluated_at })
