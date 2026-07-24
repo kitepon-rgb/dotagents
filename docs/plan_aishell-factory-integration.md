@@ -206,6 +206,7 @@ Latticeなので、wire v5本筋（dotagents / ServerManager）とはファイ�
 - Lattice `phaseV3CarrySemantics`を修理する。phaseを持たない先行planを`carry`した時に`phase_id: undefined`を作って素の`TypeError`で落ちる。characterization testを先に置き、typed `REVISION_INVALID`で拒否するか正しくcarryするかを裁定する（工程正本: Lattice aishell-factory-integration / wv5-0810）
 - Lattice `docs/todo-extraction-v1.md`の新規plan authoring入口を実装どおりに直す。既存storeはextraction→`todo migrate`、`plan create`は空store専用であることを明記する（工程正本: Lattice aishell-factory-integration / wv5-0820）
 - Lattice repoへpublish祖先gate（`verify-release-commit.mjs`＋`prepublishOnly`）を導入する。既存裁定「gate未実装の製品は次にそのrepoでrelease作業を行うwaveで同時に導入する」の適用であり、reference実装はAIShell（工程正本: Lattice aishell-factory-integration / wv5-0830）
+- Lattice `revise-phase`の非原子的失敗を修理する。v3で`reconciled`なmemberへ`phase_todo_revision.v2`を適用すると拒否されず、manifestとrevision bindingが食い違って以後`todo status`／`verify`が`STORE_INCONSISTENT: manifest_revision_binding_mismatch`で読めなくなる。世代降格を事前に拒否するか、失敗時にstore bytesを不変に保つ（工程正本: Lattice aishell-factory-integration / wv5-0850）
 - 【H】Lattice repoのfocused / related gateを通し、version bump→publish→global install→公開後smoke→公開証跡記録までを同一waveで閉じる（工程正本: Lattice aishell-factory-integration / wv5-0840）
 
 #### A6-P7 受入証拠・ADR・知識還流とarchive（gate: `closeout-reflow`）
