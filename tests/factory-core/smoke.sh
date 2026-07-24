@@ -49,7 +49,7 @@ exit 64
 EOF
 chmod +x "$BIN_DIR/uv"
 
-for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp lattice; do
+for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp lattice aishell-mcp; do
   cat > "$BIN_DIR/$command" <<'EOF'
 #!/bin/sh
 [ "$1" = --version ] && exit 0
@@ -101,6 +101,8 @@ for package in \
   [ "$(grep -Ec "^[[:space:]]*'${package}'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
     || fail "agents-update の $package は1件でなければならない"
 done
+[ "$(grep -Ec "^[[:space:]]*'@quolu/aishell'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
+  || fail 'agents-update の @quolu/aishell はdarwin/arm64条件内に1件でなければならない'
 [ "$(grep -Ec "^[[:space:]]*'@quolu/lattice'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
   || fail 'agents-update の @quolu/lattice はregistry latest更新でなければならない'
 ! grep -q '@colbymchenry/codegraph' "$ROOT/bin/agents-update.sh" \
