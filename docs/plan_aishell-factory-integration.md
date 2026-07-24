@@ -119,12 +119,70 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 
 ### Phase A5 — wire v5正式編入
 
-- [ ] wire v4完了を依存証拠で確認する
-- [ ] wire v5の固定集合、schema、expectation matrix、compatibility、rollbackを正本化する
-- [ ] ServerManager新endpointを先行deployし、v4 clientと併存させる
-- [ ] dotagents reporter v5を実装し、dual-runでevent集合とprivacyを比較する
-- [ ] 対応hostをv5へ切替え、非対応hostは`not_applicable`履歴を保持する
-- [ ] v4退役条件を満たした後にだけ旧endpoint停止を裁定する
+- [x] wire v4完了を依存証拠で確認する
+  - Lattice編入planは`docs/archive/`へ退避済み・未消化0。[cutover受入証拠](evidence/2026-07-20-codegraph-lattice-cutover-acceptance.md)で4 active host全てv4 canary success
+  - 本番実測: `/readyz`=`ready`、`factory_ingest` pass、`source_revision` `2242768`。Mac reporter configは`/api/factory/v4/reports`
+- [x] wire v5の依存前提として、AIShellのoptional key登録がv4に存在しないことを実測で確定する
+  - v2 schemaは14キー定義／12必須で`lattice`・`aishell`をoptional受理。v4 schemaは12キー定義・`additionalProperties: false`で`aishell`のスロットが無い
+  - client側も`lib/factory/contract.mjs`の`exactKeys(report.products, V4_PRODUCT_IDS)`が13個目のキーを拒否する
+  - 結論: expectation matrixだけでrequiredへ昇格させる安価な経路はschemaが塞いでおり、新wire majorが唯一の経路である
+
+#### A5-P0 設計の正本化と敵対的反証（gate: `design-refutation`）
+
+- [ ] wire v5の固定13製品集合を正本化する。v4の固定12製品へ`aishell`をrequiredとして加えた集合とし、v2/v4のproduct set・schema・受入証拠は後付け変更しない
+- [ ] v5 expectation matrixを`factory-host-product-matrix.md`の正本どおり明文化する。AIShellはmac=required、server/wsl/windows-native=unsupported。`not_applicable`をhigh欠落issueへ変換しない意味論も固定する
+- [ ] v4 expectation実装と正本の乖離2件を裁定する。`factoryExpectation()`にv4分岐が無く、grok-buildが全profile required（正本はoptional。main-serverで偽warnが実発生中）、claude-code windows-nativeがrequired（正本はunsupported。現在は潜在）
+- [ ] v4→v5のcompatibility契約を定義する。v4受理継続、issue identityの`host + product + fingerprint`共有、late v4 reportの巻戻し拒否、major別storage分離
+- [ ] v5のrollbackとhost別退避経路を定義する。host単位でv4へ戻せること、outbox保持、v5 flag無効化でv4運用が無傷であること
+- [ ] 非目標と既知の罠を固定する。v3番号はObserver予約の未実装番号として温存する。AIShellのpath・許可root・process引数・診断本文を送らない。暗黙fallbackを追加しない
+- [ ] 独立refuterで設計を反証する。親と異なるproviderで実ファイルに当て、実在指摘だけをDedupして採否と理由を還流する
+
+#### A5-P1 ServerManager / BugHub v5実装（gate: `nonprod-gate`）
+
+- [ ] `bughub/schemas/factory-report-v5.schema.json`を追加する。固定13製品required、`additionalProperties: false`、v4 schemaは変更しない
+- [ ] `bughub/src/factory-contract.js`へ`V5_PRODUCT_IDS`と`validateFactoryReportV5`を追加する。privacy・semantic検証はv4と同一実装を共有する
+- [ ] `POST /api/factory/v5/reports`を`FACTORY_V5_INGEST_ENABLED=true`明示時だけ公開する。既定404、v4受理とcredential契約は不変
+- [ ] `factoryExpectation()`へv5分岐を実装する。fall-throughの`required`へ委ねず正本matrixどおり書き、A5-P0の裁定に従いv4分岐も処理する
+- [ ] storage・dedupe・notificationをv5へ配線する。v4履歴を削除せず、issue identityを共有して二重issue・二重通知を作らない
+- [ ] `factory-view.js`のaishell扱いをenrolled製品へ更新し、`db.js`のoptional固定分岐をv5でrequiredへ昇格させる。safe_context allowlistは空のまま維持する
+- [ ] BugHub testを追加する。mac required充足、非対応hostのunsupported、`not_applicable`非issue化、未知product拒否、privacy negative、v4受理の非回帰
+- [ ] BugHub full testとlintを通し、ServerManager repoへpathspec明示commitで閉じる
+
+#### A5-P2 dotagents reporter v5実装（gate: `nonprod-gate`）
+
+- [ ] `lib/factory/v5.mjs`を追加し、`contract.mjs`へ`V5_PRODUCT_IDS`と`validateReportV5`を加える。v2/v4の固定集合とvalidatorは変更しない
+- [ ] `lib/factory/scan.mjs`の`aishellProduct`をv5 scanへ配線する。非対応hostでは構造的な`not_applicable`を出し、暗黙fallbackで塗り潰さない
+- [ ] `factory-scan-v5.mjs`、`factory-reporter-v5.mjs`、`factory-reporter-v5-schedule-runner.mjs`を追加する。v5専用state namespaceを持ちv4 outboxを列挙しない
+- [ ] `factory-reporter-scheduler.mjs`へ`--wire-major v5`を追加する。既存v1/v2/v4登録を壊さず`--dry-run`で変更範囲を提示する
+- [ ] privacy fixtureとcontract testをv5へ拡張する。AIShellのpath・root・引数・診断本文が出ないnegative testと13製品exact keysのpositive testを含める
+- [ ] `make ci`と`verify-install.sh --profile official`を通し、dotagents repoへpathspec明示commitで閉じる
+
+#### A5-P3 dual-run比較とcutover可否裁定（gate: `dual-run-compare`）
+
+- [ ] Macでv4 scanとv5 scanを同一時点で実行し、共通12製品のobservationが同値であることを差分で確認する
+- [ ] v5 reportをclient検証器とserver検証器の両方へ通し、受理・拒否の判定と理由が一致することを確認する
+- [ ] 非対応profileのv5 scanでaishellが構造的`not_applicable`になり、expectation issueを生まないことを確認する
+- [ ] dual-run差分・privacy結果・非対応host挙動をevidenceへ固定し、本番deployへ進むかを裁定する
+
+#### A5-P4 本番先行deployとcanary（gate: `h-approval`）
+
+- [ ] deploy対象commitが`origin/main`の祖先であることを`git merge-base --is-ancestor`で確認する。祖先でなければ先にmainへ着地させる
+- [ ] 【H】SQLite backupとrollback setを取得し、実在とサイズを確認する
+- [ ] 【H】`FACTORY_V5_INGEST_ENABLED=false`のままv5対応revisionをdeployし、`/readyz`全checkとv4受理継続を確認する
+- [ ] 【H】flagを`true`にして再deployし、本番container内canaryで13製品受理・未知product拒否・非対応host unsupported・safe_context空をDB書込みなしで確認する
+
+#### A5-P5 host別v5切替（gate: `h-approval`）
+
+- [ ] 【H】mac-kiteをv5へ切替え、初回full 13製品snapshotの受理とaishell=installedを確認する
+- [ ] 【H】main-serverをv5へ切替え、aishell=unsupportedとgrok-build偽warnの解消を確認する
+- [ ] 【H】fox-wslをv5へ切替え、aishell=unsupportedと既存codex-cli欠落issueが二重化していないことを確認する
+- [ ] 【H】windows-workstationをv5へ切替え、aishell=unsupportedと基盤CLI expectationが正本どおりであることを確認する
+- [ ] 4 host全てのBugHub matrixでv5 currentが揃い、v4 issueが二重化・巻戻ししていないことを確認する
+
+#### A5-P6 v4退役判定（gate: `retirement-decision`）
+
+- [ ] v4退役の判定基準（retention期間、全host v5安定、host別rollback不要の確証）を実測へ当てる
+- [ ] 基準を満たす場合だけ旧v4 endpoint停止を裁定する。満たさない場合は据置理由と再評価条件を記録して閉じる
 
 ### Phase A6 — releaseと完了
 
@@ -135,7 +193,13 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
   - global 0.3.0へ更新、app再起動（PID 33396）、fresh Codex MCPでversion 0.3.0・schema v1・ready・issues 0、stdin smoke exit 0を確認。local tag `v0.3.0`
 - [x] AIShell / dotagents / ServerManagerをrepo別pathspec commitで閉じ、H承認後にbranchをpushする（AIShell tag `v0.3.0`もpush済み）
 - [x] cross-repo receiptをfactory masterへ還流する（[受入matrix](evidence/2026-07-25-aishell-factory-integration-close.md)・[ADR 0118](adr/0118-aishell-factory-profile-and-control-v1-closure.md)）
-- [ ] ServerManager再着地とwire v5の完了後に本計画を`docs/archive/`へ退避する
+
+#### A6-P7 受入証拠・ADR・知識還流とarchive（gate: `closeout-reflow`）
+
+- [ ] wire v5の受入matrixを`docs/evidence/`へ作成する。実測値だけを載せ、gateが実際に捕まえた欠陥も隠さず記録する
+- [ ] 不変ADRへwire v5のDecisionを固定する。固定13製品、expectation matrix、v4乖離2件の処理、退役裁定、棄却した代替案とその理由を含める
+- [ ] 再利用可能な知識をcaveatとragへ還流する。「編入中製品のoptional key登録はwire majorを越えて継承されず、major cutoverで観測面から消える」という実測罠を必ず含める
+- [ ] 本計画を`docs/archive/`へ退避し、`plan_factory-master.md`のAIShell行と成功条件を完了状態へ更新する
 
 ## 6. 欠陥maintenance queue
 
