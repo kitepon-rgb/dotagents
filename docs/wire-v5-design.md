@@ -29,7 +29,14 @@ A3で入れたserver-first optional登録はv2 schemaにだけ存在し、v4 cut
 観測面から消えていた。**編入中製品のoptional key登録はwire majorを越えて継承されない**——
 これが本waveで最も高くついた発見であり、[還流対象の罠](evidence/wire-v5/)である。
 
-したがって**A案が唯一の経路**であり、B案は棄却する。
+したがって**凍結を守る限りA案しかない**。ただし「唯一」は政策込みの結論である——
+v4 schemaへoptional keyを後から足す改訂（B′案）は物理的には可能で、それを封じているのは
+schemaではなく§7の凍結方針である。物理的不可能と政策的棄却を混同しない。
+
+- **純B案**（凍結を守りexpectation matrixだけ触る）: schemaとclient validatorが物理的に塞ぐ。**不可能**。
+- **B′案**（凍結を破りv4 schemaを改訂）: 物理的には可能。既に受理済みのv4 reportと受入証拠の
+  意味を後から変えることになるため**政策的に棄却**する。
+- **A案**（新major）: 採用。
 
 ## 2. 固定13製品集合
 
@@ -77,12 +84,15 @@ windows-native=`unsupported`（macOS native API不在）。
 
 ### 意味論
 
-- `required` + `missing` / `unverified` だけがexpectation issueを作る（`missing`=high、
-  `unverified`=warn）。`optional` / `unsupported` / `not_applicable`の欠落はissueにしない。
-- **`required`なprofileで`not_applicable`が来た場合もissueにしない**。AIShellはApple Silicon
-  専用であり、Intel Macが将来hostに加わればmac profileのまま`not_applicable`を報告する。
+- 期待値が`required`**でない**時はexpectation issueを作らない（既存実装どおり)。
+- 期待値が`required`の時、`installed`ならresolve、`unverified`ならwarn、それ以外はhigh。
+- **`required` + `not_applicable`をissueにしないのは、v5で新たに要求する挙動変更である**。
+  現行実装は`installed`でしかresolveせず、`not_applicable`は**high issueになる**
+  （`bughub/src/db.js`の`applyFactoryIssues`）。AIShellはApple Silicon専用なので、
+  Intel Macが将来hostに加わればmac profileのまま`not_applicable`を報告する。
   profileの粒度がarchを区別しない以上、製品が構造的な非対応を宣言したらそれを信じる。
-  黙って欠損へ読み替えない。
+  **これは既存の意味論ではなく実装変更を伴う要求である**ことを明記する。
+  client側も`not_applicable`をこのprofileで出せることを合わせて確認する。
 - severityは各報告元の製品契約が決めた値を素通しする。BugHubは再判定しない。
 
 ### v5分岐はfall-throughへ委ねない
@@ -90,33 +100,63 @@ windows-native=`unsupported`（macOS native API不在）。
 `factoryExpectation()`は現在`v2`分岐だけを持ち、それ以外は全て`required`へ落ちる。
 v5分岐は上表を明示的に書き、fall-throughに頼らない。
 
-## 4. v4 expectation実装と正本の乖離（wv5-0030の裁定）
+## 4. expectation実装と正本の乖離（wv5-0030の裁定）
 
-2026-07-25実測。`bughub/src/db.js`の`factoryExpectation()`に**v4分岐が存在しない**ため、
-v4では`servermanager`以外の全製品が`required`へ落ちている。正本matrixとの乖離は2件:
+> **本節は2026-07-25の独立反証（Grok 4.5、cross-provider）で事実認定が覆り、全面改訂した。**
+> 初版は「`factoryExpectation()`にv4分岐が無いので全製品がrequiredへfall-throughし、
+> grok-buildがmain-serverで偽warnを出している」と書いたが、**誤りだった**。
+> 反証の指摘を実コードで再確認した結果を以下に置く。初版の記述は撤回する。
 
-| product | 正本 | v4実装 | live影響 |
+### 実際の評価経路
+
+`bughub/src/factory-ingest.js`の`ingestFactoryReportV4`は`save: db.saveFactoryReportV2`を使い、
+`saveFactoryReportV2`は`applyFactoryIssues(hostId, report, receivedAt, 'v2')`を呼ぶ。
+つまり**wire v4のreportは`version='v2'`として期待値評価される**。fall-throughしていない。
+
+その結果、v2分岐の規則がv4にもそのまま効いている:
+
+- `grok-build` → mac/server/wsl=`optional`、windows-native=`unsupported`（**正本どおり。乖離なし**）
+- `claude-code` windows-native → `unsupported`（**正本どおり。乖離なし**）
+
+初版が挙げた乖離2件は**どちらも存在しない**。main-serverのgrok-build `unverified`は
+`optional`として解決されており、偽warnは発生していない。live matrixでも確認した。
+
+### 本当の乖離（実測で確定）
+
+| product | 正本 | 実効値 | 状態 |
 |---|---|---|---|
-| `grok-build` | mac/server/wsl=optional、windows-native=unsupported | required | main-serverで`unverified`→**偽のwarn expectation issueが実発生中** |
-| `claude-code` | windows-native=unsupported | required | windows-workstationは現在導入済みのため**潜在**。欠落した瞬間に偽のhigh issueになる |
+| `lattice` | 4 profile全て`required` | `optional` | **live影響あり** |
+| `codex-cli` windows-native | `required` | `unsupported` | 潜在 |
 
-`codex-cli`は正本でも4 profile全てrequiredなので乖離しない。
+`factoryExpectation()`のv2分岐は`['lattice','aishell']`を無条件に`optional`へ落とす。
+コード上のコメントは「Latticeはv4でenroll済み」と書いているが、**v4のreportがv2として
+評価される以上、latticeは永久に`optional`のまま**であり、意図が実装されていない。
 
-### 裁定: v5分岐追加と同一波でv4分岐も修理する
+**live影響**: BugHub matrixで`fox-wsl`の`lattice`は`missing`だが、期待値が`optional`
+のためexpectation issueが1件も上がっていない。**wire v4で必須コア製品へ昇格させたはずの
+Latticeの欠落が、4 hostのうち1台で黙って見逃されている**。
 
-- **理由1**: 修理対象は`factoryExpectation()`という同一関数であり、v5分岐を書く時に必ず触る。
-  別waveへ回すと同じ関数を二度開けることになる。
-- **理由2**: 現在の挙動は正本matrixと矛盾しており、**contract違反であって仕様ではない**。
-  `bughub/FACTORY_INTEGRATION.md`は「server期待matrixはdotagents正本と一致させる」と定めている。
-  v4の期待matrixが未指定なのではなく、指定に反している。
-- **理由3**: 修理しないままv5分岐だけ書くと、v4→v5 cutover時にgrok-buildのissueが
-  「勝手に消えた」ように見え、cutoverの受入判定を汚す。
+`codex-cli` windows-nativeは、v2分岐が`claude-code`と同列に`unsupported`へ落とすが、
+正本matrixは`required`である。現在windows-workstationは`installed`なので潜在に留まる。
 
-**これはwire v4の凍結違反にあたらない**。凍結しているのはproduct set、schema、受入証拠であり、
-server側expectation matrixはそのどれでもない。product setもschemaも変更しない。
+### 裁定
 
-修理後、main-serverのgrok-build偽warnは次のv4 reportで解決される見込みであり、
-これはP5 cutoverの受入項目として実測する。
+**v5分岐を明示的に書き、あわせて`lattice`のrequired化と`codex-cli` windows-nativeの
+required化を同一波で修理する。**
+
+- **理由1**: `lattice`の欠落見逃しは、期待値matrixが存在する目的そのものを損なっている。
+  必須製品が1台で欠けていて誰も気づかない状態を、次のwaveへ持ち越さない。
+- **理由2**: 修理対象は`factoryExpectation()`という同一関数であり、v5分岐を書く時に必ず触る。
+- **理由3**: v5でaishellをrequiredへ昇格させる際、`['lattice','aishell']`の無条件optional分岐を
+  そのまま残すとaishellも同じ罠に落ちる。**同じ欠陥をv5で再生産しない**ために、
+  ここで分岐の設計自体を直す必要がある。
+
+**凍結との関係**: product setもschemaも変更しない。変えるのはserver側expectation matrixだけで、
+`FACTORY_INTEGRATION.md`が「server期待matrixはdotagents正本と一致させる」と定めている以上、
+現状は**contract違反であって仕様ではない**。ただし`lattice`をrequiredへ上げると、
+`fox-wsl`で**新たにhigh issueが1件立つ**。これは隠れていた事実の可視化であり、
+cutover受入の判定を汚さないよう、P1完了時点で「新規に立つissueは`fox-wsl`/`lattice`の1件だけ」
+であることを実測で確認してから進める。
 
 ## 5. v4 → v5 compatibility契約
 
@@ -127,8 +167,11 @@ server側expectation matrixはそのどれでもない。product setもschemaも
   同一障害を二重issue・二重通知にしない。これはv1→v2→v4で確立済みの規則を継承する。
 - **late reportによる巻戻しを拒否する**。観測時刻で判定し、遅れて届いた旧majorのreportが
   新しいcurrentを上書きしない。
-- **storageはmajor別に分離する**。v5のreports / observations / currentは専用tableへ入れ、
-  v4履歴を削除も移動もしない。issueの原因同一性とstorage分離を混同しない。
+- **storageはv2/v4と同じ面を共有する**。v4は既に`factory_v2_reports` /
+  `factory_v2_observations` / `factory_v2_current`へ保存しており（`ingestFactoryReportV4`が
+  `saveFactoryReportV2`を使う）、major別に分離していない。**v5もこの共有面へ載せ、
+  履歴を連続させる**。初版は「major別に分離する」と書いたが、それは実態でも先例でもない。
+  分離するのはv1とv2以降の境界だけである。
 - **credentialとendpoint schemaは増やさない**。既存のhost-scoped credentialに乗る。
   製品専用のcredentialやschema majorを作らない。
 
