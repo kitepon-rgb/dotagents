@@ -1,6 +1,6 @@
 # AIShell 開発工場コア編入計画
 
-**状態:** Active
+**状態:** 完了（2026-07-25）。工程正本はLattice plan `aishell-factory-integration`、受入は[wire v5受入matrix](../evidence/2026-07-25-wire-v5-acceptance-matrix.md)
 **作成日:** 2026-07-19
 **対象:** AIShell、dotagents、ServerManager / BugHub、対応host
 **製品番号:** 端末能力9製品目（コア10製品）。旧「第12コア」表記はObserver/Latticeを別番号で数えた体系のもので廃止
@@ -17,7 +17,7 @@ dotagents管理下の正式な第12コア製品へ編入する。
 - [x] 非対応hostは黙って欠損扱いにせず、構造的な`not_applicable`として判定できる
 - [x] dotagentsの製品契約、host / connector matrix、更新経路、verify、privacy fixtureが同期する
 - [x] ServerManager / BugHubへserver-firstでsourceを登録し、既存wire v2 / v3 / v4を変更しない
-- [ ] Lattice wire v4完了後のwire v5でAIShellを固定集合へ正式編入する
+- [x] Lattice wire v4完了後のwire v5でAIShellを固定集合へ正式編入する（4 host cutover完了。ADR 0119 / 0120 / 0121）
 - [x] release時はversion bump、publish、global install、公開後smoke、証拠記録まで同一waveで閉じる
 
 ## 2. 非目標と不変条件
@@ -237,9 +237,9 @@ maintenance waveで重複統合して修理する。
 |---|---|---|---|---|
 | 修理済み (`8219f8c`) | P1 | 常駐AIShell `process_run`でstdinを読む`codex exec` / `/bin/cat`を起動するとEOFが届かずtimeout | Codex CLI等のstdin readerを正規入口から実行できない | AIShell `NativeProcessService` |
 | 修理済み (0.4.1) | P1 | `aishell-mcp`をbare command名でPATH起動すると`manager.application_bundle_unavailable`／`ready:false` | MCP hostも工場adapterもこの起動形式を使うため、健全なinstallationが常にnot_ready判定 | AIShell `MCPServer.managerApplicationURL` |
-| A5-PMへ登録 | 低 | `lattice todo revise-phase`へ`phase_todo_revision.v3`を渡し、先行planがphaseを持たない`todo_plan.v3`で`state_policy: carry`を指定すると、`phaseV3CarrySemantics`が先行taskをspreadして`phase_id: undefined`を作り、canonical化が素の`TypeError: todo artifact is not a JSON tree`で落ちる | typed errorでなくCONTRACT_VIOLATIONとして表面化するため原因が読めない。`reset_pending`で回避できるが、carryが正しい場面では回避手段が無い | Lattice `src/todo-store.mjs` `phaseV3CarrySemantics` |
-| A5-PMへ登録 | 低 | Lattice `docs/todo-extraction-v1.md`が「新規planのauthoringには`lattice plan create`を使用する」と書くが、`plan create`は空store専用で既存storeには`STORE_WRITE_CONFLICT: store_already_exists`を返す | 既存storeへ新規planを足す正しい入口（extraction→`todo migrate`）が製品文書から読み取れない | Lattice `docs/todo-extraction-v1.md` |
-| Lattice・gpt-connector導入済み / 残4製品は既存裁定どおり次のrelease waveで | 低 | 工場コアNPM 7製品のうち、publish対象commitが既定ブランチの祖先であることを検証するgateを持つのはAIShellだけ。Caveat／Throughline／Spotter／codex-sidecarは`prepublishOnly`自体が無く、aiterm-mcpはbuild/check用で祖先検証ではない（Lattice 0.12.9とgpt-connector 0.4.9で導入済み） | 孤児releaseを機械的に止められない。規範は共通憲法にあるため、実行者が規範を読む限り即時の危険はない | 各製品repo。reference実装はAIShell `scripts/verify-release-commit.mjs` |
+| 修理済み（Lattice 0.12.9） | 低 | `lattice todo revise-phase`へ`phase_todo_revision.v3`を渡し、先行planがphaseを持たない`todo_plan.v3`で`state_policy: carry`を指定すると、`phaseV3CarrySemantics`が先行taskをspreadして`phase_id: undefined`を作り、canonical化が素の`TypeError: todo artifact is not a JSON tree`で落ちる | typed errorでなくCONTRACT_VIOLATIONとして表面化するため原因が読めない。`reset_pending`で回避できるが、carryが正しい場面では回避手段が無い | Lattice `src/todo-store.mjs` `phaseV3CarrySemantics` |
+| 修理済み（Lattice 0.12.9） | 低 | Lattice `docs/todo-extraction-v1.md`が「新規planのauthoringには`lattice plan create`を使用する」と書くが、`plan create`は空store専用で既存storeには`STORE_WRITE_CONFLICT: store_already_exists`を返す | 既存storeへ新規planを足す正しい入口（extraction→`todo migrate`）が製品文書から読み取れない | Lattice `docs/todo-extraction-v1.md` |
+| Lattice 0.12.9・gpt-connector 0.4.9で導入済み / 残4製品は既存裁定どおり次のrelease waveで | 低 | 工場コアNPM 7製品のうち、publish対象commitが既定ブランチの祖先であることを検証するgateを持つのはAIShellだけ。Caveat／Throughline／Spotter／codex-sidecarは`prepublishOnly`自体が無く、aiterm-mcpはbuild/check用で祖先検証ではない（Lattice 0.12.9とgpt-connector 0.4.9で導入済み） | 孤児releaseを機械的に止められない。規範は共通憲法にあるため、実行者が規範を読む限り即時の危険はない | 各製品repo。reference実装はAIShell `scripts/verify-release-commit.mjs` |
 
 ## 7. rollback
 
