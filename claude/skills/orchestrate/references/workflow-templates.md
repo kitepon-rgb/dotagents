@@ -84,7 +84,7 @@ const REPORT = { type:'object', required:['target','fixed','flags_for_owner'], p
   flags_for_owner:{type:'array',items:{type:'object',required:['file','why'],
     properties:{file:{type:'string'},why:{type:'string'},quote:{type:'string'}}}} } }
 phase('Apply')
-// 同一repo_rootへのwriterが2つ以上 ∧ Lattice未選択 → そのrepoは直列（recipes.md共通契約。自前交差判断で並列強行しない）
+// 同一repo_rootへのwriterが2つ以上 ∧ Lattice未選択 → そのrepoは直列（正本 composition.md。自前交差判断で並列強行しない）
 const apply = (t) => agent(`対象: ${t.target}（この外は書き込み禁止。write_scope: ${JSON.stringify(t.write_scope)}）。バックアップ取得済み。
 ## 許可された操作（これだけ）
 <ホワイトリスト。番号付きで具体的に>

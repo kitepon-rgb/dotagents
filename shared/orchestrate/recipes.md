@@ -40,11 +40,9 @@ canonical JSON一致をCI gate（`tests/orchestrate/recipes-conformance.test.mjs
 
 - 最大並列度は静的な上限値としてだけ持てる。hostは能力に応じてそれ以下で実行してよい。
   shared側にqueue・slot・再投入・進捗stateを持たせない。
-- read-onlyのfan-outは本数制限を受けない。
-- **同一repoへ書込む子が2つ以上になる実行は、Latticeが選択されていなければ決定的に直列化する**
-  （並列度1へ落とす）。これはADR 0113 Decision 4のsupported degraded modeの適用であり、
-  親の自前交差判断による並列強行を認めない。Recipe入力はこの判定に必要なrepo identityと
-  effect（read/write）をclosedに持つ（各型の入力contract参照）。
+- **同一repo writerの直列化規則は全経路共通であり、正本は[合成契約](composition.md)である**。
+  Recipeはその判定に必要なrepo identityとeffect（read/write）をclosedに持つだけで、規則自体を
+  再定義しない（各型の入力contract参照）。判定コードは`lib/orchestrate/execution-path.mjs`。
 
 ### 回収とControl投影
 
@@ -95,8 +93,8 @@ canonical JSON一致をCI gate（`tests/orchestrate/recipes-conformance.test.mjs
     `write_scope`は書込みを許すpath集合（`effect: read`では空）。
   - 許可操作のホワイトリスト（番号付き・具体的）と禁止事項（実質的書換え・確信のない削除・創作の禁止）。
   - 対象がgit管理外なら実行前のtar退避を前提条件とする。
-- **並列化意図**: 対象ごとに並列。ただし共通契約の直列化規則に従う——`effect: write`の対象が
-  同じ`repo_root`に2つ以上あり、Latticeが選択されていなければ、そのrepoの対象は直列に実行する。
+- **並列化意図**: 対象ごとに並列。ただし[合成契約](composition.md)の直列化規則に従う——`effect: write`の
+  対象が同じ`repo_root`に2つ以上あり、Latticeが選択されていなければ、そのrepoの対象は直列に実行する。
 - **出力schema**（正本: [recipes/bulk-curation.v1.json](recipes/bulk-curation.v1.json)）:
   - Apply: `REPORT`（`target`/`fixed`/`flags_for_owner`必須。flagは迷い・要裁定の報告先）。
   - terminal result: 全対象のREPORT配列＋集約状態。

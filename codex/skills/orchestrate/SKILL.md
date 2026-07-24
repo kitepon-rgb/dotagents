@@ -29,7 +29,8 @@ description: 統括レーン（①計画に中断が組込済み②受入が多�
 - **fan-out**: 各視点（Find）・各指摘（Verify）・各対象（Apply）を1子1任務としてnative sub-agentへ
   dispatchする。read-only段（Find/Dedup/Verify/Critic、readのApply）は本数制限なく並列してよい。
   同一repoへ書込む対象が2つ以上あり、Latticeが選択されていなければ、そのrepoの対象は直列に実行する
-  （shared共通契約の直列化規則。自前交差判断で並列強行しない）。
+  （正本は[合成契約](../../../shared/orchestrate/composition.md)「同一repo writerの直列化」。
+  自前交差判断で並列強行しない）。
 - **schema強制**: 子への指示に[recipes/](../../../shared/orchestrate/recipes/)の該当schemaへ
   厳密準拠したJSONだけを最終出力とするよう明記し、親が回収時にschema不一致を`failed`として扱う
   （黙って受理・補完しない）。
