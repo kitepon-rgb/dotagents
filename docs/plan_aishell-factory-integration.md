@@ -212,6 +212,14 @@ Lattice / gpt-connectorなので、wire v5本筋（dotagents / ServerManager）�
 - Lattice `revise-phase`の非原子的失敗を修理する。v3で`reconciled`なmemberへ`phase_todo_revision.v2`を適用すると拒否されず、manifestとrevision bindingが食い違って以後`todo status`／`verify`が`STORE_INCONSISTENT: manifest_revision_binding_mismatch`で読めなくなる。世代降格を事前に拒否するか、失敗時にstore bytesを不変に保つ（工程正本: Lattice aishell-factory-integration / wv5-0850）
 - 【H】Lattice repoのfocused / related gateを通し、version bump→publish→global install→公開後smoke→公開証跡記録までを同一waveで閉じる（工程正本: Lattice aishell-factory-integration / wv5-0840）
 
+#### A5-PM2 cutoverで見つけたBugHub欠陥のmaintenance（gate: `maintenance-wave`）
+
+P5 cutover中の実測で見つけた。どちらもwire v5の受入を塞がないが、放置すると
+観測面のnoiseと意味の不整合が残るため同一waveで直す。
+
+- 退役済みCodegraphのexpectation issueが4 host（mac-kite / main-server / fox-wsl / windows-workstation）で開いたまま残るのを解消する。`state`は`recurred`／`ongoing`、最終更新は2026-07-20のCodegraph退役日。v4／v5のproduct setに`codegraph`は無いため以後どのreportでも評価されず、自動では永久に解決しない。退役時に既存expectation issueを明示resolveする経路を入れるか、既存issueを一度だけ解決する管理コマンドを用意する（工程正本: Lattice aishell-factory-integration / wv5-0870）
+- `contract_version`の意味を製品間で揃える。main-serverの`servermanager`だけ`1.0`を返し、他製品はwire contract版（`5.0`）を返す。`serverManagerNative`が製品自身の契約版を返すためで、v4時点でも同じ値だったv5非回帰の既存不整合。wire contract版を返すか、製品固有版は`state_schema_version`へ寄せるかを裁定して統一する（工程正本: Lattice aishell-factory-integration / wv5-0880）
+
 #### A6-P7 受入証拠・ADR・知識還流とarchive（gate: `closeout-reflow`）
 
 - wire v5の受入matrixを`docs/evidence/`へ作成する。実測値だけを載せ、gateが実際に捕まえた欠陥も隠さず記録する（工程正本: Lattice aishell-factory-integration / wv5-0710）
