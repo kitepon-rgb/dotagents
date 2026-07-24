@@ -201,7 +201,10 @@ H操作は、実行直前に目的・影響・rollbackを示し、オーナー�
 #### A5-PM コア製品欠陥のmaintenance（gate: `maintenance-wave`）
 
 本waveで再現したコア製品の欠陥を、記録だけで終わらせず同一waveで修理する。所有repoが
-Latticeなので、wire v5本筋（dotagents / ServerManager）とはファイルが交差せず全期間並行できる。
+Lattice / gpt-connectorなので、wire v5本筋（dotagents / ServerManager）とはファイルが
+交差せず全期間並行できる。
+
+- gpt-connector `consult`が全呼び出しで失敗するのを修理する。`diagnostics`は`ready`（cdpConnected / officialOrigin / authenticated すべてtrue、bridgeBuildId解決済み）を返すのに、`consult`は添付の有無に関わらず`CHAT_FAILED: Cannot read properties of undefined (reading 'timeStamp')`で落ちる。`timeStamp`はrepo内に存在せずChatGPT webapp側のDOM Event propertyであり、page-bridgeが呼ぶ上流内部関数の契約変更が疑われる。ChatGPT相談レーンが全面停止しており、本waveのPhase gate反証も塞いだ（工程正本: Lattice aishell-factory-integration / wv5-0860）
 
 - Lattice `phaseV3CarrySemantics`を修理する。phaseを持たない先行planを`carry`した時に`phase_id: undefined`を作って素の`TypeError`で落ちる。characterization testを先に置き、typed `REVISION_INVALID`で拒否するか正しくcarryするかを裁定する（工程正本: Lattice aishell-factory-integration / wv5-0810）
 - Lattice `docs/todo-extraction-v1.md`の新規plan authoring入口を実装どおりに直す。既存storeはextraction→`todo migrate`、`plan create`は空store専用であることを明記する（工程正本: Lattice aishell-factory-integration / wv5-0820）
