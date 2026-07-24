@@ -1,10 +1,24 @@
-# Workflow スクリプト雛形
+# Workflow スクリプト雛形（Claude投影）
 
-実証済みの2型。コピーして DIMENSIONS/CTX/検証観点をタスクに合わせて書き換える。`agent()` の `model`・`effort` は docs/02_models.md の決定表どおり明示する（検証・反証系だけ省略＝主モデル継承可）。省略で親任せにしない——親が最上位のとき全子が張り付く。
+実証済みの2型の**Claude Workflow tool向け投影**。Phase・入出力schema・reducer・gate・失敗条件の
+意味の正本は[固定Recipe契約](../../../../shared/orchestrate/recipes.md)であり、本書は実行入口
+（`phase()`／`parallel()`／`agent()`への写像）だけを所有する。本書内のschema literalは
+[shared/orchestrate/recipes/](../../../../shared/orchestrate/recipes/)のcanonical JSONと機械的一致を
+CI（`tests/orchestrate/recipes-conformance.test.mjs`）で強制される——**schemaを変えるときはshared正本を
+先に変え、両面を同一commitで更新する**。
+
+コピーして DIMENSIONS/CTX/TARGETS/検証観点をタスクに合わせて書き換える。`agent()` の
+`model`・`effort` は docs/02_models.md の決定表どおり明示する（検証・反証系だけ省略＝主モデル継承可）。
+省略で親任せにしない——親が最上位のとき全子が張り付く。
+
+型の使用はレーンを問わない（ADR 0061 技法と儀式の分離）。統括レーン専用なのはControl儀式だけで、
+Controlが選択されている場合だけterminal resultをstrict Worker Reportへ投影する。
+2レンズ（実在性/価値）は契約クリティカルな指摘だけに使う。
 
 ## 型1: 敵対的監査（Find→Dedup→Verify→Critic）
 
-発見の網羅は並列多視点で、信頼性は「指摘ごとの反証」で作る（この重い型自体、統括レーンの契約クリティカル範囲だけに使う＝contract.md「監査の頻度」）。**2レンズ（実在性/価値）は契約クリティカルな指摘だけ**。Critic の盲点は第2ラウンドへ。
+発見の網羅は並列多視点で、信頼性は「指摘ごとの反証」で作る。Critic の盲点が出たら同型の
+第2ラウンドを**高々1回**静的に回す（それ以上は契約外＝親が新しい実行として裁定）。
 
 ```js
 export const meta = {
@@ -14,6 +28,7 @@ export const meta = {
 }
 const CTX = `<リポジトリ・規約・「誤検知を避けるための前提」（意図的な設計を指摘させない）・
 読み取り専用の明言・「evidence に file:line 必須・推測禁止・確度の高いものだけ最大N件」>`
+// schema正本: shared/orchestrate/recipes/adversarial-audit.v1.json（CI一致gateあり）
 const FINDINGS = { type:'object', required:['findings'], properties:{ findings:{ type:'array', maxItems:10,
   items:{ type:'object', required:['title','kind','files','evidence','impact','effort','suggestion','contract_critical'],
     properties:{ title:{type:'string'}, kind:{type:'string'}, files:{type:'array',items:{type:'string'}},
@@ -23,14 +38,19 @@ const FINDINGS = { type:'object', required:['findings'], properties:{ findings:{
 const VERDICT = { type:'object', required:['real','worth_it','reason'], properties:{
   real:{type:'boolean'}, worth_it:{type:'boolean'}, risk:{type:'string'}, reason:{type:'string'},
   revised_suggestion:{type:'string'} } }
+const CRITIC = { type:'object', required:['blind_spots'], properties:{ blind_spots:{ type:'array', maxItems:5,
+  items:{ type:'object', required:['area','why','evidence'], properties:{
+    area:{type:'string'}, why:{type:'string'}, evidence:{type:'string'} } } } } }
 
 phase('Find')
 const found = (await parallel(DIMENSIONS.map(d => () =>
   agent(CTX + '\n\n【担当】' + d.prompt, { label:'find:'+d.key, phase:'Find', schema:FINDINGS, agentType:'Explore' })
     .then(r => r && { key:d.key, findings:r.findings })))).filter(Boolean)
+// failed/unknownの子は成功へ丸めない: 落ちた視点はterminal resultのaggregateへ立てる（recipes.md共通契約）
+const failedDimensions = DIMENSIONS.length - found.length
 const all = []; for (const r of found) for (const x of r.findings) all.push({ id:'f'+(all.length+1), source:r.key, ...x })
 
-phase('Dedup')  // 統合のみ・全 id が merged_ids に現れることをコードで検算し欠落は復元
+phase('Dedup')  // 統合のみ・全 id が merged_ids にちょうど1回現れることをコードで検算し欠落は復元
 // …dedup agent → uniq（欠落復元コードを忘れない）…
 
 phase('Verify') // 疑わしきは false。existence レンズ＝実読で evidence 検証／value レンズ＝直す価値・挙動リスク
@@ -44,8 +64,10 @@ const verified = await parallel(uniq.map((f,i) => () => {
 }))
 
 phase('Critic') // 「この監査に漏れている観点・どの指摘にも登場しない重要領域」を実ファイル確認つきで最大5件
-// → 盲点が出たら同型の第2ラウンドを回す
-return { confirmed: verified.filter(f=>f.confirmed), rejected: verified.filter(f=>!f.confirmed) /*棄却理由も残す*/ }
+// const critic = await agent(`${CTX}\nこの監査の盲点を挙げよ`, { schema:CRITIC, ... })
+// → 盲点が出たら同型の第2ラウンドを高々1回回す（静的展開。汎用loopにしない）
+return { confirmed: verified.filter(f=>f.confirmed), rejected: verified.filter(f=>!f.confirmed),
+  aggregate: failedDimensions > 0 ? 'partial_failure' : 'success' /*棄却理由も残す*/ }
 ```
 
 **運用の要**: 棄却理由は捨てない（「実在するが価値なし」の理由が設計判断の宝庫）。確定・棄却・盲点をダイジェスト（file:line 証拠つき）に落とし、以後の全委譲の共通入力にする。
@@ -56,21 +78,29 @@ return { confirmed: verified.filter(f=>f.confirmed), rejected: verified.filter(f
 
 ```js
 export const meta = { name:'bulk-curation', description:'<対象群>へ厳格契約で一括適用', phases:[{title:'Apply'}] }
+// TARGETS: [{ target, repo_root, effect, write_scope }]（closed形の正本は recipes/bulk-curation.v1.json）
 const REPORT = { type:'object', required:['target','fixed','flags_for_owner'], properties:{
   target:{type:'string'}, fixed:{type:'array',items:{type:'string'}},
   flags_for_owner:{type:'array',items:{type:'object',required:['file','why'],
     properties:{file:{type:'string'},why:{type:'string'},quote:{type:'string'}}}} } }
 phase('Apply')
-const results = await parallel(TARGETS.map(t => () =>
-  agent(`対象: ${t}（この外は書き込み禁止）。バックアップ取得済み。
+// 同一repo_rootへのwriterが2つ以上 ∧ Lattice未選択 → そのrepoは直列（recipes.md共通契約。自前交差判断で並列強行しない）
+const apply = (t) => agent(`対象: ${t.target}（この外は書き込み禁止。write_scope: ${JSON.stringify(t.write_scope)}）。バックアップ取得済み。
 ## 許可された操作（これだけ）
 <ホワイトリスト。番号付きで具体的に>
 ## 禁止
 <実質的書き換え・確信のない削除・創作>。迷ったら flags_for_owner へ。
 ## 手順
 全部読む→許可操作を適用→構造化レポート`,
-    { label:`apply:${t}`, phase:'Apply', schema:REPORT, model:'sonnet' })))
-return results.filter(Boolean)
+  { label:`apply:${t.target}`, phase:'Apply', schema:REPORT, model:'sonnet' })
+const writersByRepo = Map.groupBy(TARGETS.filter(t => t.effect === 'write' && t.repo_root), t => t.repo_root)
+const needSerial = [...writersByRepo.values()].some(g => g.length > 1) && !LATTICE_SELECTED
+const results = needSerial
+  ? await TARGETS.reduce(async (acc, t) => [...(await acc), await apply(t)], Promise.resolve([]))
+  : await parallel(TARGETS.map(t => () => apply(t)))
+// 完全性検算: REPORT数がTARGETS数と一致（failed/unknownを成功へ丸めない）
+return { reports: results.filter(Boolean),
+  aggregate: results.filter(Boolean).length === TARGETS.length ? 'success' : 'partial_failure' }
 ```
 
 **前提**: 対象が git 管理外なら**先に tar バックアップ**（グローバル鉄則）。
