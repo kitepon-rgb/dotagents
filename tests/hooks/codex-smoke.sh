@@ -199,6 +199,15 @@ mkdir -p "$STATE/git-only" "$STATE/lattice-bin" "$REPO/.lattice/todo" "$REPO/.la
 ln -s "$(command -v git)" "$STATE/git-only/git"
 cat >"$STATE/lattice-bin/lattice" <<'EOF'
 #!/usr/bin/env bash
+# typed discovery: hookは `status --json` を接続判定の正本として先に呼ぶ。
+if [ "$1" = "status" ] && [ "$2" = "--json" ]; then
+  case "${LATTICE_STATUS_STATE:-ready}" in
+    ready) printf '%s\n' '{"schema":"lattice.project_status.v1","state":"ready","store":{"ref":".lattice/todo"}}' ;;
+    uninitialized) printf '%s\n' '{"schema":"lattice.project_status.v1","state":"uninitialized","store":{"ref":".lattice/todo"}}' ;;
+    invalid) printf '%s\n' '{"schema":"lattice.project_status.v1","state":"invalid","store":{"ref":".lattice/todo"}}'; exit 1 ;;
+  esac
+  exit 0
+fi
 [ "$*" = "todo status" ] || exit 2
 case "${LATTICE_TEST_MODE:-valid_v1}" in
   valid_v1)
@@ -207,6 +216,10 @@ case "${LATTICE_TEST_MODE:-valid_v1}" in
     printf '%s\n' '{"schema":"lattice.todo_status_result.v2","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]},{"plan_key":"master","task_id":"G6","label":"host rollout","unmet_dependencies":[{"plan_key":"master","task_id":"G3"},{"plan_key":"master","project_id":"dotagents","task_id":"G2"}]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}' ;;
   valid_v3)
     printf '%s\n' '{"schema":"lattice.todo_status_result.v3","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},{"plan_key":"queue","plan_version":"v1","through_sequence":0,"journal_head_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","reconciliation_state":"registered_unreconciled","revision_digest":null,"reconciliation_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
+  valid_v4)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v4","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}}' ;;
+  unsupported_v5)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v5","project_id":"dotagents","active_set":[],"next_ready":[],"blocked":[],"member_heads":[],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
   slow_success)
     sleep 3
     printf '%s\n' '{"schema":"lattice.todo_status_result.v1","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線"}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}' ;;
@@ -239,6 +252,22 @@ run lattice-codex-valid-v3 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE
 {"session_id":"lattice-codex-valid-v3","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'校正状態: reconciled=1, unreconciled=1'* && "$RUN_JSON_TEXT" != *'取得できませんでした'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass lattice-codex-valid-v3 || fail_case lattice-codex-valid-v3
+run lattice-codex-valid-v4 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=valid_v4 "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-valid-v4","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'active=master/G4'* && "$RUN_JSON_TEXT" == *'reconciled=1, unreconciled=0'* && "$RUN_JSON_TEXT" != *'取得できませんでした'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass lattice-codex-valid-v4 || fail_case lattice-codex-valid-v4
+run lattice-codex-unsupported env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=unsupported_v5 "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-unsupported","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'CLIの版とstore整合を確認'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass lattice-codex-unsupported || fail_case lattice-codex-unsupported
+run lattice-codex-status-invalid env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=invalid "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-status-invalid","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_JSON_TEXT" == *'additionalContext'* && "$RUN_JSON_TEXT" == *'invalid'* && "$RUN_JSON_TEXT" != *permissionDecision* ]] && pass lattice-codex-status-invalid || fail_case lattice-codex-status-invalid
+run lattice-codex-uninitialized env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=uninitialized "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-uninitialized","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-codex-uninitialized || fail_case lattice-codex-uninitialized
 run lattice-codex-slow-success env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-codex-slow-success","source":"startup","cwd":"$HOOK_REPO"}
 EOF

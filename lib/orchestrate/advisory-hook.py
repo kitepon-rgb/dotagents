@@ -227,16 +227,43 @@ def run_cli(node, cli, payload, deadline):
                 pass
 
 
+def cli_error_code(raw):
+    # lattice.cli_error.v2 の code を取り出す。現CLIはこのenvelopeをstderrへ出す。
+    try:
+        value = json.loads(raw.decode("utf-8", "strict")) if raw else None
+    except (UnicodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(value, dict) or value.get("schema") != "lattice.cli_error.v2":
+        return None
+    code = value.get("code")
+    if isinstance(code, str) and 0 < len(code) <= 64 and code.replace("_", "").isalnum():
+        return code
+    return "UNKNOWN"
+
+
 def active_lattice_runs(node, cli, cwd, deadline):
+    # 戻り値: None=このCLI候補が使えない（次候補へ）／("runs",[ids])=成功（空可）／
+    # ("error",code)=CLIがtyped cli_errorを返した（INVALID_RUN_STORE等）。失敗を空集合へ
+    # 丸めず、「active runなし」と区別してfail-visibleにする。
     try:
         result = subprocess.run(
             [str(node), str(cli), "run", "list", "--json"], cwd=cwd,
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             timeout=remaining(deadline, 0.75), check=False, env=safe_env((node, cli)),
         )
-        if result.returncode != 0 or result.stderr or len(result.stdout) > CAPTURE_LIMIT:
+        if len(result.stdout) > CAPTURE_LIMIT or len(result.stderr) > CAPTURE_LIMIT:
             return None
-        value = json.loads(result.stdout.decode("utf-8", "strict"))
+        # typed cli_errorはstdout/stderrどちらに来てもfail-visibleにする（現CLIはstderr）。
+        for stream in (result.stdout, result.stderr):
+            code = cli_error_code(stream)
+            if code is not None:
+                return ("error", code)
+        if result.returncode != 0 or result.stderr:
+            return None
+        try:
+            value = json.loads(result.stdout.decode("utf-8", "strict")) if result.stdout else None
+        except (UnicodeError, json.JSONDecodeError):
+            return None
         if not isinstance(value, dict) or set(value) != {"schema", "active_runs", "result_digest"} or value.get("schema") != "lattice.run_list.v1":
             return None
         runs = value.get("active_runs")
@@ -247,8 +274,8 @@ def active_lattice_runs(node, cli, cwd, deadline):
             for entry in runs
         ):
             return None
-        return [entry["run_id"] for entry in runs]
-    except (OSError, UnicodeError, json.JSONDecodeError, subprocess.TimeoutExpired):
+        return ("runs", [entry["run_id"] for entry in runs])
+    except (OSError, subprocess.TimeoutExpired):
         return None
 
 
@@ -284,9 +311,19 @@ def section(label, values):
     return None if not values else f"{label}: {', '.join(values[:3])}{' …' if len(values) > 3 else ''}"
 
 
-def format_context(snapshot, lattice_runs=()):
+def lattice_run_section(lattice_result):
+    # None=CLI候補なし（沈黙）／("error",code)=fail-visible／("runs",[ids])=通常表示。
+    # 空runsはsection()がNoneを返し「なし」で沈黙、失敗だけを明示する。
+    if lattice_result is None:
+        return None
+    if lattice_result[0] == "error":
+        return f"active Lattice run取得失敗: {lattice_result[1]}（空集合へ丸めず要確認）"
+    return section("active Lattice run", list(lattice_result[1]))
+
+
+def format_context(snapshot, lattice_result=None):
     sections = [
-        section("active Lattice run", list(lattice_runs)),
+        lattice_run_section(lattice_result),
         section("active Control", snapshot["active_control_ids"]),
         section("unknown Run", [f"worker:{entry}" for entry in snapshot["unknown"]["worker_run_ids"]] + [f"consultation:{entry}" for entry in snapshot["unknown"]["consultation_ids"]]),
         section("未回収", [f"worker:{entry}" for entry in snapshot["uncollected"]["worker_run_ids"]] + [f"consultation:{entry}" for entry in snapshot["uncollected"]["consultation_ids"]]),
@@ -335,12 +372,12 @@ def main():
             snapshot = snapshot_from_output(run_cli(node, cli, {"cwd": str(root), "evaluated_at": canonical_now()}, deadline) or b"")
             if snapshot is not None:
                 break
-        lattice_runs = None
+        lattice_result = None
         for lattice in lattice_candidates(sys.argv[1]):
-            lattice_runs = active_lattice_runs(node, lattice, str(root), deadline)
-            if lattice_runs is not None:
+            lattice_result = active_lattice_runs(node, lattice, str(root), deadline)
+            if lattice_result is not None:
                 break
-        context = format_context(snapshot, lattice_runs or ()) if snapshot is not None else None
+        context = format_context(snapshot, lattice_result) if snapshot is not None else None
         if context is None or time.monotonic() >= deadline:
             return
         sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": context}}, ensure_ascii=False) + "\n")

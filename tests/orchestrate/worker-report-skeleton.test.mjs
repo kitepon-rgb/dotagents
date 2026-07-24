@@ -32,11 +32,19 @@ test("Worker Report skeletonはnested strict shapeを固定し保存後そのま
     budget: makeBudget(),
   });
   const validations = ["node --test focused.test.mjs", "git diff --check"];
-  const task = await api.taskRecord({
+  const phaseGate = await api.phaseGateRecord({
     cwd: repo.root,
     control_id: controlId,
     actor_id: "parent",
     expected_revision: initialized.revision,
+    risk: "standard",
+    behavior_lane: "behavior-preserving",
+  });
+  const task = await api.taskRecord({
+    cwd: repo.root,
+    control_id: controlId,
+    actor_id: "parent",
+    expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "skeleton-task", validation: validations }),
   });
   const worker = await api.workerRunRecord({

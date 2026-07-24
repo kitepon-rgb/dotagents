@@ -68,8 +68,10 @@ async function initialized(t, overrides = {}) {
   return { repo, result };
 }
 
-async function completePhaseGate(repo, controlId, revision, { risk = "standard", behaviorLane = "behavior-preserving" } = {}) {
-  let result = await api.phaseGateRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: revision, risk, behavior_lane: behaviorLane });
+// phase gateがtaskRecordより前の段階で既にrecord済みの場合、advance部分だけを進める。
+// completePhaseGateはrecord+advanceを1回で行う従来どおりの挙動を維持する。
+async function advancePhaseGate(repo, controlId, revision, { risk = "standard", behaviorLane = "behavior-preserving" } = {}) {
+  let result = { revision };
   for (const phase of ["baseline", "discovery", "design", "safety_net", "implementation", "behavior_change", "integration", "knowledge_return", "complete"]) {
     const decisionRequired = ["design", "complete"].includes(phase)
       || (phase === "safety_net" && risk === "standard")
@@ -83,6 +85,11 @@ async function completePhaseGate(repo, controlId, revision, { risk = "standard",
     });
   }
   return result;
+}
+
+async function completePhaseGate(repo, controlId, revision, options = {}) {
+  const recorded = await api.phaseGateRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: revision, risk: options.risk ?? "standard", behavior_lane: options.behaviorLane ?? "behavior-preserving" });
+  return advancePhaseGate(repo, controlId, recorded.revision, options);
 }
 
 async function materializeDocumentEvidence(repo, descriptor) {
@@ -144,7 +151,8 @@ test("すべてのI/O APIはcwdを必須にし、non-gitを拒否してbareをre
   await assert.rejects(api.init({ cwd: nonGit, control_id: CONTROL, objective_ref: "docs/x.md", actor_id: "parent", document_refs: ["docs/x.md"], budget: makeBudget() }), code("NOT_GIT_REPOSITORY"));
   const bareControl = await api.init({ cwd: bare.root, control_id: CONTROL, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   assert.equal(bareControl.manifest.declaration.project_root_realpath, null);
-  const read = await api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareControl.revision, task: makeTask({ task_id: "bare-read", effect: "read", write_scope: [] }) });
+  const barePhaseGate = await api.phaseGateRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: bareControl.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const read = await api.taskRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: barePhaseGate.revision, task: makeTask({ task_id: "bare-read", effect: "read", write_scope: [] }) });
   assert.equal(read.manifest.tasks[0].effect, "read");
   const bareArtifact = await api.artifactRecord({ cwd: bare.root, control_id: CONTROL, actor_id: "parent", expected_revision: read.revision, artifact: { artifact_id: "bare-artifact", artifact_kind: "decision", artifact_ref: bareArtifactRef, artifact_digest: bareArtifactDigest, status: "current" } });
   assert.equal(bareArtifact.manifest.artifacts[0].artifact_digest, bareArtifactDigest);
@@ -176,7 +184,8 @@ test("status briefとresume checkはopaque状態・workspace drift・evidence re
   assert.ok(changed.review_reasons.some((entry) => entry.code === "control-dirty-state-changed"));
 
   const statusControl = await api.init({ cwd: repo.root, control_id: "brief-state-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: statusControl.revision, task: makeTask({ task_id: "brief-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const statusPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: statusControl.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: statusPhaseGate.revision, task: makeTask({ task_id: "brief-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const registry = await api.registryObservationRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: task.revision, observation: makeRegistryObservation({ registry_observation_id: "brief-registry" }) });
   const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: registry.revision, worker_run: makeWorkerRun({ worker_run_id: "brief-worker", task_id: "brief-task", assignment_id: "brief-worker-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "brief-worker-assignment" } }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "brief-state-control", actor_id: "parent-001", expected_revision: worker.revision, worker_run_id: "brief-worker" });
@@ -203,8 +212,9 @@ test("advisory snapshotはControl不在を空として返し、active状態をmu
   });
   const repo = await createGitRepo(base, "advisory-active");
   const init = await api.init({ cwd: repo.root, control_id: "advisory-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const approval = makeApproval({ approved_at: "2019-01-01T00:00:00.000Z", expires_at: "2020-01-02T00:00:00.000Z" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "advisory-h-task", classification: "H", effect: "read", write_scope: [], approval }) });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "advisory-h-task", classification: "H", effect: "read", write_scope: [], approval }) });
   const hWorker = await api.workerRunRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "advisory-h-worker", task_id: "advisory-h-task", assignment_id: "advisory-h-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "advisory-h-assignment" } }) });
   const oldRegistry = await api.registryObservationRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: hWorker.revision, observation: makeRegistryObservation({ registry_observation_id: "advisory-registry-old", expires_at: "2026-07-14T00:15:00.000Z" }) });
   const registry = await api.registryObservationRecord({ cwd: repo.root, control_id: "advisory-control", actor_id: "parent", expected_revision: oldRegistry.revision, observation: makeRegistryObservation({ registry_observation_id: "advisory-registry", expires_at: "2026-07-14T00:15:00.000Z", verification: { ...makeRegistryObservation().verification, observed_at: "2026-07-14T00:10:00.000Z", evidence: { ...makeRegistryObservation().verification.evidence, observed_at: "2026-07-14T00:10:00.000Z" } } }) });
@@ -230,6 +240,7 @@ test("advisory snapshot CLIは外部providerを起動せずmanifestを更新し�
 test("advisory snapshotはunknown/uncollectedをsortし、planned writerだけの競合とterminal Hを高精度に扱う", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "advisory-precision" });
   let revision = result.revision;
+  const advisoryPrecisionPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: revision, risk: "standard", behavior_lane: "behavior-preserving" }); revision = advisoryPrecisionPhaseGate.revision;
   const readTask = await api.taskRecord({ cwd: repo.root, control_id: "advisory-precision", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "advisory-read", effect: "read", write_scope: [], isolation: "none" }) }); revision = readTask.revision;
   for (const worker_run_id of ["z-unknown-worker", "a-unknown-worker"]) {
     const assignment_id = `${worker_run_id}-assignment`;
@@ -263,8 +274,9 @@ test("advisory snapshotはunknown/uncollectedをsortし、planned writerだけ�
 
 test("H TaskのConsultationはoperation digest契約不在をfail-closedする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "h-consultation-contract" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "h-consultation-contract", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "h-consultation-contract", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "h-consultation-contract", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "h-consultation-task", classification: "H", effect: "read", write_scope: [], approval: makeApproval() }),
   });
   await assert.rejects(api.consultationRecord({
@@ -303,6 +315,7 @@ test("advisory snapshotのlatest Registryはarchived Controlの新しいsnapshot
 test("advisory snapshotは257 planned/reserved capacity fixtureを1.5秒未満で索引評価する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "advisory-density", budget: makeBudget({ max_worker_runs: 300, max_external_runs: 300, max_wall_time_seconds: 2_000_000, max_cost_microusd: 2_000_000_000, max_runs_per_approach_family: 300 }) });
   let revision = result.revision;
+  const densityPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "advisory-density", actor_id: "parent", expected_revision: revision, risk: "standard", behavior_lane: "behavior-preserving" }); revision = densityPhaseGate.revision;
   const task = await api.taskRecord({ cwd: repo.root, control_id: "advisory-density", actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: "density-write", isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }) }); revision = task.revision;
   const workerTemplate = makeWorkerRun();
   const capacityEvidence = evidence("docs/density-capacity.md", "command", { observed_at: "2026-07-14T00:00:00.000Z" });
@@ -320,7 +333,8 @@ test("advisory snapshotは257 planned/reserved capacity fixtureを1.5秒未満�
   }
   const recordPlanned = async (control_id, task_id, count) => {
     const initializedControl = await api.init({ cwd: repo.root, control_id, objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget({ max_worker_runs: 300, max_external_runs: 300, max_wall_time_seconds: 2_000_000, max_cost_microusd: 2_000_000_000, max_runs_per_approach_family: 300 }) });
-    let current = (await api.taskRecord({ cwd: repo.root, control_id, actor_id: "parent", expected_revision: initializedControl.revision, task: makeTask({ task_id, isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }) })).revision;
+    const plannedPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id, actor_id: "parent", expected_revision: initializedControl.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+    let current = (await api.taskRecord({ cwd: repo.root, control_id, actor_id: "parent", expected_revision: plannedPhaseGate.revision, task: makeTask({ task_id, isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }) })).revision;
     for (let index = 0; index < count; index++) {
       const id = `${control_id}-planned-${String(index).padStart(3, "0")}`;
       current = (await api.workerRunRecord({ cwd: repo.root, control_id, actor_id: "parent", expected_revision: current, worker_run: makeWorkerRun({ worker_run_id: id, task_id, assignment_id: `${id}-assignment`, workspace_cwd: repo.root, lineage: { ...workerTemplate.lineage, root_assignment_id: `${id}-assignment` } }) })).revision;
@@ -344,7 +358,8 @@ test("resume checkはfile evidenceのretentionを検証し、opaque evidenceを�
   const proof = { type: "file", ref: "docs/retained-proof.md", digest: createHash("sha256").update(proofBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
   const opaque = { type: "executor-receipt", ref: "connector:codex-sidecar:retention", digest: "f".repeat(64), observed_at: "2026-07-14T00:00:00.000Z" };
   const init = await api.init({ cwd: repo.root, control_id: "retention-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "retention-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "retention-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "retention-control", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "retention-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "retention-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const template = makeWorkerRun(); const capabilities = template.workflow_capabilities.map((entry) => ({ ...entry, evidence: proof }));
   const worker = await api.workerRunRecord({
     cwd: repo.root, control_id: "retention-control", actor_id: "parent", expected_revision: task.revision,
@@ -363,7 +378,7 @@ test("resume checkはfile evidenceのretentionを検証し、opaque evidenceを�
   await symlink("../README.md", proofPath);
   const unsafe = await api.resumeCheck({ cwd: repo.root, control_id: "retention-control" });
   assert.equal(unsafe.outcome, "blocked"); assert.ok(unsafe.blocking_reasons.some((entry) => entry.code === "evidence-unsafe"));
-  assert.equal(worker.revision, 2);
+  assert.equal(worker.revision, 3);
 });
 
 test("resume checkは旧decision digestをgit履歴で保持しlegacy provider decision refをreviewへ送る", async (t) => {
@@ -373,7 +388,8 @@ test("resume checkは旧decision digestをgit履歴で保持しlegacy provider d
   const historical = { type: "decision", ref: decisionRef, digest: createHash("sha256").update(oldBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
   const legacy = { type: "decision", ref: "native:/root/legacy-agent:parent-review", digest: "f".repeat(64), observed_at: "2026-07-14T00:00:00.000Z" };
   const init = await api.init({ cwd: repo.root, control_id: "retention-history-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "retention-history-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "retention-history-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "retention-history-control", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "retention-history-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "retention-history-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const template = makeWorkerRun(); const capabilities = template.workflow_capabilities.map((entry) => ({ ...entry, evidence: historical }));
   await api.workerRunRecord({
     cwd: repo.root, control_id: "retention-history-control", actor_id: "parent", expected_revision: task.revision,
@@ -393,8 +409,9 @@ test("resume checkは旧decision digestをgit履歴で保持しlegacy provider d
 
 test("resume checkは予約中writerのHEAD移動をblockedにする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "resume-writer-head" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "resume-writer-head", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "resume-writer-head", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "resume-writer-head", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "resume-writer-task", isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }),
   });
   const run = await api.workerRunRecord({
@@ -414,8 +431,9 @@ test("resume checkは予約中writerのignored成果物driftをblockedにする"
   await writeFile(join(repo.root, ".gitignore"), "build/\n");
   runGit(repo.root, ["add", ".gitignore"]); runGit(repo.root, ["commit", "-q", "-m", "ignore build"]);
   const init = await api.init({ cwd: repo.root, control_id: "resume-writer-ignored", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "resume-writer-ignored", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "resume-writer-ignored", actor_id: "parent", expected_revision: init.revision,
+    cwd: repo.root, control_id: "resume-writer-ignored", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "resume-writer-ignored-task", isolation: "none", write_scope: [{ kind: "directory", path: "build" }] }),
   });
   const run = await api.workerRunRecord({
@@ -434,7 +452,8 @@ test("resume checkはplanned writerのignored成果物差をreviewへ送る", as
   await writeFile(join(repo.root, ".gitignore"), "build/\n");
   runGit(repo.root, ["add", ".gitignore"]); runGit(repo.root, ["commit", "-q", "-m", "ignore planned build"]);
   const init = await api.init({ cwd: repo.root, control_id: "resume-planned-ignored", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "resume-planned-ignored", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "resume-planned-ignored-task", isolation: "none", write_scope: [{ kind: "directory", path: "build" }] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "resume-planned-ignored", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "resume-planned-ignored", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "resume-planned-ignored-task", isolation: "none", write_scope: [{ kind: "directory", path: "build" }] }) });
   const template = makeWorkerRun(); const opaque = evidence("resume-planned-ignored", "executor-receipt");
   await api.workerRunRecord({ cwd: repo.root, control_id: "resume-planned-ignored", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "resume-planned-ignored-task", workspace_cwd: repo.root, workflow_capabilities: template.workflow_capabilities.map((entry) => ({ ...entry, evidence: opaque })), execution_verification: { ...template.execution_verification, evidence: opaque } }) });
   await mkdir(join(repo.root, "build")); await writeFile(join(repo.root, "build", "out.txt"), "planned ignored output\n");
@@ -450,7 +469,8 @@ test("resume checkはlinked worktree上のplanned Worker内容変更をreviewへ
   const linked = await addLinkedWorktree(repo, "resume-read-worker");
   const proof = { type: "file", ref: "docs/execution-proof.md", digest: createHash("sha256").update(proofBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
   const init = await api.init({ cwd: repo.root, control_id: "resume-read-worker", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "resume-read-worker", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "resume-read-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "resume-read-worker", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "resume-read-worker", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "resume-read-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }) });
   const template = makeWorkerRun();
   await api.workerRunRecord({
     cwd: repo.root, control_id: "resume-read-worker", actor_id: "parent", expected_revision: task.revision,
@@ -482,18 +502,28 @@ test("Control stateはPOSIX owner-only modeをread時にも強制する", async 
 
 test("receipt capacityは閉鎖用slotを予約し、archive済みControlからだけ後継へ継続する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "capacity-root" });
-  const manifest = structuredClone(result.manifest);
-  for (let revision = 1; revision <= 253; revision++) {
-    const previous = manifest.transition_receipts.at(-1);
-    manifest.transition_receipts.push(makeTransitionReceipt({
-      revision, operation: "task-record", subject: { kind: "task", id: `synthetic-${revision}` },
-      previous_state: null, next_state: "recorded", previous_receipt_digest: previous.receipt_digest,
-    }));
-  }
-  manifest.record_revision = 253;
-  manifest.last_update = { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" };
+  const buildSaturatedManifest = (base, targetRevision = 253) => {
+    const manifest = structuredClone(base);
+    for (let revision = manifest.record_revision + 1; revision <= targetRevision; revision++) {
+      const previous = manifest.transition_receipts.at(-1);
+      manifest.transition_receipts.push(makeTransitionReceipt({
+        revision, operation: "task-record", subject: { kind: "task", id: `synthetic-${revision}` },
+        previous_state: null, next_state: "recorded", previous_receipt_digest: previous.receipt_digest,
+      }));
+    }
+    manifest.record_revision = targetRevision;
+    manifest.last_update = { actor_id: "parent-001", updated_at: "2026-07-14T00:00:00.000Z" };
+    return manifest;
+  };
+  // CONTROL_CAPACITY_RESERVEDはtaskRecordのmutateコールバック内で新設されたPHASE_GATE_NOT_RECORDEDより後に評価されるため、
+  // taskRecord経由の検証にはphase gate設定済みの別synthetic controlを要する（phaseGateRecord自体の検証は未設定のcapacity-rootを使う）。
+  const manifest = buildSaturatedManifest(result.manifest);
   await writeJson(join(repo.commonDir, "dotagents", "orchestrate", "controls", "capacity-root", "manifest.json"), manifest);
-  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253, task: makeTask({ task_id: "would-poison" }) }), code("CONTROL_CAPACITY_RESERVED"));
+  const gatedInit = await api.init({ cwd: repo.root, control_id: "capacity-root-gated", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const gatedPhase = await api.phaseGateRecord({ cwd: repo.root, control_id: "capacity-root-gated", actor_id: "parent", expected_revision: gatedInit.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const gatedManifest = buildSaturatedManifest(gatedPhase.manifest);
+  await writeJson(join(repo.commonDir, "dotagents", "orchestrate", "controls", "capacity-root-gated", "manifest.json"), gatedManifest);
+  await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "capacity-root-gated", actor_id: "parent", expected_revision: 253, task: makeTask({ task_id: "would-poison" }) }), code("CONTROL_CAPACITY_RESERVED"));
   await assert.rejects(api.phaseGateRecord({ cwd: repo.root, control_id: "capacity-root", actor_id: "parent", expected_revision: 253, risk: "standard", behavior_lane: "behavior-preserving" }), code("CONTROL_CAPACITY_RESERVED"));
   await assert.rejects(api.init({ cwd: repo.root, control_id: "too-early", predecessor_control_id: "capacity-root", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() }), code("CONTINUATION_NOT_READY"));
   await assert.rejects(api.finalizeControl({
@@ -534,15 +564,17 @@ test("257件目のControlはcommit前に拒否し既存Controlをpoisonしない
   }
   const input = { cwd: repo.root, control_id: "control-256", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() };
   await assert.rejects(api.init(input), code("CONTROL_CAPACITY_REACHED"));
-  const existing = await api.taskRecord({ cwd: repo.root, control_id: "control-000", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "still-operational" }) });
-  assert.equal(existing.revision, 1);
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "control-000", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const existing = await api.taskRecord({ cwd: repo.root, control_id: "control-000", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "still-operational" }) });
+  assert.equal(existing.revision, 2);
   await assert.rejects(access(join(controls, "control-256")));
 });
 
 test("TaskはF/A/H、scope、approval、global task_id一意性を正しく記録する", async (t) => {
   const { repo, result } = await initialized(t);
-  const a = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, task: makeTask() });
-  assert.equal(a.revision, 1); assert.deepEqual((await readPersistedManifest(repo.commonDir, CONTROL)).tasks[0].doc_ref, makeTask().doc_ref); assert.match((await readPersistedManifest(repo.commonDir, CONTROL)).tasks[0].admission_digest, /^[0-9a-f]{64}$/);
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const a = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: phaseGate.revision, task: makeTask() });
+  assert.equal(a.revision, 2); assert.deepEqual((await readPersistedManifest(repo.commonDir, CONTROL)).tasks[0].doc_ref, makeTask().doc_ref); assert.match((await readPersistedManifest(repo.commonDir, CONTROL)).tasks[0].admission_digest, /^[0-9a-f]{64}$/);
   assert.deepEqual(await readdir(join(repo.commonDir, "dotagents", "orchestrate", "controls", CONTROL)), ["manifest.json"]);
   const f = makeTask({ task_id: "task-f", classification: "F", effect: "read", write_scope: [] });
   const fRecorded = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: a.revision, task: f });
@@ -556,12 +588,13 @@ test("TaskはF/A/H、scope、approval、global task_id一意性を正しく記�
 
 test("Task documentが未作成ならgit障害へ誤分類しない", async (t) => {
   const { repo, result } = await initialized(t);
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   await assert.rejects(
     api.taskRecord({
       cwd: repo.root,
       control_id: CONTROL,
       actor_id: "parent-001",
-      expected_revision: result.revision,
+      expected_revision: phaseGate.revision,
       task: makeTask({ task_id: "missing-task-document", doc_ref: "docs/not-created.md" }),
     }),
     (error) => {
@@ -575,9 +608,10 @@ test("Task documentが未作成ならgit障害へ誤分類しない", async (t) 
 
 test("H Task admissionはapproval snapshotのoperation digestと有効期限を照合する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "approval-control" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const approval = makeApproval();
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "approval-control", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "h-task", classification: "H", effect: "read", write_scope: [], approval }),
   });
   const wrong = await api.workerRunRecord({
@@ -605,18 +639,19 @@ test("H Task admissionはapproval snapshotのoperation digestと有効期限を�
 
 test("role/effect policy snapshotはread-only roleと未承認integrator writeを拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "role-effect-control" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   for (const role of ["sorter", "refuter", "verifier"]) {
     await assert.rejects(api.taskRecord({
-      cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: result.revision,
+      cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: phaseGate.revision,
       task: makeTask({ task_id: `${role}-write`, role }),
     }), code("ROLE_EFFECT_FORBIDDEN"));
   }
   await assert.rejects(api.taskRecord({
-    cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "integrator-write", role: "integrator" }),
   }), code("ROLE_EFFECT_FORBIDDEN"));
   const allowed = await api.taskRecord({
-    cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "role-effect-control", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "integrator-h-write", role: "integrator", classification: "H", approval: makeApproval() }),
   });
   assert.equal(allowed.manifest.tasks[0].role, "integrator");
@@ -709,8 +744,9 @@ test("Registry observationは根拠付きtri-stateとcapacityを保存し、将�
 
 test("Placement dry-runはRegistry由来の候補をcanonical順で評価し、状態を変更しない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "placement-control", budget: makeBudget({ max_wall_time_seconds: 3600, max_cost_microusd: 1000000 }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-control", actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "placement-control", actor_id: "parent-001", expected_revision: result.revision,
+    cwd: repo.root, control_id: "placement-control", actor_id: "parent-001", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "placement-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const observedAt = "2026-07-14T00:00:00.000Z";
@@ -806,8 +842,9 @@ test("Placement dry-runはRegistry由来の候補をcanonical順で評価し、�
 
 test("Placement dry-runは同一executor/workflowのadmitted予約をRegistry observed_inflightへ合成する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "placement-capacity-reservation" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-capacity-reservation", actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "placement-capacity-reservation", actor_id: "parent-001", expected_revision: result.revision,
+    cwd: repo.root, control_id: "placement-capacity-reservation", actor_id: "parent-001", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "capacity-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const workerCapabilities = makeWorkerRun().workflow_capabilities;
@@ -880,6 +917,7 @@ test("Placement dry-runはF/H・workspace・global write conflictを実行せず
     executor: { adapter_id: "parent", contract_version: "v1", instance_id: "parent-session", handle_schema_id: "parent.correlation.v1" }, workflow_id: "direct",
   });
   let revision = result.revision;
+  const policyPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent-001", expected_revision: revision, risk: "standard", behavior_lane: "behavior-preserving" }); revision = policyPhaseGate.revision;
   for (const observation of [nativeRegistry, parentRegistry]) {
     const recorded = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent-001", expected_revision: revision, observation });
     revision = recorded.revision;
@@ -932,8 +970,9 @@ test("Placement dry-runはF/H・workspace・global write conflictを実行せず
 
 test("Placement dry-runは古いRegistry snapshotをsupersedeし、同時刻の競合snapshotをreviewへ送る", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "placement-refresh-control" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-refresh-control", actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "placement-refresh-control", actor_id: "parent-001", expected_revision: result.revision,
+    cwd: repo.root, control_id: "placement-refresh-control", actor_id: "parent-001", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "refresh-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const capacity = {
@@ -966,8 +1005,9 @@ test("Placement dry-runは古いRegistry snapshotをsupersedeし、同時刻の�
 
 test("Placement dry-runはRegistry観測済みのRun heartbeatをcapacityへ二重加算しない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "placement-heartbeat-control" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: result.revision,
+    cwd: repo.root, control_id: "placement-heartbeat-control", actor_id: "parent-001", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "heartbeat-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const capabilities = makeWorkerRun().workflow_capabilities;
@@ -1004,7 +1044,8 @@ test("Placement dry-runはRegistry観測済みのRun heartbeatをcapacityへ二�
 
 test("Placement dry-runはapproach family・retry・integration上限を決定論的理由で拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "placement-policy-control", budget: makeBudget({ max_runs_per_approach_family: 1, max_retries_per_assignment: 0, max_integration_runs: 0 }) });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "placement-policy-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "placement-policy-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const registry = await api.registryObservationRecord({ cwd: repo.root, control_id: "placement-policy-control", actor_id: "parent", expected_revision: task.revision, observation: makeRegistryObservation({ registry_observation_id: "placement-policy-registry", capacity: {
     admission: { value: "true", evidence: evidence("docs/policy-admission.md") }, hard_inflight_limit: { knowledge: "known", value: 8, evidence: evidence("docs/policy-hard.md") }, soft_inflight_limit: { knowledge: "known", value: 8, evidence: evidence("docs/policy-soft.md") }, observed_inflight: { knowledge: "known", value: 0, evidence: evidence("docs/policy-inflight.md") },
   } }) });
@@ -1027,8 +1068,9 @@ test("Placement dry-runはapproach family・retry・integration上限を決定�
 test("Placement件数上限は所有Control内だけを数え別Controlの履歴を消費しない", async (t) => {
   const firstControl = "placement-budget-scope-a"; const secondControl = "placement-budget-scope-b";
   const { repo, result } = await initialized(t, { control_id: firstControl, budget: makeBudget({ max_runs_per_approach_family: 1 }) });
+  const firstPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: firstControl, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const firstTask = await api.taskRecord({
-    cwd: repo.root, control_id: firstControl, actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: firstControl, actor_id: "parent", expected_revision: firstPhaseGate.revision,
     task: makeTask({ task_id: "placement-budget-task-a", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }),
   });
   await api.workerRunRecord({
@@ -1047,8 +1089,9 @@ test("Placement件数上限は所有Control内だけを数え別Controlの履歴
     cwd: repo.root, control_id: secondControl, objective_ref: "docs/control-record-plan.md", actor_id: "parent",
     document_refs: ["docs/control-record-plan.md"], budget: makeBudget({ max_runs_per_approach_family: 1 }),
   });
+  const secondPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: secondControl, actor_id: "parent", expected_revision: second.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const secondTask = await api.taskRecord({
-    cwd: repo.root, control_id: secondControl, actor_id: "parent", expected_revision: second.revision,
+    cwd: repo.root, control_id: secondControl, actor_id: "parent", expected_revision: secondPhaseGate.revision,
     task: makeTask({ task_id: "placement-budget-task-b", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const registry = await api.registryObservationRecord({
@@ -1073,8 +1116,9 @@ test("Placement件数上限は所有Control内だけを数え別Controlの履歴
 
 test("Placement reservationは同一revisionの配置判断をplanned Workerへ原子的に固定する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "placement-reserve-control" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-reserve-control", actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "placement-reserve-control", actor_id: "parent-001", expected_revision: result.revision,
+    cwd: repo.root, control_id: "placement-reserve-control", actor_id: "parent-001", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "reserve-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const registry = makeRegistryObservation({
@@ -1137,8 +1181,9 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
   }), code("PLACEMENT_INELIGIBLE"));
 
   const reviewInit = await api.init({ cwd: repo.root, control_id: "placement-reserve-review", objective_ref: "docs/control-record-plan.md", actor_id: "parent-001", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
+  const reviewPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-reserve-review", actor_id: "parent-001", expected_revision: reviewInit.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const reviewTask = await api.taskRecord({
-    cwd: repo.root, control_id: "placement-reserve-review", actor_id: "parent-001", expected_revision: reviewInit.revision,
+    cwd: repo.root, control_id: "placement-reserve-review", actor_id: "parent-001", expected_revision: reviewPhaseGate.revision,
     task: makeTask({ task_id: "reserve-review-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const reviewObservedAt = "2020-07-14T00:00:00.000Z";
@@ -1166,8 +1211,9 @@ test("Placement reservationは同一revisionの配置判断をplanned Workerへ�
 
 test("Placement予約後に確定したnative handleをdispatch receiptへ相関してControlを継続できる", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "placement-late-handle-control" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "placement-late-handle-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "placement-late-handle-control", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "placement-late-handle-control", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "placement-late-handle-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const registry = await api.registryObservationRecord({
@@ -1219,7 +1265,8 @@ test("Placement予約後に確定したnative handleをdispatch receiptへ相関
 
 test("手動Worker記録もdedicated-worktree isolationを回避できない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "manual-isolation-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "manual-isolation-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "manual-isolation-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
   const run = (workspace_cwd) => makeWorkerRun({ worker_run_id: "manual-isolation-worker", task_id: "manual-isolation-task", assignment_id: "manual-isolation-assignment", workspace_cwd, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "manual-isolation-assignment" } });
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "manual-isolation-control", actor_id: "parent", expected_revision: task.revision, worker_run: run(repo.root) }), code("WORKSPACE_DRIFT"));
   const linked = await addLinkedWorktree(repo, "manual-isolation-linked");
@@ -1230,8 +1277,9 @@ test("手動Worker記録もdedicated-worktree isolationを回避できない", a
 
 test("sidecar durable workはsource予約と実行worktree bindingを分離してreportとacceptを検証する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "sidecar-binding-control" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "sidecar-binding-control", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "sidecar-binding-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }),
   });
   await writeFile(join(repo.root, "LOCAL.md"), "source-only dirty state\n");
@@ -1294,7 +1342,8 @@ test("sidecar durable workはsource予約と実行worktree bindingを分離し�
 test("worker-workspace-bind CLIはrecordだけを行い外部providerやcancel commandを実行しない", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
   const init = await api.init({ cwd: repo.root, control_id: "sidecar-bind-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "sidecar-bind-cli-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "sidecar-bind-cli-task", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
   const recorded = await api.workerRunRecord({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "sidecar-bind-cli-task", workspace_cwd: repo.root, workspace_binding: "executor-isolated" }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: recorded.revision, worker_run_id: "run-001" });
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "sidecar-bind-cli", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
@@ -1307,7 +1356,8 @@ test("worker-workspace-bind CLIはrecordだけを行い外部providerやcancel c
 
 test("未bind sidecar writerもscope予約を保持し、failed terminalはbindingなしで観測できる", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "sidecar-unbound-reservation" });
-  const firstTask = await api.taskRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "sidecar-unbound-first", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const firstTask = await api.taskRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "sidecar-unbound-first", isolation: "dedicated-worktree", write_scope: [{ kind: "file", path: "README.md" }] }) });
   const firstRun = await api.workerRunRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: firstTask.revision, worker_run: makeWorkerRun({ task_id: "sidecar-unbound-first", workspace_cwd: repo.root, workspace_binding: "executor-isolated" }) });
   const firstAdmitted = await api.admitWorker({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: firstRun.revision, worker_run_id: "run-001" });
   const overlappingTask = await api.taskRecord({ cwd: repo.root, control_id: "sidecar-unbound-reservation", actor_id: "parent", expected_revision: firstAdmitted.revision, task: makeTask({ task_id: "sidecar-unbound-overlap", isolation: "none", write_scope: [{ kind: "file", path: "README.md" }] }) });
@@ -1321,7 +1371,8 @@ test("未bind sidecar writerもscope予約を保持し、failed terminalはbindi
 
 test("WorkerとConsultationは分離され、同一read Taskを参照でき、gpt executorを拒否する", async (t) => {
   const { repo, result } = await initialized(t);
-  const ctask = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, task: makeTask({ task_id: "consultation-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const ctask = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: phaseGate.revision, task: makeTask({ task_id: "consultation-task", effect: "read", write_scope: [] }) });
   const consultation = makeConsultation();
   const recorded = await api.consultationRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: ctask.revision, consultation });
   assert.deepEqual(recorded.manifest.consultations, [consultation]);
@@ -1341,7 +1392,8 @@ test("WorkerとConsultationは分離され、同一read Taskを参照でき、gp
 
 test("Task取消とWorker cancel requestは既存実行を変えず、証拠付きの終端だけを許す", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "cancel-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "cancel-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "cancel-task", effect: "read", write_scope: [] }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "cancel-run", task_id: "cancel-task", assignment_id: "cancel-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "cancel-assignment" } }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "cancel-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "cancel-run" });
   const decision = evidence("docs/cancel-decision.md", "decision");
@@ -1361,7 +1413,8 @@ test("Task取消とWorker cancel requestは既存実行を変えず、証拠付�
 
 test("Task取消は既存Consultationを変えず新規dispatchだけを拒否し、active Runのterminal観測を許す", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "cancel-active-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "cancel-active-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "cancel-active-task", effect: "read", write_scope: [] }) });
   const plannedConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: task.revision, consultation: makeConsultation({ consultation_id: "cancel-planned-consultation", task_id: "cancel-active-task", assignment_id: "cancel-planned-consultation-assignment" }) });
   const activeConsultation = await api.consultationRecord({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: plannedConsultation.revision, consultation: makeConsultation({ consultation_id: "cancel-active-consultation", task_id: "cancel-active-task", assignment_id: "cancel-active-consultation-assignment", consultation_handle: { slug: "cancel-active-slug" } }) });
   const consultationDispatched = await api.observeConsultation({ cwd: repo.root, control_id: "cancel-active-control", actor_id: "parent", expected_revision: activeConsultation.revision, consultation_id: "cancel-active-consultation", observation: { state: "dispatched", source: "gpt-connector", observed_version: "gpt-5.6", observed_at: "2026-07-14T00:01:00.000Z", raw_state: "dispatched" } });
@@ -1381,7 +1434,8 @@ test("Task取消は既存Consultationを変えず新規dispatchだけを拒否�
 
 test("Worker cancel requestはplannedとterminalを拒否し、取消record相関の改竄をfail closedにする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "cancel-schema-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "cancel-schema-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "cancel-schema-task", effect: "read", write_scope: [] }) });
   const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "cancel-schema-run", task_id: "cancel-schema-task", assignment_id: "cancel-schema-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "cancel-schema-assignment" } }) });
   const decision = evidence("docs/cancel-schema-decision.md", "decision");
   await assert.rejects(api.requestWorkerCancel({ cwd: repo.root, control_id: "cancel-schema-control", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "cancel-schema-run", decision }), code("INVALID_TRANSITION"));
@@ -1406,7 +1460,8 @@ test("Worker cancel requestはplannedとterminalを拒否し、取消record相�
 
 test("Executor envelopeはworkflowとhandle schemaを分離し、未知adapterをstatus限定で保持する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "executor-envelope-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [], required_capabilities: ["workspace.read", "report.structured"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [], required_capabilities: ["workspace.read", "report.structured"] }) });
   const known = await api.workerRunRecord({
     cwd: repo.root, control_id: "executor-envelope-control", actor_id: "parent", expected_revision: task.revision,
     worker_run: makeWorkerRun({
@@ -1444,8 +1499,9 @@ test("Executor envelopeはworkflowとhandle schemaを分離し、未知adapter�
 
 test("同期sidecarはdurable handleを捏造せずdispatchからstrict report importまで相関する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "sidecar-synchronous-report" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "sidecar-synchronous-report", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "sidecar-synchronous-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const capabilities = [
@@ -1497,7 +1553,8 @@ test("同期sidecarはdurable handleを捏造せずdispatchからstrict report i
 
 test("未知または矛盾したExecutor契約は新規Runへ使えない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "executor-rejection-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-rejection-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "executor-rejection-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "executor-rejection-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "executor-task", effect: "read", write_scope: [] }) });
   const unknown = makeWorkerRun({
     task_id: "executor-task", write_mode: "none", workspace_cwd: repo.root, workflow_id: "future-workflow", executor_handle: null,
     executor: { adapter_id: "future-adapter", contract_version: "v1", instance_id: "future", handle_schema_id: "future.handle.v1" },
@@ -1512,8 +1569,9 @@ test("未知または矛盾したExecutor契約は新規Runへ使えない", asy
 
 test("workflow capability snapshotはTask要件とsidecarのread/write境界をfail-closedにする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "workflow-capability-control" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "workflow-capability-control", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "review-task", effect: "read", write_scope: [], required_capabilities: ["workspace.read", "report.structured"] }),
   });
   const reviewCapabilities = [
@@ -1556,7 +1614,8 @@ test("Budget Envelopeは件数・外部Run・wall time・costとunknownを予約
     budget: makeBudget({ max_worker_runs: 3, max_consultations: 1, max_external_runs: 1, max_wall_time_seconds: 1000, max_cost_microusd: 1000 }),
   });
   assert.deepEqual(result.manifest.budget, makeBudget({ max_worker_runs: 3, max_consultations: 1, max_external_runs: 1, max_wall_time_seconds: 1000, max_cost_microusd: 1000 }));
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "budget-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "budget-task", effect: "read", write_scope: [] }) });
   const external = await api.workerRunRecord({
     cwd: repo.root, control_id: "budget-control", actor_id: "parent", expected_revision: task.revision,
     worker_run: makeWorkerRun({ task_id: "budget-task", write_mode: "none", workspace_cwd: repo.root, budget_reservation: makeBudgetReservation({ wall_time_seconds: 400, cost_microusd: 400 }) }),
@@ -1587,7 +1646,8 @@ test("Budget Envelopeは件数・外部Run・wall time・costとunknownを予約
     cwd: repo.root, control_id: "budget-unknown-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent",
     document_refs: ["docs/control-record-plan.md"], budget: makeBudget({ max_wall_time_seconds: 1000, max_cost_microusd: 1000 }),
   });
-  const unknownTask = await api.taskRecord({ cwd: repo.root, control_id: "budget-unknown-control", actor_id: "parent", expected_revision: unknownControl.revision, task: makeTask({ task_id: "budget-unknown-task", effect: "read", write_scope: [] }) });
+  const unknownPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "budget-unknown-control", actor_id: "parent", expected_revision: unknownControl.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const unknownTask = await api.taskRecord({ cwd: repo.root, control_id: "budget-unknown-control", actor_id: "parent", expected_revision: unknownPhaseGate.revision, task: makeTask({ task_id: "budget-unknown-task", effect: "read", write_scope: [] }) });
   const unknownRun = makeWorkerRun({ worker_run_id: "budget-unknown-run", assignment_id: "budget-unknown-assignment", task_id: "budget-unknown-task", write_mode: "none", workspace_cwd: repo.root, budget_reservation: makeBudgetReservation({ wall_time_seconds: null }) });
   unknownRun.lineage.root_assignment_id = "budget-unknown-assignment";
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "budget-unknown-control", actor_id: "parent", expected_revision: unknownTask.revision, worker_run: unknownRun }), code("BUDGET_UNKNOWN"));
@@ -1596,7 +1656,8 @@ test("Budget Envelopeは件数・外部Run・wall time・costとunknownを予約
     cwd: repo.root, control_id: "budget-unknown-limit-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent",
     document_refs: ["docs/control-record-plan.md"], budget: makeBudget({ max_cost_microusd: null }),
   });
-  const unknownLimitTask = await api.taskRecord({ cwd: repo.root, control_id: "budget-unknown-limit-control", actor_id: "parent", expected_revision: unknownLimitControl.revision, task: makeTask({ task_id: "budget-unknown-limit-task", effect: "read", write_scope: [] }) });
+  const unknownLimitPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "budget-unknown-limit-control", actor_id: "parent", expected_revision: unknownLimitControl.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const unknownLimitTask = await api.taskRecord({ cwd: repo.root, control_id: "budget-unknown-limit-control", actor_id: "parent", expected_revision: unknownLimitPhaseGate.revision, task: makeTask({ task_id: "budget-unknown-limit-task", effect: "read", write_scope: [] }) });
   const knownReservation = makeWorkerRun({ worker_run_id: "budget-known-run", assignment_id: "budget-known-assignment", task_id: "budget-unknown-limit-task", write_mode: "none", workspace_cwd: repo.root });
   knownReservation.lineage.root_assignment_id = "budget-known-assignment";
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "budget-unknown-limit-control", actor_id: "parent", expected_revision: unknownLimitTask.revision, worker_run: knownReservation }), code("BUDGET_UNKNOWN"));
@@ -1604,7 +1665,8 @@ test("Budget Envelopeは件数・外部Run・wall time・costとunknownを予約
 
 test("Worker state遷移・evidence・retry reservationをrevision連鎖で保存する", async (t) => {
   const { repo, result } = await initialized(t);
-  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, task: makeTask() });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: phaseGate.revision, task: makeTask() });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: task.revision, worker_run: makeWorkerRun({ workspace_cwd: repo.root }) });
   assert.equal(run.manifest.worker_runs[0].state, "planned");
   assert.deepEqual(Object.keys(run.manifest.worker_runs[0].workspace).sort(), ["common_dir_realpath", "git_dir_file_id", "git_dir_realpath", "head_at_record", "head_at_reservation", "kind", "worktree_root_realpath"]);
@@ -1632,7 +1694,7 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
   const failed = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: terminalWorkerObservation() });
   assert.equal(failed.manifest.worker_runs[0].state, "failed");
   assert.deepEqual(failed.manifest.worker_runs[0].terminal_evidence, [evidence("docs/executor-terminal-proof.md")]);
-  assert.deepEqual(failed.manifest.transition_receipts.map((entry) => entry.operation), ["control-init", "task-record", "worker-run-record", "worker-admit", "worker-observe", "worker-observe"]);
+  assert.deepEqual(failed.manifest.transition_receipts.map((entry) => entry.operation), ["control-init", "phase-gate-record", "task-record", "worker-run-record", "worker-admit", "worker-observe", "worker-observe"]);
   assert.deepEqual(failed.manifest.transition_receipts.at(-2).evidence, [evidence("docs/dispatch-proof.md")]);
   assert.deepEqual(failed.manifest.transition_receipts.at(-1).evidence, [evidence("docs/executor-terminal-proof.md")]);
   const tampered = structuredClone(failed.manifest);
@@ -1658,7 +1720,8 @@ test("Worker state遷移・evidence・retry reservationをrevision連鎖で保�
 test("実adapter projectionをControl RecordのWorkerとConsultationへ往復できる", async (t) => {
   const controlId = "adapter-roundtrip-control"; const agentPath = "/root/adapter_roundtrip_agent";
   const { repo, result } = await initialized(t, { control_id: controlId });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "adapter-roundtrip-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "adapter-roundtrip-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const workerRun = makeWorkerRun({
     worker_run_id: "adapter-roundtrip-worker", task_id: "adapter-roundtrip-task", assignment_id: "adapter-roundtrip-worker-assignment",
     executor: { adapter_id: "codex-native", contract_version: "v1", instance_id: "native-subagent", handle_schema_id: "codex-native.agent-path.v1" },
@@ -1683,7 +1746,8 @@ test("実adapter projectionをControl RecordのWorkerとConsultationへ往復で
 
 test("Task snapshotは文書全体OIDから独立し、同一Control依存のready gateとcycle検査を持つ", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "dependency-control" });
-  const foundation = await api.taskRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "foundation-task" }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const foundation = await api.taskRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "foundation-task" }) });
   const dependentTask = makeTask({ task_id: "dependent-task", depends_on: ["foundation-task"] });
   const dependent = await api.taskRecord({ cwd: repo.root, control_id: "dependency-control", actor_id: "parent", expected_revision: foundation.revision, task: dependentTask });
   assert.equal(dependent.manifest.tasks[1].admission_digest, taskAdmissionDigest(dependent.manifest.tasks[1]));
@@ -1709,7 +1773,8 @@ test("Task snapshotは文書全体OIDから独立し、同一Control依存のrea
 
 test("Worker lineageは親子・root assignment・context・入力digestを事実として保存する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "lineage-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "lineage-task" }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "lineage-task" }) });
   const root = await api.workerRunRecord({ cwd: repo.root, control_id: "lineage-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "lineage-task", workspace_cwd: repo.root }) });
   assert.equal(root.manifest.worker_runs[0].lineage.root_assignment_id, "assignment-001");
   const childLineage = {
@@ -1734,6 +1799,7 @@ test("docs artifactは4種別のdigest付き投影だけを記録し、親status
   const { repo, result } = await initialized(t, { control_id: "artifact-control" });
   const digest = createHash("sha256").update("# artifact\n").digest("hex"); const ref = `docs/artifact.${digest}.md`; await writeFile(join(repo.root, ref), "# artifact\n");
   let revision = result.revision;
+  const artifactControlPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, risk: "standard", behavior_lane: "behavior-preserving" }); revision = artifactControlPhaseGate.revision;
   for (const artifact_kind of ["finding", "approach", "gap", "decision"]) {
     const recorded = await api.artifactRecord({ cwd: repo.root, control_id: "artifact-control", actor_id: "parent", expected_revision: revision, artifact: { artifact_id: `artifact-${artifact_kind}`, artifact_kind, artifact_ref: ref, artifact_digest: digest, status: "current" } });
     revision = recorded.revision;
@@ -1802,8 +1868,9 @@ test("artifact世代交代はmutable pathと旧版上書きを拒否しexact byt
 
 test("Finding共有はcontext policyと現行digestを実行境界で検査しlineageをreceiptへ束縛する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "finding-share-boundary" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const body = "# shared finding\n"; const digest = createHash("sha256").update(body).digest("hex"); const ref = `docs/shared-finding.${digest}.md`; await writeFile(join(repo.root, ref), body);
-  const first = await api.artifactRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: result.revision, artifact: { artifact_id: "shared-finding-a", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
+  const first = await api.artifactRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: phaseGate.revision, artifact: { artifact_id: "shared-finding-a", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
   const second = await api.artifactRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: first.revision, artifact: { artifact_id: "shared-finding-b", artifact_kind: "finding", artifact_ref: ref, artifact_digest: digest, status: "current" } });
   const sharingPolicy = { ...makeWorkerRun().lineage.context_policy, share_existing_findings: true };
   const sharingTask = await api.taskRecord({ cwd: repo.root, control_id: "finding-share-boundary", actor_id: "parent", expected_revision: second.revision, task: makeTask({ task_id: "finding-share-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"], context_policy: sharingPolicy }) });
@@ -1858,6 +1925,7 @@ test("governed approach familyはblock/reopenで新規入口だけを止め、ar
     ["family-decision-reopen", "decision", "# reopen\n"], ["family-basis-gap", "gap", "# gap\n"],
   ];
   let revision = result.revision;
+  const familyGovernancePhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: revision, risk: "standard", behavior_lane: "behavior-preserving" }); revision = familyGovernancePhaseGate.revision;
   for (const [artifact_id, artifact_kind, body] of artifacts) {
     const artifact_digest = createHash("sha256").update(body).digest("hex"); const artifact_ref = `docs/${artifact_id}.${artifact_digest}.md`; await writeFile(join(repo.root, artifact_ref), body);
     const recorded = await api.artifactRecord({ cwd: repo.root, control_id: "family-governance", actor_id: "parent", expected_revision: revision, artifact: { artifact_id, artifact_kind, artifact_ref, artifact_digest, status: "current" } });
@@ -1891,8 +1959,9 @@ test("governed approach familyはblock/reopenで新規入口だけを止め、ar
 
 test("approach family governanceのcontext mismatchとartifact kind不足をfail closedにする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "family-negative" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const body = "# finding\n"; const artifact_digest = createHash("sha256").update(body).digest("hex"); const artifact_ref = `docs/family-finding.${artifact_digest}.md`; await writeFile(join(repo.root, artifact_ref), body);
-  const artifact = await api.artifactRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: result.revision, artifact: { artifact_id: "family-finding", artifact_kind: "finding", artifact_ref, artifact_digest, status: "current" } });
+  const artifact = await api.artifactRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: phaseGate.revision, artifact: { artifact_id: "family-finding", artifact_kind: "finding", artifact_ref, artifact_digest, status: "current" } });
   const governedPolicy = makeWorkerRun().lineage.context_policy;
   const family = await api.approachFamilyGovernanceRecord({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: artifact.revision, approach_family_ref: "implementation-primary", context_policy: governedPolicy });
   await assert.rejects(api.approachFamilyBlock({ cwd: repo.root, control_id: "family-negative", actor_id: "parent", expected_revision: family.revision, approach_family_ref: "implementation-primary", decision_artifact_id: "family-finding", basis_artifact_ids: ["family-finding"] }), code("ARTIFACT_INVALID"));
@@ -1931,12 +2000,13 @@ test("approach family CLIはrecord/block/reopen/statusだけを行い外部provi
 
 test("DedupとFinding価値は親が裁定し票数・severity・独立性scoreをschemaへ持ち込めない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "parent-semantic-verdict" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const body = "# semantic finding\n"; const artifact_digest = createHash("sha256").update(body).digest("hex"); const artifact_ref = `docs/semantic-finding.${artifact_digest}.md`; await writeFile(join(repo.root, artifact_ref), body);
   const baseArtifact = { artifact_id: "semantic-finding", artifact_kind: "finding", artifact_ref, artifact_digest, status: "current" };
   for (const forbidden of [{ severity: "critical" }, { votes: 3 }, { quorum: 2 }, { semantic_dedup_score: 0.95 }]) {
-    await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: result.revision, artifact: { ...baseArtifact, ...forbidden } }), code("INVALID_SCHEMA"));
+    await assert.rejects(api.artifactRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: phaseGate.revision, artifact: { ...baseArtifact, ...forbidden } }), code("INVALID_SCHEMA"));
   }
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "semantic-task", effect: "read", write_scope: [] }) });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "semantic-task", effect: "read", write_scope: [] }) });
   const scoredLineage = { ...makeWorkerRun().lineage, root_assignment_id: "semantic-assignment", independence_score: 1 };
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "parent-semantic-verdict", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "semantic-worker", task_id: "semantic-task", assignment_id: "semantic-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: scoredLineage }) }), code("INVALID_SCHEMA"));
   for (const forbidden of [{ quorum: 2 }, { semantic_dedup_score: 0.95 }]) {
@@ -1946,7 +2016,8 @@ test("DedupとFinding価値は親が裁定し票数・severity・独立性score�
 
 test("read-only Workerも正式admissionを通り、証拠つき結果と親検証を保存する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "read-admission-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "read-admission-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "read-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "read-admission-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "read-admission-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "read-task", effect: "read", write_scope: [] }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "read-admission-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "read-task", write_mode: "none", workspace_cwd: repo.root }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "read-admission-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
   assert.equal(admitted.manifest.worker_runs[0].state, "admitted");
@@ -1961,7 +2032,8 @@ test("read-only Workerも正式admissionを通り、証拠つき結果と親検�
 
 test("manifest truth tableとtyped evidenceは欠損・矛盾・黙殺をfail-closedにする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "truth-table-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "truth-table-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "truth-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "truth-table-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "truth-table-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "truth-task", effect: "read", write_scope: [] }) });
   const badEvidenceRun = makeWorkerRun({ worker_run_id: "bad-evidence-run", task_id: "truth-task", assignment_id: "bad-evidence-assignment", write_mode: "none", workspace_cwd: repo.root });
   badEvidenceRun.execution_verification.evidence = { ...badEvidenceRun.execution_verification.evidence, digest: "not-sha256" };
   await assert.rejects(api.workerRunRecord({ cwd: repo.root, control_id: "truth-table-control", actor_id: "parent", expected_revision: task.revision, worker_run: badEvidenceRun }), code("INVALID_SCHEMA"));
@@ -1984,10 +2056,12 @@ test("linked worktree共通dirでglobal lockとwrite競合を直列化し、non-
   const one = await api.init({ cwd: main.root, control_id: "main-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const two = await api.init({ cwd: linked.root, control_id: "linked-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   assert.equal(one.manifest.declaration.common_dir_realpath, two.manifest.declaration.common_dir_realpath);
-  const global = await api.taskRecord({ cwd: main.root, control_id: "main-control", actor_id: "parent", expected_revision: one.revision, task: makeTask({ task_id: "global-unique" }) });
-  await assert.rejects(api.taskRecord({ cwd: linked.root, control_id: "linked-control", actor_id: "parent", expected_revision: two.revision, task: makeTask({ task_id: "global-unique" }) }), code("DUPLICATE_ID"));
+  const onePhaseGate = await api.phaseGateRecord({ cwd: main.root, control_id: "main-control", actor_id: "parent", expected_revision: one.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const twoPhaseGate = await api.phaseGateRecord({ cwd: linked.root, control_id: "linked-control", actor_id: "parent", expected_revision: two.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const global = await api.taskRecord({ cwd: main.root, control_id: "main-control", actor_id: "parent", expected_revision: onePhaseGate.revision, task: makeTask({ task_id: "global-unique" }) });
+  await assert.rejects(api.taskRecord({ cwd: linked.root, control_id: "linked-control", actor_id: "parent", expected_revision: twoPhaseGate.revision, task: makeTask({ task_id: "global-unique" }) }), code("DUPLICATE_ID"));
   const mainTask = await api.taskRecord({ cwd: main.root, control_id: "main-control", actor_id: "parent", expected_revision: global.revision, task: makeTask({ task_id: "race-a" }) });
-  const linkedTask = await api.taskRecord({ cwd: linked.root, control_id: "linked-control", actor_id: "parent", expected_revision: two.revision, task: makeTask({ task_id: "race-b" }) });
+  const linkedTask = await api.taskRecord({ cwd: linked.root, control_id: "linked-control", actor_id: "parent", expected_revision: twoPhaseGate.revision, task: makeTask({ task_id: "race-b" }) });
   const mainRun = await api.workerRunRecord({ cwd: main.root, control_id: "main-control", actor_id: "parent", expected_revision: mainTask.revision, worker_run: makeWorkerRun({ worker_run_id: "race-run-a", task_id: "race-a", assignment_id: "race-assignment-a", workspace_cwd: main.root }) });
   const linkedRun = await api.workerRunRecord({ cwd: linked.root, control_id: "linked-control", actor_id: "parent", expected_revision: linkedTask.revision, worker_run: makeWorkerRun({ worker_run_id: "race-run-b", task_id: "race-b", assignment_id: "race-assignment-b", workspace_cwd: linked.root }) });
   assert.deepEqual(await api.conflictCheck({ cwd: main.root, control_id: "main-control" }), { conflicts: [] });
@@ -2014,12 +2088,14 @@ test("全manifest scanはassignment immutable tupleをControl横断で再検証�
   const repo = await createGitRepo(base); const linked = await addLinkedWorktree(repo, "assignment-linked");
   const first = await api.init({ cwd: repo.root, control_id: "assignment-one", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const second = await api.init({ cwd: linked.root, control_id: "assignment-two", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const taskOne = await api.taskRecord({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: first.revision, task: makeTask({ task_id: "assignment-task-one", effect: "read", write_scope: [] }) });
+  const firstPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: first.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const secondPhaseGate = await api.phaseGateRecord({ cwd: linked.root, control_id: "assignment-two", actor_id: "parent", expected_revision: second.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const taskOne = await api.taskRecord({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: firstPhaseGate.revision, task: makeTask({ task_id: "assignment-task-one", effect: "read", write_scope: [] }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: taskOne.revision, worker_run: makeWorkerRun({ worker_run_id: "assignment-run-one", assignment_id: "shared-assignment", task_id: "assignment-task-one", write_mode: "none", workspace_cwd: repo.root }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: run.revision, worker_run_id: "assignment-run-one" });
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "assignment-run-one", observation: workerObservation("dispatched") });
   await api.observeWorker({ cwd: repo.root, control_id: "assignment-one", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "assignment-run-one", observation: terminalWorkerObservation() });
-  const taskTwo = await api.taskRecord({ cwd: linked.root, control_id: "assignment-two", actor_id: "parent", expected_revision: second.revision, task: makeTask({ task_id: "assignment-task-two", effect: "read", write_scope: [] }) });
+  const taskTwo = await api.taskRecord({ cwd: linked.root, control_id: "assignment-two", actor_id: "parent", expected_revision: secondPhaseGate.revision, task: makeTask({ task_id: "assignment-task-two", effect: "read", write_scope: [] }) });
   await assert.rejects(api.workerRunRecord({
     cwd: linked.root, control_id: "assignment-two", actor_id: "parent", expected_revision: taskTwo.revision,
     worker_run: makeWorkerRun({ worker_run_id: "assignment-run-two", assignment_id: "shared-assignment", task_id: "assignment-task-two", write_mode: "none", workspace_cwd: linked.root }),
@@ -2028,7 +2104,8 @@ test("全manifest scanはassignment immutable tupleをControl横断で再検証�
 
 test("同一worktreeはscopeが非交差でも予約済みwrite Runを一件だけにする", async (t) => {
   const { repo, result } = await initialized(t);
-  const firstTask = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "same-wt-a", write_scope: [{ kind: "directory", path: "lib" }] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const firstTask = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "same-wt-a", write_scope: [{ kind: "directory", path: "lib" }] }) });
   const secondTask = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: firstTask.revision, task: makeTask({ task_id: "same-wt-b", write_scope: [{ kind: "directory", path: "tests" }] }) });
   const firstRun = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: secondTask.revision, worker_run: makeWorkerRun({ worker_run_id: "same-wt-run-a", task_id: "same-wt-a", assignment_id: "same-wt-assignment-a", workspace_cwd: repo.root }) });
   const secondRun = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: firstRun.revision, worker_run: makeWorkerRun({ worker_run_id: "same-wt-run-b", task_id: "same-wt-b", assignment_id: "same-wt-assignment-b", workspace_cwd: repo.root }) });
@@ -2042,8 +2119,10 @@ test("linked worktreeの同一scopeは同一alternative_groupのisolated-alterna
   const main = await createGitRepo(base); const linked = await addLinkedWorktree(main, "alternative-linked");
   const left = await api.init({ cwd: main.root, control_id: "alternative-left", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const right = await api.init({ cwd: linked.root, control_id: "alternative-right", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const leftTask = await api.taskRecord({ cwd: main.root, control_id: "alternative-left", actor_id: "parent", expected_revision: left.revision, task: makeTask({ task_id: "alternative-task-left", alternative_group: "choice-a" }) });
-  const rightTask = await api.taskRecord({ cwd: linked.root, control_id: "alternative-right", actor_id: "parent", expected_revision: right.revision, task: makeTask({ task_id: "alternative-task-right", alternative_group: "choice-a" }) });
+  const leftPhaseGate = await api.phaseGateRecord({ cwd: main.root, control_id: "alternative-left", actor_id: "parent", expected_revision: left.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const rightPhaseGate = await api.phaseGateRecord({ cwd: linked.root, control_id: "alternative-right", actor_id: "parent", expected_revision: right.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const leftTask = await api.taskRecord({ cwd: main.root, control_id: "alternative-left", actor_id: "parent", expected_revision: leftPhaseGate.revision, task: makeTask({ task_id: "alternative-task-left", alternative_group: "choice-a" }) });
+  const rightTask = await api.taskRecord({ cwd: linked.root, control_id: "alternative-right", actor_id: "parent", expected_revision: rightPhaseGate.revision, task: makeTask({ task_id: "alternative-task-right", alternative_group: "choice-a" }) });
   const leftRun = await api.workerRunRecord({ cwd: main.root, control_id: "alternative-left", actor_id: "parent", expected_revision: leftTask.revision, worker_run: makeWorkerRun({ worker_run_id: "alternative-run-left", task_id: "alternative-task-left", assignment_id: "alternative-assignment-left", workspace_cwd: main.root, write_mode: "isolated-alternative" }) });
   const rightRun = await api.workerRunRecord({ cwd: linked.root, control_id: "alternative-right", actor_id: "parent", expected_revision: rightTask.revision, worker_run: makeWorkerRun({ worker_run_id: "alternative-run-right", task_id: "alternative-task-right", assignment_id: "alternative-assignment-right", workspace_cwd: linked.root, write_mode: "isolated-alternative" }) });
   const leftReserved = await api.admitWorker({ cwd: main.root, control_id: "alternative-left", actor_id: "parent", expected_revision: leftRun.revision, worker_run_id: "alternative-run-left" });
@@ -2057,8 +2136,10 @@ test("別linked worktreeでalternative_group不一致は同一scopeを予約で�
   const main = await createGitRepo(base); const linked = await addLinkedWorktree(main, "negative-alternative-linked");
   const left = await api.init({ cwd: main.root, control_id: "negative-left", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
   const right = await api.init({ cwd: linked.root, control_id: "negative-right", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const leftTask = await api.taskRecord({ cwd: main.root, control_id: "negative-left", actor_id: "parent", expected_revision: left.revision, task: makeTask({ task_id: "negative-left-task", alternative_group: "choice-a" }) });
-  const rightTask = await api.taskRecord({ cwd: linked.root, control_id: "negative-right", actor_id: "parent", expected_revision: right.revision, task: makeTask({ task_id: "negative-right-task", alternative_group: "choice-b" }) });
+  const leftPhaseGate = await api.phaseGateRecord({ cwd: main.root, control_id: "negative-left", actor_id: "parent", expected_revision: left.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const rightPhaseGate = await api.phaseGateRecord({ cwd: linked.root, control_id: "negative-right", actor_id: "parent", expected_revision: right.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const leftTask = await api.taskRecord({ cwd: main.root, control_id: "negative-left", actor_id: "parent", expected_revision: leftPhaseGate.revision, task: makeTask({ task_id: "negative-left-task", alternative_group: "choice-a" }) });
+  const rightTask = await api.taskRecord({ cwd: linked.root, control_id: "negative-right", actor_id: "parent", expected_revision: rightPhaseGate.revision, task: makeTask({ task_id: "negative-right-task", alternative_group: "choice-b" }) });
   const leftRun = await api.workerRunRecord({ cwd: main.root, control_id: "negative-left", actor_id: "parent", expected_revision: leftTask.revision, worker_run: makeWorkerRun({ worker_run_id: "negative-left-run", task_id: "negative-left-task", assignment_id: "negative-left-assignment", workspace_cwd: main.root, write_mode: "isolated-alternative" }) });
   const rightRun = await api.workerRunRecord({ cwd: linked.root, control_id: "negative-right", actor_id: "parent", expected_revision: rightTask.revision, worker_run: makeWorkerRun({ worker_run_id: "negative-right-run", task_id: "negative-right-task", assignment_id: "negative-right-assignment", workspace_cwd: linked.root, write_mode: "isolated-alternative" }) });
   const admitted = await api.admitWorker({ cwd: main.root, control_id: "negative-left", actor_id: "parent", expected_revision: leftRun.revision, worker_run_id: "negative-left-run" });
@@ -2070,7 +2151,8 @@ test("linked worktreeをremove/re-addした実identity driftはadmission時に�
   const base = await makeTempDir(); t.after(() => cleanupDir(base));
   const main = await createGitRepo(base); const linked = await addLinkedWorktree(main, "identity-linked");
   const init = await api.init({ cwd: main.root, control_id: "identity-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: main.root, control_id: "identity-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "identity-task" }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: main.root, control_id: "identity-control", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: main.root, control_id: "identity-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "identity-task" }) });
   const run = await api.workerRunRecord({ cwd: main.root, control_id: "identity-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "identity-task", workspace_cwd: linked.root }) });
   const recordedFileId = run.manifest.worker_runs[0].workspace.git_dir_file_id;
   assert.match(recordedFileId, /^\d+:\d+$/);
@@ -2091,6 +2173,7 @@ test("atomic manifest更新中も並行readerは完全JSONと旧または新revi
   const observations = []; let reading = true;
   const reader = (async () => { while (reading) { const value = JSON.parse(await readFile(manifestPath, "utf8")); observations.push(value.record_revision); } })();
   let revision = result.revision;
+  const atomicPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: revision, risk: "standard", behavior_lane: "behavior-preserving" }); revision = atomicPhaseGate.revision;
   for (const number of [1, 2, 3]) {
     const mutation = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: revision, task: makeTask({ task_id: `atomic-task-${number}` }) });
     revision = mutation.revision;
@@ -2104,15 +2187,17 @@ test("atomic manifest更新中も並行readerは完全JSONと旧または新revi
 test("durability faultはlock残留や偽成功を作らずunknown outcomeを明示する", async (t) => {
   await withRepo(t, async (repo) => {
     const init = await api.init({ cwd: repo.root, control_id: "manifest-fault", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-    await withFault("manifest-after-rename", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "manifest-fault", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "committed-but-unknown" }) }), code("COMMIT_OUTCOME_UNKNOWN")));
+    const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "manifest-fault", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+    await withFault("manifest-after-rename", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "manifest-fault", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "committed-but-unknown" }) }), code("COMMIT_OUTCOME_UNKNOWN")));
     const observed = await api.status({ cwd: repo.root, control_id: "manifest-fault" });
-    assert.equal(observed.record_revision, 1); assert.equal(observed.tasks[0].task_id, "committed-but-unknown");
+    assert.equal(observed.record_revision, 2); assert.equal(observed.tasks[0].task_id, "committed-but-unknown");
   });
   await withRepo(t, async (repo) => {
     const init = await api.init({ cwd: repo.root, control_id: "owner-fault", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-    await withFault("owner-publish-after-rename", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "owner-fault", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "never-recorded" }) }), code("IO_FAILURE")));
+    const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "owner-fault", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+    await withFault("owner-publish-after-rename", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "owner-fault", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "never-recorded" }) }), code("IO_FAILURE")));
     assert.deepEqual(await readdir(join(repo.commonDir, "dotagents", "orchestrate", "lock-owners")), []);
-    await withFault("owner-release-after-unlink", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "owner-fault", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "release-unknown" }) }), code("LOCK_OUTCOME_UNKNOWN")));
+    await withFault("owner-release-after-unlink", () => assert.rejects(api.taskRecord({ cwd: repo.root, control_id: "owner-fault", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "release-unknown" }) }), code("LOCK_OUTCOME_UNKNOWN")));
     assert.equal((await api.status({ cwd: repo.root, control_id: "owner-fault" })).tasks[0].task_id, "release-unknown");
     assert.deepEqual(await readdir(join(repo.commonDir, "dotagents", "orchestrate", "lock-owners")), []);
   });
@@ -2126,7 +2211,8 @@ test("durability faultはlock残留や偽成功を作らずunknown outcomeを明
 
 test("baseline後のscope内変更はcompletedとacceptを通過する", async (t) => {
   const { repo, result } = await initialized(t);
-  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "fingerprint-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "fingerprint-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "fingerprint-task", workspace_cwd: repo.root }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
   await writeFile(join(repo.root, "README.md"), "scope-in-change\n");
@@ -2141,7 +2227,8 @@ test("baseline後のscope内変更はcompletedとacceptを通過する", async (
 
 test("active fixed writer中のTask非交差fast-forward commitはcompletedを通過する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "safe-head-advance" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: result.revision, task: makeTask({
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({
     task_id: "safe-head-task", read_scope: [{ kind: "file", path: "docs/control-record-plan.md" }], write_scope: [{ kind: "file", path: "README.md" }],
   }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "safe-head-advance", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "safe-head-task", workspace_cwd: repo.root }) });
@@ -2159,7 +2246,8 @@ test("active fixed writer中のTask非交差fast-forward commitはcompletedを�
 
 test("active fixed writer中にTask read scopeをcommitするとWORKSPACE_DRIFTで拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "unsafe-head-advance" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: result.revision, task: makeTask({
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({
     task_id: "unsafe-head-task", read_scope: [{ kind: "file", path: "docs/control-record-plan.md" }], write_scope: [{ kind: "file", path: "README.md" }],
   }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "unsafe-head-advance", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "unsafe-head-task", workspace_cwd: repo.root }) });
@@ -2173,7 +2261,8 @@ test("active fixed writer中にTask read scopeをcommitするとWORKSPACE_DRIFT�
 
 test("active fixed writer中のfast-forwardでも特殊index flagはWORKSPACE_DRIFTで拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "flagged-head-advance" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: result.revision, task: makeTask({
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({
     task_id: "flagged-head-task", read_scope: [{ kind: "file", path: "docs/control-record-plan.md" }], write_scope: [{ kind: "file", path: "README.md" }],
   }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "flagged-head-advance", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "flagged-head-task", workspace_cwd: repo.root }) });
@@ -2188,7 +2277,8 @@ test("active fixed writer中のfast-forwardでも特殊index flagはWORKSPACE_DR
 
 test("admission後のscope外変更はcompleted観測をWORKSPACE_DRIFTで拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "scope-outside-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "scope-outside-task", write_scope: [{ kind: "directory", path: "lib/orchestrate" }] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "scope-outside-task", write_scope: [{ kind: "directory", path: "lib/orchestrate" }] }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "scope-outside-task", workspace_cwd: repo.root }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
@@ -2201,7 +2291,8 @@ test("admission後の既存dirty scope外file mode変更をWORKSPACE_DRIFTで拒
     const outside = join(repo.root, "docs", "control-record-plan.md");
     await writeFile(outside, "# dirty control record fixture plan\n");
     const init = await api.init({ cwd: repo.root, control_id: "mode-drift-control", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-    const task = await api.taskRecord({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "mode-drift-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
+    const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+    const task = await api.taskRecord({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "mode-drift-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
     const run = await api.workerRunRecord({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "mode-drift-task", workspace_cwd: repo.root }) });
     const admitted = await api.admitWorker({ cwd: repo.root, control_id: "mode-drift-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
     const baseline = admitted.manifest.worker_runs[0].baseline_workspace_fingerprint.files.find((entry) => entry.path === "docs/control-record-plan.md");
@@ -2214,7 +2305,8 @@ test("admission後の既存dirty scope外file mode変更をWORKSPACE_DRIFTで拒
 
 test("completed後accept前のworkspace変更はacceptをWORKSPACE_DRIFTで拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "accept-drift-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "accept-drift-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "accept-drift-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "accept-drift-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "accept-drift-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "accept-drift-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "accept-drift-control", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "accept-drift-task", workspace_cwd: repo.root }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "accept-drift-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
   await writeFile(join(repo.root, "README.md"), "first scoped change\n");
@@ -2230,7 +2322,8 @@ test("writer fingerprintはindex変更と宣言scope内のignored成果物を拒
     await writeFile(join(repo.root, ".gitignore"), "ignored-output.log\n");
     runGit(repo.root, ["add", ".gitignore"]); runGit(repo.root, ["commit", "-q", "-m", "ignore fixture"]);
     const init = await api.init({ cwd: repo.root, control_id: "ignored-guard", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-    const task = await api.taskRecord({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "ignored-task", write_scope: [{ kind: "file", path: "ignored-output.log" }] }) });
+    const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+    const task = await api.taskRecord({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "ignored-task", write_scope: [{ kind: "file", path: "ignored-output.log" }] }) });
     const run = await api.workerRunRecord({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "ignored-task", workspace_cwd: repo.root }) });
     const admitted = await api.admitWorker({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
     const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "ignored-guard", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
@@ -2239,7 +2332,8 @@ test("writer fingerprintはindex変更と宣言scope内のignored成果物を拒
   });
   await withRepo(t, async (repo) => {
     const init = await api.init({ cwd: repo.root, control_id: "index-guard", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-    const task = await api.taskRecord({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "index-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
+    const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+    const task = await api.taskRecord({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "index-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
     const run = await api.workerRunRecord({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ task_id: "index-task", workspace_cwd: repo.root }) });
     const admitted = await api.admitWorker({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
     const dispatched = await api.observeWorker({ cwd: repo.root, control_id: "index-guard", actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
@@ -2308,7 +2402,8 @@ test("malformed manifestまたはcontrols未知entryが次mutationをfail-closed
 
 test("Task finalizationはactive child・未裁定・取消を拒否しdecision receiptへ完全拘束する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "task-finalization-boundary" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "finalization-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "finalization-task", effect: "read", write_scope: [] }) });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "finalization-run", task_id: "finalization-task", assignment_id: "finalization-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "finalization-assignment" } }) });
   const finalize = (expected_revision) => api.taskFinalizeRecord({ cwd: repo.root, control_id: "task-finalization-boundary", actor_id: "parent", expected_revision, task_id: "finalization-task", finalization_ref: "docs/adr/task-finalization-decision.md", recorded_by: "parent" });
   await assert.rejects(finalize(run.revision), code("FINALIZATION_NOT_READY"));
@@ -2340,15 +2435,17 @@ test("Task finalizationはactive child・未裁定・取消を拒否しdecision 
   assert.throws(() => api.validateManifest(stray), code("INVALID_SCHEMA"));
 
   const cancelledControl = await api.init({ cwd: repo.root, control_id: "cancelled-task-finalization", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const cancelledTask = await api.taskRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelledControl.revision, task: makeTask({ task_id: "cancelled-finalization-task", effect: "read", write_scope: [] }) });
+  const cancelledControlPhaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelledControl.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const cancelledTask = await api.taskRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelledControlPhaseGate.revision, task: makeTask({ task_id: "cancelled-finalization-task", effect: "read", write_scope: [] }) });
   const cancelled = await api.taskCancelRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelledTask.revision, task_id: "cancelled-finalization-task", decision: evidence("docs/cancelled-task.md", "decision") });
   await assert.rejects(api.taskFinalizeRecord({ cwd: repo.root, control_id: "cancelled-task-finalization", actor_id: "parent", expected_revision: cancelled.revision, task_id: "cancelled-finalization-task", finalization_ref: "docs/adr/task-finalization-decision.md", recorded_by: "parent" }), code("INVALID_TRANSITION"));
 });
 
 test("Taskはcancelledなら未finalizeでもControl finalizationとarchiveを阻害しない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "cancelled-task-control-close" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "cancelled-task-control-close", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "cancelled-task-control-close", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "cancelled-task-control-close", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "cancelled-control-task", effect: "read", write_scope: [] }),
   });
   const cancelDecision = await materializeDocumentEvidence(repo, evidence("docs/cancelled-control-task.md", "decision"));
@@ -2360,7 +2457,7 @@ test("Taskはcancelledなら未finalizeでもControl finalizationとarchiveを�
   assert.deepEqual(brief.cancellations.task_ids, ["cancelled-control-task"]);
   assert.deepEqual(brief.unresolved.task_ids, []);
 
-  const phaseComplete = await completePhaseGate(repo, "cancelled-task-control-close", cancelled.revision);
+  const phaseComplete = await advancePhaseGate(repo, "cancelled-task-control-close", cancelled.revision);
   const padded = structuredClone(phaseComplete.manifest);
   for (let revision = padded.record_revision + 1; revision <= 253; revision++) {
     const previous = padded.transition_receipts.at(-1);
@@ -2392,7 +2489,8 @@ test("Taskはcancelledなら未finalizeでもControl finalizationとarchiveを�
 
 test("accept/reject/task finalization/control finalization/archiveは状態・証拠・atomic manifestを検査する", async (t) => {
   const { repo, result } = await initialized(t);
-  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask() });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask() });
   const run = await api.workerRunRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ workspace_cwd: repo.root }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" });
   const dispatched = await api.observeWorker({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: admitted.revision, worker_run_id: "run-001", observation: workerObservation("dispatched") });
@@ -2404,7 +2502,7 @@ test("accept/reject/task finalization/control finalization/archiveは状態・�
   await materializeTaskDecision(repo, "docs/adr/task-decision.md");
   const decided = await api.taskFinalizeRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: accepted.revision, task_id: "task-001", finalization_ref: "docs/adr/task-decision.md", recorded_by: "parent" });
   await assert.rejects(api.archive({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: decided.revision }), code("ARCHIVE_NOT_READY"));
-  const phaseComplete = await completePhaseGate(repo, CONTROL, decided.revision);
+  const phaseComplete = await advancePhaseGate(repo, CONTROL, decided.revision);
   const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
     cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: phaseComplete.revision,
     acceptance_matrix_ref: "docs/acceptance-matrix.md",
@@ -2438,8 +2536,9 @@ test("accept/reject/task finalization/control finalization/archiveは状態・�
 test("rejectはcompleted writer後のworkspace進行を採用せず棄却Decisionだけを記録する", async (t) => {
   const controlId = "reject-after-workspace-drift";
   const { repo, result } = await initialized(t, { control_id: controlId });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "drifted-result-task" }),
   });
   const run = await api.workerRunRecord({
@@ -2485,8 +2584,9 @@ test("rejectはcompleted writer後のworkspace進行を採用せず棄却Decisio
 
 test("archiveはfinalization Decisionの同一path旧digestだけをgit履歴から保持する (history retention)", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "finalization-history-retention" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "history-retention-task", effect: "read", write_scope: [] }),
   });
   const decisionRef = "docs/adr/history-retention-decision.md";
@@ -2497,7 +2597,7 @@ test("archiveはfinalization Decisionの同一path旧digestだけをgit履歴か
     cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: task.revision,
     task_id: "history-retention-task", finalization_ref: decisionRef, recorded_by: "parent",
   });
-  const phaseComplete = await completePhaseGate(repo, "finalization-history-retention", taskFinalized.revision);
+  const phaseComplete = await advancePhaseGate(repo, "finalization-history-retention", taskFinalized.revision);
   const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, {
     cwd: repo.root, control_id: "finalization-history-retention", actor_id: "parent", expected_revision: phaseComplete.revision,
     acceptance_matrix_ref: "docs/history-retention-matrix.md",
@@ -2528,7 +2628,8 @@ test("archiveはfinalization Decisionの同一path旧digestだけをgit履歴か
 
 test("control finalizationはTask完了と監査・回帰・knowledge return・親Decisionを必須にする", async (t) => {
   const { repo, result } = await initialized(t);
-  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, task: makeTask({ effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ effect: "read", write_scope: [] }) });
   const base = {
     cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: task.revision,
     acceptance_matrix_ref: "docs/acceptance-matrix.md", final_audit_evidence: [evidence("docs/final-audit.md")],
@@ -2562,7 +2663,8 @@ test("control finalizationはmatrix・監査・回帰・knowledgeの実在とdig
 
 test("control finalizationは全campaignの明示的な親releaseを必須にする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "campaign-finalization" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "campaign-finalization-task", effect: "read", write_scope: [], isolation: "none" }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "campaign-finalization-task", effect: "read", write_scope: [], isolation: "none" }) });
   const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-finalization-worker", task_id: "campaign-finalization-task", assignment_id: "campaign-finalization-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-finalization-assignment" } }) });
   const cancelled = await api.observeWorker({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: worker.revision, worker_run_id: "campaign-finalization-worker", observation: workerObservation("cancelled") });
   const campaign = await api.campaignRecord({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: cancelled.revision, campaign: { campaign_id: "campaign-finalization-gate", campaign_type: "final-audit", members: [{ kind: "worker-run", id: "campaign-finalization-worker" }], gated_task_ids: ["campaign-finalization-task"], audit_required: false } });
@@ -2571,14 +2673,15 @@ test("control finalizationは全campaignの明示的な親releaseを必須にす
   const finalization = (expected_revision) => ({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision, acceptance_matrix_ref: "docs/campaign-acceptance.md", final_audit_evidence: [evidence("docs/campaign-final-audit.md")], regression_evidence: [evidence("docs/campaign-regression.md")], knowledge_return_refs: ["docs/campaign-knowledge.md"], parent_decision: evidence("docs/adr/campaign-final-decision.md", "decision"), finalized_by: "parent" });
   await assert.rejects(api.finalizeControl(finalization(decided.revision)), code("FINALIZATION_NOT_READY"));
   const released = await api.releaseCampaign({ cwd: repo.root, control_id: "campaign-finalization", actor_id: "parent", expected_revision: decided.revision, campaign_id: "campaign-finalization-gate", audit_evidence: [], decision: evidence("docs/campaign-release-decision.md", "decision") });
-  const phaseComplete = await completePhaseGate(repo, "campaign-finalization", released.revision);
+  const phaseComplete = await advancePhaseGate(repo, "campaign-finalization", released.revision);
   const finalized = await api.finalizeControl(await materializeFinalizationInput(repo, finalization(phaseComplete.revision)));
   assert.equal(finalized.manifest.control_finalization.finalized_by, "parent");
 });
 
 test("campaign_typeは5つの親宣言phaseだけを受理し、改竄・未知種別・未release gateを拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "campaign-phase-types" });
-  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "campaign-phase-member", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "campaign-phase-member", effect: "read", write_scope: [] }) });
   const gatedTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: memberTask.revision, task: makeTask({ task_id: "campaign-phase-gated", effect: "read", write_scope: [] }) });
   const member = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: gatedTask.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-phase-member-worker", task_id: "campaign-phase-member", assignment_id: "campaign-phase-member-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-phase-member-assignment" } }) });
   const terminal = await api.observeWorker({ cwd: repo.root, control_id: "campaign-phase-types", actor_id: "parent", expected_revision: member.revision, worker_run_id: "campaign-phase-member-worker", observation: workerObservation("cancelled") });
@@ -2606,7 +2709,8 @@ test("campaign_typeは5つの親宣言phaseだけを受理し、改竄・未知�
 
 test("Delegation Packetとstrict Worker Report importは相関・scope・親accept分離を強制する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "packet-control" });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "packet-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "packet-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const worker = await api.workerRunRecord({
     cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: task.revision,
     worker_run: makeWorkerRun({ worker_run_id: "packet-worker", task_id: "packet-task", assignment_id: "packet-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "packet-assignment" } }),
@@ -2654,7 +2758,8 @@ test("Delegation Packetとstrict Worker Report importは相関・scope・親acce
 test("Delegation Packet/report import CLIは外部Executorを起動しない", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
   const init = await api.init({ cwd: repo.root, control_id: "packet-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "packet-cli-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "packet-cli-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const worker = await api.workerRunRecord({ cwd: repo.root, control_id: "packet-cli", actor_id: "parent", expected_revision: task.revision, worker_run: makeWorkerRun({ worker_run_id: "packet-cli-worker", task_id: "packet-cli-task", assignment_id: "packet-cli-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "packet-cli-assignment" } }) });
   const input = join(base, "packet-cli-input.json"); await writeJson(input, { cwd: repo.root, control_id: "packet-cli", worker_run_id: "packet-cli-worker" });
   const env = { ...process.env, PATH: `${sentinel.bin}:${process.env.PATH}` }; const packetOutput = spawnOrchestrate(["delegation-packet", "--input", input], { env });
@@ -2675,7 +2780,8 @@ test("Delegation Packet/report import CLIは外部Executorを起動しない", a
 
 test("parent-declared campaign gateは全member terminal・audit・親releaseまで後続reservationを拒否する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "campaign-control" });
-  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "campaign-member-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "campaign-member-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const gatedTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberTask.revision, task: makeTask({ task_id: "campaign-gated-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }) });
   const memberWorker = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: gatedTask.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-member-worker", task_id: "campaign-member-task", assignment_id: "campaign-member-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-member-assignment" } }) });
   const memberAdmitted = await api.admitWorker({ cwd: repo.root, control_id: "campaign-control", actor_id: "parent", expected_revision: memberWorker.revision, worker_run_id: "campaign-member-worker" });
@@ -2725,7 +2831,8 @@ test("parent-declared campaign gateは全member terminal・audit・親releaseま
 test("campaign CLIはrecord/status/releaseだけを行い外部Executorを起動しない", async (t) => {
   const base = await makeTempDir(); t.after(() => cleanupDir(base)); const repo = await createGitRepo(base); const sentinel = await installSentinelBin(base);
   const init = await api.init({ cwd: repo.root, control_id: "campaign-cli", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "campaign-cli-member", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const memberTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "campaign-cli-member", effect: "read", write_scope: [] }) });
   const gatedTask = await api.taskRecord({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: memberTask.revision, task: makeTask({ task_id: "campaign-cli-gated", effect: "read", write_scope: [] }) });
   const member = await api.workerRunRecord({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: gatedTask.revision, worker_run: makeWorkerRun({ worker_run_id: "campaign-cli-worker", task_id: "campaign-cli-member", assignment_id: "campaign-cli-assignment", write_mode: "none", workspace_cwd: repo.root, lineage: { ...makeWorkerRun().lineage, root_assignment_id: "campaign-cli-assignment" } }) });
   const admitted = await api.admitWorker({ cwd: repo.root, control_id: "campaign-cli", actor_id: "parent", expected_revision: member.revision, worker_run_id: "campaign-cli-worker" });
@@ -2902,7 +3009,8 @@ async function downgradeControlToV25(repo, controlId) {
 
 async function consultationTaskRecorded(t, controlId) {
   const { repo, result } = await initialized(t, { control_id: controlId });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision, task: makeTask({ task_id: "consultation-task", effect: "read", write_scope: [] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: controlId, actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "consultation-task", effect: "read", write_scope: [] }) });
   return { repo, revision: task.revision };
 }
 
@@ -3167,10 +3275,11 @@ test("control-migrate receiptは対象Control・v25/v26遷移・連鎖・最終s
 
 test("取消済みTaskのplanned consultationはfinalize・容量予約・campaign終端を恒久ブロックしない", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "orphaned-consult-close" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   // ADR 0053の孤児除外はv25/v26のreader semantics（v27の脱出経路はconsultation-cancel）
   await downgradeControlToV26(repo, "orphaned-consult-close");
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "orphan-task", effect: "read", write_scope: [] }),
   });
   const consultation = await api.consultationRecord({
@@ -3201,7 +3310,7 @@ test("取消済みTaskのplanned consultationはfinalize・容量予約・campai
     cwd: repo.root, control_id: "orphaned-consult-close", actor_id: "parent", expected_revision: cancelled.revision,
     campaign_id: "orphan-campaign", decision: releaseDecision, audit_evidence: [],
   });
-  const phaseComplete = await completePhaseGate(repo, "orphaned-consult-close", released.revision);
+  const phaseComplete = await advancePhaseGate(repo, "orphaned-consult-close", released.revision);
   // 容量予約の除外: 253まで詰めてもfinalize＋archiveのちょうど2 slotで閉じ切れる
   const padded = structuredClone(phaseComplete.manifest);
   for (let revision = padded.record_revision + 1; revision <= 253; revision++) {
@@ -3231,15 +3340,16 @@ test("取消済みTaskのplanned consultationはfinalize・容量予約・campai
 
 test("未取消Taskのplanned consultationは従来どおりControl finalizationをブロックする", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "planned-still-blocks" });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "planned-still-blocks", actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "planned-still-blocks", actor_id: "parent", expected_revision: result.revision,
+    cwd: repo.root, control_id: "planned-still-blocks", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "blocking-task", effect: "read", write_scope: [] }),
   });
   const consultation = await api.consultationRecord({
     cwd: repo.root, control_id: "planned-still-blocks", actor_id: "parent", expected_revision: task.revision,
     consultation: makeConsultation({ consultation_id: "blocking-consult", task_id: "blocking-task", assignment_id: "blocking-assignment" }),
   });
-  const phaseComplete = await completePhaseGate(repo, "planned-still-blocks", consultation.revision);
+  const phaseComplete = await advancePhaseGate(repo, "planned-still-blocks", consultation.revision);
   await assert.rejects(api.finalizeControl(await materializeFinalizationInput(repo, {
     cwd: repo.root, control_id: "planned-still-blocks", actor_id: "parent", expected_revision: phaseComplete.revision,
     acceptance_matrix_ref: "docs/blocking-acceptance.md",
@@ -3336,7 +3446,7 @@ test("v27では孤児除外が適用されずconsultation-cancelが明示の脱�
     cwd: repo.root, control_id: "v27-escape", actor_id: "parent", expected_revision: recorded.revision,
     task_id: "consultation-task", decision: cancelDecision,
   });
-  const phaseComplete = await completePhaseGate(repo, "v27-escape", taskCancelled.revision);
+  const phaseComplete = await advancePhaseGate(repo, "v27-escape", taskCancelled.revision);
   const finalizeInput = async (revision) => materializeFinalizationInput(repo, {
     cwd: repo.root, control_id: "v27-escape", actor_id: "parent", expected_revision: revision,
     acceptance_matrix_ref: "docs/escape-acceptance.md",
@@ -3393,8 +3503,9 @@ test("migration ladderはv25→v26→v27を一段ずつ進み孤児plannedだけ
 test("selector_decisionはv27のplacement reservationへoptional keyとして束縛されv26では拒否される", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "selector-placement" });
   const v27 = await api.controlMigrate({ cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: result.revision, target_schema_version: V27 });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: v27.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({
-    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: v27.revision,
+    cwd: repo.root, control_id: "selector-placement", actor_id: "parent", expected_revision: phaseGate.revision,
     task: makeTask({ task_id: "selector-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const registry = await api.registryObservationRecord({
@@ -3459,8 +3570,9 @@ test("selector_decisionはv27のplacement reservationへoptional keyとして束
   // v26 manifestへのselector_decisionはSCHEMA_UPGRADE_REQUIRED
   const legacy = await initialized(t, { control_id: "selector-legacy" });
   await downgradeControlToV26(legacy.repo, "selector-legacy");
+  const legacyPhaseGate = await api.phaseGateRecord({ cwd: legacy.repo.root, control_id: "selector-legacy", actor_id: "parent", expected_revision: legacy.result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const legacyTask = await api.taskRecord({
-    cwd: legacy.repo.root, control_id: "selector-legacy", actor_id: "parent", expected_revision: legacy.result.revision,
+    cwd: legacy.repo.root, control_id: "selector-legacy", actor_id: "parent", expected_revision: legacyPhaseGate.revision,
     task: makeTask({ task_id: "selector-task", effect: "read", write_scope: [], isolation: "none", required_capabilities: ["report.structured", "workspace.read"] }),
   });
   const legacyRegistry = await api.registryObservationRecord({
@@ -3549,8 +3661,9 @@ test("mode非忠実FSではControl stateを外部XDGへ置き、init/status/muta
     // status / mutation(lock経路) / resume-check が同じControlを回収する
     const status = await api.status({ cwd: repo.root, control_id: "drvfs-control" });
     assert.equal(status.control_id, "drvfs-control");
-    const task = await api.taskRecord({ cwd: repo.root, control_id: "drvfs-control", actor_id: "parent", expected_revision: 0, task: makeTask({ task_id: "drvfs-task" }) });
-    assert.equal(task.revision, 1);
+    const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "drvfs-control", actor_id: "parent", expected_revision: 0, risk: "standard", behavior_lane: "behavior-preserving" });
+    const task = await api.taskRecord({ cwd: repo.root, control_id: "drvfs-control", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "drvfs-task" }) });
+    assert.equal(task.revision, 2);
     const resume = await api.resumeCheck({ cwd: repo.root, control_id: "drvfs-control" });
     assert.ok(["ready", "review-required", "blocked"].includes(resume.outcome));
   });
@@ -3733,7 +3846,8 @@ async function retentionControlWithFileEvidence(t, { commit }) {
   const digest = createHash("sha256").update(body).digest("hex");
   const proof = { type: "file", ref, digest, observed_at: "2026-07-14T00:00:00.000Z" };
   const init = await api.init({ cwd: repo.root, control_id: "adr60", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "adr60", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "adr60-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "adr60", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "adr60", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "adr60-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const template = makeWorkerRun();
   await api.workerRunRecord({
     cwd: repo.root, control_id: "adr60", actor_id: "parent", expected_revision: task.revision,
@@ -3789,7 +3903,8 @@ test("同一manifest内でfile型とdecision型のevidenceが同じ更新後drif
   const fileProof = { type: "file", ref: fileRef, digest: createHash("sha256").update(fileOldBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
   const decisionProof = { type: "decision", ref: decisionRef, digest: createHash("sha256").update(decisionOldBody).digest("hex"), observed_at: "2026-07-14T00:00:00.000Z" };
   const init = await api.init({ cwd: repo.root, control_id: "adr60-dual", objective_ref: "docs/control-record-plan.md", actor_id: "parent", document_refs: ["docs/control-record-plan.md"], budget: makeBudget() });
-  const task = await api.taskRecord({ cwd: repo.root, control_id: "adr60-dual", actor_id: "parent", expected_revision: init.revision, task: makeTask({ task_id: "adr60-dual-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
+  const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: "adr60-dual", actor_id: "parent", expected_revision: init.revision, risk: "standard", behavior_lane: "behavior-preserving" });
+  const task = await api.taskRecord({ cwd: repo.root, control_id: "adr60-dual", actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "adr60-dual-task", effect: "read", write_scope: [], required_capabilities: ["report.structured", "workspace.read"] }) });
   const template = makeWorkerRun();
   const capabilities = template.workflow_capabilities.map((entry, index) => ({ ...entry, evidence: index % 2 === 0 ? fileProof : decisionProof }));
   await api.workerRunRecord({

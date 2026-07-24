@@ -16,13 +16,36 @@ STATUS_SCHEMAS = {
     "lattice.todo_status_result.v1",
     "lattice.todo_status_result.v2",
     "lattice.todo_status_result.v3",
+    "lattice.todo_status_result.v4",
 }
+# schemaごとにexact key-setを持つ。v4はtop-levelにdispatch_frontierを追加する。
+# 部分一致や未知key無視で受理せず、schema分岐で厳密等価を保つ（fail-closed）。
+STATUS_TOPLEVEL_BASE = {
+    "schema",
+    "project_id",
+    "active_set",
+    "next_ready",
+    "blocked",
+    "member_heads",
+    "result_digest",
+}
+STATUS_SCHEMA_PATTERN = re.compile(r"^lattice\.todo_status_result\.v[0-9]{1,6}$")
+DISPATCH_FRONTIER_SCHEMA = "lattice.todo_dispatch_frontier.v1"
+PROJECT_STATUS_SCHEMA = "lattice.project_status.v1"
+# guidanceの正本入口はtyped discovery（lattice status --json）。案内する工程が無い
+# missing/uninitializedは静かに終了し、readyとactive_runだけ工程を読む。invalidと
+# 未知stateはfail-visible（.lattice/todoの有無で早期判定しない）。
+PROJECT_STATES_GUIDE = {"ready", "active_run"}
+PROJECT_STATES_QUIET = {"missing", "uninitialized"}
+PROJECT_STATES_ERROR = {"invalid"}
 IDENTIFIER = re.compile(r"^[0-9A-Za-z](?:[0-9A-Za-z._-]{0,127})$")
 DIGEST = re.compile(r"^[0-9a-f]{64}$")
 GANTT_REF = Path(".lattice/generated/gantt.html")
 STATUS_TIMEOUT = "timeout"
 STATUS_EXECUTION_FAILED = "execution_failed"
 STATUS_INVALID_RESPONSE = "invalid_response"
+STATUS_UNSUPPORTED_VERSION = "unsupported_version"
+DISCOVERY_INVALID = "discovery_invalid"
 
 
 def emit(frontend, message):
@@ -184,6 +207,54 @@ def bounded_list(value, validator):
     return isinstance(value, list) and len(value) <= 2000 and all(validator(entry) for entry in value)
 
 
+def dispatch_frontier(value):
+    # v4のtop-level dispatch_frontier（lattice.todo_dispatch_frontier.v1）を厳密検証する。
+    if not isinstance(value, dict):
+        return False
+    if set(value) != {
+        "schema",
+        "selection_source",
+        "policy",
+        "recommended_parallelism",
+        "subset_requires_reason",
+        "parallel_start_flag",
+        "frontier_digest",
+    }:
+        return False
+    parallelism = value.get("recommended_parallelism")
+    return (
+        value.get("schema") == DISPATCH_FRONTIER_SCHEMA
+        and bounded_text(value.get("selection_source"), 64)
+        and bounded_text(value.get("policy"), 128)
+        and isinstance(parallelism, int)
+        and not isinstance(parallelism, bool)
+        and 0 <= parallelism <= 4096
+        and isinstance(value.get("subset_requires_reason"), bool)
+        and bounded_text(value.get("parallel_start_flag"), 64)
+        and isinstance(value.get("frontier_digest"), str)
+        and DIGEST.fullmatch(value["frontier_digest"]) is not None
+    )
+
+
+def unsupported_status_version(raw):
+    # envelopeは整合するが schema が未対応の lattice.todo_status_result.v<N> かを判定する。
+    # malformed（STATUS_INVALID_RESPONSE）と版差（STATUS_UNSUPPORTED_VERSION）を分ける。
+    if not raw or len(raw) > CAPTURE_LIMIT:
+        return False
+    try:
+        value = json.loads(raw.decode("utf-8", "strict"))
+    except (UnicodeError, json.JSONDecodeError):
+        return False
+    if not isinstance(value, dict):
+        return False
+    schema = value.get("schema")
+    return (
+        isinstance(schema, str)
+        and STATUS_SCHEMA_PATTERN.fullmatch(schema) is not None
+        and schema not in STATUS_SCHEMAS
+    )
+
+
 def parse_status(raw):
     if not raw or len(raw) > CAPTURE_LIMIT:
         return None
@@ -194,18 +265,17 @@ def parse_status(raw):
         value = json.loads(text)
     except (UnicodeError, json.JSONDecodeError):
         return None
-    expected = {
-        "schema",
-        "project_id",
-        "active_set",
-        "next_ready",
-        "blocked",
-        "member_heads",
-        "result_digest",
-    }
-    if not isinstance(value, dict) or set(value) != expected:
+    if not isinstance(value, dict):
         return None
-    if value.get("schema") not in STATUS_SCHEMAS or not identifier(value.get("project_id")):
+    schema = value.get("schema")
+    if schema not in STATUS_SCHEMAS or not identifier(value.get("project_id")):
+        return None
+    # schemaごとのexact key-set。v4だけtop-levelにdispatch_frontierを持つ。
+    if schema == "lattice.todo_status_result.v4":
+        expected = STATUS_TOPLEVEL_BASE | {"dispatch_frontier"}
+    else:
+        expected = STATUS_TOPLEVEL_BASE
+    if set(value) != expected:
         return None
     if not bounded_list(value.get("active_set"), task_entry):
         return None
@@ -216,6 +286,8 @@ def parse_status(raw):
     if not bounded_list(value.get("member_heads"), lambda entry: member_head(entry, value["schema"])):
         return None
     if not isinstance(value.get("result_digest"), str) or DIGEST.fullmatch(value["result_digest"]) is None:
+        return None
+    if schema == "lattice.todo_status_result.v4" and not dispatch_frontier(value.get("dispatch_frontier")):
         return None
     return value
 
@@ -242,8 +314,56 @@ def read_status(lattice, root):
         return None, STATUS_EXECUTION_FAILED
     status_value = parse_status(raw)
     if status_value is None:
+        if unsupported_status_version(raw):
+            return None, STATUS_UNSUPPORTED_VERSION
         return None, STATUS_INVALID_RESPONSE
     return status_value, None
+
+
+def parse_project_status(raw):
+    # typed discoveryの正本 lattice.project_status.v1 から state（と store.ref）を取り出す。
+    if not raw or len(raw) > CAPTURE_LIMIT:
+        return None
+    try:
+        value = json.loads(raw.decode("utf-8", "strict"))
+    except (UnicodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(value, dict) or value.get("schema") != PROJECT_STATUS_SCHEMA:
+        return None
+    state = value.get("state")
+    known = PROJECT_STATES_GUIDE | PROJECT_STATES_QUIET | PROJECT_STATES_ERROR
+    if not isinstance(state, str) or state not in known:
+        return None
+    return value
+
+
+def read_project_status(lattice, root):
+    try:
+        with tempfile.TemporaryFile() as capture:
+            result = subprocess.run(
+                [str(lattice), "status", "--json"],
+                cwd=root,
+                stdin=subprocess.DEVNULL,
+                stdout=capture,
+                stderr=subprocess.DEVNULL,
+                timeout=5.0,
+                check=False,
+            )
+            capture.seek(0)
+            raw = capture.read(CAPTURE_LIMIT + 1)
+    except subprocess.TimeoutExpired:
+        return None, STATUS_TIMEOUT
+    except OSError:
+        return None, STATUS_EXECUTION_FAILED
+    # invalid storeは project_status.v1 envelopeを stdout に出しつつ exit 1 を返す。
+    # returncodeより先に stdout を parse し、既知stateのenvelopeなら returncode不問で採用する。
+    # parse不能のときだけ returncode で execution_failed / invalid_response を分類する。
+    status_value = parse_project_status(raw)
+    if status_value is not None:
+        return status_value, None
+    if result.returncode != 0:
+        return None, STATUS_EXECUTION_FAILED
+    return None, STATUS_INVALID_RESPONSE
 
 
 def task_summary(entries):
@@ -278,10 +398,32 @@ def status_unavailable_message(reason):
         detail = "status取得が期限超過しました。"
     elif reason == STATUS_EXECUTION_FAILED:
         detail = "CLI実行失敗のため現在地を取得できませんでした。"
+    elif reason == STATUS_UNSUPPORTED_VERSION:
+        detail = (
+            "todo status応答のschema版がこのhookの対応範囲外です"
+            "（CLI版がstore対応版より新しい可能性）。"
+        )
     else:
         detail = "status応答を検証できないため現在地を取得できませんでした。"
     return (
         f"INFO: Lattice工程表: storeは存在しますが {detail}"
+        "lattice CLIの版とstore整合を確認してください。このINFOは依頼範囲を拡張しません。"
+    )
+
+
+def discovery_unavailable_message(reason):
+    # typed discovery（lattice status --json）自体が失敗した時のfail-visible。
+    # 空集合や「工程なし」へ丸めず、失敗を明示する。
+    if reason == STATUS_TIMEOUT:
+        detail = "status --json取得が期限超過しました。"
+    elif reason == DISCOVERY_INVALID:
+        detail = "storeがinvalid状態です（store整合の破損）。"
+    elif reason == STATUS_EXECUTION_FAILED:
+        detail = "status --json実行失敗のため接続判定ができませんでした。"
+    else:
+        detail = "status --json応答を検証できませんでした。"
+    return (
+        f"INFO: Lattice工程表: {detail}"
         "lattice CLIの版とstore整合を確認してください。このINFOは依頼範囲を拡張しません。"
     )
 
@@ -291,6 +433,7 @@ def status_message(root, status_value):
     if status_value["schema"] in {
         "lattice.todo_status_result.v2",
         "lattice.todo_status_result.v3",
+        "lattice.todo_status_result.v4",
     }:
         dependency_count = sum(
             1 for entry in status_value["active_set"] if entry.get("unmet_dependencies")
@@ -299,7 +442,10 @@ def status_message(root, status_value):
         f"未充足依存あり: active {dependency_count}件。" if dependency_count else ""
     )
     reconciliation_note = ""
-    if status_value["schema"] == "lattice.todo_status_result.v3":
+    if status_value["schema"] in {
+        "lattice.todo_status_result.v3",
+        "lattice.todo_status_result.v4",
+    }:
         unreconciled = sum(
             1
             for entry in status_value["member_heads"]
@@ -343,7 +489,19 @@ def main(frontend):
         if lattice is None:
             emit(frontend, missing_cli_message())
             return
-        if not (root / ".lattice/todo").is_dir():
+        # typed discovery: lattice status --json が接続判定の正本。.lattice/todoの
+        # ディレクトリ有無で早期判定しない（uninitialized/invalid/store ref変更を
+        # 区別できないため）。案内する工程が無いmissing/uninitializedは静かに終了し、
+        # ready/active_runだけ工程を読み、invalidと検証不能はfail-visibleにする。
+        project_status, discovery_reason = read_project_status(lattice, root)
+        if project_status is None:
+            emit(frontend, discovery_unavailable_message(discovery_reason))
+            return
+        state = project_status["state"]
+        if state in PROJECT_STATES_QUIET:
+            return
+        if state in PROJECT_STATES_ERROR:
+            emit(frontend, discovery_unavailable_message(DISCOVERY_INVALID))
             return
         status_value, reason = read_status(lattice, root)
         if status_value is None:

@@ -69,10 +69,8 @@ if (args.length === 1 && args[0] === "--help") {
   const brief = args.length === 4; const command = brief ? "status --brief" : args[0];
   try {
     const input = await readInput(brief ? args[3] : args[2]);
-    if (command === "task-record") {
-      const phase = await api.phaseGateStatus({ cwd: input.cwd, control_id: input.control_id });
-      if (!phase.configured) throw new api.ControlRecordError("PHASE_GATE_NOT_RECORDED", "record phase gate before the first task");
-    }
+    // phase-gate-before-first-task の強制は library taskRecord に一元化した
+    // （CLI経路と直接API経路で同一gateを通す）。ここでの重複pre-checkは廃止。
     const result = await (brief ? api.statusBrief : commands.get(command))(input);
     if (command === "resume-check") {
       const summary = { outcome: result.outcome, blocking_count: result.blocking_reasons.length, review_count: result.review_reasons.length };

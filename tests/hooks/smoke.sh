@@ -69,12 +69,22 @@ chmod +x "$STATE/advisory-bin/orchestrate-run"
 cat >"$STATE/advisory-bin/lattice" <<'JS'
 const fs = require("fs");
 const path = require("path");
+// run store の状態は snapshot mode と独立。既定=ok。invalid_run_store は cli_error.v2 を
+// stderr へ出し exit 1（現CLIの実挙動）。失敗が空集合へ丸められないことを検証する。
+let runMode = "ok";
+try { runMode = fs.readFileSync(path.join(__dirname, "lattice-mode"), "utf8").trim() || "ok"; } catch {}
+if (runMode === "invalid_run_store") {
+  process.stderr.write(JSON.stringify({ schema: "lattice.cli_error.v2", code: "INVALID_RUN_STORE", message: "run storeのartifact bindingが不正" }) + "\n");
+  process.exit(1);
+}
 const mode = fs.readFileSync(path.join(__dirname, "mode"), "utf8").trim() || "valid";
-const active = mode === "empty" ? [] : [{ run_id: "lattice-run-a", run_ref: ".lattice/runs/lattice-run-a", base_sha: "a".repeat(40), executor_adapter: "scripted" }];
+const active = mode === "empty" || runMode === "empty" ? [] : [{ run_id: "lattice-run-a", run_ref: ".lattice/runs/lattice-run-a", base_sha: "a".repeat(40), executor_adapter: "scripted" }];
 console.log(JSON.stringify({ schema: "lattice.run_list.v1", active_runs: active, result_digest: "b".repeat(64) }));
 JS
 chmod +x "$STATE/advisory-bin/lattice"
 set_advisory_mode() { printf '%s\n' "$1" >"$STATE/advisory-bin/mode"; }
+set_lattice_mode() { printf '%s\n' "$1" >"$STATE/advisory-bin/lattice-mode"; }
+set_lattice_mode ok
 cat >"$REPO/bin/orchestrate-run.mjs" <<'EOF'
 #!/usr/bin/env bash
 echo malicious-repo-cli-called >>"${ADVISORY_MALICIOUS_LOG:?}"
@@ -108,6 +118,13 @@ json && [[ "$RUN_OUT" == *"active Lattice run: lattice-run-a"* && "$RUN_OUT" == 
 [ ! -e "$STATE/provider.log" ] && pass advisory-no-provider || fail_case advisory-no-provider
 [ ! -e "$STATE/malicious.log" ] && pass advisory-no-repo-cli || fail_case advisory-no-repo-cli
 [ ! -e "$STATE/runtime.log" ] && [ ! -e "$STATE/node-options.log" ] && pass advisory-no-parent-runtime || fail_case advisory-no-parent-runtime
+# run store失敗（INVALID_RUN_STORE）は空集合へ丸めず fail-visible にする（active runなしと区別）。
+set_advisory_mode valid; set_lattice_mode invalid_run_store
+run advisory-run-store-invalid "$ADVISORY" <<EOF
+{"session_id":"advisory-run-invalid","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *"active Lattice run取得失敗: INVALID_RUN_STORE"* && "$RUN_OUT" == *"active Control: control-a"* ]] && pass advisory-run-store-invalid || fail_case advisory-run-store-invalid
+set_lattice_mode ok
 set_advisory_mode valid
 run advisory-dedupe "$ADVISORY" <<EOF
 {"session_id":"advisory-1","cwd":"$HOOK_REPO"}
@@ -250,6 +267,20 @@ mkdir -p "$STATE/git-only" "$STATE/lattice-bin" "$STATE/non-git"
 ln -s "$(command -v git)" "$STATE/git-only/git"
 cat >"$STATE/lattice-bin/lattice" <<'EOF'
 #!/usr/bin/env bash
+# typed discovery: hookは `status --json` を接続判定の正本として先に呼ぶ。
+if [ "$1" = "status" ] && [ "$2" = "--json" ]; then
+  case "${LATTICE_STATUS_STATE:-ready}" in
+    ready) printf '%s\n' '{"schema":"lattice.project_status.v1","state":"ready","store":{"ref":".lattice/todo"}}' ;;
+    active_run) printf '%s\n' '{"schema":"lattice.project_status.v1","state":"active_run","store":{"ref":".lattice/todo"}}' ;;
+    uninitialized) printf '%s\n' '{"schema":"lattice.project_status.v1","state":"uninitialized","store":{"ref":".lattice/todo"}}' ;;
+    missing) printf '%s\n' '{"schema":"lattice.project_status.v1","state":"missing","store":{"ref":".lattice/todo"}}' ;;
+    invalid) printf '%s\n' '{"schema":"lattice.project_status.v1","state":"invalid","store":{"ref":".lattice/todo"}}'; exit 1 ;;
+    status_bad) printf '%s\n' '{"schema":"wrong"}' ;;
+    status_fail) exit 1 ;;
+    status_timeout) sleep 6 ;;
+  esac
+  exit 0
+fi
 [ "$*" = "todo status" ] || exit 2
 case "${LATTICE_TEST_MODE:-valid_v1}" in
   valid_v1)
@@ -258,6 +289,10 @@ case "${LATTICE_TEST_MODE:-valid_v1}" in
     printf '%s\n' '{"schema":"lattice.todo_status_result.v2","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]},{"plan_key":"master","task_id":"G6","label":"host rollout","unmet_dependencies":[{"plan_key":"master","task_id":"G3"},{"plan_key":"master","project_id":"dotagents","task_id":"G2"}]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}' ;;
   valid_v3)
     printf '%s\n' '{"schema":"lattice.todo_status_result.v3","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},{"plan_key":"queue","plan_version":"v1","through_sequence":0,"journal_head_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","reconciliation_state":"registered_unreconciled","revision_digest":null,"reconciliation_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
+  valid_v4)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v4","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}}' ;;
+  unsupported_v5)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v5","project_id":"dotagents","active_set":[],"next_ready":[],"blocked":[],"member_heads":[],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
   slow_success)
     sleep 3
     printf '%s\n' '{"schema":"lattice.todo_status_result.v1","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線"}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}' ;;
@@ -278,10 +313,30 @@ run lattice-cli-missing env PATH="$STATE/git-only" "$PYTHON_EXE" "$ROOT/bin/latt
 {"session_id":"lattice-missing","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'CLIが未導入'* ]] && pass lattice-cli-missing || fail_case lattice-cli-missing
-run lattice-store-missing env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+# typed discovery: state=uninitialized（案内する工程が無い）は静かに終了する。
+run lattice-store-missing env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=uninitialized "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-no-store","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass lattice-store-missing || fail_case lattice-store-missing
+# state=missing も同様に静音。
+run lattice-status-missing env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=missing "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-state-missing","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-status-missing || fail_case lattice-status-missing
+# state=invalid は fail-visible（.lattice/todo の有無で早期判定しない）。
+run lattice-status-invalid env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=invalid "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-state-invalid","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'invalid状態'* ]] && pass lattice-status-invalid || fail_case lattice-status-invalid
+# discovery（status --json）自体の失敗も空扱いにせず fail-visible。
+run lattice-status-fail env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=status_fail "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-state-fail","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'status --json実行失敗'* ]] && pass lattice-status-fail || fail_case lattice-status-fail
+run lattice-status-bad env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=status_bad "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-state-bad","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'status --json応答を検証できませんでした'* ]] && pass lattice-status-bad || fail_case lattice-status-bad
 mkdir -p "$REPO/.lattice/todo"
 run lattice-gantt-missing env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-no-gantt","source":"clear","cwd":"$HOOK_REPO"}
@@ -300,6 +355,21 @@ run lattice-valid-v3 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=valid
 {"session_id":"lattice-valid-v3","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [[ "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" == *'校正状態: reconciled=1, unreconciled=1'* && "$RUN_OUT" != *'取得できませんでした'* ]] && pass lattice-valid-v3 || fail_case lattice-valid-v3
+# v4: dispatch_frontier付き。受理され、依存件数と校正状態のv4分岐が動くこと。
+run lattice-valid-v4 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=valid_v4 "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-valid-v4","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" == *'校正状態: reconciled=1, unreconciled=0'* && "$RUN_OUT" != *'取得できませんでした'* && "$RUN_OUT" != *'対応範囲外'* ]] && pass lattice-valid-v4 || fail_case lattice-valid-v4
+# active_run state でも工程を読む。
+run lattice-active-run env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=active_run LATTICE_TEST_MODE=valid_v4 "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-active-run","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" != *'取得できませんでした'* ]] && pass lattice-active-run || fail_case lattice-active-run
+# unsupported version（v5）: malformed とは別の「対応範囲外」を fail-visible に出す。
+run lattice-unsupported env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=unsupported_v5 "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-unsupported","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'対応範囲外'* && "$RUN_OUT" == *'CLIの版とstore整合を確認'* ]] && pass lattice-unsupported || fail_case lattice-unsupported
 run lattice-slow-success env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-slow-success","source":"startup","cwd":"$HOOK_REPO"}
 EOF
