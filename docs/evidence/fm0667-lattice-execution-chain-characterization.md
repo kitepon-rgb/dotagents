@@ -49,7 +49,7 @@ evidenceはblobをcontent digestでbindするだけで、receiptがそのtaskの
 
 ## Decision gate判定
 
-計画[Composable Orchestration 完成計画](../plan_composable-orchestration.md)「実装前Decision gate」に対して:
+計画[Composable Orchestration 完成計画](../archive/plan_composable-orchestration.md)「実装前Decision gate」に対して:
 
 1. **証明できない。** 子ごとのTask identity・scope・result digest・partial failure・run／packet帰属を
    Lattice公開receiptだけで検証する経路は存在しない。切断点は②の`compile_binding`が公開投影に現れないことと、

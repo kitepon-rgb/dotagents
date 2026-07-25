@@ -4,7 +4,7 @@
 - Date: 2026-07-24
 - 裁定者: 統括レーンの親（bell-claude）がFとして固定＋Codex旗艦(`gpt-5.6-sol`)×high refuter 3レンズによる反証1回
 - 関連: [ADR 0113](0113-composable-orchestration-invariants.md)（4不変Decision）、
-  [ADR 0114](0114-typed-lane-admission-contract.md)、[計画](../plan_composable-orchestration.md)「固定Recipe」節、
+  [ADR 0114](0114-typed-lane-admission-contract.md)、[計画](../archive/plan_composable-orchestration.md)「固定Recipe」節、
   [委譲契約](../../shared/orchestrate/delegation-contract.md)、[Executor adapter契約](../../shared/orchestrate/executor-adapters.md)
 - 工程: Lattice `dotagents` / plan `factory-master` / task `fm-0664`（Wave 1）
 

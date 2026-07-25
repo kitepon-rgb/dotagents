@@ -1,6 +1,16 @@
 # Composable Orchestration 完成計画
 
-Status: implementation not started
+Status: completed（2026-07-25）
+
+実装Task fm-0660〜fm-0673をLattice `factory-master` revision
+`rev-5878b6b9d54eabb5f3309427`で消化した。到達点と証拠は
+[docs/evidence/](evidence/)の`fm0667`〜`fm0672`各文書が正本である。
+
+実装前Decision gateの結論: 項目1は**証明できなかった**。Lattice公開receiptだけで
+子ごとのTask identity・scope・result digest・partial failure・run／packet帰属を
+検証する経路は存在しなかった。よって項目3が発動し、Lattice側へhost中立の公開
+projection／transactionを最小追加して単体releaseした（0.12.21〜0.12.25）。
+項目4の新しいcompound execution recordは提案していない。
 
 ## 工程正本
 

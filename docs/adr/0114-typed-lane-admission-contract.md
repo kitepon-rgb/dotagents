@@ -6,7 +6,7 @@
   Fとして固定＋Codex旗艦(`gpt-5.6-sol`)×high refuter 3レンズによる反証1回
 - 関連: [ADR 0061](0061-lane-activation-functional-or.md)（4条件・不変）、
   [ADR 0113](0113-composable-orchestration-invariants.md)（4不変Decision）、
-  [計画](../plan_composable-orchestration.md)
+  [計画](../archive/plan_composable-orchestration.md)
 - 工程: Lattice `dotagents` / plan `factory-master` / task `fm-0663`（Wave 1）
 
 ## Context

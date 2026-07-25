@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-07-24
-- 裁定者: オーナー承認済み計画 [plan_composable-orchestration.md](../plan_composable-orchestration.md)
+- 裁定者: オーナー承認済み計画 [plan_composable-orchestration.md](../archive/plan_composable-orchestration.md)
   に基づき、統括レーンの親（bell-claude）がFとして固定＋fable refuter監査1回
 - 関連: [ADR 0061](0061-lane-activation-functional-or.md)（レーン発動条件・不変）、
   [統括の共通契約](../../shared/orchestrate/contract.md)、[委譲契約](../../shared/orchestrate/delegation-contract.md)
@@ -85,7 +85,7 @@ fallbackではなく、機能と安全性を明示したsupported degraded mode�
 
 ## 適用範囲
 
-本ADRは上記4制約だけを不変Decisionとして固定する。それ以外（何をやらないか＝非目標、目的、適用方針、受入条件）の正本は計画doc [plan_composable-orchestration.md](../plan_composable-orchestration.md) の各節であり、本ADRへ複製しない。saga／recovery機構の実装方式は計画の「実装前Decision gate」とWave 3で扱う。
+本ADRは上記4制約だけを不変Decisionとして固定する。それ以外（何をやらないか＝非目標、目的、適用方針、受入条件）の正本は計画doc [plan_composable-orchestration.md](../archive/plan_composable-orchestration.md) の各節であり、本ADRへ複製しない。saga／recovery機構の実装方式は計画の「実装前Decision gate」とWave 3で扱う。
 
 ## Consequences
 
