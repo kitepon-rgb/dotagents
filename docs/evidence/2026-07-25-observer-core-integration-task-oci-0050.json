@@ -1,0 +1,68 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 7,
+  "task": {
+    "task_id": "oci-0050",
+    "title": "wire v6固定14製品・privacy・migration・v5 rollback契約を設計する",
+    "classification": "F",
+    "effect": "write",
+    "doc_ref": "docs/plan_observer-core-integration.md",
+    "role": "implementer",
+    "lane": "behavior-change",
+    "depends_on": [
+      "oci-0001"
+    ],
+    "required_capabilities": [
+      "wire-contract-design",
+      "privacy-boundary-design",
+      "migration-rollback-design"
+    ],
+    "isolation": "none",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": true,
+      "share_existing_findings": true,
+      "share_failed_approaches": true,
+      "share_test_results": true
+    },
+    "validation": [
+      "v6の固定14製品集合にObserverがschema自身の必須keyとして含まれている",
+      "Observerの公開診断だけを使うprivacy境界とhost別unsupportedが定義されている",
+      "server-first migration・v5併存・host別rollbackが同一契約で定義されている"
+    ],
+    "non_goals": [
+      "wire v3の復活またはv5 schemaの後付け変更",
+      "Observer内部stateの集約または新機能追加",
+      "未承認のlive cutover"
+    ],
+    "known_traps": [
+      "optional product keyはwire majorを越えて自動継承されない",
+      "共有save pathでactual wire versionを旧versionへfall-throughさせない",
+      "wire product IDとnpm distribution IDを同一視しない"
+    ],
+    "read_scope": [
+      {
+        "kind": "directory",
+        "path": "docs"
+      }
+    ],
+    "write_scope": [
+      {
+        "kind": "file",
+        "path": "docs/wire-v6-design.md"
+      },
+      {
+        "kind": "file",
+        "path": "docs/adr/0124-wire-v6-observer-enrollment.md"
+      },
+      {
+        "kind": "directory",
+        "path": "docs/evidence"
+      }
+    ],
+    "approval": null,
+    "alternative_group": null
+  }
+}

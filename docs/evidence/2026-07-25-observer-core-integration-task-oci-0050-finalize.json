@@ -1,0 +1,9 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 8,
+  "task_id": "oci-0050",
+  "finalization_ref": "docs/adr/0124-wire-v6-observer-enrollment.md",
+  "recorded_by": "codex-parent-20260725"
+}
