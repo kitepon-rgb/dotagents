@@ -26,3 +26,11 @@
   - 公開済みversionは履歴改変やunpublishをせず、必要ならdeprecateし、
     global installを旧版へ戻す。
 
+## v6 cutover再承認
+
+- owner statement: `続行 Hは承認する。`
+- approved at: `2026-07-25T14:50:42Z`
+- operation:
+  `{"operation":"observer-wire-v6-cutover","server":"main-server","hosts":["mac-kite","main-server","fox-wsl","windows-workstation"],"feature_flag":"FACTORY_V6_INGEST_ENABLED=true","rollback_verified":true}`
+- operation digest:
+  `c2d55da4e8344e65954268e402cb305ce859f484c9298475d537193b9f52d112`
