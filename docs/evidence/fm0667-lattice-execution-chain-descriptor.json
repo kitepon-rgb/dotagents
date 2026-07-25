@@ -1,0 +1,9 @@
+{
+  "evidence_id": "wave1-fm0667-lattice-execution-chain",
+  "repo_id": "self",
+  "path": "docs/evidence/fm0667-lattice-execution-chain-characterization.md",
+  "git_blob_oid": "6068d3c00b2b0ffd8d268b9631546ea10123c97c",
+  "content_digest": "daa4ffae94d907429ec2a83b7754928ff75cf860975fcd9b51bf22b50e4555d0",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
