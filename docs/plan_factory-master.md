@@ -36,7 +36,7 @@
 | [GPT-5.6再配線](archive/plan_gpt56-rewiring.md) | role routing詳細。端末横断受入はCodex全対応へ移管 | Completed。Lattice 37 task完了、履歴をarchive済み |
 | [Lattice編入](archive/plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Completed。Lattice 0.8.0、Codegraph退役、4 host cutoverまで完了 |
 | [AIShell編入](archive/plan_aishell-factory-integration.md) | AIShellコア化、native diagnostics、Mac統合、wire v5 | **完了（2026-07-25）**。wire v5で固定13製品へ編入し4 host cutover。受入は[matrix](evidence/2026-07-25-wire-v5-acceptance-matrix.md)、裁定はADR 0119 / 0120 / 0121 |
-| [Observerコア編入](plan_observer-core-integration.md) | Observer公開製品化、wire v6、4 host cutover | **完了（2026-07-25）**。固定14製品へ編入し、全hostのv5 rollbackとv6再cutoverを実測 |
+| [Observerコア編入](archive/plan_observer-core-integration.md) | Observer公開製品化、wire v6、4 host cutover | **完了（2026-07-25）**。固定14製品へ編入し、全hostのv5 rollbackとv6再cutoverを実測 |
 | [メモリ昇格queue](archive/queue_memory-promotion.md) | 各repo作業時の機会駆動queue | 終了。現行コア外の旧依頼は根拠付きで閉じarchive済み |
 
 CalloutとGPT-5.6の他端末チェックは、Codex全対応Wave 3の同じhost receiptを参照して閉じる。

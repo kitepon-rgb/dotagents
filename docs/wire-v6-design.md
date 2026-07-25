@@ -1,6 +1,6 @@
 # wire v6 設計正本 — Observerの固定集合編入
 
-**状態:** Active（[Observerコア編入計画](plan_observer-core-integration.md)の設計成果物）  
+**状態:** Active（[Observerコア編入記録](archive/plan_observer-core-integration.md)の設計成果物）
 **工程正本:** Lattice plan `observer-core-integration`  
 **対象:** dotagents reporter、ServerManager / BugHub ingest、4 active host  
 **決定:** [ADR 0124](adr/0124-wire-v6-observer-enrollment.md)

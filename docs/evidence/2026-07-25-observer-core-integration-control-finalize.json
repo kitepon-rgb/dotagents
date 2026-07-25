@@ -1,0 +1,33 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 28,
+  "acceptance_matrix_ref": "docs/evidence/2026-07-25-observer-core-integration-final-audit.md",
+  "final_audit_evidence": [
+    {
+      "type": "file",
+      "ref": "docs/evidence/2026-07-25-observer-core-integration-final-audit.md",
+      "digest": "ac655e70463ba1d2867646b06c685cd2f3668dec947266e10b6f44d197eb7b62",
+      "observed_at": "2026-07-25T15:26:53.000Z"
+    }
+  ],
+  "regression_evidence": [
+    {
+      "type": "file",
+      "ref": "docs/evidence/2026-07-25-observer-wire-v6-rollout.md",
+      "digest": "4dcaa2c894e2e1b3a6254f62f19732bfa1303626f0e798a56e6046e99ad1c411",
+      "observed_at": "2026-07-25T15:26:53.000Z"
+    }
+  ],
+  "knowledge_return_refs": [
+    "docs/evidence/2026-07-25-observer-core-integration-knowledge-return.md"
+  ],
+  "parent_decision": {
+    "type": "decision",
+    "ref": "docs/adr/0125-observer-core-integration-final-acceptance.md",
+    "digest": "ed88ead0b63dd597eff7f5ba75126c69eb90837493b284b2fe9628af33ff4491",
+    "observed_at": "2026-07-25T15:26:53.000Z"
+  },
+  "finalized_by": "codex-parent-20260725"
+}

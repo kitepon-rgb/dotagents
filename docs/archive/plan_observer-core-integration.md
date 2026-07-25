@@ -2,6 +2,7 @@
 
 - Status: Complete
 - Date: 2026-07-25
+- Archived: 2026-07-25
 - Lattice plan: `observer-core-integration`
 - Decisions: [ADR 0123](adr/0123-observer-core-integration-reinstatement.md)、
   [ADR 0124](adr/0124-wire-v6-observer-enrollment.md)、

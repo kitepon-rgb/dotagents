@@ -1,0 +1,9 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 22,
+  "task_id": "oci-0090",
+  "finalization_ref": "docs/adr/0125-observer-core-integration-final-acceptance.md",
+  "recorded_by": "codex-parent-20260725"
+}

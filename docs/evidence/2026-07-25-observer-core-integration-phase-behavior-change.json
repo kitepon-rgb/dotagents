@@ -1,0 +1,22 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 24,
+  "phase": "behavior_change",
+  "state": "completed",
+  "evidence": [
+    {
+      "type": "file",
+      "ref": "docs/evidence/2026-07-25-observer-wire-v6-rollout.md",
+      "digest": "4dcaa2c894e2e1b3a6254f62f19732bfa1303626f0e798a56e6046e99ad1c411",
+      "observed_at": "2026-07-25T15:26:53.000Z"
+    }
+  ],
+  "decision": {
+    "type": "decision",
+    "ref": "docs/adr/0125-observer-core-integration-final-acceptance.md",
+    "digest": "ed88ead0b63dd597eff7f5ba75126c69eb90837493b284b2fe9628af33ff4491",
+    "observed_at": "2026-07-25T15:26:53.000Z"
+  }
+}
