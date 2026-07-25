@@ -1,11 +1,12 @@
 # fm-0672 実dogfood: 公開面がどこまで届くか
 
 - 実測日: 2026-07-25
-- 実測version: Lattice CLI **0.12.24**（publish済み・global install済み）
-- 手法: 隔離した一時repo（`git init`済み・`.lattice/runs/` gitignore済み・writer 2件）で
-  公開CLIだけを使う。実Lattice CLIを実際に実行した実測であり、fixtureではない。
-- 判定: **端から端までは届かない。** 実dispatchに必要なexecutor adapter controllerの実装が
-  配布物に存在しないため、`fm-0672`は未完了とする。
+- 実測version: Lattice CLI **0.12.24**（本文）→ **0.12.25**（末尾の追記）。いずれもpublish済み・global install済み
+- 手法: 隔離した一時repo（`git init`済み・`.lattice/runs/` gitignore済み）で公開CLIだけを使う。
+  実Lattice CLIを実際に実行した実測であり、fixtureではない。
+- 判定: 0.12.24時点では**実dispatchへ届かなかった**（本文）。参照controllerを配布した
+  **0.12.25で実dispatch・実write・receipt受理・event chain検証まで到達した**（末尾の追記）。
+  `fm-0672`は複数writerの実dispatchと子別Control受入が未実測のため、引き続き未完了とする。
 
 ## 実際に通った段
 
@@ -59,3 +60,43 @@ activate時にしか判定できないため動的検査へ残している。
 `fm-0672`の受入文（「Lattice単一dispatch、子別Control受入、Lattice完了反映、resume/close」）は、
 参照実装のadapter controllerを配布するか否かの製品裁定が済むまで達成できない。
 これは実装の不足ではなく製品scopeの決定事項であり、推測で埋めない。
+
+## 追記: Lattice 0.12.25で実dispatchへ到達した（2026-07-25）
+
+オーナー裁定により参照scripted adapter controllerを配布した
+（[ADR 0126](https://github.com/kitepon-rgb/Lattice/blob/main/docs/adr/0126-distribute-scripted-adapter-controller.md)）。
+0.12.25をglobal installし、**公開CLIと配布binだけを使って**新規の隔離repoで実測した。
+
+| 段 | 結果 |
+|---|---|
+| `plan compile` | 成功（`lattice.plan_compile_result.v1`） |
+| `run start --executor scripted` | 成功 |
+| `run adapter register`（配布controllerを指す） | 成功（`outcome: created`） |
+| **`run activate`** | **成功（`outcome: "activated"`）** |
+| `run status` | `accepted: ["T1"]`・`dispatchable: []`・`event_count: 7` |
+| `run observe` | `accepted: ["T1"]`・`terminal: ["T1"]` |
+| **実write** | **`src/alpha.mjs`が実際に変更された**（`git diff`で確認） |
+| `event verify` | `valid: true`・`checks_total: 14`・`failed_conditions: []` |
+| `run close` | `STALE_BASE`で拒否 |
+
+`run close`の拒否は**正しい挙動**である。実測手順の途中でadapter configをcommitして
+repo HEADを動かしたため、保存requestの`base_sha`と一致しなくなった。
+製品契約（「`resume`と正常`close`は保存requestのbase SHAへbindし、stale baseを拒否する」）
+どおりにfail closedしている。
+
+### 登録で踏んだ入力の作法（いずれもdetailが正確に指した）
+
+- `binary_path`はregular fileでなければならない。`/opt/homebrew/bin/node`はsymlinkのため
+  `binary_must_be_executable_regular_file`で拒否される。realpathを渡す。
+- `config_ref`は実在して読める必要がある（`config_unreadable`）。
+
+どちらも`lattice.cli_error.v2`の`detail`が`reason`と`path`を返したため、
+推測なしで次の一手が決まった。0.12.21で入れたdiagnosability規律が実際に効いている。
+
+### fm-0672に残る部分
+
+- 本実測はwriter 1件（T1）である。複数writerの実dispatchは未実測
+  （compile・`run start`・`dispatchable: ["T1","T2"]`までは0.12.24時点で確認済み）。
+- 子別Control受入は`lib/orchestrate/lattice-receipt-projection.mjs`を通す段であり、本実測に含まない。
+
+実dispatchが不可能という**blockerは解消した**ため、`fm-0672`のblockを解除する。
