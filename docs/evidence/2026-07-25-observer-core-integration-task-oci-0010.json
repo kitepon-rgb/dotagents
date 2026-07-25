@@ -1,0 +1,51 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 4,
+  "task": {
+    "task_id": "oci-0010",
+    "title": "Observer旧planと実物を照合し製品化readinessとrelease設計を確定する",
+    "classification": "F",
+    "effect": "write",
+    "doc_ref": "docs/plan_observer-core-integration.md",
+    "role": "implementer",
+    "lane": "behavior-change",
+    "depends_on": ["oci-0001"],
+    "required_capabilities": [
+      "package-release-audit",
+      "registry-read",
+      "source-remote-audit"
+    ],
+    "isolation": "none",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": true,
+      "share_existing_findings": true,
+      "share_failed_approaches": true,
+      "share_test_results": true
+    },
+    "validation": [
+      "Observerの機能baselineと公開不足が実物で分離されている",
+      "npm package名とGitHub repo名の衝突がread-onlyで確認されている",
+      "remote・version・license・release gateの推奨裁定がH境界へ送られている"
+    ],
+    "non_goals": [
+      "未承認のremote作成・push・tag・publish・global install",
+      "Observerの新機能追加"
+    ],
+    "known_traps": [
+      "unscoped observerは第三者packageが所有する",
+      "wire product IDとnpm distribution IDを同一視しない",
+      "0.0.0の分散固定をpackage.jsonだけ直して完了扱いしない"
+    ],
+    "read_scope": [
+      {"kind": "directory", "path": "docs"}
+    ],
+    "write_scope": [
+      {"kind": "directory", "path": "docs/evidence"}
+    ],
+    "approval": null,
+    "alternative_group": null
+  }
+}
