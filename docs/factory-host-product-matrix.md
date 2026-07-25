@@ -14,7 +14,7 @@
 
 ## 製品導入matrix
 
-端末能力を担うコア製品は全現役hostへ常備する（presence）。ただしhostの構造要因で成立しない**面**は、
+端末能力を担う自作コアと第三者管理製品は、対応する現役hostへ常備する（presence）。ただしhostの構造要因で成立しない**面**は、
 presenceと分離してその面だけを理由付き`unsupported`にする（gpt-connector行の「connectorだけunsupported」
 前例を一般化。2026-07-18裁定＝原則自体は維持し、面分離の明文だけを追加）。ServerManagerのsource/runtimeはmain-serverだけが必須で、他hostは管理clientとして接続するだけである。Claude Code CLI／Codex CLI／Grok Buildはコアと別の基盤toolchainであり、version・update・compatibility管理対象である。
 
@@ -28,7 +28,8 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | aiterm-mcp | required | required | required | required | high |
 | codex-sidecar | required | required | required | required | high |
 | Lattice | required | required | required | required | high |
-| AIShell | required（Apple Silicon / macOS 15+。wire v5 enrollまでreporter検査対象外） | unsupported（macOS native API不在） | unsupported（同左） | unsupported（同左） | high（enroll後、対応Macのみ） |
+| AIShell | required（Apple Silicon / macOS 15+） | unsupported（macOS native API不在） | unsupported（同左） | unsupported（同左） | high（対応Macのみ） |
+| Observer | required（macOS） | unsupported（v1 platform support外） | unsupported（同左） | unsupported（同左） | high（対応Macのみ） |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
 | Claude Code CLI | required | required | required | unsupported | high |
 | Codex CLI | required | required | required | required | high |
@@ -49,6 +50,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う |
 | Lattice | required。`lattice-mcp`のsensor 8 toolを配線。`codegraph_*`互換名はLattice提供者identityを返す | 同左。Windows nativeは親CLIを運用する端末だけMCP登録 |
 | AIShell | MCP `aishell` required（Apple Silicon / macOS 15+のみ）。`AISHELL_CAPABILITY_SET=expanded-v1`で登録し、工場監視はpath非露出の`AISHELL_TOOL_PROFILE=factory`を使う | 同左 |
+| Observer | macOSでStop hookとparent watchをversioned fragmentからH適用。同provider familyの伴走専用 | 同左。`run-observer-parent-watch`を正規入口とし、一般Worker・Control票へ混ぜない |
 | ServerManager | connector not_applicable | connector not_applicable |
 
 独立Codegraphは全hostで退役済みであり、製品・connector期待matrixへ含めない。BugHubの既存履歴だけを

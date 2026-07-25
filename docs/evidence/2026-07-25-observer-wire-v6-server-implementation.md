@@ -36,4 +36,3 @@
 - `git diff --check -- bughub`: exit 0
 - コミット後の未コミット差分は、作業前から存在したユーザー所有の
   `.claude/settings.local.json`だけ。変更・stage・commitしていない。
-

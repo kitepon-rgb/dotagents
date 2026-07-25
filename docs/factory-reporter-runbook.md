@@ -1,6 +1,6 @@
 # Factory reporter credential・設定ランブック
 
-更新日: 2026-07-13  
+更新日: 2026-07-25
 正本: dotagents  
 対象: Mac / main-server / FOX WSL2 / FOX Windows native
 
@@ -10,7 +10,7 @@
 - token、実config、outboxはgitへ入れない。tokenを引数、query parameter、通常JSON出力へ出さない。
 - host identityはtop-level `host.id / host.profile`で固定し、tokenのserver-side bindingと一致させる。
 - credential fileは所有者限定。POSIXはdirectory `0700`・file `0600`、Windowsは継承ACLを除去して現在userだけにする。
-- 本番BugHubはv4の`FACTORY_V4_INGEST_ENABLED=true`を明示するまで`/api/factory/v4/reports`を404にする。v1の`FACTORY_INGEST_ENABLED=true`はserver-first互換期間とhost別rollbackの間だけ維持する。
+- 本番BugHubの現行入口はv6の`/api/factory/v6/reports`で、`FACTORY_V6_INGEST_ENABLED=true`を明示するまで404にする。host別rollback用のv5入口と履歴は独立して維持し、wire majorを暗黙変換しない。
 - Pi5からのServerManager outageは、main-server上の`factory-external-event`だけで記録する。任意本文・path・URLは受け取らず、固定`check`/`reason`とcanonical UTCだけを保存する。
 
 ## 1. 送信OFFでconfigを配置
@@ -79,26 +79,25 @@ reporter configの`reporting`を次の形へ編集する。tokenが存在する�
 ```json
 {
   "enabled": true,
-  "endpoint": "http://192.168.1.2:39310/api/factory/v4/reports",
+  "endpoint": "http://192.168.1.2:39310/api/factory/v6/reports",
   "credential_file": "/home/kite/.config/dotagents/credentials/factory.token"
 }
 ```
 
-Windowsでは`credential_file`にWindows nativeの絶対pathをJSON escapingして指定する。host clientをONにする前に、次のserver-first順序を完了する。v1の`FACTORY_INGEST_ENABLED`はOracle互換期間と手動rollbackのため、全host移行完了まで独立して維持する。
+Windowsでは`credential_file`にWindows nativeの絶対pathをJSON escapingして指定する。host clientをONにする前に、次のserver-first順序を完了する。v5入口はhost別rollbackのためv6と独立して維持する。
 
 ## 4a. server-first cutover と host別rollback
 
-main-serverはまず`FACTORY_INGEST_ENABLED=true`でv1を維持し、`FACTORY_V4_INGEST_ENABLED=false`のままschema v4対応codeをdeployする。`bughub/deploy.sh`は引数なしでdry-run（削除一覧確認）してからH承認後に`--apply`する。次に`/readyz`とv1 report受理を確認する。その後だけv4 flagを`true`にして再deployし、v4 endpoint canaryを確認する。matrix/history表示は既存の共有v2 tableと`FACTORY_V2_VIEWS_ENABLED`を使う。host clientはこのserver canaryの後に1台ずつ切り替える。全hostを一括で切り替えず、`FACTORY_ORACLE_RETIRED`のようなglobal booleanは使わない。cutover状態とOracle retirementはhostごとに扱う。
+main-serverはv5入口を維持したまま、`FACTORY_V6_INGEST_ENABLED=false`でschema v6対応codeをdeployする。`bughub/deploy.sh`は引数なしでdry-run（削除一覧確認）してからH承認後に`--apply`する。`/readyz`とv5 report受理を確認し、server `.env`を退避してからv6 flagを`true`にして再deployする。v6 canary後、host clientを1台ずつv5/v6 dual-runで照合し、全hostを一括切替しない。
 
-v4からそのhostだけをrollbackする時は、次の順序を守る。
+v6からそのhostだけをrollbackする時は、次の順序を守る。
 
-1. `factory-reporter-scheduler uninstall --dry-run --platform <OS>`を確認し、H承認後に`--apply`でv4 schedulerを停止する。v4 state/outboxは削除しない。
-2. host configの`reporting.endpoint`を`/api/factory/v1/reports`へ変更する。
-3. main-serverで `docker compose exec -T bughub node src/factory-admin.js restore-oracle --host-id <host-id>` を実行する。
-4. `factory-reporter-scheduler install --wire-major v1 --dry-run --platform <OS>`でartifactを確認し、H承認後に`--apply`でv1 schedulerを登録する。
-5. v1送信を再開する。v4 outboxはv1として再送・変換しない。
+1. host configを退避する。
+2. configの`reporting.endpoint`を`/api/factory/v5/reports`へ変更する。
+3. `factory-reporter-scheduler install --wire-major v5 --dry-run --platform <OS>`でartifactを確認し、H承認後に`--apply`でv5 schedulerを登録する。v6 state/outboxは削除しない。
+4. v5 scan → enqueue → flushを実行し、BugHubのcurrent viewと履歴を確認する。v6 payloadをv5へ再送・変換しない。
 
-v4へ復帰する時は、main-serverで `docker compose exec -T bughub node src/factory-admin.js retire-oracle --host-id <host-id>` を実行する。続けてv1 endpointを向いたhost configで `factory-scan --oracle-retired --config <config> --output <report> --ack-output <acks>` を一度だけ実行し、通常のv1 reporterでenqueue/flushして、Oracleが`not_applicable`になった最終full snapshotのBugHub受理を確認する。`--oracle-retired`はOracle CLIを実行せず、指定なしの通常scanとv1 rollback schedulerは従来どおりOracleを観測する。次にhost configの`reporting.endpoint`を`/api/factory/v4/reports`へ変更し、`factory-reporter-scheduler install --wire-major v4 --dry-run --platform <OS>`を確認後、H承認済みの`--apply`でv4 schedulerを登録する。v4の最初のfull snapshotは固定12製品集合として送信し、v1の消失だけでOracle履歴やissueをresolveしない。
+v6へ復帰する時はconfigの`reporting.endpoint`を`/api/factory/v6/reports`へ戻し、`factory-reporter-scheduler install --wire-major v6 --dry-run --platform <OS>`を確認後、H承認済みの`--apply`でv6 schedulerを登録する。最初のfull snapshotは固定14製品集合として送信する。serverのv6 flagを戻す必要がある場合は、先に全hostをv5へ戻して受理を確認し、退避した`.env`からflagだけを復元する。どちらのrollbackでも履歴・issue・releaseを削除しない。
 
 ## 5. rotation
 
@@ -119,8 +118,8 @@ ssh main-server 'cd /home/kite/bughub && docker compose exec -T bughub node src/
 - credentialだけを止める: `factory-admin.js revoke --credential-id <id>`。
 - host全体を廃止する: `factory-admin.js retire-host --host-id <host>`。active credentialを同時にrevokeする。
 - reporter送信だけを止める: configの`reporting.enabled=false`。既存outboxは削除しない。
-- v4だけをrollbackする: `FACTORY_V4_INGEST_ENABLED=false`にして、dry-run後に再deployする。schema v4対応codeとv1入口、既存pull collector、共有履歴viewは継続する。
-- factory入口を全停止する: v1/v4の3 flagをすべてfalseにして再deployする。host schedulerを先に停止し、outboxを保持する。
+- v6だけをrollbackする: 全hostをv5へ戻した後、`FACTORY_V6_INGEST_ENABLED=false`にしてdry-run後に再deployする。schema v6対応codeとv5入口、共有履歴viewは継続する。
+- factory入口を全停止する: 全wireのingest flagをfalseにして再deployする。host schedulerを先に停止し、outboxを保持する。
 - token漏洩時はrotation猶予を使わず旧credentialを即revokeし、server staging・対象host tokenを置換する。
 
 秘密を含むfileの削除・転送、`.env`変更、factory入口ON、本番deployは端末ごとのH確認を伴う。通常のinstall/updateがこれらを暗黙に実行してはならない。
@@ -132,26 +131,26 @@ scan、preview、enqueue、flushは別操作である。`reporting.enabled=false
 ```bash
 # 1. read-only scan。outputはcredential/outboxと別の所有者限定pathへ置く。
 umask 077
-factory-scan-v4 --config ~/.config/dotagents/factory-reporter.json \
-  --output ~/.local/state/dotagents/factory-reporter-v4/latest-report.json \
-  --ack-output ~/.local/state/dotagents/factory-reporter-v4/latest-acks.json
+factory-scan-v6 --config ~/.config/dotagents/factory-reporter.json \
+  --output ~/.local/state/dotagents/factory-reporter-v6/latest-report.json \
+  --ack-output ~/.local/state/dotagents/factory-reporter-v6/latest-acks.json
 
 # 2. 送らずにschema・host identity・privacyを確認する。
-factory-reporter-v4 preview \
+factory-reporter-v6 preview \
   --config ~/.config/dotagents/factory-reporter.json \
-  --report ~/.local/state/dotagents/factory-reporter-v4/latest-report.json
+  --report ~/.local/state/dotagents/factory-reporter-v6/latest-report.json
 
 # 3. 明示ON済みの時だけoutboxへ保存する。OFFなら成功終了でもenqueued=false。
-factory-reporter-v4 enqueue \
+factory-reporter-v6 enqueue \
   --config ~/.config/dotagents/factory-reporter.json \
-  --report ~/.local/state/dotagents/factory-reporter-v4/latest-report.json \
-  --ack-metadata ~/.local/state/dotagents/factory-reporter-v4/latest-acks.json
+  --report ~/.local/state/dotagents/factory-reporter-v6/latest-report.json \
+  --ack-metadata ~/.local/state/dotagents/factory-reporter-v6/latest-acks.json
 
 # 4. 明示ON済みの時だけnetwork送信。accepted確認後だけoutboxから削除する。
-factory-reporter-v4 flush --config ~/.config/dotagents/factory-reporter.json
+factory-reporter-v6 flush --config ~/.config/dotagents/factory-reporter.json
 ```
 
-`preview`は常にnetworkゼロである。`enqueue`と`flush`はOFFならnetworkゼロで、既存outboxを消さない。v4 ACKはBugHub accepted後だけ`gpt-connector`のproduct-owned stateへ実行する。tokenの存在、scheduler、過去のON状態は送信許可にならない。
+`preview`は常にnetworkゼロである。`enqueue`と`flush`はOFFならnetworkゼロで、既存outboxを消さない。v6 ACKはBugHub accepted後だけ公開ACK entryへ実行する。tokenの存在、scheduler、過去のON状態は送信許可にならない。
 
 ### Pi5 external outage event
 
@@ -166,28 +165,28 @@ factory-external-event resolve --check availability --reason unreachable \
   --observed-at 2026-07-13T00:01:00.000Z --json
 ```
 
-このPi5 external eventのstateはPOSIXで`~/.local/state/dotagents/factory-reporter/`（directory `0700`、file/lock `0600`）にあり、symlink・schema改ざん・同時書込みを拒否する。これは固定external eventの互換stateであり、通常のv4 reporter outboxは`factory-reporter-v4/`を使う。open/resolveは冪等でappend-only sequenceを持ち、同一fingerprintはopen phaseをBugHubが受理してackするまでresolve phaseを送らない。`snapshot --json`と`status --json`は運用確認専用、`ack --cursor N --json`はreporterだけがBugHub accepted後に実行する。reporting OFFまたはack失敗時もstateは保持される。
+このPi5 external eventのstateはPOSIXで`~/.local/state/dotagents/factory-reporter/`（directory `0700`、file/lock `0600`）にあり、symlink・schema改ざん・同時書込みを拒否する。これは固定external eventの互換stateであり、通常のv6 reporter outboxは`factory-reporter-v6/`を使う。open/resolveは冪等でappend-only sequenceを持ち、同一fingerprintはopen phaseをBugHubが受理してackするまでresolve phaseを送らない。`snapshot --json`と`status --json`は運用確認専用、`ack --cursor N --json`はreporterだけがBugHub accepted後に実行する。reporting OFFまたはack失敗時もstateは保持される。
 
 ### exitと出力の扱い
 
-- `factory-scan-v4`非0: config/profile、dotagents revision、report schema、atomic outputのいずれかに失敗した。outputの成功扱い・enqueueはしない。個別製品CLIの不在・非対応はreport全体を偽成功/失敗へ丸めず、その製品を`unverified`として残す。
-- `factory-reporter-v4`非0: stdoutの`{ok:false,code:"FACTORY_REPORTER_V4_ERROR"}`とstderrを確認する。409/413/422はdead-letter、401/403/429/5xx/timeout/network/backoffはoutbox保持であり、いずれも成功ではない。
+- `factory-scan-v6`非0: config/profile、dotagents revision、report schema、atomic outputのいずれかに失敗した。outputの成功扱い・enqueueはしない。個別製品CLIの不在・非対応はreport全体を偽成功/失敗へ丸めず、その製品を`unverified`として残す。
+- `factory-reporter-v6`非0: stdoutの`{ok:false,code:"FACTORY_REPORTER_V6_ERROR"}`とstderrを確認する。409/413/422はdead-letter、401/403/429/5xx/timeout/network/backoffはoutbox保持であり、いずれも成功ではない。
 - stdout JSONは機械判定用で、token本文を出さない。report JSONには秘密・prompt・absolute pathを入れない。
-- config、credential、v4 state/outbox、scan outputは0700 directory/0600 fileにする。Windows nativeではstate root、outbox/dead-letter/retry/lock、生成fileの継承を遮断し、現在SIDだけにFullControlを許可する。ACL設定失敗は非0であり、pathや秘密を成功JSONへ出さない。reportを共有・git add・チャット貼付けしない。
+- config、credential、wire別state/outbox、scan outputは0700 directory/0600 fileにする。Windows nativeではstate root、outbox/dead-letter/retry/lock、生成fileの継承を遮断し、現在SIDだけにFullControlを許可する。ACL設定失敗は非0であり、pathや秘密を成功JSONへ出さない。reportを共有・git add・チャット貼付けしない。
 
 ## 8. 定期scheduler（dry-runから開始）
 
-`factory-reporter-scheduler` は毎時17分に起動するOS別schedulerを管理する。既定の`--wire-major v4`は`factory-reporter-v4-schedule-runner`と`factory-reporter-v4` stateを使う。手動rollback時だけ`--wire-major v1`で`factory-reporter-schedule-runner`とv1 stateを使う。runnerは該当wireの契約に従ってscan → enqueue → flush を行い、設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushはnetwork I/Oをしない。
+`factory-reporter-scheduler` は毎時17分に起動するOS別schedulerを管理する。本番登録では`--wire-major v6`を明示し、`factory-reporter-v6-schedule-runner`と`factory-reporter-v6` stateを使う。引数省略時のv4は既存利用者向け互換であり、新規登録には使わない。手動rollback時だけ`--wire-major v5`を指定する。runnerは該当wireの契約に従ってscan → enqueue → flush を行い、設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushはnetwork I/Oをしない。
 
 最初は必ずdry-runで生成物・登録commandを確認する。実登録は明示`--apply`だけであり、通常のinstall/updateはschedulerを登録しない。configが未配置または不正ならinstall/runnerはfail closedで、scheduler登録もscanも行わない。停止のためのuninstallだけはconfigなしでも実行できる。
 
 ```bash
 # macOS
-factory-reporter-scheduler install --dry-run --platform darwin --wire-major v4
+factory-reporter-scheduler install --dry-run --platform darwin --wire-major v6
 # Linux / WSL2
-factory-reporter-scheduler install --dry-run --platform linux --wire-major v4
+factory-reporter-scheduler install --dry-run --platform linux --wire-major v6
 # Windows native PowerShell
-factory-reporter-scheduler install --dry-run --platform win32 --wire-major v4
+factory-reporter-scheduler install --dry-run --platform win32 --wire-major v6
 ```
 
 承認済みの対象hostだけで、dry-runの出力を確認してから同じcommandに`--apply`を付ける。`--apply`は実行中OSと一致するplatformだけを受け付ける。uninstallは登録済みの共通launchd label / cron marker / Task Scheduler名を外すためwire-major非依存である。
@@ -200,7 +199,7 @@ factory-reporter-scheduler install --dry-run --platform win32 --wire-major v4
 
 ## 9. agents-updateとの接続
 
-`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、`factory-reporter-v4-schedule-runner --config <host config>`を必ず1回呼ぶ。runnerが担う順序はv4 scan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
+`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、`factory-reporter-v6-schedule-runner --config <host config>`を必ず1回呼ぶ。runnerが担う順序はv6 scan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
 
 - 既定configはPOSIXで`~/.config/dotagents/factory-reporter.json`、Windows nativeで`%LOCALAPPDATA%\dotagents\factory-reporter\config.json`。
 - `collection.enabled=false`ならrunnerがscan前に正常skipする。`reporting.enabled=false`ならenqueue/flushはnetworkへ出ない。
@@ -208,13 +207,13 @@ factory-reporter-scheduler install --dry-run --platform win32 --wire-major v4
 - 最終行直前の`agents-update result: update=<success|failed> report=<success|failed>`で両系統を判定でき、どちらかが`failed`なら終了codeは1。
 - 試験時だけ`FACTORY_REPORTER_RUNNER`と`FACTORY_REPORTER_CONFIG`で入口を差し替えられる。通常運用でこのoverrideを使わない。
 
-Claude Code、Codex、Grok Build は更新ごとにowner-onlyのtoolchain ledgerへ `before`、`latest`、`operation`、`after`、`post_gate`、`reason`、UTC観測時刻を記録する。Claude/Codexはnpm registryのsemverと`npm install -g @latest`、Grokは`grok update --check --json`とstable updateを正規入力とする。post-update v4 runnerが失敗すれば全3製品の`post_gate=failed`となり、更新自体の成功を全体成功へ丸めない。
+Claude Code、Codex、Grok Build は更新ごとにowner-onlyのtoolchain ledgerへ `before`、`latest`、`operation`、`after`、`post_gate`、`reason`、UTC観測時刻を記録する。Claude/Codexはnpm registryのsemverと`npm install -g @latest`、Grokは`grok update --check --json`とstable updateを正規入力とする。post-update v6 runnerが失敗すれば全3製品の`post_gate=failed`となり、更新自体の成功を全体成功へ丸めない。
 
 この接続はschedulerを新規登録せず、configを作成・変更せず、collection/reportingをONにしない。実hostへのconfig・credential配置とON操作は前節までのH手順で別途行う。
 
-### v4 component health と post-update gate
+### v6 component health と post-update gate
 
-v4 report は Throughline、Spotter、aiterm-mcp の native diagnostics を単一の `native_diagnostics` へ縮約しない。各 component の `pass` / `fail` / `unverified` / `skipped` と reason をそのまま送る。通常定期実行は scan → enqueue → flush の成否だけで exit を決め、component health の判定は raw report と BugHub の host matrix に委譲する。
+v6 report は各製品のnative diagnosticsを単一の `native_diagnostics` へ縮約しない。各componentの `pass` / `fail` / `unverified` / `skipped` とreasonをそのまま送る。通常定期実行はscan → enqueue → flushの成否だけでexitを決め、component healthの判定はraw reportとBugHubのhost matrixに委譲する。
 
 `--post-update` だけは default-deny gate を適用する。`fail` は常時 blocking、`unverified` は次の完全一致 tuple だけ non-blocking とする: Spotter `codex_hooks/trust_not_machine_verifiable`、Throughline `evidence_restore_smoke/diagnostic_unverified` と `claude_connector/diagnostic_unverified`、aiterm-mcp `pty_list/pty_list_unverified`。未知の check、reason 違い、別 product は blocking である。`post_gate_pending` の既存例外は維持する。
 
@@ -239,21 +238,23 @@ runner全体へ別の強制timeoutは重ねない。各外部境界を上表でb
 
 ## 11. BugHub wire schema major互換matrix
 
-通常経路はpayload `schema_version="4.0"`、`report_mode="full"`、endpoint `/api/factory/v4/reports`である。v1 command/state/endpointはOracle互換・手動rollback専用で、通常運用は参照しない。未知major/minor、未知field、deltaを推測・黙示変換しない。
+通常経路はpayload `schema_version="6.0"`、`report_mode="full"`、endpoint `/api/factory/v6/reports`である。v5 command/state/endpointはhost別手動rollback専用で、通常運用は参照しない。v1/v4はretention対象である。未知major/minor、未知field、deltaを推測・黙示変換しない。
 
 | client | server入口 | 結果 | rollout可否 |
 |---|---|---|---|
-| v1 | v1 endpoint | Oracle互換・手動rollbackだけで受理 | rollback時だけ |
-| v4 payload | v1 endpoint | `422`、clientはdead-letter。v1へ自動downgradeしない | 本番送信禁止 |
-| v1 | v4 codeが保持するv1 endpoint | v1契約のまま受理 | server-first期間に必須 |
-| v4 | v4 endpoint | v4 schema/semantic fixtureとcredential契約がgreenの時だけ受理 | host単位opt-in後に可 |
+| v5 | v5 endpoint | v5契約のまま受理 | host別rollback時だけ |
+| v6 | v6 endpoint | v6 schema/semantic fixtureとcredential契約がgreenの時だけ受理 | 現行本番 |
+| v6 payload | v5 endpoint | `422`、clientはdead-letter。v5へ自動downgradeしない | 本番送信禁止 |
+| v5 payload | v6 endpoint | 明示reject。v6へ自動upgradeしない | 本番送信禁止 |
+| v1 / v4 | 対応する旧endpoint | 履歴・既存outbox保持用。新規登録しない | retentionだけ |
 | 未知major | 任意の既知endpoint | 明示reject。fallback、field削除、再serializeをしない | 不可 |
 
-major変更は同じv1 endpointの意味を差し替えず、`/api/factory/v4/reports`とv4 schemaを追加する。順序は次で固定する。
+major変更は既存endpointの意味を差し替えず、新endpointとschemaを追加する。順序は次で固定する。
 
-1. ServerManagerへv1を保持したままv4 endpoint、validator、dedupe、notification、rollback fixtureを追加し、`FACTORY_INGEST_ENABLED=true`、`FACTORY_V4_INGEST_ENABLED=false`でdeployする。`/readyz`とv1 report受理を確認後、`FACTORY_V4_INGEST_ENABLED=true`で再deployし、v4 endpoint canaryを通す。履歴・viewはv2 tableを共有し、Codegraph履歴を削除しない。
-2. dotagentsへv1生成を残したままv4 client/outboxを追加する。majorごとにbody bytesとdead-letterを分離し、v4失敗をv1成功へ偽装しない。
-3. 1 hostずつHでv4へopt-inし、v1/v4のcurrent、履歴、resolve/reopen、Discord、`/ai`が同じ意味になることをcanaryする。rollbackはv4 schedulerをuninstall（outbox保持）→config endpointをv1へ変更→host別restore-oracle→`--wire-major v1` scheduler登録→v1送信再開の順とする。復帰はretire-oracle→v1最終`not_applicable`受理→config endpointをv4へ変更→`--wire-major v4` scheduler登録→初回12製品full snapshotの順とする。
-4. 全host移行、旧v1 outbox drain、最大offline/dedupe保持期間、rollback drill完了後にだけv1 retireを別waveで承認する。履歴tableを削除しない。
+1. ServerManagerへ旧majorを保持したまま新endpoint、validator、dedupe、notification、rollback fixtureを追加し、新major flagをOFFでdeployする。
+2. `/readyz`と旧major report受理を確認後、新major flagをONにしてcanaryを通す。履歴tableを削除しない。
+3. dotagentsへmajor別client/outboxを追加し、失敗を別majorの成功へ偽装しない。
+4. 1 hostずつHでdual-run、rollback、再cutoverを実測し、current・履歴・resolve/reopen・通知・`/ai`の意味を照合する。
+5. 全host移行、旧outbox drain、最大offline/dedupe保持期間、rollback drill完了後にだけ旧major retireを別waveで承認する。
 
-後方互換なoptional field追加でも、v1は`additionalProperties:false`なのでserverを先に更新し、旧client fixtureを保持する。config schema、製品native diagnostics schema、BugHub readiness schemaはwire majorとは別契約であり、同時にまとめてversionを上げない。
+後方互換なoptional field追加でもschemaは`additionalProperties:false`なのでserverを先に更新し、旧client fixtureを保持する。config schema、製品native diagnostics schema、BugHub readiness schemaはwire majorとは別契約であり、同時にまとめてversionを上げない。

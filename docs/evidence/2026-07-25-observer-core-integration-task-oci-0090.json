@@ -1,0 +1,94 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 21,
+  "task": {
+    "task_id": "oci-0090",
+    "title": "11製品正典・Phase監査・knowledge return・計画archiveを閉じる",
+    "classification": "F",
+    "effect": "write",
+    "doc_ref": "docs/plan_observer-core-integration.md",
+    "role": "implementer",
+    "lane": "behavior-preserving",
+    "depends_on": [
+      "oci-0080"
+    ],
+    "required_capabilities": [
+      "canonical-contract-audit",
+      "phase-regression",
+      "lattice-control-closure"
+    ],
+    "isolation": "none",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": true,
+      "share_existing_findings": true,
+      "share_failed_approaches": true,
+      "share_test_results": true
+    },
+    "validation": [
+      "自作コア10製品と第三者管理MarkItDownの所有境界が全正典で一致する",
+      "agents-updateの既定post-update gateが現行wire v6を使う",
+      "make ciがgreen",
+      "全ローカル製品repoに未コミット差分が残らない",
+      "Lattice planとControlを証拠付きで完了し計画をarchiveする"
+    ],
+    "non_goals": [
+      "MarkItDownのforkまたは内部patch",
+      "Observerを非対応platformへ移植すること",
+      "無関係repoの履歴変更"
+    ],
+    "known_traps": [
+      "工場管理対象数と自作コア数を混同しない",
+      "現行schedulerを更新後に旧wireへ戻さない",
+      "Lattice完了前にlive planをarchiveしない"
+    ],
+    "read_scope": [
+      {
+        "kind": "directory",
+        "path": "docs"
+      },
+      {
+        "kind": "directory",
+        "path": "bin"
+      },
+      {
+        "kind": "directory",
+        "path": "tests"
+      }
+    ],
+    "write_scope": [
+      {
+        "kind": "directory",
+        "path": ".lattice"
+      },
+      {
+        "kind": "directory",
+        "path": "docs"
+      },
+      {
+        "kind": "directory",
+        "path": "bin"
+      },
+      {
+        "kind": "directory",
+        "path": "tests"
+      },
+      {
+        "kind": "file",
+        "path": "AGENTS.md"
+      },
+      {
+        "kind": "file",
+        "path": "PLAN.md"
+      },
+      {
+        "kind": "file",
+        "path": "README.md"
+      }
+    ],
+    "approval": null,
+    "alternative_group": null
+  }
+}

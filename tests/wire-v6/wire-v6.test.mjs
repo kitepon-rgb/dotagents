@@ -11,6 +11,31 @@ import { V6_PRODUCT_IDS } from '../../lib/factory/v6.mjs';
 
 const EXPECTED = [...V5_PRODUCT_IDS, 'observer'];
 
+test('v6正典はObserverを自作コア、MarkItDownを第三者管理として11製品へ固定する', async () => {
+  const contracts = await readFile(resolve(import.meta.dirname, '../../docs/factory-product-contracts.md'), 'utf8');
+  const matrix = await readFile(resolve(import.meta.dirname, '../../docs/factory-host-product-matrix.md'), 'utf8');
+  assert.match(contracts, /^# 工場管理11製品＋基盤toolchain 3製品/mu);
+  assert.match(contracts, /### `markitdown`[\s\S]*所有\/修正先: 第三者/u);
+  assert.match(contracts, /### `observer`[\s\S]*所有\/修正先: 自作 \/ `kitepon-rgb\/Observer`/u);
+  assert.match(matrix, /^\| Observer \| required（macOS） \| unsupported/mu);
+  assert.doesNotMatch(contracts, /Observerは予約枠のまま未編入/u);
+});
+
+test('agents-updateの既定post-update gateは現役wire v6へ固定する', async () => {
+  const source = await readFile(resolve(import.meta.dirname, '../../bin/agents-update.sh'), 'utf8');
+  assert.match(source, /FACTORY_REPORTER_RUNNER=.*factory-reporter-v6-schedule-runner/u);
+  assert.doesNotMatch(source, /FACTORY_REPORTER_RUNNER=.*factory-reporter-v4-schedule-runner/u);
+
+  const runbook = await readFile(
+    resolve(import.meta.dirname, '../../docs/factory-reporter-runbook.md'),
+    'utf8',
+  );
+  assert.match(runbook, /現行入口はv6/u);
+  assert.match(runbook, /--wire-major v6/u);
+  assert.match(runbook, /schema_version="6\.0"/u);
+  assert.doesNotMatch(runbook, /通常経路はpayload `schema_version="4\.0"`/u);
+});
+
 const product = (contractVersion = '6.0') => ({
   presence_status: 'installed',
   installed_version: '0.1.0',

@@ -1,10 +1,11 @@
 # Observerコア製品正式編入
 
-- Status: Active
+- Status: Complete
 - Date: 2026-07-25
 - Lattice plan: `observer-core-integration`
 - Decisions: [ADR 0123](adr/0123-observer-core-integration-reinstatement.md)、
-  [ADR 0124](adr/0124-wire-v6-observer-enrollment.md)
+  [ADR 0124](adr/0124-wire-v6-observer-enrollment.md)、
+  [ADR 0125](adr/0125-observer-core-integration-final-acceptance.md)
 - Control: `observer-core-integration-20260725`
 
 ## 目的
@@ -13,14 +14,16 @@
 dotagents adapter、全host運用、rollbackまで一続きの製品として届ける。旧計画の誤終了は履歴を消さずに
 訂正し、Observerを「予約」から「現役コア」へ正式に移す。
 
-## 現在地
+## 完了状態
 
-- Observer HEAD `1493b35`は`npm test` 412/412、`npm run check`、native diagnostics、
-  `npm pack --dry-run`がgreen。
-- package versionは`0.0.0`、source remote・tag・registry release・既定branch祖先gateが未成立。
-- 現役factory wireはv5・固定13製品、現役コア管理対象は10製品。
-- ServerManagerにはオーナー所有のdirty `.claude/settings.local.json`があるため、本waveでは触れず、
-  commit対象にも含めない。
+- Observer `6a2917c55032`を`@quolu/observer@0.1.0`、tag / GitHub release `v0.1.0`
+  として公開し、global installとnative diagnosticsを確認した。
+- factory wire v6・固定14製品へ編入し、4 hostでv6→v5→v6 rollbackを実測した。
+- 工場の現役管理対象を11製品、自作コアを10製品、第三者管理をMarkItDown 1製品として
+  正典化した。
+- Observer、dotagents、ServerManager、AIShellで発見した工場欠陥を修理・公開・配備した。
+- 最終受入と回帰結果は
+  [最終監査](evidence/2026-07-25-observer-core-integration-final-audit.md)を正とする。
 
 ## 設計境界
 

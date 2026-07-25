@@ -29,13 +29,14 @@
 
 | 子計画 | 親内の役割 | 2026-07-16時点 |
 |---|---|---|
-| [Observer完成・Elastic改善](archive/plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | 終了。Observerは予約・RC4条件付きsupportのため未編入 |
+| [Observer完成・Elastic改善](archive/plan_observer-factory-integration.md) | Observer、両社orchestration、rate-aware配置、wire v3 | 旧計画は終了。未編入判断は後続のObserverコア編入で覆された |
 | [BugHub工場統合](archive/plan_bughub-factory-integration.md) | 固定12製品wire v2、自己監視、4環境rollout | 完了。最終gateとremote同期を証拠化してarchive済み |
 | [Codex全対応](archive/plan_codex-full-support.md) | 全端末のinstall/config/routing/hook/MCP/session E2E | 完了。工程履歴はarchive、状態正本はLattice store |
 | [呼びかけHook](archive/plan_callout-hooks.md) | hook詳細契約。端末横断受入はCodex全対応へ移管 | Completed。実装task完了、履歴をarchive済み |
 | [GPT-5.6再配線](archive/plan_gpt56-rewiring.md) | role routing詳細。端末横断受入はCodex全対応へ移管 | Completed。Lattice 37 task完了、履歴をarchive済み |
 | [Lattice編入](archive/plan_lattice-factory-integration.md) | Lattice RC4遂行、Codegraph吸収・fork改良、MCP面新設、wire v4 | Completed。Lattice 0.8.0、Codegraph退役、4 host cutoverまで完了 |
 | [AIShell編入](archive/plan_aishell-factory-integration.md) | AIShellコア化、native diagnostics、Mac統合、wire v5 | **完了（2026-07-25）**。wire v5で固定13製品へ編入し4 host cutover。受入は[matrix](evidence/2026-07-25-wire-v5-acceptance-matrix.md)、裁定はADR 0119 / 0120 / 0121 |
+| [Observerコア編入](plan_observer-core-integration.md) | Observer公開製品化、wire v6、4 host cutover | **完了（2026-07-25）**。固定14製品へ編入し、全hostのv5 rollbackとv6再cutoverを実測 |
 | [メモリ昇格queue](archive/queue_memory-promotion.md) | 各repo作業時の機会駆動queue | 終了。現行コア外の旧依頼は根拠付きで閉じarchive済み |
 
 CalloutとGPT-5.6の他端末チェックは、Codex全対応Wave 3の同じhost receiptを参照して閉じる。

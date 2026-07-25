@@ -1,4 +1,4 @@
-# 工場コア10製品＋基盤toolchain 3製品の有限契約台帳
+# 工場管理11製品＋基盤toolchain 3製品の有限契約台帳
 
 更新日: 2026-07-25。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
@@ -35,10 +35,10 @@
 
 ### `lattice`
 
-- 所有/修正先: 自作 / `kitepon-rgb/Lattice`。端末能力を担う現役コア9製品の1つ。version入口は`lattice --version`（`factory-diagnostics`のpackage versionと一致）。
+- 所有/修正先: 自作 / `kitepon-rgb/Lattice`。version入口は`lattice --version`（`factory-diagnostics`のpackage versionと一致）。
 - project工程discovery正本: `lattice status --json`（schema `lattice.project_status.v1`、state `uninitialized|ready|active_run|invalid`、canonical store、active plan/run、`can_create_plan`、`next_action`）。`.lattice/`の有無を接続判定へ使わず、invalidをMarkdownへfallbackしない。
 - diagnostics/state正本: `lattice factory-diagnostics --json`と`lattice runtime-errors snapshot|ack ... --json`。run store、sensor index、runtime error storeはLatticeが所有し、dotagentsは直接解釈しない。コード構造面は同梱sensorと`lattice-mcp`だけから提供する。
-- 現adapter: native JSONをexact allowlistで検証し、wire v4の正式製品`lattice`へ射影する。BugHubは4現役hostをwire v4へenroll済み。sensorのindex不在・破損・version不整合はtyped failure／guidanceであり、外部Codegraphへfallbackしない。
+- 現adapter: native JSONをexact allowlistで検証し、現行wire v6の正式製品`lattice`へ射影する。BugHubは4現役hostをwire v6へenroll済み。sensorのindex不在・破損・version不整合はtyped failure／guidanceであり、外部Codegraphへfallbackしない。
 - runtime dispatch面（0.12.21〜0.12.26で公開）: request契約は`plan compile --schema --json`、executor adapter登録は`run adapter register|list`、参照controllerは配布binの`lattice-scripted-adapter`。`run_request.v1`・`executor_packet.v1`・`executor_receipt.v1`・`runtime_adapter_registration_input.v1`のJSON Schemaは配布物に同梱される。dotagentsはこれらをexact validationで消費し（`lib/orchestrate/lattice-receipt-projection.mjs`・`lattice-control-saga.mjs`）、schemaを自前で再定義しない。実dispatchの所有者はhostであり、初回駆動が効くのは配布binをlaunch argvへ明示したmanaged runだけである。
 - TODO↔runtime相関: `lattice todo bindings [--plan <key>] --json`（`lattice.todo_binding_projection.v1`）。`compile_binding`から`compiled_plan_digest`→`runtime_plan.v1`→`executor_packet.v1`→`executor_receipt.v1`を辿る。`todo_status_result.v4`は変わらないため既存hookはそのまま動く。
 - 互換: `codegraph_*` MCP tool名は入力互換名としてのみ残し、provider／sensor_owner=`lattice`とLattice系列versionを返す。独立Codegraph package、PATH command、MCP登録、daemon、SDK依存は禁止。
@@ -88,11 +88,20 @@
 
 ### `aishell`
 
-- 所有/修正先: 自作 / `kitepon-rgb/aishell`。端末能力を担う9製品目（Observerは予約枠のまま未編入）。version入口はMCP initializeの`serverInfo.version`と`factory_diagnostics.product.version`の一致で、Swift側`AIShellProduct.version`が単一正本、package.jsonとのdriftは`verify-npm-package.mjs`が検出する。
+- 所有/修正先: 自作 / `kitepon-rgb/aishell`。version入口はMCP initializeの`serverInfo.version`と`factory_diagnostics.product.version`の一致で、Swift側`AIShellProduct.version`が単一正本、package.jsonとのdriftは`verify-npm-package.mjs`が検出する。
 - diagnostics/state正本: `AISHELL_TOOL_PROFILE=factory`でだけ公開されるread-only MCP `factory_diagnostics`（schema `aishell.native_factory_diagnostics.v1`）。platform、runtime configuration schema/migration、操作readiness、MCP、管理アプリbundleを返す。許可root・Git worktreeは件数だけで、path、activity、file本文、process argumentを返さない。
-- 公開面の分離: 対話hostは`AISHELL_CAPABILITY_SET=expanded-v1`の高密度11 tool面（製品が候補面と位置づける面であり、上流の変更に追従する）へ登録し、工場診断はfactory profileへ隔離する。既定7／expanded 11／full・legacy 25のどの一覧にも`factory_diagnostics`は現れず、profile外からは呼べない。factory profileとcapability setの併用は`FACTORY_PROFILE_CAPABILITY_SET_UNSUPPORTED`で拒否され、fallbackしない。
+- 公開面の分離: 対話hostは`AISHELL_CAPABILITY_SET=expanded-v1`の高密度11 tool面（製品が候補面と位置づける面であり、上流の変更に追従する）へ登録し、工場診断はfactory profileへ隔離する。既定7／expanded 11／full 29／legacy 25のどの一覧にも`factory_diagnostics`は現れず、profile外からは呼べない。factory profileとcapability setの併用は`FACTORY_PROFILE_CAPABILITY_SET_UNSUPPORTED`で拒否され、fallbackしない。
 - runtime schema: `aishell.runtime_configuration.v2`。旧単一`allowedRootPath`は製品側のcompatible-on-readで解釈し、dotagentsは`runtime.json`や`activity.jsonl`を直接読まない。
 - update/rollback: Apple Silicon Macだけ`@quolu/aishell@latest`をglobal更新し、package内`AIShell.app`と`aishell-mcp`を同版で扱う。rollbackは旧npm versionへ戻してMCP processを再起動する。診断は`0.4.1`以降で公開されており、それ以前のversionは`unverified`になる。
 - 起動形式: adapterもMCP hostも`aishell-mcp`をbare command名で起動する。製品側はloaded executable pathからAIShell.app bundleを解決し、この起動形式をrelease gateが覆う。完全修飾pathでだけ検証してbare名起動を未検証のまま出さない。
-- wire: v2/v3/v4固定集合へ後付けせず、ServerManager optional sourceを先行し、Lattice wire v4完了後のwire v5で正式enrollする。
+- wire: v2/v3/v4固定集合へ後付けせず、ServerManager optional sourceを先行し、Lattice wire v4完了後のwire v5で正式enroll済み。wire v6でも同じ製品契約を維持する。
 - 禁止: 非対応hostへの導入、shell/AppleScript/JXA fallback、`runtime_status`のpathをfactory reportへ転記、pauseを製品故障へ丸めること。
+
+### `observer`
+
+- 所有/修正先: 自作 / `kitepon-rgb/Observer`。version入口は`observer diagnostics`の`manifest.version`とnpm package versionの一致。
+- diagnostics/state正本: `observer diagnostics`（schema `observer.product_diagnostics.v1`）と`observer-mcp --diagnostics`（schema `observer.mcp_diagnostics.v1`）。package manifest、instruction、bin integrity、Node runtime、platformをread-onlyで返す。
+- 現adapter: macOSだけ正規diagnosticsをexact allowlistで検証し、全check passを`installed / compatible`へ射影する。server / WSL / Windows nativeはCLI探索や内部state推測をせず`not_applicable / unsupported`にする。
+- update/rollback: macOSで`@quolu/observer@latest`をglobal更新する。公開済みversionをunpublishせず、必要時はdeprecateしてglobal installを旧版へ戻す。
+- wire: v5固定13製品を変更せず、wire v6の固定14製品目としてserver-first、dual-run、4 host cutover済み。
+- 禁止: watch/session/prompt/path/内部DBをfactory reportへ送信、非対応hostを`missing`扱い、ServerManagerからObserver内部stateを修復。

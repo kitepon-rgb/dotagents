@@ -142,8 +142,11 @@ if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
 fi
 
 expected_npm_packages=13
-if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then
+if [ "$(uname -s)" = Darwin ]; then
   expected_npm_packages=14
+fi
+if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then
+  expected_npm_packages=15
 fi
 [ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq "$expected_npm_packages" ] \
   || fail "curated package ${expected_npm_packages}件を fake npm へ渡していない"

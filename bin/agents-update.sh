@@ -38,7 +38,7 @@ case "$runtime_os" in
 esac
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/agents-update.log"
-FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v4-schedule-runner}"
+FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v6-schedule-runner}"
 script_source="${BASH_SOURCE[0]}"
 while [ -h "$script_source" ]; do
   case "$script_source" in */*) script_parent=${script_source%/*} ;; *) script_parent=. ;; esac

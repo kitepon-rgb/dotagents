@@ -20,7 +20,7 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 ### 開発工場の定義（所有境界）
 
 - **開発工場そのものはdotagents**。dotagentsを「工場の一部」「司令室だけ」「ServerManagerと並ぶ一方のcontrol plane」と再定義しない。全端末・全projectの規範、導入、更新、親別配線、互換契約、検証、上流追従をここが統括する。
-- 工場の現役コア管理対象は計10製品。端末能力を担う9製品（Caveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar／AIShell）と、中央運用管理を担うServerManagerである。AIShellはmacOS arm64専用であり、非対応hostでは構造的な`unsupported`として扱う。LatticeはCodegraphを完全吸収した正式後継であり、独立Codegraphはretired／not_applicableの履歴だけを保持して現役製品・依存・配線に含めない。Observerは予約・RC4条件付きsupportで未編入。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理し、Oracleはv1互換・rollback専用とする。現役契約はLattice `docs/01_integration-package.md`と本repoの製品契約台帳・host matrix、導入経緯は[完了plan](docs/archive/plan_lattice-factory-integration.md)が正。
+- 工場の現役管理対象は計11製品。自作コア10製品（Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager）と、公開CLIだけをblack-box管理する第三者製品MarkItDownである。端末能力を担う10製品のうちAIShellはmacOS arm64専用、ObserverはmacOS専用であり、非対応hostでは構造的な`unsupported`として扱う。LatticeはCodegraphを完全吸収した正式後継であり、独立Codegraphはretired／not_applicableの履歴だけを保持して現役製品・依存・配線に含めない。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理し、Oracleはv1互換・rollback専用とする。現役契約はLattice `docs/01_integration-package.md`と本repoの製品契約台帳・host matrix、導入経緯は[完了plan](docs/archive/plan_lattice-factory-integration.md)および[Observer編入plan](docs/plan_observer-core-integration.md)が正。
 - **BugHubは独立した製品ではなく、ServerManager内部のコンポーネント**。既存の読み取り専用集約、報告元アプリによる重大度決定、`resolve` / `reopen`、`/ai`という契約を守り、各製品のversion・bug・compatibility結果を統括する連携先として活用する。
 - 各製品は自身のソース・状態・schema・migration・正規診断を所有する。dotagentsはそれらを複製せず統合契約を所有し、ServerManager/BugHubはdotagentsの代わりに工場方針を決めたり製品状態を直接書き換えたりしない。
 - オーナーは、dotagentsの統括AIが**自作コア製品**の正規repoへ必要な修正を行い、version更新、release準備、publish、公開後smokeまで管理することを明示許可している。コア製品の修理・機能追加はcommit/pushで止めず、version bump→publish→対象端末へのglobal install→公開後smoke→公開証跡記録までを同一waveで完遂する。これは責務範囲の恒久裁定であり、第三者製品のfork/patch許可や、本番deploy・credential・意図的障害・registry publish等のH操作に対する目的/影響/rollback説明と実行時承認を省略するものではない。各製品repoの正典・release gate・独立履歴を守る。**コア製品のrelease gateは、共通憲法の「publish対象は既定ブランチの祖先だけ」を機械gateとして実装したものだけを合格とする**（reference実装はAIShell `scripts/verify-release-commit.mjs`＋`prepublishOnly`）。gate未実装の製品は、次にそのrepoでrelease作業を行うwaveで同時に導入する。
@@ -33,7 +33,7 @@ Codex の公式 user skill 面 `$HOME/.agents/skills`（明示 legacy 時だけ 
 
 新しい端末でこのリポを稼働させる手順。上から順に実行する。**詳細な前提・トラブルシュートは [README.md](README.md) の「他端末セットアップ・ランブック」（§0〜4）が正典**——本節はその AI 実行用の要約＋`install.sh` が触らない `settings.json` だけを補う。
 
-1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・基盤CLI（`claude`/`codex`/`grok`）・工場コア9製品（`caveat`/`throughline`/`spotter`/`lattice`/`markitdown`/`gpt-connector`/`aiterm-mcp`/`codex-sidecar-mcp`、Apple Silicon Macは`aishell-mcp`）を導入し、親別matrixどおり`lattice-mcp`と`aishell`を登録する。独立`codegraph` package／MCP／daemonは導入しない。正規MCP IDは`gpt_connector`、commandは`gpt-connector-mcp`。Oracleは互換・rollback時だけ扱う。
+1. **前提の確認**（README §0）: git identity・node>=22・docker・python3（実行判定 `python3 -c "print(1)"`＝Windows ストア偽エイリアス回避）・基盤CLI（`claude`/`codex`/`grok`）・端末側管理対象（`caveat`/`throughline`/`spotter`/`lattice`/`markitdown`/`gpt-connector`/`aiterm-mcp`/`codex-sidecar-mcp`、macOSは`observer`、Apple Silicon Macは`aishell-mcp`）を導入し、親別matrixどおり`lattice-mcp`・`observer`・`aishell`を登録する。独立`codegraph` package／MCP／daemonは導入しない。正規MCP IDは`gpt_connector`、commandは`gpt-connector-mcp`。Oracleは互換・rollback時だけ扱う。
 2. **clone**（README §1）: `gh repo clone kitepon-rgb/dotagents ~/Developer/dotagents && cd ~/Developer/dotagents`。
 3. **既存実ファイルの退避**（README §2・重要）: install.sh は実ファイルを SKIP するので、先に tar 退避し stale な `~/.claude/CLAUDE.md` 実体を削除。飛ばすと正本化が静かに失敗する。`~/.codex/AGENTS.md` が実ファイルなら同様——中身を確認し、価値ある共通行は`shared/constitution.md`、Codex固有行は`codex/AGENTS.delta.md`へPRし、generatorで配布物を更新してからtar退避・削除する（生成物を直接編集・黙って上書き・破棄しない）。
 4. **install → Codex routing / hook 差分確認 → Spotter project install → 検証**（README §3）: 既定の `./install.sh --profile official` 後、`./bin/apply-codex-config.sh --dry-run` で変更範囲を確認する。`--apply` は routing 2キー、dotagents callout hook 4イベント、SessionStart advisory 1件、SessionStart Lattice工程表案内1件だけを backup 付きで書き込むため、対象端末への適用承認後に限る。続けてdotagentsルートで `spotter install -y` を実行し、Spotter自身にproject marker・Claude/Codex hook・host別catalog・Throughline auditor contextを管理させる。最後に `./bin/verify-install.sh --profile official` を通す（FAIL 行が退避すべき実ファイルまたは不足設定を名指しする）。
@@ -97,7 +97,7 @@ description: GitHub push 起点のデプロイを安全に検討する時に使�
 
 `bin/agents-update.sh` が curated な NPM ツール群 (Claude Code / Codex CLI / aiterm-mcp / Codex Sidecar / pnpm ほか) を `npm install -g <pkg>@latest` で順次更新する。`install.sh` で `~/.local/bin/agents-update` に symlink される。**週次の常設は必須**（macOS=launchd／Linux・WSL=cron。手順と「旧自動更新の撲滅」は [README.md](README.md)「自動アップデート」節が正典）。**対象パッケージ一覧はスクリプト先頭の `PACKAGES=` を直接編集**。`npm link` / `npm install -g .` 中の package をリストに残したまま走らせると registry 版で上書きされる点だけ注意。
 
-工場コア9製品は「導入済み」で終わらない。NPM製品は `@latest`、MarkItDownは `uv tool upgrade` で更新し、更新後も `verify-install` と `make ci` の互換契約を維持する。失敗した製品名を明示して更新ジョブを非0終了させ、上流更新でCLI・hook・MCP・設定schemaが変わった時は、製品側の正規契約を確認してdotagentsのadapter・ランブック・fixtureを同じ作業で追従させる。
+工場管理対象11製品は「導入済み」で終わらない。NPM製品は `@latest`、第三者製品MarkItDownは `uv tool upgrade` で更新し、更新後も `verify-install` と `make ci` の互換契約を維持する。失敗した製品名を明示して更新ジョブを非0終了させ、上流更新でCLI・hook・MCP・設定schemaが変わった時は、製品側の正規契約を確認してdotagentsのadapter・ランブック・fixtureを同じ作業で追従させる。
 
 ## 既知の罠
 

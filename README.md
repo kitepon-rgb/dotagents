@@ -121,7 +121,7 @@ Claude command の Codex 正規入口は slash command の模造ではなく、�
 
 ### 工場コア製品の変更管理
 
-コア9製品の追加・削除・第三者化・所有移管は、`PRODUCT_IDS`や表の1行だけを変えて終わりにしない。変更前に対象repo、所有者、自作/第三者区分、version入口、正規diagnostics、state/schema/migration、runtime error、host/connector期待、修正先repoを [有限契約台帳](docs/factory-product-contracts.md) へ記録する。
+工場管理対象11製品の追加・削除・第三者化・所有移管は、`PRODUCT_IDS`や表の1行だけを変えて終わりにしない。変更前に対象repo、所有者、自作コア/第三者管理区分、version入口、正規diagnostics、state/schema/migration、runtime error、host/connector期待、修正先repoを [有限契約台帳](docs/factory-product-contracts.md) へ記録する。
 
 1. 追加は、製品側の正規入口（第三者は公開CLI/APIだけ）を確定し、host matrix、更新経路、adapter、BugHubの固定product集合と期待matrix、privacy fixture、install/verifyを同じ独立waveで追加する。自作製品はnative diagnosticsを先に作り、dotagentsが内部DBを推測しない。
 2. 削除は、`rg -a`とLattice sensorでconsumerを確認し、scheduler/outbox/runtime cursorを停止・drainしてから行う。BugHubの履歴を物理削除せず、移行中の旧clientは対象を`not_applicable`で報告し、server期待matrixから外す時期とclient/server双方が旧reportを扱う期間を明示する。
@@ -220,7 +220,7 @@ permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを�
 
 `spotter install -y` はSpotterの正規project-scoped入口である。dotagentsの `.claude/settings.json` と `.spotter/`（どちらも端末ローカル・gitignore）を作り、user-level Codex hook 3本をcanonical化し、Claude/Codex別catalogをseedする。PATH上のThroughlineを絶対実行パスへ解決できる時はauditor contextが既定ONになる。Spotter自身のCLI以外でmarkerやhookを複製・手書きしない。
 
-- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale 実ファイル・反対 skill 面の同名重複・共有orchestrate契約の欠落・routing / hook 契約不足に加え、工場コア8製品のCLI、Caveat-Private、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalog、gpt-connector を FAIL 行で名指しする。Oracle wrapper は v1 互換・明示 rollback 用の検査として残す。`~/.local/bin` を PATH に通していれば以後は `verify-install --profile official` でも可
+- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale実ファイル・反対skill面の同名重複・共有orchestrate契約の欠落・routing / hook契約不足に加え、対応hostで必要な工場管理製品CLI、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalogをFAIL行で名指しする。Oracle wrapperは旧wire互換・明示rollback用の検査として残す。`~/.local/bin`をPATHに通していれば以後は`verify-install --profile official`でも可
 - **呼びかけ hook の配線**（AGENTS.md 手順5/6）: Claude 側 `settings.json`（C1-C4）は docs/03 の手順で配線する。Codex 側 X1-X5 は `apply-codex-config` が4イベントを限定して冪等正規化する。両方とも trust 承認は別途必要。断片・復旧手順は docs/03・docs/05 が正本
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／SpotterのUserPromptSubmit・Stop eventが記録される／極小タスクを implementer に委譲して契約どおりの報告が返る
 - 新しい Codex セッションで（対話確認）: skill 一覧に `orchestrate` が出る／`spawn_agent` schema に `agent_type` がある／`agent_type=<role>` と `fork_turns="none"` で routing smoke だけを起動／`verify-codex-agent-routing <role> <agent-path>` が green／Spotter 3 hookを対話Codex CLIの`/hooks`でreviewし、対象入口の新規sessionで`spotter.hook_event.v1`が記録される時だけ follow-up task を渡す
