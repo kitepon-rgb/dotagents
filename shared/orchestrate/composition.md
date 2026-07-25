@@ -27,6 +27,17 @@ DB・管理directory・内部moduleは読まず、公開CLIとversioned schema�
 Latticeの状態を`lattice_selected`のboolean一つとしてだけ受け取る。非依存はテストではなくAPI境界の型が保証する
 （[lane-admission](../../lib/orchestrate/lane-admission.mjs)と同型）。
 
+LatticeとControlを繋ぐ2 moduleも同じ規律に従う。どちらもI/Oを持たず、呼び出し側が取得済みのJSON値
+だけを受け取るpure moduleであり、`lattice-projection.mjs`をimportせずCLIをspawnしない。
+
+- `lib/orchestrate/lattice-receipt-projection.mjs`: Lattice子receiptをControlのstrict Worker Report断片へ
+  bounded projectionし、scope・digest・partial failure・dispatch ownerをtyped reasonで判別する。
+  帰属照合の基準はdispatch記録であってexecutorの自己申告ではない。
+- `lib/orchestrate/lattice-control-saga.mjs`: ready選択→Control placement→Lattice run start→子受入→
+  工程反映の次の一手を、3つのdurable state（Lattice工程status・run list・Control manifest）の観測から
+  計算する。**進行状態をどこにも保存しないため、再実行がそのままrecoveryになる。**
+  冪等キーは観測値から導出する決定的な値で、時刻・乱数に依存しない。
+
 ## 能力の付加
 
 | 必要な能力 | 付加するもの | 付加しないもの |

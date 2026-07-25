@@ -39,6 +39,8 @@
 - project工程discovery正本: `lattice status --json`（schema `lattice.project_status.v1`、state `uninitialized|ready|active_run|invalid`、canonical store、active plan/run、`can_create_plan`、`next_action`）。`.lattice/`の有無を接続判定へ使わず、invalidをMarkdownへfallbackしない。
 - diagnostics/state正本: `lattice factory-diagnostics --json`と`lattice runtime-errors snapshot|ack ... --json`。run store、sensor index、runtime error storeはLatticeが所有し、dotagentsは直接解釈しない。コード構造面は同梱sensorと`lattice-mcp`だけから提供する。
 - 現adapter: native JSONをexact allowlistで検証し、wire v4の正式製品`lattice`へ射影する。BugHubは4現役hostをwire v4へenroll済み。sensorのindex不在・破損・version不整合はtyped failure／guidanceであり、外部Codegraphへfallbackしない。
+- runtime dispatch面（0.12.21〜0.12.26で公開）: request契約は`plan compile --schema --json`、executor adapter登録は`run adapter register|list`、参照controllerは配布binの`lattice-scripted-adapter`。`run_request.v1`・`executor_packet.v1`・`executor_receipt.v1`・`runtime_adapter_registration_input.v1`のJSON Schemaは配布物に同梱される。dotagentsはこれらをexact validationで消費し（`lib/orchestrate/lattice-receipt-projection.mjs`・`lattice-control-saga.mjs`）、schemaを自前で再定義しない。実dispatchの所有者はhostであり、初回駆動が効くのは配布binをlaunch argvへ明示したmanaged runだけである。
+- TODO↔runtime相関: `lattice todo bindings [--plan <key>] --json`（`lattice.todo_binding_projection.v1`）。`compile_binding`から`compiled_plan_digest`→`runtime_plan.v1`→`executor_packet.v1`→`executor_receipt.v1`を辿る。`todo_status_result.v4`は変わらないため既存hookはそのまま動く。
 - 互換: `codegraph_*` MCP tool名は入力互換名としてのみ残し、provider／sensor_owner=`lattice`とLattice系列versionを返す。独立Codegraph package、PATH command、MCP登録、daemon、SDK依存は禁止。
 - 表現/禁止: 生message・絶対path・repo/prompt内容をreportへ転記しない。診断のためにindex生成・run実行・provider起動を行わない。
 
