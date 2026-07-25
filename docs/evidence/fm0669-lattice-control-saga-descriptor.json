@@ -1,0 +1,9 @@
+{
+  "evidence_id": "wave1-fm0669-lattice-control-saga",
+  "repo_id": "self",
+  "path": "lib/orchestrate/lattice-control-saga.mjs",
+  "git_blob_oid": "d79f8fece631b9f5c52dd06996e907a7bdc06e3c",
+  "content_digest": "bdfdaee116493bf3ee1e01b1785ffe840812a627284f871706d4de60c7736f2d",
+  "media_type": "text/javascript",
+  "anchor_digest": null
+}
