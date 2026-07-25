@@ -1,0 +1,59 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 11,
+  "task": {
+    "task_id": "oci-0060",
+    "title": "ServerManager/BugHubをfeature flag下でwire v6 server-first対応する",
+    "classification": "F",
+    "effect": "write",
+    "doc_ref": "docs/plan_observer-core-integration.md",
+    "role": "implementer",
+    "lane": "behavior-change",
+    "depends_on": [
+      "oci-0050"
+    ],
+    "required_capabilities": [
+      "bughub-contract-implementation",
+      "factory-wire-v6-server",
+      "sqlite-current-reconciliation"
+    ],
+    "isolation": "none",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": true,
+      "share_existing_findings": true,
+      "share_failed_approaches": true,
+      "share_test_results": true
+    },
+    "validation": [
+      "固定14製品schemaとv6 endpointが独立feature flag配下で実装されている",
+      "v5 rollback面を維持し、遅着v5が新しいv6 Observer currentを消さない",
+      "BugHub関連testが全件greenで、発見した工場欠陥が同じrepoで修理されている"
+    ],
+    "non_goals": [
+      "このtask内でのlive deployまたはhost cutover",
+      "Observer内部stateの収集"
+    ],
+    "known_traps": [
+      "固定full snapshotでも退役製品をcurrentから除かないと履歴が現役matrixへ混ざる",
+      "共有save pathでactual wire versionをv2へfall-throughさせない",
+      "遅着した旧majorが新major追加製品をcurrentから削除しない"
+    ],
+    "read_scope": [
+      {
+        "kind": "directory",
+        "path": "docs"
+      }
+    ],
+    "write_scope": [
+      {
+        "kind": "directory",
+        "path": "docs/evidence"
+      }
+    ],
+    "approval": null,
+    "alternative_group": null
+  }
+}
