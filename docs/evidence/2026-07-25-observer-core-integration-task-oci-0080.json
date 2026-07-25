@@ -1,0 +1,73 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 19,
+  "task": {
+    "task_id": "oci-0080",
+    "title": "v6 dual-run・Mac canary・全host cutover・rollback実測をH承認下で閉じる",
+    "classification": "H",
+    "effect": "write",
+    "doc_ref": "docs/plan_observer-core-integration.md",
+    "role": "implementer",
+    "lane": "behavior-change",
+    "depends_on": [
+      "oci-0040",
+      "oci-0050",
+      "oci-0070"
+    ],
+    "required_capabilities": [
+      "production-deployment",
+      "cross-host-scheduler-cutover",
+      "rollback-validation"
+    ],
+    "isolation": "none",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": true,
+      "share_existing_findings": true,
+      "share_failed_approaches": true,
+      "share_test_results": true
+    },
+    "validation": [
+      "BugHub v6 feature flag有効化後もv5 endpointが送信可能",
+      "Mac canaryのv5/v6 dual-runが固定13/14製品をそれぞれ受理する",
+      "4 active hostのv6 current viewが14製品でObserver expectationと一致する",
+      "全hostでv5 rollback report後にv6へ再cutoverできる",
+      "rollback後もObserver releaseとBugHub historyを保持する"
+    ],
+    "non_goals": [
+      "wire v5のretire",
+      "Observerの対応platform拡大",
+      "公開済みObserver releaseの履歴改変"
+    ],
+    "known_traps": [
+      "Windows nativeへのbash送信はWSLを変更するためPowerShell native経路だけを使う",
+      "config変更前にhostごとのowner-only fileをbackupする",
+      "Docker compose restartはenv file変更を再読込しないためforce-recreateする"
+    ],
+    "read_scope": [
+      {
+        "kind": "directory",
+        "path": "docs"
+      }
+    ],
+    "write_scope": [
+      {
+        "kind": "directory",
+        "path": "docs/evidence"
+      }
+    ],
+    "approval": {
+      "approval_ref": "docs/evidence/2026-07-25-observer-H-approval.md",
+      "purpose": "Observerを固定14製品の実運用current viewへ届ける",
+      "impact": "BugHub v6 ingestを有効化し、4 active hostのschedulerをv6へ切り替える",
+      "rollback": "server flagをfalseへ戻し、hostごとのbackup configとv5 schedulerへ戻す",
+      "operation_digest": "c2d55da4e8344e65954268e402cb305ce859f484c9298475d537193b9f52d112",
+      "approved_by": "クオ",
+      "approved_at": "2026-07-25T14:50:42.000Z",
+      "expires_at": "2099-07-25T00:00:00.000Z"
+    },
+    "alternative_group": null
+  }
+}
