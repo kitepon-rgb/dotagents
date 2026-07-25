@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-constitution test-install test-observer-hook-config test-observer-package test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate test-lattice-cutover ci help
+.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks test-constitution test-install test-observer-hook-config test-observer-package test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-factory-wire test-orchestrate test-lattice-cutover ci help
 
 lint: lint-sh lint-py lint-js lint-md lint-constitution lint-skills lint-hooks ## 静的 lint + skill/hook smoke
 
@@ -58,6 +58,9 @@ test-factory-reporter: ## BugHub factory reporter のprivacy/outbox/retry/schedu
 test-factory-scan: ## 工場9製品scanの公開CLI・privacy・platform契約を検証
 	node --test tests/factory-scan/*.test.mjs
 
+test-factory-wire: ## 工場wire major別の固定製品集合・client互換契約を検証
+	node --test tests/wire-v*/*.test.mjs
+
 test-orchestrate: ## orchestration control record の契約を検証
 	env -u TEMP -u TMP TMPDIR=/tmp node --test tests/orchestrate/*.test.mjs
 	env -u TEMP -u TMP TMPDIR=/tmp bash tests/orchestrate/agent-routing-verifier.sh
@@ -66,7 +69,7 @@ test-lattice-cutover: ## Lattice wire v4 cutover inventoryの固定blob・GFM抽
 	node --test tests/lattice-cutover/*.test.mjs
 	node bin/lattice-todo-inventory.mjs --verify-cutover
 
-ci: lint test-constitution test-install test-observer-hook-config test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-orchestrate test-lattice-cutover ## ローカル/CI 共通の全ゲート
+ci: lint test-constitution test-install test-observer-hook-config test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-factory-wire test-orchestrate test-lattice-cutover ## ローカル/CI 共通の全ゲート
 
 help: ## タスク一覧
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \

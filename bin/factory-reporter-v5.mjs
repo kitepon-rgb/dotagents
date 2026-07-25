@@ -1,14 +1,48 @@
 #!/usr/bin/env node
-// v5 owns this namespace exclusively. v4/v2/v1のoutboxを列挙しない。
-// runtime error acknowledgementのpayload契約はv4と同一のため、その実装を共有する。
+// v5/v6はtransport実装だけを共有し、endpoint・state・outbox schemaをmajor別に分離する。
+// runtime error acknowledgementのpayload契約はv4以降で同一のため、その実装を共有する。
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { chmod, lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import process from 'node:process';
-import { readAndValidateReportV5, readConfig, validateReportV5 } from '../lib/factory/contract.mjs';
-import { acknowledgeRuntimeErrorsV5, validateAcknowledgementBundleV5 } from '../lib/factory/runtime-errors.mjs';
+import {
+  readAndValidateReportV5,
+  readAndValidateReportV6,
+  readConfig,
+  validateReportV5,
+  validateReportV6,
+} from '../lib/factory/contract.mjs';
+import {
+  acknowledgeRuntimeErrorsV5,
+  acknowledgeRuntimeErrorsV6,
+  validateAcknowledgementBundleV5,
+  validateAcknowledgementBundleV6,
+} from '../lib/factory/runtime-errors.mjs';
+
+const IS_V6 = basename(process.argv[1] || '').includes('factory-reporter-v6');
+const WIRE = IS_V6
+  ? {
+      major: 'v6',
+      endpoint: '/api/factory/v6/reports',
+      state: 'factory-reporter-v6',
+      outboxSchema: 'dotagents.factory-outbox.v6',
+      readReport: readAndValidateReportV6,
+      validateReport: validateReportV6,
+      validateAcknowledgements: validateAcknowledgementBundleV6,
+      acknowledgeRuntimeErrors: acknowledgeRuntimeErrorsV6,
+    }
+  : {
+      major: 'v5',
+      endpoint: '/api/factory/v5/reports',
+      state: 'factory-reporter-v5',
+      outboxSchema: 'dotagents.factory-outbox.v5',
+      readReport: readAndValidateReportV5,
+      validateReport: validateReportV5,
+      validateAcknowledgements: validateAcknowledgementBundleV5,
+      acknowledgeRuntimeErrors: acknowledgeRuntimeErrorsV5,
+    };
 
 const MAX_QUEUE_ITEMS = 128;
 const MAX_QUEUE_BYTES = 2 * 1024 * 1024;
@@ -18,15 +52,15 @@ const RETRY_BASE_MS = 100;
 const RETRY_MAX_MS = 60_000;
 const UTF8 = new TextDecoder('utf-8', { fatal: true });
 
-function diagnostic(message) { process.stderr.write(`[factory-reporter-v5] ${message}\n`); }
+function diagnostic(message) { process.stderr.write(`[factory-reporter-${WIRE.major}] ${message}\n`); }
 function emit(value) { process.stdout.write(`${JSON.stringify(value)}\n`); }
 function fail(code, message) { diagnostic(message); emit({ ok: false, code }); process.exitCode = 1; }
 function defaultConfigPath() { return platform() === 'win32' ? join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'dotagents', 'factory-reporter', 'config.json') : join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'dotagents', 'factory-reporter.json'); }
-function defaultStatePath() { return platform() === 'win32' ? join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'dotagents', 'factory-reporter-v5') : join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'dotagents', 'factory-reporter-v5'); }
+function defaultStatePath() { return platform() === 'win32' ? join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'dotagents', WIRE.state) : join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'dotagents', WIRE.state); }
 function locations(stateDir) { return { stateDir, outbox: join(stateDir, 'outbox'), dead: join(stateDir, 'dead-letter'), retry: join(stateDir, 'retry'), lock: join(stateDir, 'flush.lock') }; }
 
 function exact(value, keys, label) { if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== keys.length || Object.keys(value).some((key) => !keys.includes(key))) throw new Error(`${label}が不正です`); }
-function v5Endpoint(config) { if (!config.reporting.enabled) return; let url; try { url = new URL(config.reporting.endpoint); } catch { throw new Error('v5 endpointが不正です'); } if (!['http:', 'https:'].includes(url.protocol) || url.pathname !== '/api/factory/v5/reports' || url.search || url.hash) throw new Error('v5 endpointが必要です'); }
+function wireEndpoint(config) { if (!config.reporting.enabled) return; let url; try { url = new URL(config.reporting.endpoint); } catch { throw new Error(`${WIRE.major} endpointが不正です`); } if (!['http:', 'https:'].includes(url.protocol) || url.pathname !== WIRE.endpoint || url.search || url.hash) throw new Error(`${WIRE.major} endpointが必要です`); }
 function assertIdentity(config, report) { if (!config.host || config.host.id !== report.host_id || config.host.profile !== report.host_profile) throw new Error('config host identityとreportが一致しません'); }
 function ownerOnlyAcl(path) {
   if (platform() !== 'win32') return;
@@ -59,8 +93,8 @@ async function entries(loc) { await ensureState(loc); const names = (await readd
 async function stats(loc) { const value = await entries(loc); return { count: value.length, bytes: value.reduce((sum, item) => sum + item.size, 0) }; }
 async function moveDead(loc, entry, reason) { await rename(entry.file, join(loc.dead, `${entry.name}.${Date.now()}-${randomUUID().slice(0, 8)}-${reason}`)); await rm(join(loc.retry, entry.name), { force: true }); }
 async function expire(loc) { for (const entry of await entries(loc)) if (Date.now() - entry.mtimeMs > MAX_QUEUE_AGE_MS) await moveDead(loc, entry, 'expired'); }
-function envelope(bytes, acknowledgements) { return acknowledgements ? Buffer.from(JSON.stringify({ schema_version: 'dotagents.factory-outbox.v5', report_id: acknowledgements.report_id, report_base64: bytes.toString('base64'), acknowledgements })) : bytes; }
-function decode(stored) { let parsed; try { parsed = JSON.parse(UTF8.decode(stored)); } catch { throw new Error('malformed'); } if (parsed?.schema_version !== 'dotagents.factory-outbox.v5') { validateReportV5(parsed); return { bytes: stored, report: parsed, acknowledgements: null }; } exact(parsed, ['schema_version', 'report_id', 'report_base64', 'acknowledgements'], 'outbox envelope'); if (typeof parsed.report_base64 !== 'string') throw new Error('malformed'); const bytes = Buffer.from(parsed.report_base64, 'base64'); if (bytes.toString('base64') !== parsed.report_base64) throw new Error('malformed'); let report; try { report = JSON.parse(UTF8.decode(bytes)); } catch { throw new Error('malformed'); } validateReportV5(report); if (report.report_id !== parsed.report_id) throw new Error('malformed'); return { bytes, report, acknowledgements: validateAcknowledgementBundleV5(parsed.acknowledgements, parsed.report_id) }; }
+function envelope(bytes, acknowledgements) { return acknowledgements ? Buffer.from(JSON.stringify({ schema_version: WIRE.outboxSchema, report_id: acknowledgements.report_id, report_base64: bytes.toString('base64'), acknowledgements })) : bytes; }
+function decode(stored) { let parsed; try { parsed = JSON.parse(UTF8.decode(stored)); } catch { throw new Error('malformed'); } if (parsed?.schema_version !== WIRE.outboxSchema) { WIRE.validateReport(parsed); return { bytes: stored, report: parsed, acknowledgements: null }; } exact(parsed, ['schema_version', 'report_id', 'report_base64', 'acknowledgements'], 'outbox envelope'); if (typeof parsed.report_base64 !== 'string') throw new Error('malformed'); const bytes = Buffer.from(parsed.report_base64, 'base64'); if (bytes.toString('base64') !== parsed.report_base64) throw new Error('malformed'); let report; try { report = JSON.parse(UTF8.decode(bytes)); } catch { throw new Error('malformed'); } WIRE.validateReport(report); if (report.report_id !== parsed.report_id) throw new Error('malformed'); return { bytes, report, acknowledgements: WIRE.validateAcknowledgements(parsed.acknowledgements, parsed.report_id) }; }
 async function enqueue(loc, bytes, id, acknowledgements) { await ensureState(loc); await expire(loc); const name = `${id}.json`; const target = join(loc.outbox, name); const stored = envelope(bytes, acknowledgements); try { const existing = await readFile(target); if (Buffer.compare(existing, stored) === 0) return { duplicate: true }; throw new Error('report_id collision: 既存outbox本文と一致しません（既存は保持）'); } catch (error) { if (error?.code !== 'ENOENT') throw error; } const current = await stats(loc); if (current.count >= MAX_QUEUE_ITEMS || current.bytes + stored.length > MAX_QUEUE_BYTES) throw new Error('outbox上限超過: 既存queueを保持したまま新規reportを拒否しました'); const temporary = join(loc.outbox, `.${name}.${randomUUID()}.tmp`); try { await writeFile(temporary, stored, { flag: 'wx', mode: 0o600 }); ownerOnlyAcl(temporary); await rename(temporary, target); ownerOnlyAcl(target); } finally { await rm(temporary, { force: true }); } return { duplicate: false }; }
 async function retryInfo(loc, name) { try { const value = JSON.parse(await readFile(join(loc.retry, name), 'utf8')); return Number.isSafeInteger(value.attempt) && Number.isFinite(value.next_retry_at) ? value : null; } catch { return null; } }
 async function postpone(loc, name, prior) { const attempt = Math.min((prior?.attempt || 0) + 1, 16); const next_retry_at = Date.now() + Math.min(RETRY_BASE_MS * 2 ** (attempt - 1), RETRY_MAX_MS); const path = join(loc.retry, name); await writeFile(path, JSON.stringify({ attempt, next_retry_at }), { mode: 0o600 }); ownerOnlyAcl(path); }
@@ -75,13 +109,13 @@ async function postOne(config, token, loc, entry) {
     const response = await fetch(config.reporting.endpoint, { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', 'x-factory-sent-at': new Date().toISOString() }, body: decoded.bytes, signal: controller.signal });
     let body = null; try { body = await response.json(); } catch {}
     if (response.ok && body?.accepted === true && body.report_id === decoded.report.report_id) {
-      if (decoded.acknowledgements) { try { await acknowledgeRuntimeErrorsV5(decoded.acknowledgements); } catch { return { action: 'keep', reason: 'ack-failed' }; } }
+      if (decoded.acknowledgements) { try { await WIRE.acknowledgeRuntimeErrors(decoded.acknowledgements); } catch { return { action: 'keep', reason: 'ack-failed' }; } }
       return { action: 'delete' };
     }
     if ([409, 413, 422].includes(response.status)) return { action: 'dead', reason: `http-${response.status}` };
     return { action: 'keep', reason: `http-${response.status}` };
   } catch (error) { return { action: 'keep', reason: error?.name === 'AbortError' ? 'timeout' : 'network' }; } finally { clearTimeout(timeout); }
 }
-function parseArgs(argv) { const [command, ...rest] = argv; if (!['preview', 'enqueue', 'flush'].includes(command)) throw new Error('使い方: factory-reporter-v5.mjs preview|enqueue|flush [--report <file>] [--ack-metadata <file>] [--config <file>]'); const options = {}; for (let i = 0; i < rest.length; i += 1) { if (!['--report', '--ack-metadata', '--config'].includes(rest[i]) || !rest[i + 1] || options[rest[i]]) throw new Error('引数が不正です'); options[rest[i].slice(2)] = rest[++i]; } if ((command === 'preview' || command === 'enqueue') && !options.report) throw new Error('--reportが必要です'); if (command === 'flush' && options.report) throw new Error('flushは--reportを受け取りません'); if (command !== 'enqueue' && options['ack-metadata']) throw new Error('--ack-metadataはenqueue専用です'); return { command, options }; }
-async function main() { const { command, options } = parseArgs(process.argv.slice(2)); const config = await readConfig(options.config || defaultConfigPath()); const loc = locations(defaultStatePath()); if (config.reporting.enabled) v5Endpoint(config); if (command === 'preview') { const { bytes, report } = await readAndValidateReportV5(options.report); assertIdentity(config, report); emit({ ok: true, command, reporting_enabled: config.reporting.enabled, report_id: report.report_id, body_bytes: bytes.length, report }); return; } if (command === 'enqueue') { const { bytes, report } = await readAndValidateReportV5(options.report); if (!config.reporting.enabled) { emit({ ok: true, command, reporting_enabled: false, enqueued: false, report_id: report.report_id, ...(await stats(loc)) }); return; } assertIdentity(config, report); let acknowledgements = null; if (options['ack-metadata']) { let value; try { value = JSON.parse(UTF8.decode(await readFile(options['ack-metadata']))); } catch { throw new Error('ack metadataが不正です'); } acknowledgements = validateAcknowledgementBundleV5(value, report.report_id); } const result = await enqueue(loc, bytes, report.report_id, acknowledgements); emit({ ok: true, command, reporting_enabled: true, enqueued: !result.duplicate, report_id: report.report_id, ...(await stats(loc)) }); return; } if (!config.reporting.enabled) { emit({ ok: true, command, reporting_enabled: false, sent: 0, retained: (await stats(loc)).count, dead_lettered: 0, deferred: 0 }); return; } await ensureState(loc); const token = await credential(config); const outcome = await withLock(loc, async () => { await expire(loc); let sent = 0; let retained = 0; let deadLettered = 0; let deferred = 0; let ackFailed = 0; for (const entry of await entries(loc)) { const retry = await retryInfo(loc, entry.name); if (retry && retry.next_retry_at > Date.now()) { deferred += 1; continue; } const result = await postOne(config, token, loc, entry); if (result.action === 'delete') { await rm(entry.file, { force: true }); await rm(join(loc.retry, entry.name), { force: true }); sent += 1; } else if (result.action === 'dead') { await moveDead(loc, entry, result.reason); deadLettered += 1; } else { await postpone(loc, entry.name, retry); retained += 1; if (result.reason === 'ack-failed') ackFailed += 1; } } return { sent, retained, dead_lettered: deadLettered, deferred, ack_failed: ackFailed }; }); const failed = outcome.retained > 0 || outcome.dead_lettered > 0 || outcome.deferred > 0 || outcome.ack_failed > 0; emit({ ok: !failed, command, reporting_enabled: true, ...outcome, ...(await stats(loc)) }); if (failed) { diagnostic(outcome.ack_failed > 0 ? 'BugHub受理後のruntime error acknowledgementに失敗しました' : outcome.dead_lettered > 0 ? 'BugHubに永久拒否されたreportをdead-letterへ隔離しました' : 'outboxに未送信reportが残っています'); process.exitCode = 1; } }
-main().catch((error) => fail('FACTORY_REPORTER_V5_ERROR', error?.message || '失敗'));
+function parseArgs(argv) { const [command, ...rest] = argv; if (!['preview', 'enqueue', 'flush'].includes(command)) throw new Error(`使い方: factory-reporter-${WIRE.major}.mjs preview|enqueue|flush [--report <file>] [--ack-metadata <file>] [--config <file>]`); const options = {}; for (let i = 0; i < rest.length; i += 1) { if (!['--report', '--ack-metadata', '--config'].includes(rest[i]) || !rest[i + 1] || options[rest[i]]) throw new Error('引数が不正です'); options[rest[i].slice(2)] = rest[++i]; } if ((command === 'preview' || command === 'enqueue') && !options.report) throw new Error('--reportが必要です'); if (command === 'flush' && options.report) throw new Error('flushは--reportを受け取りません'); if (command !== 'enqueue' && options['ack-metadata']) throw new Error('--ack-metadataはenqueue専用です'); return { command, options }; }
+async function main() { const { command, options } = parseArgs(process.argv.slice(2)); const config = await readConfig(options.config || defaultConfigPath()); const loc = locations(defaultStatePath()); if (config.reporting.enabled) wireEndpoint(config); if (command === 'preview') { const { bytes, report } = await WIRE.readReport(options.report); assertIdentity(config, report); emit({ ok: true, command, reporting_enabled: config.reporting.enabled, report_id: report.report_id, body_bytes: bytes.length, report }); return; } if (command === 'enqueue') { const { bytes, report } = await WIRE.readReport(options.report); if (!config.reporting.enabled) { emit({ ok: true, command, reporting_enabled: false, enqueued: false, report_id: report.report_id, ...(await stats(loc)) }); return; } assertIdentity(config, report); let acknowledgements = null; if (options['ack-metadata']) { let value; try { value = JSON.parse(UTF8.decode(await readFile(options['ack-metadata']))); } catch { throw new Error('ack metadataが不正です'); } acknowledgements = WIRE.validateAcknowledgements(value, report.report_id); } const result = await enqueue(loc, bytes, report.report_id, acknowledgements); emit({ ok: true, command, reporting_enabled: true, enqueued: !result.duplicate, report_id: report.report_id, ...(await stats(loc)) }); return; } if (!config.reporting.enabled) { emit({ ok: true, command, reporting_enabled: false, sent: 0, retained: (await stats(loc)).count, dead_lettered: 0, deferred: 0 }); return; } await ensureState(loc); const token = await credential(config); const outcome = await withLock(loc, async () => { await expire(loc); let sent = 0; let retained = 0; let deadLettered = 0; let deferred = 0; let ackFailed = 0; for (const entry of await entries(loc)) { const retry = await retryInfo(loc, entry.name); if (retry && retry.next_retry_at > Date.now()) { deferred += 1; continue; } const result = await postOne(config, token, loc, entry); if (result.action === 'delete') { await rm(entry.file, { force: true }); await rm(join(loc.retry, entry.name), { force: true }); sent += 1; } else if (result.action === 'dead') { await moveDead(loc, entry, result.reason); deadLettered += 1; } else { await postpone(loc, entry.name, retry); retained += 1; if (result.reason === 'ack-failed') ackFailed += 1; } } return { sent, retained, dead_lettered: deadLettered, deferred, ack_failed: ackFailed }; }); const failed = outcome.retained > 0 || outcome.dead_lettered > 0 || outcome.deferred > 0 || outcome.ack_failed > 0; emit({ ok: !failed, command, reporting_enabled: true, ...outcome, ...(await stats(loc)) }); if (failed) { diagnostic(outcome.ack_failed > 0 ? 'BugHub受理後のruntime error acknowledgementに失敗しました' : outcome.dead_lettered > 0 ? 'BugHubに永久拒否されたreportをdead-letterへ隔離しました' : 'outboxに未送信reportが残っています'); process.exitCode = 1; } }
+main().catch((error) => fail(`FACTORY_REPORTER_${WIRE.major.toUpperCase()}_ERROR`, error?.message || '失敗'));

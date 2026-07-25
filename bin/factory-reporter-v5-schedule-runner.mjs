@@ -3,7 +3,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { chmod, link, lstat, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { readConfig } from '../lib/factory/contract.mjs';
@@ -11,8 +11,9 @@ import { extendedSchedulerPath } from '../lib/factory/scheduler-path.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
+const WIRE_MAJOR = basename(process.argv[1] || '').includes('factory-reporter-v6') ? 'v6' : 'v5';
 process.env.PATH = extendedSchedulerPath({ platform: platform(), path: process.env.PATH, execPath: process.execPath, home: homedir() });
-function statePath() { return platform() === 'win32' ? join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'dotagents', 'factory-reporter-v5') : join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'dotagents', 'factory-reporter-v5'); }
+function statePath() { return platform() === 'win32' ? join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'dotagents', `factory-reporter-${WIRE_MAJOR}`) : join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'dotagents', `factory-reporter-${WIRE_MAJOR}`); }
 function platformMatches(profile) { return (platform() === 'darwin' && profile === 'mac') || (platform() === 'linux' && ['server', 'wsl'].includes(profile)) || (platform() === 'win32' && profile === 'windows-native'); }
 function run(script, args) { return new Promise((resolveRun, rejectRun) => { const child = spawn(process.execPath, [join(HERE, script), ...args], { stdio: 'inherit' }); child.on('error', rejectRun); child.on('close', (code) => code === 0 ? resolveRun() : rejectRun(new Error(`${script} がexit ${code}で失敗`))); }); }
 function ownerOnlyAcl(path) {
@@ -43,7 +44,7 @@ $item.SetAccessControl($acl)`;
   if (result.error) throw new Error('Windows owner-only ACL設定に失敗しました (acl_process_failed)');
   if (result.status !== 0) throw new Error('Windows owner-only ACL設定に失敗しました (acl_apply_failed)');
 }
-function parseArgs(argv) { const mode = argv[2] || null; if (![2, 3].includes(argv.length) || argv[0] !== '--config' || !argv[1] || /[\0\r\n]/u.test(argv[1]) || (mode !== null && !['--post-update', '--finalize-update'].includes(mode))) throw new Error('使い方: factory-reporter-v5-schedule-runner --config <file> [--post-update|--finalize-update]'); return { configPath: argv[1], postUpdate: mode === '--post-update', finalizeUpdate: mode === '--finalize-update' }; }
+function parseArgs(argv) { const mode = argv[2] || null; if (![2, 3].includes(argv.length) || argv[0] !== '--config' || !argv[1] || /[\0\r\n]/u.test(argv[1]) || (mode !== null && !['--post-update', '--finalize-update'].includes(mode))) throw new Error(`使い方: factory-reporter-${WIRE_MAJOR}-schedule-runner --config <file> [--post-update|--finalize-update]`); return { configPath: argv[1], postUpdate: mode === '--post-update', finalizeUpdate: mode === '--finalize-update' }; }
 async function privateState(state) { try { const info = await lstat(state); if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('state pathはsymlinkでないdirectoryでなければなりません'); } catch (error) { if (error?.code !== 'ENOENT') throw error; await mkdir(state, { recursive: true, mode: 0o700 }); } if (platform() !== 'win32') await chmod(state, 0o700); else ownerOnlyAcl(state); }
 function parseLockOwner(raw) {
   try {
@@ -143,13 +144,13 @@ try {
       const acks = join(state, 'latest-acks.json');
       let failures = [];
       if (config.collection.enabled || postUpdate || finalizeUpdate) {
-        await run('factory-scan-v5.mjs', ['--config', configPath, '--output', reportPath, '--ack-output', acks, '--cwd', ROOT]);
+        await run(`factory-scan-${WIRE_MAJOR}.mjs`, ['--config', configPath, '--output', reportPath, '--ack-output', acks, '--cwd', ROOT]);
         const report = JSON.parse(await readFile(reportPath, 'utf8'));
         if (finalizeUpdate && hasPendingToolchainLedger(report)) throw new Error('finalize ledgerにpost_gate_pendingが残っています');
         if (postUpdate) failures = gateFailures(report, config.host.profile, true);
-        if (!postUpdate && (config.collection.enabled || (finalizeUpdate && config.reporting.enabled))) await run('factory-reporter-v5.mjs', ['enqueue', '--config', configPath, '--report', reportPath, '--ack-metadata', acks]);
+        if (!postUpdate && (config.collection.enabled || (finalizeUpdate && config.reporting.enabled))) await run(`factory-reporter-${WIRE_MAJOR}.mjs`, ['enqueue', '--config', configPath, '--report', reportPath, '--ack-metadata', acks]);
       }
-      if (config.reporting.enabled) await run('factory-reporter-v5.mjs', ['flush', '--config', configPath]);
+      if (config.reporting.enabled) await run(`factory-reporter-${WIRE_MAJOR}.mjs`, ['flush', '--config', configPath]);
       if (finalizeUpdate) process.stdout.write(`${JSON.stringify({ ok: true, finalized: true })}\n`);
       else if (failures.length) {
         process.stdout.write(`${JSON.stringify({ ok: false, post_gate_status: 'failed', failed_checks: failures.length })}\n`);
@@ -158,6 +159,6 @@ try {
     });
   }
 } catch (error) {
-  process.stderr.write(`[factory-reporter-v5-schedule-runner] ${error?.message || '失敗'}\n`);
+  process.stderr.write(`[factory-reporter-${WIRE_MAJOR}-schedule-runner] ${error?.message || '失敗'}\n`);
   process.exitCode = 1;
 }

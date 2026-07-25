@@ -103,7 +103,7 @@ test('v5 reporterはv5専用のendpoint・outbox・stateだけを使う', async 
   assert.match(reporter, /\/api\/factory\/v5\/reports/u);
   assert.doesNotMatch(reporter, /\/api\/factory\/v4\/reports/u, 'v4 endpointを参照しない');
   assert.match(reporter, /dotagents\.factory-outbox\.v5/u);
-  assert.match(reporter, /'dotagents', 'factory-reporter-v5'/u);
+  assert.match(reporter, /state: 'factory-reporter-v5'/u);
   assert.doesNotMatch(reporter, /'dotagents', 'factory-reporter-v4'/u, 'v4のoutboxを列挙しない');
 });
 

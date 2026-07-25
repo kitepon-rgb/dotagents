@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import test from 'node:test';
 
 import { validateReportV5, validateReportV6 } from '../../lib/factory/contract.mjs';
@@ -61,4 +65,93 @@ test('Observer safe_contextは空allowlistのため拒否する', () => {
     safe_context: { watch_id: 'w_private' },
   }];
   assert.throws(() => validateReportV6(report), /safe_context/);
+});
+
+function run(script, args, env = {}) {
+  return new Promise((resolveRun) => {
+    const child = spawn(process.execPath, [script, ...args], {
+      env: { ...process.env, ...env },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('close', (code) => resolveRun({
+      code,
+      stdout,
+      stderr,
+      json: stdout ? JSON.parse(stdout) : null,
+    }));
+  });
+}
+
+test('v6 reporterはv6 reportだけを受理し、v5とstateを共有しない', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'wire-v6-reporter-'));
+  try {
+    const reportPath = join(root, 'report.json');
+    const configPath = join(root, 'config.json');
+    const reporter = resolve(import.meta.dirname, '../../bin/factory-reporter-v6.mjs');
+    await writeFile(reportPath, JSON.stringify(reportV6()));
+    await writeFile(configPath, JSON.stringify({
+      schema_version: '1.0',
+      host: { id: 'mac-kite', profile: 'mac' },
+      collection: { enabled: false },
+      reporting: { enabled: false },
+    }));
+    const preview = await run(reporter, ['preview', '--report', reportPath, '--config', configPath], {
+      XDG_STATE_HOME: join(root, 'state'),
+    });
+    assert.equal(preview.code, 0, preview.stderr);
+    assert.equal(preview.json.report.schema_version, '6.0');
+
+    const v5 = reportV6();
+    v5.schema_version = '5.0';
+    v5.reporter.version = '5.0.0';
+    delete v5.products.observer;
+    for (const productValue of Object.values(v5.products)) productValue.contract_version = '5.0';
+    await writeFile(reportPath, JSON.stringify(v5));
+    const rejected = await run(reporter, ['preview', '--report', reportPath, '--config', configPath], {
+      XDG_STATE_HOME: join(root, 'state'),
+    });
+    assert.equal(rejected.code, 1);
+    assert.equal(rejected.json.code, 'FACTORY_REPORTER_V6_ERROR');
+
+    const source = await readFile(reporter, 'utf8');
+    assert.match(source, /factory-reporter-v5\.mjs/u, 'v5の検証済みtransport実装を共有する');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('schedulerはv6 endpoint・runner・専用stateを同じmajorへ束縛する', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'wire-v6-scheduler-'));
+  try {
+    const configPath = join(root, 'config.json');
+    const credentialPath = join(root, 'credential');
+    const scheduler = resolve(import.meta.dirname, '../../bin/factory-reporter-scheduler.mjs');
+    await writeFile(credentialPath, 'unit-test-token\n', { mode: 0o600 });
+    await writeFile(configPath, JSON.stringify({
+      schema_version: '1.0',
+      host: { id: 'mac-kite', profile: 'mac' },
+      collection: { enabled: true },
+      reporting: {
+        enabled: true,
+        endpoint: 'http://127.0.0.1:1/api/factory/v6/reports',
+        credential_file: credentialPath,
+      },
+    }));
+    const result = await run(scheduler, [
+      'install', '--dry-run', '--platform', 'darwin', '--wire-major', 'v6', '--config', configPath,
+    ], {
+      HOME: root,
+      XDG_STATE_HOME: join(root, 'state'),
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(result.json.wire_major, 'v6');
+    assert.match(result.json.artifact_content, /factory-reporter-v6-schedule-runner/u);
+    assert.match(result.json.state, /factory-reporter-v6$/u);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

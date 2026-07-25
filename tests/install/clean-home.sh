@@ -227,10 +227,13 @@ HOME="$OFFICIAL_HOME" "$ROOT/install.sh" --profile official >/dev/null
 assert_link "$OFFICIAL_HOME/.agents/skills/run-observer-parent-watch" "$ROOT/codex/skills/run-observer-parent-watch"
 verify "$OFFICIAL_HOME" official
 assert_link "$OFFICIAL_HOME/.local/bin/factory-reporter" "$ROOT/bin/factory-reporter.mjs"
+assert_link "$OFFICIAL_HOME/.local/bin/factory-reporter-v6" "$ROOT/bin/factory-reporter-v6.mjs"
+assert_link "$OFFICIAL_HOME/.local/bin/factory-reporter-v6-schedule-runner" "$ROOT/bin/factory-reporter-v6-schedule-runner.mjs"
 assert_link "$OFFICIAL_HOME/.local/bin/factory-external-event" "$ROOT/bin/factory-external-event.mjs"
 [ -x "$OFFICIAL_HOME/.local/bin/factory-external-event" ] || fail 'factory-external-event が実行可能でない'
 HOME="$OFFICIAL_HOME" "$OFFICIAL_HOME/.local/bin/factory-external-event" status --json | grep -Fq '"high_watermark":0' || fail '配布factory-external-eventを直接実行できない'
 assert_link "$OFFICIAL_HOME/.local/bin/factory-scan" "$ROOT/bin/factory-scan.mjs"
+assert_link "$OFFICIAL_HOME/.local/bin/factory-scan-v6" "$ROOT/bin/factory-scan-v6.mjs"
 assert_link "$OFFICIAL_HOME/.local/bin/orchestrate-run" "$ROOT/bin/orchestrate-run.mjs"
 [ -x "$OFFICIAL_HOME/.local/bin/orchestrate-run" ] || fail 'orchestrate-run が実行可能でない'
 help_json="$(node "$OFFICIAL_HOME/.local/bin/orchestrate-run" --help)"
