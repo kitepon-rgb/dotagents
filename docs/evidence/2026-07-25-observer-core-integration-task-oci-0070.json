@@ -1,0 +1,61 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 17,
+  "task": {
+    "task_id": "oci-0070",
+    "title": "dotagentsへObserver導入契約とwire v6 clientを実装する",
+    "classification": "F",
+    "effect": "write",
+    "doc_ref": "docs/plan_observer-core-integration.md",
+    "role": "implementer",
+    "lane": "behavior-change",
+    "depends_on": [
+      "oci-0030",
+      "oci-0060"
+    ],
+    "required_capabilities": [
+      "factory-wire-v6-client",
+      "observer-package-integration",
+      "cross-platform-scheduler"
+    ],
+    "isolation": "none",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": true,
+      "share_existing_findings": true,
+      "share_failed_approaches": true,
+      "share_test_results": true
+    },
+    "validation": [
+      "scoped Observer packageのinstall/update/verify契約がgreen",
+      "v6 scanとreporterが固定14製品・privacy・major別outboxを強制する",
+      "v6 scheduler runnerと配布symlinkが全host artifactを生成できる",
+      "実導入済みObserverを使うv6 scan/previewがgreen"
+    ],
+    "non_goals": [
+      "このtask内でのlive scheduler cutover",
+      "Observer内部watch stateの集約"
+    ],
+    "known_traps": [
+      "v5 outboxをv6から列挙または再解釈しない",
+      "reporting endpointとwire majorの不一致をpreviewで見逃さない",
+      "新規wire testをCIから孤立させない"
+    ],
+    "read_scope": [
+      {
+        "kind": "directory",
+        "path": "docs"
+      }
+    ],
+    "write_scope": [
+      {
+        "kind": "directory",
+        "path": "docs/evidence"
+      }
+    ],
+    "approval": null,
+    "alternative_group": null
+  }
+}

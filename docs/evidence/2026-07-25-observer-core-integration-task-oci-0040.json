@@ -1,0 +1,68 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 15,
+  "task": {
+    "task_id": "oci-0040",
+    "title": "Observer 0.1.0を公開・global install・公開後smokeする",
+    "classification": "H",
+    "effect": "write",
+    "doc_ref": "docs/plan_observer-core-integration.md",
+    "role": "implementer",
+    "lane": "behavior-change",
+    "depends_on": [
+      "oci-0030"
+    ],
+    "required_capabilities": [
+      "npm-registry-publish",
+      "github-release",
+      "global-package-install"
+    ],
+    "isolation": "none",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": true,
+      "share_existing_findings": true,
+      "share_failed_approaches": true,
+      "share_test_results": true
+    },
+    "validation": [
+      "@quolu/observer@0.1.0がregistryから取得できる",
+      "v0.1.0 tagとGitHub Releaseが既定ブランチ祖先を指す",
+      "registry版global install後のpackage smokeとdiagnosticsがgreen"
+    ],
+    "non_goals": [
+      "公開済みversionのunpublish",
+      "Observerの対応platform拡大"
+    ],
+    "known_traps": [
+      "unscoped observerは第三者packageであり公開対象ではない",
+      "registry反映遅延をpublish失敗と誤認しない",
+      "publish対象commitのorigin/main祖先gateを省略しない"
+    ],
+    "read_scope": [
+      {
+        "kind": "directory",
+        "path": "docs"
+      }
+    ],
+    "write_scope": [
+      {
+        "kind": "directory",
+        "path": "docs/evidence"
+      }
+    ],
+    "approval": {
+      "approval_ref": "docs/evidence/2026-07-25-observer-H-approval.md",
+      "purpose": "Observerを自作コア製品として公開面へ届ける",
+      "impact": "公開repo、npm package、GitHub Release、global installを作成する",
+      "rollback": "npmはunpublishせずdeprecateし、global installを旧版へ戻す",
+      "operation_digest": "ae1d35f7c4692218ade3fb50738fba9c0fa0618ae0666275ef849aafba5ada7a",
+      "approved_by": "クオ",
+      "approved_at": "2026-07-25T12:59:25.000Z",
+      "expires_at": "2099-07-25T00:00:00.000Z"
+    },
+    "alternative_group": null
+  }
+}
