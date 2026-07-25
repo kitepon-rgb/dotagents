@@ -5,8 +5,10 @@
 - 手法: 隔離した一時repo（`git init`済み・`.lattice/runs/` gitignore済み）で公開CLIだけを使う。
   実Lattice CLIを実際に実行した実測であり、fixtureではない。
 - 判定: 0.12.24時点では**実dispatchへ届かなかった**（本文）。参照controllerを配布した
-  **0.12.25で実dispatch・実write・receipt受理・event chain検証まで到達した**（末尾の追記）。
-  `fm-0672`は複数writerの実dispatchと子別Control受入が未実測のため、引き続き未完了とする。
+  0.12.25で実dispatchへ到達し（追記1）、**複数writerの実dispatchと子別Control受入まで
+  到達して`fm-0672`の受入文を満たした**（追記2）。
+- 読み方: 本文＝0.12.24時点の到達限界と原因、追記1＝0.12.25での実dispatch到達、
+  追記2＝複数writerと子別Control受入。**最終状態は追記2**である。
 
 ## 実際に通った段
 
@@ -100,3 +102,53 @@ repo HEADを動かしたため、保存requestの`base_sha`と一致しなくな
 - 子別Control受入は`lib/orchestrate/lattice-receipt-projection.mjs`を通す段であり、本実測に含まない。
 
 実dispatchが不可能という**blockerは解消した**ため、`fm-0672`のblockを解除する。
+
+## 追記2: 複数writerの実dispatchと子別Control受入まで到達（Lattice 0.12.25）
+
+新規の隔離repoで、writer 2件（`src/alpha.mjs` / `src/beta.mjs`）を公開CLIと配布binだけで
+端から端まで通した。`.lattice/`をgitignoreして作業ツリーをcleanに保ち、
+run作成後にHEADを動かさない手順にしている。
+
+| 段 | 結果 |
+|---|---|
+| `plan compile` | `nodes: ["T1","T2"]`・`conflicts: 0` |
+| `run start` / `run adapter register` | `run_id: twowriters`・`outcome: created` |
+| **`run activate`** | `outcome: "activated"` |
+| **`run status`** | **`accepted: ["T1","T2"]`**・`running: []`・`dispatchable: []` |
+| `run observe` | `accepted: ["T1","T2"]`・`terminal: ["T1","T2"]`・`conflict_count: 0` |
+| **実write** | **`src/alpha.mjs`と`src/beta.mjs`の両方が変更された** |
+| `event verify` | `valid: true`・`checks_total: 14`・`failed_conditions: []` |
+| **`run resume`** | `outcome: "resumable"` |
+| **`run close`** | **`outcome: "closed"`**・`event_count: 12` |
+
+同一repoの複数writerが単一runで並行dispatchされ、両方のreceiptが受理され、
+resumeとcloseまで閉じた。
+
+### 子別Control受入（実receiptで検証）
+
+run storeから実`lattice.executor_receipt.v1` 2件、実`lattice.executor_packet.v1` 2件、
+`executor_dispatched` eventのdispatch記録を取り出し、
+`lib/orchestrate/lattice-receipt-projection.mjs`（fm-0668）へ通した。
+**fixtureではなく実dispatchが生成した本物のartifactである。**
+
+```text
+status: success / succeeded: 2 / failed: 0
+  T1 → changed_paths: ["src/alpha.mjs"] / result_digest: 8813fc75…
+  T2 → changed_paths: ["src/beta.mjs"]  / result_digest: 0ee78013…
+```
+
+受理できることだけでは受入にならないため、同じ実artifactで敵対ケースも通した。
+
+| 攻撃 | 結果 |
+|---|---|
+| scope逸脱（T1のreceiptをT2のscopeで受ける） | `failure` / `SCOPE_VIOLATION` |
+| packet付け替え（T1のreceiptにT2のpacket） | `failure` / `PACKET_DIGEST_MISMATCH`＋`PACKET_CORRELATION_MISMATCH` |
+| dispatch ownerなりすまし（別のhandleを主張） | `failure` / `DISPATCH_OWNER_MISMATCH` |
+| partial（1件正常・1件scope逸脱） | `partial_failure` / 成功1・失敗1に分離 |
+
+4件すべてfail closedし、partial failureは成功分を捨てず失敗分を成功扱いにもしなかった。
+
+### 判定
+
+`fm-0672`の受入文「同一repo複数writerの実dogfoodでcompile、Lattice単一dispatch、
+子別Control受入、Lattice完了反映、resume/close」を、実CLIと実artifactで満たした。
