@@ -1,0 +1,9 @@
+{
+  "evidence_id": "wave1-fm0668-lattice-receipt-projection",
+  "repo_id": "self",
+  "path": "lib/orchestrate/lattice-receipt-projection.mjs",
+  "git_blob_oid": "812fcaa9490fd4dd726d6132f2db358d37614c99",
+  "content_digest": "f6a8a7233aa140c97afb0ea0a356eec385de4e455c8138c5c439ccaf7e74d9b9",
+  "media_type": "text/javascript",
+  "anchor_digest": null
+}
