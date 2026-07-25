@@ -111,11 +111,15 @@ def session_start(data):
         path = os.path.join(root, "docs", name)
         text = open(path, encoding="utf-8").read()
         unchecked = text.count("- [ ]")
+        checked = text.count("- [x]")
         if unchecked:
             days = max(0, int((time.time() - os.path.getmtime(path)) // 86400))
             entries.append(f"{name}（未消化 {unchecked}・最終更新 {days} 日前）")
-        else:
+        elif checked:
+            # checkboxを持っていて全て済んでいる文書だけを「全消化済み」と言う。
             complete.append(name)
+        # checkboxが1つも無い文書は消化状態を主張しない。工程正本をLatticeへ移した
+        # 計画と、旧path互換のarchive stubがこれに当たる（どちらも未退避ではない）。
     archived = complete if not entries else []
     if not entries and not archived:
         return

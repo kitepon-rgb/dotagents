@@ -321,7 +321,7 @@ Phase節は**レーン別に区切り、各レーン内は上から実行順**�
     dispatch相関、revision 40でstrict Report importまで回復した。受入証拠は
     [ADR 0037](adr/0037-control-late-dispatch-handle-correlation.md)。full regressionは工場Phase gateへ集約する。
 
-### Lane O — Observer製品（O1→O2→O3→O4。O1〜O3完了、O4はWave D dogfoodのみ残）
+### Lane O — Observer製品（O1→O2→O3→O4。**全Phase完了**）
 
 ### Phase O1 — Throughline completed-turn feed（COMPLETE）
 
@@ -552,7 +552,7 @@ Observer `docs/plan_observer.md`
 
 詳細: [Observer計画 Phase 4](archive/plan_observer-factory-integration.md#phase-4-rate-aware-elastic-scheduler)
 
-### Lane R — 既存工場rollout（R1→R2→R3。R1完了、R2進行中＝現在地、R3の一部はqueue 20が束ねて先行消化）
+### Lane R — 既存工場rollout（R1→R2→R3。**全Phase完了**）
 
 ### Phase R1 — wire v2残欠陥（O1以降と並行可）
 
