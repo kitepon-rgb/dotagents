@@ -1,0 +1,9 @@
+{
+  "evidence_id": "wave1-fm0671-lattice-integration-matrix",
+  "repo_id": "self",
+  "path": "tests/orchestrate/lattice-integration-matrix.test.mjs",
+  "git_blob_oid": "ebf74453f116667faac038beb24f67d566c19e51",
+  "content_digest": "30cb3ebfc71c3f72352ed202ad03e5bc109d2dd11ec69b2df7de6319c9f070e5",
+  "media_type": "text/javascript",
+  "anchor_digest": null
+}
