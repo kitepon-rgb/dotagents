@@ -1,0 +1,336 @@
+{
+  "schema": "lattice.todo_extraction.v1",
+  "project_id": "dotagents",
+  "plan_key": "observer-core-integration",
+  "plan_version": "v1",
+  "actor": {
+    "host": "mac-kite",
+    "session": "observer-core-integration-20260725",
+    "agent": "codex-parent"
+  },
+  "recorded_at": "2026-07-25T00:00:00.000Z",
+  "tasks": [
+    {
+      "task_id": "oci-0001",
+      "title": "誤終了を訂正しbaseline・ADR・作業計画・Controlを確立する",
+      "lane": "p0-reinstate",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 1,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": "docs/evidence/2026-07-21-observer-reserved-disposition.md",
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/adr/0123-observer-core-integration-reinstatement.md",
+          "docs/plan_observer-core-integration.md"
+        ],
+        "notes": ["旧taskは再開せず、新計画へ現行作業を登録する"]
+      }
+    },
+    {
+      "task_id": "oci-0010",
+      "title": "Observer旧planと実物を照合し製品化readinessとrelease設計を確定する",
+      "lane": "p1-product-readiness",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 15,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "現在地"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": "Observer/docs/00_product-contract.md",
+        "carry_over_ref": "Observer/docs/plan_observer.md",
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": ["docs/plan_observer-core-integration.md:15"],
+        "notes": ["checkboxではなくtest・diagnostics・pack・release実物で判定する"]
+      }
+    },
+    {
+      "task_id": "oci-0020",
+      "title": "Observerのsource remote・package identity・公開方針のH承認を得る",
+      "lane": "p1-product-readiness",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 44,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "作業と承認の所有"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": "目的・影響・rollbackを提示し、オーナーが公開identityと外部変更を承認する",
+        "evidence_refs": ["docs/adr/0123-observer-core-integration-reinstatement.md"],
+        "notes": ["承認前にremote作成・push・tag・publishを行わない"]
+      }
+    },
+    {
+      "task_id": "oci-0030",
+      "title": "Observerへversion・metadata・CI・release ancestor gate・隔離install smokeを実装する",
+      "lane": "p2-productize",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 56,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "受入条件"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": "Observer/docs/00_product-contract.md",
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": ["docs/plan_observer-core-integration.md:56"],
+        "notes": ["release gateは公開対象commitがorigin/mainの祖先であることを機械検証する"]
+      }
+    },
+    {
+      "task_id": "oci-0040",
+      "title": "Observer remote・既定branch・tag・registry release・Mac導入・公開後smokeを閉じる",
+      "lane": "p3-publish",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 58,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "受入条件"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": "oci-0020の承認snapshotとproductization gateが成立している",
+        "evidence_refs": ["docs/plan_observer-core-integration.md:58"],
+        "notes": ["remote・tag・publish・global installは個別の外部変更証拠を保持する"]
+      }
+    },
+    {
+      "task_id": "oci-0050",
+      "title": "wire v6固定14製品・privacy・migration・v5 rollback契約を設計する",
+      "lane": "p2-wire-contract",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 59,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "受入条件"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": "docs/wire-v5-design.md",
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": [
+          "docs/adr/0123-observer-core-integration-reinstatement.md",
+          "docs/plan_observer-core-integration.md:59"
+        ],
+        "notes": [
+          "v6 schema自身へObserver keyを登録し、前majorのoptional登録継承に依存しない",
+          "expectation分岐は実際に到達するwire version tagで検証する"
+        ]
+      }
+    },
+    {
+      "task_id": "oci-0060",
+      "title": "ServerManager/BugHubをfeature flag下でwire v6 server-first対応する",
+      "lane": "p3-server",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 60,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "受入条件"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": "ServerManager",
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": ["docs/plan_observer-core-integration.md:60"],
+        "notes": [
+          "オーナー所有のServerManager/.claude/settings.local.jsonへ触れない",
+          "client cutover前にv6 endpointをflag下で受理可能にする"
+        ]
+      }
+    },
+    {
+      "task_id": "oci-0070",
+      "title": "dotagentsへObserver install・update・diagnostics・wire v6 host projectionを実装する",
+      "lane": "p3-client",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 61,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "受入条件"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": ["docs/plan_observer-core-integration.md:61"],
+        "notes": ["macOS required、他profile unsupportedを同じv6 report contractで表現する"]
+      }
+    },
+    {
+      "task_id": "oci-0080",
+      "title": "v6 dual-run・Mac canary・全host cutover・rollback実測をH承認下で閉じる",
+      "lane": "p4-rollout",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 63,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "受入条件"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": true,
+        "condition": "Observer公開、ServerManager v6、dotagents v6の3受入が完了し、live変更をオーナーが承認する",
+        "evidence_refs": ["docs/plan_observer-core-integration.md:63"],
+        "notes": ["host identityを確認し、Windows native操作をWSLへ誤送信しない"]
+      }
+    },
+    {
+      "task_id": "oci-0090",
+      "title": "11コア製品正典・Phase監査・knowledge return・計画archiveを閉じる",
+      "lane": "p5-finalize",
+      "narrative_ref": "docs/plan_observer-core-integration.md",
+      "compile_binding": null,
+      "disposition": "register_pending",
+      "completion": null,
+      "source": {
+        "origin_plan_ref": "docs/plan_observer-core-integration.md",
+        "origin_line": 65,
+        "source_commit": "7b1bbc3f78e7c0f36d351a4e7acefddc73504788",
+        "heading_path": ["Observerコア製品正式編入", "受入条件"],
+        "markdown_depth": 0,
+        "parent_task_id": null,
+        "checkbox_state": "absent"
+      },
+      "migration_context": {
+        "external_canonical_ref": null,
+        "carry_over_ref": null,
+        "h_required": false,
+        "condition": null,
+        "evidence_refs": ["docs/plan_observer-core-integration.md:65"],
+        "notes": ["編入完了までは既存10製品・wire v5を現役表示として維持する"]
+      }
+    }
+  ],
+  "hard_dependencies": [
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0001"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0010"}
+    },
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0010"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0020"}
+    },
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0010"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0050"}
+    },
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0020"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0030"}
+    },
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0030"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0040"}
+    },
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0030"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0070"}
+    },
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0050"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0060"}
+    },
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0050"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0070"}
+    },
+    {
+      "from": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0080"},
+      "to": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0090"}
+    }
+  ],
+  "joins": [
+    {
+      "id": "oci-join-rollout",
+      "after": [
+        {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0040"},
+        {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0060"},
+        {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0070"}
+      ],
+      "before": {"project_id": "dotagents", "plan_key": "observer-core-integration", "task_id": "oci-0080"}
+    }
+  ],
+  "extraction_digest": "98d4044789b30bddefa60ea3475aae75423b5c0d8a512f5dd96d7363216f8092"
+}

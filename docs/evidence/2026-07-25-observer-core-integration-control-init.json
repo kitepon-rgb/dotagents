@@ -1,0 +1,39 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "objective_ref": "docs/plan_observer-core-integration.md",
+  "actor_id": "codex-parent-20260725",
+  "document_refs": [
+    "docs/adr/0123-observer-core-integration-reinstatement.md",
+    "docs/evidence/2026-07-21-master-child-owner-cutover.md",
+    "docs/evidence/2026-07-21-observer-reserved-disposition.md",
+    "docs/evidence/2026-07-25-observer-core-integration-lattice-extraction.json",
+    "docs/plan_observer-core-integration.md",
+    "docs/wire-v5-design.md"
+  ],
+  "budget": {
+    "max_worker_runs": 12,
+    "max_consultations": 3,
+    "max_external_runs": 4,
+    "max_wall_time_seconds": null,
+    "max_cost_microusd": null,
+    "max_runs_per_approach_family": 2,
+    "max_retries_per_assignment": 1,
+    "max_integration_runs": 3
+  },
+  "lane_admission": {
+    "contract_version": "dotagents.lane-admission.v1",
+    "conditions": {
+      "planned_interruption": true,
+      "chained_acceptance": true,
+      "multi_repo_write_coordination": true,
+      "decision_evidence_required": true
+    },
+    "decision": {
+      "type": "decision",
+      "ref": "docs/adr/0123-observer-core-integration-reinstatement.md",
+      "digest": "f2661768dc2b871739d23344917237905ca8fb423061751d27d643e7b9fe3cb7",
+      "observed_at": "2026-07-25T12:16:43.000Z"
+    }
+  }
+}

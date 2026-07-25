@@ -1,0 +1,17 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 2,
+  "phase": "baseline",
+  "state": "completed",
+  "evidence": [
+    {
+      "type": "file",
+      "ref": "docs/plan_observer-core-integration.md",
+      "digest": "36bdad5c6e74129b0132ca039bace82da8e2676966ee212be116da80341f5a3e",
+      "observed_at": "2026-07-25T12:18:30.000Z"
+    }
+  ],
+  "decision": null
+}

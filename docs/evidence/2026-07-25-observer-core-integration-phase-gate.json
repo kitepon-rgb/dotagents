@@ -1,0 +1,8 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 0,
+  "risk": "high",
+  "behavior_lane": "behavior-change"
+}

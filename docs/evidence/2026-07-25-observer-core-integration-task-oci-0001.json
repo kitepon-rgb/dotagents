@@ -1,0 +1,55 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 1,
+  "task": {
+    "task_id": "oci-0001",
+    "title": "誤終了を訂正しbaseline・ADR・作業計画・Controlを確立する",
+    "classification": "F",
+    "effect": "write",
+    "doc_ref": "docs/plan_observer-core-integration.md",
+    "role": "implementer",
+    "lane": "behavior-change",
+    "depends_on": [],
+    "required_capabilities": [
+      "decision-recording",
+      "lattice-todo",
+      "multi-repo-baseline"
+    ],
+    "isolation": "none",
+    "context_policy": {
+      "share_objective": true,
+      "share_current_candidate": true,
+      "share_existing_findings": true,
+      "share_failed_approaches": true,
+      "share_test_results": true
+    },
+    "validation": [
+      "ADR 0123が旧誤終了を履歴保持のまま訂正している",
+      "Lattice plan observer-core-integrationが10 task・9 dependency・1 joinでverifyできる",
+      "Controlにhigh-risk behavior-changeのPhase gateが記録される"
+    ],
+    "non_goals": [
+      "Observer製品実装をこのTaskだけで完了扱いする",
+      "remote作成・push・tag・publish・live cutoverを承認前に行う"
+    ],
+    "known_traps": [
+      "旧taskを再開すると誤終了証拠と現行作業の所有が混ざる",
+      "Lattice manifest v2へのhistorical importはactive_revision_digestを必要とする",
+      "wire majorごとのoptional keyは次majorへ自動継承されない"
+    ],
+    "read_scope": [
+      {"kind": "directory", "path": ".lattice/todo"},
+      {"kind": "directory", "path": "docs"}
+    ],
+    "write_scope": [
+      {"kind": "directory", "path": ".lattice/todo"},
+      {"kind": "file", "path": "docs/adr/0123-observer-core-integration-reinstatement.md"},
+      {"kind": "directory", "path": "docs/evidence"},
+      {"kind": "file", "path": "docs/plan_observer-core-integration.md"}
+    ],
+    "approval": null,
+    "alternative_group": null
+  }
+}
