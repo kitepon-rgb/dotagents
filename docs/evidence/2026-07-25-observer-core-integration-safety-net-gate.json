@@ -1,0 +1,17 @@
+{
+  "cwd": "/Users/kite/Developer/dotagents",
+  "control_id": "observer-core-integration-20260725",
+  "actor_id": "codex-parent-20260725",
+  "expected_revision": 10,
+  "phase": "safety_net",
+  "state": "completed",
+  "evidence": [
+    {
+      "type": "file",
+      "ref": "docs/evidence/2026-07-25-observer-wire-v6-server-safety-net.md",
+      "digest": "337828329524703f6b4978c35eb1d997dfb2ba2d2920839a1c933afc18a8d3c0",
+      "observed_at": "2026-07-25T12:47:27.000Z"
+    }
+  ],
+  "decision": null
+}
