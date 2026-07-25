@@ -339,7 +339,7 @@ test("subset_requires_reasonなのに理由なしの部分選択を拒否する"
   assert.throws(() => saga.nextLatticeControlAction(input({
     todo_status: todoStatus({ ready: ["todo-1", "todo-2"] }),
     control_manifest: manifest({ taskIds: ["todo-1", "todo-2"] }),
-    selection: { tasks: [{ plan_key: "master", task_id: "todo-1" }], reason: null },
+    selection: { tasks: [{ plan_key: "master", task_id: "todo-1" }], reason: null, frontier_digest: FRONTIER_DIGEST },
   })), code("SUBSET_REASON_REQUIRED"));
 
   const selected = saga.nextLatticeControlAction(input({
@@ -348,11 +348,34 @@ test("subset_requires_reasonなのに理由なしの部分選択を拒否する"
     selection: {
       tasks: [{ plan_key: "master", task_id: "todo-1" }],
       reason: "一方を先に実測する",
+      frontier_digest: FRONTIER_DIGEST,
     },
   }));
   assert.equal(selected.kind, "lattice_todo_start");
   assert.equal(selected.selected_parallelism, 1);
   assert.equal(selected.parallel_start_flag, null);
+});
+
+// fm-0671のfixture matrixが見つけた欠陥の回帰。形式的に正しいがfrontierが変わった後の
+// 選択は、既にreadyでなくなったToDoを指しうるためdispatchへ通さない。
+test("選択時と観測中でfrontier digestが違えばstaleとして拒否する", () => {
+  assert.throws(() => saga.nextLatticeControlAction(input({
+    todo_status: todoStatus({ ready: ["todo-1", "todo-2"] }),
+    control_manifest: manifest({ taskIds: ["todo-1", "todo-2"] }),
+    selection: {
+      tasks: [{ plan_key: "master", task_id: "todo-1" }],
+      reason: "一方を先に実測する",
+      frontier_digest: "f".repeat(64),
+    },
+  })), code("STALE_FRONTIER"));
+
+  // selectionを渡さない場合は観測中のfrontierをそのまま使うので、staleになりようがない。
+  const derived = saga.nextLatticeControlAction(input({
+    todo_status: todoStatus({ ready: ["todo-1"] }),
+    control_manifest: manifest({ taskIds: ["todo-1"] }),
+    selection: null,
+  }));
+  assert.equal(derived.kind, "lattice_todo_start");
 });
 
 test("partial failureは成功子だけimportし失敗子をretryへ残す", () => {
