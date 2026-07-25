@@ -1,5 +1,8 @@
 # Codex Wave 3 E2Eチェックリスト（4端末版・read-only下書き）
 
+> **履歴資料:** Wave 3完了後にarchiveへ退避した当時の実行用checklistです。
+> 現行の工場製品数・導入契約はREADMEと製品契約台帳を参照してください。
+
 **task-id**: r2-e2e-checklist-draft-20260718  
 **性質**: テキスト報告のみ。ファイル書込・git操作・一切の変更禁止。  
 **典拠**:  

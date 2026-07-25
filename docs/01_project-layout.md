@@ -25,7 +25,7 @@
 | `rag/` | 調査・研究の再利用棚。`INDEX.md`（1行台帳）＋ `<topic>/raw/`（一次ソース）＋コンパイル記事。運用は dotagents/PLAN.md 原則10（還流・Lint・選球眼） |
 | `.claude/settings.json` | 読み取り系 allowlist（fewer-permission-prompts で生成）。端末固有につき gitignore 対象なら生成手順を CLAUDE.md に書く |
 | Spotter project install | `spotter install -y` で `.spotter/marker.json`、Claude/Codex hook、host別catalogを生成。ThroughlineがPATHにある状態で実行しauditor contextを既定ONにする。`.spotter/` と `.claude/settings.json` は端末固有としてgitignoreし、marker/hookをリポへ複製しない |
-| 工場コア互換 | Caveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecarはdotagentsの必須製品。独立Codegraphはretiredで導入しない。Claude Code CLI／Codex CLI／Grok Buildは基盤toolchainとして別管理する。Oracleは互換・rollback専用 |
+| 工場コア互換 | 自作コア10製品（Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager）はdotagentsの必須管理対象。MarkItDownは公開CLIだけを使う第三者管理製品。独立Codegraphはretiredで導入しない。Claude Code CLI／Codex CLI／Grok Buildは基盤toolchainとして別管理する。Oracleは互換・rollback専用 |
 | テスト＋CI | required チェックとして張る（無いリポで大きな作業を始めるなら最初に CI＝作業自体の安全網） |
 | `.gitignore` 衛生 | `.env`・鍵・`.obsidian/`・`.venv/`・ビルド生成物。**gitignore された貴重物は push で保護されない**ことを常に意識 |
 | `.codex-sidecar.yml` | sidecar 委譲を受けるリポはルートに置く（テンプレ: dotagents/docs/05_codex-fragments.md） |

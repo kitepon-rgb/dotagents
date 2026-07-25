@@ -106,9 +106,11 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
 | bin | `apply-codex-config.sh` | routing 2キー、dotagents callout hook 4イベント、SessionStart advisory 1件、SessionStart Lattice工程表案内1件だけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
-| 工場コア | Caveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar（dotagents 外） | 罠知識／セッション継続／未使用ツール監査・工程graph＋コード構造理解／資料変換／ChatGPT相談／PTY・外部枠／Claude・Codex親からの隔離Codex実行を担う必須8製品。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理する。Oracleは互換・rollback専用 |
+| 自作コア10製品 | Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager（dotagents 外） | 罠知識、セッション継続、未使用ツール監査、工程graphとコード構造理解、ChatGPT接続、PTYと外部モデル枠、隔離Codex実行、macOS native開発面、親watchと監査、中央運用管理を担う。AIShellはmacOS arm64専用、ObserverはmacOS専用 |
+| 第三者管理製品 | MarkItDown | 自作コアではなく、公開CLIだけをblack-box管理する資料変換器。fork・内部patchは行わない |
+| 基盤toolchain | Claude Code CLI／Codex CLI／Grok Build | コア製品とは別区分。Oracleはv1互換・rollback専用 |
 | 中央管理コア | ServerManager（dotagents 外） | dotagentsが管理・連携する第9製品。内部のBugHubをversion・bug・compatibility結果の統括に使う。BugHubを独立した第10製品へ分離しない |
-| コード構造・工程graph | Lattice（dotagents外） | 現役コア8製品の1つ。Codegraphを完全吸収した正式後継で、`lattice-mcp`と同梱sensorを所有する。独立Codegraphはretired／not_applicable履歴だけを保持。[導入完了記録](docs/archive/plan_lattice-factory-integration.md) |
+| コード構造・工程graph | Lattice（dotagents外） | 自作コア10製品の1つ。Codegraphを完全吸収した正式後継で、`lattice-mcp`と同梱sensorを所有する。独立Codegraphはretired／not_applicable履歴だけを保持。[導入完了記録](docs/archive/plan_lattice-factory-integration.md) |
 | 知識 | `rag/` | 調査の一次ソース＋結論（第二の脳。人間用の窓は Obsidian） |
 | 設定 | `.codex-sidecar.yml` | codex-sidecar 委譲のプロジェクト既定（model/effort・readonly。正典 docs/05_codex-fragments.md） |
 
@@ -160,7 +162,7 @@ Codex全対応の工程状態はLattice storeが正本で、現役4 host・5入�
   ```
 - **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境。install.sh は実行した環境の `$HOME` に symlink を張る）。cron の起動は下の「自動アップデート」節参照
 - **ランタイム**: node>=22＋corepack・docker・python3（`command -v node docker` で存在確認、`node --version` が v22+、`docker info` が通ること。**python3 だけは実行判定 `python3 -c "print(1)"` で確認**——Windows のストア偽エイリアスは存在チェックを通り、黙って exit 0 を返す〔罠DB `windows-python3-store-exit-0`〕）
-- **CLI（必須）**: 基盤toolchainのClaude Code・Codex CLI、工場コア8製品のCaveat／Throughline／Spotter／Lattice（`npm i -g @quolu/lattice`）／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar。`command -v claude codex caveat throughline spotter lattice markitdown gpt-connector aiterm-mcp codex-sidecar-mcp`で確認し、`codegraph`がPATHに無いことも確認する。各projectでは最初に`lattice status --json`のtyped stateで工程正本を判定する。Grok Buildは対応hostで確認する。MarkItDownの正規更新面は`uv tool`。
+- **CLI（必須）**: 基盤toolchainのClaude Code・Codex CLI、端末能力を担うCaveat／Throughline／Spotter／Lattice（`npm i -g @quolu/lattice`）／gpt-connector／aiterm-mcp／codex-sidecar、第三者製品MarkItDownを確認する。macOSではObserver、Apple Silicon MacではAIShellも必須。ServerManagerは中央運用repo／serviceとして別途管理する。`command -v claude codex caveat throughline spotter lattice markitdown gpt-connector aiterm-mcp codex-sidecar-mcp`を基準に、対応hostでは`observer`／`aishell-mcp`も確認し、`codegraph`がPATHに無いことも確認する。各projectでは最初に`lattice status --json`のtyped stateで工程正本を判定する。Grok Buildは対応hostで確認する。MarkItDownの正規更新面は`uv tool`。
 - **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する（委譲は当面 Codex 主で回る＝必須ではない）
 - **MCP 用 CLI を先に入れる**（下の登録が参照する。`agents-update`が入れる各packageと同源）: `aiterm-mcp`・`caveat`・`codex-sidecar-mcp`・`gpt-connector-mcp`・`lattice-mcp`がPATHにあること。独立Codegraphは登録しない。Codex親もnative枠外の実行用にaitermとcodex-sidecarを登録する。登録・loginは端末configを変えるH操作。
 - **MCP（ユーザースコープ登録。上の CLI 導入後）**:

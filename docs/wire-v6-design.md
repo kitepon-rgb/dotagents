@@ -1,5 +1,8 @@
 # wire v6 設計正本 — Observerの固定集合編入
 
+> **現在状態（2026-07-26）:** Observer編入と4 host cutoverは完了し、wire v6・固定14製品が現役。
+> 以下のv5記述はv6へ移行する設計時点のpredecessor契約として保持する。
+
 **状態:** Active（[Observerコア編入記録](archive/plan_observer-core-integration.md)の設計成果物）
 **工程正本:** Lattice plan `observer-core-integration`  
 **対象:** dotagents reporter、ServerManager / BugHub ingest、4 active host  

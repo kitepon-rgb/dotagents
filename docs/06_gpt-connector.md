@@ -1,6 +1,6 @@
 # 06_gpt-connector — ChatGPT接続の正規ランブック
 
-更新日: 2026-07-13。ChatGPTのsecond opinionは自作 `gpt-connector` を正規入口とする。旧Oracleの運用記録は [06_oracle-mcp.md](06_oracle-mcp.md) に互換・rollback用として残すが、新規導入・通常利用・MCP登録の正本ではない。
+更新日: 2026-07-26。ChatGPTのsecond opinionは自作コア製品 `gpt-connector` を正規入口とする。旧Oracleの運用記録は [06_oracle-mcp.md](06_oracle-mcp.md) に互換・rollback用として残すが、新規導入・通常利用・MCP登録の正本ではない。
 
 ## 正規入口
 
@@ -42,7 +42,7 @@ codex mcp add gpt_connector -- gpt-connector-mcp
 
 1. v1 clientはOracleを `not_applicable` として明示し、必要なresolutionを送る。
 2. MCP登録を `gpt_connector` へ切り替える。
-3. v2の固定12製品full snapshotを送る。
+3. 現役wire v6の固定14製品full snapshotを送る。旧v2／v4／v5は履歴・rollback契約としてだけ維持する。
 4. timeout等では `sessions` によりgpt-connector側を回収する。自動fallbackはしない。
 
 必要なOracle一時切戻しは手動・期限付きのrollbackであり、H承認後にだけ行う。Oracleをコア製品や新規導入推奨へ戻さない。
