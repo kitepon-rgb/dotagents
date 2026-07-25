@@ -40,7 +40,7 @@ if [ ! -d "$PREFIX" ] || [ -L "$PREFIX" ]; then
   fail 'prefixがregular directoryではありません'
 fi
 
-PACKAGE_ROOT="$PREFIX/lib/node_modules/observer"
+PACKAGE_ROOT="$PREFIX/lib/node_modules/@quolu/observer"
 if [ ! -d "$PACKAGE_ROOT" ] || [ -L "$PACKAGE_ROOT" ]; then
   fail 'Observer packageが見つかりません'
 fi

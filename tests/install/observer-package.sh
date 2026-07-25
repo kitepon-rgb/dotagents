@@ -23,9 +23,9 @@ before_codex="$(cat "$HOME_FIXTURE/.codex/hooks.json")"
 before_credential="$(cat "$HOME_FIXTURE/credential.sentinel")"
 
 npm pack "$OBSERVER_REPO" --pack-destination "$WORK" --silent >/dev/null
-tarball_count="$(find "$WORK" -maxdepth 1 -name 'observer-*.tgz' | wc -l | tr -d ' ')"
+tarball_count="$(find "$WORK" -maxdepth 1 -name 'quolu-observer-*.tgz' | wc -l | tr -d ' ')"
 [ "$tarball_count" = 1 ] || fail 'Observer tarballを一意に生成できません'
-TARBALL="$(find "$WORK" -maxdepth 1 -name 'observer-*.tgz' -print -quit)"
+TARBALL="$(find "$WORK" -maxdepth 1 -name 'quolu-observer-*.tgz' -print -quit)"
 
 install_candidate() {
   HOME="$HOME_FIXTURE" npm install --global --prefix "$PREFIX" "$TARBALL" \
@@ -34,10 +34,10 @@ install_candidate() {
 
 verify_candidate() {
   HOME="$HOME_FIXTURE" "$ROOT/bin/verify-observer-package.sh" \
-    --prefix "$PREFIX" --expected-version 0.0.0 >/dev/null
+    --prefix "$PREFIX" --expected-version 0.1.0 >/dev/null
 }
 
-[ ! -e "$PREFIX/lib/node_modules/observer" ] || fail '初期package状態がabsentではありません'
+[ ! -e "$PREFIX/lib/node_modules/@quolu/observer" ] || fail '初期package状態がabsentではありません'
 install_candidate
 verify_candidate
 install_candidate
@@ -60,7 +60,7 @@ then
   fail 'version mismatchを成功扱いしました'
 fi
 
-product_source="$PREFIX/lib/node_modules/observer/src/product-diagnostics.mjs"
+product_source="$PREFIX/lib/node_modules/@quolu/observer/src/product-diagnostics.mjs"
 cp "$product_source" "$WORK/product-diagnostics.mjs"
 python3 - "$product_source" <<'PY'
 import sys
@@ -73,7 +73,7 @@ assert changed != source
 path.write_text(changed, encoding="utf-8")
 PY
 if HOME="$HOME_FIXTURE" "$ROOT/bin/verify-observer-package.sh" \
-  --prefix "$PREFIX" --expected-version 0.0.0 >/dev/null 2>&1
+  --prefix "$PREFIX" --expected-version 0.1.0 >/dev/null 2>&1
 then
   fail 'schema mismatchを成功扱いしました'
 fi
@@ -87,9 +87,9 @@ verify_candidate
 [ "$(cat "$HOME_FIXTURE/credential.sentinel")" = "$before_credential" ] \
   || fail 'installまたはverifyがcredential sentinelを変更しました'
 
-HOME="$HOME_FIXTURE" npm uninstall --global --prefix "$PREFIX" observer \
+HOME="$HOME_FIXTURE" npm uninstall --global --prefix "$PREFIX" @quolu/observer \
   --ignore-scripts --no-audit --no-fund >/dev/null
-[ ! -e "$PREFIX/lib/node_modules/observer" ] || fail 'rollback後もObserver packageが残っています'
+[ ! -e "$PREFIX/lib/node_modules/@quolu/observer" ] || fail 'rollback後もObserver packageが残っています'
 for name in observer observer-mcp observer-parent-stop-hook observer-hook-config observer-claude-characterization; do
   [ ! -e "$PREFIX/bin/$name" ] || fail "rollback後も$name commandが残っています"
 done

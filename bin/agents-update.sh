@@ -111,6 +111,12 @@ PACKAGES=(
   'throughline'
 )
 
+if [[ "$runtime_os" = Darwin ]]; then
+  PACKAGES+=(
+    '@quolu/observer'
+  )
+fi
+
 # AIShellはnpm package自体がdarwin/arm64限定。非対応hostでinstall失敗を起こさず、
 # host matrixどおり構造的unsupportedとして扱う。
 if [[ "$runtime_os" = Darwin && "$runtime_arch" = arm64 ]]; then
