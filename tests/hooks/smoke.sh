@@ -281,6 +281,21 @@ if [ "$1" = "status" ] && [ "$2" = "--json" ]; then
   esac
   exit 0
 fi
+# 統合入口（Lattice 0.14.0以降）。未設定なら exit 2 のままで、
+# 「この入口を持たない古いCLI」として旧2呼び出し経路のcaseを兼ねる。
+if [ "$1" = "session-context" ] && [ "$2" = "--json" ]; then
+  case "${LATTICE_CONTEXT_MODE:-absent}" in
+    absent) exit 2 ;;
+    verified) printf '%s\n' '{"schema":"lattice.session_context.v1","status":{"schema":"lattice.project_status.v1","state":"ready","store":{"ref":".lattice/todo"}},"todo":{"schema":"lattice.todo_status_result.v4","project_id":"dotagents","active_set":[],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}},"independence":[{"plan_key":"master","coverage":"verified","guidance":{"code":"independence_verified","message":"記録時点の宣言境界では、他のready工程と干渉しない。","next_action":"none"},"unreadable_reason":null,"parallel_groups":[["G5","G6"]],"serialize_pair_count":0,"conflict_with_active_count":0,"unknown_task_ids":[]}],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
+    conflict) printf '%s\n' '{"schema":"lattice.session_context.v1","status":{"schema":"lattice.project_status.v1","state":"ready","store":{"ref":".lattice/todo"}},"todo":{"schema":"lattice.todo_status_result.v4","project_id":"dotagents","active_set":[],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}},"independence":[{"plan_key":"master","coverage":"verified","guidance":{"code":"independence_conflict_with_active","message":"作業中の工程と同じ資源を書く記録がある。並行すると衝突する。","next_action":"serialize_or_split_boundary"},"unreadable_reason":null,"parallel_groups":[],"serialize_pair_count":1,"conflict_with_active_count":1,"unknown_task_ids":["G7"]}],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
+    future_key) printf '%s\n' '{"schema":"lattice.session_context.v1","status":{"schema":"lattice.project_status.v1","state":"ready","store":{"ref":".lattice/todo"}},"todo":{"schema":"lattice.todo_status_result.v4","project_id":"dotagents","active_set":[],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}},"independence":[{"plan_key":"master","coverage":"verified","future_field":123,"guidance":{"code":"independence_verified","message":"記録時点の宣言境界では、他のready工程と干渉しない。","next_action":"none","future_hint":"x"},"unreadable_reason":null,"parallel_groups":[["G5"]],"serialize_pair_count":0,"conflict_with_active_count":0,"unknown_task_ids":[]}],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
+    no_independence) printf '%s\n' '{"schema":"lattice.session_context.v1","status":{"schema":"lattice.project_status.v1","state":"ready","store":{"ref":".lattice/todo"}},"todo":{"schema":"lattice.todo_status_result.v4","project_id":"dotagents","active_set":[],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}},"independence":[],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
+    bad) printf '%s\n' '{"schema":"wrong"}' ;;
+    typed_fail) printf '%s\n' '{"schema":"lattice.cli_error.v2","code":"STORE_INCONSISTENT"}' >&2; exit 1 ;;
+    slow) sleep 6 ;;
+  esac
+  exit 0
+fi
 [ "$*" = "todo status" ] || exit 2
 case "${LATTICE_TEST_MODE:-valid_v1}" in
   valid_v1)
@@ -396,6 +411,56 @@ run lattice-off env PATH="$STATE/lattice-bin:$PATH" DOTAGENTS_LATTICE_HOOK=off "
 {"session_id":"lattice-off","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass lattice-off || fail_case lattice-off
+
+# --- 統合入口（Lattice ADR 0131） ---
+run lattice-context-verified env PATH="$STATE/lattice-bin:$PATH" LATTICE_CONTEXT_MODE=verified "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-context-verified","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'並列可否:'* \
+  && "$RUN_OUT" == *'検証済み並列1group(2件)'* \
+  && "$RUN_OUT" == *'他のready工程と干渉しない'* ]] \
+  && pass lattice-context-verified || fail_case lattice-context-verified
+
+run lattice-context-conflict env PATH="$STATE/lattice-bin:$PATH" LATTICE_CONTEXT_MODE=conflict "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-context-conflict","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'要直列1組'* && "$RUN_OUT" == *'作業中との競合1件'* \
+  && "$RUN_OUT" == *'未検査1件'* && "$RUN_OUT" == *'並行すると衝突する'* ]] \
+  && pass lattice-context-conflict || fail_case lattice-context-conflict
+
+# 未知keyの追加でhookが壊れないこと（allowlist読み）。
+run lattice-context-future-key env PATH="$STATE/lattice-bin:$PATH" LATTICE_CONTEXT_MODE=future_key "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-context-future-key","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'検証済み並列1group(1件)'* ]] \
+  && pass lattice-context-future-key || fail_case lattice-context-future-key
+
+# readyのあるplanに記録が無ければ並列可否は述べない（fragmentごと出さない）。
+run lattice-context-no-independence env PATH="$STATE/lattice-bin:$PATH" LATTICE_CONTEXT_MODE=no_independence "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-context-no-independence","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" != *'並列可否:'* ]] \
+  && pass lattice-context-no-independence || fail_case lattice-context-no-independence
+
+# 応答が読めないときは静かに旧経路へ回らず、理由を出す（fail closed）。
+run lattice-context-bad env PATH="$STATE/lattice-bin:$PATH" LATTICE_CONTEXT_MODE=bad "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-context-bad","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'検証できない'* ]] \
+  && pass lattice-context-bad || fail_case lattice-context-bad
+
+# typed failure（exit 1）は未実装と区別してfail-visibleにする。
+run lattice-context-typed-fail env PATH="$STATE/lattice-bin:$PATH" LATTICE_CONTEXT_MODE=typed_fail "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-context-typed-fail","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'CLI実行失敗'* ]] \
+  && pass lattice-context-typed-fail || fail_case lattice-context-typed-fail
+
+run lattice-context-timeout env PATH="$STATE/lattice-bin:$PATH" LATTICE_CONTEXT_MODE=slow "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-context-timeout","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'期限超過'* ]] \
+  && pass lattice-context-timeout || fail_case lattice-context-timeout
 
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'

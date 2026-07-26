@@ -46,6 +46,8 @@ STATUS_EXECUTION_FAILED = "execution_failed"
 STATUS_INVALID_RESPONSE = "invalid_response"
 STATUS_UNSUPPORTED_VERSION = "unsupported_version"
 DISCOVERY_INVALID = "discovery_invalid"
+# session-contextを持たないCLI（0.14.0未満）。fallbackではなく観測可能な版差の分岐。
+SESSION_CONTEXT_ABSENT = "session_context_absent"
 
 
 def emit(frontend, message):
@@ -337,6 +339,124 @@ def parse_project_status(raw):
     return value
 
 
+def read_session_context(lattice, root):
+    """statusと工程状態と並列可否を1プロセス・1 store読みで取る（Lattice ADR 0131）。
+
+    statusとtodo statusは同じstoreを別プロセスで二重に払う。hostの実行枠を超えて
+    案内ごと捨てられるため、統合入口があるCLIではこちらを使う。
+
+    exit 2かつstdout空は「この入口を持たないCLI」で、旧2呼び出しへ静かに回る。
+    それ以外の失敗は既存と同じくfail-visibleにする。「非ゼロなら黙る」にしない。
+    """
+    try:
+        with tempfile.TemporaryFile() as capture:
+            result = subprocess.run(
+                [str(lattice), "session-context", "--json"],
+                cwd=root,
+                stdin=subprocess.DEVNULL,
+                stdout=capture,
+                stderr=subprocess.DEVNULL,
+                timeout=5.0,
+                check=False,
+            )
+            capture.seek(0)
+            raw = capture.read(CAPTURE_LIMIT + 1)
+    except subprocess.TimeoutExpired:
+        return None, STATUS_TIMEOUT
+    except OSError:
+        return None, STATUS_EXECUTION_FAILED
+    if result.returncode == 2 and not raw.strip():
+        return None, SESSION_CONTEXT_ABSENT
+    value = parse_session_context(raw)
+    if value is not None:
+        return value, None
+    if result.returncode != 0:
+        return None, STATUS_EXECUTION_FAILED
+    return None, STATUS_INVALID_RESPONSE
+
+
+def parse_session_context(raw):
+    """必要fieldだけを取り出す（allowlist読み）。
+
+    独立性の投影は版を上げずにキーが増えた実績がある。未知keyの追加でhookが
+    全端末で壊れる構造を新しい面へ持ち込まない。知っているkeyの型だけを検査し、
+    知らないkeyは無視する。`todo`部分木は todo_status_result.v4 そのものなので、
+    既存の厳密検証をそのまま通す。
+    """
+    if raw is None or len(raw) > CAPTURE_LIMIT:
+        return None
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return None
+    if not isinstance(value, dict):
+        return None
+    if value.get("schema") != "lattice.session_context.v1":
+        return None
+    status = value.get("status")
+    if not isinstance(status, dict):
+        return None
+    project_status = parse_project_status(json.dumps(status).encode("utf-8"))
+    if project_status is None:
+        return None
+    todo_raw = value.get("todo")
+    todo = None
+    if todo_raw is not None:
+        if not isinstance(todo_raw, dict):
+            return None
+        todo = parse_status(json.dumps(todo_raw).encode("utf-8"))
+        if todo is None:
+            return None
+    return {
+        "status": project_status,
+        "todo": todo,
+        "independence": parse_independence(value.get("independence")),
+    }
+
+
+def parse_independence(entries):
+    """並列可否の要約。読める項目だけを採り、読めない項目は落とす。"""
+    if not isinstance(entries, list) or len(entries) > 512:
+        return []
+    summaries = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        plan_key = entry.get("plan_key")
+        if not isinstance(plan_key, str) or not IDENTIFIER.fullmatch(plan_key):
+            continue
+        guidance = entry.get("guidance")
+        message = None
+        if isinstance(guidance, dict) and isinstance(guidance.get("message"), str):
+            message = guidance_text(guidance["message"])
+        groups = entry.get("parallel_groups")
+        unknown = entry.get("unknown_task_ids")
+        summaries.append({
+            "plan_key": plan_key,
+            "coverage": entry.get("coverage") if isinstance(entry.get("coverage"), str) else None,
+            "message": message,
+            "group_count": len(groups) if isinstance(groups, list) else 0,
+            "verified_task_count": sum(
+                len(group) for group in groups if isinstance(group, list)
+            ) if isinstance(groups, list) else 0,
+            "serialize_pair_count": entry.get("serialize_pair_count")
+            if isinstance(entry.get("serialize_pair_count"), int) else 0,
+            "conflict_with_active_count": entry.get("conflict_with_active_count")
+            if isinstance(entry.get("conflict_with_active_count"), int) else 0,
+            "unknown_count": len(unknown) if isinstance(unknown, list) else 0,
+        })
+    return summaries
+
+
+def guidance_text(value):
+    """案内文をそのまま載せるための検査。既存のbounded_textとは用途も引数も違う。"""
+    if not isinstance(value, str) or not value or len(value) > 512:
+        return None
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        return None
+    return value
+
+
 def read_project_status(lattice, root):
     try:
         with tempfile.TemporaryFile() as capture:
@@ -428,7 +548,29 @@ def discovery_unavailable_message(reason):
     )
 
 
-def status_message(root, status_value):
+def independence_fragment(summaries):
+    """並列可否の1文。案内文はLatticeの返答をverbatimで使う。
+
+    面ごとに文言を書き直すと必ずずれる（Lattice ADR 0130が案内の単一正本を置いた理由）。
+    hookは件数を添えるだけで、意味づけの言い換えをしない。
+    """
+    if not summaries:
+        return ""
+    parts = []
+    for entry in summaries:
+        counts = (
+            f"検証済み並列{entry['group_count']}group({entry['verified_task_count']}件)"
+            f"・要直列{entry['serialize_pair_count']}組"
+            f"・作業中との競合{entry['conflict_with_active_count']}件"
+            f"・未検査{entry['unknown_count']}件"
+        )
+        coverage = entry["coverage"] or "unknown"
+        message = f" {entry['message']}" if entry["message"] else ""
+        parts.append(f"{entry['plan_key']}(coverage={coverage}): {counts}。{message}")
+    return "並列可否: " + " ".join(parts) + " "
+
+
+def status_message(root, status_value, independence=None):
     dependency_count = 0
     if status_value["schema"] in {
         "lattice.todo_status_result.v2",
@@ -459,6 +601,7 @@ def status_message(root, status_value):
         f"next-ready={task_summary(status_value['next_ready'])}。"
         f"{dependency_note}"
         f"{reconciliation_note}"
+        f"{independence_fragment(independence or [])}"
         "工程正本は Lattice store、散文は linked Markdown。"
         "表示不能時は lattice todo gantt を明示実行してください。"
         "このINFOは依頼範囲を拡張しません。"
@@ -489,6 +632,27 @@ def main(frontend):
         if lattice is None:
             emit(frontend, missing_cli_message())
             return
+        # 統合入口（Lattice 0.14.0以降）はdiscoveryと工程状態と並列可否を1プロセスで返す。
+        # 旧2呼び出しは同じstoreを二重に読み、storeが育ったprojectでは実行枠を超えて
+        # 案内ごと捨てられていた。入口を持たないCLIだけ従来経路へ回る。
+        context, context_reason = read_session_context(lattice, root)
+        if context is None and context_reason != SESSION_CONTEXT_ABSENT:
+            emit(frontend, status_unavailable_message(context_reason))
+            return
+        if context is not None:
+            project_status = context["status"]
+            state = project_status["state"]
+            if state in PROJECT_STATES_QUIET:
+                return
+            if state in PROJECT_STATES_ERROR:
+                emit(frontend, discovery_unavailable_message(DISCOVERY_INVALID))
+                return
+            if context["todo"] is None:
+                emit(frontend, status_unavailable_message(STATUS_INVALID_RESPONSE))
+                return
+            emit(frontend, status_message(root, context["todo"], context["independence"]))
+            return
+
         # typed discovery: lattice status --json が接続判定の正本。.lattice/todoの
         # ディレクトリ有無で早期判定しない（uninitialized/invalid/store ref変更を
         # 区別できないため）。案内する工程が無いmissing/uninitializedは静かに終了し、
