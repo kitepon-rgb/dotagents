@@ -60,8 +60,13 @@ LatticeとControlを繋ぐ2 moduleも同じ規律に従う。どちらもI/Oを�
   親の自前交差判断による並列強行を認めない（witness無しの「交差しないはず」が事故の源）。
 - **repo外対象（`repo_root: null`）のwriterが2つ以上ある場合も直列化する**。repo identityが無い対象同士は
   交差の有無を判定できないため、判定不能を並列可へ丸めない。
-- Latticeが選択されている場合だけ、同一repoの複数writerを並列投入できる。交差判定は`plan compile`の
-  競合検出が所有する。
+- Latticeが選択されている場合だけ、同一repoの複数writerを並列投入できる。**並列投入してよい根拠は、
+  `lattice todo independence`が返す検証済みparallel groupだけとする**。`unknown`（未検査）・`stale`・
+  記録なしは「競合が無い」を意味しない——依存線の不在は順序制約の無申告であって、書き込み境界の
+  非干渉ではないからである（Lattice ADR 0127）。判定材料が無い組は直列側へ倒す。
+  判定を宣言するのはToDoごとのwitness setであり、その誠実さが判定の上限になる。
+  runtime面（`plan compile`の競合検出）は同じ境界規律をrun経路で適用する面であり、
+  工程レーンの根拠はtodo independenceが持つ。
 - **Latticeが利用不能またはfail closed（例: `INVALID_RUN_STORE`）の時は、同じ規則で直列化する**。これは
   暗黙のfallbackではなく、機能と安全性を明示したsupported degraded modeである（ADR 0113 Decision 4）。
   断念した事実と理由は、統括レーンならControl記録、通常レーンならplanまたは工程正本へ一度残す。
