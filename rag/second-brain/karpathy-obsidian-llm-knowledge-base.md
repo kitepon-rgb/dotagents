@@ -2,7 +2,8 @@
 
 - 取得日: 2026-07-04（調査担当: Fable 5 セッション）
 - 確度: 高（本人 X 投稿の本文引用＝一次。X 投稿は xAI x_search 経由で本文取得・URL 保存、画面直接閲覧はしていない。報道は複数社一致）
-- 関連: [[obsidian-pricing-20260704]] [[obsidian-commercial-license-20260704]] [[karpathy-joins-anthropic-techcrunch-20260519]]
+- 関連: [[obsidian-pricing-20260704]] [[obsidian-commercial-license-20260704]]
+- Anthropic 入りの報道出典: TechCrunch「OpenAI co-founder Andrej Karpathy joins Anthropic's pre-training team」2026-05-19（全文ミラーは公開リポに置かないため未保管）
 
 ## 事実関係
 
