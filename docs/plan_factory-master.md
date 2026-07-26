@@ -27,12 +27,12 @@ Lattice storeが唯一の正本であり、Markdown checkboxや旧queueへ二重
 - [Observerコア編入](archive/plan_observer-core-integration.md)
 - [Codex全対応](archive/plan_codex-full-support.md)
 - [BugHub工場統合](archive/plan_bughub-factory-integration.md)
+- [工場全文書同期](archive/plan_factory-documentation-sync.md)
 
 ## 現在のwave
 
-[工場全文書同期](plan_factory-documentation-sync.md)を実行中。Lattice Taskは`fm-0680`〜`fm-0686`。
-開始時点のH承認待ち、blocked Task、active Runはない。途中で新しい承認が必要になった場合だけ、
-目的・影響・rollbackを示してLatticeとControlへ明示する。
+進行中waveはない。Lattice `factory-master`の`fm-0680`〜`fm-0686`は完了し、
+Control `factory-documentation-sync-20260726`もfinalize／archive済み。
 
 工程表示は次で生成する。
 

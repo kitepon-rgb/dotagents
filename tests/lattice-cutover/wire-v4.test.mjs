@@ -52,7 +52,7 @@ test('導入・更新契約はretired Codegraphを再導入しない', async () 
   assert.match(scheduler.match(/const required = \[[^\]]+\]/u)?.[0] ?? '', /lattice/u);
 });
 
-test('生きた製品説明とhost matrixはLatticeを現役コアとしCodegraphを必須扱いしない', async () => {
+test('生きた製品説明とhost matrixはLatticeを自作コア10へ置き第三者製品と分離する', async () => {
   const read = async (file) => readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
   const [readme, matrix] = await Promise.all([
     read('README.md'),
@@ -60,7 +60,8 @@ test('生きた製品説明とhost matrixはLatticeを現役コアとしCodegrap
   ]);
   assert.doesNotMatch(readme, /工場コア[^\n]*Codegraph/u);
   assert.doesNotMatch(readme, /curated CLI[^\n]*Codegraph/u);
-  assert.match(readme, /工場コア[^\n]*Lattice/u);
+  assert.match(readme, /自作コア10製品[^\n]*Lattice/u);
+  assert.match(readme, /\| 第三者管理製品 \| MarkItDown \| 自作コアではなく/u);
   assert.doesNotMatch(matrix, /^\| Codegraph \|/mu);
   assert.match(matrix, /^\| Lattice \| required \| required \| required \| required \| high \|$/mu);
 });
