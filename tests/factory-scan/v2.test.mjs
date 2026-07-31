@@ -217,6 +217,17 @@ test('Grokの旧snake_case JSONはstableでも契約違反として拒否する'
   assert.equal(report.products['grok-build'].checks[0].status, 'unverified');
 });
 
+test('optionalなGrok未導入は現行profileの非対象として報告する', { concurrency: false }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'factory-v2-grok-optional-missing-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
+  const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 0123456789abcdef0123456789abcdef01234567\n'); await chmod(git, 0o755);
+  const previous = process.env.PATH; process.env.PATH = bin; t.after(() => { process.env.PATH = previous; });
+  const report = await scanV2({ host: { id: 'test-host', profile: 'server' }, cwd: root, arch: 'x64', platform: 'linux', toolchainLedgerPath: join(root, 'missing-toolchain-ledger.json') });
+  const product = report.products['grok-build'];
+  assert.equal(product.presence_status, 'not_applicable');
+  assert.equal(product.compatibility_status, 'not_applicable');
+  assert.deepEqual(product.checks, [{ check_id: 'stable_update', status: 'skipped', reason_code: 'not_applicable' }]);
+});
+
 test('toolchain scannerはregistry schema drift・downgrade・Grok flag不整合をfail closedにする', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-toolchain-contract-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
   const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
