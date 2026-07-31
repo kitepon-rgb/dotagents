@@ -134,7 +134,8 @@ test("純粋APIは同期で厳格schema・scopeを検証し、unknown fieldを�
   assert.throws(() => api.validateManifest({ ...manifest, schema_version: "dotagents.orchestration-control.v21" }), code("INVALID_SCHEMA"));
   assert.throws(() => api.validateManifest({ ...manifest, prompt: "must never persist" }), code("INVALID_SCHEMA"));
   assert.deepEqual(api.normalizeScope({ kind: "directory", path: "lib/orchestrate" }), { kind: "directory", path: "lib/orchestrate" });
-  for (const path of ["../escape", "/absolute", "a\\b", ".", "a/*", "a/../b"]) assert.throws(() => api.normalizeScope({ kind: "directory", path }), code("INVALID_SCOPE"));
+  assert.deepEqual(api.normalizeScope({ kind: "file", path: "app/[gameId]/page.tsx" }), { kind: "file", path: "app/[gameId]/page.tsx" });
+  for (const path of ["../escape", "/absolute", "a\\b", ".", "a/*", "a/?", "a/{b}", "a/../b"]) assert.throws(() => api.normalizeScope({ kind: "directory", path }), code("INVALID_SCOPE"));
   assert.equal(api.scopesOverlap({ kind: "directory", path: "a/b" }, { kind: "file", path: "a/b/c.mjs" }), true);
   assert.equal(api.scopesOverlap({ kind: "directory", path: "a/b" }, { kind: "file", path: "a/bc.mjs" }), false);
 });
@@ -2745,6 +2746,8 @@ test("Delegation Packetとstrict Worker Report importは相関・scope・親acce
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [{ ...report.validation_results[0], outcome: "unknown" }] } }), code("VALIDATION_INCOMPLETE"));
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [{ ...report.validation_results[0], outcome: "failed" }] } }), code("REPORT_NONZERO"));
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, status: "failed" } }), code("INVALID_SCHEMA"));
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, changed_paths: ["app/[gameId]/page.tsx"] } }), code("WORKSPACE_DRIFT"));
+  await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, changed_paths: ["app/*/page.tsx"] } }), code("INVALID_SCHEMA"));
   const beyondClockSkew = new Date(Date.now() + 6 * 60 * 1000).toISOString();
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, evidence: [{ ...report.evidence[0], observed_at: beyondClockSkew }] } }), code("EVIDENCE_FROM_FUTURE"));
   await assert.rejects(api.importWorkerReport({ cwd: repo.root, control_id: "packet-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "packet-worker", report: { ...report, validation_results: [{ ...report.validation_results[0], evidence: { ...report.validation_results[0].evidence, observed_at: beyondClockSkew } }] } }), code("EVIDENCE_FROM_FUTURE"));
