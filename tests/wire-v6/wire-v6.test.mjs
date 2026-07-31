@@ -36,6 +36,12 @@ test('agents-updateの既定post-update gateは現役wire v6へ固定する', as
   assert.doesNotMatch(runbook, /通常経路はpayload `schema_version="4\.0"`/u);
 });
 
+test('wire v6のCodex routing診断は正典のmulti_agent_v2を検査する', async () => {
+  const source = await readFile(resolve(import.meta.dirname, '../../lib/factory/v5.mjs'), 'utf8');
+  assert.match(source, /features\\\.multi_agent_v2/u);
+  assert.doesNotMatch(source, /features\\\.multi_agent_v4/u);
+});
+
 const product = (contractVersion = '6.0') => ({
   presence_status: 'installed',
   installed_version: '0.1.0',
