@@ -60,7 +60,7 @@ test('win32はtask XMLをUTF-16LE+BOMで書き、存在照会をlocaleテキス�
   assert.doesNotMatch(source, /ABSENT_TASK/u);
   assert.doesNotMatch(source, /schtasks\.exe', \['\/Query'/u);
 });
-test('runnerはlaunchd/cron最小PATHでも~/.local/binの製品CLIを補完解決し、明示PATHを先勝ちに保つ', { skip: process.platform === 'win32' }, async () => {
+test('runnerはlaunchd/cron最小PATHでもuser binとnpm globalの製品CLIを補完解決し、明示PATHを先勝ちに保つ', { skip: process.platform === 'win32' }, async () => {
   const { extendedSchedulerPath } = await import('../../lib/factory/scheduler-path.mjs');
   const minimal = '/usr/bin:/bin:/usr/sbin:/sbin';
   const extended = extendedSchedulerPath({ platform: 'darwin', path: minimal, execPath: '/opt/homebrew/bin/node', home: '/Users/u' });
@@ -68,11 +68,16 @@ test('runnerはlaunchd/cron最小PATHでも~/.local/binの製品CLIを補完解�
   assert.ok(extended.includes('/Users/u/.local/bin'));
   assert.ok(extended.includes('/opt/homebrew/bin'));
   assert.equal(extendedSchedulerPath({ platform: 'win32', path: 'C:\\x', execPath: '', home: '' }), 'C:\\x');
-  assert.equal(extendedSchedulerPath({ platform: 'linux', path: '/a:/opt/homebrew/bin', execPath: '/nvm/v1/bin/node', home: '/home/u' }).split(':').filter((p) => p === '/opt/homebrew/bin').length, 1);
+  const linuxExtended = extendedSchedulerPath({ platform: 'linux', path: '/a:/opt/homebrew/bin', execPath: '/nvm/v1/bin/node', home: '/home/u' });
+  assert.ok(linuxExtended.includes('/home/u/.npm-global/bin'));
+  assert.equal(linuxExtended.split(':').filter((p) => p === '/opt/homebrew/bin').length, 1);
   const box = await sandbox(CURRENT_PROFILE, true, false);
   const localBin = join(box.root, '.local', 'bin');
+  const npmGlobalBin = join(box.root, '.npm-global', 'bin');
   await mkdir(localBin, { recursive: true });
-  for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(localBin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); }
+  await mkdir(npmGlobalBin, { recursive: true });
+  const caveat = join(npmGlobalBin, 'caveat'); await writeFile(caveat, '#!/bin/sh\nexit 1\n'); await chmod(caveat, 0o755);
+  for (const name of ['throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(localBin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); }
   const git = join(localBin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755);
   const minimalRun = await run(RUNNER, ['--config', box.config], box, { PATH: '/usr/bin:/bin:/usr/sbin:/sbin' });
   assert.equal(minimalRun.code, 0, minimalRun.stderr);
