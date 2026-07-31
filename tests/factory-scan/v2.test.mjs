@@ -223,8 +223,9 @@ test('optionalなGrok未導入は現行profileの非対象として報告する'
   const previous = process.env.PATH; process.env.PATH = bin; t.after(() => { process.env.PATH = previous; });
   const report = await scanV2({ host: { id: 'test-host', profile: 'server' }, cwd: root, arch: 'x64', platform: 'linux', toolchainLedgerPath: join(root, 'missing-toolchain-ledger.json') });
   const product = report.products['grok-build'];
+  assert.doesNotThrow(() => validateReportV2(report));
   assert.equal(product.presence_status, 'not_applicable');
-  assert.equal(product.compatibility_status, 'not_applicable');
+  assert.equal(product.compatibility_status, undefined);
   assert.deepEqual(product.checks, [{ check_id: 'stable_update', status: 'skipped', reason_code: 'not_applicable' }]);
 });
 
