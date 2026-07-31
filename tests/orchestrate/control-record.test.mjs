@@ -174,6 +174,32 @@ test("init/status はgit由来のdeclarationを保存し、重複controlとrevis
   await assert.rejects(api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent-001", expected_revision: 1, task: makeTask() }), code("REVISION_CONFLICT"));
 });
 
+test("resume checkは同じpath・inodeのdevice番号変化だけならreview-requiredとして継続可能にする", async (t) => {
+  const { repo } = await initialized(t, { control_id: "device-change-control" });
+  const manifestPath = join(
+    repo.commonDir,
+    "dotagents",
+    "orchestrate",
+    "controls",
+    "device-change-control",
+    "manifest.json",
+  );
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  const [device, inode] = manifest.declaration.git_dir_file_id.split(":");
+  manifest.declaration.git_dir_file_id = `${BigInt(device) + 1n}:${inode}`;
+  await writeFile(manifestPath, `${JSON.stringify(manifest)}\n`);
+
+  const resumed = await api.resumeCheck({ cwd: repo.root, control_id: "device-change-control" });
+  assert.equal(resumed.outcome, "review-required");
+  assert.ok(resumed.review_reasons.some((entry) => (
+    entry.code === "control-worktree-device-changed"
+    && entry.subject_id === "device-change-control"
+  )));
+  assert.ok(!resumed.blocking_reasons.some((entry) => (
+    entry.code === "control-worktree-generation-changed"
+  )));
+});
+
 test("status briefとresume checkはopaque状態・workspace drift・evidence retentionを要約する", async (t) => {
   const { repo, result } = await initialized(t, { control_id: "brief-control" });
   const ready = await api.resumeCheck({ cwd: repo.root, control_id: "brief-control" });

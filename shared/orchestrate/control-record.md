@@ -548,9 +548,11 @@ blocking_reasons
 review_reasons
 ```
 
-- Controlのproject/common/git directory realpathとgit directory generationを再照合する。generation変更は
-  `blocked`。HEAD、dirty boolean、porcelain status digest、bounded workspace fingerprintのinit時との差は
-  `review-required`。dirtyのまま同じpathの内容だけが変わる場合もfingerprint差として見落とさない。
+- Controlのproject/common/git directory realpathとgit directory generationを再照合する。realpathまたは
+  inodeの変更は`blocked`。同じrealpath・inodeを保ったdevice番号だけの変化は、再起動やmount namespace
+  差で起こり得るため`review-required`として親へ返す。HEAD、dirty boolean、porcelain status digest、
+  bounded workspace fingerprintのinit時との差も`review-required`。dirtyのまま同じpathの内容だけが
+  変わる場合もfingerprint差として見落とさない。
 - nonterminal Workerのworkspace identity/generationを再解決する。予約中writerのHEAD変更、workspace消失、
   generation変更は`blocked`。全worktree Workerは記録時のbounded fingerprintを持ち、read／planned Workerの
   内容差は`review-required`。予約中writerのscope外差分、index／HEAD／ignored output driftは`blocked`、
