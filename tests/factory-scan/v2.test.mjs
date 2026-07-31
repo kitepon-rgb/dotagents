@@ -47,6 +47,19 @@ test('native v1の状態別shape・exit code・unknown fieldをfail closedで扱
   assert.equal(report.products.throughline.checks[0].reason_code, 'native_exit_mismatch');
   assert.equal(report.products['aiterm-mcp'].compatibility_status, 'unverified');
   assert.doesNotThrow(() => validateReportV2(report));
+
+  const malformedAiterm = structuredClone(fixtures.aiterm);
+  malformedAiterm.overall = 'unverified';
+  malformedAiterm.runtime_error_store = {
+    status: 'unverified', collection: 'malformed', record_count: null, unacknowledged_count: null,
+  };
+  await script('aiterm-mcp', `cat >/dev/null; echo '${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: JSON.stringify(malformedAiterm) }] } })}'`);
+  const malformedReport = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
+  assert.equal(malformedReport.products['aiterm-mcp'].compatibility_status, 'unverified');
+  assert.deepEqual(malformedReport.products['aiterm-mcp'].checks.find((item) => item.check_id === 'runtime_error_store'), {
+    check_id: 'runtime_error_store', status: 'unverified', reason_code: 'diagnostic_unverified',
+  });
+  assert.doesNotThrow(() => validateReportV2(malformedReport));
 });
 
 test('native diagnosticsの製品別不変条件と非0 exitを個別に拒否する', { concurrency: false }, async (t) => {
