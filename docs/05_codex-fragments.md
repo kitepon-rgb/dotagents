@@ -130,7 +130,7 @@ codex --profile work
 - 既存・提案後の TOML は Codex CLI 自身の parser で検証する。不正なら fail-loud で書き込まない。
 - lifecycle hookの現行flagは`[features].hooks`。`codex_hooks`はdeprecated警告を出すため限定applierが除去し、hook機能を無効化するfallbackには使わない。
 - `config.toml` / `hooks.json` が symlink なら所有境界を壊さないため fail-loud にする。
-- inline comment と他 section / 他 hook は保持する。dotagents 自身のcallout・advisory・Lattice工程表案内だけを、絶対パス・`type: command`・イベント別 `timeoutSec`・`async: false`・`statusMessage: null` の1件に畳む。
+- inline comment と他 section / 他 hook は保持する。dotagents 自身のcallout・advisory・Lattice工程表案内だけを、絶対パス・`type: command`・イベント別 `timeout`・`async: false`・`statusMessage: null` の1件に畳む。
 - 変更がある時だけ `~/Archives/dotagents-codex-config-*.tar.gz` に backup を作る。directory は `0700`、archive と member は `0600`。`CODEX_HOME` が HOME 外でも archive 内は安全な相対名にする。
 - 2ファイルは temp へ先に prepare / fsync してから置換し、途中失敗なら既に置換した側も original へ rollback する。rollback 自体が失敗した場合は明示エラーで止まる。
 - `CODEX_HOME` は test や別 home 用に指定できる。実端末の通常値は `$HOME/.codex`。
@@ -148,7 +148,7 @@ codex --profile work
 
 Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3／着手案内 C4）の Codex ミラーが X1-X5 である。現行の義務はグローバルAGENTS.md「作業レーンと統制」、実装履歴は [archive版](archive/plan_callout-hooks.md) を参照する。通常の配線は section 7 の `apply-codex-config` だけを使い、古い jq 手挿し断片を併用しない。
 
-| イベント | command | 役割 | timeoutSec |
+| イベント | command | 役割 | timeout |
 |---|---|---|---:|
 | `SessionStart` | `codex-callout-hook session-start` | X1・C2 ミラー、snapshot と棚卸し | 10 |
 | `PreToolUse` | `codex-callout-hook pre-tool-use` | X2・`update_plan` / 初回 `spawn_agent` の短い INFO | 5 |
@@ -175,7 +175,7 @@ directoryかつsymlinkでないことを先に確認し、不適合ならcache�
 ### Lattice工程表案内（SessionStart）
 
 `codex-lattice-gantt-hook session-start`を同じSessionStartへ別entryとして追加する。commandは
-`$HOME/.local/bin/codex-lattice-gantt-hook session-start`の展開済み絶対path、`timeoutSec: 6`、
+`$HOME/.local/bin/codex-lattice-gantt-hook session-start`の展開済み絶対path、`timeout: 6`、
 `async: false`、`statusMessage: null`とする。Claude側と共通のread-only coreを使い、成功INFOだけを
 `hookSpecificOutput.additionalContext`へ包む。`source=startup|clear`ごとに発火し、スロットルしない。
 
@@ -227,7 +227,7 @@ STDIO の environment は closed-mode として扱う。親 shell の値が必�
 
 ## Observer parent Stop hook
 
-ObserverのCodex Stop hookは`hooks.json`へ手書きしない。Claude設定と同じtransactionで、Observer CLIが返すCodex fragment（`timeoutSec`、`async=false`、`statusMessage=null`を含む）を適用する。
+ObserverのCodex Stop hookは`hooks.json`へ手書きしない。Claude設定と同じtransactionで、Observer CLIが返すversioned Codex fragmentをその製品契約どおりに適用する。
 
 ```bash
 apply-observer-hook-config --observer-hook "$HOME/.local/bin/observer-parent-stop-hook" \

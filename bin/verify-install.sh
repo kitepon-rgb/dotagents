@@ -260,6 +260,52 @@ verify_retired_codegraph_settings() {
 
 verify_retired_codegraph_settings
 
+verify_lattice_hooks() {
+  if ! command -v lattice >/dev/null 2>&1; then
+    echo "OK  Lattice hooks: skip（lattice CLI 不在）"
+    return
+  fi
+
+  local hooks_help
+  hooks_help="$(lattice hooks --help 2>&1 || true)"
+  if ! grep -Fq 'hooks <install|status|uninstall|emit>' <<<"$hooks_help"; then
+    echo "OK  Lattice hooks: skip（導線未対応版）"
+    return
+  fi
+
+  local host status_output state
+  for host in claude codex; do
+    if [ "$host" = codex ] && ! command -v codex >/dev/null 2>&1; then
+      continue
+    fi
+    if ! status_output="$(lattice hooks status --host "$host" 2>&1)"; then
+      echo "FAIL: Lattice ${host} hooks status を取得できない。lattice hooks install --host ${host} を実行"
+      fail=1
+      continue
+    fi
+    if ! state="$(python3 -c 'import json, sys
+try:
+    value = json.load(sys.stdin)
+except (json.JSONDecodeError, UnicodeDecodeError):
+    raise SystemExit(1)
+if value.get("schema") != "lattice.hooks_status_result.v1" or value.get("host") != sys.argv[1] or not isinstance(value.get("state"), str):
+    raise SystemExit(1)
+print(value["state"])' "$host" <<<"$status_output")"; then
+      echo "FAIL: Lattice ${host} hooks status が正規JSONでない。lattice hooks install --host ${host} を実行"
+      fail=1
+      continue
+    fi
+    if [ "$state" = wired ]; then
+      echo "OK  Lattice hooks: ${host} → wired"
+    else
+      echo "FAIL: Lattice ${host} hooks state=${state}。lattice hooks install --host ${host} を実行"
+      fail=1
+    fi
+  done
+}
+
+verify_lattice_hooks
+
 if [ "${DOTAGENTS_FACTORY_CORE_ONLY:-0}" = 1 ]; then
   verify_factory_core
   exit "$fail"
@@ -513,7 +559,7 @@ for event, (subcommand, timeout) in required.items():
     if len(matches) != 1 or matches[0] != {
         "type": "command",
         "command": command,
-        "timeoutSec": timeout,
+        "timeout": timeout,
         "async": False,
         "statusMessage": None,
     }:
@@ -544,7 +590,7 @@ path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/orchest
 shell_prefix = str(Path(shutil.which("sh") or shutil.which("bash") or "sh").resolve()) if os.name == "nt" else "/bin/sh"
 parts = [shell_prefix, path]
 command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
-expected = {"type": "command", "command": command, "timeoutSec": 5, "async": False, "statusMessage": None}
+expected = {"type": "command", "command": command, "timeout": 5, "async": False, "statusMessage": None}
 matches = [
     hook
     for entry in data.get("hooks", {}).get("SessionStart", [])
@@ -575,7 +621,7 @@ path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-l
 python_prefix = [str(Path(sys.executable).resolve())] if os.name == "nt" else ["/usr/bin/env", "python3"]
 parts = [*python_prefix, path, "session-start"]
 command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
-expected = {"type": "command", "command": command, "timeoutSec": 6, "async": False, "statusMessage": None}
+expected = {"type": "command", "command": command, "timeout": 6, "async": False, "statusMessage": None}
 relevant = []
 matches = []
 for entry in data.get("hooks", {}).get("SessionStart", []):

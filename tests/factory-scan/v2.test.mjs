@@ -134,7 +134,7 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
   const codexCommand = (subcommand) => process.platform === 'win32'
     ? `& "C:\\Python\\python.exe" "${join(root, '.local', 'bin', 'codex-callout-hook')}" "${subcommand}"`
     : `/usr/bin/env python3 ${join(root, '.local', 'bin', 'codex-callout-hook')} ${subcommand}`;
-  const codexHook = (subcommand, timeoutSec) => ({ type: 'command', command: codexCommand(subcommand), timeoutSec, async: false, statusMessage: null }); const codexHooks = { hooks: { SessionStart: [{ hooks: [codexHook('session-start', 10)] }], PreToolUse: [{ hooks: [codexHook('pre-tool-use', 5)] }], UserPromptSubmit: [{ hooks: [codexHook('user-prompt-submit', 5)] }], Stop: [{ hooks: [codexHook('stop', 10)] }] } }; await writeFile(join(root, '.codex', 'hooks.json'), JSON.stringify(codexHooks));
+  const codexHook = (subcommand, timeout) => ({ type: 'command', command: codexCommand(subcommand), timeout, async: false, statusMessage: null }); const codexHooks = { hooks: { SessionStart: [{ hooks: [codexHook('session-start', 10)] }], PreToolUse: [{ hooks: [codexHook('pre-tool-use', 5)] }], UserPromptSubmit: [{ hooks: [codexHook('user-prompt-submit', 5)] }], Stop: [{ hooks: [codexHook('stop', 10)] }] } }; await writeFile(join(root, '.codex', 'hooks.json'), JSON.stringify(codexHooks));
   const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
   await script('caveat', `echo '${JSON.stringify(caveatDiagnostic())}'`);
   const fixtures = nativeFixtures();

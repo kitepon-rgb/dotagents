@@ -31,6 +31,7 @@
 - 自動化（「毎回 X したら Y」）は memory や指示ではなく hooks でしか成立しない——必要になったら update-config skill で settings.json に組む。
 - 実例: caveat の UserPromptSubmit / Stop hook（罠シグナルの提示・セッション状態の退避）。配線は caveat 側の正典に従い、caveat MCP 導入とセットで適用する。
 - **Spotter hookは手挿ししない**: 対象projectで `spotter install -y` を実行し、Spotter自身にproject markerとClaude 5 hookを管理させる。PATH上のThroughlineが解決できればauditor contextは既定ON。全projectへglobal発火させる旧`--user`方式はdaemon proliferationを再発させるため非採用。
+- **Lattice導線hookは手挿ししない**: `lattice hooks install --host claude|codex` を実行し、Lattice自身にsensor気づかせ導線を管理させる。
 
 ## Observer parent Stop hook（Claude）
 

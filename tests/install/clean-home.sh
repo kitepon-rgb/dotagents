@@ -14,8 +14,28 @@ SYMLINK_CODEX_HOME="$(mktemp -d)"
 SYMLINK_TARGETS="$(mktemp -d)"
 TRANSACTION_CODEX_HOME="$(mktemp -d)"
 VERIFY_FIXTURE="$(mktemp -d)"
-trap 'rm -rf "$OFFICIAL_HOME" "$LEGACY_HOME" "$EXTERNAL_CODEX_HOME" "$BAD_CODEX_HOME" "$SYMLINK_CODEX_HOME" "$SYMLINK_TARGETS" "$TRANSACTION_CODEX_HOME" "$VERIFY_FIXTURE"' EXIT
+LATTICE_TEST_BIN="$(mktemp -d)"
+trap 'rm -rf "$OFFICIAL_HOME" "$LEGACY_HOME" "$EXTERNAL_CODEX_HOME" "$BAD_CODEX_HOME" "$SYMLINK_CODEX_HOME" "$SYMLINK_TARGETS" "$TRANSACTION_CODEX_HOME" "$VERIFY_FIXTURE" "$LATTICE_TEST_BIN"' EXIT
 PYTHON_BIN=python3
+
+cat >"$LATTICE_TEST_BIN/lattice" <<'EOF'
+#!/usr/bin/env bash
+set -u
+mode="${LATTICE_HOOKS_TEST_MODE:-wired}"
+if [ "${1:-}" = hooks ] && [ "${2:-}" = --help ]; then
+  [ "$mode" != unsupported ] || exit 2
+  echo 'Usage: lattice hooks <install|status|uninstall|emit> --host <claude|codex>'
+  exit 0
+fi
+if [ "${1:-}" = hooks ] && [ "${2:-}" = status ] && [ "${3:-}" = --host ]; then
+  state=wired
+  [ "$mode" != drift ] || state=drift
+  printf '{"schema":"lattice.hooks_status_result.v1","host":"%s","state":"%s"}\n' "$4" "$state"
+  exit 0
+fi
+exit 64
+EOF
+chmod +x "$LATTICE_TEST_BIN/lattice"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 assert_link() {
@@ -37,7 +57,7 @@ EOF
 EOF
 }
 apply_config() { HOME="$1" CODEX_HOME="$1/.codex" "$PYTHON_BIN" "$1/.local/bin/apply-codex-config" "$2"; }
-verify() { HOME="$1" DOTAGENTS_SKIP_FACTORY_CORE=1 "$ROOT/bin/verify-install.sh" --profile "$2"; }
+verify() { PATH="$LATTICE_TEST_BIN:$PATH" HOME="$1" DOTAGENTS_SKIP_FACTORY_CORE=1 LATTICE_HOOKS_TEST_MODE="${LATTICE_HOOKS_TEST_MODE:-wired}" "$ROOT/bin/verify-install.sh" --profile "$2"; }
 assert_stop_count() {
   "$PYTHON_BIN" - "$1" <<'PY'
 import json
@@ -86,6 +106,12 @@ dry_run="$(apply_config "$OFFICIAL_HOME" --dry-run)"
 [ ! -d "$OFFICIAL_HOME/Archives" ] || fail 'dry-run が backup を作った'
 apply_config "$OFFICIAL_HOME" --apply
 verify "$OFFICIAL_HOME" official
+if lattice_drift_output="$(LATTICE_HOOKS_TEST_MODE=drift verify "$OFFICIAL_HOME" official 2>&1)"; then
+  fail 'Lattice hooks drift を verify が見逃した'
+fi
+grep -Fq 'lattice hooks install --host claude' <<<"$lattice_drift_output" \
+  || fail 'Lattice hooks drift のFAILがinstall commandを名指ししない'
+LATTICE_HOOKS_TEST_MODE=unsupported verify "$OFFICIAL_HOME" official >/dev/null
 mkdir -p "$VERIFY_FIXTURE/bin" "$VERIFY_FIXTURE/claude/skills/orchestrate"
 cp "$ROOT/bin/verify-install.sh" "$VERIFY_FIXTURE/bin/verify-install.sh"
 chmod +x "$VERIFY_FIXTURE/bin/verify-install.sh"
@@ -287,7 +313,7 @@ from pathlib import Path
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 path = str(Path(sys.argv[2]).resolve() / ".local/bin/orchestrate-advisory-hook")
 command = shlex.join(["/bin/sh", path])
-expected = {"type":"command", "command":command, "timeoutSec":5, "async":False, "statusMessage":None}
+expected = {"type":"command", "command":command, "timeout":5, "async":False, "statusMessage":None}
 hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command") == command]
 raise SystemExit(0 if hooks == [expected] else 1)
 PY
@@ -299,7 +325,7 @@ from pathlib import Path
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 path = str(Path(sys.argv[2]).resolve() / ".local/bin/codex-lattice-gantt-hook")
 command = shlex.join(["/usr/bin/env", "python3", path, "session-start"])
-expected = {"type":"command", "command":command, "timeoutSec":6, "async":False, "statusMessage":None}
+expected = {"type":"command", "command":command, "timeout":6, "async":False, "statusMessage":None}
 hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and "codex-lattice-gantt-hook" in h.get("command", "")]
 raise SystemExit(0 if hooks == [expected] else 1)
 PY
@@ -321,7 +347,7 @@ data = json.load(open(sys.argv[1], encoding="utf-8"))
 hooks = [h for e in data["hooks"]["Stop"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command", "").endswith("codex-callout-hook stop")]
 hook_path = Path(sys.argv[2]).resolve() / ".local/bin/codex-callout-hook"
 command = shlex.join(["/usr/bin/env", "python3", str(hook_path), "stop"])
-expected = {"type":"command", "command":command, "timeoutSec":10, "async":False, "statusMessage":None}
+expected = {"type":"command", "command":command, "timeout":10, "async":False, "statusMessage":None}
 raise SystemExit(0 if hooks == [expected] else 1)
 PY
 archive_count="$(find "$OFFICIAL_HOME/Archives" -name '*.tar.gz' | wc -l | tr -d ' ')"

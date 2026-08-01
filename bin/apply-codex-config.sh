@@ -237,7 +237,7 @@ def update_hooks(data: dict, home: Path) -> dict:
         canonical = {
             "type": "command",
             "command": python_hook_command(hook_path, subcommand),
-            "timeoutSec": timeout,
+            "timeout": timeout,
             "async": False,
             "statusMessage": None,
         }
@@ -269,7 +269,7 @@ def update_hooks(data: dict, home: Path) -> dict:
     canonical = {
         "type": "command",
         "command": shell_hook_command(hook_path),
-        "timeoutSec": timeout,
+        "timeout": timeout,
         "async": False,
         "statusMessage": None,
     }
@@ -298,7 +298,7 @@ def update_hooks(data: dict, home: Path) -> dict:
     canonical = {
         "type": "command",
         "command": python_hook_command(hook_path, subcommand),
-        "timeoutSec": timeout,
+        "timeout": timeout,
         "async": False,
         "statusMessage": None,
     }
