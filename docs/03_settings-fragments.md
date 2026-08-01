@@ -158,6 +158,7 @@ storeが存在するのにtimeoutなら「status取得が期限超過」、CLI�
 #### C3 プラン更新忘れ（Stop・rolling baseline で毎ターン判定）
 
 このターンで dirty/コミットの差分があるのに `docs/plan_*.md` が動いていなければ INFO を pending に保存する。Stop 自体には注入せず、次の自然な UserPromptSubmit で C4 が1回だけ配送する（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `stop` サブコマンド）。
+文面はLattice typed discoveryが `ready`／`active_run` を返すrepoでは記録先の選択肢としてLattice storeとMarkdown planを並べ、それ以外は従来のplan正本文面とする。
 
 ```bash
 S=~/.claude/settings.json

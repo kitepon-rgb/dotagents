@@ -197,19 +197,39 @@ run c2-stocktake python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
 {"session_id":"t1","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [[ "$RUN_OUT" == *'INFO: docs/'* ]] && pass c2-stocktake || fail_case c2-stocktake
-run c3-clean python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
+PYTHON_EXE=$(command -v python3)
+mkdir -p "$STATE/c3-no-lattice-bin" "$STATE/c3-lattice-bin"
+ln -s "$(command -v git)" "$STATE/c3-no-lattice-bin/git"
+ln -s "$(command -v git)" "$STATE/c3-lattice-bin/git"
+cat >"$STATE/c3-lattice-bin/lattice" <<'EOF'
+#!/bin/sh
+[ "$1" = "status" ] && [ "$2" = "--json" ] || exit 2
+printf '%s\n' '{"schema":"lattice.project_status.v1","state":"'"${LATTICE_STATUS_STATE:-ready}"'","store":{"ref":".lattice/todo"}}'
+EOF
+chmod +x "$STATE/c3-lattice-bin/lattice"
+run c3-clean env PATH="$STATE/c3-no-lattice-bin" "$PYTHON_EXE" "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass c3-clean || fail_case c3-clean
 printf '%s\n' changed >>"$REPO/source.txt"
-run c3-warn python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
+run c3-warn env PATH="$STATE/c3-no-lattice-bin" "$PYTHON_EXE" "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/$(session_key t1).todo-pending" ] && pass c3-warn || fail_case c3-warn
-run c3-active python3 "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
+run c3-active env PATH="$STATE/c3-no-lattice-bin" "$PYTHON_EXE" "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":true}
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass c3-active || fail_case c3-active
+run c3-lattice-baseline env PATH="$STATE/c3-lattice-bin" LATTICE_STATUS_STATE=ready "$PYTHON_EXE" "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
+{"session_id":"t-lattice","cwd":"$HOOK_REPO","stop_hook_active":false}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass c3-lattice-baseline || fail_case c3-lattice-baseline
+printf '%s\n' lattice-changed >"$REPO/lattice-source.txt"
+run c3-lattice-ready env PATH="$STATE/c3-lattice-bin" LATTICE_STATUS_STATE=ready "$PYTHON_EXE" "$ROOT/bin/todo-gate-hook.sh" stop <<EOF
+{"session_id":"t-lattice","cwd":"$HOOK_REPO","stop_hook_active":false}
+EOF
+C3_LATTICE_PENDING="$STATE/dotagents/hooks/$(session_key t-lattice).todo-pending"
+[ "$RUN_BYTES" -eq 0 ] && [ -f "$C3_LATTICE_PENDING" ] && grep -q 'Lattice storeへ記録' "$C3_LATTICE_PENDING" && grep -q 'plan_x.md' "$C3_LATTICE_PENDING" && pass c3-lattice-ready || fail_case c3-lattice-ready
 
 run c4-normal python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && json && [[ "$RUN_OUT" == *'通常レーン'* && "$RUN_OUT" == *'対象限定commitだけで閉じます'* ]] && pass c4-normal || fail_case c4-normal
 run c4-silent python3 "$ROOT/bin/onset-gate-hook.sh" <<<'{"session_id":"u1"}' && [ "$RUN_BYTES" -eq 0 ] && pass c4-silent || fail_case c4-silent
@@ -262,7 +282,6 @@ EOF
 [ "$(find "$STATE" -maxdepth 1 -name 'outside-absolute.*.snapshot' -type f | wc -l | tr -d ' ')" -eq 0 ] && pass c5-todo-no-escape || fail_case c5-todo-no-escape
 
 # Lattice工程表SessionStart hook。共通coreの異常系とClaude plain stdoutを固定する。
-PYTHON_EXE=$(command -v python3)
 mkdir -p "$STATE/git-only" "$STATE/lattice-bin" "$STATE/non-git"
 ln -s "$(command -v git)" "$STATE/git-only/git"
 cat >"$STATE/lattice-bin/lattice" <<'EOF'

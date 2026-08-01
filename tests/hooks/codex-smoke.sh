@@ -103,6 +103,7 @@ EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x1-off || fail_case x1-off
 
 # --- X4 stop（C3 ミラー） ---
+PYTHON_EXE=$(command -v python3)
 run x4-clean python3 "$HOOK" stop <<EOF
 {"session_id":"t1","cwd":"$HOOK_REPO","stop_hook_active":false}
 EOF
@@ -154,6 +155,25 @@ run x4-block-1 env DOTAGENTS_TODO_GATE=block python3 "$HOOK" stop <<EOF
 EOF
 [ "$RUN_BYTES" -eq 0 ] && [ -f "$STATE/dotagents/hooks/$(session_key t1).codex-pending" ] && pass x4-block-1 || fail_case x4-block-1
 
+mkdir -p "$STATE/codex-c3-lattice-bin"
+ln -s "$(command -v git)" "$STATE/codex-c3-lattice-bin/git"
+cat >"$STATE/codex-c3-lattice-bin/lattice" <<'EOF'
+#!/bin/sh
+[ "$1" = "status" ] && [ "$2" = "--json" ] || exit 2
+printf '%s\n' '{"schema":"lattice.project_status.v1","state":"'"${LATTICE_STATUS_STATE:-ready}"'","store":{"ref":".lattice/todo"}}'
+EOF
+chmod +x "$STATE/codex-c3-lattice-bin/lattice"
+run x4-lattice-baseline env PATH="$STATE/codex-c3-lattice-bin" LATTICE_STATUS_STATE=ready "$PYTHON_EXE" "$HOOK" stop <<EOF
+{"session_id":"t-lattice","cwd":"$HOOK_REPO","stop_hook_active":false}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass x4-lattice-baseline || fail_case x4-lattice-baseline
+printf '%s\n' lattice-changed >"$REPO/lattice-source.txt"
+run x4-lattice-ready env PATH="$STATE/codex-c3-lattice-bin" LATTICE_STATUS_STATE=ready "$PYTHON_EXE" "$HOOK" stop <<EOF
+{"session_id":"t-lattice","cwd":"$HOOK_REPO","stop_hook_active":false}
+EOF
+X4_LATTICE_PENDING="$STATE/dotagents/hooks/$(session_key t-lattice).codex-pending"
+[ "$RUN_BYTES" -eq 0 ] && [ -f "$X4_LATTICE_PENDING" ] && grep -q 'Lattice storeへ記録' "$X4_LATTICE_PENDING" && grep -q 'plan_x.md' "$X4_LATTICE_PENDING" && pass x4-lattice-ready || fail_case x4-lattice-ready
+
 # --- X3/X5 user-prompt-submit（セッション1回のINFO ＋ pending drain） ---
 run x35-normal python3 "$HOOK" user-prompt-submit <<<'{"session_id":"u1"}' \
   && json && [[ "$RUN_OUT" == *'通常レーン'* && "$RUN_OUT" == *'対象限定commitだけで閉じます'* ]] && pass x35-normal || fail_case x35-normal
@@ -194,7 +214,6 @@ done
 [ ! -e "$STATE/codex-absolute.codex-pending" ] && [ ! -e "$STATE/dotagents/codex-outside.codex-pending" ] && pass x6-session-key-no-escape || fail_case x6-session-key-no-escape
 
 # Codex frontendは共通Lattice coreのINFOをadditionalContextへ包む。
-PYTHON_EXE=$(command -v python3)
 mkdir -p "$STATE/git-only" "$STATE/lattice-bin" "$REPO/.lattice/todo" "$REPO/.lattice/generated"
 ln -s "$(command -v git)" "$STATE/git-only/git"
 cat >"$STATE/lattice-bin/lattice" <<'EOF'

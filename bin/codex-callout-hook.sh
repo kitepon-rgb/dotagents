@@ -2,6 +2,7 @@
 # 前提: Fable級統括が設計・Opus/Sol級の親が日常実行（2026-07 時点）。判定の正は docs/02_models.md
 import datetime
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -90,6 +91,23 @@ def status_paths(porcelain):
             value = value.split(" -> ", 1)[1]
         paths.add(value.strip('"'))
     return paths
+
+
+def lattice_store_is_canonical(root):
+    core = Path(__file__).resolve().parents[1] / "lib" / "lattice-hook.py"
+    try:
+        spec = importlib.util.spec_from_file_location("dotagents_lattice_hook", core)
+        if spec is None or spec.loader is None:
+            return False
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        lattice = module.executable("lattice")
+        if lattice is None:
+            return False
+        project_status, _ = module.read_project_status(lattice, root)
+        return isinstance(project_status, dict) and project_status.get("state") in ("ready", "active_run")
+    except Exception:
+        return False
 
 
 # --- X1: session-start（C2 ミラー。棚卸し文言は additionalContext 契約で統一） ---
@@ -258,7 +276,14 @@ def stop(data):
         summary = f"{len(paths)} ファイルの作業差分を解消/コミット {commits}" if paths else f"dirtyだった作業差分を解消/コミット {commits}"
     else:
         summary = f"{len(paths)} ファイル/コミット {commits}"
-    message = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。この差分が当該planに属する統括レーンなら進捗を反映し、無関係な通常レーンなら更新不要です。この情報は依頼範囲を広げません。"
+    # Lattice文面を肯定するのはtyped discoveryがready/active_runの時だけ。
+    # discovery失敗は発火を握りつぶすfallbackではなく、確定済み発火の文面選択を既存側に倒す。
+    prefix = f"INFO: 前ターンでは作業差分（{summary}）が検出され、docs/ のプラン正本（{', '.join(os.path.basename(path) for path in plans)}）には同じターンの更新が確認されませんでした。"
+    if lattice_store_is_canonical(root):
+        guidance = "この差分がLattice工程のToDoに属するなら進捗・完了証拠をLattice storeへ記録し、Markdown planの統括レーンに属するならそのplanへ進捗を反映してください。無関係な通常レーンなら更新不要です"
+    else:
+        guidance = "この差分が当該planに属する統括レーンなら進捗を反映し、無関係な通常レーンなら更新不要です"
+    message = prefix + guidance + "。この情報は依頼範囲を広げません。"
     safe_write(os.path.join(STATE_DIR, f"{key}.codex-pending"), message + "\n")
 
 
