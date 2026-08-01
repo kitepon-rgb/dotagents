@@ -133,8 +133,8 @@ hook自身のcache markerは7日後に掃除する。cache baseと`dotagents/hoo
 
 #### Lattice工程表案内（SessionStart・読み取り専用）
 
-`source=startup|clear`のたびに、Lattice工程表の安定パスとstore上の`active`／`next-ready`を短い
-INFOとして表示する。24時間スロットルは掛けない。hookは`lattice todo status`の
+`source=startup|clear`のたびに、正規statusでstore上の`active`／`next-ready`のどちらかが存在する時だけ、
+Lattice工程表の安定パスと現在地を短いINFOとして表示し、両方空なら沈黙する。24時間スロットルは掛けない。hookは`lattice todo status`の
 `lattice.todo_status_result.v1`／`v2`をstrictに読み、HTMLや`.lattice/todo/`を直接解釈せず、
 `lattice todo gantt`も自動実行しない。既存SessionStart entryを変更せず、次の1件だけ追加する。
 

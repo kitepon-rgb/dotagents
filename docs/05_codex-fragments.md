@@ -182,8 +182,8 @@ directoryかつsymlinkでないことを先に確認し、不適合ならcache�
 `lattice` CLI不在時は未導入INFOを一行返す。導入済みでstoreがないrepo、非git、`resume|compact`は
 沈黙する。storeが存在するのにtimeoutなら「status取得が期限超過」、CLI失敗なら「CLI実行失敗」、
 `lattice.todo_status_result.v1`／`v2`／`v3`不一致なら「status応答を検証できない」と区別したINFO一行を返す。正規status取得時は
-`.lattice/generated/gantt.html`の絶対`file://` URIと`active`／`next-ready`を案内し、HTML未生成時も
-hook自身は生成しない。`DOTAGENTS_LATTICE_HOOK=off`で無効化できる。HTMLやstore journalを直接parseする
+`.lattice/generated/gantt.html`の絶対`file://` URIと`active`／`next-ready`を、どちらかが存在する時だけ案内し、
+両方空なら沈黙する。HTML未生成時もhook自身は生成しない。`DOTAGENTS_LATTICE_HOOK=off`で無効化できる。HTMLやstore journalを直接parseする
 fallbackは持たない。
 
 ### Spotter Codex hook（工場コア・Spotter所有）

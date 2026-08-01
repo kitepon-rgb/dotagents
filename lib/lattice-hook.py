@@ -650,6 +650,9 @@ def main(frontend):
             if context["todo"] is None:
                 emit(frontend, status_unavailable_message(STATUS_INVALID_RESPONSE))
                 return
+            # オーナー裁定: 空の現在地通知は無視を学習させるため、正常な空frontierでは沈黙する。
+            if not context["todo"]["active_set"] and not context["todo"]["next_ready"]:
+                return
             emit(frontend, status_message(root, context["todo"], context["independence"]))
             return
 
@@ -670,6 +673,8 @@ def main(frontend):
         status_value, reason = read_status(lattice, root)
         if status_value is None:
             emit(frontend, status_unavailable_message(reason))
+            return
+        if not status_value["active_set"] and not status_value["next_ready"]:
             return
         emit(frontend, status_message(root, status_value))
     except Exception:
