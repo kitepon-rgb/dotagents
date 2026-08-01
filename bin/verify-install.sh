@@ -248,6 +248,18 @@ PY
   fi
 }
 
+verify_retired_codegraph_settings() {
+  local config
+  for config in "$HOME/.claude/settings.json" "$HOME/.codex/hooks.json" "$HOME/.codex/config.toml"; do
+    if [ -f "$config" ] && grep -Fq 'codegraph' "$config"; then
+      echo "FAIL: $config に retired Codegraph残骸・除去が必要（役割はlattice-mcpとSpotterへ継承済み）"
+      fail=1
+    fi
+  done
+}
+
+verify_retired_codegraph_settings
+
 if [ "${DOTAGENTS_FACTORY_CORE_ONLY:-0}" = 1 ]; then
   verify_factory_core
   exit "$fail"

@@ -106,6 +106,27 @@ mkdir -p "$OFFICIAL_HOME/.claude"
 cat >"$OFFICIAL_HOME/.claude/settings.json" <<'EOF'
 {"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/delegation-gate-hook","timeout":5}]}],"SessionStart":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook session-start","timeout":10}]},{"hooks":[{"type":"command","command":"~/.local/bin/orchestrate-advisory-hook","timeout":5}]},{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":6}]}],"Stop":[{"hooks":[{"type":"command","command":"~/.local/bin/todo-gate-hook stop","timeout":10}]}],"UserPromptSubmit":[{"hooks":[{"type":"command","command":"~/.local/bin/onset-gate-hook","timeout":5}]}],"PostToolUse":[{"hooks":[{"type":"command","command":"~/.local/bin/plan-gate-hook","timeout":5}]}]}}
 EOF
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+data["permissions"] = {"allow": ["mcp__codegraph__*"]}
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
+if codegraph_verify_output="$(verify "$OFFICIAL_HOME" official 2>&1)"; then
+  fail 'retired Codegraph settings残骸を verify が見逃した'
+fi
+grep -Fq "FAIL: $OFFICIAL_HOME/.claude/settings.json に retired Codegraph残骸・除去が必要（役割はlattice-mcpとSpotterへ継承済み）" <<<"$codegraph_verify_output" \
+  || fail 'retired Codegraph settings残骸のFAILが対象pathと除去案内を名指ししない'
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
+import json
+import sys
+path = sys.argv[1]
+data = json.load(open(path, encoding="utf-8"))
+del data["permissions"]
+json.dump(data, open(path, "w", encoding="utf-8"))
+PY
 verify "$OFFICIAL_HOME" official
 "$PYTHON_BIN" - "$OFFICIAL_HOME/.claude/settings.json" <<'PY'
 import json
