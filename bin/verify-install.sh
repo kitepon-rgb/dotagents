@@ -279,6 +279,15 @@ verify_lattice_hooks() {
       continue
     fi
     if ! status_output="$(lattice hooks status --host "$host" 2>&1)"; then
+      if python3 -c 'import json, sys
+try:
+    value = json.load(sys.stdin)
+except (json.JSONDecodeError, UnicodeDecodeError):
+    raise SystemExit(1)
+raise SystemExit(0 if value.get("code") == "HOST_PLATFORM_UNSUPPORTED" else 1)' <<<"$status_output"; then
+        echo "OK  Lattice hooks: skip（platform非対応）"
+        return
+      fi
       echo "FAIL: Lattice ${host} hooks status を取得できない。lattice hooks install --host ${host} を実行"
       fail=1
       continue

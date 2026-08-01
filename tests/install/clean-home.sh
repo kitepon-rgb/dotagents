@@ -28,6 +28,10 @@ if [ "${1:-}" = hooks ] && [ "${2:-}" = --help ]; then
   exit 0
 fi
 if [ "${1:-}" = hooks ] && [ "${2:-}" = status ] && [ "${3:-}" = --host ]; then
+  if [ "$mode" = platform_unsupported ]; then
+    printf '{"schema":"lattice.cli_error.v2","code":"HOST_PLATFORM_UNSUPPORTED"}\n' >&2
+    exit 1
+  fi
   state=wired
   [ "$mode" != drift ] || state=drift
   printf '{"schema":"lattice.hooks_status_result.v1","host":"%s","state":"%s"}\n' "$4" "$state"
@@ -112,6 +116,12 @@ fi
 grep -Fq 'lattice hooks install --host claude' <<<"$lattice_drift_output" \
   || fail 'Lattice hooks drift のFAILがinstall commandを名指ししない'
 LATTICE_HOOKS_TEST_MODE=unsupported verify "$OFFICIAL_HOME" official >/dev/null
+if lattice_platform_unsupported_output="$(LATTICE_HOOKS_TEST_MODE=platform_unsupported verify "$OFFICIAL_HOME" official 2>&1)"; then
+  grep -Fq 'OK  Lattice hooks: skip（platform非対応）' <<<"$lattice_platform_unsupported_output" \
+    || fail 'Lattice hooks platform非対応のskipをverifyが出さない'
+else
+  fail 'Lattice hooks platform非対応をverifyがFAILにする'
+fi
 mkdir -p "$VERIFY_FIXTURE/bin" "$VERIFY_FIXTURE/claude/skills/orchestrate"
 cp "$ROOT/bin/verify-install.sh" "$VERIFY_FIXTURE/bin/verify-install.sh"
 chmod +x "$VERIFY_FIXTURE/bin/verify-install.sh"
