@@ -71,23 +71,23 @@ r1反証での棄却3件（P13受け皿ミス再発・P15根拠誤読・P19規�
 
 ## Tier 2 — 機械境界の工事（各々独立起票。規則は増やさない）
 
-### P9. 委譲の能力分離 【裁定: 　】
+### P9. 委譲の能力分離 【裁定: 起票済み（2026-08-02・fm-0687〜fm-0690・Lattice factory-master）】
 
 - 対象を**未強制面に限定**: Claude側Agent/Bash委譲とaiterm系（Codex refuter/sorterは既に
   read-only sandbox・Controlはrole書込拒否済み——反証の前提補正）。committer新設はしない
   （子commit禁止契約と衝突）。
 
-### P10. model/effort省略のdispatch拒否 【裁定: 　】
+### P10. model/effort省略のdispatch拒否 【裁定: 起票済み（2026-08-02・fm-0687〜fm-0690・Lattice factory-master）】
 
 - Claude C1のdeny化に加え、**Codex X2面・sidecar既定値の扱い**を起票時の設計論点に含める
   （C1単独ではCodex面に届かない——反証の補正）。
 
-### P11. writer直列化の強制点 【裁定: 　】
+### P11. writer直列化の強制点 【裁定: 起票済み（2026-08-02・fm-0687〜fm-0690・Lattice factory-master）】
 
 - 実態: `lib/orchestrate/execution-path.mjs`（pure判定・production importerなし）。
   「単一入口へ接続」ではなく**dispatch ownerごと（親の手順・Lattice run経路）の強制点設計**として起票。
 
-### P12. 祖先検証gateの残repo展開 【裁定: 　】
+### P12. 祖先検証gateの残repo展開 【裁定: 起票済み（2026-08-02・fm-0687〜fm-0690・Lattice factory-master）】
 
 - 前提更新（反証の実測）: 実装済み=AIShell・Lattice・gpt-connector・Observer。
   未実装の候補=aiterm-mcp（buildのみ確認）・Throughline・Caveat・Spotter・codex-sidecar等を
