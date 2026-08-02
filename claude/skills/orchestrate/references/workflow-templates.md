@@ -44,7 +44,7 @@ const CRITIC = { type:'object', required:['blind_spots'], properties:{ blind_spo
 
 phase('Find')
 const found = (await parallel(DIMENSIONS.map(d => () =>
-  agent(CTX + '\n\n【担当】' + d.prompt, { label:'find:'+d.key, phase:'Find', schema:FINDINGS, agentType:'Explore' })
+  agent(CTX + '\n\n【担当】' + d.prompt, { label:'find:'+d.key, phase:'Find', schema:FINDINGS, agentType:'Explore', model:'sonnet', effort:'low' })
     .then(r => r && { key:d.key, findings:r.findings })))).filter(Boolean)
 // failed/unknownの子は成功へ丸めない: 落ちた視点はterminal resultのaggregateへ立てる（recipes.md共通契約）
 const failedDimensions = DIMENSIONS.length - found.length
@@ -58,13 +58,13 @@ const verified = await parallel(uniq.map((f,i) => () => {
   const lenses = f.contract_critical ? ['existence','value'] : ['existence']  // 契約クリティカル判定はCTX側で定義
   return parallel(lenses.map(lens => () =>
     agent(`${CTX}\nあなたは懐疑的な検証者。反証を試みよ。観点:${lens}。疑わしい場合は false。\n指摘:${JSON.stringify(f)}`,
-      { label:`verify:${i}:${lens}`, phase:'Verify', schema:VERDICT, agentType:'Explore' })
+      { label:`verify:${i}:${lens}`, phase:'Verify', schema:VERDICT, agentType:'Explore', model:'fable', effort:'high' })
   )).then(vs => ({ ...f, verdicts: vs.filter(Boolean),
     confirmed: vs.filter(Boolean).length > 0 && vs.filter(Boolean).every(v => v.real && v.worth_it) }))
 }))
 
 phase('Critic') // 「この監査に漏れている観点・どの指摘にも登場しない重要領域」を実ファイル確認つきで最大5件
-// const critic = await agent(`${CTX}\nこの監査の盲点を挙げよ`, { schema:CRITIC, ... })
+// const critic = await agent(`${CTX}\nこの監査の盲点を挙げよ`, { schema:CRITIC, model:'fable', effort:'high' })
 // → 盲点が出たら同型の第2ラウンドを高々1回回す（静的展開。汎用loopにしない）
 return { confirmed: verified.filter(f=>f.confirmed), rejected: verified.filter(f=>!f.confirmed),
   aggregate: failedDimensions > 0 ? 'partial_failure' : 'success' /*棄却理由も残す*/ }
@@ -92,7 +92,7 @@ const apply = (t) => agent(`対象: ${t.target}（この外は書き込み禁止
 <実質的書き換え・確信のない削除・創作>。迷ったら flags_for_owner へ。
 ## 手順
 全部読む→許可操作を適用→構造化レポート`,
-  { label:`apply:${t.target}`, phase:'Apply', schema:REPORT, model:'sonnet' })
+  { label:`apply:${t.target}`, phase:'Apply', schema:REPORT, model:'sonnet', effort:'medium' })
 const writersByRepo = Map.groupBy(TARGETS.filter(t => t.effect === 'write' && t.repo_root), t => t.repo_root)
 const needSerial = [...writersByRepo.values()].some(g => g.length > 1) && !LATTICE_SELECTED
 const results = needSerial

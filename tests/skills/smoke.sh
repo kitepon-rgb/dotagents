@@ -91,6 +91,11 @@ contains "$ROOT/claude/skills/orchestrate/SKILL.md" 'references/workflow-templat
 contains "$ROOT/PLAN.md" 'ラベル運用は統括レーンの4関節（writer委譲・受入裁定・Phase gate・H操作）の裁定用とする。'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '**配置は統括レーンの4関節で宣言**'
 contains "$ROOT/shared/orchestrate/contract.md" '統括レーンへ入った後、4関節で扱う役割をF/A/Hに分ける。'
+contains "$ROOT/claude/skills/orchestrate/SKILL.md" '反証は親と同値のaliasを明示×high。finderはsonnet×low'
+contains "$ROOT/claude/skills/orchestrate/SKILL.md" '親と同値のaliasを明示×決定表のeffort'
+contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "model:'sonnet', effort:'low'"
+contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "model:'sonnet', effort:'medium'"
+[ "$(rg -Fo "model:'fable', effort:'high'" "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" | wc -l | tr -d ' ')" -eq 2 ] || fail 'workflow反証2例のmodel/effortが明示されていない'
 [ ! -e "$ROOT/claude/skills/orchestrate/references/delegation-contract.md" ] || fail 'Claude 固有の旧 delegation-contract.md が残っている'
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'agent_type=<role>'
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'fork_turns="none"'
