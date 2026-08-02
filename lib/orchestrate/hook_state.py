@@ -1,3 +1,5 @@
+import hashlib
+import json
 import os
 import stat
 from pathlib import Path
@@ -121,3 +123,138 @@ def safe_unlink(path):
         return True
     except OSError:
         return False
+
+
+# Writer reservations deliberately have no TTL.  A timed-out/unknown worker remains
+# a conflict until its parent explicitly releases it.
+def writer_state_dir():
+    parent = state_dir()
+    if parent is None:
+        return None
+    directory = Path(parent) / "writer-reservations"
+    try:
+        info = directory.lstat()
+    except FileNotFoundError:
+        try:
+            directory.mkdir(mode=0o700)
+            info = directory.lstat()
+        except OSError:
+            return None
+    except OSError:
+        return None
+    if not stat.S_ISDIR(info.st_mode) or stat.S_ISLNK(info.st_mode) or not _owner_and_mode_safe(info):
+        return None
+    if os.name != "nt" and stat.S_IMODE(info.st_mode) != 0o700:
+        try:
+            os.chmod(directory, 0o700)
+            info = directory.lstat()
+        except OSError:
+            return None
+        if stat.S_IMODE(info.st_mode) != 0o700 or not _owner_and_mode_safe(info):
+            return None
+    return str(directory)
+
+
+def _writer_reservation_path(common_dir):
+    digest = hashlib.sha256(common_dir.encode("utf-8")).hexdigest()
+    directory = writer_state_dir()
+    return None if directory is None else os.path.join(directory, f"{digest}.json")
+
+
+def _writer_paths(common_dir):
+    path = _writer_reservation_path(common_dir)
+    return (None, None, None) if path is None else (path, path + ".lock", path + ".tmp")
+
+
+def _opaque_reservation(path, common_dir, reason):
+    return {"common_dir": common_dir, "state": "opaque", "reason": reason, "path": os.path.basename(path)}
+
+
+def writer_reserve(record):
+    """Atomically reserve record.common_dir; return ("reserved"|"busy"|"error", record)."""
+    common_dir = record.get("common_dir") if isinstance(record, dict) else None
+    if not isinstance(common_dir, str) or not common_dir:
+        return "error", None
+    path, lock_path, temp_path = _writer_paths(common_dir)
+    if path is None:
+        return "error", None
+    # Any pre-existing record, creator lock, or interrupted temp is deliberately
+    # opaque busy.  It must be inspected/released manually, never GC'd or opened.
+    for candidate, reason in ((path, "record"), (lock_path, "creator-lock"), (temp_path, "interrupted-write")):
+        if os.path.lexists(candidate):
+            content = safe_read(candidate)
+            if candidate == path and content is not None:
+                try:
+                    parsed = json.loads(content)
+                    if isinstance(parsed, dict) and parsed.get("common_dir") == common_dir:
+                        return "busy", parsed
+                except (TypeError, ValueError):
+                    pass
+            return "busy", _opaque_reservation(candidate, common_dir, reason)
+    payload = json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n"
+    lock_fd = _open_fd(lock_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+    if lock_fd is None:
+        return "busy", _opaque_reservation(lock_path, common_dir, "creator-lock")
+    os.close(lock_fd)
+    try:
+        fd = _open_fd(temp_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+        if fd is None:
+            return "busy", _opaque_reservation(temp_path, common_dir, "interrupted-write")
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        # The exclusive creator lock prevents replacement of another record;
+        # rename makes readers observe either no record or a complete record.
+        os.rename(temp_path, path)
+        return "reserved", record
+    except OSError:
+        return "error", None
+
+
+def writer_release(common_dir):
+    if not isinstance(common_dir, str) or not common_dir:
+        return False
+    path, lock_path, temp_path = _writer_paths(common_dir)
+    if path is None:
+        return False
+    removed = False
+    for candidate in (path, lock_path, temp_path):
+        if os.path.lexists(candidate):
+            removed = safe_unlink(candidate) or removed
+    return removed
+
+
+def writer_reservations():
+    directory = writer_state_dir()
+    if directory is None:
+        return None
+    records = []
+    try:
+        entries = list(os.scandir(directory))
+    except OSError:
+        return None
+    for entry in entries:
+        if not entry.name.endswith(".json"):
+            continue
+        content = safe_read(entry.path)
+        common_dir = "unknown"
+        if content is None:
+            records.append(_opaque_reservation(entry.path, common_dir, "unreadable-record"))
+            continue
+        try:
+            record = json.loads(content)
+        except (TypeError, ValueError):
+            records.append(_opaque_reservation(entry.path, common_dir, "malformed-record"))
+            continue
+        if not isinstance(record, dict) or not isinstance(record.get("common_dir"), str):
+            records.append(_opaque_reservation(entry.path, common_dir, "invalid-record"))
+            continue
+        records.append(record)
+    record_names = {entry.name for entry in entries if entry.name.endswith(".json")}
+    for entry in entries:
+        if entry.name.endswith(".lock") or entry.name.endswith(".tmp"):
+            if entry.name.rsplit(".", 1)[0] + ".json" in record_names:
+                continue
+            records.append(_opaque_reservation(entry.path, "unknown", "interrupted-write"))
+    return sorted(records, key=lambda item: (item["common_dir"], item.get("path", "")))

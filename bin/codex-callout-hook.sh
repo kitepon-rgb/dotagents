@@ -45,6 +45,37 @@ def emit(payload):
     sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
+def deny(code, missing, example):
+    # Codex PreToolUse's measured deny envelope is deliberately distinct from
+    # Claude's permissionDecision envelope.
+    emit({"decision": "deny", "reason": f"{code}: {missing}\n正しい呼び方: {example}\n正典: shared/orchestrate/delegation-contract.md"})
+
+
+def concrete_value(value):
+    if not isinstance(value, str):
+        return False
+    value = value.strip().strip("'\"")
+    return bool(value) and value.casefold() != "inherit" and not any(token in value for token in ("$", "{", "}"))
+
+
+def native_role_has_model(agent_type):
+    if not isinstance(agent_type, str) or not agent_type.strip():
+        return False
+    path = Path.home() / ".codex" / "agents" / f"{agent_type}.toml"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    # The installed file is the authority; a fixed concrete model is equivalent
+    # to explicit dispatch only when any declared effort field is concrete too.
+    import re
+    model = re.search(r"(?m)^\s*model\s*=\s*(.*?)\s*(?:#.*)?$", text)
+    if model is None or not concrete_value(model.group(1)):
+        return False
+    efforts = re.findall(r"(?m)^\s*(?:reasoning_effort|model_reasoning_effort|effort)\s*=\s*(.*?)\s*(?:#.*)?$", text)
+    return all(concrete_value(value) for value in efforts)
+
+
 def run_git(cwd, *args):
     result = subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True, encoding="utf-8")
     if result.returncode:
@@ -194,6 +225,10 @@ def pre_tool_use(data):
     if tool_name == "spawn_agent":
         if os.environ.get("DOTAGENTS_PLACEMENT_GATE") == "off":
             return
+        if not concrete_value(tool_input.get("model")):
+            if not native_role_has_model(tool_input.get("agent_type")):
+                deny("P10_MODEL_EFFORT_MISSING", "spawn_agent の model が未指定で、agent_type の固定 model もありません", "model を指定するか model 固定の agent_type を指定する")
+                return
         shown = os.path.join(STATE_DIR, f"{key}.codex-placement-info")
         if safe_exists(shown):
             return

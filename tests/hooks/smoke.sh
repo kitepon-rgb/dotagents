@@ -37,16 +37,118 @@ json() { printf '%s' "$RUN_OUT" | python3 -c 'import json,sys; json.load(sys.std
 session_key() { printf '%s' "$1" | python3 -c 'import hashlib,sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'; }
 
 run c1-date-info python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d1","tool_name":"Agent","tool_input":{"model":"x-20202607"}}' && json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *permissionDecision* ]] && pass c1-date-info || fail_case c1-date-info
-run c1-aiterm-info python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d2","tool_name":"mcp__aiterm__codex_agent","tool_input":{}}' && json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *permissionDecision* ]] && pass c1-aiterm-info || fail_case c1-aiterm-info
+run c1-aiterm-info python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d2","tool_name":"mcp__aiterm__codex_agent","tool_input":{"model":"gpt-5.6-terra","reasoning_effort":"medium","prompt":"[scope:read-only] review"}}' && json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *permissionDecision* ]] && pass c1-aiterm-info || fail_case c1-aiterm-info
 run c1-oracle-info python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d3","tool_name":"mcp__oracle__consult","tool_input":{"preset":"chatgpt-pro-heavy"}}' && json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *permissionDecision* ]] && pass c1-oracle-info || fail_case c1-oracle-info
-run c1-ultra-info python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d4","tool_name":"Agent","tool_input":{"effort":"ultra"}}' && json && [[ "$RUN_OUT" == *additionalContext* && "$RUN_OUT" != *permissionDecision* ]] && pass c1-ultra-info || fail_case c1-ultra-info
+run c1-model-missing-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d4","tool_name":"Agent","tool_input":{"effort":"ultra"}}' && json && [[ "$RUN_OUT" == *'permissionDecision'* && "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass c1-model-missing-deny || fail_case c1-model-missing-deny
+run c1-model-inherit-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d4i","tool_name":"mcp__aiterm__codex_agent","tool_input":{"model":"inherit","reasoning_effort":"medium","prompt":"[scope:read-only]"}}' && json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass c1-model-inherit-deny || fail_case c1-model-inherit-deny
 run c1-info python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d5","tool_name":"Agent","tool_input":{"model":"sonnet","effort":"medium"}}' && json && [[ "$RUN_OUT" == *'INFO:'* && "$RUN_OUT" != *permissionDecision* ]] && pass c1-info || fail_case c1-info
 run c1-silent python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"d5","tool_name":"Agent","tool_input":{"model":"sonnet","effort":"medium"}}' && [ "$RUN_BYTES" -eq 0 ] && pass c1-silent || fail_case c1-silent
-run c1-off env DOTAGENTS_PLACEMENT_GATE=off python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{}' && [ "$RUN_BYTES" -eq 0 ] && pass c1-off || fail_case c1-off
+run c1-off env DOTAGENTS_PLACEMENT_GATE=off python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"off","tool_name":"mcp__aiterm__codex_agent","tool_input":{}}' && [ "$RUN_BYTES" -eq 0 ] && pass c1-off || fail_case c1-off
 
 git -C "$REPO" init -q && git -C "$REPO" config user.email smoke@example.test && git -C "$REPO" config user.name smoke
 mkdir "$REPO/docs"; printf '%s\n' '- [ ] task' >"$REPO/docs/plan_x.md"; printf '%s\n' base >"$REPO/source.txt"
 git -C "$REPO" add . && git -C "$REPO" commit -qm initial
+
+# C1 enforcement fixtures: fixed role, sidecar defaults, routing declaration,
+# writer reservation/release, and operational failures all have distinct paths.
+mkdir -p "$STATE/claude-project/.claude/agents" "$STATE/claude-home/.claude/agents"
+printf '%s\n' '---' 'model: sonnet' '---' >"$STATE/claude-project/.claude/agents/fixed.md"
+printf '%s\n' '---' 'model: sonnet' '---' >"$STATE/claude-home/.claude/agents/fixed.md"
+printf '%s\n' '---' 'model: inherit' '---' >"$STATE/claude-project/.claude/agents/priority.md"
+printf '%s\n' '---' 'model: sonnet' '---' >"$STATE/claude-home/.claude/agents/priority.md"
+printf '%s\n' '---' 'model: inherit' '---' >"$STATE/claude-home/.claude/agents/inherit.md"
+run c1-project-shadow-deny env HOME="$STATE/claude-home" CLAUDE_PROJECT_DIR="$STATE/claude-project" python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"role-project","tool_name":"Agent","tool_input":{"subagent_type":"fixed"}}' \
+  && json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass c1-project-shadow-deny || fail_case c1-project-shadow-deny
+run c1-project-shadow-explicit env HOME="$STATE/claude-home" CLAUDE_PROJECT_DIR="$STATE/claude-project" python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"role-project-model","tool_name":"Agent","tool_input":{"subagent_type":"fixed","model":"sonnet"}}' \
+  && json && [[ "$RUN_OUT" == *additionalContext* ]] && pass c1-project-shadow-explicit || fail_case c1-project-shadow-explicit
+run c1-home-direct-role env HOME="$STATE/claude-home" CLAUDE_PROJECT_DIR="$STATE/no-project" python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"role-home","tool_name":"Agent","tool_input":{"subagent_type":"fixed"}}' \
+  && json && [[ "$RUN_OUT" == *additionalContext* ]] && pass c1-home-direct-role || fail_case c1-home-direct-role
+run c1-role-inherit-deny env HOME="$STATE/claude-home" CLAUDE_PROJECT_DIR="$STATE/no-project" python3 "$ROOT/bin/delegation-gate-hook.sh" <<<'{"session_id":"role-inherit","tool_name":"Agent","tool_input":{"subagent_type":"inherit"}}' \
+  && json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass c1-role-inherit-deny || fail_case c1-role-inherit-deny
+run c1-sidecar-no-default-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"sidecar-none","tool_name":"mcp__codex-sidecar__codex_work","cwd":"$STATE/no-default","tool_input":{"prompt":"read-only review"}}
+EOF
+json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass c1-sidecar-no-default-deny || fail_case c1-sidecar-no-default-deny
+printf '%s\n' 'defaults: {}' >"$REPO/.codex-sidecar.yml"
+run c1-sidecar-empty-default-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"sidecar-empty","tool_name":"mcp__codex-sidecar__codex_work","cwd":"$HOOK_REPO","tool_input":{"prompt":"[scope:read-only] review"}}
+EOF
+json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass c1-sidecar-empty-default-deny || fail_case c1-sidecar-empty-default-deny
+run c1-sidecar-explicit-allow python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"sidecar-explicit","tool_name":"mcp__codex-sidecar__codex_work","cwd":"$HOOK_REPO","tool_input":{"model":"gpt-5.6-terra","modelReasoningEffort":"medium","prompt":"[scope:read-only] review"}}
+EOF
+json && [[ "$RUN_OUT" == *additionalContext* ]] && pass c1-sidecar-explicit-allow || fail_case c1-sidecar-explicit-allow
+printf '%s\n' 'defaults:' '  model: gpt-5.6-terra' '  model_reasoning_effort: medium' >"$REPO/.codex-sidecar.yml"
+run c1-sidecar-default-allow python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"sidecar-default","tool_name":"mcp__codex-sidecar__codex_work","cwd":"$HOOK_REPO","tool_input":{"prompt":"[scope:read-only] review"}}
+EOF
+json && [[ "$RUN_OUT" == *additionalContext* ]] && pass c1-sidecar-default-allow || fail_case c1-sidecar-default-allow
+printf '%s\n' 'defaults:' '  model: inherit' '  model_reasoning_effort: medium' >"$REPO/.codex-sidecar.yml"
+run c1-sidecar-inherit-default-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"sidecar-inherit","tool_name":"mcp__codex-sidecar__codex_work","cwd":"$HOOK_REPO","tool_input":{"prompt":"[scope:read-only] review"}}
+EOF
+json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass c1-sidecar-inherit-default-deny || fail_case c1-sidecar-inherit-default-deny
+printf '%s\n' 'defaults:' '  model: gpt-5.6-terra' '  model_reasoning_effort: medium' >"$REPO/.codex-sidecar.yml"
+run c1-scope-missing-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"scope","tool_name":"mcp__aiterm__codex_agent","cwd":"$HOOK_REPO","tool_input":{"model":"gpt-5.6-terra","reasoning_effort":"medium","prompt":"implement it"}}
+EOF
+json && [[ "$RUN_OUT" == *'P9_SCOPE_DECL_MISSING'* ]] && pass c1-scope-missing-deny || fail_case c1-scope-missing-deny
+run c1-writer-first python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"writer-1","tool_name":"mcp__aiterm__codex_agent","cwd":"$HOOK_REPO","tool_input":{"model":"gpt-5.6-terra","reasoning_effort":"medium","prompt":"[scope:write] source.txt"}}
+EOF
+json && [[ "$RUN_OUT" == *additionalContext* ]] && pass c1-writer-first || fail_case c1-writer-first
+run c1-writer-second-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"writer-2","tool_name":"mcp__aiterm__codex_agent","cwd":"$HOOK_REPO","tool_input":{"model":"gpt-5.6-terra","reasoning_effort":"medium","prompt":"[scope:write] source.txt"}}
+EOF
+json && [[ "$RUN_OUT" == *'P11_WRITER_BUSY'* ]] && pass c1-writer-second-deny || fail_case c1-writer-second-deny
+run c1-writer-list python3 "$ROOT/bin/delegation-gate-hook.sh" --list </dev/null && json && [[ "$RUN_OUT" == *writer-1* ]] && pass c1-writer-list || fail_case c1-writer-list
+run c1-writer-release python3 "$ROOT/bin/delegation-gate-hook.sh" --release --common-dir "$REPO/.git" </dev/null && json && [[ "$RUN_OUT" == *released_common_dir* ]] && pass c1-writer-release || fail_case c1-writer-release
+python3 "$ROOT/bin/delegation-gate-hook.sh" --common-dir "$REPO/.git" </dev/null >"$STATE/c1-common.out" 2>"$STATE/c1-common.err"; common_status=$?
+[ "$common_status" -eq 2 ] && [ ! -s "$STATE/c1-common.out" ] && [ ! -s "$STATE/c1-common.err" ] && pass c1-common-dir-without-release || fail_case c1-common-dir-without-release
+chmod 755 "$STATE/dotagents/hooks/writer-reservations"
+run c1-writer-after-release python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"writer-3","tool_name":"mcp__aiterm__codex_agent","cwd":"$HOOK_REPO","tool_input":{"model":"gpt-5.6-terra","reasoning_effort":"medium","prompt":"[scope:write] source.txt"}}
+EOF
+json && [[ "$RUN_OUT" == *additionalContext* ]] && pass c1-writer-after-release || fail_case c1-writer-after-release
+/usr/bin/python3 - "$STATE/dotagents/hooks/writer-reservations" <<'PY' && pass c1-writer-state-mode || fail_case c1-writer-state-mode
+import os, stat, sys
+raise SystemExit(0 if stat.S_IMODE(os.stat(sys.argv[1]).st_mode) == 0o700 else 1)
+PY
+RESERVATION=$(find "$STATE/dotagents/hooks/writer-reservations" -name '*.json' -print -quit)
+touch -t 202001010000 "$RESERVATION"
+run c1-reservation-gc-survives python3 "$ROOT/bin/codex-callout-hook.sh" pre-tool-use <<EOF
+{"session_id":"reservation-gc","tool_name":"spawn_agent","tool_input":{"model":"gpt-5.6-terra"}}
+EOF
+[ -f "$RESERVATION" ] && pass c1-reservation-gc-survives || fail_case c1-reservation-gc-survives
+run c1-writer-release-after-gc python3 "$ROOT/bin/delegation-gate-hook.sh" --release --common-dir "$REPO/.git" </dev/null && json && pass c1-writer-release-after-gc || fail_case c1-writer-release-after-gc
+mkdir -p "$STATE/not-git"; printf '%s\n' 'defaults:' '  model: gpt-5.6-terra' '  model_reasoning_effort: medium' >"$STATE/not-git/.codex-sidecar.yml"
+run c1-nongit-writer-first python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"nongit-1","tool_name":"mcp__codex-sidecar__codex_work","cwd":"$STATE/not-git","tool_input":{"prompt":"[scope:write] x"}}
+EOF
+json && [[ "$RUN_OUT" == *additionalContext* ]] && pass c1-nongit-writer-first || fail_case c1-nongit-writer-first
+run c1-nongit-writer-second-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"nongit-2","tool_name":"mcp__codex-sidecar__codex_work","cwd":"$STATE/not-git","tool_input":{"prompt":"[scope:write] x"}}
+EOF
+json && [[ "$RUN_OUT" == *'P11_WRITER_BUSY'* && "$RUN_OUT" == *unidentified-repo* ]] && pass c1-nongit-writer-second-deny || fail_case c1-nongit-writer-second-deny
+run c1-nongit-release python3 "$ROOT/bin/delegation-gate-hook.sh" --release --common-dir unidentified-repo </dev/null && json && pass c1-nongit-release || fail_case c1-nongit-release
+OPAQUE_KEY=$(printf '%s' unidentified-repo | python3 -c 'import hashlib,sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())')
+: >"$STATE/dotagents/hooks/writer-reservations/$OPAQUE_KEY.json"
+run c1-corrupt-reservation-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"corrupt","tool_name":"mcp__codex-sidecar__codex_work","cwd":"$STATE/not-git","tool_input":{"prompt":"[scope:write] x"}}
+EOF
+json && [[ "$RUN_OUT" == *'P11_WRITER_BUSY'* && "$RUN_OUT" != *'内部障害'* ]] && pass c1-corrupt-reservation-deny || fail_case c1-corrupt-reservation-deny
+run c1-corrupt-reservation-list python3 "$ROOT/bin/delegation-gate-hook.sh" --list </dev/null && json && [[ "$RUN_OUT" == *opaque* ]] && pass c1-corrupt-reservation-list || fail_case c1-corrupt-reservation-list
+run c1-corrupt-reservation-release python3 "$ROOT/bin/delegation-gate-hook.sh" --release --common-dir unidentified-repo </dev/null && json && pass c1-corrupt-reservation-release || fail_case c1-corrupt-reservation-release
+rmdir "$STATE/dotagents/hooks/writer-reservations"
+ln -s "$STATE/not-git" "$STATE/dotagents/hooks/writer-reservations"
+run c1-writer-state-unavailable-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"state-unavailable","tool_name":"mcp__aiterm__codex_agent","cwd":"$HOOK_REPO","tool_input":{"model":"gpt-5.6-terra","reasoning_effort":"medium","prompt":"[scope:write] x"}}
+EOF
+json && [[ "$RUN_OUT" == *'P11_STATE_UNAVAILABLE'* ]] && pass c1-writer-state-unavailable-deny || fail_case c1-writer-state-unavailable-deny
+run c1-scope-ambiguous-deny python3 "$ROOT/bin/delegation-gate-hook.sh" <<EOF
+{"session_id":"scope-both","tool_name":"mcp__aiterm__codex_agent","cwd":"$HOOK_REPO","tool_input":{"model":"gpt-5.6-terra","reasoning_effort":"medium","prompt":"[scope:read-only] [scope:write]"}}
+EOF
+json && [[ "$RUN_OUT" == *'P9_SCOPE_DECL_AMBIGUOUS'* ]] && pass c1-scope-ambiguous-deny || fail_case c1-scope-ambiguous-deny
 
 # Orchestrate advisoryはhook配布dirのfake sibling CLIだけを実行する。対象repoのCLIは悪性でも実行しない。
 mkdir -p "$REPO/bin" "$STATE/sentinel" "$STATE/advisory-bin" "$STATE/lib/orchestrate"
@@ -184,11 +286,15 @@ run advisory-cache-symlink env XDG_CACHE_HOME="$STATE/cache-link" "$ADVISORY" <<
 EOF
 [ "$RUN_BYTES" -eq 0 ] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass advisory-cache-symlink || fail_case advisory-cache-symlink
 
-# 4本のcallout hookも、cache rootがsymlinkならfail closedで無出力にする。
+# 親cache rootがsymlinkでも、C1はwriteをfail-closedしreadをINFO縮退する。他hookは無出力。
 run c1-cache-symlink env XDG_CACHE_HOME="$STATE/cache-link" python3 "$ROOT/bin/delegation-gate-hook.sh" <<'EOF'
-{"session_id":"unsafe-delegation","tool_name":"Agent","tool_input":{}}
+{"session_id":"unsafe-delegation-read","tool_name":"mcp__codex-sidecar__codex_review","tool_input":{}}
 EOF
-[ "$RUN_BYTES" -eq 0 ] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass c1-cache-symlink || fail_case c1-cache-symlink
+json && [[ "$RUN_OUT" == *'内部障害'* && "$RUN_OUT" != *permissionDecision* ]] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass c1-cache-symlink || fail_case c1-cache-symlink
+run c1-parent-state-writer-deny env XDG_CACHE_HOME="$STATE/cache-link" python3 "$ROOT/bin/delegation-gate-hook.sh" <<'EOF'
+{"session_id":"unsafe-delegation-write","tool_name":"mcp__aiterm__codex_agent","tool_input":{"model":"gpt-5.6-terra","reasoning_effort":"medium","prompt":"[scope:write] x"}}
+EOF
+json && [[ "$RUN_OUT" == *'P11_STATE_UNAVAILABLE'* ]] && [ "$(cat "$STATE/cache-target/dotagents/hooks/keep")" = keep ] && pass c1-parent-state-writer-deny || fail_case c1-parent-state-writer-deny
 run c2-cache-symlink env XDG_CACHE_HOME="$STATE/cache-link" python3 "$ROOT/bin/todo-gate-hook.sh" session-start <<EOF
 {"session_id":"unsafe-todo","source":"startup","cwd":"$HOOK_REPO"}
 EOF

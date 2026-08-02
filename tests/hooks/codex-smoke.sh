@@ -81,14 +81,26 @@ run x2-plan-off env DOTAGENTS_TODO_GATE=off python3 "$HOOK" pre-tool-use <<EOF
 EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x2-plan-off || fail_case x2-plan-off
 
-# spawn_agent: 引数に関係なく初回はINFO、同一セッション2回目は沈黙
+# spawn_agent: model 明示、または配布先の固定model roleだけを許可する。
 run x2-spawn-info python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1","tool_name":"spawn_agent","tool_input":{"model":"x-20260227"}}' \
   && json && [[ "$RUN_OUT" == *'INFO:'* && "$RUN_OUT" != *permissionDecision* ]] && pass x2-spawn-info || fail_case x2-spawn-info
-run x2-spawn-silent python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1","tool_name":"spawn_agent","tool_input":{"agent_type":"implementer"}}' \
-  && [ "$RUN_BYTES" -eq 0 ] && pass x2-spawn-silent || fail_case x2-spawn-silent
+run x2-spawn-direct-inherit-deny python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1i","tool_name":"spawn_agent","tool_input":{"model":"inherit"}}' \
+  && json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass x2-spawn-direct-inherit-deny || fail_case x2-spawn-direct-inherit-deny
+mkdir -p "$STATE/home/.codex/agents"
+printf '%s\n' 'model = "gpt-5.6-terra"' >"$STATE/home/.codex/agents/fixed.toml"
+run x2-spawn-fixed-role env HOME="$STATE/home" python3 "$HOOK" pre-tool-use <<<'{"session_id":"s2","tool_name":"spawn_agent","tool_input":{"agent_type":"fixed"}}' \
+  && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass x2-spawn-fixed-role || fail_case x2-spawn-fixed-role
+run x2-spawn-missing-deny env HOME="$STATE/home" python3 "$HOOK" pre-tool-use <<<'{"session_id":"s3","tool_name":"spawn_agent","tool_input":{"agent_type":"unknown"}}' \
+  && json && [[ "$RUN_OUT" == *'decision'* && "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass x2-spawn-missing-deny || fail_case x2-spawn-missing-deny
+printf '%s\n' 'model = "inherit"' >"$STATE/home/.codex/agents/inherit.toml"
+run x2-spawn-inherit-deny env HOME="$STATE/home" python3 "$HOOK" pre-tool-use <<<'{"session_id":"s4","tool_name":"spawn_agent","tool_input":{"agent_type":"inherit"}}' \
+  && json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass x2-spawn-inherit-deny || fail_case x2-spawn-inherit-deny
+printf '%s\n' 'model = "gpt-5.6-terra"' 'reasoning_effort = "inherit"' >"$STATE/home/.codex/agents/bad-effort.toml"
+run x2-spawn-effort-inherit-deny env HOME="$STATE/home" python3 "$HOOK" pre-tool-use <<<'{"session_id":"s4e","tool_name":"spawn_agent","tool_input":{"agent_type":"bad-effort"}}' \
+  && json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass x2-spawn-effort-inherit-deny || fail_case x2-spawn-effort-inherit-deny
 
 # DOTAGENTS_PLACEMENT_GATE=off → spawn_agent は沈黙
-run x2-spawn-off env DOTAGENTS_PLACEMENT_GATE=off python3 "$HOOK" pre-tool-use <<<'{"session_id":"s5","tool_name":"spawn_agent","tool_input":{}}' \
+run x2-spawn-off env DOTAGENTS_PLACEMENT_GATE=off python3 "$HOOK" pre-tool-use <<<'{"session_id":"s5","tool_name":"spawn_agent","tool_input":{"agent_type":"unknown"}}' \
   && [ "$RUN_BYTES" -eq 0 ] && pass x2-spawn-off || fail_case x2-spawn-off
 
 # --- X1 session-start（C2 ミラー） ---
