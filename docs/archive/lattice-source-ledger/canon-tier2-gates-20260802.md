@@ -24,3 +24,5 @@
 - fm-0692（Lattice run gate）: Lattice `320e05a`＋`v0.41.0` publish/install——`plan compile --todo-plan`のtodo_plan_binding束縛と、artifact消費型`run start`の型付き拒否（INVALID_PLAN_ARTIFACT／COMPILE_ARTIFACT_UNBOUND／STALE_TODO_PLAN_BINDING／TODO_PLAN_TASK_MISMATCH／PARALLEL_GROUP_UNVERIFIED）。138 suites green。
 - fm-0687（委譲の能力分離）: dotagents分は`adf2381`（scope宣言token強制）、能力壁の本丸はfm-0691の実装で充足（aiterm 0.21.0）。
 - fm-0689（writer直列化の強制点）: 親手順側=`adf2381`（予約台帳）、Codex側=`839a704`（X2展開）、Lattice側=fm-0692（run gate）。dispatch owner 3面すべてに強制点を設置。
+- fm-0692: 撤回（上記オーナー裁定・工程はsuccessor revisionで除去）
+- aiterm-mcp 0.21.0はオーナー裁定（2026-08-02）で存置確定（省略時挙動不変のadditive宣言欄）
