@@ -14,14 +14,23 @@ export XDG_CACHE_HOME="$STATE"
 
 fail=0
 pass() { printf 'PASS %s\n' "$1"; }
-fail_case() { printf 'FAIL %s\n' "$1"; fail=1; }
+fail_case() {
+  printf 'FAIL %s\n' "$1"
+  printf '  timestamp: %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+  printf '  exit status: %s\n' "${RUN_STATUS:-unset}"
+  printf '  RUN_OUT (first 200 lines):\n'
+  printf '%s\n' "${RUN_OUT:-}" | LC_ALL=C tr -d '\000-\010\013\014\016-\037\177' | sed -n '1,200p'
+  printf '  RUN_ERR (first 200 lines):\n'
+  printf '%s\n' "${RUN_ERR:-}" | LC_ALL=C tr -d '\000-\010\013\014\016-\037\177' | sed -n '1,200p'
+  fail=1
+}
 run() {
   name=$1; shift
   out=$(mktemp); err=$(mktemp)
-  "$@" >"$out" 2>"$err"; status=$?
+  "$@" >"$out" 2>"$err"; RUN_STATUS=$?
   RUN_OUT=$(cat "$out"); RUN_BYTES=$(wc -c <"$out" | tr -d ' '); RUN_ERR=$(cat "$err")
   rm -f "$out" "$err"
-  if [ "$status" -ne 0 ] || [ -n "$RUN_ERR" ]; then fail_case "$name exit/stderr"; return 1; fi
+  if [ "$RUN_STATUS" -ne 0 ] || [ -n "$RUN_ERR" ]; then fail_case "$name exit/stderr"; return 1; fi
   return 0
 }
 json() { printf '%s' "$RUN_OUT" | python3 -c 'import json,sys; json.load(sys.stdin)' >/dev/null 2>&1; }
