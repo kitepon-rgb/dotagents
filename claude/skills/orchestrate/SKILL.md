@@ -25,7 +25,7 @@ Claude appendixは、Claude固有入口から得たstatusをControlへ投影す�
 | 層 | 担当 | 実行手段 | モデル |
 |---|---|---|---|
 | L0 統括 | 裁定・契約クリティカル（認可/tx/公開API互換/依存方向/本番操作）・履歴修復・コミット・最終責任 | 本人 | セッション主モデル |
-| L1 監査・検証 | 発見→重複統合→**指摘ごとの反証**→網羅性Critic（盲点→第2ラウンド） | Workflow（`references/workflow-templates.md`） | 省略=主モデル継承（検証の精度優先）。数で押す finder は sonnet 可 |
+| L1 監査・検証 | 発見→重複統合→**指摘ごとの反証**→網羅性Critic（盲点→第2ラウンド） | Workflow（`references/workflow-templates.md`） | 親と同値のaliasを明示（省略は不可）。数で押す finder は sonnet 可 |
 | L2 設計 | 2〜4視点の並列設計（実行順序/配置/取捨 等）→**割れは統括が根拠で裁定**（多数決禁止） | Agent (Plan) | 主モデル継承 |
 | L3 実装 | 統括レーンで委譲利益が明確な仕様固定物量 | codex-sidecar の `codex_work` と Agent/Workflow `model: sonnet` は対等候補（機械的なら haiku） | 選定基準は 02_models.md |
 | L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | 非対話＝codex-sidecar の `codex_review`/`codex_work`/`codex_generate` 等／対話＝aiterm の `codex_agent`・`grok_agent`・`composer_agent` | レート非依存の並列枠（02_models.md） |
@@ -44,7 +44,7 @@ Claude appendixは、Claude固有入口から得たstatusをControlへ投影す�
 ## 標準エージェント（~/.claude/agents に定義済み）
 
 - **implementer**（sonnet）: 委譲契約を焼き込んだ標準実装者。契約の共通部を毎回書かなくてよい。
-- **refuter**（主モデル継承・読み取り専用）: 敵対的検証者。指摘/計画/主張を実ファイルを読んで殺しにかかる。
+- **refuter**（親と同値のaliasを明示・読み取り専用）: 敵対的検証者。指摘/計画/主張を実ファイルを読んで殺しにかかる。
 
 ## ガードレール常時ON（統括が最上位級でない場合に備える）
 

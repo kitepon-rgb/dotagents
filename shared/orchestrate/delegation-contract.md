@@ -7,7 +7,7 @@
 - task IDを一意にし、稼働中の同一taskを重複起動しない。書込を許す範囲を明示し、共有worktreeはread-onlyを既定、writerは専用worktreeを原則とする（明示した非交差範囲だけ共有worktreeで書かせてよい）。
 - 子にbranch切替、commit、push、merge、rebase、reset、stash、他者変更のrevert、H操作、秘密の読取・転記をさせない。
 - timeoutは失敗でなく`unknown`として扱い、同一handleを正規入口で回収する。親が実diffと検証で受け入れ、未検証を成功扱いしない。
-- 同種ホストへの委譲（Claude→Claude subagent、Codex→入れ子Codex）は通常の委譲先として使える。委譲呼び出しはmodel・effortを明示したものだけを許す——親と同値の指定は可、省略による無自覚な継承は不可。委譲先とmodel・effortの選定は、その作業に必要な能力とコストを見積もった上での判断だけを許し、委譲するのはその利益が準備・受入コストを上回る時だけ。
+- 同種ホストへの委譲（Claude→Claude subagent、Codex→入れ子Codex）は通常の委譲先として使える。委譲呼び出しはmodel・effortを明示したものだけを許す——親と同値の指定は可、省略による無自覚な継承は不可。検証済みroleがmodelとeffortの両方を固定する入口は、明示と等価として扱う。委譲先とmodel・effortの選定は、その作業に必要な能力とコストを見積もった上での判断だけを許し、委譲するのはその利益が準備・受入コストを上回る時だけ。
 
 ## 並列化の検討とLattice既定
 

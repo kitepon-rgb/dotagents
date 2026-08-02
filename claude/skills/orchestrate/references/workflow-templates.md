@@ -8,7 +8,7 @@ CI（`tests/orchestrate/recipes-conformance.test.mjs`）で強制される——
 先に変え、両面を同一commitで更新する**。
 
 コピーして DIMENSIONS/CTX/TARGETS/検証観点をタスクに合わせて書き換える。`agent()` の
-`model`・`effort` は docs/02_models.md の決定表どおり明示する（検証・反証系だけ省略＝主モデル継承可）。
+`model`・`effort` は docs/02_models.md の決定表どおり明示する（検証・反証系も親と同値のaliasを明示し、省略は不可）。
 省略で親任せにしない——親が最上位のとき全子が張り付く。
 
 型の使用はレーンを問わない（ADR 0061 技法と儀式の分離）。統括レーン専用なのはControl儀式だけで、
