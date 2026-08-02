@@ -15,11 +15,9 @@ for stream in (sys.stdin, sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib" / "orchestrate"))
-from hook_state import safe_append, safe_exists, safe_mtime, safe_read, safe_touch, safe_unlink, safe_write, state_dir
+from hook_state import safe_append, safe_exists, safe_mtime, safe_read, safe_touch, safe_unlink, safe_write, state_dir, writer_reserve
 
 STATE_DIR = state_dir()
-if STATE_DIR is None:
-    raise SystemExit(0)
 
 ONSET_CONTEXT = "INFO: 統括レーン（計画に組込済みの中断・多段の受入連鎖・複数repo書込調整・裁定証跡のいずれかが着手時に確定する戦役）は、グローバル AGENTS.md「作業レーンと統制」とorchestrate skillに従います。それ以外はすべて通常レーンで、短い成功条件・focused test・対象限定commitだけで閉じます（委譲もfan-out技法も通常レーンで使えます）。このINFO自体は作業範囲を拡張しません。"
 
@@ -74,6 +72,62 @@ def native_role_has_model(agent_type):
         return False
     efforts = re.findall(r"(?m)^\s*(?:reasoning_effort|model_reasoning_effort|effort)\s*=\s*(.*?)\s*(?:#.*)?$", text)
     return all(concrete_value(value) for value in efforts)
+
+
+def nonempty(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def scope_declaration(tool_input):
+    try:
+        text = json.dumps(tool_input, ensure_ascii=False)
+    except (TypeError, ValueError):
+        raise ValueError("tool input is not serializable")
+    has_read = "[scope:read-only]" in text
+    has_write = "[scope:write]" in text
+    if has_read and has_write:
+        return "ambiguous"
+    if has_write:
+        return "write"
+    if has_read:
+        return "read"
+    return "missing"
+
+
+def effective_cwd(data, tool_input):
+    value = tool_input.get("workspaceRoot") or tool_input.get("cwd") or data.get("cwd") or os.getcwd()
+    if not nonempty(value):
+        raise ValueError("cwd is unavailable")
+    return Path(value).expanduser().resolve()
+
+
+def common_dir(cwd):
+    try:
+        result = subprocess.run(["git", "-C", str(cwd), "rev-parse", "--git-common-dir"], capture_output=True, text=True, encoding="utf-8", timeout=2)
+        if result.returncode or not result.stdout.strip():
+            return "unidentified-repo"
+        raw = Path(result.stdout.strip())
+        return str((cwd / raw).resolve() if not raw.is_absolute() else raw.resolve())
+    except (OSError, subprocess.TimeoutExpired):
+        return "unidentified-repo"
+
+
+def writer_record(data, tool_name, tool_input, cwd):
+    hint = tool_input.get("session_name") or tool_input.get("sessionName") or tool_input.get("cwd") or str(cwd)
+    return {"common_dir": common_dir(cwd), "tool": tool_name, "session_hint": str(hint), "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(), "dispatch_id": data.get("session_id", "unknown")}
+
+
+def reserve_writer(data, tool_name, tool_input, cwd):
+    record = writer_record(data, tool_name, tool_input, cwd)
+    status, existing = writer_reserve(record)
+    if status == "reserved":
+        return
+    if status == "busy":
+        shown = json.dumps(existing, ensure_ascii=False, sort_keys=True)
+        deny("P11_WRITER_BUSY", f"先行writer（{shown}）が未解放です", f"受入完了後に delegation-gate-hook --release --common-dir '{record['common_dir']}'、並列なら Lattice run（plan compile→run start）")
+        return "denied"
+    deny("P11_STATE_UNAVAILABLE", "writer予約stateを安全に確保できません", "stateを修復してから [scope:write] を再実行する")
+    return "denied"
 
 
 def run_git(cwd, *args):
@@ -228,6 +282,16 @@ def pre_tool_use(data):
         if not concrete_value(tool_input.get("model")):
             if not native_role_has_model(tool_input.get("agent_type")):
                 deny("P10_MODEL_EFFORT_MISSING", "spawn_agent の model が未指定で、agent_type の固定 model もありません", "model を指定するか model 固定の agent_type を指定する")
+                return
+        declaration = scope_declaration(tool_input)
+        if declaration == "missing":
+            deny("P9_SCOPE_DECL_MISSING", "scope 宣言トークンがありません", "prompt/input に [scope:read-only] または [scope:write] を一つだけ入れる")
+            return
+        if declaration == "ambiguous":
+            deny("P9_SCOPE_DECL_AMBIGUOUS", "read-only と write のscope宣言が混在しています", "prompt/input に [scope:read-only] または [scope:write] を一つだけ入れる")
+            return
+        if declaration == "write":
+            if reserve_writer(data, tool_name, tool_input, effective_cwd(data, tool_input)) == "denied":
                 return
         shown = os.path.join(STATE_DIR, f"{key}.codex-placement-info")
         if safe_exists(shown):

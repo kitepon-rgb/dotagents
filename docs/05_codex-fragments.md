@@ -151,11 +151,11 @@ Claude 側の呼びかけ hook 群（配置ゲート C1／TODO ゲート C2-C3�
 | イベント | command | 役割 | timeout |
 |---|---|---|---:|
 | `SessionStart` | `codex-callout-hook session-start` | X1・C2 ミラー、snapshot と棚卸し | 10 |
-| `PreToolUse` | `codex-callout-hook pre-tool-use` | X2・`update_plan` / 初回 `spawn_agent` の短い INFO、構造的なmodel省略だけdeny | 5 |
+| `PreToolUse` | `codex-callout-hook pre-tool-use` | X2・`update_plan` / 初回 `spawn_agent` の短い INFO、model・scope・同一repo writer競合をdeny | 5 |
 | `UserPromptSubmit` | `codex-callout-hook user-prompt-submit` | X3 pending drain と X5 初回 / compact 後案内 | 5 |
 | `Stop` | `codex-callout-hook stop` | X4・rolling baseline で pending 保存 | 10 |
 
-X2 の `spawn_agent` は、具体 `model` があれば許可する。省略時は、配布先 `~/.codex/agents/<agent_type>.toml` に具体固定 `model` があり、effort系fieldが存在する場合はそれも具体値である時だけ明示等価として許可する。`inherit`、空、空白のみ、`${...}`等の変数風、roleなし・定義なし・model継承は `decision:"deny"` で拒否する。denyには `P10_MODEL_EFFORT_MISSING`、最小例、`shared/orchestrate/delegation-contract.md`参照を含める。`DOTAGENTS_PLACEMENT_GATE=off` はこのdenyと初回INFOをともに止める。
+X2 の `spawn_agent` は、具体 `model` があれば許可する。省略時は、配布先 `~/.codex/agents/<agent_type>.toml` に具体固定 `model` があり、effort系fieldが存在する場合はそれも具体値である時だけ明示等価として許可する。`inherit`、空、空白のみ、`${...}`等の変数風、roleなし・定義なし・model継承は `decision:"deny"` で拒否する。加えて全 `spawn_agent` は `[scope:read-only]` または `[scope:write]` をちょうど一つ宣言する。write宣言はC1と同じ `hook_state.writer-reservations` を `git rev-parse --git-common-dir` の絶対パスで予約し、非gitは共有 `unidentified-repo` sentinelで直列化する。未解放writer・安全なstate確保不能はそれぞれ `P11_WRITER_BUSY`・`P11_STATE_UNAVAILABLE` で拒否し、解放は既存の `delegation-gate-hook --release --common-dir <common-dir>`（sentinelは `unidentified-repo`）だけを使う。scopeの欠如・混在はP9、model不備はP10である。denyには最小例と `shared/orchestrate/delegation-contract.md`参照を含める。`DOTAGENTS_PLACEMENT_GATE=off` はこれらのdenyと初回INFOをともに止める。
 
 各 command は、WSL2 interop の拡張子dispatchへ落ちないよう、展開済み絶対pathのscriptを明示interpreterで起動する。POSIXではPython製のcalloutとLattice案内を `/usr/bin/env python3 $HOME/.local/bin/<hook> ...`、shell製のorchestrate advisoryを `/bin/sh $HOME/.local/bin/orchestrate-advisory-hook` とする。Windows nativeではPowerShellのcall operator `&` に続けてapplier自身の`python.exe`とGit for Windowsの`sh.exe`を絶対pathで固定し、全tokenを二重引用符で囲む。Codex hook runnerは現在のturn shellを使うため、`&`がquoted executableの呼出しを成立させ、引用はspaceとbackslashを保つ。各hookはmatcherのない専用entryに1件だけ置き、旧direct-exec表記はapplierが同一hookとして回収してhost別canonical表記へ置換する。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
 

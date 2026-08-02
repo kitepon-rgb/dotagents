@@ -6,11 +6,12 @@ set -u
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 STATE=$(mktemp -d)
 REPO=$(mktemp -d)
+WRITER_REPO=$(mktemp -d)
 HOOK_REPO=$REPO
 if command -v cygpath >/dev/null 2>&1; then
   HOOK_REPO=$(cygpath -m "$REPO")
 fi
-trap 'rm -rf "$STATE" "$REPO"' EXIT
+trap 'rm -rf "$STATE" "$REPO" "$WRITER_REPO"' EXIT
 export XDG_CACHE_HOME="$STATE"
 HOOK="$ROOT/bin/codex-callout-hook.sh"
 
@@ -82,13 +83,13 @@ EOF
 [ "$RUN_BYTES" -eq 0 ] && pass x2-plan-off || fail_case x2-plan-off
 
 # spawn_agent: model 明示、または配布先の固定model roleだけを許可する。
-run x2-spawn-info python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1","tool_name":"spawn_agent","tool_input":{"model":"x-20260227"}}' \
+run x2-spawn-info python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1","tool_name":"spawn_agent","tool_input":{"model":"x-20260227","message":"[scope:read-only]"}}' \
   && json && [[ "$RUN_OUT" == *'INFO:'* && "$RUN_OUT" != *permissionDecision* ]] && pass x2-spawn-info || fail_case x2-spawn-info
 run x2-spawn-direct-inherit-deny python3 "$HOOK" pre-tool-use <<<'{"session_id":"s1i","tool_name":"spawn_agent","tool_input":{"model":"inherit"}}' \
   && json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass x2-spawn-direct-inherit-deny || fail_case x2-spawn-direct-inherit-deny
 mkdir -p "$STATE/home/.codex/agents"
 printf '%s\n' 'model = "gpt-5.6-terra"' >"$STATE/home/.codex/agents/fixed.toml"
-run x2-spawn-fixed-role env HOME="$STATE/home" python3 "$HOOK" pre-tool-use <<<'{"session_id":"s2","tool_name":"spawn_agent","tool_input":{"agent_type":"fixed"}}' \
+run x2-spawn-fixed-role env HOME="$STATE/home" python3 "$HOOK" pre-tool-use <<<'{"session_id":"s2","tool_name":"spawn_agent","tool_input":{"agent_type":"fixed","message":"[scope:read-only]"}}' \
   && json && [[ "$RUN_OUT" == *'INFO:'* ]] && pass x2-spawn-fixed-role || fail_case x2-spawn-fixed-role
 run x2-spawn-missing-deny env HOME="$STATE/home" python3 "$HOOK" pre-tool-use <<<'{"session_id":"s3","tool_name":"spawn_agent","tool_input":{"agent_type":"unknown"}}' \
   && json && [[ "$RUN_OUT" == *'decision'* && "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass x2-spawn-missing-deny || fail_case x2-spawn-missing-deny
@@ -99,9 +100,49 @@ printf '%s\n' 'model = "gpt-5.6-terra"' 'reasoning_effort = "inherit"' >"$STATE/
 run x2-spawn-effort-inherit-deny env HOME="$STATE/home" python3 "$HOOK" pre-tool-use <<<'{"session_id":"s4e","tool_name":"spawn_agent","tool_input":{"agent_type":"bad-effort"}}' \
   && json && [[ "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* ]] && pass x2-spawn-effort-inherit-deny || fail_case x2-spawn-effort-inherit-deny
 
+git -C "$WRITER_REPO" init -q && git -C "$WRITER_REPO" config user.email smoke@example.test && git -C "$WRITER_REPO" config user.name smoke
+printf '%s\n' base >"$WRITER_REPO/source.txt"
+git -C "$WRITER_REPO" add . && git -C "$WRITER_REPO" commit -qm initial
+
+# X2 writerはC1と同じscope tokenと共有reservationを使う。
+run x2-scope-missing-deny python3 "$HOOK" pre-tool-use <<EOF
+{"session_id":"w0","tool_name":"spawn_agent","cwd":"$WRITER_REPO","tool_input":{"model":"x-20260227","cwd":"$WRITER_REPO"}}
+EOF
+json && [[ "$RUN_OUT" == *'P9_SCOPE_DECL_MISSING'* && "$RUN_OUT" == *'"decision": "deny"'* ]] && pass x2-scope-missing-deny || fail_case x2-scope-missing-deny
+
+run x2-writer-first python3 "$HOOK" pre-tool-use <<EOF
+{"session_id":"w1","tool_name":"spawn_agent","cwd":"$WRITER_REPO","tool_input":{"model":"x-20260227","cwd":"$WRITER_REPO","message":"[scope:write]"}}
+EOF
+json && [[ "$RUN_OUT" != *'"decision": "deny"'* ]] && pass x2-writer-first || fail_case x2-writer-first
+run x2-writer-busy-deny python3 "$HOOK" pre-tool-use <<EOF
+{"session_id":"w2","tool_name":"spawn_agent","cwd":"$WRITER_REPO","tool_input":{"model":"x-20260227","cwd":"$WRITER_REPO","message":"[scope:write]"}}
+EOF
+json && [[ "$RUN_OUT" == *'P11_WRITER_BUSY'* && "$RUN_OUT" == *'"decision": "deny"'* ]] && pass x2-writer-busy-deny || fail_case x2-writer-busy-deny
+run x2-writer-release python3 "$ROOT/bin/delegation-gate-hook.sh" --release --common-dir "$WRITER_REPO/.git" </dev/null \
+  && json && [[ "$RUN_OUT" == *'released_common_dir'* ]] && pass x2-writer-release || fail_case x2-writer-release
+run x2-writer-after-release python3 "$HOOK" pre-tool-use <<EOF
+{"session_id":"w3","tool_name":"spawn_agent","cwd":"$WRITER_REPO","tool_input":{"model":"x-20260227","cwd":"$WRITER_REPO","message":"[scope:write]"}}
+EOF
+json && [[ "$RUN_OUT" != *'"decision": "deny"'* ]] && pass x2-writer-after-release || fail_case x2-writer-after-release
+run x2-writer-release-2 python3 "$ROOT/bin/delegation-gate-hook.sh" --release --common-dir "$WRITER_REPO/.git" </dev/null \
+  && json && pass x2-writer-release-2 || fail_case x2-writer-release-2
+run x2-reader-passthrough python3 "$HOOK" pre-tool-use <<EOF
+{"session_id":"w4","tool_name":"spawn_agent","cwd":"$WRITER_REPO","tool_input":{"model":"x-20260227","cwd":"$WRITER_REPO","message":"[scope:read-only]"}}
+EOF
+json && [[ "$RUN_OUT" != *'"decision": "deny"'* ]] && pass x2-reader-passthrough || fail_case x2-reader-passthrough
+mkdir -p "$STATE/unavailable-writer-state"
+rmdir "$STATE/dotagents/hooks/writer-reservations"
+ln -s "$STATE/unavailable-writer-state" "$STATE/dotagents/hooks/writer-reservations"
+run x2-writer-state-unavailable-deny python3 "$HOOK" pre-tool-use <<EOF
+{"session_id":"w5","tool_name":"spawn_agent","cwd":"$WRITER_REPO","tool_input":{"model":"x-20260227","cwd":"$WRITER_REPO","message":"[scope:write]"}}
+EOF
+json && [[ "$RUN_OUT" == *'P11_STATE_UNAVAILABLE'* && "$RUN_OUT" == *'"decision": "deny"'* ]] && pass x2-writer-state-unavailable-deny || fail_case x2-writer-state-unavailable-deny
+
 # DOTAGENTS_PLACEMENT_GATE=off → spawn_agent は沈黙
-run x2-spawn-off env DOTAGENTS_PLACEMENT_GATE=off python3 "$HOOK" pre-tool-use <<<'{"session_id":"s5","tool_name":"spawn_agent","tool_input":{"agent_type":"unknown"}}' \
-  && [ "$RUN_BYTES" -eq 0 ] && pass x2-spawn-off || fail_case x2-spawn-off
+run x2-spawn-off env DOTAGENTS_PLACEMENT_GATE=off python3 "$HOOK" pre-tool-use <<EOF
+{"session_id":"s5","tool_name":"spawn_agent","cwd":"$WRITER_REPO","tool_input":{"model":"x-20260227","cwd":"$WRITER_REPO","message":"[scope:write]"}}
+EOF
+[ "$RUN_STATUS" -eq 0 ] && [ "$RUN_BYTES" -eq 0 ] && pass x2-spawn-off || fail_case x2-spawn-off
 
 # --- X1 session-start（C2 ミラー） ---
 git -C "$REPO" init -q && git -C "$REPO" config user.email smoke@example.test && git -C "$REPO" config user.name smoke
