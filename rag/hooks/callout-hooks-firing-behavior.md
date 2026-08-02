@@ -8,10 +8,11 @@
 
 将来 hook を新設・改修する時の一次リファレンス。plan は工場の設計・進捗で役目を終えれば archive されるが、発火挙動の実測は使い回す。caveat（罠）とは役割が違う＝これは「正の実測記録」。
 
-## 現行の dotagents 呼びかけ契約（2026-07-12 INFO 化後）
+## 現行の dotagents 呼びかけ契約（2026-08-02 delegation gate）
 
 - Hook は詳細な手順を再掲せず、観測事実とグローバル `CLAUDE.md` / `AGENTS.md` への短い INFO だけを返す。
-- C1/X2 の委譲案内はセッション初回だけ。model ID、引数省略、Oracle パラメータ、`ultra` を Hook で検査せず、deny / ask もしない。Oracle は C1 matcher の対象外。
+- C1/X2 の委譲案内はセッション初回だけ。Oracle は C1 matcher の対象外。C1はaiterm codexの具体model/effort、Agent/Taskの具体call model（project agents directory不在時だけhome直結roleも可）、sidecar writeの明示pairまたは具体defaults pair、外部writerのscope tokenと未解放writer予約だけをdenyする。X2はspawn_agentの具体modelまたは配布先の具体fixed role（存在するeffort fieldも具体）だけを許可する。それ以外の入口・grok/composer・Workflow・read系sidecarはINFOのまま。
+- denyはP10/P9/P11の閉集合に限る。scopeは `[scope:read-only]` / `[scope:write]` の一方だけで、欠如・混在はP9 deny。予約はowner-only 0700専用directoryでtemp+rename公開され、削除は手動releaseだけ（TTLなし）。非git writerは `unidentified-repo` sentinelで直列化し、破損/中間reservationはopaque busy、state確保不能は `P11_STATE_UNAVAILABLE` としてdenyする。read系・非writerのhook内部障害は理由付きINFOへ縮退する。Bashは汎用入口で構造化inputがなく委譲判定不能、sidecar read系は書込まないため直列化対象外で、ともにINFO維持する。`DOTAGENTS_PLACEMENT_GATE=off`はC1/X2のINFOとdenyをともに停止する。
 - C4/X5 の着手案内はセッション初回だけで、compact 後に1回再武装する。毎 UserPromptSubmit の固定文注入はしない。
 - C3/X4 は Stop で rolling baseline を判定するが、その場で context 注入や block はしない。必要時だけ pending を保存し、次の自然な UserPromptSubmit で1回配送する。
 - C2/X1 の棚卸しと plan gate / X2 update_plan は、従来の命令文を正典参照の INFO に置換した。検出とスロットル自体は維持する。
@@ -27,7 +28,7 @@
 - **Stop は1実行で複数回発火しうる**（P4。バックグラウンド Agent 完了点＋最終応答点、いずれも `stop_hook_active=false`）。rolling baseline 方式は差分ゼロで沈黙するので二重発火に耐える。stdin に cwd・CLAUDE_PROJECT_DIR あり。
 - **settings.json は hot-reload される**（P5・現行版）。配線後の新セッション不要。**user 設定変更は全稼働セッションに波及**。→ caveat `claude-code-hooks-no-hot-reload` を「バージョンで挙動変化」と訂正済み。
 - **headless の ask は自動 deny**（P7・再試行なし・hang なし）。Stop block の 8回 cap 実在。
-- **動的文言は実生成される**: 2026-07-12 実火で旧 C1 が `codex_agent` 呼び出し時に `model=gpt-5.6-sol, effort=low` を埋め込んだ文言を注入した。現行 C1 も初回委譲の観測値は INFO に含めるが、判断や修正は命令しない。
+- **動的文言は実生成される**: C1は初回INFOに観測値を含め、deny時は理由コード・最小例・正典参照を3行で返す。
 
 ## Codex CLI hook（hooks.json）の実測挙動
 
@@ -35,7 +36,7 @@
 - **matcher が無い**＝stdin 先頭 grep の fast-path で対象外ツールを python3 起動前に弾く（同期 150-300ms 税対策）。
 - **async 非対応**（0.144.1 でも）。`async:true` エントリは `skipping async hook … async hooks are not supported yet` 警告付きで skip される。**全エントリ `async:false` 必須**。実例: spotter の SessionStart（async:true）は skip 確定＝Codex では起動時注入が死ぬ（codex-callout は全 async:false ゆえ無影響）。
 - **trust 承認必須**（対話 codex で "Trust all"）。`codex exec` は未信頼 hook を発火しない（`--dangerously-bypass-hook-trust` でも directory trust は越えない）。
-- **Stop の `decision:block` は挙動へ反映される**（P6・X4 成立）。Codex は停止せず続行し reason に従属（Claude 側 Stop block と同型）。PreToolUse deny も第一形式で実ブロック。→ 「Codex hook は観測専用」は誤り。caveat `codex-cli-hooks-posttooluse-payload-omits-tool-outcome…` に補足済み。
+- **Stop の `decision:block` は挙動へ反映される**（P6・X4 成立）。Codex は停止せず続行し reason に従属（Claude 側 Stop block と同型）。PreToolUseの `{"decision":"deny","reason":"..."}` も実ブロックする。→ 「Codex hook は観測専用」は誤り。caveat `codex-cli-hooks-posttooluse-payload-omits-tool-outcome…` に補足済み。
 - **update_plan は Pre/PostToolUse 両方発火**・tool_input に3状態プラン（`plan[].{step,status=pending|in_progress|completed}`）＝プラン瞬間の唯一の観測点。
 - **PostToolUse payload に tool 成否は出ない**（exit code/status なし。失敗 apply_patch は PostToolUse すら出ない）。同 caveat 参照。
 - **X5 着手ゲート実火**（2026-07-12）: `UserPromptSubmit hook (completed)` として着手ゲート全文が Codex コンテキストへ注入（画面表示・Codex 自身も到達を確認）。
@@ -57,6 +58,7 @@
 | `<session_id>.codex-pending` | INFO 文字列 | Codex X4 から次の UserPromptSubmit への1回配送 |
 | `<repo_hash>.stocktake` | 空 | 棚卸し（C2/X1）の 24h スロットル（repo パスキー） |
 | `errors.log` | 1行/件 | fail-open 記録（parse 不能時。stderr 禁止の代替＝憲法のフォールバック明示要件） |
+| `writer-reservations/<sha256(common_dir)>.json` | common_dir/tool/session_hint/created_at/dispatch_id | C1 write宣言の同一repo排他予約。owner-only専用directoryでtemp+rename公開、手動releaseのみ、TTLなし・通常GC対象外。 |
 
 - porcelain が空（クリーン）の SHA1 は `da39a3ee5e6b4b0d3255bfef95601890afd80709`（空文字列の SHA1）。実測 snapshot でこの値なら「作業なし」。
 - repo_hash はリポルートパスのハッシュ（例: dotagents=`6c870a0ad555`）。同一リポの複数セッションが同じ stocktake スロットルを共有。

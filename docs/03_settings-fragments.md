@@ -84,7 +84,15 @@ apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-con
 
 #### C1 配置ゲート（PreToolUse・委譲ツール呼び出し時）
 
-セッションで最初の委譲を検出した時だけ、配置・委譲契約の正典を案内する短い INFO を返す。引数の検査や deny / ask は行わない。`gpt_connector` の `consult` は相談であって委譲ではないため対象外（[`../bin/delegation-gate-hook.sh`](../bin/delegation-gate-hook.sh)）。
+セッションで最初の委譲を検出した時だけ、配置・委譲契約の正典を案内する短い INFO を返す。加えて、次の閉集合だけを同期 `permissionDecision="deny"` で拒否する。`gpt_connector` の `consult` は相談であって委譲ではないため対象外（[`../bin/delegation-gate-hook.sh`](../bin/delegation-gate-hook.sh)）。
+
+- `mcp__aiterm__codex_agent` は具体値（`inherit`・空・空白のみ・`${...}`等の変数風は不可）の `model` と `reasoning_effort` が必須。grok/composer は対話TUIに effort 指定を持たないため INFO のまま。
+- sidecar write入口（`codex_work` / `codex_work_start` / `codex_generate`）は、callの具体値 `model` と `modelReasoningEffort`、または実効cwdから上向きに解決した `.codex-sidecar.yml` の具体値 `defaults.model` と `defaults.model_reasoning_effort` の組だけを明示等価として許可する。単なるファイル存在・空/継承/変数風defaultsはdeny。read系 sidecar は INFO のまま。
+- `Agent` / `Task` は具体のcall `model` が必須。ただし `CLAUDE_PROJECT_DIR/.claude/agents` directory が**存在しない**時だけ、`~/.claude/agents/<subagent_type>.md`（ファイル名直結・非再帰）のfrontmatter具体 `model:` を明示等価として許可する。Claude runtimeの再帰探索・frontmatter name識別・project優先をhookで模倣しない。project agent directoryがあるshadow環境ではruntime解決との差を安全側に倒し、定義ベース判定を捨てて明示modelを要求する。`inherit`、空、変数風の値は固定でないためdeny。Claude Agent入口にはeffort fieldがないため、ここではeffortを要求しない。`Workflow` は script内のper-call明示を正とし、静的検査の誤爆を避けるため INFO のまま。
+- aiterm codex と上記sidecar write入口のscopeは、prompt/inputに完全な `[scope:read-only]` または `[scope:write]` を**一つだけ**入れる。欠如と両方混在はdeny。これは dispatch routing 用の宣言強制であり能力壁ではない。実効の能力壁は Codex native sandbox、sidecar `allowed_paths`、将来のaiterm launch schema が担う。
+- write宣言では `git rev-parse --git-common-dir` の絶対パス、失敗時は共通 `unidentified-repo` sentinelをキーに期限なしのwriter予約を作る。予約directoryはowner-only 0700を強制し、修復不能なら `P11_STATE_UNAVAILABLE` denyとなる。予約はowner-only `writer-reservations/`下にtemp+renameで完全recordとして公開し、既存の空・破損・中間recordは不透明busyとしてdenyする。同一keyの未解放予約はdeny。予約を消す経路は `delegation-gate-hook --release --common-dir <common-dir>`（sentinelは `unidentified-repo`）だけで、`--common-dir`単独はexit 2、`--list`は破損recordもopaqueとして表示する。TTL、自動解放、自動warning格下げ、Lattice例外、`.lattice/`直接読取はない。予約directoryはC1/X2/C2-C3の7日GC対象外。並列が必要なら Lattice の `plan compile → run start` を使う。
+
+全denyは理由コード（`P10_MODEL_EFFORT_MISSING`、`P9_SCOPE_DECL_MISSING`、`P9_SCOPE_DECL_AMBIGUOUS`、`P11_WRITER_BUSY`、`P11_STATE_UNAVAILABLE`）、最小の正しい呼び方、`shared/orchestrate/delegation-contract.md`参照の3行で返す。親`STATE_DIR`を確保できない場合も入力を解析する。read系・非writerのhook内部障害は denyせず理由付きINFOへ縮退する一方、write宣言dispatchは予約stateを確保できないため `P11_STATE_UNAVAILABLE` でfail-closedにする。Bashは汎用入口で構造化inputがなく委譲か判定できないためINFO維持、sidecar read系は書込まないため直列化対象外でINFO維持する。`lib/orchestrate/execution-path.mjs` はこのPython hookからimportしない（接続契約は fm-0689 の別note対象）。
 
 ```bash
 S=~/.claude/settings.json
@@ -189,7 +197,7 @@ fi
 
 各 hook は環境変数で無効化できる。`off` 以外の値（未設定を含む）は既定動作になる:
 
-- `DOTAGENTS_PLACEMENT_GATE=off` — C1 の初回委譲 INFO を無効化。
+- `DOTAGENTS_PLACEMENT_GATE=off` — C1 の初回委譲 INFO と上記denyをともに無効化。
 - `DOTAGENTS_TODO_GATE=off` — C2 の棚卸しと C3 の pending 保存・配送を無効化。旧 `block` 値に特別な昇格動作はない。
 - `DOTAGENTS_ONSET_GATE=off` — C4 の初回案内 INFO を無効化。C3 pending の配送は `DOTAGENTS_TODO_GATE` 側で制御する。
 - `DOTAGENTS_LATTICE_HOOK=off` — SessionStartのLattice工程表案内を無効化。
