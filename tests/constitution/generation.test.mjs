@@ -88,6 +88,9 @@ test("実repoの共通契約とhost固有契約を交差させず保持する", 
   assert.match(common, /repo内の変更はpush（push既定の判定はgit鉄則に従う）/);
   assert.match(common, /通常のpushを完遂に含めるのは、project正典または恒久裁定がpush既定を定めるrepoだけ/);
   assert.match(common, /push既定を認定できるのは、適用中のrepo直下のAGENTS\.md／CLAUDE\.md（import先を含む）または現在のユーザー指示が、通常pushを既定と明記している場合だけ。認定できない・矛盾する時はpushしない/);
+  assert.match(common, /^- 本節の還流・正典反映の書込みは、書込みを含む依頼・進行中campaign・明示の知識還流Phaseだけで行い、read-only指定の依頼では提案として返す。$/m);
+  assert.doesNotMatch(common, /還流の書込みを行うのは/);
+  assert.match(common, /\*\*方針級の発見はその場で正典へ\*\*:/);
   assert.match(common, /全hostで既定として aiterm-mcp の永続PTY/);
   assert.match(common, /host標準の単発shellツール可/);
 

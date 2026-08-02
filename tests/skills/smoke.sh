@@ -89,8 +89,11 @@ contains "$ROOT/claude/skills/orchestrate/SKILL.md" '](../../../shared/orchestra
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '](../../../shared/orchestrate/delegation-contract.md)'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" 'references/workflow-templates.md'
 contains "$ROOT/PLAN.md" 'ラベル運用は統括レーンの4関節（writer委譲・受入裁定・Phase gate・H操作）の裁定用とする。'
+contains "$ROOT/PLAN.md" '10. （書込みscopeは憲法「調査と知識の置き場」冒頭に従う）**知識は還流させて育てる（第二の脳）**'
+contains "$ROOT/PLAN.md" '（書込みscopeは憲法「調査と知識の置き場」冒頭に従う）**方針級の発見はその場で正典へ**'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '**配置は統括レーンの4関節で宣言**'
 contains "$ROOT/shared/orchestrate/contract.md" '統括レーンへ入った後、4関節で扱う役割をF/A/Hに分ける。'
+# shellcheck disable=SC2016 # backticks are literal Markdown from the contract.
 contains "$ROOT/shared/orchestrate/contract.md" '対象projectの`docs/`にあるcampaign計画正本を最初に確認し、実行TODOの正本はtyped discovery（憲法「計画文書の作法」）で決める。'
 contains "$ROOT/shared/orchestrate/control-record.md" 'docs計画正本（実行TODOの正本はtyped discoveryで解決）'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '反証は親と同値のaliasを明示×high。finderはsonnet×low'
