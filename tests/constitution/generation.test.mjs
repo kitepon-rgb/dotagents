@@ -85,7 +85,8 @@ test("実repoの共通契約とhost固有契約を交差させず保持する", 
     "報告",
     "出力衛生",
   ]) assert.match(common, new RegExp(`^## ${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "m"));
-  assert.match(common, /push・force 系・履歴改変はユーザーの明示指示時のみ/);
+  assert.match(common, /repo内の変更はpush（push既定の判定はgit鉄則に従う）/);
+  assert.match(common, /通常のpushを完遂に含めるのは、project正典または恒久裁定がpush既定を定めるrepoだけ/);
   assert.match(common, /全hostで既定として aiterm-mcp の永続PTY/);
   assert.match(common, /host標準の単発shellツール可/);
 
