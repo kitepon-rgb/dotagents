@@ -10,7 +10,7 @@
 - [ ] Lattice run start前にverified parallel groupとcompile artifactを検証する製品所有gateを設計・実装する（P11のLattice側強制点）。
 - [ ] Codex X2面へ同一repo並行writer検出を展開する（P11のClaude側実測を得た後）。
 
-## 平文設計メモ（2026-08-02・統括裁定。`lattice todo note`経路が修理されるまでの一時置き場——正本欠陥はcaveat `lattice-todo-note-revision-plan-json-note-projection-invalid`）
+## 平文設計メモ（2026-08-02・統括裁定。note経路はLattice 0.40.1で復旧し、各工程の正本noteへ転記済み。本節は凍結記録として保持）
 
 - **P9（fm-0687）** 目的: 読み取り専用のはずの子AIが実際には書き込めてしまう面を塞ぐ。何が変わるか: 外部の子AI起動時に「読み取り専用か・どこへ書くか」の宣言が無いと起動を拒否する（宣言はルーティング用であり能力壁ではない。本物の能力壁はCodex側read-only sandbox・sidecarのallowed_pathsが既に持ち、aiterm側の起動schema組込みは別の依存工程で扱う）。経緯: 実装前反証で「dotagents内だけの薄い壁は偽の安心」と判定→dotagents分と製品側依存へ分割。
 - **P10（fm-0688）** 目的: 子AIを起動する時のモデル・思考量の指定忘れを物理的に止める（指定忘れは親の高価な設定を黙って継ぎ、費用と品質の事故になる）。何が変わるか: Claude C1 hookとCodex X2 hookが、指定の無い起動を拒否する。例外=repo設定ファイルが既定を固定する入口（codex-sidecar）と役割定義がモデルを固定する入口は「明示と同等」で許可。

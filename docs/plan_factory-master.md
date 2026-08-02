@@ -40,8 +40,7 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
 - **Lattice `todo note`がスタブrevisionでfail closed**（2026-08-02記録・所有repo=Lattice・非クリティカル）:
   `factory-master`履歴中の`rev-c7e2409e…`（2026-07-20移行中断の残骸・`plan.json`欠落）でnote投影が
   `NOTE_PROJECTION_INVALID`になる。最小再現・迂回はcaveat
-  `lattice-todo-note-revision-plan-json-note-projection-invalid`が正。修理はLattice repoの
-  maintenance waveで（store直接編集はしない）。
+  `lattice-todo-note-revision-plan-json-note-projection-invalid`が正。2026-08-02に Lattice 0.40.1（`3d6b882`）で修理・publish済み＝**解消**。
 
 工程表示は次で生成する。
 
