@@ -9,7 +9,7 @@
 Control Recordが所有するのは、親が宣言したTask参照、Worker Run／Consultationの相関ID、
 各Executorを再照会するためのopaque handle、最後に観測した状態、write予約、親の受入記録だけ。
 
-- Taskの目的・TODO・仕様・Finding・Decisionは対象projectの`docs/`とgit履歴が正本。
+- Taskの目的・docs計画正本（実行TODOの正本はtyped discoveryで解決）・仕様・Finding・Decisionは対象projectの`docs/`とgit履歴が正本。
 - session、job、認証、cancel、retry、worktree lifecycle、migrationは各Executor製品が正本。
 - H承認はオーナーとの会話が正本。approval snapshotは親が確認した承認のpurpose、impact、
   rollback、対象operation digest、有効期間への参照であり、CLIが承認の意味や真正性を

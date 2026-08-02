@@ -91,6 +91,8 @@ contains "$ROOT/claude/skills/orchestrate/SKILL.md" 'references/workflow-templat
 contains "$ROOT/PLAN.md" 'ラベル運用は統括レーンの4関節（writer委譲・受入裁定・Phase gate・H操作）の裁定用とする。'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '**配置は統括レーンの4関節で宣言**'
 contains "$ROOT/shared/orchestrate/contract.md" '統括レーンへ入った後、4関節で扱う役割をF/A/Hに分ける。'
+contains "$ROOT/shared/orchestrate/contract.md" '対象projectの`docs/`にあるcampaign計画正本を最初に確認し、実行TODOの正本はtyped discovery（憲法「計画文書の作法」）で決める。'
+contains "$ROOT/shared/orchestrate/control-record.md" 'docs計画正本（実行TODOの正本はtyped discoveryで解決）'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '反証は親と同値のaliasを明示×high。finderはsonnet×low'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '親と同値のaliasを明示×決定表のeffort'
 contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "model:'sonnet', effort:'low'"
