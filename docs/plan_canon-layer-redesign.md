@@ -89,9 +89,21 @@
 - wave 3: AGENTS.md・PLAN.mdの厚み移設
 - wave 4: L1契約細部のL2化＋予算lint敷設＋凍結台帳Tier 2の個別起票
 
+## 外部到達性の保証（2026-08-02オーナー制約「本プロジェクト外・他端末から参照不能になる事態を
+起こすな」の実装）
+
+1. runbookは`~/.claude/runbooks/`・`~/.codex/runbooks/`のsymlink面で全端末へ配布
+   （install.shへ`shared/runbooks/`の1エントリ追加——skills/binと同じ既存機構）。
+   L0のポインタはこのhome基準パスで書き、標準repo配置も併記して二重化する。
+2. verify-installへrunbook symlinkの実在・行き先検査を追加（他端末の欠落を機械検出）。
+3. migration manifest検査に「L0トリガー行→受け皿のリンク到達」を含める。
+4. commit順序: 受け皿が先・ポインタは後。どのcommit時点にも「ポインタだけあって行き先が無い」
+   状態を存在させない（pull途中の端末も安全）。
+
 ## 裁定を求める点
 
-1. 層モデル・受け皿6面・上書き裁定2件 【裁定: 　】
+1. 層モデル・受け皿6面・上書き裁定2件 【裁定: 採用（2026-08-02・方向承認）。制約: 外部到達性の
+   保証を上記のとおり機械化すること】
 2. L0残存の節別方針 【裁定: 　】
 3. 予算数値（runtime≦7.0千字ほか）と警告方式 【裁定: 　】
 4. wave構成（矛盾family先行・隔離worktree・manifest check） 【裁定: 　】
