@@ -1,6 +1,6 @@
 # 規範の層モデル再設計 — 提案書（r2）
 
-- Status: 実行中——**wave 0完了**（受け皿5面・runbook配布・manifest検査・`7570b95`）／
+- Status: **campaign完了（2026-08-02・全5 wave）**——**wave 0完了**（受け皿5面・runbook配布・manifest検査・`7570b95`）／
   **wave 1完了**（矛盾6家系解消・反証3巡14commit・`50d12e4`配布済み）／
   **wave 2完了**（憲法4節18行をrunbookへ逐語移設・manifest検査を可視本文基準＋変異試験耐性へ強化・
   反証2巡8commit・`2a1fd42`配布済み。憲法7,569→7,043字）／
@@ -8,7 +8,13 @@
   移設は「逐語凍結はmanifest source_text・受け皿は統治文」方式へ確定——引用ダンプ受け皿は棄却。
   manifest 38 entries・verifierへsource凍結検査（source_ref原文との連続逐語一致）と
   receiver_phrase実在検査を追加。反証3巡＋変異試験（欠陥条文単独削除・sync-sweep節削除が
-  FAILすることを確認）・補正5巡・`69cbead`配布済み）／wave 4待機
+  FAILすることを確認）・補正5巡・`69cbead`配布済み）／
+  **wave 4完了**（統括契約・委譲契約のL1骨格化——lifecycle回復例外・配置機械実装・並列語義・
+  run照合CLI・retry相関をcontrol-record／composition／02_models／lattice-workflow runbookへ移設。
+  反証で採用5件は「復元」で解消（同期確認・H全レーン適用・未修理／未検証の成功扱い禁止は
+  ワークシートの重複判定が偽と確定しbase逐語残留）。manifest 56 entries・変異試験FAIL確認・
+  `53608a8`配布済み。凍結台帳Tier 2はfm-0687〜fm-0690としてLattice factory-masterへ起票済み——
+  `lattice todo revise`の0.40.0要件3点はcaveat `lattice-todo-revise-revision-invalid-cli`が正）
 - 旧Status: オーナー裁定待ち（4点）
 - Date: 2026-08-02
 - 目的: 「意図どおりAIが動くこと」を、矛盾解消と常時ロード面スリム化の同時手術で実現する。
