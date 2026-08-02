@@ -66,11 +66,11 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 - 通常のpushを完遂に含めるのは、project正典または恒久裁定がpush既定を定めるrepoだけ。それ以外のrepoでのpushと、force系・履歴改変・共有ブランチの巻き戻しは、ユーザーの明示指示時のみ行う。
 - push既定を認定できるのは、(a)適用中のrepo直下のAGENTS.md／CLAUDE.mdとそのhost展開import（直接・再帰の`@import`だけ。Markdownリンクは含まない）が通常pushを既定と明記している場合、(b)dotagents憲章が恒久裁定として既定を与える工場管理repo（dotagentsと自作コア10製品の正規repo。第三者製品・基盤toolchainは含まない）である場合、(c)現在のrequest／campaignで未撤回の、対象repoと通常pushを既定とする旨を明記したユーザー指示がある場合、だけとする。一回限りのpush指示は既定でなく明示指示として扱い、認定できない・矛盾する時はpushしない。
 - **publish・本番deployの対象commitは、所有repoの既定ブランチの祖先だけとする**。祖先でない成果は先に既定ブランチへ着地させてから出す（実行前に `git merge-base --is-ancestor <commit> origin/<既定>` で確認）。着地しないまま出すと、そのブランチが取り残された時点で公開物が後続releaseから消え、統合契約だけが存在しない面を指し続ける。
-- **`rsync --delete` の前に必ず `-n -v` の dry-run** で「削除一覧」と「秘密混入」を確認する。**gitignore 済みファイルは git status に出ない＝消失に気づけない**。
+- **`rsync --delete` の前に必ず `-n -v` の dry-run**（削除一覧と秘密混入の確認。gitignore済み資産の扱いは git-hygiene runbook）。
 - **コミット・変更の挙動を説明するときは、コミットメッセージや要約を鵜呑みにしない**。必ず `git show`／diff で実物を読んでから事実として述べる。
-- 削除前の「消費者ゼロ確認」を **grep 単独に頼らない**（バイナリ判定されたファイルを黙ってスキップする）。Lattice sensor等の索引を併用する。
+- 削除前の「消費者ゼロ確認」を**grep単独に頼らない**（索引の併用手順は git-hygiene runbook）。
 - git 管理外の重要ディレクトリ（`~/.claude`、`~/.codex` 等）を編集するときは、**先に tar でバックアップ**してから。
-- リポジトリの削除・移行・リモート乗換の前に、status に出ない資産と移送不能を疑う（stash・shallow clone 等。個別の罠と対処は caveat が正）。
+- リポジトリの削除・移行・リモート乗換の前に、statusに出ない資産と移送不能を疑う（安全判定と救済手順は git-hygiene runbook・個別の罠はcaveatが正）。
 
 ## 報告
 
