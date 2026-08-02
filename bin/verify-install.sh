@@ -50,7 +50,7 @@ fail=0
 check() { # check <dst> <expect_src>
   local dst="$1" exp="$2"
   if [ ! -e "$dst" ] && [ ! -L "$dst" ]; then
-    echo "MISS: $dst 不在（install.sh 未実行 or 対象追加後に再実行が必要）"; fail=1; return
+    echo "FAIL: $dst 不在（install.sh 未実行または対象追加後。install.sh を再実行）"; fail=1; return
   fi
   if [ ! -L "$dst" ]; then
     echo "FAIL: $dst は実ファイル（退避して install.sh 再実行しないと正本が使われない）"; fail=1; return
@@ -360,10 +360,12 @@ fi
 
 # install.sh の配布グループと対称に検証
 [ -f "$REPO/claude/CLAUDE.md" ] && check "$HOME/.claude/CLAUDE.md" "$REPO/claude/CLAUDE.md"
+[ -d "$REPO/shared/runbooks" ] && check "$HOME/.claude/runbooks" "$REPO/shared/runbooks"
 for d in "$REPO/claude/skills"/*/;   do [ -d "$d" ] && check "$HOME/.claude/skills/$(basename "$d")" "$d"; done
 for f in "$REPO/claude/commands"/*.md; do [ -e "$f" ] && check "$HOME/.claude/commands/$(basename "$f")" "$f"; done
 for f in "$REPO/claude/agents"/*.md;   do [ -e "$f" ] && check "$HOME/.claude/agents/$(basename "$f")" "$f"; done
 [ -f "$REPO/codex/AGENTS.md" ] && check "$HOME/.codex/AGENTS.md" "$REPO/codex/AGENTS.md"
+[ -d "$REPO/shared/runbooks" ] && check "$HOME/.codex/runbooks" "$REPO/shared/runbooks"
 for d in "$REPO/codex/skills"/*/; do
   [ -d "$d" ] || continue
   skill_name="$(basename "$d")"

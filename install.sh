@@ -69,6 +69,9 @@ mkdir -p "$HOME/.claude/skills" "$HOME/.claude/commands" "$HOME/.claude/agents"
 if [ -e "$HERE/claude/CLAUDE.md" ]; then
   link_one "$HERE/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 fi
+if [ -d "$HERE/shared/runbooks" ]; then
+  link_one "$HERE/shared/runbooks" "$HOME/.claude/runbooks"
+fi
 for d in "$HERE/claude/skills"/*/; do
   [ -d "$d" ] || continue
   link_one "${d%/}" "$HOME/.claude/skills/$(basename "$d")"
@@ -92,6 +95,9 @@ fi
 mkdir -p "$codex_skills_dir"
 if [ -e "$HERE/codex/AGENTS.md" ]; then
   link_one "$HERE/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+fi
+if [ -d "$HERE/shared/runbooks" ]; then
+  link_one "$HERE/shared/runbooks" "$HOME/.codex/runbooks"
 fi
 for d in "$HERE/codex/skills"/*/; do
   [ -d "$d" ] || continue

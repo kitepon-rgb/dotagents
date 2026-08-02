@@ -94,6 +94,19 @@ if HOME="$OFFICIAL_HOME" "$ROOT/bin/verify-install.sh" --unknown >/dev/null 2>&1
   fail 'verify が未知引数を受理した'
 fi
 HOME="$OFFICIAL_HOME" "$ROOT/install.sh" --profile official
+[ -L "$OFFICIAL_HOME/.claude/runbooks" ] || fail 'Claude runbooks symlinkを生成しない'
+assert_link "$OFFICIAL_HOME/.claude/runbooks" "$ROOT/shared/runbooks"
+assert_link "$OFFICIAL_HOME/.codex/runbooks" "$ROOT/shared/runbooks"
+rm "$OFFICIAL_HOME/.claude/runbooks"
+if runbook_missing_output="$(verify "$OFFICIAL_HOME" official 2>&1)"; then
+  fail 'Claude runbooks欠落をverifyが見逃した'
+fi
+grep -Fq "FAIL: $OFFICIAL_HOME/.claude/runbooks 不在" <<<"$runbook_missing_output" \
+  || fail 'Claude runbooks欠落のFAILが対象pathを名指ししない'
+grep -Fq 'install.sh を再実行' <<<"$runbook_missing_output" \
+  || fail 'Claude runbooks欠落のFAILがinstall.sh再実行を案内しない'
+HOME="$OFFICIAL_HOME" "$ROOT/install.sh" --profile official >/dev/null
+assert_link "$OFFICIAL_HOME/.claude/runbooks" "$ROOT/shared/runbooks"
 [ ! -L "$OFFICIAL_HOME/.claude/skills/audit-gauntlet" ] || fail '廃止済みClaude skill linkを除去しない'
 [ ! -L "$OFFICIAL_HOME/.claude/commands/audit-gauntlet.md" ] || fail '廃止済みClaude command linkを除去しない'
 [ ! -L "$OFFICIAL_HOME/.agents/skills/audit-gauntlet" ] || fail '廃止済みofficial Codex skill linkを除去しない'
@@ -487,6 +500,8 @@ fi
 
 seed_config "$LEGACY_HOME"
 HOME="$LEGACY_HOME" "$ROOT/install.sh" --profile=legacy
+assert_link "$LEGACY_HOME/.claude/runbooks" "$ROOT/shared/runbooks"
+assert_link "$LEGACY_HOME/.codex/runbooks" "$ROOT/shared/runbooks"
 apply_config "$LEGACY_HOME" --apply
 verify "$LEGACY_HOME" legacy
 assert_link "$LEGACY_HOME/.codex/skills/orchestrate" "$ROOT/codex/skills/orchestrate"
