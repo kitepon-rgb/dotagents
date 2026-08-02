@@ -3,7 +3,12 @@
 - Status: 実行中——**wave 0完了**（受け皿5面・runbook配布・manifest検査・`7570b95`）／
   **wave 1完了**（矛盾6家系解消・反証3巡14commit・`50d12e4`配布済み）／
   **wave 2完了**（憲法4節18行をrunbookへ逐語移設・manifest検査を可視本文基準＋変異試験耐性へ強化・
-  反証2巡8commit・`2a1fd42`配布済み。憲法7,569→7,043字）／wave 3待機
+  反証2巡8commit・`2a1fd42`配布済み。憲法7,569→7,043字）／
+  **wave 3完了**（AGENTS.md 19.1→5.8千字(-70%)・PLAN.md 11.7→6.8千字(-42%)・原則番号骨子不変。
+  移設は「逐語凍結はmanifest source_text・受け皿は統治文」方式へ確定——引用ダンプ受け皿は棄却。
+  manifest 38 entries・verifierへsource凍結検査（source_ref原文との連続逐語一致）と
+  receiver_phrase実在検査を追加。反証3巡＋変異試験（欠陥条文単独削除・sync-sweep節削除が
+  FAILすることを確認）・補正5巡・`69cbead`配布済み）／wave 4待機
 - 旧Status: オーナー裁定待ち（4点）
 - Date: 2026-08-02
 - 目的: 「意図どおりAIが動くこと」を、矛盾解消と常時ロード面スリム化の同時手術で実現する。
@@ -41,7 +46,16 @@
 5. `reporting.md` — task ID日本語化・3秒理解の見せ方
 6. 割当の完全表はワークシートが正（48件中47件は上記1-5、残る`constitution:28`は下記の上書き裁定でL0残留）
 
-## ワークシートからの設計側上書き裁定（2件だけ・他は提案列が正）
+## ワークシートからの設計側上書き裁定（当初2件＋wave 3で3件・他は提案列が正）
+
+- **wave 3-1（受け皿fit）**: AGENTS:26のrelease完遂規律・release gate要件とAGENTS:28の欠陥処理裁定は、
+  ワークシートの`shared/orchestrate/contract.md`でなく`docs/factory-product-contracts.md`「共通境界」を
+  受け皿とする。contract.mdは自ら「製品中立」を宣言しており工場固有規則を置けない（受入裁定 2026-08-02）。
+- **wave 3-2（保守的L0残留）**: PLAN:14の介入四種列挙・PLAN:32後段・PLAN:49残件導線、およびPLAN原則1全文
+  （反証P0採用: 物量委譲と統括の担当範囲限定は原則級）はワークシート提案よりL0残留側へ倒した。規則消失ゼロ優先。
+- **wave 3-3（検査意味論）**: 移設の逐語凍結はmanifest `source_text`（source_ref原文との連続逐語一致を
+  機械検査）が担い、受け皿には統治文（`receiver_text`・可視本文実在を機械検査）を置く。受け皿への
+  引用ダンプ（見出し＋fenced quote）は受入不可。
 
 - `constitution:46-55`全10行はワークシートどおりL2へ移すが、**トリガー1行**
   「工程を読む/作る前に`lattice status --json`で正本を判定する（詳細はlattice-workflow）」をL0に残す
