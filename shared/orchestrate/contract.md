@@ -11,27 +11,27 @@
 
 ## 使う時・使わない時
 
-**本正典を適用するのは統括レーンだけ**（ADR 0061）: ①計画に中断が組み込まれている②受入が多段に連鎖する③複数repoの書込みを調整する④裁定の検証可能な証跡が必要、のいずれかが**着手時点の事実として確定**している戦役（campaign）。判定材料は着手時点で確定している作業の構造だけ。重装備（Packet/Report・Control記録）が要るのはwriter委譲・受入裁定・Phase gate・H操作の4関節だけで、campaign単位のdocs計画正本は統括レーン共通の前提であり、F/A/H宣言・Control Record・ADR・独立監査・receipt/evidence文書もこの4関節だけのもの。それ以外（直接処理・read-only呼び出し・queueで束ねた小粒消化）は通常レーンと同じ軽さで進め、証跡はgate evidenceとdocsに残す。技法（fan-out・重複統合・反証・網羅性Critic）はどのレーンでも使え、統括レーン専用はControl儀式（Elastic Control lifecycle、Packet/Report、受入・回収契約）だけ。対象projectの`docs/`にあるcampaign計画正本を最初に確認し、実行TODOの正本はtyped discovery（憲法「計画文書の作法」）で決める。
+**本正典を適用するのは統括レーンだけ**（ADR 0061）: 適用条件（4条件のOR）の正本は共通憲法「作業レーンと統制」であり、判定材料は着手時点で確定している作業の構造だけ。重装備（Packet/Report・Control記録）が要るのはwriter委譲・受入裁定・Phase gate・H操作の4関節だけで、campaign単位のdocs計画正本は統括レーン共通の前提であり、F/A/H宣言・Control Record・ADR・独立監査・receipt/evidence文書もこの4関節だけのもの。それ以外（直接処理・read-only呼び出し・queueで束ねた小粒消化）は通常レーンと同じ軽さで進め、証跡はgate evidenceとdocsに残す。技法（fan-out・重複統合・反証・網羅性Critic）はどのレーンでも使え、統括レーン専用はControl儀式（Elastic Control lifecycle、Packet/Report、受入・回収契約）だけ。対象projectの`docs/`にあるcampaign計画正本を最初に確認し、実行TODOの正本はtyped discovery（憲法「計画文書の作法」）で決める。
 
-それ以外はすべて通常レーンとし、Control Recordを使わない。短い成功条件、focused test、対象限定commitで閉じる。通常レーンでもWorkerへのコーディング委譲は可能で、Packetなしの明確な指示と親のdiff・test確認で受け入れる。途中で統括条件が揃ったら原子的作業を止めて昇格し、既存active Controlに属する作業を通常レーンへ降格しない。H操作の承認と高リスク操作の説明義務はレーンに関係なく適用する。
+通常レーンはControl Recordを使わない。短い成功条件、focused test、対象限定commitで閉じる。通常レーンでもWorkerへのコーディング委譲は可能で、Packetなしの明確な指示と親のdiff・test確認で受け入れる。途中で統括条件が揃ったら原子的作業を止めて昇格し、既存active Controlに属する作業を通常レーンへ降格しない。H操作の承認と高リスク操作の説明義務はレーンに関係なく適用する。
 
 ## Control Recordの最小lifecycle
 
-1. docs正本を確認してからControlを`init`し、直後・最初のTask前にriskとbehavior laneを`phase-gate-record`で固定する。phase gate未設定のまま`task-record`へ進まない。既存Controlで設定漏れを発見した場合は、実在するretained evidenceだけで順序どおりphaseを記録し、事後の推測や証拠再構成で完了へ丸めない。その後、Taskを`task-record`、Worker RunまたはConsultationをそれぞれ`worker-run-record`または`consultation-record`で記録する。
-2. Registry observationを記録し、`placement-dry-run`で候補を出す。親が候補を選び、`placement-reserve`でreservation proposalとして固定する。複数Runの完了を後続Taskの条件にする時は、親が`campaign-record`でmembers／gate／audit要否を宣言する。planned/admitted Workerの`delegation-packet`を生成してから、親自身がExecutor固有入口でdispatchする。packet保存漏れはactive Run専用のread-only `delegation-packet-recover`で回収し、同じRunを再dispatchしない。自動dispatchやExecutor stateの複製はしない。
-3. 観測・strict Worker Reportを回収し、`worker-report-import`で記録してから親がaccept/rejectを裁定する。`status --brief`でunresolved/unknown/uncollectedを確認し、timeoutや中断後は`resume-check`と同一handleで回収する。Task取消とRun cancel要求は別に記録し、外部側でcancel済みと推測しない。
-4. `campaign-status`で全member terminalを確認し、audit-requiredなら証拠を揃えて親が`campaign-release`する。releaseは後続Runを自動起動しないため、親が改めてplacement／admission／dispatchする。
-5. 受入済みTaskを`docs/adr/<file>.md`の不変Decisionで`task-finalize-record`し、全Campaign release後に同じく不変ADRの親DecisionでControlを`control-finalize`する。追記可能なplan/TODOをaccept/reject/finalizationのDecision証拠へ使わない。過去digestの保持確認は同一repoのgit履歴にある同一path・regular blob・完全一致SHA-256だけを認め、別pathや近似一致へfallbackしない。検証・再発防止に有用な知識を正本へ還流してから`archive`する。
+1. docs正本を確認してからControlを`init`し、直後・最初のTask前にriskとbehavior laneを`phase-gate-record`で固定する。phase gate未設定のまま`task-record`へ進まない。その後、Taskを`task-record`、Worker RunまたはConsultationをそれぞれ`worker-run-record`または`consultation-record`で記録する。
+2. Registry observationを記録し、`placement-dry-run`で候補を出す。親が候補を選び、`placement-reserve`でreservation proposalとして固定する。複数Runの完了を後続Taskの条件にする時は、親が`campaign-record`でmembers／gate／audit要否を宣言する。planned/admitted Workerの`delegation-packet`を生成してから、親自身がExecutor固有入口でdispatchする。packet保存漏れは回復手順に従って回収し、同じRunを再dispatchしない。自動dispatchやExecutor stateの複製はしない。
+3. 観測・strict Worker Reportを回収し、`worker-report-import`で記録してから親がaccept/rejectを裁定する。timeoutや中断後は同一handleで回収する。Task取消とRun cancel要求は別に記録し、外部側でcancel済みと推測しない。
+4. `campaign-status`で全member terminalを確認し、audit-requiredなら証拠を揃えて親が`campaign-release`する。
+5. 受入済みTaskを`docs/adr/<file>.md`の不変Decisionで`task-finalize-record`し、全Campaign release後に同じく不変ADRの親DecisionでControlを`control-finalize`する。追記可能なplan/TODOをaccept/reject/finalizationのDecision証拠へ使わない。検証・再発防止に有用な知識を正本へ還流してから`archive`する。
 
+lifecycleの回復・例外の詳細（phase設定漏れの補完、packet回収、`status --brief`と`resume-check`、release後の再配置、過去digestの検証要件）は[control-record.md](control-record.md)を正とする。
 Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[委譲契約](delegation-contract.md)を正本とする。
 
 ## 統括ゲート
 
-1. 独立した反証で実在性と価値を確認するのは、契約クリティカル（F相当：認可・トランザクション・公開契約・依存方向・本番操作・履歴修復）な変更・監査指摘・設計判断だけ。それ以外は統括自身の確認で足りる。確信できない指摘は棄却する。
+1. 独立した反証で実在性と価値を確認するのは、契約クリティカル（F相当：認可・トランザクション・公開契約・依存方向・本番操作・履歴修復）な変更・監査指摘・設計判断だけ。それ以外は統括自身の確認で足りる。
 2. 委譲は[委譲契約](delegation-contract.md)のPacket 8点に従い、結果は統括が diff と検証で採用判断する（項目を本書へ再掲しない）。
 3. 挙動不変レーンと挙動修正レーンを分ける。挙動修正は一件ごとに差分を明文化し、必要な承認を得る。
 4. 作業を独立して revert できる単位に分割する。実装中はfocused testを回し、単位完了時に関連gateを1回通す（full regressionはPhase gateへ集約）。並行作業は書き込み範囲を交差させない。
-5. 外部状態を変更する前には、目的・影響・rollback を説明し、H 承認が必要な操作は承認後だけ実行する。失敗を fallback で隠さない。
 
 ## 知能の配置原則（provider対称）
 
@@ -46,15 +46,13 @@ Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[�
 - **一般Workerは適格候補（role・能力・独立性・F/A/H適合）内での適応配置**とする。残quotaに基づく
   rate-aware selectorが提供されるまで、quota架空値・暗黙fallbackで配置を成功扱いしない。
 
-役割と配置関係の機械可読な対応は`lib/orchestrate/placement-policy.mjs`
-（`dotagents.placement-policy.v1`）が固定し、fixtureがadapter catalogのconsultation laneおよび
-Control schema v26のconnector enumとの整合を検証する。
+役割と配置関係の機械可読な対応・fixture検証の詳細は`docs/02_models.md`に従う。
 
 ## 実装と受入
 
 - 並列実装は非交差の書込範囲でwaveを分け、同一ファイルを触る作業は直列化する。巨大な任務を一人へ渡さず、1責務を1受入単位に分解する。同一repoへ書込むworkerが2つ以上になる時の直列化規則は、レーンと実行経路を問わず[合成契約](composition.md)が正本である。
 - 統括はWorkerの完了報告を鵜呑みにせず、対象diff、受入条件、関連gate、未検証範囲を自ら確認してaccept/rejectする。受入済みの発見と検証結果は正本へ還流する。
-- 安全網より先に本体を変更しない。反証なしの監査指摘を実装へ流さず、並行作業中に裸のcommitで他者の変更を巻き込まない。
+- 安全網より先に本体を変更しない。反証なしの監査指摘を実装へ流さない。
 - **active fixed Worker中の親commit**: 同じworktreeへの親commitは、予約HEADからのfast-forwardで、Taskの`read_scope`／`write_scope`と非交差なpathだけをpathspecでcommitし、Controlがcommit pathとindexを検証できる場合に限る。関連scope、履歴改変、staged成果、検証不能な変更はWorker完了までcommitしない。
 
 ## フェーズ
