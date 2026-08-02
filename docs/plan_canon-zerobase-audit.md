@@ -30,43 +30,65 @@ r1反証での棄却3件（P13受け皿ミス再発・P15根拠誤読・P19規�
 ## Tier 1 — 実行が分岐する条文の解消（文書修正wave 1件）
 
 ### P1. push規則の正面矛盾 【裁定: 採用（2026-08-02）】
+
 - 矛盾実在: 憲法26行（完遂にpush含む）／75行（pushは明示指示時のみ）／PLAN原則2（必ずpush）。
 - 補正済み提案: 75行を「force系・履歴改変・共有ブランチ巻き戻しは明示指示時のみ」へ限定した上で、
   **通常pushの既定は「project正典または恒久裁定でpush既定が確認できるrepo」に限る**
   （無条件既定化は誤push防御を弱める——反証指摘の採用）。generation testのexact検査文言の
   追従を同waveに含める。
+
 ### P2. F/A/Hラベルの適用範囲 【裁定: 採用（2026-08-02）】
+
 - PLAN原則5へ「ラベル運用は統括レーンの裁定用」の1句（番号・骨子不変）。
+
 ### P3. 子モデル「省略=継承」表記の自己衝突 【裁定: 　】
+
 - 対象はClaude側SKILL.md 28/47行**とworkflow-templates.md 11行**（反証が追加発見）。
   「親と同値のaliasを明示」へ統一。
+
 ### P4. dotagents TODO正本の二重表記 【裁定: 　】
+
 - AGENTS.md掟3**とREADME.md 5行**（反証が追加発見）を「プラン＝目的・判断・受入条件と
   Lattice工程への導線」へ。
+
 ### P5. 統括plan要件の粒度 【裁定: 　】
+
 - 憲法44行とcontract.md 14行の**両面**を「campaign単位のplan正本＋重装備は4関節」で整合
   （片面追補では矛盾が残る——反証指摘の採用）。
+
 ### P6. publish H承認の埋没分離 【裁定: 　】
+
 - AGENTS.md 26行段落を恒久権限とH承認の別bulletへ（内容不変）。
+
 ### P7. 知識還流のscope限定 【裁定: 　】
+
 - 還流の書込みは「書込みを含む依頼・進行中campaign・明示の知識還流Phase」だけ、他は還流提案まで。
+
 ### P8. model/effort規則とCodex native role 【裁定: 　】
+
 - 委譲契約10行へ「検証済みroleによる**model・effort両方の**固定は明示と等価」（effort欠落を
   補正——反証指摘の採用）。
 
 ## Tier 2 — 機械境界の工事（各々独立起票。規則は増やさない）
 
 ### P9. 委譲の能力分離 【裁定: 　】
+
 - 対象を**未強制面に限定**: Claude側Agent/Bash委譲とaiterm系（Codex refuter/sorterは既に
   read-only sandbox・Controlはrole書込拒否済み——反証の前提補正）。committer新設はしない
   （子commit禁止契約と衝突）。
+
 ### P10. model/effort省略のdispatch拒否 【裁定: 　】
+
 - Claude C1のdeny化に加え、**Codex X2面・sidecar既定値の扱い**を起票時の設計論点に含める
   （C1単独ではCodex面に届かない——反証の補正）。
+
 ### P11. writer直列化の強制点 【裁定: 　】
+
 - 実態: `lib/orchestrate/execution-path.mjs`（pure判定・production importerなし）。
   「単一入口へ接続」ではなく**dispatch ownerごと（親の手順・Lattice run経路）の強制点設計**として起票。
+
 ### P12. 祖先検証gateの残repo展開 【裁定: 　】
+
 - 前提更新（反証の実測）: 実装済み=AIShell・Lattice・gpt-connector・Observer。
   未実装の候補=aiterm-mcp（buildのみ確認）・Throughline・Caveat・Spotter・codex-sidecar等を
   再棚卸しして展開（既存恒久裁定の実装完遂）。
@@ -74,15 +96,22 @@ r1反証での棄却3件（P13受け皿ミス再発・P15根拠誤読・P19規�
 ## Tier 3 — 文書衛生（生き残り3件）
 
 ### P14. モデル名の02_models集約（範囲補正版） 【裁定: 　】
+
 - skillから**世代の解決例・コスト説明**だけを02_modelsへ寄せ、実行に必要なfloating alias
   （`sonnet`等の呼出形）はskillに残す（全置換は実行形を壊す——反証指摘の採用）。
+
 ### P16. AGENTS.md工場欠陥段落のポインタ化 【裁定: 　】
+
 - 共通部分はcontract.md「Phase maintenance」へ、dotagents固有（第三者完全範囲外・adapter例外・
   H carry-over）だけ残す。反証も維持判定。
+
 ### P17. 委譲契約のADR経緯の圧縮 【裁定: 　】
+
 - 経緯散文を「（ADR 0113で不変Decision確定・旧L7留保は失効）」の括弧1つへ（再燃防止マーカー保持）。
   反証も維持判定。
+
 ### P18. 外部到達性の断定規則（範囲限定版） 【裁定: 　】
+
 - 「**外部サービスの可用性・到達性の断定**は、単一経路・単一試行を根拠にせず、再試行または
   独立経路の確認だけを根拠にする」（無限定の「単一試行=unknown」はfail loudと衝突——反証指摘の採用）。
 
