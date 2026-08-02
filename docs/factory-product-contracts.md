@@ -4,6 +4,10 @@
 
 ## 共通境界
 
+- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、Observer、ServerManager）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64、ObserverはmacOS専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。
+- 現役契約はLattice `docs/01_integration-package.md`と本台帳・[factory-host-product-matrix.md](factory-host-product-matrix.md)が正、導入経緯は[docs/archive/plan_lattice-factory-integration.md](archive/plan_lattice-factory-integration.md)と[docs/archive/plan_observer-core-integration.md](archive/plan_observer-core-integration.md)が正。
+- コア製品の修理・機能追加はcommit/pushで止めず、version bump→publish→対象端末へのglobal install→公開後smoke→公開証跡記録までを同一waveで完遂する。release gateは「publish対象は既定ブランチの祖先だけ」を機械gateとして実装したものだけを合格とし、AIShellの`scripts/verify-release-commit.mjs`＋`prepublishOnly`をreference実装とする。gate未実装の製品は、次にrelease作業を行うwaveで同時に導入する。
+- 工場の再現欠陥では、データ損失、security・認可・秘密漏洩、公開契約・履歴破壊、回復不能、現在のcritical pathまたはPhase受入を塞ぐP0/P1だけを即時修理する。非criticalは最小再現・影響・所有repoを既存planのmaintenance queueへ一度記録し、通常TODO後かつfull regression/Phase監査前のmaintenance wave一回で重複統合、再現確認、repo別修理、focused/related gate、repo別commitまで閉じる。欠陥ごとのplan、Control、ADR、独立監査、receiptは作らない。第三者製品または基盤toolchain本体が原因かつ修理所有者である欠陥はdotagentsのToDo、maintenance queue、H承認待ちへ登録せず範囲外とし、dotagents所有adapter・設定生成・互換projectionの欠陥は範囲内とする。権限外変更、コア製品publish、本番deploy、credential/login、意図的障害試験は理由と必要条件を記録しH承認待ちとしてcarry overする。
 - 各製品のhost/connector期待状態は本台帳へ複製せず、[factory-host-product-matrix.md](factory-host-product-matrix.md)の親別connector matrixだけが持つ。
 - adapterは下記の正規入口だけをread-onlyで使う。未実装native diagnosticsを内部stateの推測で補わない。
 - `latest_version`、update/compatibility、state schema/migration、runtime errorは製品所有者の正規診断が出るまで省略または`unverified`。`unsupported`/`unverified`/`skipped`をpassへ丸めない。

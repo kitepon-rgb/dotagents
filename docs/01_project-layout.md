@@ -74,3 +74,32 @@ src/  tests/  package.json（or pyproject 等）
 1. リポごとに必須要件9点＋型判定を突き合わせ「欠落・過剰・移動候補・リスク」を採点（安価枠へ委譲可）。
 2. 統括が移行順を裁定（見送り基準を先に適用）。
 3. 適用は同期→標準化→CLAUDE.md 磨きを1リポで連続処理し、1リポ=独立コミット。
+
+## dotagents リポの配置規約
+
+| 種類 | リポジトリ上の場所 | 配置先 | 形式 |
+|---|---|---|---|
+| Claude skill | `claude/skills/<name>/` | `~/.claude/skills/<name>` | `SKILL.md` 必須のディレクトリ |
+| Claude command | `claude/commands/<name>.md` | `~/.claude/commands/<name>.md` | 単一 `.md` |
+| Codex skill | `codex/skills/<name>/` | 既定: `$HOME/.agents/skills/<name>`／明示legacy: `~/.codex/skills/<name>` | `SKILL.md`を含むディレクトリ（`agents/openai.yaml`等を併設可）。同一端末・入口には一方だけ |
+| Codex rule | `codex/rules/<file>` | `~/.codex/rules/<file>` | 任意ファイル |
+| Codex グローバル規範 | 正本: `shared/constitution.md`＋`codex/AGENTS.delta.md`／生成物: `codex/AGENTS.md` | `~/.codex/AGENTS.md` | generatorで合成する単一Markdown |
+| Codex サブエージェント | `codex/agents/<name>.toml` | `~/.codex/agents/<name>.toml` | `name`/`description`/`developer_instructions`必須 |
+| 実行スクリプト | `bin/<name>.sh` / `bin/<name>.mjs` | `~/.local/bin/<name>` | shebangに従う単一実行スクリプト（bash / Python / Node.js）。拡張子は配置時に外れる。 `chmod +x` 必須 |
+
+`install.sh`は配布対象を1階層だけ走査しsymlinkを張る。Codex skill面は`--profile official|legacy`の一方だけを選び、新規entryの追加・削除・改名後は`./install.sh --profile <面>`を再実行する。
+
+### Skill の frontmatter
+
+`SKILL.md`の冒頭にはYAML frontmatterで`name`と`description`を書く。`description`はClaudeがいつこのskillを起動するかの判定材料であり、起動条件として「〜と頼まれた時に使う」「Use when …」のように書く。
+
+```yaml
+---
+name: auto-deploy-on-push
+description: GitHub push 起点のデプロイを安全に検討する時に使う。
+---
+```
+
+### Command の frontmatter
+
+`description`は必須、`argument-hint`は任意。本文では`$ARGUMENTS`でコマンド引数を差し込める。

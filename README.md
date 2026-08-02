@@ -227,7 +227,7 @@ permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを�
 `lattice hooks install --host claude|codex` はLattice 0.40.0+の製品管理入口である。sensor気づかせ導線はLattice自身に管理させ、Claude/Codex設定へ手挿ししない。Codex未導入端末では`--host codex`を省略する。
 
 - **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale実ファイル・反対skill面の同名重複・共有orchestrate契約の欠落・routing / hook契約不足に加え、対応hostで必要な工場管理製品CLI、Lattice製品管理hookの`wired`状態、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalogをFAIL行で名指しする。Oracle wrapperは旧wire互換・明示rollback用の検査として残す。`~/.local/bin`をPATHに通していれば以後は`verify-install --profile official`でも可
-- **呼びかけ hook の配線**（AGENTS.md 手順5/6）: Claude 側 `settings.json`（C1-C4）は docs/03 の手順で配線する。Codex 側 X1-X5 は `apply-codex-config` が4イベントを限定して冪等正規化する。両方とも trust 承認は別途必要。断片・復旧手順は docs/03・docs/05 が正本
+- **hook の配線**: Claude側は[docs/03_settings-fragments.md](docs/03_settings-fragments.md)が正本であり、`settings.json`の正本化ゲートhook（「計画レーン案内 hook」）と呼びかけhook 4本（C1-C4）を全端末必須で配線する。Codex側のX1-X5は[docs/05_codex-fragments.md](docs/05_codex-fragments.md)に従い、`apply-codex-config`が4イベントを限定して冪等正規化する。両方ともtrust承認は別途必要。
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／SpotterのUserPromptSubmit・Stop eventが記録される／極小タスクを implementer に委譲して契約どおりの報告が返る
 - 新しい Codex セッションで（対話確認）: skill 一覧に `orchestrate` が出る／`spawn_agent` schema に `agent_type` がある／`agent_type=<role>` と `fork_turns="none"` で routing smoke だけを起動／`verify-codex-agent-routing <role> <agent-path>` が green／Spotter 3 hookを対話Codex CLIの`/hooks`でreviewし、対象入口の新規sessionで`spotter.hook_event.v1`が記録される時だけ follow-up task を渡す
 
@@ -293,3 +293,9 @@ tail -5 ~/.local/state/agents-update/agents-update.log # "agents-update end" 行
 - ~~`~/.codex/AGENTS.md`~~ — 2026-07 にリポ正本化（`shared/constitution.md`＋`codex/AGENTS.delta.md`から作る`codex/AGENTS.md`をsymlink配布）。端末ローカルの緊急上書きは `~/.codex/AGENTS.override.md`（非コミット・`bin/verify-install.sh` が非空を FAIL 名指し）
 - 罠DB（旧 `caveat/`）は **v0.15+ で dotagents の外**へ移管済み。`~/.caveat/own` を Caveat 自身が private の Caveat-Private へ同期する（public/private とも）。第三者共有は `caveat publish` が public のみ Caveat-Public へ抽出。旧 `*.private.md` gitignore ガードは死に文だったため撤廃
 - リポ直下の `.claude/` `.vscode/` `.obsidian/` — 端末固有状態（gitignore 済み）
+
+## 既知の罠
+
+- 旧clone path `~/projects/dotagents` は廃止済み。古いsymlinkが残る端末は `./install.sh` を再実行して `~/Developer/dotagents` へ貼り直す。
+- Codex skill面は `$HOME/.agents/skills` と `~/.codex/skills` を同居させない。通常はofficial profile、旧入口だけlegacyを明示し、重複FAILを解消してから新規sessionを開く。
+- Throughlineが端末側で実体管理する `sc-detail`、`tl`、`tl-trim` と `~/.codex/skills/throughline` はrepoへ再収録しない。

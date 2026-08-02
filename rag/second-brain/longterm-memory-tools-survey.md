@@ -5,6 +5,10 @@
 - 出典: [Context Cloud 比較記事](https://contextcloud.pro/blog/best-mcp-memory-servers-for-teams/)・[mem0 公式](https://docs.mem0.ai/integrations/claude-code)・[claude-mem-lite](https://github.com/sdsrss/claude-mem-lite)・[vectorize.io 比較](https://vectorize.io/articles/claude-code-memory-vs-mem0-vs-hindsight)
 - 関連: [[karpathy-obsidian-llm-knowledge-base]] [[notebooklm-second-brain-critique]]
 
+## 適用例（憲章原則7の運用）
+
+窓は流行が去れば替えられるが、器に真実を入れると人質になる。Obsidianは`.obsidian/`を端末固有としてgitignoreし、Markdown＋gitを読む窓としてだけ採用できる。NotebookLMは主脳にはせず、一方通行の人間用窓に限る。プラグインはネイティブ機能で上位互換できるなら新規導入しない。
+
 ## 候補の概観（2026-07 時点）
 
 | ツール | 保存先 | 性質 |
