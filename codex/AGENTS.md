@@ -48,16 +48,7 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 
 - **正本化ゲートは統括レーンだけ**: 統括レーンは着手前に、campaign単位の計画正本を対象projectの`docs/`へ置く（工程正本の形式は「計画文書の作法」に従う）。Packet・Control記録などの重装備の適用範囲は統括契約の4関節規定だけとする。通常レーンは会話上の成功条件や内蔵planで足り、docsへ残さない理由の宣言も不要。
 - **Lattice工程管理は明示適用だけ**: Latticeのplan／ToDo／runによる工程管理を新たに使うのは、オーナーが指示した場合だけとする。AIが重い作業に必要と判断した場合は、適用理由と負担を説明して事前に問い合わせ、承認後だけ使う。通常レーンや軽作業では`lattice status`を含む工程管理操作を自動実行せず、会話上の成功条件または内蔵planで閉じる。オーナー承認済みの進行中Lattice planは再確認なしで継続できる。このgateはコード索引としてのLattice sensor利用を制限しない。
-- **工程正本はLatticeのtyped discoveryで決める**: projectで工程を読む／作る前に`lattice status --json`を実行し、
-  `.lattice/`の有無を接続判定へ使わない。`ready`／`active_run`ならtask、依存、状態、完了証拠の正本はLattice
-  storeだけであり、Markdownへ二重化しない。`invalid`はエラーとして止め、Markdownへfallbackしない。
-  `uninitialized`は利用可能な未初期化状態であり、plan導入が作業scopeなら返された`next_action`から
-  `lattice plan create`を使う。Markdownを正本にするのは、Lattice CLIが利用不能か、未初期化projectで
-  project方針／オーナー裁定により導入しない場合だけとする。統括plan Markdownは目的、思想、判断理由、
-  非目標、受入条件、Lattice planへの導線を所有する。新規・変更ToDoはLattice authoring transactionで更新し、
-  Markdown checkboxから移転する時はToDo単位のsource cutoverを同じrevision transactionへ含める。
-  移転済みcheckboxをlive文書へ残したり、Markdownから暗黙再同期したりしない。役目を終えたplan・凍結台帳は
-  `docs/archive/`へ退避し、`docs/`直下は生きた文書だけに保つ。
+- **工程正本はtyped discoveryで決める**: projectで工程を読む／作る前に`lattice status --json`で正本を判定する。`ready`／`active_run`なら正本はLattice storeだけ（Markdownへ二重化しない）。`invalid`はエラーとして止め、Markdownへfallbackしない。判定後の運用（uninitializedの導入・Markdown正本の条件・散文の所有・cutover・archive）は `~/.claude/runbooks/lattice-workflow.md`（Codexは`~/.codex/runbooks/`・実体はdotagents `shared/runbooks/`）に従う。
 
 ## 作業レーンと統制
 
