@@ -1,1 +1,77 @@
-{"schema":"dotagents.canon-migration.v1","entries":[{"receiver_path":"shared/runbooks/lattice-workflow.md","receiver_phrase":"工程正本はLatticeのtyped discoveryで決める","l0_path":"shared/constitution.md","l0_pointer_phrase":"lattice-workflow runbook に従う"},{"receiver_path":"shared/runbooks/knowledge-return.md","receiver_phrase":"調査を無駄にしない。** 調べた／検証した外部仕様・文献","l0_path":"shared/constitution.md","l0_pointer_phrase":"knowledge-return runbook に従う"},{"receiver_path":"shared/runbooks/knowledge-return.md","receiver_phrase":"出力も還流させる**: 良い回答・監査ダイジェスト・図解","l0_path":"shared/constitution.md","l0_pointer_phrase":"knowledge-return runbook に従う"},{"receiver_path":"shared/runbooks/canon-authoring.md","receiver_phrase":"規範文書は判断だけを正本化する**: 共通事項は共通正本","l0_path":"shared/constitution.md","l0_pointer_phrase":"canon-authoring runbook に従う"},{"receiver_path":"shared/runbooks/git-hygiene.md","receiver_phrase":"`rsync --delete` の前に必ず `-n -v` の dry-run","l0_path":"shared/constitution.md","l0_pointer_phrase":"gitignore済み資産の扱いは git-hygiene runbook"},{"receiver_path":"shared/runbooks/git-hygiene.md","receiver_phrase":"削除前の「消費者ゼロ確認」を **grep 単独に頼らない**","l0_path":"shared/constitution.md","l0_pointer_phrase":"索引の併用手順は git-hygiene runbook"},{"receiver_path":"shared/runbooks/git-hygiene.md","receiver_phrase":"リポジトリの削除・移行・リモート乗換の前に、status に出ない資産","l0_path":"shared/constitution.md","l0_pointer_phrase":"安全判定と救済手順は git-hygiene runbook"},{"receiver_path":"shared/runbooks/reporting.md","receiver_phrase":"一枚目は運用中のものだけを扱い、休眠・内部点検・将来用","l0_path":"shared/constitution.md","l0_pointer_phrase":"報告の見せ方は reporting runbook に従う"},{"receiver_path":"shared/runbooks/reporting.md","receiver_phrase":"正確なデータの陳列を完成扱いせず、UI・図・レポート","l0_path":"shared/constitution.md","l0_pointer_phrase":"報告の見せ方は reporting runbook に従う"}]}
+{
+  "schema": "dotagents.canon-migration.v1",
+  "entries": [
+    {
+      "receiver_path": "shared/runbooks/lattice-workflow.md",
+      "receiver_phrase": "工程正本はLatticeのtyped discoveryで決める",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "lattice-workflow runbook に従う",
+      "source_text": "- **工程正本はLatticeのtyped discoveryで決める**: projectで工程を読む／作る前に`lattice status --json`を実行し、\n  `.lattice/`の有無を接続判定へ使わない。`ready`／`active_run`ならtask、依存、状態、完了証拠の正本はLattice\n  storeだけであり、Markdownへ二重化しない。`invalid`はエラーとして止め、Markdownへfallbackしない。\n  `uninitialized`は利用可能な未初期化状態であり、plan導入が作業scopeなら返された`next_action`から\n  `lattice plan create`を使う。Markdownを正本にするのは、Lattice CLIが利用不能か、未初期化projectで\n  project方針／オーナー裁定により導入しない場合だけとする。統括plan Markdownは目的、思想、判断理由、\n  非目標、受入条件、Lattice planへの導線を所有する。新規・変更ToDoはLattice authoring transactionで更新し、\n  Markdown checkboxから移転する時はToDo単位のsource cutoverを同じrevision transactionへ含める。\n  移転済みcheckboxをlive文書へ残したり、Markdownから暗黙再同期したりしない。役目を終えたplan・凍結台帳は\n  `docs/archive/`へ退避し、`docs/`直下は生きた文書だけに保つ。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    },
+    {
+      "receiver_path": "shared/runbooks/knowledge-return.md",
+      "receiver_phrase": "調査を無駄にしない。** 調べた／検証した外部仕様・文献",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "knowledge-return runbook に従う",
+      "source_text": "- **調査を無駄にしない。** 調べた／検証した外部仕様・文献は、その都度 MarkItDown で Markdown 化し `rag/` に保管して再利用可能にする（取得系の罠は caveat が正）。**raw/（一次ソース verbatim）とコンパイル記事（要約・[[リンク]]・自前実測）を分ける**。各ファイルに**出典・取得日・確度**、`rag/INDEX.md` に1行追記。`rag/` が無ければ作る。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    },
+    {
+      "receiver_path": "shared/runbooks/knowledge-return.md",
+      "receiver_phrase": "出力も還流させる**: 良い回答・監査ダイジェスト・図解",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "knowledge-return runbook に従う",
+      "source_text": "- **出力も還流させる**: 良い回答・監査ダイジェスト・図解は使い捨てず rag/ / docs/ に戻して複利で育てる（詳細規約は dotagents/PLAN.md 原則10）。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    },
+    {
+      "receiver_path": "shared/runbooks/canon-authoring.md",
+      "receiver_phrase": "規範文書は判断だけを正本化する**: 共通事項は共通正本",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "canon-authoring runbook に従う",
+      "source_text": "- **規範文書は判断だけを正本化する**: 共通事項は共通正本、host固有事項はhost deltaだけに置く。設定・機械gateで確定する値、自明な入口、手順の複製、事件経緯、日付スタンプは各所有面へ置く。規則は「XはYだけ／それ以外はZ」の肯定制限文で書く。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    },
+    {
+      "receiver_path": "shared/runbooks/git-hygiene.md",
+      "receiver_phrase": "`rsync --delete` の前に必ず `-n -v` の dry-run",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "gitignore済み資産の扱いは git-hygiene runbook",
+      "source_text": "- **`rsync --delete` の前に必ず `-n -v` の dry-run** で「削除一覧」と「秘密混入」を確認する。**gitignore 済みファイルは git status に出ない＝消失に気づけない**。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    },
+    {
+      "receiver_path": "shared/runbooks/git-hygiene.md",
+      "receiver_phrase": "削除前の「消費者ゼロ確認」を **grep 単独に頼らない**",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "索引の併用手順は git-hygiene runbook",
+      "source_text": "- 削除前の「消費者ゼロ確認」を **grep 単独に頼らない**（バイナリ判定されたファイルを黙ってスキップする）。Lattice sensor等の索引を併用する。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    },
+    {
+      "receiver_path": "shared/runbooks/git-hygiene.md",
+      "receiver_phrase": "リポジトリの削除・移行・リモート乗換の前に、status に出ない資産",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "安全判定と救済手順は git-hygiene runbook",
+      "source_text": "- リポジトリの削除・移行・リモート乗換の前に、status に出ない資産と移送不能を疑う（stash・shallow clone 等。個別の罠と対処は caveat が正）。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    },
+    {
+      "receiver_path": "shared/runbooks/reporting.md",
+      "receiver_phrase": "一枚目は運用中のものだけを扱い、休眠・内部点検・将来用",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "報告の見せ方は reporting runbook に従う",
+      "source_text": "- 一枚目は運用中のものだけを扱い、休眠・内部点検・将来用は明示ラベル付きの従属情報にする。内部task IDは作業内容の日本語へ翻訳し、追跡に必要な時だけ括弧へ添える。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    },
+    {
+      "receiver_path": "shared/runbooks/reporting.md",
+      "receiver_phrase": "正確なデータの陳列を完成扱いせず、UI・図・レポート",
+      "l0_path": "shared/constitution.md",
+      "l0_pointer_phrase": "報告の見せ方は reporting runbook に従う",
+      "source_text": "- 正確なデータの陳列を完成扱いせず、UI・図・レポートは見た人が3秒で要点を掴める見せ方までを受入条件にする。",
+      "source_ref": "shared/constitution.md@50d12e4"
+    }
+  ]
+}
