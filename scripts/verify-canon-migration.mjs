@@ -50,8 +50,14 @@ if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
       if (!invalidFields.some((field) => field === "receiver_path" || field === "receiver_text")) {
         verifyReceiverText(index, entry.receiver_path, entry.receiver_text);
       }
+      if (!invalidFields.some((field) => field === "receiver_path" || field === "receiver_phrase")) {
+        verifyPhrase(index, "receiver", entry.receiver_path, entry.receiver_phrase);
+      }
       if (!invalidFields.some((field) => field === "l0_path" || field === "l0_pointer_phrase")) {
         verifyPhrase(index, "l0", entry.l0_path, entry.l0_pointer_phrase);
+      }
+      if (!invalidFields.some((field) => field === "source_ref" || field === "source_text")) {
+        verifySourceText(index, entry.source_ref, entry.source_text);
       }
     });
     if (base && violations.length === 0) coverage = verifyBaseCoverage(base, manifest.entries);
@@ -106,6 +112,28 @@ function verifyPhrase(index, label, relativePath, phrase) {
   const content = readRepoFile(relativePath, `entries[${index}].${label}_path`);
   if (content !== null && !content.includes(phrase)) {
     violations.push(`entries[${index}].${label}_phrase: ${relativePath} に必須句「${phrase}」がない`);
+  }
+}
+
+function verifySourceText(index, sourceRef, sourceText) {
+  const match = /^(.+)@([0-9a-f]{7,40})$/.exec(sourceRef);
+  if (!match) {
+    violations.push(`entries[${index}].source_ref: <path>@<hex revision> 形式でなければならない`);
+    return;
+  }
+  let source;
+  try {
+    source = execFileSync("git", ["show", `${match[2]}:${match[1]}`], {
+      cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error) {
+    violations.push(`entries[${index}].source_ref: ${sourceRef} を取得できない: ${error.stderr?.trim() || error.message}`);
+    return;
+  }
+  if (!visibleMarkdown(source).includes(sourceText)) {
+    violations.push(
+      `entries[${index}].source_text: ${sourceRef} の可視本文の連続逐語部分文字列でない`,
+    );
   }
 }
 
