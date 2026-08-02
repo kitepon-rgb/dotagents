@@ -1053,6 +1053,8 @@ declared_from_revision, declared_by, declared_at, release
   typed audit evidenceと、常に`type=decision`の親Decisionを必須とする。releaseは一度だけで、親actor、
   revision、時刻、evidenceをreceiptへ結合する。未release Campaignが一件でもあればControl finalizationを
   拒否する。
+- release後の後続Runは、親が改めてplacement、admission、dispatchを行う。releaseをそれらの自動実行へ
+  読み替えない。
 - Campaign宣言のtype、members、gated Task、audit要否はcreation receiptのsubject digestへ結合し、
   schema上有効な別値への差替えも拒否する。
 - record／status／releaseはprovider command、network、process、cancel、dispatchを実行しない。
@@ -1076,9 +1078,16 @@ completeやfinalize可能とは扱わない。
 - 各record/advanceは同一manifestのreceiptへ厳密に対応し、receipt capacityは未完了stepすべてを
   閉鎖予約へ含める。v21 manifestは暗黙migrationもcomplete変換もせず`INVALID_SCHEMA`で停止する。
 
+既存Controlでphase gateの設定漏れを発見した時は、実在するretained evidenceだけで順序どおりphaseを記録する。
+事後の推測や証拠再構成で完了へ丸めない。
+
 ### Acceptance
 
 Workerの`completed`と親の`accepted | rejected`を分離する。
+
+import前に親が受入差分を返した時は、Workerは同一Run相関とexecutor handleで再作業する。import後にrejectした時は、
+同じTaskとassignmentの新しいretry Runを作り、新しいPacket／Report相関で再配置する。完了報告の撤回だけで
+停止したり、既存Runを書き換えたりしない。
 
 - running／unknown／failed／cancelledをacceptできない。
 - acceptanceは`decision=accepted|rejected`、`accepted_from_revision`、`result_digest`、Executor handle、

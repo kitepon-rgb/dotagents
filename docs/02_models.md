@@ -37,6 +37,9 @@
 - **一般Workerは適格候補間でrate-aware配置**: role、能力、独立性、F/A/Hを満たす候補だけを残し、残quotaを配置判断に使う。quota取得不能・stale時に架空値や暗黙fallbackで配置を成功扱いしない。Observerは自作コア製品へ編入済みだが、配置roleは親伴走専用であり、一般Worker・Consultation・Control票へ混ぜない。旧検討履歴は[archive済みObserver計画](archive/plan_observer-factory-integration.md)に置く。
 - **Phase検証はクロスprovider**: Phase完了時の重い検証は、Claude親の成果をCodex（`codex_review`／`codex_risk_check`）が、Codex親の成果をClaude（`claude -p`）が1回検証する。TODO単位ではやらず親確認で足りる。指摘の採用・棄却は統括が裁定する。
 
+役割と配置関係の機械可読な対応は`lib/orchestrate/placement-policy.mjs`（`dotagents.placement-policy.v1`）が固定し、
+fixtureがadapter catalogのconsultation laneおよびControl schema v26のconnector enumとの整合を検証する。
+
 | 役割 | Claude レーン | Codex レーン | xAI レーン | ChatGPT レーン |
 |---|---|---|---|---|
 | 統括・会話（親） | **オーナー指定** | **オーナー指定**（旗艦単体・proactive OFF を推奨） | — | — |
