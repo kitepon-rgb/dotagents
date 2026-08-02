@@ -34,12 +34,14 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 
 ## 調査と知識の置き場
 
+本書の「<name> runbook」は `~/.claude/runbooks/<name>.md`（Codexは `~/.codex/runbooks/<name>.md`・実体はdotagents `shared/runbooks/`）を指す。
+
 - 本節の還流・正典反映の書込みは、書込みを含む依頼・進行中campaign・明示の知識還流Phaseだけで行い、read-only指定の依頼では提案として返す。
 - 調査では、モデルの既存知識だけで判断しない。必ず最新の根拠を確認してから判断する。モデル内の知識は古い、または間違っている可能性があるものとして扱う。
 - **調べる前に、まず既存の知識を検索する**: caveat（罠DB・`caveat_search`）と `rag/INDEX.md`。同じ調査・同じ罠の再走は資源の無駄。
 - **確信できない指摘は棄却する**。通常レーンは親自身が反対仮説を確認すれば足り、別エージェントや反復監査を要求しない。統括レーンの反証・監査構造と頻度は`orchestrate`正典に従う。
 - **テストは薄く速く**: 実装中は変更に直結するfocused testだけを回し、完了時に関連testを1回確認して閉じる。full regressionは統括レーンのPhase gateとCI必須gateだけ。変わっていないgreen testを「念のため」再実行しない。
-- **調査と出力を還流させる**: 調べた外部仕様・文献と、価値ある出力（回答・監査ダイジェスト・図解）はrag/へ還流して複利で育てる。保存手順（MarkItDown化・raw/コンパイル分離・出典/取得日/確度・INDEX追記）と月次衛生は knowledge-return runbook に従う。
+- **調査と出力を還流させる**: 調べた外部仕様・文献は`rag/`へ、価値ある出力（回答・監査ダイジェスト・図解）は内容に応じて`rag/`または`docs/`へ還流して複利で育てる。保存手順（MarkItDown化・raw/コンパイル分離・出典/取得日/確度・INDEX追記）と月次衛生は knowledge-return runbook に従う。
 - **方針級の発見はその場で正典へ**: 作業中に見つけた規約・作法・罠対処は、会話や端末メモリに置いて終わらせず、その場でプロジェクトの AGENTS.md／CLAUDE.md／docsへ反映する。全project共通の規範はdotagentsの`shared/constitution.md`またはhost deltaへ反映する。端末メモリには端末固有情報とポインタだけ残す。
 - **規範文書は判断だけを正本化する**: 規則は「XはYだけ／それ以外はZ」の肯定制限文で書き、共通事項は共通正本・host固有はdeltaだけに置く。書き方の詳細（置かないもの・受け皿の選び方・読者面の実測）は canon-authoring runbook に従う。
 
@@ -47,7 +49,7 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 
 - **正本化ゲートは統括レーンだけ**: 統括レーンは着手前に、campaign単位の計画正本を対象projectの`docs/`へ置く（工程正本の形式は「計画文書の作法」に従う）。Packet・Control記録などの重装備の適用範囲は統括契約の4関節規定だけとする。通常レーンは会話上の成功条件や内蔵planで足り、docsへ残さない理由の宣言も不要。
 - **Lattice工程管理は明示適用だけ**: Latticeのplan／ToDo／runによる工程管理を新たに使うのは、オーナーが指示した場合だけとする。AIが重い作業に必要と判断した場合は、適用理由と負担を説明して事前に問い合わせ、承認後だけ使う。通常レーンや軽作業では`lattice status`を含む工程管理操作を自動実行せず、会話上の成功条件または内蔵planで閉じる。オーナー承認済みの進行中Lattice planは再確認なしで継続できる。このgateはコード索引としてのLattice sensor利用を制限しない。
-- **工程正本はtyped discoveryで決める**: projectで工程を読む／作る前に`lattice status --json`で正本を判定する。`ready`／`active_run`なら正本はLattice storeだけ（Markdownへ二重化しない）。`invalid`はエラーとして止め、Markdownへfallbackしない。判定後の運用（uninitializedの導入・Markdown正本の条件・散文の所有・cutover・archive）は `~/.claude/runbooks/lattice-workflow.md`（Codexは`~/.codex/runbooks/`・実体はdotagents `shared/runbooks/`）に従う。
+- **工程正本はtyped discoveryで決める**: projectで工程を読む／作る前に`lattice status --json`で正本を判定する。`ready`／`active_run`なら正本はLattice storeだけ（Markdownへ二重化しない）。`invalid`はエラーとして止め、Markdownへfallbackしない。判定後の運用（uninitializedの導入・Markdown正本の条件・散文の所有・cutover・archive）は lattice-workflow runbook に従う。
 
 ## 作業レーンと統制
 

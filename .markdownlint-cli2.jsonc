@@ -2,6 +2,7 @@
 //
 // 方針: 「正しく描画される既存の知識ドキュメントと戦わない」。
 // 純スタイル系で密なバイリンガル知識文書に不適な4ルールだけを無効化し、
+// 共通憲法のrunbook写像プレースホルダ`<name>`だけをMD033の例外にする。
 // 構造系（見出し階層・見出し前後の空行・末尾改行・ハードタブ・空リンク 等
 // ~40ルール）は既定のまま有効に保つ＝将来の編集の破綻は捕まえる。
 // 無効化した各ルールの根拠は docs/04_ci.md に記録（勝手に「直さない」ため）。
@@ -9,6 +10,7 @@
   "config": {
     "default": true,
     "MD013": false, // line-length: 日本語散文＋広い表に80桁は不適
+    "MD033": { "allowed_elements": ["name"] }, // inline-html: 確定文言の写像プレースホルダ
     "MD031": false, // blanks-around-fences: リスト内フェンス（GitHubで正常描画）に発火
     "MD040": false, // fenced-code-language: ASCIIツリー/テキスト図に言語指定は無意味
     "MD060": false  // table-column-style: 表パイプ整列の見た目のみ
