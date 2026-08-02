@@ -34,6 +34,7 @@ if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
       "l0_pointer_phrase",
       "source_text",
       "source_ref",
+      "receiver_text",
     ];
     manifest.entries.forEach((entry, index) => {
       if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
@@ -46,8 +47,8 @@ if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
       for (const field of invalidFields) {
         violations.push(`entries[${index}].${field}: 空でない文字列でなければならない`);
       }
-      if (!invalidFields.some((field) => field === "receiver_path" || field === "source_text")) {
-        verifySourceText(index, entry.receiver_path, entry.source_text);
+      if (!invalidFields.some((field) => field === "receiver_path" || field === "receiver_text")) {
+        verifyReceiverText(index, entry.receiver_path, entry.receiver_text);
       }
       if (!invalidFields.some((field) => field === "l0_path" || field === "l0_pointer_phrase")) {
         verifyPhrase(index, "l0", entry.l0_path, entry.l0_pointer_phrase);
@@ -86,11 +87,17 @@ function readRepoFile(relativePath, violationLabel) {
   }
 }
 
-function verifySourceText(index, relativePath, sourceText) {
+function visibleMarkdown(content) {
+  return content
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<!--[\s\S]*$/g, "");
+}
+
+function verifyReceiverText(index, relativePath, receiverText) {
   const content = readRepoFile(relativePath, `entries[${index}].receiver_path`);
-  if (content !== null && !content.includes(sourceText)) {
+  if (content !== null && !visibleMarkdown(content).includes(receiverText)) {
     violations.push(
-      `entries[${index}].source_text: ${relativePath} に移設全文が逐語で含まれない`,
+      `entries[${index}].receiver_text: ${relativePath} の可視本文に現行規範全文が逐語で含まれない`,
     );
   }
 }
@@ -120,8 +127,9 @@ function verifyBaseCoverage(baseRevision, entries) {
   const result = { total: 0, sourceText: 0, l0: 0 };
 
   for (const l0Path of l0Paths) {
-    const currentContent = readRepoFile(l0Path, `--base ${baseRevision}`);
-    if (currentContent === null) continue;
+    const rawCurrentContent = readRepoFile(l0Path, `--base ${baseRevision}`);
+    if (rawCurrentContent === null) continue;
+    const currentContent = visibleMarkdown(rawCurrentContent);
     let diff;
     try {
       diff = execFileSync(

@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
 
-.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-canon-migration lint-skills lint-hooks test-constitution test-install test-observer-hook-config test-observer-package test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-factory-wire test-orchestrate test-lattice-cutover ci help
+.PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-canon-migration canon-migration-gate lint-skills lint-hooks test-constitution test-install test-observer-hook-config test-observer-package test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-factory-wire test-orchestrate test-lattice-cutover ci help
 
 lint: lint-sh lint-py lint-js lint-md lint-constitution lint-canon-migration lint-skills lint-hooks ## 静的 lint + skill/hook smoke
 
@@ -26,6 +26,10 @@ lint-constitution: ## 共通憲法＋host deltaと生成物の完全一致を照
 
 lint-canon-migration: ## 正典移設manifestの受け皿・L0ポインタ必須句を検証
 	node scripts/verify-canon-migration.mjs
+
+canon-migration-gate: ## BASEとの差分にある正典削除行の移設被覆を検証
+	@test -n "$(BASE)" || { echo "BASE is required (例: make canon-migration-gate BASE=origin/main)" >&2; exit 2; }
+	node scripts/verify-canon-migration.mjs --base "$(BASE)"
 
 lint-skills: ## Codex skill の frontmatter と安全契約を静的検証
 	bash tests/skills/smoke.sh

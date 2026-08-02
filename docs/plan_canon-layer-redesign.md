@@ -77,6 +77,7 @@
 - **各waveは隔離worktreeで完遂**する: source置換→generator再生成→exact文言追従→
   migration manifest検査→refuter→全gate green→親受入→**mainへのfast-forward一回**で配布面へ反映。
   symlink配布面に未受入状態を露出させない。
+- 各waveの受入は `make canon-migration-gate BASE=origin/main` green を必須とする。
 - **wave 0（受け皿新設）は未参照の骨格まで**に限定（L0からのポインタはまだ張らない＝二重存在期間も
   読者面は不変）。
 - **migration manifest**: 移設行ごとに`source行→L0ポインタ→受け皿行`を記録し、対象存在・リンク到達・
