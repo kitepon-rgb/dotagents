@@ -16,3 +16,11 @@
 - **P10（fm-0688）** 目的: 子AIを起動する時のモデル・思考量の指定忘れを物理的に止める（指定忘れは親の高価な設定を黙って継ぎ、費用と品質の事故になる）。何が変わるか: Claude C1 hookとCodex X2 hookが、指定の無い起動を拒否する。例外=repo設定ファイルが既定を固定する入口（codex-sidecar）と役割定義がモデルを固定する入口は「明示と同等」で許可。
 - **P11（fm-0689）** 目的: 同じrepoへ同時に書き込む2つ目の作業者を止める（並行書込は互いの変更を踏み潰す事故源）。何が変わるか: 親が外部writerを起動すると予約台帳へ記録され、同じrepoへの2匹目は先行の受入完了・手動解放まで拒否される。時刻による自動解放は作らない（結果不明のまま並行させるのが一番危険）。並列が必要な時はLattice run経由が正規ルート。経緯: 実装前反証で当初案（active runの有無で判定・TTL自動解放）が棄却され、予約・手動解放方式へ再設計。Codex側・aiterm追撃dispatch面への展開は依存工程。
 - **P12（fm-0690）** 目的: 「公開してよいのはmainに載ったcommitだけ」ゲート（公開後にそのcommitが後続releaseから消える事故の防止）を、未実装のコア製品repoへ展開する。AIShellの実装（`scripts/verify-release-commit.mjs`＋`prepublishOnly`）が手本。実装済み=AIShell・Lattice・gpt-connector・Observer。残repoの実態は棚卸し調書に従う。
+
+## 完了receipt（2026-08-02・統括受入）
+
+- fm-0693（X2展開）: dotagents `839a704`——spawn_agentへC1同一のscope token・共有writer予約・sentinel直列化を移植。fixture群green。
+- fm-0691（aiterm launch schema）: aiterm-mcp `07cb43e`＋`v0.21.0` publish/install——write_scope宣言をreceipt/metadata/pty_listへ記録し、Codex read-onlyは`--sandbox read-only`で実効能力壁化。他レーンはdeclaration_only_unsupportedを明示。
+- fm-0692（Lattice run gate）: Lattice `320e05a`＋`v0.41.0` publish/install——`plan compile --todo-plan`のtodo_plan_binding束縛と、artifact消費型`run start`の型付き拒否（INVALID_PLAN_ARTIFACT／COMPILE_ARTIFACT_UNBOUND／STALE_TODO_PLAN_BINDING／TODO_PLAN_TASK_MISMATCH／PARALLEL_GROUP_UNVERIFIED）。138 suites green。
+- fm-0687（委譲の能力分離）: dotagents分は`adf2381`（scope宣言token強制）、能力壁の本丸はfm-0691の実装で充足（aiterm 0.21.0）。
+- fm-0689（writer直列化の強制点）: 親手順側=`adf2381`（予約台帳）、Codex側=`839a704`（X2展開）、Lattice側=fm-0692（run gate）。dispatch owner 3面すべてに強制点を設置。
