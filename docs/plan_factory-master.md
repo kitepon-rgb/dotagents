@@ -31,8 +31,17 @@ Lattice storeが唯一の正本であり、Markdown checkboxや旧queueへ二重
 
 ## 現在のwave
 
-進行中waveはない。Lattice `factory-master`の`fm-0680`〜`fm-0686`は完了し、
-Control `factory-documentation-sync-20260726`もfinalize／archive済み。
+Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-layer-redesign`）が進行中。
+各ToDoの平文設計メモは[source-ledger](archive/lattice-source-ledger/canon-tier2-gates-20260802.md)にある
+（`lattice todo note`経路が下記欠陥で塞がっている間の一時迂回）。
+
+## maintenance queue
+
+- **Lattice `todo note`がスタブrevisionでfail closed**（2026-08-02記録・所有repo=Lattice・非クリティカル）:
+  `factory-master`履歴中の`rev-c7e2409e…`（2026-07-20移行中断の残骸・`plan.json`欠落）でnote投影が
+  `NOTE_PROJECTION_INVALID`になる。最小再現・迂回はcaveat
+  `lattice-todo-note-revision-plan-json-note-projection-invalid`が正。修理はLattice repoの
+  maintenance waveで（store直接編集はしない）。
 
 工程表示は次で生成する。
 
