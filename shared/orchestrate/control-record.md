@@ -425,7 +425,7 @@ expiry判定に使うため、同じsnapshotと入力から同じ結果を返す
         "parent_worker_run_id": null,
         "root_assignment_id": "assignment-001",
         "provider": "openai",
-        "model": "gpt-5.6-terra",
+        "model": "<docs/02_models.md の実装物量（Codexレーン）現行値>",
         "prompt_family": "implementation-v1",
         "independence_group": "implementation-primary",
         "context_policy": {
@@ -873,7 +873,7 @@ wall timeとcost上限は非負整数または`null=unknown`である。costは�
     "parent_worker_run_id": null,
     "root_assignment_id": "assignment-001",
     "provider": "openai",
-    "model": "gpt-5.6-terra",
+    "model": "<docs/02_models.md の実装物量（Codexレーン）現行値>",
     "prompt_family": "implementation-v1",
     "independence_group": "implementation-primary",
     "context_policy": {
