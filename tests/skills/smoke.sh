@@ -101,7 +101,14 @@ contains "$ROOT/claude/skills/orchestrate/SKILL.md" '反証は親と同値のali
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '親と同値のaliasを明示×決定表のeffort'
 contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "model:'sonnet', effort:'low'"
 contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "model:'sonnet', effort:'medium'"
-[ "$(rg -Fo "model:'fable', effort:'high'" "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" | wc -l | tr -d ' ')" -eq 2 ] || fail 'workflow反証2例のmodel/effortが明示されていない'
+contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "const PARENT_ALIAS = 'opus'; // copy時に親と同値のfloating aliasへ変更（docs/02_models.md「反証・検証」行）"
+assert_order "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" \
+  "phase('Verify')" \
+  "model:PARENT_ALIAS, effort:'high'" \
+  "phase('Critic')" \
+  "model:PARENT_ALIAS, effort:'high'"
+# shellcheck disable=SC2016 # backticks are literal Markdown from the workflow contract.
+contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" '`fable×high`の使用は、親が最上位未満かつ契約クリティカルのPhase gateで1回だけ（02_models「最上位のスポット呼び」）。雛形の既定にしない。'
 [ ! -e "$ROOT/claude/skills/orchestrate/references/delegation-contract.md" ] || fail 'Claude 固有の旧 delegation-contract.md が残っている'
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'agent_type=<role>'
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'fork_turns="none"'
