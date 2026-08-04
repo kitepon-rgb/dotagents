@@ -62,8 +62,60 @@ check() { # check <dst> <expect_src>
   fi
 }
 
+verify_aishell_host_registration() {
+  local codex_config claude_config
+
+  if ! command -v codex >/dev/null 2>&1; then
+    echo "FAIL: Codex CLI 不在（AIShell MCP登録を検証できない）"
+    fail=1
+  elif ! codex_config="$(codex mcp get aishell --json 2>/dev/null)"; then
+    echo "FAIL: CodexのAIShell MCP登録を取得できない"
+    fail=1
+  elif printf '%s\n' "$codex_config" | python3 -c '
+import json
+import sys
+
+value = json.load(sys.stdin)
+transport = value.get("transport") if isinstance(value, dict) else None
+transport = transport if isinstance(transport, dict) else {}
+environment = transport.get("env")
+environment = environment if isinstance(environment, dict) else {}
+valid = (
+    value.get("enabled") is True
+    and transport.get("type") == "stdio"
+    and transport.get("command") == "aishell-mcp"
+    and transport.get("args") == []
+    and environment.get("AISHELL_CAPABILITY_SET") == "expanded-v1"
+)
+raise SystemExit(0 if valid else 1)
+'; then
+    echo "OK  Codex AIShell MCP: aishell-mcp / expanded-v1"
+  else
+    echo "FAIL: Codex AIShell MCPはenabledなbare aishell-mcp + AISHELL_CAPABILITY_SET=expanded-v1でない"
+    fail=1
+  fi
+
+  if ! command -v claude >/dev/null 2>&1; then
+    echo "FAIL: Claude Code CLI 不在（AIShell MCP登録を検証できない）"
+    fail=1
+  elif ! claude_config="$(NO_COLOR=1 TERM=dumb claude mcp get aishell 2>&1)"; then
+    echo "FAIL: Claude CodeのAIShell MCP登録を取得できない"
+    fail=1
+  elif printf '%s\n' "$claude_config" | grep -Eq '^  Scope: User config' \
+    && printf '%s\n' "$claude_config" | grep -Eq '^  Status: .*Connected$' \
+    && printf '%s\n' "$claude_config" | grep -Fqx '  Type: stdio' \
+    && printf '%s\n' "$claude_config" | grep -Fqx '  Command: aishell-mcp' \
+    && printf '%s\n' "$claude_config" | grep -Fqx '    AISHELL_CAPABILITY_SET=expanded-v1'; then
+    echo "OK  Claude AIShell MCP: user / aishell-mcp / expanded-v1 / Connected"
+  else
+    echo "FAIL: Claude AIShell MCPはuser scopeのConnectedなbare aishell-mcp + AISHELL_CAPABILITY_SET=expanded-v1でない"
+    fail=1
+  fi
+}
+
 verify_factory_core() {
   local project_root="${DOTAGENTS_FACTORY_PROJECT_ROOT:-$REPO}"
+  local aishell_supported=false
   local cli
   for cli in caveat throughline spotter lattice markitdown gpt-connector aiterm-mcp codex-sidecar-mcp; do
     if command -v "$cli" >/dev/null 2>&1; then
@@ -74,7 +126,10 @@ verify_factory_core() {
     fi
   done
 
-  if [ "$(uname -s 2>/dev/null || true)" = Darwin ] && [ "$(uname -m 2>/dev/null || true)" = arm64 ]; then
+  if { [ "$(uname -s 2>/dev/null || true)" = Darwin ] \
+      && [ "$(uname -m 2>/dev/null || true)" = arm64 ]; } \
+    || [ "${DOTAGENTS_TEST_AISHELL_SUPPORTED:-0}" = 1 ]; then
+    aishell_supported=true
     if command -v aishell-mcp >/dev/null 2>&1; then
       echo "OK  factory core CLI: aishell-mcp → $(command -v aishell-mcp)"
     else
@@ -121,6 +176,10 @@ verify_factory_core() {
     echo "FAIL: python3 不在（Spotter project marker / hook / catalog を検証できない）"
     fail=1
     return
+  fi
+
+  if [ "$aishell_supported" = true ]; then
+    verify_aishell_host_registration
   fi
 
   if ! python3 - "$project_root" <<'PY'

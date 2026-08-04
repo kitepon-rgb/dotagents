@@ -68,6 +68,7 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 ## git・shell・ファイルの作法（実被弾からの鉄則）
 
 - **shell操作は、全hostで既定として aiterm-mcp の永続PTY（`mcp__aiterm__pty_*`）を使う**（全host共通）。永続PTYは cwd・環境変数・ssh セッション等の状態を保てる（長時間・対話的・連続操作に強い）。明らかに軽い単発の読み取りに限りhost標準の単発shellツール可。新しいセッションで無意識に標準入口へ流れない。PTY既定はhostの承認・sandboxの迂回ではない＝承認を要する操作の目的・影響・戻し方説明は入口によらず省略しない。
+- **対応macOS hostでは、反復または複数ファイルのworkspace観測、32KiB超が見込まれる検査、processの継続観測・待機、cursorへ束縛した複数ファイル変更だけをAIShellの高密度toolへ先に流す。** AIShellはPTYの代替ではなく、OS状態を保持して再scan・再読・再実行を減らす面である。狭い単発`rg`、小出力command、single-file taskはhost native／aitermを使い、AIShellを儀式として呼ばない。対話hostの登録はbare `aishell-mcp`＋`AISHELL_CAPABILITY_SET=expanded-v1`だけを正とする。
 - **基準パス・フォルダ構成の変更（プロジェクトの移動・改名・削除）はオーナーの明示承認必須**。文書に正規パスが書いてあっても実環境を黙って動かす免罪符にしない＝食い違いは報告して裁定を仰ぐ。実行前に目的・影響・戻し方を申告、実行後に移動一覧を報告する。**端末限定の裁定を共有ドキュメントへ一般化して書かない**（他端末に波及する）。
 - **並行エージェント作業中の commit は必ず pathspec 明示**（対象だけ `git add` して直後に `git status` 確認、または `git commit -- <paths>`）。裸の `git commit` は他エージェントが stage した変更を巻き込む。
 - **複数行のコミットメッセージは `-F <file>` で渡す**。PTY へのインライン複数行 `-m` は引用崩れする。

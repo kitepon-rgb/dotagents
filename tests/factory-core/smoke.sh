@@ -57,6 +57,43 @@ exit 64
 EOF
   chmod +x "$BIN_DIR/$command"
 done
+cat > "$BIN_DIR/codex" <<'EOF'
+#!/bin/sh
+if [ "$1" = mcp ] && [ "$2" = get ] && [ "$3" = aishell ] && [ "$4" = --json ]; then
+  case "${CODEX_AISHELL_MODE:-valid}" in
+    valid)
+      printf '%s\n' '{"name":"aishell","enabled":true,"transport":{"type":"stdio","command":"aishell-mcp","args":[],"env":{"AISHELL_CAPABILITY_SET":"expanded-v1"}}}'
+      ;;
+    missing_env)
+      printf '%s\n' '{"name":"aishell","enabled":true,"transport":{"type":"stdio","command":"aishell-mcp","args":[],"env":null}}'
+      ;;
+    absolute_command)
+      printf '%s\n' '{"name":"aishell","enabled":true,"transport":{"type":"stdio","command":"/opt/homebrew/bin/aishell-mcp","args":[],"env":{"AISHELL_CAPABILITY_SET":"expanded-v1"}}}'
+      ;;
+  esac
+  exit 0
+fi
+exit 64
+EOF
+chmod +x "$BIN_DIR/codex"
+cat > "$BIN_DIR/claude" <<'EOF'
+#!/bin/sh
+if [ "$1" = mcp ] && [ "$2" = get ] && [ "$3" = aishell ]; then
+  printf '%s\n' 'aishell:'
+  printf '%s\n' '  Scope: User config (available in all your projects)'
+  printf '%s\n' '  Status: ✔ Connected'
+  printf '%s\n' '  Type: stdio'
+  printf '%s\n' '  Command: aishell-mcp'
+  printf '%s\n' '  Args:'
+  printf '%s\n' '  Environment:'
+  if [ "${CLAUDE_AISHELL_MODE:-valid}" = valid ]; then
+    printf '%s\n' '    AISHELL_CAPABILITY_SET=expanded-v1'
+  fi
+  exit 0
+fi
+exit 64
+EOF
+chmod +x "$BIN_DIR/claude"
 cat > "$HOME_DIR/.local/bin/oracle-mcp-stable" <<'EOF'
 #!/bin/sh
 exit 0
@@ -83,6 +120,7 @@ chmod +x "$BIN_DIR/spotter"
 verify_core() {
   HOME="$HOME_DIR" PATH="$BIN_DIR:/usr/bin:/bin" \
     DOTAGENTS_FACTORY_CORE_ONLY=1 \
+    DOTAGENTS_TEST_AISHELL_SUPPORTED=1 \
     DOTAGENTS_FACTORY_PROJECT_ROOT="$PROJECT" \
     "$ROOT/bin/verify-install.sh" --profile official
 }
@@ -145,11 +183,15 @@ mv "$BIN_DIR/spotter" "$BIN_DIR/spotter.off"
 assert_rejected 'spotter CLI 欠落'
 mv "$BIN_DIR/spotter.off" "$BIN_DIR/spotter"
 
-for command in aiterm-mcp codex-sidecar-mcp lattice; do
+for command in aiterm-mcp codex-sidecar-mcp lattice aishell-mcp; do
   mv "$BIN_DIR/$command" "$BIN_DIR/$command.off"
   assert_rejected "$command CLI 欠落"
   mv "$BIN_DIR/$command.off" "$BIN_DIR/$command"
 done
+
+CODEX_AISHELL_MODE=missing_env assert_rejected 'Codex AIShell expanded-v1欠落'
+CODEX_AISHELL_MODE=absolute_command assert_rejected 'Codex AIShell absolute command'
+CLAUDE_AISHELL_MODE=missing_env assert_rejected 'Claude AIShell expanded-v1欠落'
 
 # Oracle はv1 rollback互換だけに残す。v2の通常導入・更新対象ではないため、
 # v2 factory core smokeはOracle wrapperの正常性を要求しない。

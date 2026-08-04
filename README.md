@@ -172,10 +172,12 @@ Codex全対応の工程状態はLattice storeが正本で、現役4 host・5入�
   claude mcp add --scope user lattice -- lattice-mcp
   claude mcp add --scope user codex-sidecar -- codex-sidecar-mcp
   claude mcp add --scope user gpt_connector -- gpt-connector-mcp
+  claude mcp add --scope user aishell --env AISHELL_CAPABILITY_SET=expanded-v1 -- aishell-mcp
   codex mcp add aiterm -- aiterm-mcp
   codex mcp add codex-sidecar -- codex-sidecar-mcp
   codex mcp add gpt_connector -- gpt-connector-mcp
   codex mcp add lattice -- lattice-mcp
+  codex mcp add aishell --env AISHELL_CAPABILITY_SET=expanded-v1 -- aishell-mcp
   ```
 - **人間用の窓（任意だが標準）**: Obsidian（`brew install --cask obsidian`。無料・md 直読み。vault 設定 `.obsidian/` は端末ローカル＝gitignore 済み）
 - **home-server ssh**: `kite@192.168.1.2` 直IP（固定IP・エイリアスは作らない）

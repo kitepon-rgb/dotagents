@@ -97,7 +97,7 @@
 - 公開面の分離: 対話hostは`AISHELL_CAPABILITY_SET=expanded-v1`の高密度11 tool面（製品が候補面と位置づける面であり、上流の変更に追従する）へ登録し、工場診断はfactory profileへ隔離する。既定7／expanded 11／full 29／legacy 25のどの一覧にも`factory_diagnostics`は現れず、profile外からは呼べない。factory profileとcapability setの併用は`FACTORY_PROFILE_CAPABILITY_SET_UNSUPPORTED`で拒否され、fallbackしない。
 - runtime schema: `aishell.runtime_configuration.v2`。旧単一`allowedRootPath`は製品側のcompatible-on-readで解釈し、dotagentsは`runtime.json`や`activity.jsonl`を直接読まない。
 - update/rollback: Apple Silicon Macだけ`@quolu/aishell@latest`をglobal更新し、package内`AIShell.app`と`aishell-mcp`を同版で扱う。rollbackは旧npm versionへ戻してMCP processを再起動する。診断は`0.4.1`以降で公開されており、それ以前のversionは`unverified`になる。
-- 起動形式: adapterもMCP hostも`aishell-mcp`をbare command名で起動する。製品側はloaded executable pathからAIShell.app bundleを解決し、この起動形式をrelease gateが覆う。完全修飾pathでだけ検証してbare名起動を未検証のまま出さない。
+- 起動形式: adapterもMCP hostも`aishell-mcp`をbare command名で起動する。`verify-install`は対応Mac上のClaude/Codex両hostについて、user/enable状態、bare command、`AISHELL_CAPABILITY_SET=expanded-v1`、接続状態を検証し、CLI存在だけでは合格にしない。製品側はloaded executable pathからAIShell.app bundleを解決し、この起動形式をrelease gateが覆う。完全修飾pathでだけ検証してbare名起動を未検証のまま出さない。
 - wire: v2/v3/v4固定集合へ後付けせず、ServerManager optional sourceを先行し、Lattice wire v4完了後のwire v5で正式enroll済み。wire v6でも同じ製品契約を維持する。
 - 禁止: 非対応hostへの導入、shell/AppleScript/JXA fallback、`runtime_status`のpathをfactory reportへ転記、pauseを製品故障へ丸めること。
 
