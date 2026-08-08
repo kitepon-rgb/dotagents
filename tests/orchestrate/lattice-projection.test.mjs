@@ -57,11 +57,49 @@ test("public digests are format-validated and relayed without recreating Lattice
 });
 
 test("schema disagreement is version_mismatch and preserves the observed version", async () => {
-  const result = await readTodoFrontier({ runner: runner(JSON.stringify({ schema: "lattice.todo_status_result.v5" })) });
+  const result = await readTodoFrontier({ runner: runner(JSON.stringify({ schema: "lattice.todo_status_result.v4" })) });
   assert.deepEqual(result, {
     kind: "version_mismatch", command: "lattice", args: ["todo", "status", "--json"],
-    expected_schema: TODO_STATUS_SCHEMA, observed_schema: "lattice.todo_status_result.v5",
+    expected_schema: TODO_STATUS_SCHEMA, observed_schema: "lattice.todo_status_result.v4",
   });
+});
+
+test("v5 surfaces audit_pending phases and rejects the v4 shape that omits them", async () => {
+  const accepted = await readTodoFrontier({ runner: runner(await fixture("todo-frontier.json")) });
+  assert.equal(accepted.kind, "todo_frontier");
+  assert.equal(accepted.schema, "lattice.todo_status_result.v5");
+  assert.deepEqual(accepted.value.audit_pending, [{
+    plan_key: "legacy", phase_id: "terminal-audit", phase_status: "gate_ready", implicit: true,
+    required_evidence_slots: ["terminal-audit"],
+    next_commands: [
+      "lattice todo phase review --plan legacy --phase terminal-audit --reason <text>",
+      "lattice todo phase close-unaudited --plan legacy --phase terminal-audit --reason <text>",
+    ],
+  }]);
+  // v5を名乗りながら監査欄を落とした応答は受理しない。欄の欠落は「監査待ちが無い」ではなく
+  // 「監査待ちを答えていない」であり、そこを空扱いすると今回直している失念がそのまま戻る。
+  const withoutAuditPending = JSON.parse(await fixture("todo-frontier.json"));
+  delete withoutAuditPending.audit_pending;
+  const rejected = await readTodoFrontier({ runner: runner(JSON.stringify(withoutAuditPending)) });
+  assert.deepEqual(rejected, {
+    kind: "cli_unavailable", command: "lattice", args: ["todo", "status", "--json"], reason: "invalid_envelope",
+  });
+});
+
+test("audit_pending entries are validated per field, not relayed unchecked", async () => {
+  const mutate = async (patch) => {
+    const value = JSON.parse(await fixture("todo-frontier.json"));
+    patch(value.audit_pending[0]);
+    return readTodoFrontier({ runner: runner(JSON.stringify(value)) });
+  };
+  const invalid = { kind: "cli_unavailable", command: "lattice", args: ["todo", "status", "--json"], reason: "invalid_envelope" };
+  // acceptedとclosed_unauditedは監査待ちではない。値域を開けると「閉じた工程」が残作業に化ける。
+  assert.deepEqual(await mutate((entry) => { entry.phase_status = "accepted"; }), invalid);
+  assert.deepEqual(await mutate((entry) => { entry.implicit = "true"; }), invalid);
+  // 次の一手が空の監査待ちは、次アクション面としては何も答えていないのと同じである。
+  assert.deepEqual(await mutate((entry) => { entry.next_commands = []; }), invalid);
+  assert.deepEqual(await mutate((entry) => { entry.status = "gate_ready"; }), invalid);
+  assert.equal((await mutate((entry) => { entry.phase_status = "reviewing"; })).kind, "todo_frontier");
 });
 
 test("unknown project states and malformed stdout are typed failures, never a missing state", async () => {
