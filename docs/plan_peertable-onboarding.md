@@ -2,7 +2,9 @@
 
 status: **suspended**（2026-08-08 開始、同日中断。オーナー裁定: peertableをLatticeへ内蔵する可能性が浮上し、独立製品としての編入前提が保留）。ToDoの正本はLattice store（plan `peertable-onboarding`）であり、本書は目的・思想・受入条件・導線だけを所有する。
 
-中断時点の現在地: s1（診断契約）は円卓全員合意まで到達し、契約はpeertable repo `docs/plan.md` 決定45としてcommit済み（push未・オーナー明示指示待ち）。t-adapter以降は未着手。詳細はLattice s1のnoteを参照。再開はLattice内蔵可否のオーナー裁定後。
+中断時点の現在地: s1（診断契約）は円卓全員合意まで到達し、契約はpeertable repo `docs/plan.md` 決定45としてcommit済み（push未・オーナー明示指示待ち）。t-adapter以降は未着手。詳細はLattice s1のnoteを参照。
+
+Lattice内蔵案は撤回（オーナー裁定 2026-08-08 同日）。peertableは独立製品のまま編入対象として有効。ただし中断時点でLattice・peertable両製品の改修が別途進行中のため、再開はその収束とオーナーの再開指示後とする（s1契約は再開時に実装現況との差分を再確認してから使う）。
 
 ## 目的
 
