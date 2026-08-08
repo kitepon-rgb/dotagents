@@ -34,3 +34,6 @@ prefix_rule(pattern=["ssh", "-o", "BatchMode=yes", "kite@192.168.1.2"], decision
 prefix_rule(pattern=["mv", "/tmp/Bell-bootstrap", "/home/kite/Developer/Bell"], decision="allow")
 prefix_rule(pattern=["cp", "/home/kite/Developer/OpenCClaw/docs/codex-protocol/ClientRequest.json", "/home/kite/Developer/OpenCClaw/docs/codex-protocol/ServerRequest.json", "/home/kite/Developer/OpenCClaw/docs/codex-protocol/ServerNotification.json", "/home/kite/Developer/OpenCClaw/docs/codex-protocol/codex_app_server_protocol.schemas.json", "/home/kite/Developer/Bell/docs/codex-protocol/"], decision="allow")
 prefix_rule(pattern=["bash", "-o", "pipefail", "-c", "node --test --experimental-test-isolation=none tests/*.test.js 2>&1 | tail -n 30"], decision="allow")
+prefix_rule(pattern=["curl", "-sSIL", "https://kitepon.dev/"], decision="allow")
+prefix_rule(pattern=["curl", "-4", "-sSIL", "-A", "Twitterbot/1.0", "https://kitepon.dev/"], decision="allow")
+prefix_rule(pattern=["node", "/Users/kite/Developer/dotagents/bin/orchestrate-run.mjs"], decision="allow")
