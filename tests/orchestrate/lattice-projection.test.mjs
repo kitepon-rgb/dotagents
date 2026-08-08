@@ -57,17 +57,17 @@ test("public digests are format-validated and relayed without recreating Lattice
 });
 
 test("schema disagreement is version_mismatch and preserves the observed version", async () => {
-  const result = await readTodoFrontier({ runner: runner(JSON.stringify({ schema: "lattice.todo_status_result.v4" })) });
+  const result = await readTodoFrontier({ runner: runner(JSON.stringify({ schema: "lattice.todo_status_result.v5" })) });
   assert.deepEqual(result, {
     kind: "version_mismatch", command: "lattice", args: ["todo", "status", "--json"],
-    expected_schema: TODO_STATUS_SCHEMA, observed_schema: "lattice.todo_status_result.v4",
+    expected_schema: TODO_STATUS_SCHEMA, observed_schema: "lattice.todo_status_result.v5",
   });
 });
 
-test("v5 surfaces audit_pending phases and rejects the v4 shape that omits them", async () => {
+test("v6 surfaces the three process fields and rejects the v5 shape that omits them", async () => {
   const accepted = await readTodoFrontier({ runner: runner(await fixture("todo-frontier.json")) });
   assert.equal(accepted.kind, "todo_frontier");
-  assert.equal(accepted.schema, "lattice.todo_status_result.v5");
+  assert.equal(accepted.schema, "lattice.todo_status_result.v6");
   assert.deepEqual(accepted.value.audit_pending, [{
     plan_key: "legacy", phase_id: "terminal-audit", phase_status: "gate_ready", implicit: true,
     required_evidence_slots: ["terminal-audit"],
@@ -76,14 +76,54 @@ test("v5 surfaces audit_pending phases and rejects the v4 shape that omits them"
       "lattice todo phase close-unaudited --plan legacy --phase terminal-audit --reason <text>",
     ],
   }]);
-  // v5を名乗りながら監査欄を落とした応答は受理しない。欄の欠落は「監査待ちが無い」ではなく
-  // 「監査待ちを答えていない」であり、そこを空扱いすると今回直している失念がそのまま戻る。
-  const withoutAuditPending = JSON.parse(await fixture("todo-frontier.json"));
-  delete withoutAuditPending.audit_pending;
-  const rejected = await readTodoFrontier({ runner: runner(JSON.stringify(withoutAuditPending)) });
-  assert.deepEqual(rejected, {
-    kind: "cli_unavailable", command: "lattice", args: ["todo", "status", "--json"], reason: "invalid_envelope",
-  });
+  // v6の3欄が射影を素通りして届く。中身の検証は下のtestが持つ。
+  assert.equal(accepted.value.plan_notes[0].plan_note_head_digest, "1".repeat(64));
+  assert.equal(accepted.value.coordination[0].mode, "conversation");
+  assert.deepEqual(accepted.value.parallel_candidates[0].unjudged_task_ids, ["task-2"]);
+
+  // 欄を1つでも落とした応答は受理しない。欄の欠落は「無い」ではなく「答えていない」であり、
+  // そこを空扱いすると、この工程が直している失念がそのまま戻る。v6の3欄すべてで同じ。
+  const invalid = { kind: "cli_unavailable", command: "lattice", args: ["todo", "status", "--json"], reason: "invalid_envelope" };
+  for (const key of ["audit_pending", "plan_notes", "coordination", "parallel_candidates"]) {
+    const withoutField = JSON.parse(await fixture("todo-frontier.json"));
+    delete withoutField[key];
+    assert.deepEqual(await readTodoFrontier({ runner: runner(JSON.stringify(withoutField)) }), invalid,
+      `${key} を落とした応答が受理された`);
+  }
+});
+
+test("v6の3欄はfieldごとに検証され、素通しされない", async () => {
+  const mutate = async (key, patch) => {
+    const value = JSON.parse(await fixture("todo-frontier.json"));
+    patch(value[key][0]);
+    return readTodoFrontier({ runner: runner(JSON.stringify(value)) });
+  };
+  const invalid = { kind: "cli_unavailable", command: "lattice", args: ["todo", "status", "--json"], reason: "invalid_envelope" };
+
+  // plan_notes: 先頭がheadである不変を消費側でも守る。ここが崩れた応答は
+  // 「最新のnoteはどれか」を答えられていない。
+  assert.deepEqual(await mutate("plan_notes", (e) => { e.latest[0].event_digest = "3".repeat(64); }), invalid);
+  assert.deepEqual(await mutate("plan_notes", (e) => { e.count = 0; }), invalid);
+  // note_head_digest は v6 で plan_note_head_digest へ改名された。旧名は別chainのheadを指す。
+  assert.deepEqual(await mutate("plan_notes", (e) => {
+    e.note_head_digest = e.plan_note_head_digest; delete e.plan_note_head_digest;
+  }), invalid);
+
+  // coordination: modeは2値。値域を開けると「宣言していない」が「未知の方式」に化ける。
+  assert.deepEqual(await mutate("coordination", (e) => { e.mode = "auto"; }), invalid);
+  assert.deepEqual(await mutate("coordination", (e) => { delete e.declared_by.agent; }), invalid);
+  assert.equal((await mutate("coordination", (e) => { e.mode = "witness"; })).kind, "todo_frontier");
+
+  // parallel_candidates: coverageはLattice側のTODO_INDEPENDENCE_COVERAGEと同じ4値だけ。
+  // 5値目が来たらそれはwire versionの変更として来るべきもので、黙って受理しない。
+  assert.deepEqual(await mutate("parallel_candidates", (e) => { e.coverage = "ready"; }), invalid);
+  assert.deepEqual(await mutate("parallel_candidates", (e) => {
+    e.serialize_pairs = [{ task_ids: ["a"], type: "state", detail: "共有状態" }];
+  }), invalid, "serialize_pairs の task_ids は2件ちょうど");
+  for (const coverage of ["verified", "stale", "superseded", "missing"]) {
+    assert.equal((await mutate("parallel_candidates", (e) => { e.coverage = coverage; })).kind, "todo_frontier",
+      `coverage=${coverage} が拒否された`);
+  }
 });
 
 test("audit_pending entries are validated per field, not relayed unchecked", async () => {
