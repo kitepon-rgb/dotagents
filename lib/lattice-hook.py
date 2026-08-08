@@ -17,8 +17,18 @@ STATUS_SCHEMAS = {
     "lattice.todo_status_result.v2",
     "lattice.todo_status_result.v3",
     "lattice.todo_status_result.v4",
+    "lattice.todo_status_result.v5",
 }
-# schemaごとにexact key-setを持つ。v4はtop-levelにdispatch_frontierを追加する。
+STATUS_SCHEMAS_WITH_FRONTIER = {
+    "lattice.todo_status_result.v4",
+    "lattice.todo_status_result.v5",
+}
+STATUS_SCHEMAS_WITH_AUDIT_PENDING = {"lattice.todo_status_result.v5"}
+# 監査待ちPhaseの状態集合（Lattice側`src/todo-audit-pending.mjs`が正本）。
+# acceptedとclosed_unauditedは監査待ちではないので、ここへ入れない。
+AUDIT_PENDING_PHASE_STATUSES = {"gate_ready", "reviewing", "rejected"}
+# schemaごとにexact key-setを持つ。v4はtop-levelにdispatch_frontierを、
+# v5はさらにaudit_pendingを追加する。
 # 部分一致や未知key無視で受理せず、schema分岐で厳密等価を保つ（fail-closed）。
 STATUS_TOPLEVEL_BASE = {
     "schema",
@@ -209,8 +219,34 @@ def bounded_list(value, validator):
     return isinstance(value, list) and len(value) <= 2000 and all(validator(entry) for entry in value)
 
 
+def audit_pending_entry(value):
+    # v5のtop-level audit_pending。Phase entryなので`status`ではなく`phase_status`を持ち、
+    # 値域は監査待ちの3状態だけ。次の一手が空の監査待ちは案内として無意味なので受理しない。
+    if not isinstance(value, dict):
+        return False
+    if set(value) != {
+        "plan_key",
+        "phase_id",
+        "phase_status",
+        "implicit",
+        "required_evidence_slots",
+        "next_commands",
+    }:
+        return False
+    return (
+        identifier(value.get("plan_key"))
+        and identifier(value.get("phase_id"))
+        and value.get("phase_status") in AUDIT_PENDING_PHASE_STATUSES
+        and isinstance(value.get("implicit"), bool)
+        and bounded_list(value.get("required_evidence_slots"), identifier)
+        and isinstance(value.get("next_commands"), list)
+        and 1 <= len(value["next_commands"]) <= 2000
+        and all(bounded_text(command, 16384) for command in value["next_commands"])
+    )
+
+
 def dispatch_frontier(value):
-    # v4のtop-level dispatch_frontier（lattice.todo_dispatch_frontier.v1）を厳密検証する。
+    # v4/v5のtop-level dispatch_frontier（lattice.todo_dispatch_frontier.v1）を厳密検証する。
     if not isinstance(value, dict):
         return False
     if set(value) != {
@@ -272,11 +308,12 @@ def parse_status(raw):
     schema = value.get("schema")
     if schema not in STATUS_SCHEMAS or not identifier(value.get("project_id")):
         return None
-    # schemaごとのexact key-set。v4だけtop-levelにdispatch_frontierを持つ。
-    if schema == "lattice.todo_status_result.v4":
-        expected = STATUS_TOPLEVEL_BASE | {"dispatch_frontier"}
-    else:
-        expected = STATUS_TOPLEVEL_BASE
+    # schemaごとのexact key-set。v4からtop-levelにdispatch_frontierが、v5からaudit_pendingが載る。
+    expected = set(STATUS_TOPLEVEL_BASE)
+    if schema in STATUS_SCHEMAS_WITH_FRONTIER:
+        expected |= {"dispatch_frontier"}
+    if schema in STATUS_SCHEMAS_WITH_AUDIT_PENDING:
+        expected |= {"audit_pending"}
     if set(value) != expected:
         return None
     if not bounded_list(value.get("active_set"), task_entry):
@@ -289,7 +326,11 @@ def parse_status(raw):
         return None
     if not isinstance(value.get("result_digest"), str) or DIGEST.fullmatch(value["result_digest"]) is None:
         return None
-    if schema == "lattice.todo_status_result.v4" and not dispatch_frontier(value.get("dispatch_frontier")):
+    if schema in STATUS_SCHEMAS_WITH_FRONTIER and not dispatch_frontier(value.get("dispatch_frontier")):
+        return None
+    if schema in STATUS_SCHEMAS_WITH_AUDIT_PENDING and not bounded_list(
+        value.get("audit_pending"), audit_pending_entry
+    ):
         return None
     return value
 
@@ -494,6 +535,28 @@ def task_summary(entries):
     ) + ("ほか" if len(entries) > 8 else "")
 
 
+def audit_pending_fragment(status_value):
+    # 監査待ちPhaseは残作業である。gantt/dashboardは「見に行く面」なので、図を開かない
+    # sessionには届かない。開かなくても目に入るのはこのINFOだけなので、ここへ出す。
+    entries = status_value.get("audit_pending") or []
+    if not entries:
+        return ""
+    shown = "・".join(
+        f"{entry['plan_key']}/{entry['phase_id']}（{entry['phase_status']}）" for entry in entries[:8]
+    ) + ("ほか" if len(entries) > 8 else "")
+    return f"監査待ち{len(entries)}件: {shown}。未監査は未完了です。"
+
+
+def has_guidance(status_value):
+    # 全taskがdoneでも監査待ちPhaseが残っていれば残作業である。ここで沈黙すると
+    # 「残りは無い」と答えたのと同じ意味になり、終端監査の失念をhook自身が後押しする。
+    return bool(
+        status_value["active_set"]
+        or status_value["next_ready"]
+        or status_value.get("audit_pending")
+    )
+
+
 def gantt_location(root):
     path = root / GANTT_REF
     uri = path.absolute().as_uri()
@@ -576,6 +639,7 @@ def status_message(root, status_value, independence=None):
         "lattice.todo_status_result.v2",
         "lattice.todo_status_result.v3",
         "lattice.todo_status_result.v4",
+        "lattice.todo_status_result.v5",
     }:
         dependency_count = sum(
             1 for entry in status_value["active_set"] if entry.get("unmet_dependencies")
@@ -587,6 +651,7 @@ def status_message(root, status_value, independence=None):
     if status_value["schema"] in {
         "lattice.todo_status_result.v3",
         "lattice.todo_status_result.v4",
+        "lattice.todo_status_result.v5",
     }:
         unreconciled = sum(
             1
@@ -601,6 +666,7 @@ def status_message(root, status_value, independence=None):
         f"next-ready={task_summary(status_value['next_ready'])}。"
         f"{dependency_note}"
         f"{reconciliation_note}"
+        f"{audit_pending_fragment(status_value)}"
         f"{independence_fragment(independence or [])}"
         "工程正本は Lattice store、散文は linked Markdown。"
         "表示不能時は lattice todo gantt を明示実行してください。"
@@ -651,7 +717,8 @@ def main(frontend):
                 emit(frontend, status_unavailable_message(STATUS_INVALID_RESPONSE))
                 return
             # オーナー裁定: 空の現在地通知は無視を学習させるため、正常な空frontierでは沈黙する。
-            if not context["todo"]["active_set"] and not context["todo"]["next_ready"]:
+            # ただし監査待ちが残っている間は「空」ではない（has_guidance）。
+            if not has_guidance(context["todo"]):
                 return
             emit(frontend, status_message(root, context["todo"], context["independence"]))
             return
@@ -674,7 +741,7 @@ def main(frontend):
         if status_value is None:
             emit(frontend, status_unavailable_message(reason))
             return
-        if not status_value["active_set"] and not status_value["next_ready"]:
+        if not has_guidance(status_value):
             return
         emit(frontend, status_message(root, status_value))
     except Exception:

@@ -443,8 +443,14 @@ case "${LATTICE_TEST_MODE:-valid_v1}" in
     printf '%s\n' '{"schema":"lattice.todo_status_result.v4","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}}' ;;
   empty_frontier)
     printf '%s\n' '{"schema":"lattice.todo_status_result.v4","project_id":"dotagents","active_set":[],"next_ready":[],"blocked":[],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}}' ;;
-  unsupported_v5)
-    printf '%s\n' '{"schema":"lattice.todo_status_result.v5","project_id":"dotagents","active_set":[],"next_ready":[],"blocked":[],"member_heads":[],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
+  valid_v5)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v5","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線","unmet_dependencies":[]}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"audit_pending":[{"plan_key":"legacy","phase_id":"terminal-audit","phase_status":"gate_ready","implicit":true,"required_evidence_slots":["terminal-audit"],"next_commands":["lattice todo phase review --plan legacy --phase terminal-audit --reason <text>"]}],"member_heads":[{"plan_key":"master","plan_version":"rev-a","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reconciliation_state":"reconciled","revision_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","reconciliation_digest":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}}' ;;
+  invalid_audit_pending)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v5","project_id":"dotagents","active_set":[],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"audit_pending":[{"plan_key":"legacy","phase_id":"terminal-audit","phase_status":"accepted","implicit":true,"required_evidence_slots":["terminal-audit"],"next_commands":["lattice todo phase review --plan legacy --phase terminal-audit --reason <text>"]}],"member_heads":[],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":1,"subset_requires_reason":true,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}}' ;;
+  audit_only)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v5","project_id":"dotagents","active_set":[],"next_ready":[],"blocked":[],"audit_pending":[{"plan_key":"legacy","phase_id":"terminal-audit","phase_status":"gate_ready","implicit":true,"required_evidence_slots":["terminal-audit"],"next_commands":["lattice todo phase review --plan legacy --phase terminal-audit --reason <text>"]}],"member_heads":[],"result_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","dispatch_frontier":{"schema":"lattice.todo_dispatch_frontier.v1","selection_source":"next_ready","policy":"all_ready_parallel_by_default","recommended_parallelism":0,"subset_requires_reason":false,"parallel_start_flag":"--parallel-frontier","frontier_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}}' ;;
+  unsupported_v6)
+    printf '%s\n' '{"schema":"lattice.todo_status_result.v6","project_id":"dotagents","active_set":[],"next_ready":[],"blocked":[],"member_heads":[],"result_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}' ;;
   slow_success)
     sleep 3
     printf '%s\n' '{"schema":"lattice.todo_status_result.v1","project_id":"dotagents","active_set":[{"plan_key":"master","task_id":"G4","label":"dotagents側アクセス配線"}],"next_ready":[{"plan_key":"master","task_id":"G5","label":"authoring CLI"}],"blocked":[],"member_heads":[{"plan_key":"master","through_sequence":4,"journal_head_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}],"result_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}' ;;
@@ -522,8 +528,25 @@ run lattice-active-run env PATH="$STATE/lattice-bin:$PATH" LATTICE_STATUS_STATE=
 {"session_id":"lattice-active-run","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [[ "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" != *'取得できませんでした'* ]] && pass lattice-active-run || fail_case lattice-active-run
-# unsupported version（v5）: malformed とは別の「対応範囲外」を fail-visible に出す。
-run lattice-unsupported env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=unsupported_v5 "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+# v5: audit_pending付き。受理され、v4分岐（依存件数・校正状態）も引き続き動くこと。
+# ここが落ちると、v5をpublishした瞬間に全projectでSessionStartの工程案内が消える。
+run lattice-valid-v5 env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=valid_v5 "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-valid-v5","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'active=master/G4'* && "$RUN_OUT" == *'校正状態: reconciled=1, unreconciled=0'* && "$RUN_OUT" == *'監査待ち1件: legacy/terminal-audit（gate_ready）'* && "$RUN_OUT" != *'取得できませんでした'* && "$RUN_OUT" != *'対応範囲外'* ]] && pass lattice-valid-v5 || fail_case lattice-valid-v5
+# audit_pendingの値域外（accepted）はexact検証で落ちる。監査欄を素通しにはしない。
+run lattice-invalid-audit-pending env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=invalid_audit_pending "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-invalid-audit-pending","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'取得できませんでした'* ]] && pass lattice-invalid-audit-pending || fail_case lattice-invalid-audit-pending
+# 全taskがdoneでも監査待ちが残る間は沈黙しない。ここが沈黙すると「残作業なし」と答えたのと同じで、
+# この工程が直している終端監査の失念をhook自身が後押しすることになる。
+run lattice-audit-only env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=audit_only "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-audit-only","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'監査待ち1件: legacy/terminal-audit（gate_ready）'* && "$RUN_OUT" == *'未監査は未完了です'* && "$RUN_OUT" == *'active=なし; next-ready=なし'* ]] && pass lattice-audit-only || fail_case lattice-audit-only
+# unsupported version（v6）: malformed とは別の「対応範囲外」を fail-visible に出す。
+run lattice-unsupported env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=unsupported_v6 "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-unsupported","source":"startup","cwd":"$HOOK_REPO"}
 EOF
 [[ "$RUN_OUT" == 'INFO: Lattice工程表:'* && "$RUN_OUT" == *'対応範囲外'* && "$RUN_OUT" == *'CLIの版とstore整合を確認'* ]] && pass lattice-unsupported || fail_case lattice-unsupported
