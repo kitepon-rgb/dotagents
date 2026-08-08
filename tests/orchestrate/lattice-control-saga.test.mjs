@@ -33,8 +33,11 @@ const head = () => ({
 
 const task = (taskId) => ({ plan_key: "master", task_id: taskId, label: `Task ${taskId}` });
 
-const todoStatus = ({ ready = ["todo-1"], active = [], blocked = [], auditPending = [] } = {}) => ({
-  schema: "lattice.todo_status_result.v5",
+const todoStatus = ({
+  ready = ["todo-1"], active = [], blocked = [], auditPending = [],
+  planNotes = [], coordination = [], parallelCandidates = [],
+} = {}) => ({
+  schema: "lattice.todo_status_result.v6",
   project_id: "dotagents",
   active_set: active.map((taskId) => ({ ...task(taskId), unmet_dependencies: [] })),
   next_ready: ready.map(task),
@@ -51,6 +54,9 @@ const todoStatus = ({ ready = ["todo-1"], active = [], blocked = [], auditPendin
     plan_key: "master", task_id: taskId, reason: "dependency blocked",
   })),
   audit_pending: auditPending,
+  plan_notes: planNotes,
+  coordination,
+  parallel_candidates: parallelCandidates,
   member_heads: [head()],
   result_digest: STATUS_DIGEST,
 });
@@ -454,6 +460,52 @@ test("v5の監査待ち欄は受理するが選択を動かさず、v4時代の�
     assert.throws(() => saga.nextLatticeControlAction(input({
       todo_status: todoStatus({ auditPending: [{ ...auditPending[0], ...patch }] }),
     })), code("INVALID_OBSERVATION"));
+  }
+});
+
+test("v6の工程3欄は受理するが選択を動かさず、member_headsもdispatchも触らない", () => {
+  const planNotes = [{
+    plan_key: "master", plan_note_head_digest: "e".repeat(64), count: 1,
+    latest: [{ event_digest: "e".repeat(64), actor_agent: "agent-1", recorded_at: "2026-08-08T00:00:00.000Z" }],
+    next_commands: ["lattice todo note list --plan master --json"],
+  }];
+  const coordination = [{
+    plan_key: "master", mode: "conversation",
+    declared_by: { host: "host-1", session: "session-1", agent: "agent-1" },
+    declared_at: "2026-08-08T00:00:00.000Z", reason: "卓の合意で調整する",
+  }];
+  const parallelCandidates = [{
+    plan_key: "master", coverage: "missing", unjudged_task_ids: ["todo-1"],
+    verified_parallel_groups: [], serialize_pairs: [],
+    next_commands: ["lattice todo independence compile --plan master --input <file>"],
+  }];
+
+  // 工程に属する事実はdispatchではない（ADR 0160）。3欄が埋まっても返るactionは1バイトも
+  // 変わらない。ap06(c)が「監査状態が変わってもdispatchはbyte等価」を固定したのと同型の決定が
+  // 並ぶ形で、領域が重なっているのではない。
+  const baseline = saga.nextLatticeControlAction(input());
+  const withFields = saga.nextLatticeControlAction(input({
+    todo_status: todoStatus({ planNotes, coordination, parallelCandidates }),
+  }));
+  assert.deepEqual(withFields, baseline);
+
+  // `member_heads`のthrough_sequence/journal_head_digestはtask lifecycle chainだけを指す。
+  // 調整方式の宣言はplan-scopedな別chainへ積まれるので、ここを動かさない。合成すると
+  // 型も値域も同じまま意味だけが変わり、exact validatorを素通りする。
+  const before = todoStatus();
+  const after = todoStatus({ coordination });
+  assert.deepEqual(after.member_heads, before.member_heads);
+  assert.deepEqual(after.dispatch_frontier, before.dispatch_frontier);
+
+  // 素通しと無検証は別物。値域外は受理しない。
+  for (const patch of [
+    { key: "coordination", value: [{ ...coordination[0], mode: "auto" }] },
+    { key: "parallelCandidates", value: [{ ...parallelCandidates[0], coverage: "ready" }] },
+    { key: "planNotes", value: [{ ...planNotes[0], latest: [{ ...planNotes[0].latest[0], event_digest: "f".repeat(64) }] }] },
+  ]) {
+    assert.throws(() => saga.nextLatticeControlAction(input({
+      todo_status: todoStatus({ [patch.key]: patch.value }),
+    })), code("INVALID_OBSERVATION"), `${patch.key} の値域外が受理された`);
   }
 });
 

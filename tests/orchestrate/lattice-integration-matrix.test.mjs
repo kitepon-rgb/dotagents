@@ -55,7 +55,7 @@ const todoStatus = ({
   active = [],
   frontierDigest = FRONTIER_DIGEST,
 } = {}) => ({
-  schema: "lattice.todo_status_result.v5",
+  schema: "lattice.todo_status_result.v6",
   project_id: "dotagents",
   active_set: active.map((taskId) => ({ ...task(taskId), unmet_dependencies: [] })),
   next_ready: ready.map(task),
@@ -70,6 +70,9 @@ const todoStatus = ({
   },
   blocked: [],
   audit_pending: [],
+  plan_notes: [],
+  coordination: [],
+  parallel_candidates: [],
   member_heads: [head()],
   result_digest: STATUS_DIGEST,
 });
@@ -308,12 +311,12 @@ const fixtureMatrix = [
   },
   {
     axis: "4. unknown version",
-    caseName: "todo statusの旧v4と将来v6",
-    guarantee: "未知schemaを既知v5として解釈せずobserved version付きでfail closedにする",
+    caseName: "todo statusの旧v5と将来v7",
+    guarantee: "未知schemaを既知v6として解釈せずobserved version付きでfail closedにする",
     async run() {
       for (const observedSchema of [
-        "lattice.todo_status_result.v4",
-        "lattice.todo_status_result.v6",
+        "lattice.todo_status_result.v5",
+        "lattice.todo_status_result.v7",
       ]) {
         const result = await readTodoFrontier({
           runner: jsonRunner({ schema: observedSchema }),
@@ -322,7 +325,7 @@ const fixtureMatrix = [
           kind: "version_mismatch",
           command: "lattice",
           args: ["todo", "status", "--json"],
-          expected_schema: "lattice.todo_status_result.v5",
+          expected_schema: "lattice.todo_status_result.v6",
           observed_schema: observedSchema,
         });
       }
