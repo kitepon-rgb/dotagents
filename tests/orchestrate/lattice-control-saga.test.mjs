@@ -33,8 +33,8 @@ const head = () => ({
 
 const task = (taskId) => ({ plan_key: "master", task_id: taskId, label: `Task ${taskId}` });
 
-const todoStatus = ({ ready = ["todo-1"], active = [], blocked = [] } = {}) => ({
-  schema: "lattice.todo_status_result.v4",
+const todoStatus = ({ ready = ["todo-1"], active = [], blocked = [], auditPending = [] } = {}) => ({
+  schema: "lattice.todo_status_result.v5",
   project_id: "dotagents",
   active_set: active.map((taskId) => ({ ...task(taskId), unmet_dependencies: [] })),
   next_ready: ready.map(task),
@@ -50,6 +50,7 @@ const todoStatus = ({ ready = ["todo-1"], active = [], blocked = [] } = {}) => (
   blocked: blocked.map((taskId) => ({
     plan_key: "master", task_id: taskId, reason: "dependency blocked",
   })),
+  audit_pending: auditPending,
   member_heads: [head()],
   result_digest: STATUS_DIGEST,
 });
@@ -418,6 +419,42 @@ test("不正観測・run相関不一致・Lattice readyに対応するControl bi
     run_request: request(),
     control_manifest: manifest({ taskIds: [] }),
   })), code("OBSERVATION_INCONSISTENT"));
+});
+
+test("v5の監査待ち欄は受理するが選択を動かさず、v4時代の束縛も引き続き解決する", () => {
+  const auditPending = [{
+    plan_key: "master",
+    phase_id: "terminal-audit",
+    phase_status: "gate_ready",
+    implicit: true,
+    required_evidence_slots: ["terminal-audit"],
+    next_commands: ["lattice todo phase review --plan master --phase terminal-audit --reason <text>"],
+  }];
+  // 監査待ちはdispatchではない。欄が埋まっていてもready選択とfrontierの扱いは1バイトも変わらない。
+  const baseline = saga.nextLatticeControlAction(input());
+  const withAudit = saga.nextLatticeControlAction(input({ todo_status: todoStatus({ auditPending }) }));
+  assert.deepEqual(withAudit, baseline);
+
+  // Control manifestのcontract_versionは束縛時点の履歴である。上のmanifestはv4記録のままで、
+  // v5へbumpした後もこの束縛が解決できることをbaselineが証明している。v5記録も同じく通る。
+  const v5Bound = saga.nextLatticeControlAction(input({
+    todo_status: todoStatus({ auditPending }),
+    control_manifest: {
+      ...manifest(),
+      tasks: manifest().tasks.map((entry) => ({
+        ...entry,
+        external_source: { ...entry.external_source, contract_version: "lattice.todo_status_result.v5" },
+      })),
+    },
+  }));
+  assert.deepEqual(v5Bound, baseline);
+
+  // 値域外のphase_statusと空のnext_commandsはtyped拒否。監査欄を素通しにはしない。
+  for (const patch of [{ phase_status: "accepted" }, { next_commands: [] }]) {
+    assert.throws(() => saga.nextLatticeControlAction(input({
+      todo_status: todoStatus({ auditPending: [{ ...auditPending[0], ...patch }] }),
+    })), code("INVALID_OBSERVATION"));
+  }
 });
 
 test("pure moduleはlattice-projectionをimportせずCLI spawnも持たない", async () => {
