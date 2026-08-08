@@ -1,6 +1,8 @@
 # plan_peertable-onboarding — peertableを工場管理12製品目へ編入する
 
-status: active（2026-08-08 開始）。ToDoの正本はLattice store（plan `peertable-onboarding`）であり、本書は目的・思想・受入条件・導線だけを所有する。
+status: **suspended**（2026-08-08 開始、同日中断。オーナー裁定: peertableをLatticeへ内蔵する可能性が浮上し、独立製品としての編入前提が保留）。ToDoの正本はLattice store（plan `peertable-onboarding`）であり、本書は目的・思想・受入条件・導線だけを所有する。
+
+中断時点の現在地: s1（診断契約）は円卓全員合意まで到達し、契約はpeertable repo `docs/plan.md` 決定45としてcommit済み（push未・オーナー明示指示待ち）。t-adapter以降は未着手。詳細はLattice s1のnoteを参照。再開はLattice内蔵可否のオーナー裁定後。
 
 ## 目的
 
