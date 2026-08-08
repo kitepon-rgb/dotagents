@@ -18,18 +18,32 @@ STATUS_SCHEMAS = {
     "lattice.todo_status_result.v3",
     "lattice.todo_status_result.v4",
     "lattice.todo_status_result.v5",
+    "lattice.todo_status_result.v6",
 }
 STATUS_SCHEMAS_WITH_FRONTIER = {
     "lattice.todo_status_result.v4",
     "lattice.todo_status_result.v5",
+    "lattice.todo_status_result.v6",
 }
-STATUS_SCHEMAS_WITH_AUDIT_PENDING = {"lattice.todo_status_result.v5"}
+STATUS_SCHEMAS_WITH_AUDIT_PENDING = {
+    "lattice.todo_status_result.v5",
+    "lattice.todo_status_result.v6",
+}
+# v6で加わった工程3欄（ADR 0160）。plan単位noteの存在・調整方式の宣言・並列候補の逐次判定。
+STATUS_SCHEMAS_WITH_PROCESS_FIELDS = {"lattice.todo_status_result.v6"}
 # 監査待ちPhaseの状態集合（Lattice側`src/todo-audit-pending.mjs`が正本）。
 # acceptedとclosed_unauditedは監査待ちではないので、ここへ入れない。
 AUDIT_PENDING_PHASE_STATUSES = {"gate_ready", "reviewing", "rejected"}
+# 調整方式の2値（Lattice側`TODO_COORDINATION_MODES`が正本）。
+COORDINATION_MODES = {"witness", "conversation"}
+# 独立性判定の被覆4値（Lattice側`TODO_INDEPENDENCE_COVERAGE`が正本）。
+# 5値目が来たらそれはwire versionの変更として来るべきもので、黙って受理しない。
+INDEPENDENCE_COVERAGE = {"verified", "stale", "superseded", "missing"}
 # schemaごとにexact key-setを持つ。v4はtop-levelにdispatch_frontierを、
-# v5はさらにaudit_pendingを追加する。
+# v5はさらにaudit_pendingを、v6はさらに工程3欄を追加する。
 # 部分一致や未知key無視で受理せず、schema分岐で厳密等価を保つ（fail-closed）。
+# **旧版の受理は消さない**——publishまでの移行窓で、installed CLIは旧版を返し続ける。
+# ここをexact pinにすると、その間ずっと全projectの工程案内が消える。
 STATUS_TOPLEVEL_BASE = {
     "schema",
     "project_id",
@@ -245,8 +259,99 @@ def audit_pending_entry(value):
     )
 
 
+def plan_note_entry(value):
+    # v6のplan_notes。本文は載らず、存在と件数と次の一手だけを述べる。
+    # `plan_note_head_digest`が`note_context.note_head_digest`と別名なのは、後者がtask chainの
+    # headで前者がplan chainのheadだから。同名にすると型が同じ64hexなので取り違えても通る。
+    if not isinstance(value, dict):
+        return False
+    if set(value) != {"plan_key", "plan_note_head_digest", "count", "latest", "next_commands"}:
+        return False
+    latest = value.get("latest")
+    if not isinstance(latest, list) or not 1 <= len(latest) <= 2000:
+        return False
+    for item in latest:
+        if not isinstance(item, dict) or set(item) != {"event_digest", "actor_agent", "recorded_at"}:
+            return False
+        if not isinstance(item.get("event_digest"), str) or DIGEST.fullmatch(item["event_digest"]) is None:
+            return False
+        if not bounded_text(item.get("actor_agent"), 160) or not bounded_text(item.get("recorded_at"), 64):
+            return False
+    count = value.get("count")
+    return (
+        identifier(value.get("plan_key"))
+        and isinstance(value.get("plan_note_head_digest"), str)
+        and DIGEST.fullmatch(value["plan_note_head_digest"]) is not None
+        # 先頭がheadであることはLattice側の不変。ここで確かめないと「最新はどれか」を
+        # 読む側が自分で決めることになる。
+        and latest[0]["event_digest"] == value["plan_note_head_digest"]
+        and isinstance(count, int) and not isinstance(count, bool) and count >= 1
+        and len(latest) <= count
+        and isinstance(value.get("next_commands"), list)
+        and 1 <= len(value["next_commands"]) <= 2000
+        and all(bounded_text(command, 16384) for command in value["next_commands"])
+    )
+
+
+def coordination_entry(value):
+    # v6のcoordination。**宣言済みのplanだけ**が並ぶ。未宣言は「member_headsに居て
+    # coordinationに居ない」で引く（Lattice側の設計判断）。
+    if not isinstance(value, dict):
+        return False
+    if set(value) != {"plan_key", "mode", "declared_by", "declared_at", "reason"}:
+        return False
+    declared_by = value.get("declared_by")
+    if not isinstance(declared_by, dict) or set(declared_by) != {"host", "session", "agent"}:
+        return False
+    return (
+        identifier(value.get("plan_key"))
+        and value.get("mode") in COORDINATION_MODES
+        and all(bounded_text(declared_by[key], 160) for key in ("host", "session", "agent"))
+        and bounded_text(value.get("declared_at"), 64)
+        and bounded_text(value.get("reason"), 512)
+    )
+
+
+def parallel_candidate_entry(value):
+    # v6のparallel_candidates。判定そのものではなく、逐次判定の導線である。
+    if not isinstance(value, dict):
+        return False
+    if set(value) != {
+        "plan_key", "coverage", "unjudged_task_ids",
+        "verified_parallel_groups", "serialize_pairs", "next_commands",
+    }:
+        return False
+
+    def group(entry):
+        return (
+            isinstance(entry, dict) and set(entry) == {"task_ids"}
+            and bounded_list(entry.get("task_ids"), identifier)
+            and len(entry["task_ids"]) > 0
+        )
+
+    def pair(entry):
+        return (
+            isinstance(entry, dict) and set(entry) == {"task_ids", "type", "detail"}
+            and isinstance(entry.get("task_ids"), list) and len(entry["task_ids"]) == 2
+            and all(identifier(task_id) for task_id in entry["task_ids"])
+            and bounded_text(entry.get("type"), 160)
+            and bounded_text(entry.get("detail"), 512)
+        )
+
+    return (
+        identifier(value.get("plan_key"))
+        and value.get("coverage") in INDEPENDENCE_COVERAGE
+        and bounded_list(value.get("unjudged_task_ids"), identifier)
+        and bounded_list(value.get("verified_parallel_groups"), group)
+        and bounded_list(value.get("serialize_pairs"), pair)
+        and isinstance(value.get("next_commands"), list)
+        and 1 <= len(value["next_commands"]) <= 2000
+        and all(bounded_text(command, 16384) for command in value["next_commands"])
+    )
+
+
 def dispatch_frontier(value):
-    # v4/v5のtop-level dispatch_frontier（lattice.todo_dispatch_frontier.v1）を厳密検証する。
+    # v4/v5/v6のtop-level dispatch_frontier（lattice.todo_dispatch_frontier.v1）を厳密検証する。
     if not isinstance(value, dict):
         return False
     if set(value) != {
@@ -314,6 +419,8 @@ def parse_status(raw):
         expected |= {"dispatch_frontier"}
     if schema in STATUS_SCHEMAS_WITH_AUDIT_PENDING:
         expected |= {"audit_pending"}
+    if schema in STATUS_SCHEMAS_WITH_PROCESS_FIELDS:
+        expected |= {"plan_notes", "coordination", "parallel_candidates"}
     if set(value) != expected:
         return None
     if not bounded_list(value.get("active_set"), task_entry):
@@ -330,6 +437,12 @@ def parse_status(raw):
         return None
     if schema in STATUS_SCHEMAS_WITH_AUDIT_PENDING and not bounded_list(
         value.get("audit_pending"), audit_pending_entry
+    ):
+        return None
+    if schema in STATUS_SCHEMAS_WITH_PROCESS_FIELDS and not (
+        bounded_list(value.get("plan_notes"), plan_note_entry)
+        and bounded_list(value.get("coordination"), coordination_entry)
+        and bounded_list(value.get("parallel_candidates"), parallel_candidate_entry)
     ):
         return None
     return value
@@ -640,6 +753,7 @@ def status_message(root, status_value, independence=None):
         "lattice.todo_status_result.v3",
         "lattice.todo_status_result.v4",
         "lattice.todo_status_result.v5",
+        "lattice.todo_status_result.v6",
     }:
         dependency_count = sum(
             1 for entry in status_value["active_set"] if entry.get("unmet_dependencies")
@@ -652,6 +766,7 @@ def status_message(root, status_value, independence=None):
         "lattice.todo_status_result.v3",
         "lattice.todo_status_result.v4",
         "lattice.todo_status_result.v5",
+        "lattice.todo_status_result.v6",
     }:
         unreconciled = sum(
             1
