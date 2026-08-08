@@ -26,6 +26,36 @@
 
 手書きせず **fewer-permission-prompts skill** を各リポで実行して生成する（実際のトランスクリプトから頻出読み取りコールを抽出して優先順位つきで提案してくれる）。生成物はそのリポの `.claude/settings.json` に入る＝P3 標準の必須要件。
 
+## コア製品repoへのアクセス断片（dotagentsだけ）
+
+dotagentsセッションからコア製品repoへ直接手を届かせるのは、この断片を dotagents の `.claude/settings.local.json` へ貼った端末だけとする。`.claude/` はこのリポの gitignore 対象＝端末ごとに貼る。
+
+対象は[製品契約台帳](factory-product-contracts.md)の自作コア10製品の正規repoだけとし、MarkItDown（第三者・repoなし）、基盤toolchain、`*-wt-*` / `*-worktrees` の作業ツリーは含めない。`<HOME>` は各端末の home 絶対パスへ置換する:
+
+```json
+{
+  "permissions": {
+    "additionalDirectories": [
+      "<HOME>/Developer/Caveat",
+      "<HOME>/Developer/Throughline",
+      "<HOME>/Developer/Spotter",
+      "<HOME>/Developer/Lattice",
+      "<HOME>/Developer/gpt-connector",
+      "<HOME>/Developer/aiterm-mcp",
+      "<HOME>/Developer/codex-sidecar",
+      "<HOME>/Developer/aishell",
+      "<HOME>/Developer/Observer",
+      "<HOME>/Developer/ServerManager"
+    ]
+  }
+}
+```
+
+- 置き場は dotagents の `.claude/settings.local.json` だけとする。project の `.claude/settings.json` へ書いた付与は workspace trust ダイアログを承認した後にだけ効き、グローバル `~/.claude/settings.json` へ書くと全 project がコア10repoへ到達する。
+- パスは絶対パスで書く（`~` 展開は公式ドキュメントに明記がない）。実在する repo だけを列挙し、無い行を残さない。
+- 反映は次セッションの起動から。当該セッション内だけ足すなら `/add-dir <path>` を使う。
+- `additionalDirectories` が与えるのはファイルアクセスだけで、その先の `.claude/` 設定（skills・agents・CLAUDE.md）は読み込まれない。それらが要る時は起動時 `--add-dir` かセッション中 `/add-dir` を使う。
+
 ## hooks の方針
 
 - 自動化（「毎回 X したら Y」）は memory や指示ではなく hooks でしか成立しない——必要になったら update-config skill で settings.json に組む。
