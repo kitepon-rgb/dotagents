@@ -23,7 +23,7 @@ H承認[45]①・[H承認要求文書](evidence/2026-08-10-peertable-wire-v7-H-a
 
 ### t-enroll-cutover ServerManager wire v7 enroll + 4host段階cutover
 
-H承認[45]②のうちコード実装部分（part A・B）。`docs/wire-v7-design.md` §7 server-first migrationに従う: ServerManagerへv7 schema・固定15製品・endpoint追加（`FACTORY_V7_INGEST_ENABLED=false`既定）＋dotagentsへ配信CLI（`bin/factory-reporter-v7.mjs`等）追加。flag既定falseのため本番挙動は変えない。**実deploy・flag有効化・cutoverはt-cutover-deployへ分割**（room `peertable-onboarding` [69][74]、調査の結果リスク粒度が異なると判明したため）。
+H承認[45]②のうちコード実装部分（part A・B）。`docs/wire-v7-design.md` §7 server-first migrationに従う: ServerManagerへv7 schema・固定15製品・endpoint追加（`FACTORY_V7_INGEST_ENABLED=false`既定）＋dotagentsへ配信CLI（`bin/factory-reporter-v7.mjs`等）追加。flag既定falseのため本番挙動は変えない。**実deploy・flag有効化・cutoverはt-cutover-deployへ分割**（room `peertable-onboarding` [69]・[74]、調査の結果リスク粒度が異なると判明したため）。
 
 ### t-cutover-deploy 実deploy＋flag有効化＋Mac canary dual-run＋host別段階cutover
 
