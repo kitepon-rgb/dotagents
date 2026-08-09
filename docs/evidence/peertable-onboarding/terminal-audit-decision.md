@@ -5,7 +5,7 @@
 plan `peertable-onboarding`（s1・t-diag・t-adapter・t-gate・t-docs・t-hpkg 全task done）の
 terminal-audit phase gate。個別task監査はすべて別席の独立監査で既に受理済み
 （s1/t-diag: room [15] hinata軽監査、t-adapter: room [31] koharu監査・bell受理、
-t-gate: room [17] koharu監査・[21] bell受理、t-docs: room [27][34] tsumugi監査・[29][36] bell受理）。
+t-gate: room [17] koharu監査・[21] bell受理、t-docs: room [27]・[34] tsumugi監査・[29]・[36] bell受理）。
 終端監査はplan全体としての受入条件充足を、個別task監査結果に加えて自分の環境で独立に再実測した。
 
 ## 受入条件（docs/plan_peertable-onboarding.md「受入条件」節）と実測
@@ -46,7 +46,7 @@ t-gate: room [17] koharu監査・[21] bell受理、t-docs: room [27][34] tsumugi
 ## 結論
 
 3項とも欠陥なし。新規欠陥探索ではなく、個別task監査で確認済みの実装・文書に対する
-plan全体としての受入条件突合として十分と判断する。room [42][43][44]（koharu所見・tsumugi同意・
+plan全体としての受入条件突合として十分と判断する。room [42]・[43]・[44]（koharu所見・tsumugi同意・
 bell受理）を意思決定の記録として残す。
 
 記録者: koharu
