@@ -55,4 +55,15 @@
   含める場合は`node bin/render-global-constitution.mjs --write`での再生成と`make lint-constitution`
   確認が必要になる。t-hpkgのH承認パッケージへ論点として引き継ぐ。
 
+## 追記（2026-08-10・受理後の自己発見）
+
+t-docs受理（room [29]）後、t-adapterの監査中に自分でtest一式を実行したところ、台帳/README総製品数を
+リテラル固定していた既存test 2件が本taskのcommit(28d50d8)でfailすることを発見した:
+`tests/wire-v6/wire-v6.test.mjs`（`# 工場管理11製品`固定）、`tests/lattice-cutover/wire-v4.test.mjs`
+（`自作コア10製品...Lattice`固定）。両testの本来の検証対象（Observer/Lattice個別事実の残存）は総数と
+無関係なため、正規表現で数値部分を`\d+`へ汎化し追随可能にした（commit 605d682・.lattice store記録は
+d61f862、いずれもpush済み）。`node --test`でwire-v5/v6/v7/lattice-cutover/factory-reporter/constitution
+一式38 test全green再確認。t-docs着手時にtest実行を検証手順へ含めていなかったのが原因——次回は
+docsだけの変更でも`node --test`を最後に通す。
+
 記録者: koharu
