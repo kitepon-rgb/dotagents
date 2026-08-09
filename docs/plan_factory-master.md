@@ -41,6 +41,14 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
   `factory-master`履歴中の`rev-c7e2409e…`（2026-07-20移行中断の残骸・`plan.json`欠落）でnote投影が
   `NOTE_PROJECTION_INVALID`になる。最小再現・迂回はcaveat
   `lattice-todo-note-revision-plan-json-note-projection-invalid`が正。2026-08-02に Lattice 0.40.1（`3d6b882`）で修理・publish済み＝**解消**。
+- **`factory-reporter-scheduler install --apply`がrunner binの解決可能性を検証せずsuccessを返す**
+  （2026-08-10記録・所有repo=dotagents・非クリティカル）: 新規wire-major runner binを追加した直後に
+  scheduler installを実行すると、`~/.local/bin/`へのsymlinkが`install.sh`で配布される前でも
+  install自体は成功し、`launchctl kickstart`等の実起動時に初めて`Cannot find module`で気づく
+  （実被弾: peertable wire v7 canary cutover・room [91]）。回避手順は
+  [factory-reporter-runbook.md](factory-reporter-runbook.md)§11 step3に明記済み。根本修理（typed
+  errorで弾いてから成功を返す）は本campaignのscope外。最小再現はcaveat
+  `dotagents-factory-reporter-scheduler-install-apply-runner-bin-success-fail-open`が正。
 
 工程表示は次で生成する。
 
