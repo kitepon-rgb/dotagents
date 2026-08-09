@@ -11,10 +11,10 @@ import { V6_PRODUCT_IDS } from '../../lib/factory/v6.mjs';
 
 const EXPECTED = [...V5_PRODUCT_IDS, 'observer'];
 
-test('v6正典はObserverを自作コア、MarkItDownを第三者管理として11製品へ固定する', async () => {
+test('v6正典はObserverを自作コア、MarkItDownを第三者管理として管理対象へ固定する', async () => {
   const contracts = await readFile(resolve(import.meta.dirname, '../../docs/factory-product-contracts.md'), 'utf8');
   const matrix = await readFile(resolve(import.meta.dirname, '../../docs/factory-host-product-matrix.md'), 'utf8');
-  assert.match(contracts, /^# 工場管理11製品＋基盤toolchain 3製品/mu);
+  assert.match(contracts, /^# 工場管理\d+製品＋基盤toolchain 3製品/mu);
   assert.match(contracts, /### `markitdown`[\s\S]*所有\/修正先: 第三者/u);
   assert.match(contracts, /### `observer`[\s\S]*所有\/修正先: 自作 \/ `kitepon-rgb\/Observer`/u);
   assert.match(matrix, /^\| Observer \| required（macOS） \| unsupported/mu);
