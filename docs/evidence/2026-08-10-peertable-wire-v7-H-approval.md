@@ -3,7 +3,7 @@
 - Date: 2026-08-10
 - Requested by: tsumugi（peertable-onboarding campaign、Lattice task `t-hpkg`）
 - Decision owner: クオ
-- Decision: **未承認（承認待ち）**
+- Decision: **承認済み（4件すべて・2026-08-10）**
 
 peertable編入campaignの実装（s1・t-diag・t-adapter・t-gate・t-docs）は全task受理済み。
 残るのはオーナー承認が要る3件の実行だけであり、本書はその承認要求パッケージである。
@@ -88,6 +88,6 @@ peertable編入campaignの実装（s1・t-diag・t-adapter・t-gate・t-docs）�
 
 ## 承認欄（オーナー記入）
 
-- owner statement:
-- approved at:
-- 承認範囲（3件のうちどれを承認するか。上記「自作コア11製品」句の更新可否も併記可）:
+- owner statement: 「全部承認」（bell経由セッションでの直接発言。bellが転記）
+- approved at: 2026-08-10
+- 承認範囲（3件のうちどれを承認するか。上記「自作コア11製品」句の更新可否も併記可）: 4件すべて——①npm publish 0.3.5→0.3.6 ②wire v7 enroll＋4host cutover ③公開後smoke ④push恒久裁定「自作コア10製品」→11製品への正典更新（4箇所＋render＋lint）
