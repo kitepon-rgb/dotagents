@@ -30,6 +30,9 @@
   ],
   "ignores": [
     "docs/archive/**",
+    "docs/evidence/**", // 完了task証跡。Lattice evidence記述子がgit_blob_oid/content_digestで
+                        // 内容を固定するため、後からlint都合で編集すると証跡と食い違う（実被弾: MD052が
+                        // room発言引用`[42][43]`をreference linkと誤検知。archiveと同じ「凍結記録」区分）
     "node_modules/**"
   ]
 }
