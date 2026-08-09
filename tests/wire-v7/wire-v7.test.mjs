@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import {
-  chmod, mkdir, mkdtemp, rm, writeFile,
+  chmod, mkdir, mkdtemp, readFile, rm, writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import process from 'node:process';
 import test from 'node:test';
 
@@ -189,4 +190,111 @@ test('peertableProductはCLI不在をmissing、schema不正をunverifiedへ落�
   const invalid = await peertableProduct({ cwd: box.root, now: '2026-08-10T00:00:00.000Z' });
   assert.equal(invalid.presence_status, 'unverified');
   assert.equal(invalid.checks[0].reason_code, 'native_schema_invalid');
+});
+
+function readyReportV7() {
+  return {
+    schema_version: '7.0',
+    report_id: '019f57f0-6bb7-7bc1-b94a-18f648f2d903',
+    host_id: 'mac-kite',
+    host_profile: 'mac',
+    platform: { os: 'darwin', arch: 'arm64' },
+    report_mode: 'full',
+    observed_at: '2026-08-10T00:00:00.000Z',
+    created_at: '2026-08-10T00:00:00.000Z',
+    reporter: { version: '7.0.0', dotagents_revision: 'abc1234' },
+    products: Object.fromEntries(EXPECTED.map((id) => [id, {
+      presence_status: 'installed', installed_version: '0.1.0', contract_version: '7.0',
+      checks: [], runtime_errors: [], resolutions: [],
+    }])),
+  };
+}
+
+function run(script, args, env = {}) {
+  return new Promise((resolveRun) => {
+    const child = spawn(process.execPath, [script, ...args], {
+      env: { ...process.env, ...env },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('close', (code) => resolveRun({
+      code,
+      stdout,
+      stderr,
+      json: stdout ? JSON.parse(stdout) : null,
+    }));
+  });
+}
+
+test('v7 reporterはv7 reportだけを受理し、v6とstateを共有しない', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'wire-v7-reporter-'));
+  try {
+    const reportPath = join(root, 'report.json');
+    const configPath = join(root, 'config.json');
+    const reporter = resolve(import.meta.dirname, '../../bin/factory-reporter-v7.mjs');
+    await writeFile(reportPath, JSON.stringify(readyReportV7()));
+    await writeFile(configPath, JSON.stringify({
+      schema_version: '1.0',
+      host: { id: 'mac-kite', profile: 'mac' },
+      collection: { enabled: false },
+      reporting: { enabled: false },
+    }));
+    const preview = await run(reporter, ['preview', '--report', reportPath, '--config', configPath], {
+      XDG_STATE_HOME: join(root, 'state'),
+    });
+    assert.equal(preview.code, 0, preview.stderr);
+    assert.equal(preview.json.report.schema_version, '7.0');
+
+    const v6 = readyReportV7();
+    v6.schema_version = '6.0';
+    v6.reporter.version = '6.0.0';
+    delete v6.products.peertable;
+    for (const productValue of Object.values(v6.products)) productValue.contract_version = '6.0';
+    await writeFile(reportPath, JSON.stringify(v6));
+    const rejected = await run(reporter, ['preview', '--report', reportPath, '--config', configPath], {
+      XDG_STATE_HOME: join(root, 'state'),
+    });
+    assert.equal(rejected.code, 1);
+    assert.equal(rejected.json.code, 'FACTORY_REPORTER_V7_ERROR');
+
+    const source = await readFile(reporter, 'utf8');
+    assert.match(source, /factory-reporter-v5\.mjs/u, 'v5の検証済みtransport実装を共有する');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('schedulerはv7 endpoint・runner・専用stateを同じmajorへ束縛する', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'wire-v7-scheduler-'));
+  try {
+    const configPath = join(root, 'config.json');
+    const credentialPath = join(root, 'credential');
+    const scheduler = resolve(import.meta.dirname, '../../bin/factory-reporter-scheduler.mjs');
+    await writeFile(credentialPath, 'unit-test-token\n', { mode: 0o600 });
+    await writeFile(configPath, JSON.stringify({
+      schema_version: '1.0',
+      host: { id: 'mac-kite', profile: 'mac' },
+      collection: { enabled: true },
+      reporting: {
+        enabled: true,
+        endpoint: 'http://127.0.0.1:1/api/factory/v7/reports',
+        credential_file: credentialPath,
+      },
+    }));
+    const result = await run(scheduler, [
+      'install', '--dry-run', '--platform', 'darwin', '--wire-major', 'v7', '--config', configPath,
+    ], {
+      HOME: root,
+      XDG_STATE_HOME: join(root, 'state'),
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(result.json.wire_major, 'v7');
+    assert.match(result.json.artifact_content, /factory-reporter-v7-schedule-runner/u);
+    assert.match(result.json.state, /factory-reporter-v7$/u);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

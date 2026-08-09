@@ -11,7 +11,8 @@ import { extendedSchedulerPath } from '../lib/factory/scheduler-path.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
-const WIRE_MAJOR = basename(process.argv[1] || '').includes('factory-reporter-v6') ? 'v6' : 'v5';
+const INVOKED = basename(process.argv[1] || '');
+const WIRE_MAJOR = INVOKED.includes('factory-reporter-v7') ? 'v7' : INVOKED.includes('factory-reporter-v6') ? 'v6' : 'v5';
 process.env.PATH = extendedSchedulerPath({ platform: platform(), path: process.env.PATH, execPath: process.execPath, home: homedir() });
 function statePath() { return platform() === 'win32' ? join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'dotagents', `factory-reporter-${WIRE_MAJOR}`) : join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'dotagents', `factory-reporter-${WIRE_MAJOR}`); }
 function platformMatches(profile) { return (platform() === 'darwin' && profile === 'mac') || (platform() === 'linux' && ['server', 'wsl'].includes(profile)) || (platform() === 'win32' && profile === 'windows-native'); }
