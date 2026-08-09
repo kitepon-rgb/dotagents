@@ -253,7 +253,7 @@ major変更は既存endpointの意味を差し替えず、新endpointとschema�
 
 1. ServerManagerへ旧majorを保持したまま新endpoint、validator、dedupe、notification、rollback fixtureを追加し、新major flagをOFFでdeployする。
 2. `/readyz`と旧major report受理を確認後、新major flagをONにしてcanaryを通す。履歴tableを削除しない。
-3. dotagentsへmajor別client/outboxを追加し、失敗を別majorの成功へ偽装しない。
+3. dotagentsへmajor別client/outboxを追加し、失敗を別majorの成功へ偽装しない。新規runner binを追加したら、schedulerの`install --apply`より前に`./install.sh`を再実行してグローバル`~/.local/bin/`へsymlinkを配る（怠ると`launchctl kickstart`等が`Cannot find module`で落ちる。実被弾: v7 canary cutover時に`factory-reporter-v7-schedule-runner`のsymlinkが無くkickstart失敗）。
 4. 1 hostずつHでdual-run、rollback、再cutoverを実測し、current・履歴・resolve/reopen・通知・`/ai`の意味を照合する。
 5. 全host移行、旧outbox drain、最大offline/dedupe保持期間、rollback drill完了後にだけ旧major retireを別waveで承認する。
 
