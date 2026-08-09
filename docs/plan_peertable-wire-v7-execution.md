@@ -23,7 +23,11 @@ H承認[45]①・[H承認要求文書](evidence/2026-08-10-peertable-wire-v7-H-a
 
 ### t-enroll-cutover ServerManager wire v7 enroll + 4host段階cutover
 
-H承認[45]②。`docs/wire-v7-design.md` §7 server-first migrationに従う: ServerManagerへv7 schema・固定15製品・endpoint追加（`FACTORY_V7_INGEST_ENABLED=false`既定）→検証→dotagentsへ配信CLI（`bin/factory-reporter-v7.mjs`等）追加→Mac canaryでv6/v7 dual-run→host別段階cutover。一括不可逆cutoverはしない。FOX WSL2/Windows nativeはこのセッションから到達不能なため、carry over対象として明示する（bell[45]了承済み）。着手前にt-publishの完了とrollback手順の再読・実行コマンドの突合をroomで確認する。
+H承認[45]②のうちコード実装部分（part A・B）。`docs/wire-v7-design.md` §7 server-first migrationに従う: ServerManagerへv7 schema・固定15製品・endpoint追加（`FACTORY_V7_INGEST_ENABLED=false`既定）＋dotagentsへ配信CLI（`bin/factory-reporter-v7.mjs`等）追加。flag既定falseのため本番挙動は変えない。**実deploy・flag有効化・cutoverはt-cutover-deployへ分割**（room `peertable-onboarding` [69][74]、調査の結果リスク粒度が異なると判明したため）。
+
+### t-cutover-deploy 実deploy＋flag有効化＋Mac canary dual-run＋host別段階cutover
+
+H承認[45]②の残り（part C）。t-enroll-cutoverが実装したServerManager wire v7を実際にserver-first deployし、`FACTORY_V7_INGEST_ENABLED=true`へ有効化、Mac canaryでv6/v7 dual-runを実測し、到達可能hostから段階cutoverする。一括不可逆cutoverはしない。FOX WSL2/Windows nativeはこのセッションから到達不能なため、carry over対象として明示する（bell[45]了承済み）。実行前にt-enroll-cutoverの完了とrollback手順の再読・実行コマンドの突合をroomで確認する。Lattice上は`todo migrate`が既存plan_keyへの追記に対応しない実測制約（`plan_key_already_exists`）のため、姉妹plan `peertable-wire-v7-cutover-deploy`として登録する。
 
 ### t-smoke 公開後smoke
 
@@ -35,7 +39,7 @@ H承認[45]③。`npm install -g peertable@0.3.6`後に`peertable-client diagnos
 
 ## 依存
 
-t-publish → t-enroll-cutover → t-smoke。t-constitutionは独立。
+t-publish → t-enroll-cutover → t-cutover-deploy（姉妹plan） → t-smoke。t-constitutionは独立。
 
 ## 導線
 
