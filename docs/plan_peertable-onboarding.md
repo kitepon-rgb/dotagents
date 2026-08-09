@@ -1,14 +1,14 @@
 # plan_peertable-onboarding — peertableを工場管理12製品目へ編入する
 
-status: **suspended**（2026-08-08 開始、同日中断。オーナー裁定: peertableをLatticeへ内蔵する可能性が浮上し、独立製品としての編入前提が保留）。ToDoの正本はLattice store（plan `peertable-onboarding`）であり、本書は目的・思想・受入条件・導線だけを所有する。
+status: **active**（2026-08-08 開始、同日中断、2026-08-10 オーナー指示で再開）。ToDoの正本はLattice store（plan `peertable-onboarding`）であり、本書は目的・思想・受入条件・導線だけを所有する。
 
-中断時点の現在地: s1（診断契約）は円卓全員合意まで到達し、契約はpeertable repo `docs/plan.md` 決定45としてcommit済み（push未・オーナー明示指示待ち）。t-adapter以降は未着手。詳細はLattice s1のnoteを参照。
+再開時の現在地（2026-08-10 実測）: 中断中にpeertableは0.3.5まで進み、s1合意契約（決定45）は**製品側で実装・npm公開済み**。`peertable-client diagnostics --json`の実測はURL無しで`room_reachability: not_applicable`・`overall: ready`・exit 0、URL有りで`pass`と契約に一致。`prepublishOnly`診断gateも導入済み。よってs1・t-diagはdoneへ照合し、t-gateは「既定ブランチ祖先gate（aishell reference移植）」へ再スコープ。残作業はt-adapter・t-docs・t-gate・t-hpkg。Lattice 0.52.0のCLI（plan v4／extraction v3／diagnostics v1）は無変更で手順への影響なし。
 
-Lattice内蔵案は撤回（オーナー裁定 2026-08-08 同日）。peertableは独立製品のまま編入対象として有効。ただし中断時点でLattice・peertable両製品の改修が別途進行中のため、再開はその収束とオーナーの再開指示後とする（s1契約は再開時に実装現況との差分を再確認してから使う）。
+push裁定（オーナー 2026-08-10）: 本campaign中は両repoともpush既定。新publish・BugHub cutoverだけH承認待ち。
 
 ## 目的
 
-peertable（`kitepon-rgb/peertable`、npm `peertable@0.1.0`）をdotagents工場管理の12製品目（自作コア11製品目）として編入する。標準の追加wave 1本で行い、特別扱いの新設計をしない。
+peertable（`kitepon-rgb/peertable`、npm `peertable@0.3.5`）をdotagents工場管理の12製品目（自作コア11製品目）として編入する。標準の追加wave 1本で行い、特別扱いの新設計をしない。
 
 ## 思想（オーナー裁定 2026-08-08）
 
