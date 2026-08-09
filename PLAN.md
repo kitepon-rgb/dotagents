@@ -4,7 +4,7 @@
 
 ## 趣旨
 
-dotagents は**開発工場そのもの**。全プロジェクトに共通して効く土台（規範・同期ハブ・知識台帳）と、工場管理対象製品の統合責務を持つ。規範・配布・知識の各面の地図は [docs/00_overview.md](docs/00_overview.md)、管理対象11製品・基盤toolchain・BugHubの台帳は [docs/factory-product-contracts.md](docs/factory-product-contracts.md) が正。GitHub が真実の源。LatticeはCodegraphを完全吸収した正式後継で、独立Codegraphはretired／not_applicableの履歴だけを保持する。
+dotagents は**開発工場そのもの**。全プロジェクトに共通して効く土台（規範・同期ハブ・知識台帳）と、工場管理対象製品の統合責務を持つ。規範・配布・知識の各面の地図は [docs/00_overview.md](docs/00_overview.md)、管理対象12製品・基盤toolchain・BugHubの台帳は [docs/factory-product-contracts.md](docs/factory-product-contracts.md) が正。GitHub が真実の源。LatticeはCodegraphを完全吸収した正式後継で、独立Codegraphはretired／not_applicableの履歴だけを保持する。
 
 **範囲**: 本旨は「開発工場（環境）の最適化」。個々のプロダクトの品質監査・法務チェック・深いバグ探しは範囲外——それは「工場で作る製品の検品」であり、オーナーが個別に依頼した時だけ行う。各プロジェクトへの介入は原則、①GitHub 同期 ②フォルダ構成の標準化 ③CLAUDE.md ブラッシュアップ ④Spotter のproject-scoped有効化に絞る。Spotterは全projectで無条件発火させず、正規CLIが作るmarkerで対象を限定する。
 

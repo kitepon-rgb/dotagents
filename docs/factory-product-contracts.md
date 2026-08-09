@@ -1,10 +1,10 @@
-# 工場管理11製品＋基盤toolchain 3製品の有限契約台帳
+# 工場管理12製品＋基盤toolchain 3製品の有限契約台帳
 
-更新日: 2026-07-25。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
+更新日: 2026-08-10。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
 ## 共通境界
 
-- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、Observer、ServerManager）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64、ObserverはmacOS専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。
+- 現役管理対象は自作コア11製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、Observer、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計12製品である。AIShellはmacOS arm64、ObserverはmacOS専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。peertableはpeertable-onboarding campaignで編入済みだが、npm publish・BugHub/ServerManager wire v7 enroll・4host cutoverはH承認待ちで未実行。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。
 - 現役契約はLattice `docs/01_integration-package.md`と本台帳・[factory-host-product-matrix.md](factory-host-product-matrix.md)が正、導入経緯は[docs/archive/plan_lattice-factory-integration.md](archive/plan_lattice-factory-integration.md)と[docs/archive/plan_observer-core-integration.md](archive/plan_observer-core-integration.md)が正。
 - コア製品の修理・機能追加はcommit/pushで止めず、version bump→publish→対象端末へのglobal install→公開後smoke→公開証跡記録までを同一waveで完遂する。release gateは「publish対象は既定ブランチの祖先だけ」を機械gateとして実装したものだけを合格とし、AIShellの`scripts/verify-release-commit.mjs`＋`prepublishOnly`をreference実装とする。gate未実装の製品は、次にrelease作業を行うwaveで同時に導入する。
 - 工場の再現欠陥では、データ損失、security・認可・秘密漏洩、公開契約・履歴破壊、回復不能、現在のcritical pathまたはPhase受入を塞ぐP0/P1だけを即時修理する。非criticalは最小再現・影響・所有repoを既存planのmaintenance queueへ一度記録し、通常TODO後かつfull regression/Phase監査前のmaintenance wave一回で重複統合、再現確認、repo別修理、focused/related gate、repo別commitまで閉じる。欠陥ごとのplan、Control、ADR、独立監査、receiptは作らない。第三者製品または基盤toolchain本体が原因かつ修理所有者である欠陥はdotagentsのToDo、maintenance queue、H承認待ちへ登録せず範囲外とし、dotagents所有adapter・設定生成・互換projectionの欠陥は範囲内とする。権限外変更、コア製品publish、本番deploy、credential/login、意図的障害試験は理由と必要条件を記録しH承認待ちとしてcarry overする。
@@ -109,3 +109,12 @@
 - update/rollback: macOSで`@quolu/observer@latest`をglobal更新する。公開済みversionをunpublishせず、必要時はdeprecateしてglobal installを旧版へ戻す。
 - wire: v5固定13製品を変更せず、wire v6の固定14製品目としてserver-first、dual-run、4 host cutover済み。
 - 禁止: watch/session/prompt/path/内部DBをfactory reportへ送信、非対応hostを`missing`扱い、ServerManagerからObserver内部stateを修復。
+
+### `peertable`
+
+- 所有/修正先: 自作 / `kitepon-rgb/peertable`。version入口: `peertable-client diagnostics --json`の`product.version`（`package.json`と`room/client.mjs`の`MCP_VERSION`一致を`version_consistency` checkが検証。別途`--version`は無い）。
+- diagnostics/state正本: `peertable-client diagnostics --json`（schema `peertable.native_factory_diagnostics.v1`。決定45契約）。`version_consistency`・`bin_integrity`・`node_runtime`・`skill_bundle`・`room_reachability`をread-onlyで返す。room DB・member state・message本文は解釈しない。`room_reachability`は`PEERTABLE_URL`未設定時`not_applicable`（npm単体利用の平常状態）、設定時は到達fetchの`pass`/`fail`。overallは`ready`（全pass/not_applicable）/`not_ready`（fail含む）/`unverified`（判定不能含む）。
+- 現adapter: `lib/factory/v7.mjs`の`projectPeertableFactory`/`peertableProduct`がnative JSONをexact allowlistで検証し、`ready`をpass/compatible、`not_ready`を固定fingerprintのfail/incompatible、schema不正・CLI不在をunverified/missingへ射影する。`room_reachability`はLAN room到達性と製品健全性を結合させないため、scan時は常に`PEERTABLE_URL=''`で空へ倒す（不可侵原則：ServerManager server profileパターンの踏襲）。runtime errorは製品側に未実装のため契約対象外。
+- wire: v6固定14製品へpeertableを加えた`V7_PRODUCT_IDS`固定15製品として実装済み（`lib/factory/v7.mjs`・`docs/wire-v7-design.md`）。BugHub/ServerManagerへのwire v7 enrollと4host cutoverはH承認待ちで未実行。
+- release gate: `scripts/verify-release-commit.mjs`（aishell reference実装からの移植）を`prepublishOnly`へ連結済み。publish対象は既定ブランチ祖先のcleanなcommitだけに限定する。
+- 表現/禁止: room server URL・投稿token・room DB・message本文をreportへ転記しない。room DBの直接query、adapterによるmember state推測を禁止。`skill/`はpeertable repoが所有しnpm同梱で配る——dotagentsの`claude/skills/`や`install.sh`へ複製しない。

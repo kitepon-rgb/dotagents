@@ -30,7 +30,7 @@
 
 dotagentsセッションからコア製品repoへ直接手を届かせるのは、この断片を dotagents の `.claude/settings.local.json` へ貼った端末だけとする。`.claude/` はこのリポの gitignore 対象＝端末ごとに貼る。
 
-対象は[製品契約台帳](factory-product-contracts.md)の自作コア10製品の正規repoだけとし、MarkItDown（第三者・repoなし）、基盤toolchain、`*-wt-*` / `*-worktrees` の作業ツリーは含めない。`<HOME>` は各端末の home 絶対パスへ置換する:
+対象は[製品契約台帳](factory-product-contracts.md)の自作コア11製品の正規repoだけとし、MarkItDown（第三者・repoなし）、基盤toolchain、`*-wt-*` / `*-worktrees` の作業ツリーは含めない。`<HOME>` は各端末の home 絶対パスへ置換する:
 
 ```json
 {
@@ -45,13 +45,14 @@ dotagentsセッションからコア製品repoへ直接手を届かせるのは�
       "<HOME>/Developer/codex-sidecar",
       "<HOME>/Developer/aishell",
       "<HOME>/Developer/Observer",
-      "<HOME>/Developer/ServerManager"
+      "<HOME>/Developer/ServerManager",
+      "<HOME>/Developer/peertable"
     ]
   }
 }
 ```
 
-- 置き場は dotagents の `.claude/settings.local.json` だけとする。project の `.claude/settings.json` へ書いた付与は workspace trust ダイアログを承認した後にだけ効き、グローバル `~/.claude/settings.json` へ書くと全 project がコア10repoへ到達する。
+- 置き場は dotagents の `.claude/settings.local.json` だけとする。project の `.claude/settings.json` へ書いた付与は workspace trust ダイアログを承認した後にだけ効き、グローバル `~/.claude/settings.json` へ書くと全 project がコア11repoへ到達する。
 - パスは絶対パスで書く（`~` 展開は公式ドキュメントに明記がない）。実在する repo だけを列挙し、無い行を残さない。
 - 反映は次セッションの起動から。当該セッション内だけ足すなら `/add-dir <path>` を使う。
 - `additionalDirectories` が与えるのはファイルアクセスだけで、その先の `.claude/` 設定（skills・agents・CLAUDE.md）は読み込まれない。それらが要る時は起動時 `--add-dir` かセッション中 `/add-dir` を使う。

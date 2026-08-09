@@ -9,8 +9,8 @@ Lattice storeが唯一の正本であり、Markdown checkboxや旧queueへ二重
 ## 現在の工場
 
 - 開発工場: dotagents
-- 自作コア10製品: Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／
-  codex-sidecar／AIShell／Observer／ServerManager
+- 自作コア11製品: Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／
+  codex-sidecar／AIShell／Observer／ServerManager／peertable
 - 第三者管理製品: MarkItDown（公開CLIだけをblack-box管理）
 - 基盤toolchain: Claude Code CLI／Codex CLI／Grok Build
 - 現役factory wire: v6・固定14製品

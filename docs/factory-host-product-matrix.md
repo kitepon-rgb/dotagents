@@ -1,6 +1,6 @@
 # 工場 host × product 期待matrix
 
-更新日: 2026-07-25
+更新日: 2026-08-10
 正本: dotagents
 対象: Mac、main-server、FOX WSL2、FOX Windows native
 
@@ -31,6 +31,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | AIShell | required（Apple Silicon / macOS 15+） | unsupported（macOS native API不在） | unsupported（同左） | unsupported（同左） | high（対応Macのみ） |
 | Observer | required（macOS） | unsupported（v1 platform support外） | unsupported（同左） | unsupported（同左） | high（対応Macのみ） |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
+| peertable | required（client。実測済み） | required（server。`deploy/compose.yaml`でcompose常駐） | optional（client。未実測） | optional（client。未実測） | high（main-server・Macのみ） |
 | Claude Code CLI | required | required | required | unsupported | high |
 | Codex CLI | required | required | required | required | high |
 | Grok Build | optional | optional | optional | unsupported | info |
@@ -52,12 +53,13 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | AIShell | MCP `aishell` required（Apple Silicon / macOS 15+のみ）。`AISHELL_CAPABILITY_SET=expanded-v1`で登録し、工場監視はpath非露出の`AISHELL_TOOL_PROFILE=factory`を使う | 同左 |
 | Observer | macOSでStop hookとparent watchをversioned fragmentからH適用。同provider familyの伴走専用 | 同左。`run-observer-parent-watch`を正規入口とし、一般Worker・Control票へ混ぜない |
 | ServerManager | connector not_applicable | connector not_applicable |
+| peertable | team編成時（peertable setup）だけMCP `room` required。teardownで解除 | 同左 |
 
 独立Codegraphは全hostで退役済みであり、製品・connector期待matrixへ含めない。BugHubの既存履歴だけを
 `not_applicable`として保持する。Latticeの`codegraph_*` tool名はLattice所有の入力互換ABIであり、
 独立Codegraph MCP登録を意味しない。
 
-Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。
+Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。peertableも同様にteam編成（`peertable setup`）した対象projectだけがMCP `room`のrequired対象で、未編成projectでの未導入をissueにしない。FOX WSL2／FOX Windows nativeでのclient稼働は本campaign時点で未実測のため`optional`起点とし、実測後にrequiredへ昇格するかは実測結果次第とする。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。
 
 ## 診断とreportの扱い
 
