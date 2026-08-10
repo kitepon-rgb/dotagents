@@ -19,10 +19,23 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | [06_oracle-mcp.md](06_oracle-mcp.md) | Oracleの互換・手動rollback記録（新規導入の正本ではない） |
 | [../shared/orchestrate/contract.md](../shared/orchestrate/contract.md) | 両親共通のorchestrate use-not-use・Control lifecycle・統括ゲート |
 | [../shared/orchestrate/delegation-contract.md](../shared/orchestrate/delegation-contract.md) | 製品中立のDelegation Packet／Worker Reportと統括側受入契約 |
-| `plan_*.md` | 進行中の子計画（詳細TODO・受入条件。マスターの実行順に従い、完遂で `YYYY-MM_` 接頭辞にして archive へ） |
+| `plan_*.md` | 進行中の子計画（詳細TODO・受入条件。マスターの実行順に従い、完遂で `YYYY-MM_` 接頭辞にして archive へ移し、docs/直下には archive を指す短いスタブだけ残す） |
 | [archive/queue_memory-promotion.md](archive/queue_memory-promotion.md) | 終了した端末メモリ→リポ正典への旧昇格待ち行列 |
 | [adr/](adr/) | このリポ自身の構造決定の記録 |
 | [archive/](archive/) | 役目を終えた文書（Fable 期キャンペーンの計画 v3・消化台帳一式） |
+
+## 工場（管理対象製品）の正典
+
+製品の統合契約はこの4種が正で、他文書へ複製しない。
+
+| 文書 | 役割 |
+|---|---|
+| [factory-product-contracts.md](factory-product-contracts.md) | 管理12製品＋基盤toolchain 3製品の**有限契約台帳**。version入口・正規diagnostics・adapter・禁止事項 |
+| [factory-host-product-matrix.md](factory-host-product-matrix.md) | host別の期待状態（required／optional／unsupported／not_applicable）と親別connector |
+| [factory-reporter-runbook.md](factory-reporter-runbook.md) | credential・設定・送信・rotation・**wire major別のserver-first cutoverとrollback**の運用手順 |
+| `wire-vN-design.md` | wire major各版の契約正本。現役は[v7](wire-v7-design.md)（mac-kite）と[v6](wire-v6-design.md)（他host）で、**段階cutover中は並存が正常**。[v5](wire-v5-design.md)は履歴 |
+
+製品の追加・削除・第三者化・所有移管の手順は [../README.md](../README.md)「工場コア製品の変更管理」が正。
 
 ## 関連
 

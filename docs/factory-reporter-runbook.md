@@ -10,7 +10,7 @@
 - token、実config、outboxはgitへ入れない。tokenを引数、query parameter、通常JSON出力へ出さない。
 - host identityはtop-level `host.id / host.profile`で固定し、tokenのserver-side bindingと一致させる。
 - credential fileは所有者限定。POSIXはdirectory `0700`・file `0600`、Windowsは継承ACLを除去して現在userだけにする。
-- 本番BugHubの現行入口はv6の`/api/factory/v6/reports`で、`FACTORY_V6_INGEST_ENABLED=true`を明示するまで404にする。host別rollback用のv5入口と履歴は独立して維持し、wire majorを暗黙変換しない。
+- **本番BugHubの入口はhostごとに違う（2026-08-10〜のwire v7段階cutover中）**。mac-kiteはv7の`/api/factory/v7/reports`、main-server自身とFOX WSL2／Windows nativeはv6の`/api/factory/v6/reports`である。どちらも`FACTORY_V<N>_INGEST_ENABLED=true`を明示するまで404にする。host別rollback用のv6／v5入口と履歴は独立して維持し、wire majorを暗黙変換しない。自分が触るhostがどちらかを`~/.config/dotagents/factory-reporter.json`の`reporting.endpoint`で確認してから作業する（§4bを参照）。
 - Pi5からのServerManager outageは、main-server上の`factory-external-event`だけで記録する。任意本文・path・URLは受け取らず、固定`check`/`reason`とcanonical UTCだけを保存する。
 
 ## 1. 送信OFFでconfigを配置
@@ -98,6 +98,22 @@ v6からそのhostだけをrollbackする時は、次の順序を守る。
 4. v5 scan → enqueue → flushを実行し、BugHubのcurrent viewと履歴を確認する。v6 payloadをv5へ再送・変換しない。
 
 v6へ復帰する時はconfigの`reporting.endpoint`を`/api/factory/v6/reports`へ戻し、`factory-reporter-scheduler install --wire-major v6 --dry-run --platform <OS>`を確認後、H承認済みの`--apply`でv6 schedulerを登録する。最初のfull snapshotは固定14製品集合として送信する。serverのv6 flagを戻す必要がある場合は、先に全hostをv5へ戻して受理を確認し、退避した`.env`からflagだけを復元する。どちらのrollbackでも履歴・issue・releaseを削除しない。
+
+## 4b. wire v7への段階cutover（2026-08-10〜・進行中）
+
+peertable編入に伴うwire v7（固定15製品）は、§4aと同じserver-first順序で進めている。契約は[wire v7設計](wire-v7-design.md)、承認記録は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)が正。
+
+**現在のhost別状態**: main-serverはv7対応codeをdeploy済みで`FACTORY_V7_INGEST_ENABLED=true`。cutover済みのhost clientは**mac-kiteだけ**で、main-server自身とFOX WSL2／Windows nativeは引き続きv6で報告する。並存は設計どおりであり、異常ではない。
+
+残hostをcutoverする時の順序（mac-kiteで実測済みの形）:
+
+1. **対象端末で`./install.sh`を再実行する**。v7 binのsymlinkが`~/.local/bin`へ無いと、schedulerが登録できても実行時に`Cannot find module ... factory-reporter-v7-schedule-runner`で落ちる（2026-08-10実被弾。scheduler installはrunner binの解決可能性を検証しないため、install漏れは登録時点では発覚しない）。
+2. host configを`factory-reporter.json.bak-v6-<timestamp>`へ退避する。
+3. `reporting.endpoint`を`/api/factory/v7/reports`へ変更する。
+4. `factory-reporter-scheduler install --wire-major v7 --dry-run --platform <OS>`でartifactを確認し、H承認後に`--apply`する。**v6 state/outbox（`~/.local/state/dotagents/factory-reporter-v6/`）は削除しない**——rollback即再開の前提になる。
+5. scan → enqueue → flushを1回手動実行し、BugHubのcurrent viewで対象hostの15製品が`contract_version 7.0`で反映されることを確認する。
+
+v6へ戻す時は退避configを書き戻し、`--wire-major v6`で再installする（state/outboxが無傷なら即再開できる）。§4aと同じく、全hostを一括切替しない。
 
 ## 5. rotation
 
@@ -212,6 +228,12 @@ Claude Code、Codex、Grok Build は更新ごとにowner-onlyのtoolchain ledger
 この接続はschedulerを新規登録せず、configを作成・変更せず、collection/reportingをONにしない。実hostへのconfig・credential配置とON操作は前節までのH手順で別途行う。
 
 ### v6 component health と post-update gate
+
+> **既知の食い違い（2026-08-10・未修理）**: `bin/agents-update.sh:41`の`FACTORY_REPORTER_RUNNER`既定は
+> `factory-reporter-v6-schedule-runner`のままで、wire v7へcutover済みのhost（現時点でmac-kite）でも
+> v6 runnerがpost-update gateを回す。v7 cutover済みhostで`agents-update`のgate結果を読む時は、
+> `FACTORY_REPORTER_RUNNER=$HOME/.local/bin/factory-reporter-v7-schedule-runner`を明示してから実行する。
+> 既定値の追従は§maintenance queue（[plan_factory-master.md](plan_factory-master.md)）の申し送り。
 
 v6 report は各製品のnative diagnosticsを単一の `native_diagnostics` へ縮約しない。各componentの `pass` / `fail` / `unverified` / `skipped` とreasonをそのまま送る。通常定期実行はscan → enqueue → flushの成否だけでexitを決め、component healthの判定はraw reportとBugHubのhost matrixに委譲する。
 

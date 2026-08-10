@@ -1,13 +1,20 @@
 # wire v7 設計正本 — peertableの固定集合編入
 
-**状態:** Active（[peertable編入campaign](plan_peertable-onboarding.md)の設計成果物）
-**工程正本:** Lattice plan `peertable-onboarding`
-**対象:** dotagents reporter（client実装のみ。ServerManager / BugHub ingestと4 host cutoverはH承認待ち）
+**状態:** Active（[peertable編入記録](archive/2026-08_peertable-onboarding.md)の設計成果物）
+**工程正本:** Lattice plan `peertable-onboarding`（設計）／`peertable-wire-v7-execution`・`peertable-wire-v7-cutover-deploy`（実行）
+**対象:** dotagents reporter、ServerManager / BugHub ingest、4 active host
+**決定:** [ADR 0127](adr/0127-wire-v7-peertable-enrollment.md)
 **契約:** [s1合意（決定45、peertable repo `docs/plan.md`）](https://github.com/kitepon-rgb/peertable)
 
-本書はwire v7のclient側契約を所有する。wire v6踏襲のserver-first・dual-run設計を維持しつつ、
-本waveで実装した範囲（`lib/factory/v7.mjs`・`lib/factory/contract.mjs`配線・tests・privacy fixture）と、
-H承認待ちで実行していない範囲（server実装・endpoint有効化・host cutover）を明示的に分ける。
+> **現在状態（2026-08-10）:** client・serverとも実装済みでdeploy済み、`FACTORY_V7_INGEST_ENABLED=true`。
+> **cutover済みhostはmac-kiteだけ**で、main-server自身とFOX WSL2／Windows nativeの2hostは
+> 引き続き[wire v6](wire-v6-design.md)で報告する（host別段階cutoverの途中であり、v6とv7は並存が正常）。
+> 残hostの手順は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)と
+> [reporter runbook](factory-reporter-runbook.md)が正。
+
+本書はwire v7の契約を所有する。wire v6踏襲のserver-first・dual-run設計を維持し、
+実装（`lib/factory/v7.mjs`・`lib/factory/contract.mjs`配線・tests・privacy fixture・`bin/factory-reporter-v7.mjs`等）と
+運用状態（server deploy・flag・host別cutover）を分けて記述する。
 
 ## 1. 新しいwire majorが必要な理由
 
@@ -103,18 +110,24 @@ Observer型の`unsupported`分岐ではなく、他のnpm CLI製品（gpt-connec
 - late reportはcurrent viewを巻き戻さない
 - v6とv7で同じ根因を観測した時は、wire versionだけで別issueを増殖させない
 
-## 7. server-first migration（設計。本waveは1・5のclient側だけ実装済み）
+## 7. server-first migration（進行状況は2026-08-10時点）
 
-1. ~~ServerManagerへv7 schema、固定15製品、expectation、fixture、endpointを追加する。~~ dotagentsへv7
-   client（`lib/factory/v7.mjs`・contract配線・tests・privacy fixture）を追加する（本wave完了）。
-2. `FACTORY_V7_INGEST_ENABLED=false`を既定にし、v6 ingestを変更しない。（H承認後）
-3. v7のschema、unknown-key拒否、late-report、issue identity、v6 regressionを検証する。（H承認後）
-4. server側だけv7 ingestを有効化し、client未送信状態がv6運用へ影響しないことを確認する。（H承認後）
-5. ~~dotagentsへv7 reporter、peertable adapter、fixture、host matrixを追加する。~~ adapter・fixtureは本wave完了。
-   reporter bin（`bin/factory-reporter-v7.mjs`等）とhost matrix行はt-hpkg承認後またはt-docsの範囲。
-6. canary hostからv6/v7 dual-runを始める。（H承認後）
-7. 全active hostでpeertableの構造化判定（required/unsupported）が期待どおりであることを確認する。（H承認後）
-8. 全active hostのv7 current view、history、issue transition、privacyを照合してcutoverする。（H承認後）
+1. **[完了]** ServerManagerへv7 schema、固定15製品、expectation、fixture、endpointを追加し（ServerManager commit
+   `0f196d3`）、dotagentsへv7 client（`lib/factory/v7.mjs`・contract配線・tests・privacy fixture）を追加する。
+2. **[完了]** `FACTORY_V7_INGEST_ENABLED=false`を既定にしてserver-first deployし、v6 ingestを変更しない。
+3. **[完了]** v7のschema、unknown-key拒否、late-report、issue identity、v6 regressionを検証する。
+4. **[完了]** server側だけv7 ingestを有効化する（`.env`へflag追記→`docker compose up -d`。v7 endpointが404→401、
+   v6 endpointは不変を実測）。
+5. **[完了]** dotagentsへv7 reporter bin（`bin/factory-reporter-v7.mjs`等）、peertable adapter、fixture、host matrix行を追加する。
+6. **[完了]** canary host（mac-kite）でv6/v7 dual-runを実測し、issue 0件・15製品matrix反映を確認する。
+7. **[部分]** mac-kiteはpeertableの構造化判定を実測済み。main-server自身とFOX 2hostは未実施。
+8. **[部分]** mac-kiteは本番scheduler（launchd）をv7へcutover済み。残hostは未実施——**一括で行わず、host別に
+   実行前確認とrollback手順の再読を経てから進める**。
+
+**新しいwire majorのbinを足したwaveは、対象端末で`./install.sh`を再実行するまでがcutover手順**である
+（`~/.local/bin`のsymlink未配布だとscheduler jobが`Cannot find module`で落ちる。2026-08-10実測）。
+
+feature flagはv6と独立させる。単一のglobal switchでv6を同時停止しない。
 
 feature flagはv6と独立させる。単一のglobal switchでv6を同時停止しない。
 
@@ -141,7 +154,7 @@ v6 reporterはpeertableを報告しない。
 - room DB・member state・message本文の集約またはServerManagerへの送信
 - ServerManagerによるpeertable内部状態の直接変更
 - 全host一括の不可逆cutover
-- server側実装（ServerManager/BugHub ingest）とhost cutoverの実行（H承認待ち。t-hpkgが承認要求文書を持つ）
+- 残host（main-server自身・FOX WSL2・FOX Windows native）のcutoverを、host別の実行前確認なしに進めること
 
 ## 10. 受入条件
 
@@ -152,9 +165,11 @@ v6 reporterはpeertableを報告しない。
 4. `room_reachability`が親環境の`PEERTABLE_URL`によらずadapter呼び出し時は`not_applicable`相当へ倒れる。
 5. peertableのpath・token・room本文がreportへ流れない（safe_context空allowlist・privacy fixture）。
 6. v6 endpoint、schema、固定14製品、issue transitionのregressionがgreenである。
-7. server-first、dual-run、host別cutover、host別rollbackの設計がv6と同型で説明できる（実証はH承認後）。
+7. server-first、dual-run、host別cutover、host別rollbackがv6と同型で実証されている（mac-kiteで実測済み。
+   残hostは同じ手順を各端末で踏む）。
 
 ## 工程正本
 
-task、依存、ready frontier、完了証拠はLattice plan `peertable-onboarding`だけを正本とする。
+task、依存、ready frontier、完了証拠はLattice planだけを正本とする（設計＝`peertable-onboarding`、
+実行＝`peertable-wire-v7-execution`・`peertable-wire-v7-cutover-deploy`。いずれも終端監査accepted）。
 この文書へtask checkboxを複製しない。

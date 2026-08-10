@@ -30,7 +30,9 @@ test('agents-updateの既定post-update gateは現役wire v6へ固定する', as
     resolve(import.meta.dirname, '../../docs/factory-reporter-runbook.md'),
     'utf8',
   );
-  assert.match(runbook, /現行入口はv6/u);
+  // wire v7の段階cutover中はhostごとに入口が違う。v6が未cutover hostの現役入口として
+  // 書かれていることを検証する（総数リテラルと同じく、状態が動く文言へ固定しない）。
+  assert.match(runbook, /はv6の`\/api\/factory\/v6\/reports`/u);
   assert.match(runbook, /--wire-major v6/u);
   assert.match(runbook, /schema_version="6\.0"/u);
   assert.doesNotMatch(runbook, /通常経路はpayload `schema_version="4\.0"`/u);

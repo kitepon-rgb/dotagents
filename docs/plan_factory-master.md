@@ -13,7 +13,8 @@ Lattice storeが唯一の正本であり、Markdown checkboxや旧queueへ二重
   codex-sidecar／AIShell／Observer／ServerManager／peertable
 - 第三者管理製品: MarkItDown（公開CLIだけをblack-box管理）
 - 基盤toolchain: Claude Code CLI／Codex CLI／Grok Build
-- 現役factory wire: v6・固定14製品
+- 現役factory wire: **host別に並存中**。mac-kiteはv7・固定15製品、main-server自身とFOX 2hostはv6・固定14製品
+  （wire v7段階cutoverの途中。[wire v7設計](wire-v7-design.md)・[reporter runbook §4b](factory-reporter-runbook.md)が正）
 - 独立Codegraph: retired／not_applicable。Lattice sensorが正式後継
 
 所有境界と恒久規則は[AGENTS.md](../AGENTS.md)、趣旨は[PLAN.md](../PLAN.md)、有限契約は
@@ -28,6 +29,9 @@ Lattice storeが唯一の正本であり、Markdown checkboxや旧queueへ二重
 - [Codex全対応](archive/plan_codex-full-support.md)
 - [BugHub工場統合](archive/plan_bughub-factory-integration.md)
 - [工場全文書同期](archive/plan_factory-documentation-sync.md)
+- [peertable編入](archive/2026-08_peertable-onboarding.md)（設計・実装）と
+  [wire v7実行](archive/2026-08_peertable-wire-v7-execution.md)（publish・enroll・cutover・正典更新）。
+  残作業はmain-server自身とFOX 2hostのcutoverだけで、次に各端末を触るwaveが拾う
 
 ## 現在のwave
 
@@ -49,6 +53,13 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
   [factory-reporter-runbook.md](factory-reporter-runbook.md)§11 step3に明記済み。根本修理（typed
   errorで弾いてから成功を返す）は本campaignのscope外。最小再現はcaveat
   `dotagents-factory-reporter-scheduler-install-apply-runner-bin-success-fail-open`が正。
+- **`agents-update`のpost-update gate既定がwire v6 runner固定**（2026-08-10記録・所有repo=dotagents・
+  非クリティカル）: `bin/agents-update.sh:41`の`FACTORY_REPORTER_RUNNER`既定が
+  `factory-reporter-v6-schedule-runner`のため、wire v7へcutover済みのhost（mac-kite）でも
+  v6 runnerがgateを回し、configのendpoint（v7）とrunnerのmajorが食い違う。回避は同env varの明示指定で、
+  [runbook §9](factory-reporter-runbook.md)に注記済み。**根本修理は「hostのconfigが指すwire majorから
+  runnerを解決する」形が筋**で、v6のまま残るhostを壊さないこと。次にwire cutoverまたは
+  `agents-update`を触るwaveで閉じる。
 
 工程表示は次で生成する。
 
