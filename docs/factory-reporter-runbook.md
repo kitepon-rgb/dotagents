@@ -235,7 +235,9 @@ host別段階cutover中でも、cutover済みhostは自動でそのmajorのrunne
 
 v6 report は各製品のnative diagnosticsを単一の `native_diagnostics` へ縮約しない。各componentの `pass` / `fail` / `unverified` / `skipped` とreasonをそのまま送る。通常定期実行はscan → enqueue → flushの成否だけでexitを決め、component healthの判定はraw reportとBugHubのhost matrixに委譲する。
 
-`--post-update` だけは default-deny gate を適用する。`fail` は常時 blocking、`unverified` は次の完全一致 tuple だけ non-blocking とする: Spotter `codex_hooks/trust_not_machine_verifiable`、Throughline `evidence_restore_smoke/diagnostic_unverified` と `claude_connector/diagnostic_unverified`、aiterm-mcp `pty_list/pty_list_unverified`。未知の check、reason 違い、別 product は blocking である。`post_gate_pending` の既存例外は維持する。
+`--post-update` だけは default-deny gate を適用する。`fail` は常時 blocking、`unverified` は次の完全一致 tuple だけ non-blocking とする: Spotter `codex_hooks/trust_not_machine_verifiable`、Throughline `evidence_restore_smoke/diagnostic_unverified` と `claude_connector/diagnostic_unverified`、aiterm-mcp `pty_list/pty_list_unverified`、claude-code / codex-cli `last_update/post_gate_failed`（前回gate失敗の残響。実際の更新失敗は`operation_status=failed`→failでblockingのまま）、gpt-connector `cdp/chrome_idle`と`official_origin`・`auth`・`runtime_bridge`の`cdp_not_inspected`（専用Chrome未起動＝on-demand設計のidle平常状態。0.4.12+のchrome_idle意味論）。未知の check、reason 違い、別 product は blocking である。`post_gate_pending` の既存例外は維持する。
+
+更新自体は成功しgateだけ失敗したtoolchainの`last_update`は、failでなく`unverified: post_gate_failed`として報告する（2026-08-10修理。gate失敗が全toolchainのfailとして増幅・残響し、根本3件が9件fail表示になる実測を受けた）。
 
 現 ServerManager は fail を中心に issue 化するため、critical な `unverified` が直ちに通知されない限界がある。reporter は通知のために `unverified` を `fail` へ変換しない。
 
