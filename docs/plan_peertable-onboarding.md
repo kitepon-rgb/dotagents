@@ -1,6 +1,6 @@
 # plan_peertable-onboarding — peertableを工場管理12製品目へ編入する
 
-status: **active**（2026-08-08 開始、同日中断、2026-08-10 オーナー指示で再開）。ToDoの正本はLattice store（plan `peertable-onboarding`）であり、本書は目的・思想・受入条件・導線だけを所有する。
+status: **completed**（2026-08-08 開始、同日中断、2026-08-10 再開・完走。全task done・終端監査accepted・H承認4件実行済み。円卓は同日解散、roomログ控えはdocs/archive/へ）。ToDoの正本はLattice store（plan `peertable-onboarding`）であり、本書は目的・思想・受入条件・導線だけを所有する。
 
 再開時の現在地（2026-08-10 実測）: 中断中にpeertableは0.3.5まで進み、s1合意契約（決定45）は**製品側で実装・npm公開済み**。`peertable-client diagnostics --json`の実測はURL無しで`room_reachability: not_applicable`・`overall: ready`・exit 0、URL有りで`pass`と契約に一致。`prepublishOnly`診断gateも導入済み。よってs1・t-diagはdoneへ照合し、t-gateは「既定ブランチ祖先gate（aishell reference移植）」へ再スコープ。残作業はt-adapter・t-docs・t-gate・t-hpkg。Lattice 0.52.0のCLI（plan v4／extraction v3／diagnostics v1）は無変更で手順への影響なし。
 

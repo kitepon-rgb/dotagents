@@ -1,6 +1,6 @@
 # plan_peertable-wire-v7-execution — peertable H承認4件の実行
 
-status: **active**（2026-08-10 開始）。ToDoの正本はLattice store（plan `peertable-wire-v7-execution`）であり、本書は目的・受入条件・導線だけを所有する。
+status: **completed**（2026-08-10 開始・同日完走。全task done・終端監査accepted。carry over: main-server自身のhost分cutover・FOX WSL2/Windows native 2host分——次に各端末を触るwaveで実施、手順はdocs/evidence/2026-08-10-peertable-wire-v7-H-approval.mdと各証跡が正）。ToDoの正本はLattice store（plan `peertable-wire-v7-execution`）であり、本書は目的・受入条件・導線だけを所有する。
 
 親plan [plan_peertable-onboarding.md](plan_peertable-onboarding.md)は全task done・終端監査acceptedで完全closeした。本waveはそのplanのt-hpkgが整理した[H承認要求文書](evidence/2026-08-10-peertable-wire-v7-H-approval.md)4件のうち、オーナーが2026-08-10「全部承認」と裁定した実行フェーズを持つ（room `peertable-onboarding` log [45]）。
 
