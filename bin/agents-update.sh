@@ -122,6 +122,7 @@ PACKAGES=(
   'codex-sidecar-core'
   'codex-sidecar-mcp'
   '@quolu/lattice'
+  'peertable'
   'pnpm'
   'throughline'
 )
