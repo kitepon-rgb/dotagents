@@ -46,20 +46,15 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
   `NOTE_PROJECTION_INVALID`になる。最小再現・迂回はcaveat
   `lattice-todo-note-revision-plan-json-note-projection-invalid`が正。2026-08-02に Lattice 0.40.1（`3d6b882`）で修理・publish済み＝**解消**。
 - **`factory-reporter-scheduler install --apply`がrunner binの解決可能性を検証せずsuccessを返す**
-  （2026-08-10記録・所有repo=dotagents・非クリティカル）: 新規wire-major runner binを追加した直後に
-  scheduler installを実行すると、`~/.local/bin/`へのsymlinkが`install.sh`で配布される前でも
-  install自体は成功し、`launchctl kickstart`等の実起動時に初めて`Cannot find module`で気づく
-  （実被弾: peertable wire v7 canary cutover・room [91]）。回避手順は
-  [factory-reporter-runbook.md](factory-reporter-runbook.md)§11 step3に明記済み。根本修理（typed
-  errorで弾いてから成功を返す）は本campaignのscope外。最小再現はcaveat
-  `dotagents-factory-reporter-scheduler-install-apply-runner-bin-success-fail-open`が正。
-- **`agents-update`のpost-update gate既定がwire v6 runner固定**（2026-08-10記録・所有repo=dotagents・
-  非クリティカル）: `bin/agents-update.sh:41`の`FACTORY_REPORTER_RUNNER`既定が
-  `factory-reporter-v6-schedule-runner`のため、wire v7へcutover済みのhost（mac-kite）でも
-  v6 runnerがgateを回し、configのendpoint（v7）とrunnerのmajorが食い違う。回避は同env varの明示指定で、
-  [runbook §9](factory-reporter-runbook.md)に注記済み。**根本修理は「hostのconfigが指すwire majorから
-  runnerを解決する」形が筋**で、v6のまま残るhostを壊さないこと。次にwire cutoverまたは
-  `agents-update`を触るwaveで閉じる。
+  （2026-08-10記録・所有repo=dotagents）: 実被弾はpeertable wire v7 canary cutover・room [91]。
+  **2026-08-10修理済み**——`--apply`はrunner不在／実行権限なしを`runner_unresolved`のtyped errorで
+  登録前に拒否する（dry-runは従来どおり検証なし）。負側testで欠陥版がfailすることを確認済み。
+  最小再現はcaveat `dotagents-factory-reporter-scheduler-install-apply-runner-bin-success-fail-open`が正＝**解消**。
+- **`agents-update`のpost-update gate既定がwire v6 runner固定**（2026-08-10記録・所有repo=dotagents）:
+  wire v7へcutover済みのhostでconfigのendpoint（v7）とrunner（v6）のmajorが食い違い、cutover後最初の
+  定期実行からgateが落ちる構造だった。**2026-08-10修理済み**——runnerはhostの実configの
+  `reporting.endpoint`が指すmajorから解決し（env明示が最優先）、endpointが読めない時はv6へ倒す
+  （未cutover hostの挙動不変）。このMacでv7解決・config不在fallbackとも実測済み＝**解消**。
 
 工程表示は次で生成する。
 

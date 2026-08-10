@@ -25,6 +25,24 @@ test('macOS Homebrew Nodeはversioned Cellar pathでなくstable入口をschedul
 });
 
 test('dry-run/apply併用は順序にかかわらず拒否する', async () => { const box = await sandbox(); for (const flags of [['--dry-run', '--apply'], ['--apply', '--dry-run']]) { const result = await run(SCHEDULER, ['install', ...flags, '--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /併用/); } });
+test('install --applyはrunner binが解決できない時typed errorで拒否し、dry-runは検証しない', async () => {
+  // 実被弾（2026-08-10 wire v7 canary cutover）: install.sh未実行でsymlink未配布でも
+  // installが成功を返し、launchctl kickstart時に初めてCannot find moduleで落ちるfail-open。
+  const box = await sandbox(CURRENT_PROFILE);
+  const platform = process.platform === 'darwin' ? 'darwin' : process.platform === 'win32' ? 'win32' : 'linux';
+  // sandbox HOMEには ~/.local/bin/ のrunner symlinkが無い → applyはOS操作へ進む前に拒否する
+  const applied = await run(SCHEDULER, ['install', '--apply', '--platform', platform, '--config', box.config], box);
+  assert.equal(applied.code, 1);
+  assert.match(applied.stderr, /runner_unresolved/);
+  assert.match(applied.stderr, /install\.sh/);
+  // dry-runはartifact確認用のため、runner不在でも従来どおり成功する
+  const dry = await run(SCHEDULER, ['install', '--dry-run', '--platform', platform, '--config', box.config], box);
+  assert.equal(dry.code, 0, dry.stderr);
+  // 検証はapplyのOS操作より前に配線されている（正側のapply実行は実launchd/cron/schtasksを
+  // 変更するためテストしない。検証通過後の経路は既存のapply系テストが覆う）
+  const source = await readFile(SCHEDULER, 'utf8');
+  assert.match(source, /assertRunnerExecutable\(spec\.runner, request\.target\);\n  if \(!request\.dryRun\) await apply\(/);
+});
 test('配布symlink経由でもscheduler CLIがmainを実行する', async () => { const box = await sandbox('mac'); const link = join(box.root, 'factory-reporter-scheduler'); await symlink(SCHEDULER, link); const result = await run(link, ['install', '--dry-run', '--platform', 'darwin', '--config', box.config], box); assert.equal(result.code, 0, result.stderr); assert.equal(result.json.ok, true); assert.equal(result.json.dry_run, true); });
 test('macOS launchdはnode→v4 runnerをXML escapeして生成する', async () => { const box = await sandbox('mac'); const result = await run(SCHEDULER, ['install', '--platform', 'darwin', '--config', box.config], box); assert.equal(result.code, 0); assert.match(result.json.artifact_content, /<string>.*node.*<\/string><string>.*factory-reporter-v4-schedule-runner/); assert.match(result.json.artifact_content, /<key>Minute<\/key><integer>17<\/integer>/); });
 test('Linux/WSL cronは厳密single quoteでnode→v4 runnerを起動する', async () => { const box = await sandbox('wsl'); const result = await run(SCHEDULER, ['install', '--platform', 'linux', '--config', box.config], box); assert.equal(result.code, 0); assert.match(result.json.artifact_content, /^17 \* \* \* \* '\/.*node' '\/.*factory-reporter-v4-schedule-runner' --config '/); assert.match(result.json.artifact_content, /# dotagents-factory-reporter\n$/); });

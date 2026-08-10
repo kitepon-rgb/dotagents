@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { existsSync, realpathSync } from 'node:fs';
+import { accessSync, constants as fsConstants, existsSync, realpathSync } from 'node:fs';
 import { chmod, lstat, mkdir, rm, writeFile } from 'node:fs/promises';
 import { homedir, platform as hostPlatform } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -68,12 +68,12 @@ function artifact(target, config, location, wireMajor) {
   if (target === 'darwin') {
     const file = join(location.home, 'Library', 'LaunchAgents', `${LABEL}.plist`);
     const content = `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict><key>Label</key><string>${xml(LABEL)}</string><key>ProgramArguments</key><array><string>${xml(node)}</string><string>${xml(runner)}</string><string>--config</string><string>${xml(config)}</string></array><key>StartCalendarInterval</key><dict><key>Minute</key><integer>17</integer></dict><key>StandardOutPath</key><string>${xml(log)}</string><key>StandardErrorPath</key><string>${xml(log)}</string></dict></plist>\n`;
-    const domain = `gui/${process.getuid?.() ?? '<uid>'}`; return { file, content, commands: [['launchctl', 'bootstrap', domain, file]], uninstall: [['launchctl', 'bootout', `${domain}/${LABEL}`]], acl: [] };
+    const domain = `gui/${process.getuid?.() ?? '<uid>'}`; return { file, content, runner, commands: [['launchctl', 'bootstrap', domain, file]], uninstall: [['launchctl', 'bootout', `${domain}/${LABEL}`]], acl: [] };
   }
   if (target === 'linux') {
     const file = join(location.control, 'scheduler', 'factory-reporter.cron');
     const content = `17 * * * * ${cronQuote(node)} ${cronQuote(runner)} --config ${cronQuote(config)} >> ${cronQuote(log)} 2>&1 ${CRON_MARKER}\n`;
-    return { file, content, commands: [['crontab', '<managed-crontab-with-entry>']], uninstall: [['crontab', '<managed-crontab-without-entry>']], acl: [] };
+    return { file, content, runner, commands: [['crontab', '<managed-crontab-with-entry>']], uninstall: [['crontab', '<managed-crontab-without-entry>']], acl: [] };
   }
   const file = join(location.control, 'scheduler', `${TASK_NAME}.xml`);
   const argumentsText = `${windowsQuote(runner)} --config ${windowsQuote(config)}`;
@@ -90,7 +90,7 @@ foreach ($existing in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existing
 $rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inherit, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
 [void]$acl.AddAccessRule($rule)
 $item.SetAccessControl($acl)`;
-  return { file, content, commands: [['schtasks.exe', '/Create', '/TN', TASK_NAME, '/XML', file, '/F']], uninstall: [['schtasks.exe', '/Delete', '/TN', TASK_NAME, '/F']], acl: [['powershell.exe', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script]] };
+  return { file, content, runner, commands: [['schtasks.exe', '/Create', '/TN', TASK_NAME, '/XML', file, '/F']], uninstall: [['schtasks.exe', '/Delete', '/TN', TASK_NAME, '/F']], acl: [['powershell.exe', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script]] };
 }
 
 async function ensurePrivateState(target, state, acl) {
@@ -139,8 +139,19 @@ export async function removeLegacyArtifacts(target, location) {
 async function main() {
   const request = parseArgs(process.argv.slice(2)); const location = locations(request.target, request.wireMajor); const configPath = request.config || location.config;
   if (request.command === 'install') { const config = await readConfig(configPath); if (config.source !== 'file') throw new Error('設定ファイルなしではschedulerを登録しません'); if (!platformMatches(config.host.profile, request.target)) throw new Error(`host.profile=${config.host.profile}は${request.target} schedulerに登録できません`); assertReportingEndpoint(config, request.wireMajor); }
-  const spec = artifact(request.target, configPath, location, request.wireMajor); if (!request.dryRun) await apply(request.command, request.target, spec, location);
+  const spec = artifact(request.target, configPath, location, request.wireMajor);
+  // --applyは、schedulerが指すrunnerが実際に起動可能であることを登録前に検証する。
+  // 配布symlink（install.sh）が未実行だと、登録は成功するのに実行時にCannot find moduleで落ちる
+  // fail-openになる（2026-08-10実被弾: wire v7 canary cutover）。dry-runはartifact確認用のため検証しない。
+  if (request.command === 'install' && !request.dryRun) assertRunnerExecutable(spec.runner, request.target);
+  if (!request.dryRun) await apply(request.command, request.target, spec, location);
   emit({ ok: true, command: request.command, dry_run: request.dryRun, platform: request.target, wire_major: request.wireMajor, config: configPath, state: location.state, artifact: spec.file, artifact_content: request.command === 'install' ? spec.content : undefined, commands: request.command === 'install' ? spec.commands : spec.uninstall, acl_commands: spec.acl, reporting_enabled_changed: false, collection_enabled_changed: false });
+}
+function assertRunnerExecutable(runner, target) {
+  if (!existsSync(runner)) throw new Error(`schedulerが起動するrunnerが存在しません (runner_unresolved): ${runner}。./install.sh を再実行してsymlinkを配布してから--applyしてください`);
+  if (target !== 'win32') {
+    try { accessSync(runner, fsConstants.X_OK); } catch { throw new Error(`schedulerが起動するrunnerに実行権限がありません (runner_unresolved): ${runner}`); }
+  }
 }
 function assertReportingEndpoint(config, wireMajor) {
   if (!config.reporting.enabled) return;

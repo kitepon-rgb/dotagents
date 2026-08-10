@@ -38,7 +38,22 @@ case "$runtime_os" in
 esac
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/agents-update.log"
-FACTORY_REPORTER_RUNNER="${FACTORY_REPORTER_RUNNER:-$HOME/.local/bin/factory-reporter-v6-schedule-runner}"
+# post-update gateのrunnerは、hostの実configが指すwire majorへ追従させる（env明示が最優先）。
+# 固定既定にするとhost別段階cutover中のhostでrunnerとendpointのmajorが食い違う
+# （2026-08-10実測: mac-kiteをv7へcutover後、v6固定既定のままだとflushがendpoint不一致で落ちる）。
+# configが無い・endpointが読めない場合はv6へ倒す（未cutover hostの従来挙動を変えない）。
+if [ -z "${FACTORY_REPORTER_RUNNER:-}" ]; then
+  reporter_wire_major="$(node -e '
+    try {
+      const config = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+      const match = /^\/api\/factory\/(v[0-9]+)\/reports$/.exec(new URL(config.reporting.endpoint).pathname);
+      if (match) { process.stdout.write(match[1]); process.exit(0); }
+    } catch {}
+    process.exit(1);
+  ' "$FACTORY_REPORTER_CONFIG" 2>/dev/null)" || reporter_wire_major=""
+  [ -z "$reporter_wire_major" ] && reporter_wire_major=v6
+  FACTORY_REPORTER_RUNNER="$HOME/.local/bin/factory-reporter-${reporter_wire_major}-schedule-runner"
+fi
 script_source="${BASH_SOURCE[0]}"
 while [ -h "$script_source" ]; do
   case "$script_source" in */*) script_parent=${script_source%/*} ;; *) script_parent=. ;; esac

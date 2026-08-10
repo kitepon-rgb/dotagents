@@ -107,7 +107,7 @@ peertable編入に伴うwire v7（固定15製品）は、§4aと同じserver-fir
 
 残hostをcutoverする時の順序（mac-kiteで実測済みの形）:
 
-1. **対象端末で`./install.sh`を再実行する**。v7 binのsymlinkが`~/.local/bin`へ無いと、schedulerが登録できても実行時に`Cannot find module ... factory-reporter-v7-schedule-runner`で落ちる（2026-08-10実被弾。scheduler installはrunner binの解決可能性を検証しないため、install漏れは登録時点では発覚しない）。
+1. **対象端末で`./install.sh`を再実行する**。v7 binのsymlinkが`~/.local/bin`へ無いと実行できない（2026-08-10実被弾）。同日修理済みの`scheduler install --apply`はrunner binが解決できない時`runner_unresolved`のtyped errorで登録前に拒否するので、このerrorが出たら`./install.sh`を再実行してから`--apply`し直す。
 2. host configを`factory-reporter.json.bak-v6-<timestamp>`へ退避する。
 3. `reporting.endpoint`を`/api/factory/v7/reports`へ変更する。
 4. `factory-reporter-scheduler install --wire-major v7 --dry-run --platform <OS>`でartifactを確認し、H承認後に`--apply`する。**v6 state/outbox（`~/.local/state/dotagents/factory-reporter-v6/`）は削除しない**——rollback即再開の前提になる。
@@ -229,11 +229,9 @@ Claude Code、Codex、Grok Build は更新ごとにowner-onlyのtoolchain ledger
 
 ### v6 component health と post-update gate
 
-> **既知の食い違い（2026-08-10・未修理）**: `bin/agents-update.sh:41`の`FACTORY_REPORTER_RUNNER`既定は
-> `factory-reporter-v6-schedule-runner`のままで、wire v7へcutover済みのhost（現時点でmac-kite）でも
-> v6 runnerがpost-update gateを回す。v7 cutover済みhostで`agents-update`のgate結果を読む時は、
-> `FACTORY_REPORTER_RUNNER=$HOME/.local/bin/factory-reporter-v7-schedule-runner`を明示してから実行する。
-> 既定値の追従は§maintenance queue（[plan_factory-master.md](plan_factory-master.md)）の申し送り。
+`agents-update`のpost-update gateが使うrunnerは、hostの実configの`reporting.endpoint`が指すwire majorから
+解決される（2026-08-10修理済み。env `FACTORY_REPORTER_RUNNER`の明示が最優先、endpointが読めない時はv6へ倒す）。
+host別段階cutover中でも、cutover済みhostは自動でそのmajorのrunnerがgateを回す。
 
 v6 report は各製品のnative diagnosticsを単一の `native_diagnostics` へ縮約しない。各componentの `pass` / `fail` / `unverified` / `skipped` とreasonをそのまま送る。通常定期実行はscan → enqueue → flushの成否だけでexitを決め、component healthの判定はraw reportとBugHubのhost matrixに委譲する。
 

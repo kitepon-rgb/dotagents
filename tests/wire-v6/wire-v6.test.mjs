@@ -21,9 +21,12 @@ test('v6正典はObserverを自作コア、MarkItDownを第三者管理として
   assert.doesNotMatch(contracts, /Observerは予約枠のまま未編入/u);
 });
 
-test('agents-updateの既定post-update gateは現役wire v6へ固定する', async () => {
+test('agents-updateのpost-update gateはconfigのwire majorへ追従し、解決不能時はv6へ倒す', async () => {
   const source = await readFile(resolve(import.meta.dirname, '../../bin/agents-update.sh'), 'utf8');
-  assert.match(source, /FACTORY_REPORTER_RUNNER=.*factory-reporter-v6-schedule-runner/u);
+  // hostの実configのendpointからmajorを解決する（host別段階cutover中のendpoint/runner食い違い対策）
+  assert.match(source, /api\\\/factory\\\/\(v\[0-9\]\+\)\\\/reports/u);
+  assert.match(source, /reporter_wire_major=v6/u);
+  assert.match(source, /factory-reporter-\$\{reporter_wire_major\}-schedule-runner/u);
   assert.doesNotMatch(source, /FACTORY_REPORTER_RUNNER=.*factory-reporter-v4-schedule-runner/u);
 
   const runbook = await readFile(
