@@ -1,2 +1,6 @@
 # Git Bash でも shell 契約を壊さないよう、実行スクリプトは常に LF で checkout する。
 *.sh text eol=lf
+
+# Lattice storeはcanonical JSON+LFのバイト列契約。EOL変換されると
+# artifact_truncated_or_trailing_bytesでstore全体がfail closedする（Windows checkoutで実害）。
+.lattice/** -text
