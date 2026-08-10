@@ -103,7 +103,7 @@ v6へ復帰する時はconfigの`reporting.endpoint`を`/api/factory/v6/reports`
 
 peertable編入に伴うwire v7（固定15製品）は、§4aと同じserver-first順序で進めている。契約は[wire v7設計](wire-v7-design.md)、承認記録は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)が正。
 
-**現在のhost別状態**: main-serverはv7対応codeをdeploy済みで`FACTORY_V7_INGEST_ENABLED=true`。cutover済みのhost clientは**mac-kiteだけ**で、main-server自身とFOX WSL2／Windows nativeは引き続きv6で報告する。並存は設計どおりであり、異常ではない。
+**現在のhost別状態（2026-08-10 完了）**: 全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）がv7へcutover済み。各hostにv6退避config（`*.bak-v6-<timestamp>`）とv6 state/outboxが残っており、rollbackは§4a同様に即応できる。
 
 残hostをcutoverする時の順序（mac-kiteで実測済みの形）:
 

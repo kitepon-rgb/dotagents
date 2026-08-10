@@ -6,11 +6,10 @@
 **決定:** [ADR 0127](adr/0127-wire-v7-peertable-enrollment.md)
 **契約:** [s1合意（決定45、peertable repo `docs/plan.md`）](https://github.com/kitepon-rgb/peertable)
 
-> **現在状態（2026-08-10）:** client・serverとも実装済みでdeploy済み、`FACTORY_V7_INGEST_ENABLED=true`。
-> **cutover済みhostはmac-kiteだけ**で、main-server自身とFOX WSL2／Windows nativeの2hostは
-> 引き続き[wire v6](wire-v6-design.md)で報告する（host別段階cutoverの途中であり、v6とv7は並存が正常）。
-> 残hostの手順は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)と
-> [reporter runbook](factory-reporter-runbook.md)が正。
+> **現在状態（2026-08-10 cutover完了）:** client・serverとも実装・deploy済み、`FACTORY_V7_INGEST_ENABLED=true`。
+> **全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）がwire v7で報告中**。
+> 各hostで実送信・gate success・BugHub matrixのcontract_version 7.0を実測済み。
+> [wire v6](wire-v6-design.md)はhost別rollback先として維持する（v6 state/outboxと退避configは各hostに保存済み）。
 
 本書はwire v7の契約を所有する。wire v6踏襲のserver-first・dual-run設計を維持し、
 実装（`lib/factory/v7.mjs`・`lib/factory/contract.mjs`配線・tests・privacy fixture・`bin/factory-reporter-v7.mjs`等）と
@@ -120,14 +119,12 @@ Observer型の`unsupported`分岐ではなく、他のnpm CLI製品（gpt-connec
    v6 endpointは不変を実測）。
 5. **[完了]** dotagentsへv7 reporter bin（`bin/factory-reporter-v7.mjs`等）、peertable adapter、fixture、host matrix行を追加する。
 6. **[完了]** canary host（mac-kite）でv6/v7 dual-runを実測し、issue 0件・15製品matrix反映を確認する。
-7. **[部分]** mac-kiteはpeertableの構造化判定を実測済み。main-server自身とFOX 2hostは未実施。
-8. **[部分]** mac-kiteは本番scheduler（launchd）をv7へcutover済み。残hostは未実施——**一括で行わず、host別に
-   実行前確認とrollback手順の再読を経てから進める**。
+7. **[完了]** 全4現役hostでpeertableの構造化判定（installed/compatible）をmatrix実測済み（2026-08-10）。
+8. **[完了]** 全4現役hostの本番scheduler（launchd/cron/Task Scheduler）をv7へcutover済み。host別に
+   現状実測→backup→dry-run→apply→実送信確認の順で個別に実施した（一括切替はしていない）。
 
 **新しいwire majorのbinを足したwaveは、対象端末で`./install.sh`を再実行するまでがcutover手順**である
 （`~/.local/bin`のsymlink未配布だとscheduler jobが`Cannot find module`で落ちる。2026-08-10実測）。
-
-feature flagはv6と独立させる。単一のglobal switchでv6を同時停止しない。
 
 feature flagはv6と独立させる。単一のglobal switchでv6を同時停止しない。
 
@@ -154,7 +151,7 @@ v6 reporterはpeertableを報告しない。
 - room DB・member state・message本文の集約またはServerManagerへの送信
 - ServerManagerによるpeertable内部状態の直接変更
 - 全host一括の不可逆cutover
-- 残host（main-server自身・FOX WSL2・FOX Windows native）のcutoverを、host別の実行前確認なしに進めること
+- v6 rollback経路（endpoint・schema・各host state/outbox・退避config）の削除
 
 ## 10. 受入条件
 

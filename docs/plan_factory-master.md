@@ -13,8 +13,8 @@ Lattice storeが唯一の正本であり、Markdown checkboxや旧queueへ二重
   codex-sidecar／AIShell／Observer／ServerManager／peertable
 - 第三者管理製品: MarkItDown（公開CLIだけをblack-box管理）
 - 基盤toolchain: Claude Code CLI／Codex CLI／Grok Build
-- 現役factory wire: **host別に並存中**。mac-kiteはv7・固定15製品、main-server自身とFOX 2hostはv6・固定14製品
-  （wire v7段階cutoverの途中。[wire v7設計](wire-v7-design.md)・[reporter runbook §4b](factory-reporter-runbook.md)が正）
+- 現役factory wire: **v7・固定15製品（全4現役host cutover済み・2026-08-10）**。v6はhost別rollback先として維持
+  （[wire v7設計](wire-v7-design.md)・[reporter runbook §4b](factory-reporter-runbook.md)が正）
 - 独立Codegraph: retired／not_applicable。Lattice sensorが正式後継
 
 所有境界と恒久規則は[AGENTS.md](../AGENTS.md)、趣旨は[PLAN.md](../PLAN.md)、有限契約は
@@ -31,7 +31,7 @@ Lattice storeが唯一の正本であり、Markdown checkboxや旧queueへ二重
 - [工場全文書同期](archive/plan_factory-documentation-sync.md)
 - [peertable編入](archive/2026-08_peertable-onboarding.md)（設計・実装）と
   [wire v7実行](archive/2026-08_peertable-wire-v7-execution.md)（publish・enroll・cutover・正典更新）。
-  残作業はmain-server自身とFOX 2hostのcutoverだけで、次に各端末を触るwaveが拾う
+  cutoverは2026-08-10に全4現役hostで完遂（実送信・gate success・matrix 7.0を各host実測）
 
 ## 現在のwave
 

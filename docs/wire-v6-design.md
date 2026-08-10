@@ -1,9 +1,9 @@
 # wire v6 設計正本 — Observerの固定集合編入
 
-> **現在状態（2026-08-10 更新）:** wire v6は[wire v7](wire-v7-design.md)へ引き継がれた。v7 cutoverが済んだ
-> hostはmac-kiteだけで、main-serverとFOX 2hostは引き続きv6が現役——**v6はrollback先兼現役入口として生きている**
-> （v6を廃止・凍結扱いにしない）。Observer編入と4 host cutoverが完了し固定14製品が全hostで現役だったのは
-> 2026-07-26〜2026-08-10。以下のv5記述はv6へ移行する設計時点のpredecessor契約として保持する。
+> **現在状態（2026-08-10 更新）:** wire v6は[wire v7](wire-v7-design.md)へ引き継がれ、全4現役hostの
+> v7 cutoverが完了した。**v6は現役入口ではなくhost別rollback先**として維持する（endpoint・schema・
+> 各hostのv6 state/outboxは削除しない）。Observer編入と4 host cutoverが完了し固定14製品が全hostで
+> 現役だったのは2026-07-26〜2026-08-10。以下のv5記述はv6へ移行する設計時点のpredecessor契約として保持する。
 
 **状態:** Active（[Observerコア編入記録](archive/plan_observer-core-integration.md)の設計成果物）
 **工程正本:** Lattice plan `observer-core-integration`  
