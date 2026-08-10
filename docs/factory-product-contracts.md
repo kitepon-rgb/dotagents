@@ -61,7 +61,8 @@
 - 所有/修正先: 自作 / `gpt-connector`。version入口: `gpt-connector --version`。
 - diagnostics/state正本: versioned native factory diagnosticsとproduct-owned runtime error snapshot。dotagentsはChatGPT会話・job stateを直接読解しない。
 - update/compatibility: 製品の正規update・diagnosticsでinstalled/latest、model/effort、MCP readinessを観測する。caller既知slugだけを受け、unknown slugを推測しない。
-- 禁止: Oracle/OpenAI APIへの暗黙fallback、prompt/response/file/conversation ID/絶対pathの送信、Oracle profileの流用。timeout後は sessions で回収する。
+- idle意味論（0.4.12+）: 専用Chromeはon-demand起動の設計であり、CDP接続不能（unreachable）は故障でなくidle平常状態。診断は`cdp: unverified/chrome_idle`・overall `unverified`を返し、起動中の実異常（HTTP error・target不正・RUNTIME_DRIFT）だけを`not_ready`にする。adapterとpost-update gateはidle系tupleを非blockingとして扱う。
+- 禁止: Oracle/OpenAI APIへの暗黙fallback、prompt/response/file/conversation ID/絶対pathの送信、Oracle profileの流用。timeout後は sessions で回収する。idle（chrome_idle）をfail/incompatibleへ丸めない。
 
 ### 基盤toolchain
 
