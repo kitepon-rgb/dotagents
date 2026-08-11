@@ -16,7 +16,7 @@
 - `status --apply`と`Get-ScheduledTask`の双方で`dotagents-agents-update`が`Ready`であることを確認した。
 - XML先頭は`255,254`（UTF-16LE BOM）。control directoryのDACLは継承遮断、`FOX\kite_`のAllow/FullControl 1件だけだった。
 
-Rollbackは`agents-update-scheduler uninstall --apply`。taskだけを外し、report/outboxは削除しない。
+Rollbackは`agents-update-scheduler uninstall --apply`。Task登録と生成XML artifactを外し、report/outboxは削除しない。
 
 ## 実scheduled task smoke
 
