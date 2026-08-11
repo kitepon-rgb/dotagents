@@ -141,12 +141,12 @@ if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   fail '正常fixtureのagents-updateが失敗した'
 fi
 
-expected_npm_packages=13
+expected_npm_packages=14
 if [ "$(uname -s)" = Darwin ]; then
-  expected_npm_packages=14
+  expected_npm_packages=15
 fi
 if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then
-  expected_npm_packages=15
+  expected_npm_packages=16
 fi
 [ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq "$expected_npm_packages" ] \
   || fail "curated package ${expected_npm_packages}件を fake npm へ渡していない"

@@ -33,9 +33,11 @@ test('agents-updateのpost-update gateはconfigのwire majorへ追従し、解�
     resolve(import.meta.dirname, '../../docs/factory-reporter-runbook.md'),
     'utf8',
   );
-  // wire v7の段階cutover中はhostごとに入口が違う。v6が未cutover hostの現役入口として
-  // 書かれていることを検証する（総数リテラルと同じく、状態が動く文言へ固定しない）。
-  assert.match(runbook, /はv6の`\/api\/factory\/v6\/reports`/u);
+  // 全hostのv7 cutover後も、実configのendpoint確認とv6 rollback手順を維持する。
+  // updaterのmajor解決は固定majorでなくconfigに追従するため、この両面を検証する。
+  assert.match(runbook, /全4現役hostでwire v7/u);
+  assert.match(runbook, /いずれも`\/api\/factory\/v7\/reports`を使う/u);
+  assert.match(runbook, /`reporting\.endpoint`を確認する/u);
   assert.match(runbook, /--wire-major v6/u);
   assert.match(runbook, /schema_version="6\.0"/u);
   assert.doesNotMatch(runbook, /通常経路はpayload `schema_version="4\.0"`/u);
