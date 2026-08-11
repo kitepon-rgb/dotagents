@@ -65,6 +65,7 @@ case "$script_source" in */*) script_parent=${script_source%/*} ;; *) script_par
 SCRIPT_DIR="$(CDPATH='' cd -P -- "$script_parent" && pwd)"
 TOOLCHAIN_LEDGER_HELPER="${TOOLCHAIN_LEDGER_HELPER:-$SCRIPT_DIR/factory-toolchain-ledger.mjs}"
 TOOLCHAIN_CONTRACT_HELPER="${TOOLCHAIN_CONTRACT_HELPER:-$SCRIPT_DIR/factory-toolchain-contract.mjs}"
+DEPLOYMENT_CONTRACT_HELPER="${DEPLOYMENT_CONTRACT_HELPER:-$SCRIPT_DIR/factory-deployment-contract.mjs}"
 TOOLCHAIN_LEDGER_FILE="${TOOLCHAIN_LEDGER_FILE:-$LOG_DIR/toolchain-ledger.json}"
 
 extract_semver() { node -e 'const s=require("fs").readFileSync(0,"utf8");const m=s.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?/);if(m)process.stdout.write(m[0]);'; }
@@ -110,40 +111,15 @@ npm_install_spec() {
   esac
 }
 
-PACKAGES=(
-  '@anthropic-ai/claude-code'
-  '@openai/codex'
-  'gpt-connector'
-  '@anthropic-ai/sdk'
-  'aiterm-mcp'
-  'caveat-cli'
-  'claude-spotter'
-  'codex-sidecar-cli'
-  'codex-sidecar-core'
-  'codex-sidecar-mcp'
-  '@quolu/lattice'
-  'peertable'
-  'pnpm'
-  'throughline'
-)
-
-if [[ "$runtime_os" = Darwin ]]; then
-  PACKAGES+=(
-    '@quolu/observer'
-  )
+# 現役製品のOS/arch別更新集合はdeployment contractだけが所有する。
+PACKAGES=()
+while IFS= read -r package_line; do
+  [[ -n "$package_line" ]] && PACKAGES+=("$package_line")
+done < <(node "$DEPLOYMENT_CONTRACT_HELPER" npm-packages --os "$runtime_os" --arch "$runtime_arch")
+if [[ "${#PACKAGES[@]}" -eq 0 ]]; then
+  printf 'FAILED: deployment contract から更新集合を読めない\n'
+  exit 1
 fi
-
-# AIShellはnpm package自体がdarwin/arm64限定。非対応hostでinstall失敗を起こさず、
-# host matrixどおり構造的unsupportedとして扱う。
-if [[ "$runtime_os" = Darwin && "$runtime_arch" = arm64 ]]; then
-  PACKAGES+=(
-    '@quolu/aishell'
-  )
-fi
-
-UV_TOOLS=(
-  'markitdown'
-)
 
 {
   update_failed=0
@@ -230,13 +206,19 @@ UV_TOOLS=(
     printf 'FAILED: uv 不在（MarkItDownを更新できない）\n'
     update_failed=1
   else
-    for pkg in "${UV_TOOLS[@]}"; do
-      printf -- '--- uv-tool:%s ---\n' "$pkg"
-      if ! uv tool upgrade "$pkg"; then
-        printf 'FAILED: uv-tool:%s\n' "$pkg"
+    printf -- '--- MarkItDown:uv-tool ---\n'
+    if ! uv_tools="$(uv tool list 2>&1)"; then
+      printf 'FAILED: MarkItDown uv tool list\n'
+      update_failed=1
+    elif printf '%s' "$uv_tools" | node -e 'const text=require("fs").readFileSync(0,"utf8");process.exit(/^markitdown(?:\s|$)/m.test(text)?0:1)'; then
+      if ! uv tool upgrade markitdown; then
+        printf 'FAILED: MarkItDown uv tool upgrade\n'
         update_failed=1
       fi
-    done
+    elif ! uv tool install markitdown; then
+      printf 'FAILED: MarkItDown uv tool install\n'
+      update_failed=1
+    fi
   fi
 
   # Grok Build は npm 管理ではない。公開された stable JSON check だけを使い、
@@ -337,6 +319,9 @@ UV_TOOLS=(
   printf 'agents-update result: update=%s report=%s\n' \
     "$([[ "$update_failed" -eq 0 ]] && printf success || printf failed)" \
     "$([[ "$report_failed" -eq 0 ]] && printf success || printf failed)"
+  if [[ -n "${AGENTS_UPDATE_BATCH_TOKEN:-}" ]]; then
+    printf 'agents-update batch-token: %s\n' "$AGENTS_UPDATE_BATCH_TOKEN"
+  fi
   printf '=== agents-update end:   %s ===\n' "$(date -Iseconds)"
   if [[ "$update_failed" -ne 0 || "$report_failed" -ne 0 ]]; then
     exit 1

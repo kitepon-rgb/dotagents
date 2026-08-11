@@ -116,28 +116,68 @@ raise SystemExit(0 if valid else 1)
 verify_factory_core() {
   local project_root="${DOTAGENTS_FACTORY_PROJECT_ROOT:-$REPO}"
   local aishell_supported=false
-  local cli
-  for cli in caveat throughline spotter lattice markitdown gpt-connector aiterm-mcp codex-sidecar-mcp; do
-    if command -v "$cli" >/dev/null 2>&1; then
+  local cli host_profile required_product required_products runtime_os runtime_arch contract_os macos_major
+  factory_cli_present() { [ "${DOTAGENTS_FACTORY_CORE_TEST:-0}" = 1 ] && [ "${DOTAGENTS_FACTORY_MISSING_CLI:-}" = "$1" ] && return 1; command -v "$1" >/dev/null 2>&1; }
+  case "$(uname -s 2>/dev/null || true)" in
+    Darwin) host_profile=mac ;;
+    MINGW*|MSYS*|Windows_NT) host_profile=windows-native ;;
+    Linux) host_profile=wsl ;;
+    *) echo "FAIL: 未対応OSをhost profileへ射影できない"; fail=1; return ;;
+  esac
+  host_profile="${DOTAGENTS_FACTORY_HOST_PROFILE:-$host_profile}"
+  runtime_os="$(uname -s 2>/dev/null || true)"
+  runtime_arch="$(uname -m 2>/dev/null || true)"
+  case "$runtime_os" in Darwin) contract_os=darwin ;; Linux) contract_os=linux ;; MINGW*|MSYS*|Windows_NT) contract_os=win32 ;; *) echo "FAIL: 未対応OSをdeployment contractへ渡せない: $runtime_os"; fail=1; return ;; esac
+  case "$runtime_arch" in
+    x64|x86_64|amd64) runtime_arch=x64 ;;
+    arm64|aarch64) runtime_arch=arm64 ;;
+    arm|armv[5-8]l) runtime_arch=arm ;;
+    ia32|i?86|x86) runtime_arch=ia32 ;;
+  esac
+  macos_major=''
+  if [ "$runtime_os" = Darwin ] && command -v sw_vers >/dev/null 2>&1; then
+    macos_major="$(sw_vers -productVersion 2>/dev/null | cut -d. -f1)"
+  fi
+  if [ -n "$macos_major" ]; then
+    required_products="$(node "$REPO/bin/factory-deployment-contract.mjs" required-products --profile "$host_profile" --os "$contract_os" --arch "$runtime_arch" --macos-major "$macos_major")"
+  else
+    required_products="$(node "$REPO/bin/factory-deployment-contract.mjs" required-products --profile "$host_profile" --os "$contract_os" --arch "$runtime_arch")"
+  fi
+  if [ $? -ne 0 ]; then
+    echo "FAIL: deployment contract を読めない"
+    fail=1
+    required_products=''
+  fi
+  while IFS= read -r required_product; do
+    case "$required_product" in
+      caveat|throughline|spotter|lattice|markitdown|gpt-connector|aiterm-mcp) cli="$required_product" ;;
+      codex-sidecar) cli=codex-sidecar-mcp ;;
+      peertable) cli=peertable-client ;;
+      aishell) cli=aishell-mcp; aishell_supported=true ;;
+      observer) cli=observer ;;
+      servermanager) continue ;;
+      *) echo "FAIL: deployment contract product が未対応: $required_product"; fail=1; continue ;;
+    esac
+    if factory_cli_present "$cli"; then
       echo "OK  factory core CLI: $cli → $(command -v "$cli")"
     else
-      echo "FAIL: factory core CLI '$cli' 不在（現役工場コア8製品は全端末必須）"
+      echo "FAIL: factory managed product CLI '$cli' 不在（host projectionでrequired）"
       fail=1
     fi
-  done
+  done <<< "$required_products"
 
-  if { [ "$(uname -s 2>/dev/null || true)" = Darwin ] \
-      && [ "$(uname -m 2>/dev/null || true)" = arm64 ]; } \
-    || [ "${DOTAGENTS_TEST_AISHELL_SUPPORTED:-0}" = 1 ]; then
-    aishell_supported=true
-    if command -v aishell-mcp >/dev/null 2>&1; then
-      echo "OK  factory core CLI: aishell-mcp → $(command -v aishell-mcp)"
-    else
-      echo "FAIL: factory core CLI 'aishell-mcp' 不在（AIShell第12コアはApple Silicon Macで必須）"
+  if [ "$host_profile" = server ]; then
+    if [ -z "${SERVERMANAGER_READY_URL:-}" ]; then
+      echo "FAIL: ServerManager readiness URL が未指定（SERVERMANAGER_READY_URL）"
       fail=1
+    elif ! node -e 'const url=process.argv[1];fetch(url).then(async r=>{const v=await r.json();process.exit(r.ok&&typeof v?.source_revision==="string"&&v.source_revision.length>=7?0:1)}).catch(()=>process.exit(1))' "$SERVERMANAGER_READY_URL"; then
+      echo "FAIL: ServerManager public readiness/revision が不正"
+      fail=1
+    else
+      echo "OK  ServerManager public readiness/revision"
     fi
   else
-    echo "OK  factory core CLI: aishell-mcp → unsupported（darwin/arm64専用）"
+    echo "OK  ServerManager → not_applicable（server profile専用）"
   fi
 
   if command -v codegraph >/dev/null 2>&1; then
@@ -155,7 +195,9 @@ verify_factory_core() {
     fail=1
   fi
 
-  if [ -d "$HOME/.caveat/own/.git" ]; then
+  if [ "${DOTAGENTS_FACTORY_CORE_TEST:-0}" = 1 ]; then
+    echo "OK  Caveat ownership: clean-home fixture"
+  elif [ -d "$HOME/.caveat/own/.git" ]; then
     local caveat_remote
     caveat_remote="$(git -C "$HOME/.caveat/own" remote get-url origin 2>/dev/null || true)"
     case "$caveat_remote" in
@@ -178,7 +220,7 @@ verify_factory_core() {
     return
   fi
 
-  if [ "$aishell_supported" = true ]; then
+  if [ "$aishell_supported" = true ] && [ "${DOTAGENTS_FACTORY_CORE_TEST:-0}" != 1 ]; then
     verify_aishell_host_registration
   fi
 

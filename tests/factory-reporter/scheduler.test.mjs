@@ -6,15 +6,23 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, test } from 'node:test';
 import { nextCron, removeLegacyArtifacts, stableNodePath } from '../../bin/factory-reporter-scheduler.mjs';
+import { postUpdateFailures } from '../../lib/factory/deployment-contract.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..', '..');
 const SCHEDULER = join(ROOT, 'bin', 'factory-reporter-scheduler.mjs');
 const RUNNER = join(ROOT, 'bin', 'factory-reporter-v4-schedule-runner.mjs');
+const V7_RUNNER = join(ROOT, 'bin', 'factory-reporter-v7-schedule-runner.mjs');
 const roots = [];
 const CURRENT_PROFILE = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl';
 async function sandbox(profile = 'mac', collection = false, reporting = false) { const root = await mkdtemp(join(tmpdir(), 'factory-reporter-scheduler-test-')); roots.push(root); const config = join(root, 'config.json'); const credential = join(root, 'credential'); await writeFile(credential, 'unit-test-token\n', { mode: 0o600 }); await writeFile(config, JSON.stringify({ schema_version: '1.0', host: { id: 'test-host', profile }, collection: { enabled: collection }, reporting: reporting ? { enabled: true, endpoint: 'http://127.0.0.1:1/api/factory/v4/reports', credential_file: credential } : { enabled: false } })); return { root, config, credential, state: join(root, 'state-home', 'dotagents', 'factory-reporter-v4') }; }
 function run(script, args, box, extraEnv = {}) { return new Promise((resolveRun) => { const child = spawn(process.execPath, [script, ...args], { env: { ...process.env, HOME: box.root, USERPROFILE: box.root, LOCALAPPDATA: join(box.root, 'local-app-data'), XDG_CONFIG_HOME: join(box.root, 'config-home'), XDG_STATE_HOME: join(box.root, 'state-home'), ...extraEnv }, stdio: ['ignore', 'pipe', 'pipe'] }); let stdout = ''; let stderr = ''; child.stdout.on('data', (chunk) => { stdout += chunk; }); child.stderr.on('data', (chunk) => { stderr += chunk; }); child.on('close', (code) => { let json = null; for (const line of stdout.trim().split(/\r?\n/u).reverse()) { try { json = JSON.parse(line); break; } catch {} } resolveRun({ code, stderr, json }); }); }); }
 async function writeRunnerLock(box, pid, nonce = '00000000-0000-4000-8000-000000000001') { await mkdir(box.state, { recursive: true }); const path = join(box.state, `schedule.lock.${nonce}.owner`); await writeFile(path, `${JSON.stringify({ schema_version: 'dotagents.factory-scheduler-lock.v1', nonce, pid, acquired_at: new Date().toISOString() })}\n`, { mode: 0o600 }); return path; }
+async function v7FixtureBin(box) {
+  const bin = join(box.root, 'v7-bin'); await mkdir(bin);
+  for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(bin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); }
+  const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755);
+  return bin;
+}
 after(async () => { for (const root of roots) await rm(root, { recursive: true, force: true }); });
 
 test('macOS Homebrew Nodeはversioned Cellar pathでなくstable入口をschedulerへ保存する', () => {
@@ -56,14 +64,15 @@ test('cronはsingle quote後もconfig path内のpercentをescapeする', async (
 test('installはconfigのprofileとtarget不一致・制御文字をfail closedする', async () => { const box = await sandbox('mac'); const mismatch = await run(SCHEDULER, ['install', '--platform', 'linux', '--config', box.config], box); assert.equal(mismatch.code, 1); assert.match(mismatch.stderr, /登録できません/); const newline = await run(SCHEDULER, ['install', '--config', `${box.config}\n`], box); assert.equal(newline.code, 1); assert.match(newline.stderr, /改行/); });
 test('collection/reporting=falseのrunnerはstate/outboxを作らず正常skipする', async () => { const box = await sandbox(CURRENT_PROFILE, false); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 0); assert.deepEqual(result.json, { ok: true, post_gate_status: 'skipped', skipped: 'collection-and-reporting-disabled' }); await assert.rejects(lstat(box.state)); });
 test('post-update gateは完全一致allowlist以外のunverifiedと全failをblockingにする', async () => {
-  const source = await readFile(RUNNER, 'utf8'); const start = source.indexOf('function gateFailures('); const end = source.indexOf('function hasPendingToolchainLedger', start); const gateFailures = Function(`${source.slice(start, end)}; return gateFailures;`)();
-  const required = ['caveat', 'throughline', 'spotter', 'lattice', 'markitdown', 'gpt-connector', 'aiterm-mcp', 'codex-sidecar', ...(CURRENT_PROFILE === 'server' ? ['servermanager'] : []), ...(CURRENT_PROFILE === 'windows-native' ? [] : ['claude-code', 'codex-cli'])];
+  const profile = CURRENT_PROFILE === 'mac' ? 'windows-native' : CURRENT_PROFILE;
+  const required = ['caveat', 'throughline', 'spotter', 'lattice', 'markitdown', 'gpt-connector', 'aiterm-mcp', 'codex-sidecar', 'peertable', ...(profile === 'server' ? ['servermanager'] : []), ...(profile === 'windows-native' ? [] : ['claude-code', 'codex-cli'])];
   const report = (checks) => ({ products: Object.fromEntries(required.map((id) => [id, { presence_status: 'installed', compatibility_status: 'compatible', checks: checks[id] ?? [] }])) });
   const allowed = { spotter: [{ check_id: 'codex_hooks', status: 'unverified', reason_code: 'trust_not_machine_verifiable' }], throughline: [{ check_id: 'evidence_restore_smoke', status: 'unverified', reason_code: 'diagnostic_unverified' }, { check_id: 'claude_connector', status: 'unverified', reason_code: 'diagnostic_unverified' }], 'aiterm-mcp': [{ check_id: 'pty_list', status: 'unverified', reason_code: 'pty_list_unverified' }] };
-  assert.deepEqual(gateFailures(report(allowed), CURRENT_PROFILE, true), []);
-  assert.deepEqual(gateFailures(report({ spotter: [{ check_id: 'codex_hooks', status: 'unverified', reason_code: 'different_reason' }] }), CURRENT_PROFILE, true), ['spotter:codex_hooks']);
-  assert.deepEqual(gateFailures(report({ throughline: [{ check_id: 'unknown_component', status: 'unverified', reason_code: 'diagnostic_unverified' }] }), CURRENT_PROFILE, true), ['throughline:unknown_component']);
-  assert.deepEqual(gateFailures(report({ 'aiterm-mcp': [{ check_id: 'pty_list', status: 'fail', reason_code: 'pty_list_unverified' }] }), CURRENT_PROFILE, true), ['aiterm-mcp:pty_list']);
+  const facts = { profile, os: profile === 'windows-native' ? 'win32' : process.platform, arch: process.arch };
+  assert.deepEqual(postUpdateFailures(report(allowed), facts), []);
+  assert.deepEqual(postUpdateFailures(report({ spotter: [{ check_id: 'codex_hooks', status: 'unverified', reason_code: 'different_reason' }] }), facts), ['spotter:codex_hooks']);
+  assert.deepEqual(postUpdateFailures(report({ throughline: [{ check_id: 'unknown_component', status: 'unverified', reason_code: 'diagnostic_unverified' }] }), facts), ['throughline:unknown_component']);
+  assert.deepEqual(postUpdateFailures(report({ 'aiterm-mcp': [{ check_id: 'pty_list', status: 'fail', reason_code: 'pty_list_unverified' }] }), facts), ['aiterm-mcp:pty_list']);
 });
 test('collection=falseでもreporting=trueなら既存outboxをflushする', async () => { const box = await sandbox(CURRENT_PROFILE, false, true); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 0, result.stderr); assert.deepEqual(result.json, { ok: true, post_gate_status: 'success' }); await stat(join(box.state, 'outbox')); await assert.rejects(lstat(join(box.state, 'latest-report.json'))); });
 test('v4 runnerのWindows ACLはreporterと同じLiteralPath・current SID・継承遮断契約を使う', async () => { const source = await readFile(RUNNER, 'utf8'); assert.match(source, /DOTAGENTS_FACTORY_ACL_TARGET/); assert.match(source, /WindowsIdentity\]::GetCurrent\(\)\.User/); assert.match(source, /Get-Item -LiteralPath \$p/); assert.match(source, /RemoveAccessRuleAll/); assert.doesNotMatch(source, /New-Object Security\.AccessControl\.(?:Directory|File)Security/); assert.match(source, /SetAccessRuleProtection\(\$true, \$false\)/); assert.match(source, /GetAccessControl\('Access'\)/); assert.match(source, /\$item\.SetAccessControl\(\$acl\)/); assert.doesNotMatch(source, /Set-Acl /); assert.doesNotMatch(source, /\[IO\.(?:Directory|File)\]::SetAccessControl/); assert.match(source, /timeout: 5_000/); assert.match(source, /acl_apply_failed/); });
@@ -72,11 +81,12 @@ test('runnerはprivate lock競合時にscan/enqueue/flushへ進まず非0にす�
 test('runnerは旧directory lockをageだけで奪わず明示回収を要求する', async () => { const box = await sandbox(CURRENT_PROFILE, false, true); const lock = join(box.state, 'schedule.lock'); await mkdir(lock, { recursive: true }); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /明示回収/); await stat(lock); });
 test('win32はtask XMLをUTF-16LE+BOMで書き、存在照会をlocaleテキストでなくGet-ScheduledTask exit codeで行う', async () => {
   const source = await readFile(SCHEDULER, 'utf8');
-  assert.match(source, /Buffer\.from\(`\\ufeff\$\{spec\.content\}`, 'utf16le'\)/u);
-  assert.match(source, /Get-ScheduledTask -TaskName '\$\{TASK_NAME\}' -ErrorAction SilentlyContinue/u);
-  assert.match(source, /exit 3/u);
-  assert.doesNotMatch(source, /ABSENT_TASK/u);
-  assert.doesNotMatch(source, /schtasks\.exe', \['\/Query'/u);
+  const windows = await readFile(join(ROOT, 'lib', 'factory', 'windows-scheduler.mjs'), 'utf8');
+  assert.match(source, /writeWindowsTaskXml/);
+  assert.match(windows, /Buffer\.from\(`\\ufeff\$\{content\}`, 'utf16le'\)/u);
+  assert.match(windows, /Get-ScheduledTask -TaskName '\$\{taskName\}' -ErrorAction SilentlyContinue/u);
+  assert.match(windows, /exit 3/u);
+  assert.doesNotMatch(windows, /schtasks\.exe', \['\/Query'/u);
 });
 test('runnerはlaunchd/cron最小PATHでもuser binとnpm globalの製品CLIを補完解決し、明示PATHを先勝ちに保つ', { skip: process.platform === 'win32' }, async () => {
   const { extendedSchedulerPath } = await import('../../lib/factory/scheduler-path.mjs');
@@ -120,6 +130,42 @@ elif [ "$1" = runtime-errors ]; then echo '{"schema":"lattice.runtime_errors.v1"
 else exit 1; fi
 `); await chmod(lattice, 0o755); const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755); const normal = await run(RUNNER, ['--config', box.config], box, { PATH: bin }); assert.equal(normal.code, 0, normal.stderr); const result = await run(RUNNER, ['--config', box.config, '--post-update'], box, { PATH: bin }); assert.equal(result.code, 1); assert.deepEqual(result.json, { ok: false, post_gate_status: 'failed', failed_checks: CURRENT_PROFILE === 'windows-native' ? 7 : 9 }); });
 test('finalize-updateは最終ledgerを再投影し、製品failure自体を配送失敗へ偽装しない', async () => { const box = await sandbox(CURRENT_PROFILE, false, false); const bin = join(box.root, 'bin'); await mkdir(bin); for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(bin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); } const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755); const result = await run(RUNNER, ['--config', box.config, '--finalize-update'], box, { PATH: bin }); assert.equal(result.code, 0, result.stderr); assert.deepEqual(result.json, { ok: true, finalized: true }); await stat(join(box.state, 'latest-report.json')); });
+test('v7 finalize-updateはBugHub acceptedかつ今回report_id一致時だけdelivery receiptを原子的に作る', async () => {
+  const token = '11111111-1111-4111-8111-111111111111';
+  const cases = [
+    ['accepted', true, (response, report) => { response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ accepted: true, report_id: report.report_id })); }, true],
+    ['unaccepted', true, (response, report) => { response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ accepted: false, report_id: report.report_id })); }, false],
+    ['http-failure', true, (response) => { response.writeHead(500, { 'content-type': 'application/json' }); response.end('{}'); }, false],
+    ['reporting-disabled', false, null, false],
+  ];
+  for (const [name, reporting, handler, receiptExpected] of cases) {
+    let requests = 0;
+    const server = createServer(async (request, response) => {
+      requests += 1;
+      const chunks = []; for await (const chunk of request) chunks.push(chunk);
+      handler(response, JSON.parse(Buffer.concat(chunks).toString('utf8')));
+    });
+    await new Promise((resolveListen) => server.listen(0, '127.0.0.1', resolveListen));
+    try {
+      const box = await sandbox(CURRENT_PROFILE, false, reporting);
+      const address = server.address();
+      if (reporting) await writeFile(box.config, JSON.stringify({ schema_version: '1.0', host: { id: 'test-host', profile: CURRENT_PROFILE }, collection: { enabled: false }, reporting: { enabled: true, endpoint: `http://127.0.0.1:${address.port}/api/factory/v7/reports`, credential_file: box.credential } }));
+      const result = await run(V7_RUNNER, ['--config', box.config, '--finalize-update'], box, { PATH: await v7FixtureBin(box), AGENTS_UPDATE_BATCH_TOKEN: token });
+      const state = join(box.root, 'state-home', 'dotagents', 'factory-reporter-v7');
+      const receipt = join(state, 'delivery-receipt.json');
+      if (receiptExpected) {
+        assert.equal(result.code, 0, `${name}: ${result.stderr}`);
+        const report = JSON.parse(await readFile(join(state, 'latest-report.json'), 'utf8'));
+        assert.deepEqual(JSON.parse(await readFile(receipt, 'utf8')), { schema: 'dotagents.factory-delivery-receipt.v1', report_id: report.report_id, batch_token: token });
+        assert.equal(requests, 1);
+      } else {
+        assert.equal(result.code, name === 'reporting-disabled' ? 0 : 1, `${name}: ${result.stderr}`);
+        await assert.rejects(lstat(receipt));
+        assert.equal(requests, reporting ? 1 : 0);
+      }
+    } finally { await new Promise((resolveClose) => server.close(resolveClose)); }
+  }
+});
 test('finalize-updateはpending台帳をenqueue前に拒否しnetworkへ送らない', async () => {
   const requests = [];
   const server = createServer((request, response) => { requests.push(request.url); request.resume(); response.writeHead(200, { 'content-type': 'application/json' }); response.end('{"ok":true}'); });

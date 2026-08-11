@@ -61,7 +61,49 @@ EOF
 EOF
 }
 apply_config() { HOME="$1" CODEX_HOME="$1/.codex" "$PYTHON_BIN" "$1/.local/bin/apply-codex-config" "$2"; }
-verify() { PATH="$LATTICE_TEST_BIN:$PATH" HOME="$1" DOTAGENTS_SKIP_FACTORY_CORE=1 LATTICE_HOOKS_TEST_MODE="${LATTICE_HOOKS_TEST_MODE:-wired}" "$ROOT/bin/verify-install.sh" --profile "$2"; }
+FACTORY_TEST_BIN="$(mktemp -d)"
+UNKNOWN_OS_BIN="$(mktemp -d)"
+SUPPORTED_MAC_HOST_BIN="$(mktemp -d)"
+trap 'rm -rf "$OFFICIAL_HOME" "$LEGACY_HOME" "$EXTERNAL_CODEX_HOME" "$BAD_CODEX_HOME" "$SYMLINK_CODEX_HOME" "$SYMLINK_TARGETS" "$TRANSACTION_CODEX_HOME" "$VERIFY_FIXTURE" "$LATTICE_TEST_BIN" "$FACTORY_TEST_BIN" "$UNKNOWN_OS_BIN" "$SUPPORTED_MAC_HOST_BIN"' EXIT
+for factory_cli in caveat throughline spotter markitdown gpt-connector aiterm-mcp codex-sidecar-mcp peertable-client observer aishell-mcp; do
+  printf '#!/usr/bin/env bash\nexit 0\n' >"$FACTORY_TEST_BIN/$factory_cli"
+  chmod +x "$FACTORY_TEST_BIN/$factory_cli"
+done
+cat >"$FACTORY_TEST_BIN/spotter" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1 $2 $3" = 'codex-hook diagnostics --project' ]; then
+  printf '%s\n' '{"availability":"available","readiness":"ready","installedHooks":{"sessionStart":"installed","userPromptSubmit":"installed","stop":"installed"},"validation":{"sessionStart":{"registered":true,"compatible":true,"misconfigured":false,"canonical":true,"issues":[]},"userPromptSubmit":{"registered":true,"compatible":true,"misconfigured":false,"canonical":true,"issues":[]},"stop":{"registered":true,"compatible":true,"misconfigured":false,"canonical":true,"issues":[]}}}'
+fi
+EOF
+chmod +x "$FACTORY_TEST_BIN/spotter"
+printf '#!/usr/bin/env bash\n[ "$1 $2" = "tool list" ] && printf "markitdown 0.1.0\\n"\n' >"$FACTORY_TEST_BIN/uv"
+chmod +x "$FACTORY_TEST_BIN/uv"
+verify() { PATH="$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$1" DOTAGENTS_FACTORY_CORE_TEST=1 LATTICE_HOOKS_TEST_MODE="${LATTICE_HOOKS_TEST_MODE:-wired}" "$ROOT/bin/verify-install.sh" --profile "$2"; }
+cat >"$UNKNOWN_OS_BIN/uname" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in -s) printf 'UnknownOS\n' ;; -m) printf 'x86_64\n' ;; esac
+EOF
+chmod +x "$UNKNOWN_OS_BIN/uname"
+if PATH="$UNKNOWN_OS_BIN:$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$OFFICIAL_HOME" DOTAGENTS_FACTORY_CORE_TEST=1 LATTICE_HOOKS_TEST_MODE=wired "$ROOT/bin/verify-install.sh" --profile official >"$OFFICIAL_HOME/unknown-os.out" 2>&1; then
+  fail '未知OSをLinux/WSLとしてverify-installが通した'
+fi
+grep -q '未対応OSをhost profileへ射影できない' "$OFFICIAL_HOME/unknown-os.out" || fail '未知OSのfail-closed理由を出さない'
+cat >"$SUPPORTED_MAC_HOST_BIN/uname" <<'EOF'
+#!/usr/bin/env bash
+case "$1" in -s) printf 'Darwin\n' ;; -m) printf 'arm64\n' ;; *) exit 64 ;; esac
+EOF
+cat >"$SUPPORTED_MAC_HOST_BIN/sw_vers" <<'EOF'
+#!/usr/bin/env bash
+[ "${1:-}" = -productVersion ] || exit 64
+printf '15.1.0\n'
+EOF
+chmod +x "$SUPPORTED_MAC_HOST_BIN/uname" "$SUPPORTED_MAC_HOST_BIN/sw_vers"
+for missing_cli in observer peertable-client; do
+  if PATH="$SUPPORTED_MAC_HOST_BIN:$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$OFFICIAL_HOME" DOTAGENTS_FACTORY_CORE_TEST=1 DOTAGENTS_FACTORY_MISSING_CLI="$missing_cli" LATTICE_HOOKS_TEST_MODE=wired "$ROOT/bin/verify-install.sh" --profile official >"$OFFICIAL_HOME/$missing_cli.out" 2>&1; then
+    fail "$missing_cli 欠落をverify-installが通した"
+  fi
+  grep -q "'$missing_cli' 不在" "$OFFICIAL_HOME/$missing_cli.out" || fail "$missing_cli 欠落理由を出さない"
+done
 assert_stop_count() {
   "$PYTHON_BIN" - "$1" <<'PY'
 import json

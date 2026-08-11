@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 import { readConfig } from '../lib/factory/contract.mjs';
+import { windowsOwnerOnlyAclScript, windowsTaskExists, writeWindowsTaskXml } from '../lib/factory/windows-scheduler.mjs';
 
 const LABEL = 'com.kite.factory-reporter';
 const TASK_NAME = 'dotagents-factory-reporter';
@@ -78,18 +79,7 @@ function artifact(target, config, location, wireMajor) {
   const file = join(location.control, 'scheduler', `${TASK_NAME}.xml`);
   const argumentsText = `${windowsQuote(runner)} --config ${windowsQuote(config)}`;
   const content = `<?xml version="1.0" encoding="UTF-16"?><Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Triggers><CalendarTrigger><StartBoundary>2026-01-01T00:17:00</StartBoundary><Repetition><Interval>PT1H</Interval><Duration>P1D</Duration><StopAtDurationEnd>false</StopAtDurationEnd></Repetition><ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay></CalendarTrigger></Triggers><Principals><Principal id="Author"><RunLevel>LeastPrivilege</RunLevel></Principal></Principals><Settings><MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy><StartWhenAvailable>true</StartWhenAvailable></Settings><Actions Context="Author"><Exec><Command>${xml(node)}</Command><Arguments>${argumentsText}</Arguments><WorkingDirectory>${xml(location.home)}</WorkingDirectory></Exec></Actions></Task>`;
-  const script = String.raw`$ErrorActionPreference = 'Stop'
-$p = $env:DOTAGENTS_FACTORY_ACL_TARGET
-if ([string]::IsNullOrWhiteSpace($p) -or -not (Test-Path -LiteralPath $p -PathType Container)) { throw 'ACL target is invalid' }
-$sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
-$inherit = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
-$item = Get-Item -LiteralPath $p
-$acl = $item.GetAccessControl('Access')
-$acl.SetAccessRuleProtection($true, $false)
-foreach ($existing in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existing) }
-$rule = [Security.AccessControl.FileSystemAccessRule]::new($sid, [Security.AccessControl.FileSystemRights]::FullControl, $inherit, [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
-[void]$acl.AddAccessRule($rule)
-$item.SetAccessControl($acl)`;
+  const script = windowsOwnerOnlyAclScript();
   return { file, content, runner, commands: [['schtasks.exe', '/Create', '/TN', TASK_NAME, '/XML', file, '/F']], uninstall: [['schtasks.exe', '/Delete', '/TN', TASK_NAME, '/F']], acl: [['powershell.exe', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script]] };
 }
 
@@ -110,23 +100,17 @@ function isAbsent(result, pattern) { return result.status !== 0 && pattern.test(
 // schtasksのconsole出力はOS localeのcodepage（日本語Windowsはcp932）で、UTF-8 decodeすると
 // mojibake化して不在文言regexが一致しない。存在判定はlocaleテキストに依存しない
 // PowerShell Get-ScheduledTaskのexit codeだけで行う。
-function windowsTaskExists() {
-  const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', `if (Get-ScheduledTask -TaskName '${TASK_NAME}' -ErrorAction SilentlyContinue) { exit 0 } else { exit 3 }`], { encoding: 'utf8', timeout: 15_000 });
-  if (result.status === 0) return true;
-  if (result.status === 3) return false;
-  throw commandError(result, 'Windows Task Scheduler照会');
-}
 
 async function apply(command, target, spec, location) {
   if (command === 'install') {
-    await ensurePrivateState(target, location.state, spec.acl); await ensurePrivateState(target, location.control, spec.acl); await mkdir(dirname(spec.file), { recursive: true, mode: 0o700 }); await writeFile(spec.file, target === 'win32' ? Buffer.from(`\ufeff${spec.content}`, 'utf16le') : spec.content, { mode: 0o600 });
+    await ensurePrivateState(target, location.state, spec.acl); await ensurePrivateState(target, location.control, spec.acl); await mkdir(dirname(spec.file), { recursive: true, mode: 0o700 }); if (target === 'win32') await writeWindowsTaskXml(spec.file, spec.content); else await writeFile(spec.file, spec.content, { mode: 0o600 });
     if (target === 'linux') { replaceCron(spec.content, false); await removeLegacyArtifacts(target, location); return; }
     if (target === 'darwin') { const probe = spawnSync('launchctl', ['print', spec.uninstall[0][2]], { encoding: 'utf8' }); if (probe.status === 0) { const stopped = spawnSync('launchctl', spec.uninstall[0].slice(1), { encoding: 'utf8' }); if (stopped.status !== 0) throw commandError(stopped, 'launchd既存scheduler停止'); } else if (!isAbsent(probe, ABSENT_LAUNCHD)) throw commandError(probe, 'launchd scheduler照会'); }
     const [bin, ...args] = spec.commands[0]; const result = spawnSync(bin, args, { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, `${bin}登録`); await removeLegacyArtifacts(target, location); return;
   }
   if (target === 'linux') replaceCron(spec.content, true);
   else if (target === 'darwin') { const probe = spawnSync('launchctl', ['print', spec.uninstall[0][2]], { encoding: 'utf8' }); if (probe.status === 0) { const result = spawnSync('launchctl', spec.uninstall[0].slice(1), { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, 'launchd解除'); } else if (!isAbsent(probe, ABSENT_LAUNCHD)) throw commandError(probe, 'launchd scheduler照会'); }
-  else if (windowsTaskExists()) { const [bin, ...args] = spec.uninstall[0]; const result = spawnSync(bin, args, { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, 'Windows Task Scheduler解除'); }
+  else if (windowsTaskExists(TASK_NAME)) { const [bin, ...args] = spec.uninstall[0]; const result = spawnSync(bin, args, { encoding: 'utf8' }); if (result.status !== 0) throw commandError(result, 'Windows Task Scheduler解除'); }
   await rm(spec.file, { force: true }); await removeLegacyArtifacts(target, location);
 }
 

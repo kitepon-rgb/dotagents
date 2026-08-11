@@ -72,4 +72,4 @@ Spotterは全projectへ無条件activationしない。dotagentsなど工場管�
 - `wsl`: 上表FOX WSL2列
 - `windows-native`: 上表FOX Windows native列
 
-BugHub serverはhost credentialにprofileを結び付け、このmatrixから期待状態を決める。期待状態はclient payloadへ重複保持せず、serverだけがpresenceとの組合せとseverityを判定する。
+BugHub serverはhost credentialにprofileを結び付け、このmatrixから期待状態を決める。dotagentsの`lib/factory/deployment-contract.mjs`も同じ12管理製品・host projectionを更新後gateとverify-installへ供給し、profile/OS/arch/macOS majorがmatrix外なら停止する。期待状態はclient payloadへ重複保持せず、serverだけがpresenceとの組合せとseverityを判定する。

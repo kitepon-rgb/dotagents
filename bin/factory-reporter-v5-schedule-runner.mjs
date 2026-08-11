@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { chmod, link, lstat, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, link, lstat, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { readConfig } from '../lib/factory/contract.mjs';
+import { postUpdateFailures } from '../lib/factory/deployment-contract.mjs';
 import { extendedSchedulerPath } from '../lib/factory/scheduler-path.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -16,6 +17,7 @@ const WIRE_MAJOR = INVOKED.includes('factory-reporter-v7') ? 'v7' : INVOKED.incl
 process.env.PATH = extendedSchedulerPath({ platform: platform(), path: process.env.PATH, execPath: process.execPath, home: homedir() });
 function statePath() { return platform() === 'win32' ? join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'dotagents', `factory-reporter-${WIRE_MAJOR}`) : join(process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state'), 'dotagents', `factory-reporter-${WIRE_MAJOR}`); }
 function platformMatches(profile) { return (platform() === 'darwin' && profile === 'mac') || (platform() === 'linux' && ['server', 'wsl'].includes(profile)) || (platform() === 'win32' && profile === 'windows-native'); }
+function macosMajor() { if (platform() !== 'darwin') return null; const result = spawnSync('sw_vers', ['-productVersion'], { encoding: 'utf8' }); const major = Number(result.stdout?.trim().split('.')[0]); if (result.status !== 0 || !Number.isInteger(major) || major < 1) throw new Error('macOS majorを取得できません'); return major; }
 function run(script, args) { return new Promise((resolveRun, rejectRun) => { const child = spawn(process.execPath, [join(HERE, script), ...args], { stdio: 'inherit' }); child.on('error', rejectRun); child.on('close', (code) => code === 0 ? resolveRun() : rejectRun(new Error(`${script} がexit ${code}で失敗`))); }); }
 function ownerOnlyAcl(path) {
   if (platform() !== 'win32') return;
@@ -128,15 +130,15 @@ async function withLock(state, task) {
     await releaseContender(contender.published, contender.owner.nonce);
   }
 }
-function gateFailures(report, profile, postUpdate) { const required = ['caveat', 'throughline', 'spotter', 'lattice', 'markitdown', 'gpt-connector', 'aiterm-mcp', 'codex-sidecar']; if (profile === 'server') required.push('servermanager'); if (profile !== 'windows-native') required.push('claude-code', 'codex-cli'); const allowedUnverified = new Set(['spotter\0codex_hooks\0trust_not_machine_verifiable', 'throughline\0evidence_restore_smoke\0diagnostic_unverified', 'throughline\0claude_connector\0diagnostic_unverified', 'aiterm-mcp\0pty_list\0pty_list_unverified',
-    // 前回gate失敗の残響（last_update: post_gate_failed）は現在の健全性でなく前回判定の写しであり、gateを再帰失敗させない。
-    // 実際の更新失敗はoperation_status=failed→failで引き続きblocking。
-    'claude-code\0last_update\0post_gate_failed', 'codex-cli\0last_update\0post_gate_failed',
-    // 専用Chrome未起動（idle）はgpt-connectorのon-demand設計の平常状態（gpt-connector 0.4.12+の
-    // chrome_idle意味論）。live runtime未検分もidleの帰結であり、更新破壊の兆候ではない。
-    'gpt-connector\0cdp\0chrome_idle', 'gpt-connector\0official_origin\0cdp_not_inspected',
-    'gpt-connector\0auth\0cdp_not_inspected', 'gpt-connector\0runtime_bridge\0cdp_not_inspected']); const failures = []; for (const id of required) { const product = report?.products?.[id]; if (!product || product.presence_status !== 'installed') { failures.push(`${id}:presence`); continue; } if ((['claude-code', 'codex-cli'].includes(id) && product.compatibility_status !== 'compatible') || product.compatibility_status === 'incompatible') failures.push(`${id}:compatibility`); for (const item of product.checks || []) { if (postUpdate && item.check_id === 'last_update' && item.status === 'unverified' && item.reason_code === 'post_gate_pending') continue; if (item.status === 'fail' || (item.status === 'unverified' && !allowedUnverified.has(`${id}\0${item.check_id}\0${item.reason_code}`))) failures.push(`${id}:${item.check_id}`); } } return failures; }
+function gateFailures(report, profile, postUpdate) { return postUpdateFailures(report, { profile, os: platform(), arch: process.arch, macosMajor: macosMajor() }, { postUpdate }); }
 function hasPendingToolchainLedger(report) { return ['claude-code', 'codex-cli', 'grok-build'].some((id) => (report?.products?.[id]?.checks || []).some((item) => item.check_id === 'last_update' && item.status === 'unverified' && item.reason_code === 'post_gate_pending')); }
+async function writeDeliveryReceipt(state, reportId) {
+  const batchToken = process.env.AGENTS_UPDATE_BATCH_TOKEN || null;
+  if (batchToken !== null && !/^[0-9a-f-]{36}$/iu.test(batchToken)) throw new Error('delivery receiptのbatch tokenが不正です');
+  const receipt = { schema: 'dotagents.factory-delivery-receipt.v1', report_id: reportId, batch_token: batchToken };
+  const target = join(state, 'delivery-receipt.json'); const temporary = join(state, `.delivery-receipt.${randomUUID()}.tmp`);
+  try { await writeFile(temporary, `${JSON.stringify(receipt)}\n`, { flag: 'wx', mode: 0o600 }); if (platform() !== 'win32') await chmod(temporary, 0o600); else ownerOnlyAcl(temporary); await rename(temporary, target); if (platform() !== 'win32') await chmod(target, 0o600); else ownerOnlyAcl(target); } finally { await rm(temporary, { force: true }); }
+}
 try {
   const { configPath, postUpdate, finalizeUpdate } = parseArgs(process.argv.slice(2));
   const config = await readConfig(configPath);
@@ -151,14 +153,17 @@ try {
       const reportPath = join(state, 'latest-report.json');
       const acks = join(state, 'latest-acks.json');
       let failures = [];
+      let latestReport = null;
       if (config.collection.enabled || postUpdate || finalizeUpdate) {
         await run(`factory-scan-${WIRE_MAJOR}.mjs`, ['--config', configPath, '--output', reportPath, '--ack-output', acks, '--cwd', ROOT]);
         const report = JSON.parse(await readFile(reportPath, 'utf8'));
+        latestReport = report;
         if (finalizeUpdate && hasPendingToolchainLedger(report)) throw new Error('finalize ledgerにpost_gate_pendingが残っています');
         if (postUpdate) failures = gateFailures(report, config.host.profile, true);
         if (!postUpdate && (config.collection.enabled || (finalizeUpdate && config.reporting.enabled))) await run(`factory-reporter-${WIRE_MAJOR}.mjs`, ['enqueue', '--config', configPath, '--report', reportPath, '--ack-metadata', acks]);
       }
       if (config.reporting.enabled) await run(`factory-reporter-${WIRE_MAJOR}.mjs`, ['flush', '--config', configPath]);
+      if (finalizeUpdate && WIRE_MAJOR === 'v7' && config.reporting.enabled && latestReport) await writeDeliveryReceipt(state, latestReport.report_id);
       if (finalizeUpdate) process.stdout.write(`${JSON.stringify({ ok: true, finalized: true })}\n`);
       else if (failures.length) {
         process.stdout.write(`${JSON.stringify({ ok: false, post_gate_status: 'failed', failed_checks: failures.length })}\n`);

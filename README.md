@@ -162,7 +162,7 @@ Codex全対応の工程状態はLattice storeが正本で、現役4 host・5入�
   ```
 - **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境。install.sh は実行した環境の `$HOME` に symlink を張る）。cron の起動は下の「自動アップデート」節参照
 - **ランタイム**: node>=22＋corepack・docker・python3（`command -v node docker` で存在確認、`node --version` が v22+、`docker info` が通ること。**python3 だけは実行判定 `python3 -c "print(1)"` で確認**——Windows のストア偽エイリアスは存在チェックを通り、黙って exit 0 を返す〔罠DB `windows-python3-store-exit-0`〕）
-- **CLI（必須）**: 基盤toolchainのClaude Code・Codex CLI、端末能力を担うCaveat／Throughline／Spotter／Lattice（`npm i -g @quolu/lattice`）／gpt-connector／aiterm-mcp／codex-sidecar、第三者製品MarkItDownを確認する。macOSではObserver、Apple Silicon MacではAIShellも必須。ServerManagerは中央運用repo／serviceとして別途管理する。`command -v claude codex caveat throughline spotter lattice markitdown gpt-connector aiterm-mcp codex-sidecar-mcp`を基準に、対応hostでは`observer`／`aishell-mcp`も確認し、`codegraph`がPATHに無いことも確認する。各projectでは最初に`lattice status --json`のtyped stateで工程正本を判定する。Grok Buildは対応hostで確認する。MarkItDownの正規更新面は`uv tool`。
+- **CLI（必須）**: 管理12製品はCaveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager／peertable。共通requiredは基礎8＋`peertable-client`、macOSではObserver、macOS 15+ Apple SiliconではAIShell、main-serverではServerManagerの公開readiness/revisionだけを検証する。他hostのServerManagerは`not_applicable`、AIShell/Observerは`unsupported`である。基盤toolchainのClaude Code・Codex CLIは別管理。独立CodegraphはPATHに存在してはならない。MarkItDownの正規更新面は`uv tool`。
 - **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する（委譲は当面 Codex 主で回る＝必須ではない）
 - **MCP 用 CLI を先に入れる**（下の登録が参照する。`agents-update`が入れる各packageと同源）: `aiterm-mcp`・`caveat`・`codex-sidecar-mcp`・`gpt-connector-mcp`・`lattice-mcp`がPATHにあること。独立Codegraphは登録しない。Codex親もnative枠外の実行用にaitermとcodex-sidecarを登録する。登録・loginは端末configを変えるH操作。
 - **MCP（ユーザースコープ登録。上の CLI 導入後）**:
@@ -239,7 +239,7 @@ permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを�
 
 ## 自動アップデート（常設・全端末必須）
 
-`~/.local/bin/agents-update` が curated CLI / SDK / MCP 群 (Claude Code / Codex CLI / gpt-connector / aiterm-mcp / Codex Sidecar / Throughline / Caveat / Lattice / claude-spotter / Anthropic SDK / pnpm) をNPM `@latest`へ、MarkItDownを `uv tool upgrade` で更新する。**「推奨」ではなく常設が必須**（2026-07-04 実測: この一手を省いた端末では旧世代の自動更新が別リストで回り続け、真実が二重化していた）。1製品でも更新に失敗したら製品名をログへ残し、残り製品の更新と更新後のfactory contract scan/reportを継続する。更新処理とreporterの成否は別々に記録し、どちらか一方でも失敗ならジョブを非0終了する。reporterは明示opt-in設定に従い、収集OFFならscan前、送信OFFならnetwork前で停止する。詳細は [factory reporterランブック](docs/factory-reporter-runbook.md#9-agents-updateとの接続) を参照。
+`~/.local/bin/agents-update` はdeployment contractが返すOS/arch別の完全なnpm package集合を `@latest` へ更新する（DarwinはObserver、Darwin arm64はAIShell、全対応hostはpeertable）。MarkItDownは`uv tool list`成功時だけ、不在なら`uv tool install markitdown`、存在すれば`uv tool upgrade markitdown`を実行し、list失敗はfail-closedにする。失敗は製品名付きで記録し、更新後のfactory contract scan/reportも継続する。更新処理とreporterの成否は別々に記録し、どちらか一方でも失敗ならjobを非0終了する。詳細は [factory reporterランブック](docs/factory-reporter-runbook.md#9-agents-updateとの接続) を参照。
 
 **Step 0 — 旧自動更新の撲滅（一つの真実）**: 先に古い npm 自動更新が居ないか掃引し、居たら停止・撤去する。
 
@@ -272,6 +272,8 @@ launchctl bootstrap gui/$UID ~/Library/LaunchAgents/com.kite.agents-update.plist
 ```
 
 - **Linux / WSL2（cron）**: cron 稼働確認（WSL2: `sudo service cron start`＋`/etc/wsl.conf` の `[boot]` に `command = "service cron start"`）→ `crontab -e` に `0 4 * * 1 $HOME/.local/bin/agents-update`（端末が起動している時間帯に合わせる）
+
+- **Windows native（Task Scheduler）**: `agents-update-scheduler install --dry-run`で専用task `dotagents-agents-update` のUTF-16LE XMLとrollbackを確認する。実登録は目的・影響・戻し方を確認したH承認後の`--apply`だけ。解除は`agents-update-scheduler uninstall --apply`。本番taskの手動起動は受入batch tokenで行い、`agents-update end`、exit code、v7 report、BugHub delivery acknowledgementを確認する。
 
 **Step 2 — 実走行で検証**（配線したつもりで一度も走らない、を防ぐ）:
 

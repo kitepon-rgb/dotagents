@@ -95,6 +95,11 @@ cat > "$TEST_HOME/.nvm/fake-bin/uv" <<'EOF'
 #!/bin/sh
 printf '%s:%s\n' "${RUN_ID:-default}" "$*" >> "$HOME/uv-calls.log"
 printf 'uv:%s\n' "$*" >> "$HOME/update-events.log"
+if [ "$*" = 'tool list' ]; then
+  [ "${UV_LIST_FAIL:-0}" -eq 1 ] && exit 25
+  [ "${UV_MARKITDOWN_ABSENT:-0}" -eq 1 ] || echo 'markitdown 0.1.0'
+  exit 0
+fi
 case "${UV_FAIL_PACKAGE:-}" in
   '') exit 0 ;;
 esac
@@ -148,8 +153,17 @@ fi
 if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then
   expected_npm_packages=16
 fi
+node --input-type=module - <<'EOF' || fail 'OS/arch別npm package集合がdeployment contractと一致しない'
+import { npmPackagesForHost } from './lib/factory/deployment-contract.mjs';
+const base = ['@anthropic-ai/claude-code','@openai/codex','gpt-connector','@anthropic-ai/sdk','aiterm-mcp','caveat-cli','claude-spotter','codex-sidecar-cli','codex-sidecar-core','codex-sidecar-mcp','@quolu/lattice','peertable','pnpm','throughline'];
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+if (!same(npmPackagesForHost({ os: 'Linux', arch: 'x64' }), base)
+ || !same(npmPackagesForHost({ os: 'Windows_NT', arch: 'x64' }), base)
+ || !same(npmPackagesForHost({ os: 'Darwin', arch: 'x64' }), [...base, '@quolu/observer'])
+ || !same(npmPackagesForHost({ os: 'Darwin', arch: 'arm64' }), [...base, '@quolu/observer', '@quolu/aishell'])) process.exit(1);
+EOF
 [ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq "$expected_npm_packages" ] \
-  || fail "curated package ${expected_npm_packages}件を fake npm へ渡していない"
+  || fail "curated package集合を fake npm へ正確に渡していない"
 if grep -q '@colbymchenry/codegraph' "$TEST_HOME/npm-calls.log"; then
   fail 'retired Codegraphを更新対象へ再導入している'
 fi
@@ -374,6 +388,31 @@ fi
   || fail 'uv 不在時に factory reporter を実行しなかった'
 mv "$TEST_HOME/.nvm/fake-bin/uv.off" "$TEST_HOME/.nvm/fake-bin/uv"
 
+if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  RUN_ID=uv-absent UV_MARKITDOWN_ABSENT=1 \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/uv-absent.out" 2>&1; then
+  cat "$TEST_HOME/uv-absent.out" >&2
+  fail 'MarkItDown absent→install fixtureが失敗した'
+fi
+[ "$(grep -c '^uv-absent:tool install markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
+  || fail 'MarkItDown absent時にuv tool installを実行していない'
+
+if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  RUN_ID=uv-list-fail UV_LIST_FAIL=1 \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/uv-list-fail.out" 2>&1; then
+  cat "$TEST_HOME/uv-list-fail.out" >&2
+  fail 'MarkItDown list失敗を更新成功扱いした'
+fi
+grep -q '^FAILED: MarkItDown uv tool list$' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
+  || fail 'uv tool list失敗を製品名付きで記録しない'
+if grep -q '^uv-list-fail:tool \(install\|upgrade\) markitdown$' "$TEST_HOME/uv-calls.log"; then
+  fail 'uv tool list失敗後にMarkItDownを更新している'
+fi
+
 if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \
   FACTORY_REPORTER_RUNNER="$REPORTER" \
@@ -387,7 +426,7 @@ fi
   || fail 'uv tool upgrade 失敗時に npm の残件を更新しなかった'
 [ "$(grep -c '^uv-fail:tool upgrade markitdown$' "$TEST_HOME/uv-calls.log")" -eq 1 ] \
   || fail 'uv tool upgrade を実行していない'
-grep -q '^FAILED: uv-tool:markitdown$' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
+grep -q '^FAILED: MarkItDown uv tool upgrade$' "$TEST_HOME/.local/state/agents-update/agents-update.log" \
   || fail 'uv 失敗した package 名を log に残さない'
 
 if env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \

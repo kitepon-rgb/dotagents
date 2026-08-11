@@ -209,13 +209,15 @@ factory-reporter-scheduler install --dry-run --platform win32 --wire-major v6
 
 - macOS: `~/Library/LaunchAgents/com.kite.factory-reporter.plist`を`launchctl bootstrap gui/$UID`で登録する。`node`の絶対path → 選択wireのrunnerをXML escapeした引数配列で起動する。runner state/logはwireごとのstateで0700、control artifactはmajor非依存である。
 - Linux / WSL2: 現在userのcrontabに`# dotagents-factory-reporter`で終わる**完全一致の自管理行だけ**を置換する。cron最小環境でもNodeとrunnerの絶対pathをPOSIX single-quoteして起動する。control artifactは`factory-reporter-scheduler/`配下でmajor非依存、runner state/outboxは削除しない。WSL2ではcron service自体を別途常設する。
-- Windows native: `%LOCALAPPDATA%\dotagents\factory-reporter-scheduler\scheduler\dotagents-factory-reporter.xml`をUTF-8で生成し、毎時のTaskを`schtasks.exe /Create /TN dotagents-factory-reporter /XML <file> /F`で登録する。control artifactはmajor非依存で、runner state/outboxは削除しない。apply時は継承・既存明示ACEを外し、現在userのSIDだけを許可するprivate ACLをPowerShell/.NETで設定する。
+- Windows native: `%LOCALAPPDATA%\dotagents\factory-reporter-scheduler\scheduler\dotagents-factory-reporter.xml`をUTF-16LE BOMで生成し、毎時のTaskを`schtasks.exe /Create /TN dotagents-factory-reporter /XML <file> /F`で登録する。control artifactはmajor非依存で、runner state/outboxは削除しない。apply時は継承・既存明示ACEを外し、現在userのSIDだけを許可するprivate ACLをPowerShell/.NETの`Access`面だけで設定する。
 
 停止はoutboxを消さずschedulerだけ外す。`factory-reporter-scheduler uninstall --dry-run --platform <OS>`で対象commandを確認し、承認後に`--apply`を付ける。
 
 ## 9. agents-updateとの接続
 
-`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、`factory-reporter-v6-schedule-runner --config <host config>`を必ず1回呼ぶ。runnerが担う順序はv6 scan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
+`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、`factory-reporter-v6-schedule-runner --config <host config>`を必ず1回呼ぶ。MarkItDownは`uv tool list`成功時だけ存在→upgrade／不在→installを選び、list失敗はfail-closedにする。runnerが担う順序はv6 scan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
+
+Windows nativeの常設更新は`agents-update-scheduler`が所有する。`install|status|uninstall`はdry-run既定で、専用task `dotagents-agents-update`、現在SIDの`UserId`と`InteractiveToken`を組にしたUTF-16LE BOM XML、locale非依存の`Get-ScheduledTask`照会、Create後の読み戻し、runner preflight、DACL `Access`だけのowner-only ACLを使う。`--apply`とTask手動起動はH承認が必要である。scheduled runnerは実行ごとに新しいbatch tokenを発行して`agents-update`へ渡し、終了codeだけでなく、BugHub accepted後にv7 runnerが原子的に保存した同一report_id・同一tokenのdelivery receiptを確認する。runtime-error acknowledgement metadataはdelivery証拠に使わない。rollbackはtaskだけを`uninstall --apply`で外し、report/outboxを削除しない。
 
 - 既定configはPOSIXで`~/.config/dotagents/factory-reporter.json`、Windows nativeで`%LOCALAPPDATA%\dotagents\factory-reporter\config.json`。
 - `collection.enabled=false`ならrunnerがscan前に正常skipする。`reporting.enabled=false`ならenqueue/flushはnetworkへ出ない。
