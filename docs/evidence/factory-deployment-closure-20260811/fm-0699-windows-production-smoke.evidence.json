@@ -1,0 +1,9 @@
+{
+  "evidence_id": "fm-0699-windows-production-smoke",
+  "repo_id": "self",
+  "path": "docs/evidence/factory-deployment-closure-20260811/fm-0699-windows-production-smoke.md",
+  "git_blob_oid": "7d155ad91c29c48485cb314c4762dee25bb350d9",
+  "content_digest": "3bd5c72e7cfef5686c45e97b9998582ebeab82dd44a3f17df58b03b90f839ef6",
+  "media_type": "text/markdown",
+  "anchor_digest": null
+}
