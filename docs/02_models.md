@@ -1,10 +1,10 @@
 # 02_models — 役割→モデル×エフォートの決定表（唯一の参照点）
 
-<!-- 前提: 2026-07-16 更新（GPT-5.6 / Grok 4.5 世代）。バージョン固定禁止（PLAN 原則9）。モデル名をこの表以外＋公認例外（codex/agents/*.toml・.codex-sidecar.yml）に書き散らさない -->
+<!-- 前提: 2026-08-11 更新（Claude 5 / GPT-5.6 / Grok 4.5 世代）。バージョン固定禁止（PLAN 原則9）。モデル名をこの表以外＋公認例外（codex/agents/*.toml・.codex-sidecar.yml）に書き散らさない -->
 
 方針: skill・agents・委譲契約・スクリプトは**役割名**でモデルを指し、具体名への解決はこの表だけが担う。世代交代時は**この1枚＋公認例外2種を更新して push すれば全端末が追従**する。更新トリガーはオーナーの宣言（PLAN 原則6）。
 
-背骨: **判断はティアで買い、粘りは effort で買う**（「中位×xhigh」より「旗艦×low」が安くて強い——GPT-5.6 公式指針）。**配置に迷ったら安い方・採用に迷ったら棄却**（前者はエスカレーションで取り返せる、後者の混入は取り返せない——別物なので混同しない）。**親のモデル×エフォートはオーナーの領分**（規範・AI はピンを打ち替えない。事実と推奨の提示まで。規範が縛るのは子の配置だけ）。
+背骨: **判断はティアで買い、粘りは effort で買う**。ただし「上位ティア×低 effort が常に安くて強い」「軽量×高 effort が常に得」のどちらも一般則にしない。曖昧さ・長期判断・失敗コストが大きいほどティアを上げ、仕様固定・機械検証可能・局所的な作業ほど安いティアへ寄せて effort を与える。代表タスクの成功率・総トークン・所要時間で比較する。**配置に迷ったら安い方・採用に迷ったら棄却**（前者はエスカレーションで取り返せる、後者の混入は取り返せない——別物なので混同しない）。**親のモデル×エフォートはオーナーの領分**（規範・AI はピンを打ち替えない。事実と推奨の提示まで。規範が縛るのは子の配置だけ）。
 
 ## 消費枠（4つ。レート予算の分散が最優先）
 
@@ -17,16 +17,26 @@
 
 ## ティア語彙（この表だけがモデル名を持つ）
 
-| ティア | 解決規則（latest 型） | 2026-07-11 時点の解決例 | コスト感 |
+| ティア | 解決規則（latest 型） | 2026-08-11 時点の解決例 | API 定価（入力/出力、per Mtok） |
 |---|---|---|---|
-| Claude 主 | セッション主モデル（委譲時も同値のaliasを明示する＝省略継承は不可） | オーナー指定（Opus 4.8 / Fable 5） | Anthropic 枠 |
-| Claude 最上位 | floating alias `fable` | Fable 5 | Anthropic 枠・高コスト＝**スポット限定** |
-| Claude 中／軽 | floating alias `sonnet` / `haiku` | Sonnet 5 / Haiku 4.5 | Anthropic 枠 |
-| Codex 旗艦 | OpenAI 現行旗艦 | `gpt-5.6-sol` | 5（$5/$30 per Mtok） |
-| Codex 中位 | OpenAI 現行バランス枠（旧 mini 相当） | `gpt-5.6-terra` | 2.5（$2.5/$15） |
-| Codex 軽量 | OpenAI 現行軽量枠（分類/抽出/高スループット） | `gpt-5.6-luna` | 1（$1/$6） |
-| xAI 万能 | xAI 現行旗艦 | `grok-4.5`（effort は low/medium/high の3段のみ） | $2/$6・トークン効率4〜5倍 |
-| xAI 物量 | xAI 現行コーディング特化 | `grok-composer-2.5-fast`（effort 非対応） | 速い・判断力低 |
+| Claude 主 | セッション主モデル（委譲時も同値のaliasを明示する＝省略継承は不可） | オーナー指定（現行の通常上位は Opus 5） | Opus 5: $5/$25 |
+| Claude 最上位 | floating alias `fable` | Fable 5 | $10/$50・**スポット限定** |
+| Claude 上位 | floating alias `opus` | Opus 5 | $5/$25 |
+| Claude 中位 | floating alias `sonnet` | Sonnet 5 | **$2/$10（8月10日に恒久化）** |
+| Claude 軽量 | floating alias `haiku` | Haiku 4.5 | $1/$5 |
+| Codex 旗艦 | OpenAI 現行旗艦 | `gpt-5.6-sol` | $5/$30 |
+| Codex 中位 | OpenAI 現行バランス枠（旧 mini 相当） | `gpt-5.6-terra` | **$2/$12（7月30日から20%減）** |
+| Codex 軽量 | OpenAI 現行軽量枠（分類/抽出/高スループット） | `gpt-5.6-luna` | **$0.20/$1.20（7月30日から80%減）** |
+| xAI 万能 | xAI 現行旗艦 | `grok-4.5` | $2/$6（200K超は別料金） |
+| xAI 物量 | Grok CLI の現行コーディング特化 | `grok-composer-2.5-fast`（effort 非対応） | OAuth/契約枠。API単価と直比較しない |
+
+価格は各社の標準 API 定価で、Claude Code・Codex・Grok CLI の subscription quota そのものではない。ただし OpenAI は Terra/Luna の値下げを Codex と ChatGPT Work の credit 消費にも反映した。Sonnet 5 は新 tokenizer により同じ入力が旧世代の約1.0〜1.35倍の token になるため、単価低下をそのまま request 単位の値下げ率にしない。provider 間の公表 benchmark も harness が違うため、横並び順位を配置根拠にしない。根拠と取得日は [GPT-5.6](../rag/models/gpt-5.6-family.md)、[Claude 5](../rag/models/claude-5-family.md)、[Grok 4.5](../rag/models/xai-grok45-composer25.md) に置く。
+
+### 参考指標（選定の答えではない）
+
+2026-08-11 の Artificial Analysis Index v4.1.1（9種の知識・科学推論・coding・terminal・agentic task の合成）では、各社の高 effort 条件が Opus 5=63、Fable 5=62（Opus 4.8 fallback 込み）、Sol=61、Terra=57、Grok 4.5=56、Sonnet 5=55、Luna=52。**これは「幅広い思考力」や人間との設計対話を測る尺度ではない**。ただし Luna×max が Sonnet 5×max に近い task 達成帯へ入ることと、Luna の局所実装 preset を試す価値の傍証にはなる。
+
+実リポジトリの issue 解決に絞る SWE-bench Pro snapshot では、Fable 5=80.0%、Grok 4.5=64.7%、Sol=64.6%、Terra=63.4%、Sonnet 5=63.2%（unverified）、Luna=62.7%。こちらも agent harness と effort が揃わないため絶対順位にはせず、**何を測る benchmark かを選んでから数字を見る**。数値・status・限界は [benchmark snapshot](../rag/models/benchmark-snapshot-20260811.md) に置く。
 
 ## 決定表（役割→ティア×effort×入口。既定は写すだけ・外れる方を要正当化）
 
@@ -50,6 +60,7 @@ fixtureがadapter catalogのconsultation laneおよびControl schema v26のconne
 | 設計（並列 Plan） | 主 同値明示×medium〜high | 旗艦×medium・codex_opinion | `grok-4.5`・実務判断の別視点 | 設計意見の別視点 |
 | 実装物量（外部枠） | —（Claude枠の行と対等候補） | **中位=`gpt-5.6-terra`×medium**・codex_work / implementer 定義 | **`grok-composer-2.5-fast`**（仕様固定＋検証コマンド必須の委譲契約を厳守） | —（ChatGPT second-opinion laneは実装を担わない） |
 | 実装物量（Claude 枠・外部枠と対等） | `sonnet`×low〜medium・implementer | — | — | — |
+| 局所コーディング（仕様固定・focused testあり） | `sonnet`×medium（次善） | **軽量=`gpt-5.6-luna`×max**・implementer。探索・設計判断まで混ぜない | composer 可 | — |
 | 軽作業・分類・抽出 | `haiku`×low（次善） | 軽量=`gpt-5.6-luna`×low・sorter 定義 / codex_generate | composer 可 | — |
 | 第三者レビュー | — | 旗艦×medium・codex_review（契約クリティカル差分は high） | — | 差分を貼れる規模なら併用可 |
 
@@ -71,7 +82,9 @@ fixtureがadapter catalogのconsultation laneおよびControl schema v26のconne
 2. 役割と入口が決定表の行と一致しているか（違えばルーティングを直す）
 3. 「green まで自走」「前提の再検証」を契約に書いたか
 
-**上げ方の規律**: 1回に動かすのは「ティア」か「effort」の片方だけ・effort は1段ずつ。**xhigh / max は既定禁止**（high との有意差を実測できた時のみ・理由記録）。**ultra は「すごく大変」な作業だけ**（設計と実装が絡む大物の全面再設計・多面監査・難しい移行の一発勝負。定型実装・調査は high 以下。ultra＝max 推論＋proactive 自動委譲 ON＝子を自動量産。使用量急増の公式警告あり）。
+**上げ方の規律**: 失敗後の再配置では、1回に動かすのは「ティア」か「effort」の片方だけ・effort は1段ずつ。最初から決定表の preset に置く場合はこの段階上げを要求しないため、仕様固定の局所コーディングは `Luna×max` へ直接置ける。`Luna×max` は dotagents の配置裁定であり、OpenAI 公式の個別推奨ではない。公式は `max` を品質優先の難しい workload 用とし、`xhigh` と代表タスクで比較するよう求めている。
+
+**xhigh / max を全役割の既定にはしない**。Opus 5 は high から始め、長時間の難しい coding/agentic work では xhigh、token 制約を外す価値がある時だけ max。Sol/Terra は medium を均衡点とし、測定で品質差が出た時だけ上げる。**ultra は「すごく大変」な作業だけ**（設計と実装が絡む大物の全面再設計・多面監査・難しい移行の一発勝負。定型実装・調査は max 以下。ultra＝max 推論＋proactive 自動委譲 ON＝子を自動量産。使用量急増の公式警告あり）。
 
 **下げゲート**: 統括レーンで委譲すると裁定した仕様固定・機械判定可能な作業（A相当）は1段下げを試してよい（下げも1段ずつ）。
 

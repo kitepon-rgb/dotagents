@@ -1,13 +1,18 @@
 <!--
-source: openai/codex リポ models.json・latest-model.md（一次・2026-07-10 取得、前セッション調査）／
+source: https://developers.openai.com/api/docs/models/gpt-5.6-sol ／
+        https://developers.openai.com/api/docs/models/gpt-5.6-terra ／
+        https://developers.openai.com/api/docs/models/gpt-5.6-luna ／
+        https://developers.openai.com/api/docs/guides/latest-model ／
+        https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/ ／
+        openai/codex リポ models.json・latest-model.md（一次・2026-07-10 取得、前セッション調査）／
         upgrading-to-gpt-5p6-sol.md（一次・effort 公式指針）／
         core/src/client.rs（Ultra→Max マッピング）・session/multi_agents.rs（Ultra→Proactive）／
         本セッションでの再検証: ~/.codex/models_cache.json（端末実測・fetched_at 2026-07-10T15:37:32Z）・
         codex-darwin-arm64 バイナリの strings 実読（agent_roles.rs 由来のバリデーションメッセージ・
         AgentRoleToml 構造）
 audit_by: ベル配下 implementer（作業委譲・2026-07-11）
-fetched: 2026-07-10（前セッション一次取得）／2026-07-11（本セッション実装再検証）
-confidence: 高（GA・価格・ティア語彙・effort 段階は端末実測で裏取り済み）〜中（ultra の内部委譲メカニズムは
+fetched: 2026-07-10（前セッション一次取得）／2026-07-11（実装再検証）／2026-08-11（公式Web・Codex 0.147.0 実測）
+confidence: 高（GA・価格は公式Web、effort 段階は端末実測）〜中（ultra の内部委譲メカニズムは
   前セッション由来で今回未再実行）。claim ごとに below 明記。
 -->
 
@@ -20,16 +25,18 @@ confidence: 高（GA・価格・ティア語彙・effort 段階は端末実測�
 | slug | 位置づけ | 価格（per Mtok, in/out） |
 |---|---|---|
 | `gpt-5.6-sol` | 旗艦（frontier agentic coding model） | $5 / $30 |
-| `gpt-5.6-terra` | 中位（balanced・everyday work 向け） | $2.5 / $15 |
-| `gpt-5.6-luna` | 軽量（fast and affordable） | $1 / $6 |
+| `gpt-5.6-terra` | 中位（balanced・everyday work 向け） | **$2 / $12** |
+| `gpt-5.6-luna` | 軽量（fast and affordable） | **$0.20 / $1.20** |
 
-`gpt-5.6` は `gpt-5.6-sol` への alias とされる（**確度: 中** — 一次資料〔openai/codex リポの models.json・latest-model.md〕に記載があるとの前セッション報告だが、本セッションで端末 `~/.codex/models_cache.json` を実測した限り `gpt-5.6` という単体 slug は選択リストに現れず、実測ではなく前セッションの一次資料引用に依拠。**alias の実挙動〔`gpt-5.6` 指定時に実際に Sol へ解決されるか〕は未実測**）。
+2026-07-30 に OpenAI は Terra を20%、Lunaを80%値下げした。Sol は $5/$30 のまま。Codex と ChatGPT Work の subscription 価格・quota budget 自体は不変だが、Terra/Luna は消費 credit が減る。model catalog / pricing page の一部にはローンチ時の旧価格（Terra $2.5/$15、Luna $1/$6）が残っているため、日付が新しい公式価格改定記事を正とする。
+
+`gpt-5.6` は `gpt-5.6-sol` へ route される（2026-08-11 の OpenAI 公式 model page と model guidance で確認）。
 
 GA: 2026-07-09。コンテキストは API ≈1.05M（Sol/Terra）と Codex CLI 運用窓 372K の2系統（前セッション由来・本セッション未再検証）。
 
 ## Effort（reasoning level）
 
-**本セッションで `~/.codex/models_cache.json`（端末実測・2026-07-10 取得）から裏取り**:
+**2026-08-11 に Codex CLI 0.147.0 の `codex debug models` で再確認**:
 
 | slug | 既定 effort | 対応 effort 段階 |
 |---|---|---|
@@ -39,11 +46,12 @@ GA: 2026-07-09。コンテキストは API ≈1.05M（Sol/Terra）と Codex CLI 
 
 **発見（前セッション未言及・本セッションで確定）**: `gpt-5.6-luna` は `ultra` に対応しない。6段階あるのは Sol と Terra のみ。Luna の既定は low でなく **medium**。
 
-公式指針（一次: upgrading-to-gpt-5p6-sol.md）:
+公式指針（一次: OpenAI Model guidance）:
 
-- 「低く始めて上げろ」（start low, escalate only when needed）
-- 「xhigh/max は eval で有意差が出る難問のみ」
-- 「上げる前に成功条件/ルーティング/検証ループを疑え」（effort を上げても直らない場合、そこが根本原因）
+- `medium` を均衡点、`low` を latency 重視の起点にする。
+- `high` / `xhigh` は追加 reasoning が測定可能な品質差を出す時に使う。
+- `max` は最難関の品質優先 workload 向けで、`xhigh` と代表タスク上の品質・latency・cost を比較する。
+- `gpt-5.6-luna` は cost-sensitive / high-volume workload 向け。**Luna×max を仕様固定の局所 coding に置くのは dotagents の配置裁定であり、OpenAI の個別推奨ではない**。
 
 ## ultra の正体
 
@@ -79,11 +87,12 @@ GA: 2026-07-09。コンテキストは API ≈1.05M（Sol/Terra）と Codex CLI 
 
 codex-sidecar は端末 config の `model`/`model_provider`/`model_reasoning_effort` 行だけを隔離 home に継承する（一次: `codex-sidecar-core/dist/app-server-client.js` の `minimalCodexConfig`。本セッションで `codex-sidecar-core/dist/config.js` を実読し `.codex-sidecar.yml` の必須キー `project`（非空文字列）を新規発見——前セッションの仕様認識には無かった）。`.codex-sidecar.yml` が無いと `CONFIG_NOT_FOUND`。`defaults.model_reasoning_effort` は `low`/`medium`/`high`/`xhigh` のみ受理（`ultra`/`max` はスキーマ外＝本セッションで `codex-sidecar-core/dist/config.js` の `MODEL_REASONING_EFFORTS` 定数から確認）。
 
-## ベンチマーク
+## 選定上の注意
 
-- Terminal-Bench 2.1 SOTA 主張（公式間接・本セッション未再検証）。
-- 「Sol 88.8%/Sol Ultra 91.9%」は二次資料のみ。SWE-bench Verified の公式値は未公表（2026-07-10 時点・前セッション調査）。
-- openai.com / help.openai.com は本セッションでも 403 想定でアクセス未実施（前セッションの制約を踏襲）。一次資料はスニペット・端末実測ファイルに依拠。
+- 2026-08-11 の API 定価は Sol $5/$30、Terra $2/$12、Luna $0.20/$1.20。7月30日の改定前ページを current price として使わない。
+- 272K tokens を超える入力は request 全体が input 2倍・output 1.5倍になる。長大 context ではモデル単価だけで見積もらない。
+- provider 公表 benchmark は harness・token budget・比較価格が揃わないため、dotagents の配置表では横断順位を採用しない。代表的な repo task の成功率、総 token、所要時間、手戻りで判断する。
+- Artificial Analysis v4.1.1 では Luna×max=52、Terra×max=57、Sol×max=61。合成指数は広い思考力そのものではないが、Luna×max を局所実装候補として試す根拠にはなる。詳細は [[benchmark-snapshot-20260811.md]]。
 
 ## 関連
 

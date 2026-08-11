@@ -1,10 +1,11 @@
 <!--
-source: docs.x.ai・x.ai ローカル models catalog（前セッション一次調査）／
+source: https://docs.x.ai/developers/models/grok-4.5（一次・2026-08-11 再取得）／
+        docs.x.ai・x.ai ローカル models catalog（前セッション一次調査）／
         AA Intelligence Index・DeepSWE・AA-Omniscience・Snorkel GDPval+（二次・ベンチマーク集計、前セッション調査）／
         ~/.grok/README.md（一次・CLI 挙動）／
         本セッションでの再検証: ~/.grok/models_cache.json（端末実測・fetched_at 2026-07-10T00:27:19Z）
 audit_by: ベル配下 implementer（作業委譲・2026-07-11）
-fetched: 2026-07-08（前セッション一次取得）／2026-07-11（本セッション実装再検証）
+fetched: 2026-07-08（前セッション一次取得）／2026-07-11（実装再検証）／2026-08-11（公式Web再取得）
 confidence: 高（価格・context window・effort 対応は端末実測で裏取り済み）〜中（ベンチマーク数値は二次資料、
   本セッション未再検証）。claim ごとに below 明記。
 -->
@@ -16,16 +17,10 @@ confidence: 高（価格・context window・effort 対応は端末実測で裏�
 2026-07-08 リリース。**本セッションで `~/.grok/models_cache.json`（端末実測・fetched_at 2026-07-10T00:27:19Z）から裏取り**:
 
 - `context_window`: 500,000（実測一致）
-- 価格: $2/$6 per Mtok（前セッション由来・本セッション未再検証）
+- 価格: $2/$6 per Mtok、cached input $0.30。200K context 超は別料金（2026-08-11 公式再確認）
 - `reasoning_efforts`: `high`（既定・`default: true`）/ `medium` / `low` の3段のみ（実測一致——xhigh/max/ultra 相当は存在しない）
 
-ベンチマーク（二次資料・前セッション調査。本セッション未再検証＝**確度: 中**）:
-
-- AA Intelligence Index 4位（GPT-5.5・Fable 5・Opus 4.8 の下）
-- トークン効率 ~14k/task（Opus 4.8 は 67k）＝約6割安
-- **難関 SWE・形式推論は弱い**: DeepSWE 1.1 で 53%（GPT-5.5 は 67%・Fable 5 は 70%）
-- ハルシネーション増: AA-Omniscience 25%→54%
-- **実務的専門判断（Snorkel GDPval+）は首位**: 平均 29%（GPT-5.5 22%・Opus 4.8 21%）。分野別: 法務40%・教育58%・医療35%・QA37%
+2026-08-11 の独立 snapshot では Artificial Analysis v4.1.1（high）が56、SWE-bench Pro が64.7%（Verified）。いずれも task 型を限定した値で、幅広い思考力・ハルシネーション耐性・設計力の順位へ一般化しない。現行比較と限界は [[benchmark-snapshot-20260811.md]] に分離した。
 
 ## grok-composer-2.5-fast
 
@@ -35,7 +30,7 @@ Composer 2.5（2026-06-01 Grok Build 搭載・Kimi K2.5 基盤・Cursor 由来�
 - `supports_reasoning_effort`: **false**（実測一致——effort 指定は無効。`reasoning_effort` フィールドも `null`）
 - `description`: "Cursor's latest coding model"（実測）
 
-価格: 標準 $0.50/$2.50・fast 版 $3/$15（"same intelligence" と宣伝、前セッション由来・本セッション未再検証）。SWE-Bench Pro 54%（二次資料・未再検証）。
+過去に記録した価格は標準 $0.50/$2.50・fast 版 $3/$15 だが、2026-08-11 に現行契約を再検証していないため比較表へは載せない。SWE-Bench Pro 54% も二次資料・未再検証。
 
 位置づけ = 速度・物量特化・判断力低（オーナー体感と一致、と前セッション記録にあり）。
 
@@ -58,9 +53,9 @@ Composer 2.5（2026-06-01 Grok Build 搭載・Kimi K2.5 基盤・Cursor 由来�
   2. aiterm の `reasoning_effort` enum は grok の非対応段階（`xhigh`/`max`）を許容してしまう（grok 側の実際の対応段階は `low`/`medium`/`high` のみ、本セッション実測で確認）。
   3. → aiterm プロジェクト側への改修依頼リストとして [[../../docs/archive/plan_gpt56-rewiring.md]] に4件登録済み。
 
-## 出典アクセスの制約
+## API と CLI 契約を混ぜない
 
-x.ai/news・openai.com 系ページは本セッションでも 403 想定でアクセス未実施。一次資料は `docs.x.ai`（前セッション参照）と端末ローカルの `models_cache.json`（本セッションで実測・最も確度が高い一次ソース）に依拠。
+`grok-4.5` の $2/$6 は xAI API 定価である。`grok-composer-2.5-fast` は Grok CLI / OAuth 契約のモデルなので、この単価を CLI quota 消費へ換算しない。xAI API の `grok-build-latest` alias が `grok-4.5` を指す事実も、端末 CLI の Composer slug を自動的に置き換える根拠にはならない。
 
 ## 関連
 
