@@ -1,0 +1,9 @@
+{
+  "evidence_id": "fm-0697-update-bootstrap",
+  "repo_id": "self",
+  "path": "bin/agents-update.sh",
+  "git_blob_oid": "95e6f4af579510b9d750a7700e3e4f669d3651df",
+  "content_digest": "abec66f458a1d2f1c398e7304de73567a9cf676179bd73952b4a63fcb1420d64",
+  "media_type": "text/x-shellscript",
+  "anchor_digest": null
+}

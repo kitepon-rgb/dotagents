@@ -1,0 +1,9 @@
+{
+  "evidence_id": "fm-0695-deployment-contract",
+  "repo_id": "self",
+  "path": "lib/factory/deployment-contract.mjs",
+  "git_blob_oid": "b8991d32dc116c8b2bd60c69e816fa3297c489cf",
+  "content_digest": "4b90283b72d6a913b715d8b812551e346b9daaa73b4bc4493eb20457e7f080ce",
+  "media_type": "text/javascript",
+  "anchor_digest": null
+}
