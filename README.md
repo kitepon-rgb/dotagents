@@ -95,8 +95,8 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | Codex skill | `polish-github` | GitHub presentation 整備（正本は Claude 版・Codex 版は薄いポインタ＝一本化済み） |
 | Codex rule | `default.rules` | Codex 常時適用ルール |
 | 共通憲法 | `shared/constitution.md` | Claude／Codexへ生成する人格・応対・安全・調査・計画・git・報告の唯一の共通正本 |
-| Claudeグローバル規範 | `claude/CLAUDE.delta.md` → `claude/CLAUDE.md` | 共通憲法＋Claude delta（2026-07-16現在は空）から合成する配布生成物 |
-| Codexグローバル規範 | `codex/AGENTS.delta.md` → `codex/AGENTS.md` | 共通憲法＋Codex delta（2026-07-16現在は空。配置・配線の正典はdocs/02・docs/05）から合成する配布生成物 |
+| Claudeグローバル規範 | `claude/CLAUDE.delta.md` → `claude/CLAUDE.md` | 共通憲法＋Claude固有deltaから合成する配布生成物 |
+| Codexグローバル規範 | `codex/AGENTS.delta.md` → `codex/AGENTS.md` | 共通憲法＋Codex固有deltaから合成する配布生成物。配置・配線の正典はdocs/02・docs/05 |
 | bin | `render-global-constitution.mjs` | 共通憲法＋host deltaから両runtime向け完全指示を冪等生成し、driftを検査 |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲のrole定義（役割→model×effortの正は docs/02_models.md） |
 | bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
@@ -106,7 +106,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `verify-codex-agent-routing.sh` | spawn 後、role/model/effort/developer instructions を検証し、sandbox実効値を別表示 |
 | bin | `apply-codex-config.sh` | routing 2キー、dotagents callout hook 4イベント、SessionStart advisory 1件、SessionStart Lattice工程表案内1件だけを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
-| 自作コア11製品 | Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager／peertable（いずれもdotagents 外） | 罠知識、セッション継続、未使用ツール監査、工程graphとコード構造理解、ChatGPT接続、PTYと外部モデル枠、隔離Codex実行、macOS native開発面、親watchと監査、中央運用管理、対等マルチエージェント円卓を担う。AIShellはmacOS arm64専用、ObserverはmacOS専用。peertableはnpm配布のskill同梱製品で、0.3.6公開とwire v7 enroll済み。cutoverはmac-kiteだけ完了、main-server自身とFOX 2hostは残作業 |
+| 自作コア11製品 | Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager／peertable（いずれもdotagents 外） | 罠知識、セッション継続、未使用ツール監査、工程graphとコード構造理解、ChatGPT接続、PTYと外部モデル枠、隔離Codex実行、macOS native開発面、親watchと監査、中央運用管理、対等マルチエージェント円卓を担う。AIShellはmacOS arm64専用、ObserverはmacOS専用。peertableはnpm配布のskill同梱製品で、0.3.6公開とwire v7 enroll済み。全4現役hostのcutoverも2026-08-10に完了済み |
 | 第三者管理製品 | MarkItDown | 自作コアではなく、公開CLIだけをblack-box管理する資料変換器。fork・内部patchは行わない |
 | 基盤toolchain | Claude Code CLI／Codex CLI／Grok Build | コア製品とは別区分。Oracleはv1互換・rollback専用 |
 | 中央管理コア | ServerManager（dotagents 外） | 自作コア11製品に含まれる中央運用管理製品。内部のBugHubをversion・bug・compatibility結果の統括に使い、BugHubを独立製品へ分離しない |

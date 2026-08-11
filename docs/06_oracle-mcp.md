@@ -2,8 +2,8 @@
 
 > **移行先:** [06_gpt-connector.md](06_gpt-connector.md) がChatGPT接続の生きた正本である。Oracleはv1 client・履歴・手動rollbackの互換期限中だけ残す。以下は新規導入・通常MCP登録の手順ではなく、承認済みrollback時だけ参照する記録である。
 
-<!-- 前提: oracle 0.15.2・GPT-5.6 世代・Node 24/26 の undici バグ現存（2026-07 時点）。
-     役割配置の正は docs/02_models.md。経緯と調査・切り分けの全記録は docs/archive/2026-07_oracle-chat-quota.md（2026-07-11 完了・退避済み） -->
+<!-- 固定実証前提: oracle 0.15.2・GPT-5.6 世代・Node 24/26 の undici バグ現存（2026-07 時点）。
+     rollback記録なので日付を現行へ読み替えない。現行の役割配置は docs/02_models.md。経緯と調査・切り分けの全記録は docs/archive/2026-07_oracle-chat-quota.md（2026-07-11 完了・退避済み） -->
 
 [oracle](https://github.com/steipete/oracle)（`@steipete/oracle`・npm -g）で ChatGPT サブスクの **Chat枠**を MCP 経由の第二意見に使う。Work枠（Codex 消費分）と別勘定・追加課金なし。**API engine / `OPENAI_API_KEY` は禁止**（憲法）。**oracle 本体は改造しない**——構成は config・起動ラッパー・呼び出し引数で行う。
 

@@ -10,7 +10,7 @@
 - token、実config、outboxはgitへ入れない。tokenを引数、query parameter、通常JSON出力へ出さない。
 - host identityはtop-level `host.id / host.profile`で固定し、tokenのserver-side bindingと一致させる。
 - credential fileは所有者限定。POSIXはdirectory `0700`・file `0600`、Windowsは継承ACLを除去して現在userだけにする。
-- **本番BugHubの入口はhostごとに違う（2026-08-10〜のwire v7段階cutover中）**。mac-kiteはv7の`/api/factory/v7/reports`、main-server自身とFOX WSL2／Windows nativeはv6の`/api/factory/v6/reports`である。どちらも`FACTORY_V<N>_INGEST_ENABLED=true`を明示するまで404にする。host別rollback用のv6／v5入口と履歴は独立して維持し、wire majorを暗黙変換しない。自分が触るhostがどちらかを`~/.config/dotagents/factory-reporter.json`の`reporting.endpoint`で確認してから作業する（§4bを参照）。
+- **本番BugHubの入口は全4現役hostでwire v7（2026-08-10 cutover完了）**。`mac-kite`・`main-server`・`fox-wsl`・`windows-workstation`はいずれも`/api/factory/v7/reports`を使う。`FACTORY_V<N>_INGEST_ENABLED=true`を明示するまで各majorの入口は404にする。host別rollback用のv6／v5入口と履歴は独立して維持し、wire majorを暗黙変換しない。作業前に`~/.config/dotagents/factory-reporter.json`の`reporting.endpoint`を確認する（§4bを参照）。
 - Pi5からのServerManager outageは、main-server上の`factory-external-event`だけで記録する。任意本文・path・URLは受け取らず、固定`check`/`reason`とcanonical UTCだけを保存する。
 
 ## 1. 送信OFFでconfigを配置
@@ -105,7 +105,7 @@ peertable編入に伴うwire v7（固定15製品）は、§4aと同じserver-fir
 
 **現在のhost別状態（2026-08-10 完了）**: 全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）がv7へcutover済み。各hostにv6退避config（`*.bak-v6-<timestamp>`）とv6 state/outboxが残っており、rollbackは§4a同様に即応できる。
 
-残hostをcutoverする時の順序（mac-kiteで実測済みの形）:
+host別cutoverの順序（全4現役hostで実測済みの形）:
 
 1. **対象端末で`./install.sh`を再実行する**。v7 binのsymlinkが`~/.local/bin`へ無いと実行できない（2026-08-10実被弾）。同日修理済みの`scheduler install --apply`はrunner binが解決できない時`runner_unresolved`のtyped errorで登録前に拒否するので、このerrorが出たら`./install.sh`を再実行してから`--apply`し直す。
 2. host configを`factory-reporter.json.bak-v6-<timestamp>`へ退避する。
