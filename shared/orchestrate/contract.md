@@ -1,7 +1,7 @@
 # 統括の共通契約
 
 この契約は製品中立の統括原則である。各製品の入口は、実行手段だけを appendix として追加し、この本文を複製しない。
-品質はモデル名や担当数ではなく、並列多視点、敵対的反証、安全網、委譲契約、親裁定という構造から作る。
+品質はモデル名や担当数ではなく、並列多視点、敵対的反証、原因特定、focused検証、委譲契約、親裁定という構造から作る。
 
 ## 着手と責務
 
@@ -31,7 +31,7 @@ Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[�
 1. 独立した反証で実在性と価値を確認するのは、契約クリティカル（F相当：認可・トランザクション・公開契約・依存方向・本番操作・履歴修復）な変更・監査指摘・設計判断だけ。それ以外は統括自身の確認で足りる。
 2. 委譲は[委譲契約](delegation-contract.md)のPacket 8点に従い、結果は統括が diff と検証で採用判断する（項目を本書へ再掲しない）。
 3. 挙動不変レーンと挙動修正レーンを分ける。挙動修正は一件ごとに差分を明文化し、必要な承認を得る。
-4. 作業を独立して revert できる単位に分割する。実装中はfocused testを回し、単位完了時に関連gateを1回通す（full regressionはPhase gateへ集約）。並行作業は書き込み範囲を交差させない。
+4. 作業を独立して revert できる単位に分割する。実装中はfocused testを回し、単位完了時に関連gateを1回通す。full regressionは全単位の関連gate完了後に行うPhase最終確認へ集約する。並行作業は書き込み範囲を交差させない。
 
 ## 知能の配置原則（provider対称）
 
@@ -52,12 +52,12 @@ Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[�
 
 - 並列実装は非交差の書込範囲でwaveを分け、同一ファイルを触る作業は直列化する。巨大な任務を一人へ渡さず、1責務を1受入単位に分解する。同一repoへ書込むworkerが2つ以上になる時の直列化規則は、レーンと実行経路を問わず[合成契約](composition.md)が正本である。
 - 統括はWorkerの完了報告を鵜呑みにせず、対象diff、受入条件、関連gate、未検証範囲を自ら確認してaccept/rejectする。受入済みの発見と検証結果は正本へ還流する。
-- 安全網より先に本体を変更しない。反証なしの監査指摘を実装へ流さない。
+- 挙動修正は、最小再現で原因を特定し、その原因を固定するfocused testを先行させる。原因不明の修正、症状を隠す安全装置・チェック機構、反証なしの監査指摘を実装へ流さない。
 - **active fixed Worker中の親commit**: 同じworktreeへの親commitは、予約HEADからのfast-forwardで、Taskの`read_scope`／`write_scope`と非交差なpathだけをpathspecでcommitし、Controlがcommit pathとindexを検証できる場合に限る。関連scope、履歴改変、staged成果、検証不能な変更はWorker完了までcommitしない。
 
 ## フェーズ
 
-`ベースライン → 発見/監査 → 設計と裁定 → 安全網 → 実装 → 承認済みの挙動修正 → 統合と検証 → 知識還流`
+`ベースライン → 発見/監査 → 設計と裁定 → 最小再現と原因特定 → 実装 → 承認済みの挙動修正 → focused/related gate → 統合 → full regression（最終確認） → 知識還流`
 
 設計と裁定の成果である計画には、非目標（やらないこと）、既知の罠、検証方法を必ず含める。
 
@@ -72,7 +72,7 @@ Delegation PacketとWorker Reportの必須項目・統括側の受入手順は[�
 ## Phase maintenance
 
 - 即時修理するのは、データ損失、security・認可・秘密漏洩、公開契約・履歴破壊、回復不能、現在のcritical pathまたはPhase受入を塞ぐP0/P1だけ。非クリティカルなコア欠陥は最小再現・影響・所有repoを既存planのmaintenance queueへ一度記録して本筋を続け、欠陥ごとの新規plan、Control、ADR、独立監査、receiptを作らない。
-- Phaseの通常TODO後、full regressionとPhase監査の前にmaintenance waveを一回だけ行い、重複統合、再現確認、repo別修理、focused/related gate、repo別独立commitの順で閉じる。同じrepoの関連小修正は一受入単位へまとめてよい。H、credential/login、第三者修正、本番操作待ちは理由と必要条件を明記してcarry overし、未修理を成功扱いしない。
+- Phaseの通常TODO後、最終確認のfull regressionとPhase監査の前にmaintenance waveを一回だけ行い、重複統合、再現確認、repo別修理、focused/related gate、repo別独立commitの順で閉じる。同じrepoの関連小修正は一受入単位へまとめてよい。H、credential/login、第三者修正、本番操作待ちは理由と必要条件を明記してcarry overし、未修理を成功扱いしない。
 
 ## 還流
 

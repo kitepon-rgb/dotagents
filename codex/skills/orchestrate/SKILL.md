@@ -5,7 +5,7 @@ description: 統括レーン（①計画に中断が組込済み②受入が多�
 
 # Orchestrate
 
-まず[共通契約](../../../shared/orchestrate/contract.md)と[委譲契約](../../../shared/orchestrate/delegation-contract.md)を全文読む。使う時・使わない時、F/A/H、Control lifecycle、Packet/Report、反証、安全網、レーン分離、統括ゲートは共有文書が正本である。
+まず[共通契約](../../../shared/orchestrate/contract.md)と[委譲契約](../../../shared/orchestrate/delegation-contract.md)を全文読む。使う時・使わない時、F/A/H、Control lifecycle、Packet/Report、反証、原因特定、focused検証、通し試験の最終確認、レーン分離、統括ゲートは共有文書が正本である。
 
 ## Codex appendix
 

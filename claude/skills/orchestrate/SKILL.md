@@ -7,7 +7,7 @@ description: 多エージェント/多モデル統括の標準型。統括レー
 
 # Orchestrate — 統括の標準型
 
-まず[共通契約](../../../shared/orchestrate/contract.md)と[委譲契約](../../../shared/orchestrate/delegation-contract.md)を全文読む。使う時・使わない時、同期、安全網、反証、Packet/Report、レーン分離、独立完結、知識還流、F/A/H、Control lifecycle、フェーズ、統括ゲートは共有文書が正本である。この本文は Claude 固有の appendix として読む。
+まず[共通契約](../../../shared/orchestrate/contract.md)と[委譲契約](../../../shared/orchestrate/delegation-contract.md)を全文読む。使う時・使わない時、同期、原因特定、focused検証、通し試験の最終確認、反証、Packet/Report、レーン分離、独立完結、知識還流、F/A/H、Control lifecycle、フェーズ、統括ゲートは共有文書が正本である。この本文は Claude 固有の appendix として読む。
 
 ## Claude appendix（既存の運用詳細）
 
