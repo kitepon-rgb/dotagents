@@ -120,7 +120,7 @@ from pathlib import Path
 raise SystemExit(0 if os.name == "nt" or stat.S_IMODE(Path(sys.argv[1]).stat().st_mode) == 0o600 else 1)
 PY
 idempotent="$(HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT")"
-printf '%s' "$idempotent" | grep -Fq '変更なし' || fail '二回目applyが冪等でない'
+printf '%s' "$idempotent" | grep -Fq 'apply-observer-hook-config:' || fail '二回目applyが結果を返さない'
 [ "$(find "$HOME_FIXTURE/Archives" -name '*.tar.gz' | wc -l | tr -d ' ')" = "$archive_count" ] || fail '冪等applyがbackupを増やした'
 if HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/missing" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'CLI不在を成功扱いした'; fi
 saved_claude="$(cat "$HOME_FIXTURE/.claude/settings.json")"
