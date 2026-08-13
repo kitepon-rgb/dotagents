@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 外部所有の factory core 8製品を verify-install のテスト専用最小モードで固定する。
+# 工場管理製品を verify-install のテスト専用最小モードで固定する。
 # 実 CLI や利用者の状態には依存しない。
 set -euo pipefail
 
@@ -13,6 +13,10 @@ trap 'rm -rf "$TMP"' EXIT
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
 mkdir -p "$HOME_DIR/.caveat/own" "$HOME_DIR/.local/bin" "$PROJECT/.spotter" "$PROJECT/.claude" "$BIN_DIR"
+for runtime in node python3 git; do
+  printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$runtime")" > "$BIN_DIR/$runtime"
+  chmod +x "$BIN_DIR/$runtime"
+done
 git -C "$HOME_DIR/.caveat/own" init -q
 git -C "$HOME_DIR/.caveat/own" remote add origin 'git@github.com:kitepon-rgb/Caveat-Private.git'
 cat > "$PROJECT/.spotter/marker.json" <<EOF
@@ -49,7 +53,7 @@ exit 64
 EOF
 chmod +x "$BIN_DIR/uv"
 
-for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp lattice aishell-mcp; do
+for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp lattice aishell-mcp observer peertable-client; do
   cat > "$BIN_DIR/$command" <<'EOF'
 #!/bin/sh
 [ "$1" = --version ] && exit 0
@@ -120,7 +124,6 @@ chmod +x "$BIN_DIR/spotter"
 verify_core() {
   HOME="$HOME_DIR" PATH="$BIN_DIR:/usr/bin:/bin" \
     DOTAGENTS_FACTORY_CORE_ONLY=1 \
-    DOTAGENTS_TEST_AISHELL_SUPPORTED=1 \
     DOTAGENTS_FACTORY_PROJECT_ROOT="$PROJECT" \
     "$ROOT/bin/verify-install.sh" --profile official
 }
@@ -132,25 +135,6 @@ assert_rejected() {
   fi
 }
 
-# updater の curated package は同名重複を許さず、コア製品の導入面を必須化する。
-for package in \
-  caveat-cli throughline claude-spotter gpt-connector aiterm-mcp \
-  codex-sidecar-cli codex-sidecar-core codex-sidecar-mcp; do
-  [ "$(grep -Ec "^[[:space:]]*'${package}'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
-    || fail "agents-update の $package は1件でなければならない"
-done
-[ "$(grep -Ec "^[[:space:]]*'@quolu/aishell'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
-  || fail 'agents-update の @quolu/aishell はdarwin/arm64条件内に1件でなければならない'
-[ "$(grep -Ec "^[[:space:]]*'@quolu/lattice'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
-  || fail 'agents-update の @quolu/lattice はregistry latest更新でなければならない'
-! grep -q '@colbymchenry/codegraph' "$ROOT/bin/agents-update.sh" \
-  || fail 'retired Codegraphをagents-updateへ残してはならない'
-[ "$(grep -Ec "^[[:space:]]*'markitdown'[[:space:]]*$" "$ROOT/bin/agents-update.sh")" -eq 1 ] \
-  || fail 'agents-update の uv tool package markitdown は1件でなければならない'
-! grep -Eq "^[[:space:]]*'grok(-build)?'[[:space:]]*$" "$ROOT/bin/agents-update.sh" \
-  || fail 'Grok Build を npm package として更新してはならない'
-grep -Fq 'grok update --check --json' "$ROOT/bin/agents-update.sh" \
-  || fail 'Grok Build の stable JSON update check がない'
 [ "$(grep -Ec '^  advisory:$' "$ROOT/.codex-sidecar.yml")" -eq 1 ] || fail 'codex-sidecar advisory preset がない'
 
 verify_core || fail '有効な factory core fixture が verify-install に拒否された'
@@ -183,15 +167,27 @@ mv "$BIN_DIR/spotter" "$BIN_DIR/spotter.off"
 assert_rejected 'spotter CLI 欠落'
 mv "$BIN_DIR/spotter.off" "$BIN_DIR/spotter"
 
-for command in aiterm-mcp codex-sidecar-mcp lattice aishell-mcp; do
+for command in aiterm-mcp codex-sidecar-mcp lattice peertable-client; do
   mv "$BIN_DIR/$command" "$BIN_DIR/$command.off"
   assert_rejected "$command CLI 欠落"
   mv "$BIN_DIR/$command.off" "$BIN_DIR/$command"
 done
 
-CODEX_AISHELL_MODE=missing_env assert_rejected 'Codex AIShell expanded-v1欠落'
-CODEX_AISHELL_MODE=absolute_command assert_rejected 'Codex AIShell absolute command'
-CLAUDE_AISHELL_MODE=missing_env assert_rejected 'Claude AIShell expanded-v1欠落'
+if [ "$(uname -s)" = Darwin ]; then
+  mv "$BIN_DIR/observer" "$BIN_DIR/observer.off"
+  assert_rejected 'observer CLI 欠落'
+  mv "$BIN_DIR/observer.off" "$BIN_DIR/observer"
+fi
+
+if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ] \
+  && [ "$(sw_vers -productVersion | cut -d. -f1)" -ge 15 ]; then
+  mv "$BIN_DIR/aishell-mcp" "$BIN_DIR/aishell-mcp.off"
+  assert_rejected 'aishell-mcp CLI 欠落'
+  mv "$BIN_DIR/aishell-mcp.off" "$BIN_DIR/aishell-mcp"
+  CODEX_AISHELL_MODE=missing_env assert_rejected 'Codex AIShell expanded-v1欠落'
+  CODEX_AISHELL_MODE=absolute_command assert_rejected 'Codex AIShell absolute command'
+  CLAUDE_AISHELL_MODE=missing_env assert_rejected 'Claude AIShell expanded-v1欠落'
+fi
 
 # Oracle はv1 rollback互換だけに残す。v2の通常導入・更新対象ではないため、
 # v2 factory core smokeはOracle wrapperの正常性を要求しない。

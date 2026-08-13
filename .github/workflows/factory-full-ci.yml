@@ -31,12 +31,8 @@ jobs:
       - name: full CI
         if: matrix.environment != 'windows-native'
         shell: bash
-        env:
-          FACTORY_FULL_COMMAND: ${{ inputs.full-command }}
-        run: bash -lc "$FACTORY_FULL_COMMAND"
+        run: ${{ inputs.full-command }}
       - name: full CI
         if: matrix.environment == 'windows-native'
         shell: C:\Progra~1\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}
-        env:
-          FACTORY_FULL_COMMAND: ${{ inputs.full-command }}
-        run: bash -lc "$FACTORY_FULL_COMMAND"
+        run: ${{ inputs.full-command }}
