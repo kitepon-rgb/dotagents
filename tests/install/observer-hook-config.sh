@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-case "$(uname -s)" in MINGW*|MSYS*) export MSYS=winsymlinks:nativestrict ;; esac
+POSIX_METADATA=1
+case "$(uname -s)" in MINGW*|MSYS*) export MSYS=winsymlinks:nativestrict; POSIX_METADATA=0 ;; esac
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # 呼出元Codexの一時CODEX_HOMEを継承せず、各fixtureのHOME配下だけを検証する。
@@ -180,14 +181,18 @@ cat >"$RESTORE_HOME/.claude/settings.json" <<'EOF'
 EOF
 chmod 640 "$RESTORE_HOME/.claude/settings.json"
 restore_before="$(cat "$RESTORE_HOME/.claude/settings.json")"
-restore_uid="$(file_stat "$RESTORE_HOME/.claude/settings.json" uid)"
-restore_gid="$(file_stat "$RESTORE_HOME/.claude/settings.json" gid)"
+if [ "$POSIX_METADATA" = 1 ]; then
+  restore_uid="$(file_stat "$RESTORE_HOME/.claude/settings.json" uid)"
+  restore_gid="$(file_stat "$RESTORE_HOME/.claude/settings.json" gid)"
+fi
 HOME="$RESTORE_HOME" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" \
   "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$RESTORE_HOME/observer-state" >/dev/null
 restore_archive="$(find "$RESTORE_HOME/Archives" -name '*.tar.gz' -print -quit)"
 [ -n "$restore_archive" ] || fail 'restore fixture backupがない'
-[ "$(file_stat "$RESTORE_HOME/.claude/settings.json" mode)" = 640 ] || fail 'applyが既存modeを保持しない'
-[ "$(file_stat "$RESTORE_HOME/.codex/hooks.json" mode)" = 600 ] || fail 'applyが新規configを0600にしない'
+if [ "$POSIX_METADATA" = 1 ]; then
+  [ "$(file_stat "$RESTORE_HOME/.claude/settings.json" mode)" = 640 ] || fail 'applyが既存modeを保持しない'
+  [ "$(file_stat "$RESTORE_HOME/.codex/hooks.json" mode)" = 600 ] || fail 'applyが新規configを0600にしない'
+fi
 
 applied_claude="$(cat "$RESTORE_HOME/.claude/settings.json")"
 applied_codex="$(cat "$RESTORE_HOME/.codex/hooks.json")"
@@ -202,9 +207,11 @@ fi
 HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$restore_archive" >/dev/null
 [ "$(cat "$RESTORE_HOME/.claude/settings.json")" = "$restore_before" ] || fail 'restoreがClaude原文を戻さない'
 [ ! -e "$RESTORE_HOME/.codex/hooks.json" ] || fail 'restoreが元absentのCodex configを削除しない'
-[ "$(file_stat "$RESTORE_HOME/.claude/settings.json" mode)" = 640 ] || fail 'restoreが元modeを戻さない'
-[ "$(file_stat "$RESTORE_HOME/.claude/settings.json" uid)" = "$restore_uid" ] || fail 'restoreが元uidを戻さない'
-[ "$(file_stat "$RESTORE_HOME/.claude/settings.json" gid)" = "$restore_gid" ] || fail 'restoreが元gidを戻さない'
+if [ "$POSIX_METADATA" = 1 ]; then
+  [ "$(file_stat "$RESTORE_HOME/.claude/settings.json" mode)" = 640 ] || fail 'restoreが元modeを戻さない'
+  [ "$(file_stat "$RESTORE_HOME/.claude/settings.json" uid)" = "$restore_uid" ] || fail 'restoreが元uidを戻さない'
+  [ "$(file_stat "$RESTORE_HOME/.claude/settings.json" gid)" = "$restore_gid" ] || fail 'restoreが元gidを戻さない'
+fi
 
 ln -s "$restore_archive" "$RESTORE_HOME/restore-link.tar.gz"
 if HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$RESTORE_HOME/restore-link.tar.gz" >/dev/null 2>&1
