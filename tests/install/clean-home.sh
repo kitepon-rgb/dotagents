@@ -76,16 +76,24 @@ if [ "$1 $2 $3" = 'codex-hook diagnostics --project' ]; then
 fi
 EOF
 chmod +x "$FACTORY_TEST_BIN/spotter"
+FACTORY_PROJECT="$VERIFY_FIXTURE/factory-project"
+mkdir -p "$FACTORY_PROJECT/.spotter" "$FACTORY_PROJECT/.claude"
+printf '%s\n' '{"markerVersion":"2","auditorContext":{"mode":"throughline","command":"'"$FACTORY_TEST_BIN/spotter"'"}}' >"$FACTORY_PROJECT/.spotter/marker.json"
+printf '%s\n' '{}' >"$FACTORY_PROJECT/.spotter/tool-db.json"
+printf '%s\n' '{}' >"$FACTORY_PROJECT/.spotter/tool-db.codex.json"
+cat >"$FACTORY_PROJECT/.claude/settings.json" <<EOF
+{"hooks":{"SessionStart":[{"hooks":[{"command":"$FACTORY_TEST_BIN/spotter.mjs hook session-start"}]}],"UserPromptSubmit":[{"hooks":[{"command":"$FACTORY_TEST_BIN/spotter.mjs hook user-prompt"}]}],"PreToolUse":[{"hooks":[{"command":"$FACTORY_TEST_BIN/spotter.mjs hook pre-tool-use"}]}],"Stop":[{"hooks":[{"command":"$FACTORY_TEST_BIN/spotter.mjs hook stop"}]}],"SessionEnd":[{"hooks":[{"command":"$FACTORY_TEST_BIN/spotter.mjs hook session-end"}]}]}}
+EOF
 # shellcheck disable=SC2016 # 生成するfixtureの実行時に$1/$2を展開する。
 printf '#!/usr/bin/env bash\n[ "$1 $2" = "tool list" ] && printf "markitdown 0.1.0\\n"\n' >"$FACTORY_TEST_BIN/uv"
 chmod +x "$FACTORY_TEST_BIN/uv"
-verify() { PATH="$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$1" DOTAGENTS_FACTORY_CORE_TEST=1 LATTICE_HOOKS_TEST_MODE="${LATTICE_HOOKS_TEST_MODE:-wired}" "$ROOT/bin/verify-install.sh" --profile "$2"; }
+verify() { PATH="$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$1" DOTAGENTS_FACTORY_CORE_TEST=1 DOTAGENTS_FACTORY_PROJECT_ROOT="$FACTORY_PROJECT" LATTICE_HOOKS_TEST_MODE="${LATTICE_HOOKS_TEST_MODE:-wired}" "$ROOT/bin/verify-install.sh" --profile "$2"; }
 cat >"$UNKNOWN_OS_BIN/uname" <<'EOF'
 #!/usr/bin/env bash
 case "$1" in -s) printf 'UnknownOS\n' ;; -m) printf 'x86_64\n' ;; esac
 EOF
 chmod +x "$UNKNOWN_OS_BIN/uname"
-if PATH="$UNKNOWN_OS_BIN:$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$OFFICIAL_HOME" DOTAGENTS_FACTORY_CORE_TEST=1 LATTICE_HOOKS_TEST_MODE=wired "$ROOT/bin/verify-install.sh" --profile official >"$OFFICIAL_HOME/unknown-os.out" 2>&1; then
+if PATH="$UNKNOWN_OS_BIN:$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$OFFICIAL_HOME" DOTAGENTS_FACTORY_CORE_TEST=1 DOTAGENTS_FACTORY_PROJECT_ROOT="$FACTORY_PROJECT" LATTICE_HOOKS_TEST_MODE=wired "$ROOT/bin/verify-install.sh" --profile official >"$OFFICIAL_HOME/unknown-os.out" 2>&1; then
   fail '未知OSをLinux/WSLとしてverify-installが通した'
 fi
 grep -q '未対応OSをhost profileへ射影できない' "$OFFICIAL_HOME/unknown-os.out" || fail '未知OSのfail-closed理由を出さない'
@@ -100,7 +108,7 @@ printf '15.1.0\n'
 EOF
 chmod +x "$SUPPORTED_MAC_HOST_BIN/uname" "$SUPPORTED_MAC_HOST_BIN/sw_vers"
 for missing_cli in observer peertable-client; do
-  if PATH="$SUPPORTED_MAC_HOST_BIN:$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$OFFICIAL_HOME" DOTAGENTS_FACTORY_CORE_TEST=1 DOTAGENTS_FACTORY_MISSING_CLI="$missing_cli" LATTICE_HOOKS_TEST_MODE=wired "$ROOT/bin/verify-install.sh" --profile official >"$OFFICIAL_HOME/$missing_cli.out" 2>&1; then
+  if PATH="$SUPPORTED_MAC_HOST_BIN:$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$OFFICIAL_HOME" DOTAGENTS_FACTORY_CORE_TEST=1 DOTAGENTS_FACTORY_PROJECT_ROOT="$FACTORY_PROJECT" DOTAGENTS_FACTORY_MISSING_CLI="$missing_cli" LATTICE_HOOKS_TEST_MODE=wired "$ROOT/bin/verify-install.sh" --profile official >"$OFFICIAL_HOME/$missing_cli.out" 2>&1; then
     fail "$missing_cli 欠落をverify-installが通した"
   fi
   grep -q "'$missing_cli' 不在" "$OFFICIAL_HOME/$missing_cli.out" || fail "$missing_cli 欠落理由を出さない"
@@ -108,6 +116,8 @@ done
 assert_stop_count() {
   "$PYTHON_BIN" - "$1" <<'PY'
 import json
+import os
+import shlex
 import sys
 data = json.load(open(sys.argv[1], encoding="utf-8"))
 commands = [
@@ -116,7 +126,13 @@ commands = [
     for hook in entry.get("hooks", [])
     if isinstance(hook, dict)
 ]
-raise SystemExit(0 if sum(command.endswith("codex-callout-hook stop") for command in commands if isinstance(command, str)) == 1 else 1)
+def is_callout_stop(command):
+    if not isinstance(command, str):
+        return False
+    parts = shlex.split(command, posix=os.name != "nt")
+    parts = [part.strip('"\'') for part in parts if part != "&"]
+    return len(parts) >= 2 and parts[-2].endswith("codex-callout-hook") and parts[-1] == "stop"
+raise SystemExit(0 if sum(is_callout_stop(command) for command in commands) == 1 else 1)
 PY
 }
 
@@ -371,50 +387,43 @@ if grep -Eq '^[[:space:]]*codex_hooks[[:space:]]*=' "$OFFICIAL_HOME/.codex/confi
 fi
 grep -Fq '/custom/keep stop' "$OFFICIAL_HOME/.codex/hooks.json" || fail '既存 hook を保持しない'
 assert_stop_count "$OFFICIAL_HOME/.codex/hooks.json" || fail '~ 表記の callout hook を重複追加した'
-"$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'SessionStart advisory hook を正規設定しない'
+"$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'Codex hook 群をOSの正規設定へ修正しない'
 import json
+import os
 import shlex
+import shutil
+import subprocess
 import sys
 from pathlib import Path
+
+def native_path(value):
+    if os.name == "nt" and value.startswith("/"):
+        value = subprocess.run(["cygpath", "-w", value], check=True, capture_output=True, text=True).stdout.strip()
+    return Path(value).resolve()
+
+def command_parts(command):
+    parts = shlex.split(command, posix=os.name != "nt")
+    return [part.strip('"\'') for part in parts if part != "&"]
+
 data = json.load(open(sys.argv[1], encoding="utf-8"))
-path = str(Path(sys.argv[2]).resolve() / ".local/bin/orchestrate-advisory-hook")
-command = shlex.join(["/bin/sh", path])
-expected = {"type":"command", "command":command, "timeout":5, "async":False, "statusMessage":None}
-hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command") == command]
-raise SystemExit(0 if hooks == [expected] else 1)
-PY
-"$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'SessionStart Lattice hook を正規設定しない'
-import json
-import shlex
-import sys
-from pathlib import Path
-data = json.load(open(sys.argv[1], encoding="utf-8"))
-path = str(Path(sys.argv[2]).resolve() / ".local/bin/codex-lattice-gantt-hook")
-command = shlex.join(["/usr/bin/env", "python3", path, "session-start"])
-expected = {"type":"command", "command":command, "timeout":6, "async":False, "statusMessage":None}
-hooks = [h for e in data["hooks"]["SessionStart"] for h in e.get("hooks", []) if isinstance(h, dict) and "codex-lattice-gantt-hook" in h.get("command", "")]
-raise SystemExit(0 if hooks == [expected] else 1)
-PY
-"$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" <<'PY' || fail 'matcher group から callout hook を分離しない'
-import json
-import sys
-data = json.load(open(sys.argv[1], encoding="utf-8"))
-entries = data["hooks"]["Stop"]
-matcher_entries = [e for e in entries if e.get("matcher") == "never-match"]
-standalone = [e for e in entries if set(e) == {"hooks"} and len(e["hooks"]) == 1 and e["hooks"][0].get("command", "").endswith("codex-callout-hook stop")]
-raise SystemExit(0 if matcher_entries and not matcher_entries[0]["hooks"] and len(standalone) == 1 else 1)
-PY
-"$PYTHON_BIN" - "$OFFICIAL_HOME/.codex/hooks.json" "$OFFICIAL_HOME" <<'PY' || fail 'callout hook を正規設定へ修正しない'
-import json
-import shlex
-import sys
-from pathlib import Path
-data = json.load(open(sys.argv[1], encoding="utf-8"))
-hooks = [h for e in data["hooks"]["Stop"] for h in e.get("hooks", []) if isinstance(h, dict) and h.get("command", "").endswith("codex-callout-hook stop")]
-hook_path = Path(sys.argv[2]).resolve() / ".local/bin/codex-callout-hook"
-command = shlex.join(["/usr/bin/env", "python3", str(hook_path), "stop"])
-expected = {"type":"command", "command":command, "timeout":10, "async":False, "statusMessage":None}
-raise SystemExit(0 if hooks == [expected] else 1)
+home = native_path(sys.argv[2])
+python_prefix = [str(Path(sys.executable).resolve())] if os.name == "nt" else ["/usr/bin/env", "python3"]
+shell_prefix = [str(Path(shutil.which("sh") or shutil.which("bash")).resolve())] if os.name == "nt" else ["/bin/sh"]
+
+def assert_hook(event, script, prefix, arguments, timeout):
+    hooks = [h for entry in data["hooks"][event] for h in entry.get("hooks", []) if isinstance(h, dict) and script in h.get("command", "")]
+    assert len(hooks) == 1
+    hook = hooks[0]
+    assert {key: value for key, value in hook.items() if key != "command"} == {
+        "type": "command", "timeout": timeout, "async": False, "statusMessage": None,
+    }
+    assert command_parts(hook["command"]) == [*prefix, str(home / ".local/bin" / script), *arguments]
+
+assert_hook("SessionStart", "orchestrate-advisory-hook", shell_prefix, [], 5)
+assert_hook("SessionStart", "codex-lattice-gantt-hook", python_prefix, ["session-start"], 6)
+assert_hook("Stop", "codex-callout-hook", python_prefix, ["stop"], 10)
+matcher_entries = [entry for entry in data["hooks"]["Stop"] if entry.get("matcher") == "never-match"]
+assert matcher_entries and matcher_entries[0]["hooks"] == []
 PY
 archive_count="$(find "$OFFICIAL_HOME/Archives" -name '*.tar.gz' | wc -l | tr -d ' ')"
 [ "$archive_count" = 1 ] || fail 'apply の backup 数が期待と不一致'

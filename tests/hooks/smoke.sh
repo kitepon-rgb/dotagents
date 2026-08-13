@@ -156,7 +156,8 @@ ADVISORY="$STATE/advisory-bin/orchestrate-advisory-hook"
 cp "$ROOT/bin/orchestrate-advisory-hook.sh" "$ADVISORY"
 cp "$ROOT/lib/orchestrate/advisory-hook.py" "$STATE/lib/orchestrate/advisory-hook.py"
 chmod +x "$ADVISORY"
-cat >"$STATE/advisory-bin/orchestrate-run" <<'PY'
+printf '#!%s\n' "$(command -v node)" >"$STATE/advisory-bin/orchestrate-run"
+cat >>"$STATE/advisory-bin/orchestrate-run" <<'PY'
 const fs = require("fs");
 const path = require("path");
 const mode = fs.readFileSync(path.join(__dirname, "mode"), "utf8").trim() || "valid";
@@ -177,7 +178,8 @@ else {
 }
 PY
 chmod +x "$STATE/advisory-bin/orchestrate-run"
-cat >"$STATE/advisory-bin/lattice" <<'JS'
+printf '#!%s\n' "$(command -v node)" >"$STATE/advisory-bin/lattice"
+cat >>"$STATE/advisory-bin/lattice" <<'JS'
 const fs = require("fs");
 const path = require("path");
 // run store の状態は snapshot mode と独立。既定=ok。invalid_run_store は cli_error.v2 を

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Codex routingとdotagents所有hookを安全に適用する。"""
 
+from __future__ import annotations
+
 import argparse
 import copy
 import difflib
@@ -331,6 +333,18 @@ def update_hooks(data: dict, home: Path) -> dict:
 def render_hooks(data: dict) -> str:
     return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
 
+def environment_path(value: str) -> Path:
+    if os.name == "nt" and value.startswith("/"):
+        converted = subprocess.run(
+            ["cygpath", "-w", value],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        ).stdout.strip()
+        return Path(converted).resolve()
+    return Path(value).expanduser().resolve()
+
 
 def diff(path: Path, before: str, after: str) -> str:
     return "".join(
@@ -420,8 +434,8 @@ def apply_transaction(changed: dict[Path, str], originals: dict[Path, str], exis
 
 def main() -> int:
     args = parse_args()
-    home = Path(os.environ.get("HOME", str(Path.home()))).expanduser().resolve()
-    codex_home = Path(os.environ.get("CODEX_HOME", home / ".codex")).expanduser()
+    home = environment_path(os.environ.get("HOME", str(Path.home())))
+    codex_home = environment_path(os.environ.get("CODEX_HOME", str(home / ".codex")))
     config_path = codex_home / "config.toml"
     hooks_path = codex_home / "hooks.json"
     if config_path.is_symlink() or hooks_path.is_symlink():
