@@ -12,7 +12,7 @@ import { writeCommandFixture } from './command-fixture.mjs';
 const ROOT = resolve(import.meta.dirname, '..', '..');
 
 async function assertRevisionCommand() {
-  const result = await runCommand('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT });
+  const result = await runCommand('git', ['-c', `safe.directory=${ROOT}`, 'rev-parse', '--short=7', 'HEAD'], { cwd: ROOT });
   assert.equal(result.ok, true, JSON.stringify({ reason: result.reason, code: result.code, error: result.error?.code, stderr: result.stderr }));
 }
 
