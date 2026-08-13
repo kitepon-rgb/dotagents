@@ -19,6 +19,23 @@ from pathlib import Path
 SCHEMA = "observer.parent_stop_hook_fragment.v1"
 BACKUP_SCHEMA = "dotagents.observer_hook_config_backup.v1"
 BACKUP_MANIFEST = "observer-hook-backup.json"
+WINDOWS = os.name == "nt"
+
+
+def current_uid():
+    return None if WINDOWS else os.geteuid()
+
+
+def current_gid():
+    return None if WINDOWS else os.getegid()
+
+
+def owned_by_current_user(info):
+    return WINDOWS or info.st_uid == current_uid()
+
+
+def private_mode(mode):
+    return WINDOWS or not stat.S_IMODE(mode) & 0o077
 
 
 def parse_args():
@@ -161,9 +178,9 @@ def file_metadata(path):
 
 
 def validate_file_metadata(value, label):
-    allowed_groups = set(os.getgroups()) | {os.getegid()}
-    if value["uid"] != os.geteuid() or value["gid"] not in allowed_groups or value["mode"] < 0 \
-            or value["mode"] > 0o777 or value["mode"] & 0o133:
+    allowed_groups = set() if WINDOWS else set(os.getgroups()) | {os.getegid()}
+    if (not WINDOWS and (value["uid"] != current_uid() or value["gid"] not in allowed_groups)) \
+            or value["mode"] < 0 or value["mode"] > 0o777 or (not WINDOWS and value["mode"] & 0o133):
         raise ValueError(f"{label}: modeまたはownerが安全条件を満たしません")
 
 
@@ -187,7 +204,7 @@ def backup(home, paths, originals, existed, metadata):
     directory = home / "Archives"
     if directory.exists():
         info = directory.lstat()
-        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid():
+        if not stat.S_ISDIR(info.st_mode) or not owned_by_current_user(info):
             raise ValueError("Archives directoryのownerまたはtypeが不正です")
     else:
         directory.mkdir(parents=True, mode=0o700)
@@ -246,8 +263,9 @@ def prepare(path, content, metadata):
         file.write(content)
         file.flush()
         os.fsync(file.fileno())
-        os.fchmod(file.fileno(), metadata["mode"])
-        os.fchown(file.fileno(), metadata["uid"], metadata["gid"])
+        if not WINDOWS:
+            os.fchmod(file.fileno(), metadata["mode"])
+            os.fchown(file.fileno(), metadata["uid"], metadata["gid"])
     return temporary
 
 
@@ -261,7 +279,7 @@ def verify_desired(desired):
             raise OSError(f"{path.name}: 内容を復元できません")
         actual = file_metadata(path)
         expected = {key: value[key] for key in ("mode", "uid", "gid")}
-        if actual != expected:
+        if not WINDOWS and actual != expected:
             raise OSError(f"{path.name}: modeまたはownerを復元できません")
 
 
@@ -320,13 +338,13 @@ def read_backup(archive, home, paths):
             or not archive.name.endswith(".tar.gz"):
         raise ValueError("--restore はabsolute regular archiveが必要です")
     directory_info = archive_directory.lstat()
-    if not stat.S_ISDIR(directory_info.st_mode) or directory_info.st_uid != os.geteuid() \
-            or stat.S_IMODE(directory_info.st_mode) & 0o077:
+    if not stat.S_ISDIR(directory_info.st_mode) or not owned_by_current_user(directory_info) \
+            or not private_mode(directory_info.st_mode):
         raise ValueError("restore archive directoryのownerまたはmodeが不正です")
     descriptor = os.open(archive, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     info = os.fstat(descriptor)
-    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.geteuid() \
-            or stat.S_IMODE(info.st_mode) & 0o077:
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or not owned_by_current_user(info) \
+            or not private_mode(info.st_mode):
         os.close(descriptor)
         raise ValueError("restore archiveのownerまたはmodeが不正です")
     try:
@@ -420,7 +438,7 @@ def main():
     archive = backup(home, paths, originals, existed, metadata)
     desired = {}
     for path, content in changed.items():
-        current = metadata[path] if existed[path] else {"mode": 0o600, "uid": os.geteuid(), "gid": os.getegid()}
+        current = metadata[path] if existed[path] else {"mode": 0o600, "uid": current_uid(), "gid": current_gid()}
         desired[path] = {"content": content, **current}
     transaction(desired, originals, existed, metadata)
     print(f"apply-observer-hook-config: 適用完了（backup: {archive}）")
