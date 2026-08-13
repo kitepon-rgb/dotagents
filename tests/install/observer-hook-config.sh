@@ -107,7 +107,7 @@ for provider, path in (("claude", home / ".claude/settings.json"), ("codex", hom
     command = f"{hook} --provider {provider} --state-root {state_root}".replace("\\", "/")
     count = sum(1 for entry in data["hooks"]["Stop"] for item in (entry.get("hooks", []) if provider == "claude" else [entry]) if isinstance(item, dict) and item.get("command", "").replace("\\", "/") == command)
     assert count == 1
-    assert "/old/state" not in str(data)
+    assert "/old/state" not in str(data), data
 PY
 archive_count="$(find "$HOME_FIXTURE/Archives" -name '*.tar.gz' | wc -l | tr -d ' ')"
 [ "$archive_count" = 1 ] || fail '初回applyのbackup数が不正'
