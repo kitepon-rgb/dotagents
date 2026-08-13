@@ -3,6 +3,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+PYTHON=python3
+if [ "${OS:-}" = "Windows_NT" ]; then
+  PYTHON=python
+fi
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 contains() { rg -Fq "$2" "$1" || fail "$1 に $2 がない"; }
@@ -10,7 +14,7 @@ absent() { ! rg -Fq "$2" "$1" || fail "$1 に Claude 固有入口 $2 が残っ�
 assert_order() {
   local file="$1"
   shift
-  python3 - "$file" "$@" <<'PY' || fail "$file の語句が存在しないか想定順序でない"
+  "$PYTHON" - "$file" "$@" <<'PY' || fail "$file の語句が存在しないか想定順序でない"
 from pathlib import Path
 import sys
 
@@ -39,7 +43,7 @@ frontmatter_is_name_and_description_only() {
 frontmatter_has_keys() {
   local file="$1"
   shift
-  python3 - "$file" "$@" <<'PY' || fail "$file の frontmatter に必須キーがない"
+  "$PYTHON" - "$file" "$@" <<'PY' || fail "$file の frontmatter に必須キーがない"
 from pathlib import Path
 import sys
 

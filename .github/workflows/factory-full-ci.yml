@@ -28,6 +28,18 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+      - name: logical CPU parallelism
+        if: matrix.environment != 'windows-native'
+        shell: bash
+        run: |
+          jobs=$(node -p "require('node:os').availableParallelism()")
+          printf 'FACTORY_CI_JOBS=%s\nMAKEFLAGS=-j%s\n' "$jobs" "$jobs" >> "$GITHUB_ENV"
+      - name: logical CPU parallelism
+        if: matrix.environment == 'windows-native'
+        shell: C:\Progra~1\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}
+        run: |
+          jobs=$(node -p "require('node:os').availableParallelism()")
+          printf 'FACTORY_CI_JOBS=%s\nMAKEFLAGS=-j%s\n' "$jobs" "$jobs" >> "$GITHUB_ENV"
       - name: full CI
         if: matrix.environment != 'windows-native'
         shell: bash

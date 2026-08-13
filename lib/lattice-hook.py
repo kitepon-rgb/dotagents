@@ -85,7 +85,7 @@ def emit(frontend, message):
         # Windows PowerShell 5.1経由でもCodexがJSONを誤復号しないようASCIIだけを出す。
         sys.stdout.write(json.dumps(payload, ensure_ascii=True) + "\n")
     else:
-        sys.stdout.write(message + "\n")
+        sys.stdout.buffer.write((message + "\n").encode("utf-8"))
 
 
 def executable(name):

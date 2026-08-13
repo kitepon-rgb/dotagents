@@ -20,6 +20,14 @@ source_dir=$(CDPATH='' cd -P -- "$(/usr/bin/dirname -- "$source")" 2>/dev/null &
 core="$source_dir/../lib/orchestrate/advisory-hook.py"
 [ -f "$core" ] && [ ! -L "$core" ] || exit 0
 
+if [ "${OS:-}" = "Windows_NT" ]; then
+  python=$(command -v python 2>/dev/null) || exit 0
+  core=$(cygpath -m "$core") || exit 0
+  invoked_dir=$(cygpath -m "$invoked_dir") || exit 0
+  source_dir=$(cygpath -m "$source_dir") || exit 0
+  exec "$python" -I "$core" "$invoked_dir" "$source_dir"
+fi
+
 for python in /usr/bin/python3 /opt/homebrew/bin/python3 /usr/local/bin/python3; do
   if [ -f "$python" ] && [ ! -d "$python" ] && [ -x "$python" ]; then
     exec "$python" -I "$core" "$invoked_dir" "$source_dir"

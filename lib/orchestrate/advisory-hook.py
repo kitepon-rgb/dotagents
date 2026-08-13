@@ -12,14 +12,26 @@ import tempfile
 import threading
 import time
 
+for stream in (sys.stdin, sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8")
+
 
 SCHEMA = "orchestrate.advisory-snapshot.v1"
 CAPTURE_LIMIT = 64 * 1024
 CACHE_TTL_SECONDS = 7 * 24 * 60 * 60
-SYSTEM_PATHS = ("/usr/bin", "/bin", "/usr/sbin", "/sbin")
-GIT_CANDIDATES = ("/usr/bin/git", "/opt/homebrew/bin/git", "/usr/local/bin/git")
-NODE_CANDIDATES = ("/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node")
-LATTICE_CANDIDATES = ("/opt/homebrew/bin/lattice", "/usr/local/bin/lattice")
+if os.name == "nt":
+    program_files = Path(os.environ.get("ProgramFiles", r"C:\Program Files"))
+    system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+    SYSTEM_PATHS = (str(system_root / "System32"), str(system_root))
+    GIT_CANDIDATES = (program_files / "Git" / "cmd" / "git.exe", program_files / "Git" / "bin" / "git.exe")
+    NODE_CANDIDATES = (program_files / "nodejs" / "node.exe",)
+    LATTICE_CANDIDATES = ()
+else:
+    SYSTEM_PATHS = ("/usr/bin", "/bin", "/usr/sbin", "/sbin")
+    GIT_CANDIDATES = ("/usr/bin/git", "/opt/homebrew/bin/git", "/usr/local/bin/git")
+    NODE_CANDIDATES = ("/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node")
+    LATTICE_CANDIDATES = ("/opt/homebrew/bin/lattice", "/usr/local/bin/lattice")
 
 
 def trusted_executable(candidates):
@@ -36,8 +48,9 @@ def trusted_executable(candidates):
 
 def safe_env(executables=()):
     result = {}
+    windows_runtime = {"SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP", "PATHEXT"}
     for key, value in os.environ.items():
-        if key in {"HOME", "TMPDIR", "LANG"} or key.startswith("LC_"):
+        if key in {"HOME", "TMPDIR", "LANG"} or key.startswith("LC_") or (os.name == "nt" and key.upper() in windows_runtime):
             result[key] = value
     paths = []
     for executable in executables:
@@ -123,7 +136,8 @@ def gc(directory):
         for entry in directory.iterdir():
             try:
                 info = entry.lstat()
-                if entry.name.startswith("orchestrate-advisory-") and entry.name.endswith(".shown") and stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1 and info.st_mtime < cutoff:
+                owner_safe = os.name == "nt" or info.st_uid == os.getuid()
+                if entry.name.startswith("orchestrate-advisory-") and entry.name.endswith(".shown") and stat.S_ISREG(info.st_mode) and owner_safe and info.st_nlink == 1 and info.st_mtime < cutoff:
                     entry.unlink()
             except OSError:
                 pass
@@ -177,7 +191,7 @@ def run_cli(node, cli, payload, deadline):
     input_path = None
     process = None
     try:
-        fd, input_path = tempfile.mkstemp(prefix="dotagents-orchestrate-advisory-", suffix=".json", dir="/tmp")
+        fd, input_path = tempfile.mkstemp(prefix="dotagents-orchestrate-advisory-", suffix=".json")
         os.fchmod(fd, 0o600)
         with os.fdopen(fd, "wb") as handle:
             handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
