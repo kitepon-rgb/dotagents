@@ -4,7 +4,7 @@ import {
   chmod, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { delimiter, join, posix, resolve } from 'node:path';
+import { delimiter, join, posix, resolve, win32 } from 'node:path';
 import process from 'node:process';
 import { test } from 'node:test';
 import { resolveWindowsCommand, run as runCommand } from '../../lib/factory/command.mjs';
@@ -17,6 +17,7 @@ const COMMANDS = [
   'caveat', 'throughline', 'spotter', 'aiterm-mcp',
   'codex-sidecar', 'codegraph', 'markitdown', 'oracle',
 ];
+const WINDOWS_FIXTURE_PATH = process.platform === 'win32' ? win32 : { ...posix, delimiter: ';' };
 
 function validConfig(overrides = {}) {
   return {
@@ -108,7 +109,7 @@ function runScanner(box, extraEnv = {}, extraArgs = []) {
       CLI, '--config', box.config, '--output', box.output, '--cwd', box.root,
       ...extraArgs,
     ], {
-      env: { ...process.env, PATH: `${box.bin}:${process.env.PATH}`, ...extraEnv },
+      env: { ...process.env, PATH: `${box.bin}${delimiter}${process.env.PATH}`, ...extraEnv },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';
@@ -246,7 +247,7 @@ test('Caveat native diagnosticsのschema drift・追加field・path漏洩をrepo
 test('Caveat CLI不在は壊れた診断出力と区別してmissingへ写像する', async (t) => {
   const box = await sandbox(t);
   await installHealthyCommands(box);
-  await rm(join(box.bin, 'caveat'));
+  await rm(join(box.bin, process.platform === 'win32' ? 'caveat.cmd' : 'caveat'));
   await box.script('git', "echo '1234567'");
   await writeFile(box.config, JSON.stringify(validConfig()));
   const result = await runScanner(box, { PATH: box.bin });
@@ -508,7 +509,7 @@ test('Windows npm .cmd実物variantは空白を含むPathから検証済みNode 
   const box = await windowsCommandFixture(t);
   const entry = await box.entry('safe.js', 'process.exit(0);\n');
   await box.cmd('safe-cli', 'node_modules\\safe-package\\bin\\safe.js', { programIndent: '  ' });
-  const resolved = await resolveWindowsCommand('safe-cli', { env: box.env, pathModule: { ...posix, delimiter: ';' } });
+  const resolved = await resolveWindowsCommand('safe-cli', { env: box.env, pathModule: WINDOWS_FIXTURE_PATH });
   assert.deepEqual(resolved, { command: process.execPath, prefixArgs: [await realpath(entry)] });
 });
 
@@ -516,7 +517,7 @@ test('Windows .exeはPATHEXT順で直接起動し、npm .cmdへはcmd.exeを介�
   const box = await windowsCommandFixture(t);
   const executable = join(box.bin, 'native.exe');
   await writeFile(executable, 'placeholder');
-  const resolved = await resolveWindowsCommand('native', { env: { ...box.env, PathExt: '.EXE;.CMD' }, pathModule: { ...posix, delimiter: ';' } });
+  const resolved = await resolveWindowsCommand('native', { env: { ...box.env, PathExt: '.EXE;.CMD' }, pathModule: WINDOWS_FIXTURE_PATH });
   assert.deepEqual(resolved, { command: executable, prefixArgs: [] });
 });
 
@@ -525,7 +526,7 @@ test('Windows command解決はPATHEXT先頭の許可外ps1を実行せず検証�
   const entry = await box.entry('safe.js', 'process.exit(0);\n');
   await writeFile(join(box.bin, 'safe-cli.ps1'), 'throw "must not run"\n');
   await box.cmd('safe-cli', 'node_modules\\safe-package\\bin\\safe.js');
-  const resolved = await resolveWindowsCommand('safe-cli', { env: { ...box.env, PathExt: '.PS1;.CMD;.EXE' }, pathModule: { ...posix, delimiter: ';' } });
+  const resolved = await resolveWindowsCommand('safe-cli', { env: { ...box.env, PathExt: '.PS1;.CMD;.EXE' }, pathModule: WINDOWS_FIXTURE_PATH });
   assert.deepEqual(resolved, { command: process.execPath, prefixArgs: [await realpath(entry)] });
 });
 
@@ -535,7 +536,7 @@ test('Windows npm .cmdはstdin・cwd・envを保ってNodeで実行する', asyn
   await box.cmd('runner', 'node_modules\\safe-package\\bin\\runner.js');
   const helper = join(box.root, 'success-helper.mjs');
   await writeFile(helper, `process.stdin.resume(); process.stdin.on('end', () => process.stdout.write(JSON.stringify({ status: 'ok', command: ${JSON.stringify(process.execPath)}, prefixArgs: [${JSON.stringify(entry)}] })));\n`);
-  const result = await runCommand('runner', [], { cwd: box.root, env: { ...box.env, FACTORY_MARKER: 'kept' }, input: 'stdin-kept', platform: 'win32', windowsPathModule: { ...posix, delimiter: ';' }, windowsHelperPath: helper });
+  const result = await runCommand('runner', [], { cwd: box.root, env: { ...box.env, FACTORY_MARKER: 'kept' }, input: 'stdin-kept', platform: 'win32', windowsPathModule: WINDOWS_FIXTURE_PATH, windowsHelperPath: helper });
   assert.equal(result.ok, true, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), { input: 'stdin-kept', cwd: await realpath(box.root), marker: 'kept' });
 });
