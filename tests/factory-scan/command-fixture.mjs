@@ -16,13 +16,14 @@ export async function writeCommandFixture(bin, name, body) {
 
   const packageDir = join(bin, 'node_modules', 'factory-test-fixtures');
   const script = join(packageDir, name);
+  const shellScript = script.replace(/^([A-Za-z]):\\/u, (_, drive) => `/${drive.toLowerCase()}/`).replaceAll('\\', '/');
   const entrypoint = join(packageDir, `${name}.mjs`);
   await mkdir(packageDir, { recursive: true });
   await writeFile(script, `#!/bin/sh\n${body}`);
   await writeFile(entrypoint, `import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 
-const result = spawnSync(join(process.env.ProgramFiles, 'Git', 'bin', 'sh.exe'), [${JSON.stringify(script)}, ...process.argv.slice(2)], { env: process.env, stdio: 'inherit' });
+const result = spawnSync(join(process.env.ProgramFiles, 'Git', 'bin', 'sh.exe'), [${JSON.stringify(shellScript)}, ...process.argv.slice(2)], { env: process.env, stdio: 'inherit' });
 if (result.error) throw result.error;
 process.exit(result.status ?? 1);
 `);
