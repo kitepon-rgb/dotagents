@@ -4,33 +4,27 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 実行する環境
+        type: choice
+        default: all
+        options:
+          - all
+          - macos-native
+          - linux-native
+          - windows-native
+          - wsl2
 
 permissions:
   contents: read
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: install test prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes ripgrep
-      # shellcheck / node は ubuntu-latest ランナー同梱。全依存を version 表示で
-      # fail-loud（黙って skip しない）。Codex は clean HOME test の完全 TOML parser として固定導入する。
-      - name: tool versions
-        run: |
-          shellcheck --version
-          node --version
-          rg --version
-      - name: install Codex CLI
-        run: |
-          npm view @openai/codex@0.144.1 version
-          npm install --global @openai/codex@0.144.1
-          codex --version
-      - name: make ci (local/CI common gate)
-        run: make ci
+  full:
+    uses: ./.github/workflows/factory-full-ci.yml
+    with:
+      environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'all' }}
+      full-command: >-
+        node --version && npm --version && python3 --version && shellcheck --version && rg --version && codex --version && make ci
