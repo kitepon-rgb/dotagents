@@ -138,12 +138,9 @@ verify_factory_core() {
   if [ "$runtime_os" = Darwin ] && command -v sw_vers >/dev/null 2>&1; then
     macos_major="$(sw_vers -productVersion 2>/dev/null | cut -d. -f1)"
   fi
-  if [ -n "$macos_major" ]; then
-    required_products="$(node "$REPO/bin/factory-deployment-contract.mjs" required-products --profile "$host_profile" --os "$contract_os" --arch "$runtime_arch" --macos-major "$macos_major")"
-  else
-    required_products="$(node "$REPO/bin/factory-deployment-contract.mjs" required-products --profile "$host_profile" --os "$contract_os" --arch "$runtime_arch")"
-  fi
-  if [ $? -ne 0 ]; then
+  local -a contract_args=(required-products --profile "$host_profile" --os "$contract_os" --arch "$runtime_arch")
+  if [ -n "$macos_major" ]; then contract_args+=(--macos-major "$macos_major"); fi
+  if ! required_products="$(node "$REPO/bin/factory-deployment-contract.mjs" "${contract_args[@]}")"; then
     echo "FAIL: deployment contract を読めない"
     fail=1
     required_products=''

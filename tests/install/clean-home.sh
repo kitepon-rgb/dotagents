@@ -76,6 +76,7 @@ if [ "$1 $2 $3" = 'codex-hook diagnostics --project' ]; then
 fi
 EOF
 chmod +x "$FACTORY_TEST_BIN/spotter"
+# shellcheck disable=SC2016 # 生成するfixtureの実行時に$1/$2を展開する。
 printf '#!/usr/bin/env bash\n[ "$1 $2" = "tool list" ] && printf "markitdown 0.1.0\\n"\n' >"$FACTORY_TEST_BIN/uv"
 chmod +x "$FACTORY_TEST_BIN/uv"
 verify() { PATH="$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$1" DOTAGENTS_FACTORY_CORE_TEST=1 LATTICE_HOOKS_TEST_MODE="${LATTICE_HOOKS_TEST_MODE:-wired}" "$ROOT/bin/verify-install.sh" --profile "$2"; }
