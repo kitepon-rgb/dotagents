@@ -4,7 +4,7 @@ import {
   chmod, mkdir, mkdtemp, readFile, rm, writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { delimiter, join, resolve } from 'node:path';
 import process from 'node:process';
 import test from 'node:test';
 
@@ -146,6 +146,17 @@ async function sandbox(t) {
       const path = join(bin, name);
       await writeFile(path, `#!/bin/sh\n${body}`);
       await chmod(path, 0o755);
+      if (process.platform === 'win32') {
+        const packageDir = join(bin, 'node_modules', 'factory-test-fixtures');
+        await mkdir(packageDir, { recursive: true });
+        await writeFile(join(packageDir, `${name}.mjs`), `
+import { spawnSync } from 'node:child_process';
+import { join, resolve } from 'node:path';
+const result = spawnSync(join(process.env.ProgramFiles, 'Git', 'bin', 'sh.exe'), [resolve(import.meta.dirname, '..', '..', '${name}'), ...process.argv.slice(2)], { env: process.env, stdio: 'inherit' });
+process.exit(result.status ?? 1);
+`);
+        await writeFile(`${path}.cmd`, `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n  SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n  SET "_prog=node"\r\n  SET PATHEXT=%PATHEXT:;.JS;=;%\r\n)\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%dp0%\\node_modules\\factory-test-fixtures\\${name}.mjs" %*\r\n`);
+      }
     },
   };
 }
@@ -164,7 +175,7 @@ else
 fi`);
   const previous = process.env.PATH;
   const previousUrl = process.env.PEERTABLE_URL;
-  process.env.PATH = `${box.bin}:${previous}`;
+  process.env.PATH = `${box.bin}${delimiter}${previous}`;
   process.env.PEERTABLE_URL = 'http://192.168.1.2:18860';
   t.after(() => { process.env.PATH = previous; process.env.PEERTABLE_URL = previousUrl; });
 
