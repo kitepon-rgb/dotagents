@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { chmod, mkdtemp, mkdir, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, test } from 'node:test';
@@ -34,7 +34,7 @@ async function writeConfig(box, endpoint, enabled = true, hostId = 'test-host', 
 }
 function run(box, args, extra = {}, cli = CLI) {
   return new Promise((resolveRun) => {
-    const child = spawn(process.execPath, [cli, ...args], { env: { ...process.env, XDG_STATE_HOME: box.state, XDG_CONFIG_HOME: join(box.root, 'config-home'), ...extra }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [cli, ...args], { env: { ...process.env, XDG_STATE_HOME: box.state, XDG_CONFIG_HOME: join(box.root, 'config-home'), LOCALAPPDATA: box.state, ...extra }, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = ''; let stderr = '';
     child.stdout.on('data', (chunk) => { stdout += chunk; }); child.stderr.on('data', (chunk) => { stderr += chunk; });
     child.on('close', (code) => resolveRun({ code, stdout, stderr, json: stdout ? JSON.parse(stdout) : null }));
@@ -178,12 +178,16 @@ test('duplicate accepted responseも同一report_idなら削除する', async ()
 
 test('受理後の削除失敗は同じbytesを保持し、duplicate再受理後だけ削除する', async () => {
   const box = await sandbox(); const payload = await writeReport(box); let calls = 0;
-  const server = await startServer((req, res) => accepted(res, report().report_id, calls++ > 0)); await writeConfig(box, server.endpoint);
+  const target = join(queueDir(box), `${report().report_id}.json`); const backup = `${target}.accepted`;
+  const server = await startServer(async (req, res) => {
+    const duplicate = calls++ > 0;
+    if (!duplicate) { await rename(target, backup); await mkdir(target); }
+    accepted(res, report().report_id, duplicate);
+  }); await writeConfig(box, server.endpoint);
   await run(box, ['enqueue', '--report', box.report, '--config', box.config]);
-  await chmod(queueDir(box), 0o500);
   const interrupted = await run(box, ['flush', '--config', box.config]);
-  assert.equal(interrupted.code, 1); assert.deepEqual(await readFile(join(queueDir(box), `${report().report_id}.json`)), payload);
-  await chmod(queueDir(box), 0o700);
+  assert.equal(interrupted.code, 1); assert.deepEqual(await readFile(backup), payload);
+  await rm(target, { recursive: true }); await rename(backup, target);
   const retried = await run(box, ['flush', '--config', box.config]);
   assert.equal(retried.code, 0); assert.equal(retried.json.sent, 1); assert.deepEqual(await readdir(queueDir(box)), []);
   assert.deepEqual(server.received[0].body, payload); assert.deepEqual(server.received[1].body, payload); await server.close();
