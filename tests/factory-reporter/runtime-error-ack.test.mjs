@@ -5,7 +5,7 @@ import {
   chmod, mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { basename, delimiter, dirname, join, resolve } from 'node:path';
 import process from 'node:process';
 import { after, test } from 'node:test';
 
@@ -101,19 +101,41 @@ async function installAckCommands(box, { failOnce = null } = {}) {
       'factory-external-event': `n="$3"; printf '{"ok":true,"acknowledged_through":%s}\\n' "$n"`,
     }[command];
     await writeFile(path, `#!/bin/sh
-printf '%s %s\n' "${'$'}{0##*/}" "${'$'}*" >> "$ACK_LOG"
+name="${'$'}{ACK_COMMAND_NAME:-${'$'}{0##*/}}"
+printf '%s %s\n' "${'$'}name" "${'$'}*" >> "$ACK_LOG"
 ${failure}
 ${response}
 exit 0
 `);
     await chmod(path, 0o755);
+    await installWindowsCommandWrapper(path);
   }
+}
+
+async function installWindowsCommandWrapper(path) {
+  if (process.platform !== 'win32') return;
+  const name = basename(path);
+  const packageDir = join(dirname(path), 'node_modules', 'factory-test-fixtures');
+  await mkdir(packageDir, { recursive: true });
+  await writeFile(join(packageDir, `${name}.mjs`), `
+import { spawnSync } from 'node:child_process';
+import { join, resolve } from 'node:path';
+const env = { ...process.env };
+env.ACK_COMMAND_NAME = '${name}';
+for (const key of ['ACK_LOG', 'ACK_FAIL_MARKER']) {
+  env[key] = env[key]?.replace(/^([A-Za-z]):[\\\\/]/u, (_, drive) => \`/\${drive.toLowerCase()}/\`).replaceAll('\\\\', '/');
+}
+const result = spawnSync(join(process.env.ProgramFiles, 'Git', 'bin', 'sh.exe'), [resolve(import.meta.dirname, '..', '..', '${name}'), ...process.argv.slice(2)], { env, stdio: 'inherit' });
+process.exit(result.status ?? 1);
+`);
+  await writeFile(`${path}.cmd`, `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n  SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n  SET "_prog=node"\r\n  SET PATHEXT=%PATHEXT:;.JS;=;%\r\n)\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%dp0%\\node_modules\\factory-test-fixtures\\${name}.mjs" %*\r\n`);
 }
 
 async function script(box, name, body) {
   const path = join(box.bin, name);
   await writeFile(path, `#!/bin/sh\n${body}\n`);
   await chmod(path, 0o755);
+  await installWindowsCommandWrapper(path);
 }
 
 async function installScannerCommands(box) {
@@ -149,6 +171,8 @@ if [ "$1" = "factory-diagnostics" ]; then
 elif [ "$1" = "factory-errors" ]; then
   echo '{"status":"ok","factoryRuntimeErrors":{"schema_version":"2","cursor":0,"acknowledged_through":0,"records":[]}}'
 else exit 2; fi`);
+  await script(box, 'bughub-external-probe', `echo '{"schema_version":"dotagents.bughub-external-probe.v1","product_version":"0.1.0","source_revision":"0123456789abcdef0123456789abcdef01234567","status":"ready","reason_code":"ready","checks":[{"id":"database","status":"pass","reason_code":"ready"},{"id":"schema","status":"pass","reason_code":"ready"},{"id":"pull_poll","status":"pass","reason_code":"ready"},{"id":"factory_ingest","status":"pass","reason_code":"ready"},{"id":"factory_delivery","status":"pass","reason_code":"ready"},{"id":"source_revision","status":"pass","reason_code":"revision_match"}]}'`);
+  await script(box, 'factory-external-event', `echo '{"schema":"dotagents.external-events.v1","cursor":{"high_watermark":0,"acknowledged_through":0,"next":0},"events":[]}'`);
 }
 
 function runReporter(box, args) {
@@ -157,7 +181,8 @@ function runReporter(box, args) {
       env: {
         ...process.env,
         XDG_STATE_HOME: box.state,
-        PATH: `${box.bin}:${process.env.PATH}`,
+        ...(process.platform === 'win32' ? { LOCALAPPDATA: box.state } : {}),
+        PATH: `${box.bin}${delimiter}${process.env.PATH}`,
         ACK_LOG: box.ackLog,
         ACK_FAIL_MARKER: box.failMarker,
       },
@@ -223,7 +248,7 @@ test('factory-scan --ack-outputはreport_id一致sidecarを生成し、report pa
   const result = await new Promise((done) => {
     const child = spawn(process.execPath, [
       SCANNER, '--config', box.config, '--output', box.report, '--ack-output', box.ack, '--cwd', box.root,
-    ], { env: { ...process.env, PATH: `${box.bin}:${process.env.PATH}` }, stdio: ['ignore', 'pipe', 'pipe'] });
+    ], { env: { ...process.env, PATH: `${box.bin}${delimiter}${process.env.PATH}` }, stdio: ['ignore', 'pipe', 'pipe'] });
     let stderr = '';
     child.stderr.on('data', (chunk) => { stderr += chunk; });
     child.on('close', (code) => done({ code, stderr }));
@@ -233,15 +258,17 @@ test('factory-scan --ack-outputはreport_id一致sidecarを生成し、report pa
   const generatedMetadata = JSON.parse(await readFile(box.ack, 'utf8'));
   assert.equal(generatedMetadata.report_id, generatedReport.report_id);
   assert.equal(generatedMetadata.schema_version, '1.0');
-  assert.deepEqual(generatedMetadata.acknowledgements.map(({ product }) => product), [
+  const expectedProducts = [
     'caveat', 'throughline', 'spotter', 'aiterm-mcp', 'codex-sidecar',
-  ]);
+  ];
+  if (profile === 'server') expectedProducts.push('servermanager');
+  assert.deepEqual(generatedMetadata.acknowledgements.map(({ product }) => product), expectedProducts);
   assert.equal(JSON.stringify(generatedReport).includes('acknowledgement'), false);
-  assert.equal((await stat(box.ack)).mode & 0o777, 0o600);
+  if (process.platform !== 'win32') assert.equal((await stat(box.ack)).mode & 0o777, 0o600);
 });
 
 test('enqueueはreportとack metadataを単一private envelopeへatomic保存し、受理前には実行しない', async (t) => {
-  if (process.platform === 'win32') t.skip('POSIX mode assertion');
+  if (process.platform === 'win32') return t.skip('POSIX mode assertion');
   const box = await sandbox();
   const server = await startServer(() => assert.fail('enqueue must not send'));
   t.after(server.close);

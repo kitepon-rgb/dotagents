@@ -1,9 +1,14 @@
 # dotagents の静的 lint と完全 CI ゲート（正典: docs/04_ci.md）。
-# 依存: shellcheck（`brew install shellcheck` / ubuntu-latest は同梱）・node/npx・python3。
+# 依存: shellcheck（`brew install shellcheck` / ubuntu-latest は同梱）・node/npx・Python 3。
 # `make ci` の clean HOME test は Codex CLI 0.144.1 を完全 TOML parser として使う。
 # markdownlint-cli2 は再現性のためバージョン固定。
 SHELL := /bin/bash
 MDLINT := npx --yes markdownlint-cli2@0.23.0
+ifeq ($(OS),Windows_NT)
+PYTHON := python
+else
+PYTHON := python3
+endif
 
 .PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-canon-migration canon-migration-gate lint-skills lint-hooks test-constitution test-install test-observer-hook-config test-observer-package test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-factory-wire test-orchestrate test-lattice-cutover ci help
 
@@ -13,7 +18,7 @@ lint-sh: ## shellcheck: install.sh + bin/ と tests/ の shell スクリプト�
 	shellcheck install.sh $$(grep -lE '^#!.*sh$$' bin/*.sh tests/**/*.sh)
 
 lint-py: ## bin/ と lib/ の Python script を構文チェック（py_compile・依存なし）
-	@for f in $$(grep -lE '^#!.*python' bin/*.sh) lib/*.py lib/orchestrate/*.py; do python3 -m py_compile "$$f" && echo "py-syntax OK: $$f"; done
+	@for f in $$(grep -lE '^#!.*python' bin/*.sh) lib/*.py lib/orchestrate/*.py; do $(PYTHON) -m py_compile "$$f" && echo "py-syntax OK: $$f"; done
 
 lint-js: ## bin/ と lib/orchestrate/ の Node.js script を構文チェック
 	@for f in bin/*.mjs lib/orchestrate/*.mjs; do node --check "$$f"; done
