@@ -114,8 +114,12 @@ def fragment_command(provider, value):
 
 
 def is_target_command(command, provider, executable):
-    prefix = f"{executable} --provider {provider}"
-    return isinstance(command, str) and (command == prefix or command.startswith(f"{prefix} --state-root "))
+    if not isinstance(command, str):
+        return False
+    marker = f" --provider {provider}"
+    command_executable, separator, suffix = command.partition(marker)
+    same_executable = os.path.normcase(os.path.normpath(command_executable)) == os.path.normcase(os.path.normpath(executable))
+    return bool(separator) and same_executable and (suffix == "" or suffix.startswith(" --state-root "))
 
 
 def stop_entries(config, path):
