@@ -86,7 +86,7 @@ function parseArgs(args) {
 function readRepoFile(relativePath, violationLabel) {
   const path = resolve(repoRoot, relativePath);
   try {
-    return readFileSync(path, "utf8");
+    return readFileSync(path, "utf8").replace(/\r\n?/g, "\n");
   } catch (error) {
     violations.push(`${violationLabel}: ${relativePath} を読めない: ${error.message}`);
     return null;
