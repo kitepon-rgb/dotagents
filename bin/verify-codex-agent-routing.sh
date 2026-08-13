@@ -58,7 +58,7 @@ if [ ! -d "$sessions_dir" ]; then
   exit 1
 fi
 
-MSYS2_ARG_CONV_EXCL='*' "$python_bin" - "$python_role_file" "$python_sessions_dir" "$role" "$agent_path" "$max_age_seconds" "$require_sandbox" <<'PY'
+PYTHONUTF8=1 MSYS2_ARG_CONV_EXCL='*' "$python_bin" - "$python_role_file" "$python_sessions_dir" "$role" "$agent_path" "$max_age_seconds" "$require_sandbox" <<'PY'
 import json
 import re
 import sys
