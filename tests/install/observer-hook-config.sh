@@ -57,6 +57,8 @@ else:
 print(json.dumps({"schema":"observer.parent_stop_hook_verification.v1","provider":provider,"event":"Stop","status":"canonical" if canonical else ("missing" if count == 0 else "noncanonical"),"target_count":count}))
 PY
 chmod 755 "$CLI_DIR/observer-hook-config"
+OBSERVER_CLI="$CLI_DIR/observer-hook-config"
+case "$(uname -s)" in MINGW*|MSYS*) OBSERVER_CLI="$(cygpath -w "$OBSERVER_CLI")" ;; esac
 
 mkdir -p "$HOME_FIXTURE/.claude" "$HOME_FIXTURE/.codex"
 cat >"$HOME_FIXTURE/.claude/settings.json" <<'EOF'
@@ -74,21 +76,21 @@ for name in sys.argv[1:3]:
 PY
 before_claude="$(cat "$HOME_FIXTURE/.claude/settings.json")"
 before_codex="$(cat "$HOME_FIXTURE/.codex/hooks.json")"
-dry="$(HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --observer-hook "$HOOK" --state-root "$STATE_ROOT" 2>&1)"
+dry="$(HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --observer-hook "$HOOK" --state-root "$STATE_ROOT" 2>&1)"
 printf '%s' "$dry" | grep -Fq 'provider=claude' || fail 'dry-run がClaude要約を出さない'
 printf '%s' "$dry" | grep -Fq 'provider=codex' || fail 'dry-run がCodex要約を出さない'
 if printf '%s' "$dry" | grep -Fq 'OBSERVER_SECRET_SENTINEL'; then fail 'dry-run が設定内容を出した'; fi
 [ "$(cat "$HOME_FIXTURE/.claude/settings.json")" = "$before_claude" ] || fail 'dry-run がClaudeを書換えた'
 [ "$(cat "$HOME_FIXTURE/.codex/hooks.json")" = "$before_codex" ] || fail 'dry-run がCodexを書換えた'
-if HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" \
+if HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" \
   "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" >/dev/null 2>&1
 then
   fail 'state root省略を成功扱いした'
 fi
-if HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" OBSERVER_TEST_BAD_SCHEMA=1 "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'schema不一致を成功扱いした'; fi
+if HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" OBSERVER_TEST_BAD_SCHEMA=1 "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'schema不一致を成功扱いした'; fi
 [ "$(cat "$HOME_FIXTURE/.claude/settings.json")" = "$before_claude" ] || fail 'schema failure がClaudeを書換えた'
 [ "$(cat "$HOME_FIXTURE/.codex/hooks.json")" = "$before_codex" ] || fail 'schema failure がCodexを書換えた'
-HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null
+HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null
 python3 - "$HOME_FIXTURE" "$HOOK" "$STATE_ROOT" <<'PY' || exit 1
 import json, sys
 from pathlib import Path
@@ -110,7 +112,7 @@ import sys
 from pathlib import Path
 raise SystemExit(0 if stat.S_IMODE(Path(sys.argv[1]).stat().st_mode) == 0o600 else 1)
 PY
-idempotent="$(HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT")"
+idempotent="$(HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT")"
 printf '%s' "$idempotent" | grep -Fq '変更なし' || fail '二回目applyが冪等でない'
 [ "$(find "$HOME_FIXTURE/Archives" -name '*.tar.gz' | wc -l | tr -d ' ')" = "$archive_count" ] || fail '冪等applyがbackupを増やした'
 if HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/missing" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'CLI不在を成功扱いした'; fi
@@ -128,33 +130,33 @@ json.dump(data, open(codex, "w", encoding="utf-8"), separators=(",", ":"))
 PY
 saved_claude="$(cat "$HOME_FIXTURE/.claude/settings.json")"
 saved_codex="$(cat "$HOME_FIXTURE/.codex/hooks.json")"
-if HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" DOTAGENTS_TEST_FAIL_REPLACE=hooks.json "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'replace failureを成功扱いした'; fi
+if HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" DOTAGENTS_TEST_FAIL_REPLACE=hooks.json "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'replace failureを成功扱いした'; fi
 [ "$(cat "$HOME_FIXTURE/.claude/settings.json")" = "$saved_claude" ] || fail 'rollback がClaudeを戻さない'
 [ "$(cat "$HOME_FIXTURE/.codex/hooks.json")" = "$saved_codex" ] || fail 'rollback がCodexを戻さない'
 stamp=20000101T000000Z
 collision="$HOME_FIXTURE/Archives/dotagents-observer-hook-config-$stamp.tar.gz"
 printf '%s' 'keep-existing-backup' >"$collision"
 printf '\n' >>"$HOME_FIXTURE/.claude/settings.json"
-HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" DOTAGENTS_TEST_BACKUP_STAMP="$stamp" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null
+HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" DOTAGENTS_TEST_BACKUP_STAMP="$stamp" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null
 [ "$(cat "$collision")" = keep-existing-backup ] || fail '既存backupを上書きした'
 [ -f "$HOME_FIXTURE/Archives/dotagents-observer-hook-config-$stamp-1.tar.gz" ] || fail '同秒backupのsuffixを作らない'
 SYMLINK_HOME="$(mktemp -d)"
 trap 'rm -rf "$HOME_FIXTURE" "$CLI_DIR" "$SYMLINK_HOME"' EXIT
 mkdir -p "$SYMLINK_HOME/external-claude" "$SYMLINK_HOME/external-codex"
 ln -s "$SYMLINK_HOME/external-claude" "$SYMLINK_HOME/.claude"
-if HOME="$SYMLINK_HOME" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'symlink設定を成功扱いした'; fi
+if HOME="$SYMLINK_HOME" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'symlink設定を成功扱いした'; fi
 rm "$SYMLINK_HOME/.claude"
 mkdir "$SYMLINK_HOME/.claude"
 ln -s "$SYMLINK_HOME/external-codex" "$SYMLINK_HOME/codex-link"
-if HOME="$SYMLINK_HOME" CODEX_HOME="$SYMLINK_HOME/codex-link" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --dry-run --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'symlink CODEX_HOMEを成功扱いした'; fi
+if HOME="$SYMLINK_HOME" CODEX_HOME="$SYMLINK_HOME/codex-link" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --dry-run --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'symlink CODEX_HOMEを成功扱いした'; fi
 ln -s "$SYMLINK_HOME/missing-codex-target" "$SYMLINK_HOME/broken-codex-link"
-if HOME="$SYMLINK_HOME" CODEX_HOME="$SYMLINK_HOME/broken-codex-link" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --dry-run --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'broken symlink CODEX_HOMEを成功扱いした'; fi
+if HOME="$SYMLINK_HOME" CODEX_HOME="$SYMLINK_HOME/broken-codex-link" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --dry-run --observer-hook "$HOOK" --state-root "$STATE_ROOT" >/dev/null 2>&1; then fail 'broken symlink CODEX_HOMEを成功扱いした'; fi
 EMPTY_HOME="$(mktemp -d)"
 RESTORE_HOME="$(mktemp -d)"
 trap 'rm -rf "$HOME_FIXTURE" "$CLI_DIR" "$SYMLINK_HOME" "$EMPTY_HOME" "$RESTORE_HOME"' EXIT
 mkdir -p "$EMPTY_HOME/.claude"
 : >"$EMPTY_HOME/.claude/settings.json"
-HOME="$EMPTY_HOME" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$EMPTY_HOME/observer-state" >/dev/null
+HOME="$EMPTY_HOME" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$EMPTY_HOME/observer-state" >/dev/null
 python3 - "$EMPTY_HOME" <<'PY'
 import json, sys
 from pathlib import Path
@@ -171,7 +173,7 @@ chmod 640 "$RESTORE_HOME/.claude/settings.json"
 restore_before="$(cat "$RESTORE_HOME/.claude/settings.json")"
 restore_uid="$(file_stat "$RESTORE_HOME/.claude/settings.json" uid)"
 restore_gid="$(file_stat "$RESTORE_HOME/.claude/settings.json" gid)"
-HOME="$RESTORE_HOME" OBSERVER_HOOK_CONFIG_BIN="$CLI_DIR/observer-hook-config" \
+HOME="$RESTORE_HOME" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" \
   "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$RESTORE_HOME/observer-state" >/dev/null
 restore_archive="$(find "$RESTORE_HOME/Archives" -name '*.tar.gz' -print -quit)"
 [ -n "$restore_archive" ] || fail 'restore fixture backupがない'
