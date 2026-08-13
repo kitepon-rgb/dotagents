@@ -460,6 +460,11 @@ test('command出力上限とtimeoutは固定reasonで失敗し、生出力を返
   const box = await sandbox(t);
   await box.script('noisy', 'while :; do echo x; done');
   await box.script('slow', 'while :; do :; done');
+  const marker = join(box.root, 'late-marker');
+  const shellMarker = process.platform === 'win32'
+    ? marker.replace(/^([A-Za-z]):\\/u, (_, drive) => `/${drive.toLowerCase()}/`).replaceAll('\\', '/')
+    : marker;
+  await box.script('late', `sleep 0.2; echo late > '${shellMarker}'`);
   const env = { ...process.env, PATH: `${box.bin}${delimiter}${process.env.PATH}` };
 
   const noisy = await runCommand('noisy', [], { env, maxOutputBytes: 128, timeoutMs: 1000 });
@@ -470,6 +475,10 @@ test('command出力上限とtimeoutは固定reasonで失敗し、生出力を返
   assert.deepEqual({ reason: slow.reason, stdout: slow.stdout, stderr: slow.stderr }, {
     reason: 'timeout', stdout: '', stderr: '',
   });
+  const late = await runCommand('late', [], { env, timeoutMs: 50 });
+  assert.equal(late.reason, 'timeout');
+  await new Promise((resolveDelay) => setTimeout(resolveDelay, 300));
+  await assert.rejects(stat(marker), { code: 'ENOENT' });
 });
 
 async function windowsCommandFixture(t) {
