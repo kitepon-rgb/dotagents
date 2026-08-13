@@ -109,7 +109,9 @@ test('single lockはlive ownerを拒否し、crash lockを回収して0600/0700�
   await mutate('open', 'availability', 'unreachable', A);
   const { mode: dirMode } = await (await import('node:fs/promises')).stat(state.dir);
   const { mode: fileMode } = await (await import('node:fs/promises')).stat(state.state);
-  assert.equal(dirMode & 0o777, 0o700); assert.equal(fileMode & 0o777, 0o600);
+  if (process.platform !== 'win32') {
+    assert.equal(dirMode & 0o777, 0o700); assert.equal(fileMode & 0o777, 0o600);
+  }
 });
 
 test('bounded retentionは未ack eventを捨てず、ack済みだけをpruneする', async (t) => {

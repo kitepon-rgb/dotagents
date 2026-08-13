@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import process from 'node:process';
 import { projectGptConnectorFactory, scanV2, scanV2WithAcknowledgements, V2_PRODUCT_IDS } from '../../lib/factory/v2.mjs';
 import { validateReportV2 } from '../../lib/factory/contract.mjs';
+import { writeCommandFixture } from './command-fixture.mjs';
 
 test('v2 product集合はOracleを含まず固定12製品', () => {
   assert.deepEqual(V2_PRODUCT_IDS, ['caveat', 'throughline', 'spotter', 'codegraph', 'markitdown', 'gpt-connector', 'aiterm-mcp', 'codex-sidecar', 'servermanager', 'claude-code', 'codex-cli', 'grok-build']);
@@ -37,12 +38,12 @@ function nativeFixtures() {
 
 test('native v1の状態別shape・exit code・unknown fieldをfail closedで扱う', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-native-negative-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
-  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  const script = (name, body) => writeCommandFixture(bin, name, body);
   for (const name of ['caveat', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'claude', 'codex', 'npm', 'grok']) await script(name, 'exit 1');
   const fixtures = nativeFixtures(); const unverifiedAiterm = structuredClone(fixtures.aiterm); unverifiedAiterm.overall = 'unverified'; unverifiedAiterm.pty_list = { ...unverifiedAiterm.pty_list, status: 'unverified', session_count: null };
   await script('aiterm-mcp', `cat >/dev/null; echo '${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: JSON.stringify(unverifiedAiterm) }] } })}'`);
   await script('throughline', `echo '${JSON.stringify(fixtures.throughline)}'; exit 1`);
-  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
   const report = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
   assert.equal(report.products.throughline.checks[0].reason_code, 'native_exit_mismatch');
   assert.equal(report.products['aiterm-mcp'].compatibility_status, 'unverified');
@@ -64,13 +65,13 @@ test('native v1の状態別shape・exit code・unknown fieldをfail closedで扱
 
 test('native diagnosticsの製品別不変条件と非0 exitを個別に拒否する', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-native-invariants-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
-  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  const script = (name, body) => writeCommandFixture(bin, name, body);
   for (const name of ['caveat', 'gpt-connector', 'codegraph', 'markitdown', 'claude', 'codex', 'npm', 'grok']) await script(name, 'exit 1');
   const fixtures = nativeFixtures();
   const setJson = async (name, payload, exitCode = 0) => script(name, `echo '${JSON.stringify(payload)}'; exit ${exitCode}`);
   const setAiterm = async (payload, exitCode = 0) => script('aiterm-mcp', `cat >/dev/null; echo '${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: JSON.stringify(payload) }] } })}'; exit ${exitCode}`);
   const scan = () => scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, toolchainLedgerPath: join(root, 'missing-toolchain-ledger.json') });
-  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
   await setJson('spotter', fixtures.spotter); await setJson('codex-sidecar', fixtures.sidecar); await setAiterm(fixtures.aiterm);
   for (const mutate of [
     (value) => { value.databaseSchema.databaseSchemaVersion = 7; },
@@ -90,13 +91,13 @@ test('native diagnosticsの製品別不変条件と非0 exitを個別に拒否�
 
 test('Caveat・Throughline・aitermの観測済みadapter契約だけを受理する', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-adapter-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
-  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  const script = (name, body) => writeCommandFixture(bin, name, body);
   const setJson = async (name, payload, exitCode = 0) => script(name, `echo '${JSON.stringify(payload)}'; exit ${exitCode}`);
   const setAiterm = async (payload) => script('aiterm-mcp', `cat >/dev/null; echo '${JSON.stringify({ jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: JSON.stringify(payload) }] } })}'`);
   for (const name of ['spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'claude', 'codex', 'npm', 'grok']) await script(name, 'exit 1');
   const fixtures = nativeFixtures();
   const scan = () => scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
-  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
 
   await setJson('caveat', caveatDiagnostic('not_ready'), 1); await setJson('throughline', fixtures.throughline); await setAiterm(fixtures.aiterm);
   let report = await scan();
@@ -135,7 +136,7 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
     ? `& "C:\\Python\\python.exe" "${join(root, '.local', 'bin', 'codex-callout-hook')}" "${subcommand}"`
     : `/usr/bin/env python3 ${join(root, '.local', 'bin', 'codex-callout-hook')} ${subcommand}`;
   const codexHook = (subcommand, timeout) => ({ type: 'command', command: codexCommand(subcommand), timeout, async: false, statusMessage: null }); const codexHooks = { hooks: { SessionStart: [{ hooks: [codexHook('session-start', 10)] }], PreToolUse: [{ hooks: [codexHook('pre-tool-use', 5)] }], UserPromptSubmit: [{ hooks: [codexHook('user-prompt-submit', 5)] }], Stop: [{ hooks: [codexHook('stop', 10)] }] } }; await writeFile(join(root, '.codex', 'hooks.json'), JSON.stringify(codexHooks));
-  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  const script = (name, body) => writeCommandFixture(bin, name, body);
   await script('caveat', `echo '${JSON.stringify(caveatDiagnostic())}'`);
   const fixtures = nativeFixtures();
   await script('throughline', `echo '${JSON.stringify(fixtures.throughline)}'`);
@@ -148,7 +149,7 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
   await script('claude', "echo '2.1.0'"); await script('codex', "echo '0.144.3'");
   await script('npm', `if [ "$2" = @anthropic-ai/claude-code ]; then echo '"2.1.0"'; else echo '"0.144.3"'; fi`);
   await script('grok', "echo '{\"currentVersion\":\"0.2.99\",\"latestVersion\":\"0.2.99\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'");
-  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
   const ledgerPath = join(root, 'toolchain-ledger.json'); const record = (version) => ({ before_version: version, latest_version: version, operation_status: 'skipped', after_version: version, post_gate_status: 'success', reason_code: 'already_current', observed_at: '2026-07-13T14:00:00.000Z' });
   await writeFile(ledgerPath, JSON.stringify({ schema_version: 'dotagents.toolchain-update.v1', products: { 'claude-code': record('2.1.0'), 'codex-cli': record('0.144.3'), 'grok-build': record('0.2.99') } }), { mode: 0o600 });
   const { report, acknowledgements } = await scanV2WithAcknowledgements({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, collectionEnabled: true, toolchainLedgerPath: ledgerPath });
@@ -188,9 +189,9 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
 
 test('Caveat native diagnosticsのnested不整合をcompatibleへ偽装しない', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-caveat-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
-  const target = join(bin, 'caveat'); await writeFile(target, `#!/bin/sh\necho '${JSON.stringify(caveatDiagnostic('not_ready', 'ready'))}'\n`); await chmod(target, 0o755);
-  for (const name of ['throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(bin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); }
-  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  await writeCommandFixture(bin, 'caveat', `echo '${JSON.stringify(caveatDiagnostic('not_ready', 'ready'))}'`);
+  for (const name of ['throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) await writeCommandFixture(bin, name, 'exit 1');
+  const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
   const report = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
   assert.deepEqual(report.products.caveat.checks, [{ check_id: 'native_diagnostics', status: 'unverified', reason_code: 'native_diagnostics_schema' }]);
   assert.notEqual(report.products.caveat.compatibility_status, 'compatible');
@@ -198,10 +199,10 @@ test('Caveat native diagnosticsのnested不整合をcompatibleへ偽装しない
 
 test('Grokのalphaや文字列推測、CLI registry失敗をpassへ丸めない', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-grok-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
-  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  const script = (name, body) => writeCommandFixture(bin, name, body);
   for (const command of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp', 'claude', 'codex']) await script(command, 'exit 1');
   await script('npm', 'exit 1'); await script('grok', "echo '{\"currentVersion\":\"0.2.0\",\"latestVersion\":\"0.2.1\",\"updateAvailable\":true,\"installer\":\"native\",\"channel\":\"alpha\",\"autoUpdate\":true,\"error\":null}'");
-  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
   const report = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, toolchainLedgerPath: join(root, 'missing-toolchain-ledger.json') });
   assert.doesNotThrow(() => validateReportV2(report));
   assert.deepEqual(report.products['grok-build'].checks[0], { check_id: 'stable_update', status: 'unverified', reason_code: 'grok_update_schema' });
@@ -211,15 +212,15 @@ test('Grokのalphaや文字列推測、CLI registry失敗をpassへ丸めない'
 
 test('Grokの旧snake_case JSONはstableでも契約違反として拒否する', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-grok-snake-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
-  await writeFile(join(bin, 'grok'), "#!/bin/sh\necho '{\"channel\":\"stable\",\"current_version\":\"0.2.0\",\"latest_version\":\"0.2.0\",\"update_available\":false}'\n"); await chmod(join(bin, 'grok'), 0o755);
-  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  await writeCommandFixture(bin, 'grok', "echo '{\"channel\":\"stable\",\"current_version\":\"0.2.0\",\"latest_version\":\"0.2.0\",\"update_available\":false}'");
+  const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
   const report = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
   assert.equal(report.products['grok-build'].checks[0].status, 'unverified');
 });
 
 test('optionalなGrok未導入は現行profileの非対象として報告する', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-grok-optional-missing-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
-  const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 0123456789abcdef0123456789abcdef01234567\n'); await chmod(git, 0o755);
+  await writeCommandFixture(bin, 'git', 'echo 0123456789abcdef0123456789abcdef01234567');
   const previous = process.env.PATH; process.env.PATH = bin; t.after(() => { process.env.PATH = previous; });
   const report = await scanV2({ host: { id: 'test-host', profile: 'server' }, cwd: root, arch: 'x64', platform: 'linux', toolchainLedgerPath: join(root, 'missing-toolchain-ledger.json') });
   const product = report.products['grok-build'];
@@ -231,13 +232,12 @@ test('optionalなGrok未導入は現行profileの非対象として報告する'
 
 test('toolchain scannerはregistry schema drift・downgrade・Grok flag不整合をfail closedにする', { concurrency: false }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-toolchain-contract-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
-  const script = async (name, body) => { const target = join(bin, name); await writeFile(target, `#!/bin/sh\n${body}`); await chmod(target, 0o755); };
+  const script = (name, body) => writeCommandFixture(bin, name, body);
   for (const command of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp']) await script(command, 'exit 1');
   await script('claude', "echo '2.2.0'"); await script('codex', "echo '0.144.3'");
   await script('npm', `if [ "$2" = @anthropic-ai/claude-code ]; then echo '"2.1.0"'; else echo '{"version":"0.144.3"}'; fi`);
-  const grokPath = join(bin, 'grok');
   await script('grok', "echo '{\"currentVersion\":\"0.2.2\",\"latestVersion\":\"0.2.1\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'");
-  const previousPath = process.env.PATH; const previousHome = process.env.HOME; process.env.PATH = `${bin}:${previousPath}`; process.env.HOME = root; t.after(() => { process.env.PATH = previousPath; process.env.HOME = previousHome; });
+  const previousPath = process.env.PATH; const previousHome = process.env.HOME; process.env.PATH = `${bin}${delimiter}${previousPath}`; process.env.HOME = root; t.after(() => { process.env.PATH = previousPath; process.env.HOME = previousHome; });
   const first = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
   assert.equal(first.products['claude-code'].latest_version, '2.1.0');
   assert.equal(first.products['claude-code'].update_status, 'unverified');
@@ -246,7 +246,7 @@ test('toolchain scannerはregistry schema drift・downgrade・Grok flag不整合
   assert.deepEqual(first.products['codex-cli'].checks[1], { check_id: 'npm_latest', status: 'unverified', reason_code: 'registry_unverified' });
   assert.deepEqual(first.products['grok-build'].checks[0], { check_id: 'stable_update', status: 'unverified', reason_code: 'downgrade_refused' });
 
-  await writeFile(grokPath, "#!/bin/sh\necho '{\"currentVersion\":\"0.2.0\",\"latestVersion\":\"0.2.1\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'\n");
+  await script('grok', "echo '{\"currentVersion\":\"0.2.0\",\"latestVersion\":\"0.2.1\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'");
   const second = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
   assert.deepEqual(second.products['grok-build'].checks[0], { check_id: 'stable_update', status: 'unverified', reason_code: 'grok_update_inconsistent' });
 });
@@ -255,8 +255,8 @@ test('collection有効時のgpt runtime snapshot失敗をdisabledへ丸めない
   const root = await mkdtemp(join(tmpdir(), 'factory-v2-gpt-runtime-')); const bin = join(root, 'bin'); await mkdir(bin); t.after(() => rm(root, { recursive: true, force: true }));
   const ids = ['version', 'state_schema', 'job_schema', 'migration', 'cdp', 'official_origin', 'auth', 'runtime_bridge', 'mcp_contract'];
   const diagnostic = { schema: 'gpt-connector.factory-diagnostics.v1', package_version: '0.2.0', overall: 'ready', diagnostic_schema: 'gpt-connector.diagnostics.v1', state: { schema: '1.0', migration: 'current' }, job: { schema: '1.0', migration: 'current' }, checks: ids.map((id) => ({ id, status: 'ready', reason: 'ready' })) };
-  const target = join(bin, 'gpt-connector'); await writeFile(target, `#!/bin/sh\nif [ "$1" = factory-diagnostics ]; then echo '${JSON.stringify(diagnostic)}'; else exit 1; fi\n`); await chmod(target, 0o755);
-  const previous = process.env.PATH; process.env.PATH = `${bin}:${previous}`; t.after(() => { process.env.PATH = previous; });
+  await writeCommandFixture(bin, 'gpt-connector', `if [ "$1" = factory-diagnostics ]; then echo '${JSON.stringify(diagnostic)}'; else exit 1; fi`);
+  const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
   const report = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, collectionEnabled: true });
   assert.ok(report.products['gpt-connector'].checks.some((item) => item.check_id === 'runtime_errors' && item.status === 'unverified' && item.reason_code === 'runtime_snapshot_unavailable'));
 });

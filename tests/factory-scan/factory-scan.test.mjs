@@ -4,11 +4,12 @@ import {
   chmod, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, posix, resolve } from 'node:path';
+import { delimiter, join, posix, resolve } from 'node:path';
 import process from 'node:process';
 import { test } from 'node:test';
 import { resolveWindowsCommand, run as runCommand } from '../../lib/factory/command.mjs';
 import { validateReport } from '../../lib/factory/contract.mjs';
+import { writeCommandFixture } from './command-fixture.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..', '..');
 const CLI = join(ROOT, 'bin', 'factory-scan.mjs');
@@ -38,9 +39,7 @@ async function sandbox(t) {
     config: join(root, 'config.json'),
     output: join(root, 'report.json'),
     async script(name, body) {
-      const path = join(bin, name);
-      await writeFile(path, `#!/bin/sh\n${body}`);
-      await chmod(path, 0o755);
+      await writeCommandFixture(bin, name, body);
     },
   };
 }
@@ -461,7 +460,7 @@ test('command出力上限とtimeoutは固定reasonで失敗し、生出力を返
   const box = await sandbox(t);
   await box.script('noisy', 'while :; do echo x; done');
   await box.script('slow', 'while :; do :; done');
-  const env = { ...process.env, PATH: `${box.bin}:${process.env.PATH}` };
+  const env = { ...process.env, PATH: `${box.bin}${delimiter}${process.env.PATH}` };
 
   const noisy = await runCommand('noisy', [], { env, maxOutputBytes: 128, timeoutMs: 1000 });
   assert.deepEqual({ reason: noisy.reason, stdout: noisy.stdout, stderr: noisy.stderr }, {
