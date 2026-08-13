@@ -13,10 +13,16 @@ trap 'rm -rf "$TMP"' EXIT
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
 mkdir -p "$HOME_DIR/.caveat/own" "$HOME_DIR/.local/bin" "$PROJECT/.spotter" "$PROJECT/.claude" "$BIN_DIR"
-for runtime in node python3 git; do
+for runtime in node git; do
   printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$runtime")" > "$BIN_DIR/$runtime"
   chmod +x "$BIN_DIR/$runtime"
 done
+PYTHON_RUNTIME=python3
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) PYTHON_RUNTIME=python ;;
+esac
+printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$PYTHON_RUNTIME")" > "$BIN_DIR/python3"
+chmod +x "$BIN_DIR/python3"
 git -C "$HOME_DIR/.caveat/own" init -q
 git -C "$HOME_DIR/.caveat/own" remote add origin 'git@github.com:kitepon-rgb/Caveat-Private.git'
 cat > "$PROJECT/.spotter/marker.json" <<EOF

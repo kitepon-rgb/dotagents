@@ -223,9 +223,8 @@ verify_factory_core() {
 
   if ! python3 - "$project_root" <<'PY'
 import json
-import os
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 root = Path(sys.argv[1])
 marker_path = root / ".spotter" / "marker.json"
@@ -246,7 +245,9 @@ command = context.get("command")
 if marker.get("markerVersion") != "2" or context.get("mode") != "throughline":
     print("FAIL: Spotter marker は markerVersion=2 / auditorContext.mode=throughline でない")
     raise SystemExit(1)
-if not isinstance(command, str) or not os.path.isabs(command):
+if not isinstance(command, str) or not (
+    PurePosixPath(command).is_absolute() or PureWindowsPath(command).is_absolute()
+):
     print("FAIL: Spotter Throughline connector の command が絶対パスでない")
     raise SystemExit(1)
 
