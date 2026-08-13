@@ -7,7 +7,9 @@ trap 'rm -rf "$tmp"' EXIT
 
 mkdir -p "$tmp/.codex/sessions/2026/07/17"
 
-python3 - "$repo" "$tmp/.codex/sessions/2026/07/17" <<'PY'
+python_bin=python3
+if [[ "${OS:-}" == "Windows_NT" ]]; then python_bin=python; fi
+"$python_bin" - "$repo" "$tmp/.codex/sessions/2026/07/17" <<'PY'
 import json
 import sys
 import tomllib

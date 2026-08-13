@@ -7,7 +7,11 @@ MDLINT := npx --yes markdownlint-cli2@0.23.0
 ifeq ($(OS),Windows_NT)
 PYTHON := python
 else
+ifeq ($(OS),Windows_NT)
+PYTHON := python
+else
 PYTHON := python3
+endif
 endif
 
 .PHONY: lint lint-sh lint-py lint-js lint-md lint-constitution lint-canon-migration canon-migration-gate lint-skills lint-hooks test-constitution test-install test-observer-hook-config test-observer-package test-update test-oracle test-factory-core test-factory-reporter test-factory-scan test-factory-wire test-orchestrate test-lattice-cutover ci help
