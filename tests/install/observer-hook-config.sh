@@ -218,12 +218,14 @@ if HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$RE
 then
   fail 'symlink archiveをrestoreした'
 fi
-chmod 644 "$restore_archive"
-if HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$restore_archive" >/dev/null 2>&1
-then
-  fail 'world-readable archiveをrestoreした'
+if [ "$POSIX_METADATA" = 1 ]; then
+  chmod 644 "$restore_archive"
+  if HOME="$RESTORE_HOME" "$ROOT/bin/apply-observer-hook-config.sh" --restore "$restore_archive" >/dev/null 2>&1
+  then
+    fail 'world-readable archiveをrestoreした'
+  fi
+  chmod 600 "$restore_archive"
 fi
-chmod 600 "$restore_archive"
 bad_archive="$RESTORE_HOME/Archives/dotagents-observer-hook-config-bad.tar.gz"
 printf '%s' 'not-a-backup' >"$bad_archive"
 chmod 600 "$bad_archive"
