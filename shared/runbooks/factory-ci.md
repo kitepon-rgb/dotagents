@@ -11,7 +11,13 @@
   commandを並列実行する。OSごとの役割分散はしない。対応OSを限定する製品は、製品契約に
   従って対象環境だけを選び、非対応環境を成功扱いしない。
 - 製品repoは`kitepon/dotagents/.github/workflows/factory-full-ci.yml@main`を呼び、製品自身の
-  full commandだけを渡す。独自runner登録・OS matrix・役割分散・capacity・fallbackは作らない。
+  dependency commandとfull commandだけを渡す。独自runner登録・OS matrix・役割分散・capacity・
+  fallbackは作らない。
+- Markdownファイルだけの変更はLinux 1環境の文書確認だけを行い、4環境fullを実行しない。
+  Markdown以外を1つでも含む変更、tag、手動実行は製品変更として扱い、対象全環境でfullを行う。
+- 製品変更のjobはcheckout・依存導入・製品full testを別stepにして、所要時間をGitHub Actions上で
+  そのまま比較できるようにする。依存キャッシュは先に作らない。実測で依存導入が支配的だと確認
+  できた製品に限り、そのpackage managerの標準キャッシュを使う。
 - 共通workflowは実行環境の論理CPU数を`FACTORY_CI_JOBS`として渡す。製品の標準test runnerが
   自身の並列度を決め、工場側は製品固有の並列flagを強制しない。
 - runnerに必要な標準toolchainを常備し、個人用PATHや特殊な端末状態を前提にしない。runnerが
@@ -36,8 +42,12 @@ jobs:
     uses: kitepon/dotagents/.github/workflows/factory-full-ci.yml@main
     with:
       environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'all' }}
+      dependency-command: PRODUCT_DEPENDENCY_COMMAND
+      documentation-command: PRODUCT_DOCUMENTATION_COMMAND
       full-command: PRODUCT_FULL_COMMAND
 ```
+
+依存導入がない製品と、固有の文書確認を持たない製品は、対応する任意inputを省略する。
 
 製品または試験の失敗は製品repoで原因を特定する。runnerや共通workflowの問題はdotagentsで直し、
 製品へ独自のCI基盤を追加しない。
