@@ -9,6 +9,10 @@ CLI_DIR="$(mktemp -d)"
 trap 'rm -rf "$HOME_FIXTURE" "$CLI_DIR"' EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
+PYTHON_BIN="$(command -v python3 || command -v python)" || fail 'Python runtimeがありません'
+printf '#!/usr/bin/env bash\nexec "%s" "$@"\n' "$PYTHON_BIN" >"$CLI_DIR/python3"
+chmod 755 "$CLI_DIR/python3"
+export PATH="$CLI_DIR:$PATH"
 file_stat() {
   python3 - "$1" "$2" <<'PY'
 import os

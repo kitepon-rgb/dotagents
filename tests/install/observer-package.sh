@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+PYTHON_BIN="$(command -v python3 || command -v python)" || { echo 'Python runtimeがありません' >&2; exit 1; }
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OBSERVER_REPO="${OBSERVER_REPO:-$ROOT/../Observer}"
 WORK="$(mktemp -d)"
@@ -62,7 +64,7 @@ fi
 
 product_source="$PREFIX/lib/node_modules/@quolu/observer/src/product-diagnostics.mjs"
 cp "$product_source" "$WORK/product-diagnostics.mjs"
-python3 - "$product_source" <<'PY'
+"$PYTHON_BIN" - "$product_source" <<'PY'
 import sys
 from pathlib import Path
 
