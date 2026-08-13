@@ -5,6 +5,7 @@ import { chmod, link, lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, tr
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 
 export const ROOT = resolve(import.meta.dirname, "..", "..");
 export const CONTROL_LIB = join(ROOT, "lib", "orchestrate", "control-record.mjs");
@@ -12,7 +13,7 @@ export const ORCHESTRATE_BIN = join(ROOT, "bin", "orchestrate-run.mjs");
 export const OWNER_SCHEMA = "dotagents.orchestration-lock-owner.v1";
 export const MiB = 1024 * 1024;
 
-export const loadControl = () => import(CONTROL_LIB);
+export const loadControl = () => import(pathToFileURL(CONTROL_LIB).href);
 export const makeTempDir = (prefix = "orchestrate-test-") => mkdtemp(join(tmpdir(), prefix));
 export const cleanupDir = (dir) => rm(dir, { recursive: true, force: true });
 
