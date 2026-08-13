@@ -58,7 +58,13 @@ print(json.dumps({"schema":"observer.parent_stop_hook_verification.v1","provider
 PY
 chmod 755 "$CLI_DIR/observer-hook-config"
 OBSERVER_CLI="$CLI_DIR/observer-hook-config"
-case "$(uname -s)" in MINGW*|MSYS*) OBSERVER_CLI="$(cygpath -w "$OBSERVER_CLI")" ;; esac
+case "$(uname -s)" in
+  MINGW*|MSYS*)
+    mv "$OBSERVER_CLI" "$OBSERVER_CLI.py"
+    printf '@echo off\r\n"%s" "%%~dp0observer-hook-config.py" %%*\r\n' "$(cygpath -w "$PYTHON_BIN")" >"$CLI_DIR/observer-hook-config.cmd"
+    OBSERVER_CLI="$(cygpath -w "$CLI_DIR/observer-hook-config.cmd")"
+    ;;
+esac
 
 mkdir -p "$HOME_FIXTURE/.claude" "$HOME_FIXTURE/.codex"
 cat >"$HOME_FIXTURE/.claude/settings.json" <<'EOF'
