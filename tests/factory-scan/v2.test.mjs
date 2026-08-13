@@ -2,11 +2,19 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { delimiter, join, resolve } from 'node:path';
 import process from 'node:process';
 import { projectGptConnectorFactory, scanV2, scanV2WithAcknowledgements, V2_PRODUCT_IDS } from '../../lib/factory/v2.mjs';
 import { validateReportV2 } from '../../lib/factory/contract.mjs';
+import { run as runCommand } from '../../lib/factory/command.mjs';
 import { writeCommandFixture } from './command-fixture.mjs';
+
+const ROOT = resolve(import.meta.dirname, '..', '..');
+
+async function assertRevisionCommand() {
+  const result = await runCommand('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT });
+  assert.equal(result.ok, true, JSON.stringify({ reason: result.reason, code: result.code, error: result.error?.code }));
+}
 
 test('v2 product集合はOracleを含まず固定12製品', () => {
   assert.deepEqual(V2_PRODUCT_IDS, ['caveat', 'throughline', 'spotter', 'codegraph', 'markitdown', 'gpt-connector', 'aiterm-mcp', 'codex-sidecar', 'servermanager', 'claude-code', 'codex-cli', 'grok-build']);
@@ -150,6 +158,7 @@ test('v2 scannerは公開CLIとnative diagnosticsだけで固定12製品をfull 
   await script('npm', `if [ "$2" = @anthropic-ai/claude-code ]; then echo '"2.1.0"'; else echo '"0.144.3"'; fi`);
   await script('grok', "echo '{\"currentVersion\":\"0.2.99\",\"latestVersion\":\"0.2.99\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'");
   const previous = process.env.PATH; process.env.PATH = `${bin}${delimiter}${previous}`; t.after(() => { process.env.PATH = previous; });
+  await assertRevisionCommand();
   const ledgerPath = join(root, 'toolchain-ledger.json'); const record = (version) => ({ before_version: version, latest_version: version, operation_status: 'skipped', after_version: version, post_gate_status: 'success', reason_code: 'already_current', observed_at: '2026-07-13T14:00:00.000Z' });
   await writeFile(ledgerPath, JSON.stringify({ schema_version: 'dotagents.toolchain-update.v1', products: { 'claude-code': record('2.1.0'), 'codex-cli': record('0.144.3'), 'grok-build': record('0.2.99') } }), { mode: 0o600 });
   const { report, acknowledgements } = await scanV2WithAcknowledgements({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform, collectionEnabled: true, toolchainLedgerPath: ledgerPath });
@@ -238,6 +247,7 @@ test('toolchain scannerはregistry schema drift・downgrade・Grok flag不整合
   await script('npm', `if [ "$2" = @anthropic-ai/claude-code ]; then echo '"2.1.0"'; else echo '{"version":"0.144.3"}'; fi`);
   await script('grok', "echo '{\"currentVersion\":\"0.2.2\",\"latestVersion\":\"0.2.1\",\"updateAvailable\":false,\"installer\":\"internal\",\"channel\":\"stable\",\"autoUpdate\":null,\"error\":null}'");
   const previousPath = process.env.PATH; const previousHome = process.env.HOME; process.env.PATH = `${bin}${delimiter}${previousPath}`; process.env.HOME = root; t.after(() => { process.env.PATH = previousPath; process.env.HOME = previousHome; });
+  await assertRevisionCommand();
   const first = await scanV2({ host: { id: 'test-host', profile: process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl' }, cwd: root, arch: 'x64', platform: process.platform });
   assert.equal(first.products['claude-code'].latest_version, '2.1.0');
   assert.equal(first.products['claude-code'].update_status, 'unverified');
