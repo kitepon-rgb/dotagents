@@ -13,7 +13,7 @@ const ROOT = resolve(import.meta.dirname, '..', '..');
 
 async function assertRevisionCommand() {
   const result = await runCommand('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT });
-  assert.equal(result.ok, true, JSON.stringify({ reason: result.reason, code: result.code, error: result.error?.code }));
+  assert.equal(result.ok, true, JSON.stringify({ reason: result.reason, code: result.code, error: result.error?.code, stderr: result.stderr }));
 }
 
 test('v2 product集合はOracleを含まず固定12製品', () => {
