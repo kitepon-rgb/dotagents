@@ -16,11 +16,27 @@ const roots = [];
 const CURRENT_PROFILE = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'windows-native' : 'wsl';
 async function sandbox(profile = 'mac', collection = false, reporting = false) { const root = await mkdtemp(join(tmpdir(), 'factory-reporter-scheduler-test-')); roots.push(root); const config = join(root, 'config.json'); const credential = join(root, 'credential'); await writeFile(credential, 'unit-test-token\n', { mode: 0o600 }); await writeFile(config, JSON.stringify({ schema_version: '1.0', host: { id: 'test-host', profile }, collection: { enabled: collection }, reporting: reporting ? { enabled: true, endpoint: 'http://127.0.0.1:1/api/factory/v4/reports', credential_file: credential } : { enabled: false } })); return { root, config, credential, state: join(root, 'state-home', 'dotagents', 'factory-reporter-v4') }; }
 function run(script, args, box, extraEnv = {}) { return new Promise((resolveRun) => { const env = { ...process.env, HOME: box.root, USERPROFILE: box.root, LOCALAPPDATA: join(box.root, 'local-app-data'), XDG_CONFIG_HOME: join(box.root, 'config-home'), XDG_STATE_HOME: join(box.root, 'state-home'), ...extraEnv }; if (process.platform === 'win32' && extraEnv.PATH) env.PATH = `${extraEnv.PATH}${delimiter}${process.env.PATH}`; const child = spawn(process.execPath, [script, ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] }); let stdout = ''; let stderr = ''; child.stdout.on('data', (chunk) => { stdout += chunk; }); child.stderr.on('data', (chunk) => { stderr += chunk; }); child.on('close', (code) => { let json = null; for (const line of stdout.trim().split(/\r?\n/u).reverse()) { try { json = JSON.parse(line); break; } catch {} } resolveRun({ code, stderr, json }); }); }); }
+async function fixtureCommand(directory, name, body) {
+  const file = join(directory, name);
+  await writeFile(file, `#!/bin/sh\n${body}\n`);
+  await chmod(file, 0o755);
+  if (process.platform !== 'win32') return file;
+  const packageDir = join(directory, 'node_modules', 'factory-test-fixtures');
+  await mkdir(packageDir, { recursive: true });
+  await writeFile(join(packageDir, `${name}.mjs`), `
+import { spawnSync } from 'node:child_process';
+import { join, resolve } from 'node:path';
+const result = spawnSync(join(process.env.ProgramFiles, 'Git', 'bin', 'sh.exe'), [resolve(import.meta.dirname, '..', '..', '${name}'), ...process.argv.slice(2)], { env: process.env, stdio: 'inherit' });
+process.exit(result.status ?? 1);
+`);
+  await writeFile(`${file}.cmd`, `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n  SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n  SET "_prog=node"\r\n  SET PATHEXT=%PATHEXT:;.JS;=;%\r\n)\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%dp0%\\node_modules\\factory-test-fixtures\\${name}.mjs" %*\r\n`);
+  return file;
+}
 async function writeRunnerLock(box, pid, nonce = '00000000-0000-4000-8000-000000000001') { await mkdir(box.state, { recursive: true }); const path = join(box.state, `schedule.lock.${nonce}.owner`); await writeFile(path, `${JSON.stringify({ schema_version: 'dotagents.factory-scheduler-lock.v1', nonce, pid, acquired_at: new Date().toISOString() })}\n`, { mode: 0o600 }); return path; }
 async function v7FixtureBin(box) {
   const bin = join(box.root, 'v7-bin'); await mkdir(bin);
-  for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(bin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); }
-  const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755);
+  for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) await fixtureCommand(bin, name, 'exit 1');
+  await fixtureCommand(bin, 'git', 'echo 1234567');
   return bin;
 }
 after(async () => { for (const root of roots) await rm(root, { recursive: true, force: true }); });
@@ -104,16 +120,16 @@ test('runnerはlaunchd/cron最小PATHでもuser binとnpm globalの製品CLIを�
   const npmGlobalBin = join(box.root, '.npm-global', 'bin');
   await mkdir(localBin, { recursive: true });
   await mkdir(npmGlobalBin, { recursive: true });
-  const caveat = join(npmGlobalBin, 'caveat'); await writeFile(caveat, '#!/bin/sh\nexit 1\n'); await chmod(caveat, 0o755);
-  for (const name of ['throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(localBin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); }
-  const git = join(localBin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755);
+  await fixtureCommand(npmGlobalBin, 'caveat', 'exit 1');
+  for (const name of ['throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'codegraph', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) await fixtureCommand(localBin, name, 'exit 1');
+  await fixtureCommand(localBin, 'git', 'echo 1234567');
   const minimalRun = await run(RUNNER, ['--config', box.config], box, { PATH: '/usr/bin:/bin:/usr/sbin:/sbin' });
   assert.equal(minimalRun.code, 0, minimalRun.stderr);
   const report = JSON.parse(await readFile(join(box.state, 'latest-report.json'), 'utf8'));
   assert.notEqual(report.products.caveat.presence_status, 'missing');
   const override = join(box.root, 'override-bin');
   await mkdir(override);
-  const fake = join(override, 'caveat'); await writeFile(fake, '#!/bin/sh\nexit 7\n'); await chmod(fake, 0o755);
+  await fixtureCommand(override, 'caveat', 'exit 7');
   const overrideRun = await run(RUNNER, ['--config', box.config], box, { PATH: `${override}:/usr/bin:/bin:/usr/sbin:/sbin` });
   assert.equal(overrideRun.code, 0, overrideRun.stderr);
   const overrideReport = JSON.parse(await readFile(join(box.state, 'latest-report.json'), 'utf8'));
@@ -123,13 +139,13 @@ test('runnerは原子的owner contenderの死んだPIDだけを掃除して再�
 test('runnerはowner完成後の固有hard-link公開とnonce一致cleanupで共有lock削除を避ける', async () => { const source = await readFile(RUNNER, 'utf8'); assert.match(source, /await link\(temporary, published\)/); assert.match(source, /current\?\.nonce === nonce/); assert.match(source, /schedule\\\.lock\\\.\[0-9a-f-\]\{36\}\\\.owner/); assert.doesNotMatch(source, /\.reclaim|oldEnough|mtimeMs/); });
 test('runnerは既存POSIX stateのgroup/other permissionを0700へ矯正する', async () => { const box = await sandbox(CURRENT_PROFILE, true); await chmod(await mkdir(box.state, { recursive: true }).then(() => box.state), 0o755); await writeRunnerLock(box, process.pid); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.equal((await stat(box.state)).mode & 0o777, 0o700); });
 test('v4 runnerはstate symlink先へscan artifactを書かない', async () => { const box = await sandbox(CURRENT_PROFILE, true); const target = join(box.root, 'symlink-target'); await mkdir(target); await mkdir(join(box.root, 'state-home', 'dotagents'), { recursive: true }); await symlink(target, box.state); const result = await run(RUNNER, ['--config', box.config], box); assert.equal(result.code, 1); assert.match(result.stderr, /symlink/); assert.deepEqual(await readdir(target), []); });
-test('通常runはcomponent healthをexitへ変換せず、post-updateだけがdefault-deny gateを適用する', async () => { const box = await sandbox(CURRENT_PROFILE, true, false); const bin = join(box.root, 'bin'); await mkdir(bin); for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(bin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); } const lattice = join(bin, 'lattice'); await writeFile(lattice, `#!/bin/sh
+test('通常runはcomponent healthをexitへ変換せず、post-updateだけがdefault-deny gateを適用する', async () => { const box = await sandbox(CURRENT_PROFILE, true, false); const bin = join(box.root, 'bin'); await mkdir(bin); for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) await fixtureCommand(bin, name, 'exit 1'); await fixtureCommand(bin, 'lattice', `
 if [ "$1" = --version ]; then echo 0.7.0
 elif [ "$1" = factory-diagnostics ]; then echo '{"schema":"lattice.native_factory_diagnostics.v1","product":"lattice","version":"0.7.0","overall":"ok","checks":[{"id":"package_version","status":"ok","detail":"0.7.0"},{"id":"node_runtime","status":"ok","detail":"ready"},{"id":"cli_surface","status":"ok","detail":"ready"},{"id":"mcp_entry","status":"ok","detail":"ready"},{"id":"sensor_attribution","status":"ok","detail":"ready"}]}'
 elif [ "$1" = runtime-errors ]; then echo '{"schema":"lattice.runtime_errors.v1","product":"lattice","version":"0.7.0","state_schema_version":"1.0","cursor":{"high_watermark":0,"acknowledged_through":0,"next":0},"runtime_errors":[],"resolutions":[],"diagnostics":{"collection":"enabled","status":"ready","total_count":0,"pending_count":0,"truncated":false}}'
 else exit 1; fi
-`); await chmod(lattice, 0o755); const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755); const normal = await run(RUNNER, ['--config', box.config], box, { PATH: bin }); assert.equal(normal.code, 0, normal.stderr); const result = await run(RUNNER, ['--config', box.config, '--post-update'], box, { PATH: bin }); assert.equal(result.code, 1); assert.deepEqual(result.json, { ok: false, post_gate_status: 'failed', failed_checks: CURRENT_PROFILE === 'windows-native' ? 7 : 9 }); });
-test('finalize-updateは最終ledgerを再投影し、製品failure自体を配送失敗へ偽装しない', async () => { const box = await sandbox(CURRENT_PROFILE, false, false); const bin = join(box.root, 'bin'); await mkdir(bin); for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(bin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); } const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755); const result = await run(RUNNER, ['--config', box.config, '--finalize-update'], box, { PATH: bin }); assert.equal(result.code, 0, result.stderr); assert.deepEqual(result.json, { ok: true, finalized: true }); await stat(join(box.state, 'latest-report.json')); });
+`); await fixtureCommand(bin, 'git', 'echo 1234567'); const normal = await run(RUNNER, ['--config', box.config], box, { PATH: bin }); assert.equal(normal.code, 0, normal.stderr); const result = await run(RUNNER, ['--config', box.config, '--post-update'], box, { PATH: bin }); assert.equal(result.code, 1); assert.deepEqual(result.json, { ok: false, post_gate_status: 'failed', failed_checks: CURRENT_PROFILE === 'windows-native' ? 7 : 9 }); });
+test('finalize-updateは最終ledgerを再投影し、製品failure自体を配送失敗へ偽装しない', async () => { const box = await sandbox(CURRENT_PROFILE, false, false); const bin = join(box.root, 'bin'); await mkdir(bin); for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) await fixtureCommand(bin, name, 'exit 1'); await fixtureCommand(bin, 'git', 'echo 1234567'); const result = await run(RUNNER, ['--config', box.config, '--finalize-update'], box, { PATH: bin }); assert.equal(result.code, 0, result.stderr); assert.deepEqual(result.json, { ok: true, finalized: true }); await stat(join(box.state, 'latest-report.json')); });
 test('v7 finalize-updateはBugHub acceptedかつ今回report_id一致時だけdelivery receiptを原子的に作る', async () => {
   const token = '11111111-1111-4111-8111-111111111111';
   const cases = [
@@ -175,8 +191,8 @@ test('finalize-updateはpending台帳をenqueue前に拒否しnetworkへ送ら�
     const address = server.address();
     await writeFile(box.config, JSON.stringify({ schema_version: '1.0', host: { id: 'test-host', profile: CURRENT_PROFILE }, collection: { enabled: false }, reporting: { enabled: true, endpoint: `http://127.0.0.1:${address.port}/api/factory/v2/reports`, credential_file: box.credential } }));
     const bin = join(box.root, 'bin'); await mkdir(bin);
-    for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) { const file = join(bin, name); await writeFile(file, '#!/bin/sh\nexit 1\n'); await chmod(file, 0o755); }
-    const git = join(bin, 'git'); await writeFile(git, '#!/bin/sh\necho 1234567\n'); await chmod(git, 0o755);
+    for (const name of ['caveat', 'throughline', 'spotter', 'codex-sidecar', 'gpt-connector', 'lattice', 'markitdown', 'aiterm-mcp', 'claude', 'codex', 'npm', 'grok']) await fixtureCommand(bin, name, 'exit 1');
+    await fixtureCommand(bin, 'git', 'echo 1234567');
     const ledgerDirectory = join(box.root, 'state-home', 'agents-update'); await mkdir(ledgerDirectory, { recursive: true });
     const pending = { before_version: null, latest_version: null, operation_status: 'success', after_version: null, post_gate_status: 'pending', reason_code: 'updated', observed_at: '2026-07-13T14:00:00.000Z' };
     await writeFile(join(ledgerDirectory, 'toolchain-ledger.json'), JSON.stringify({ schema_version: 'dotagents.toolchain-update.v1', products: { 'claude-code': pending, 'codex-cli': pending, 'grok-build': pending } }), { mode: 0o600 });
