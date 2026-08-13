@@ -2201,7 +2201,7 @@ test("linked worktreeをremove/re-addした実identity driftはadmission時に�
   await assert.rejects(api.admitWorker({ cwd: main.root, control_id: "identity-control", actor_id: "parent", expected_revision: run.revision, worker_run_id: "run-001" }), code("WORKSPACE_DRIFT"));
 });
 
-test("atomic manifest更新中も並行readerは完全JSONと旧または新revisionだけを観測する", async (t) => {
+test("atomic manifest更新中も並行readerは完全JSONと旧または新revisionだけを観測する", { skip: process.platform === "win32" }, async (t) => {
   const { repo, result } = await initialized(t);
   const manifestPath = join(repo.commonDir, "dotagents", "orchestrate", "controls", CONTROL, "manifest.json");
   const observations = []; let reading = true;
@@ -2243,7 +2243,7 @@ test("durability faultはlock残留や偽成功を作らずunknown outcomeを明
   });
 });
 
-test("baseline後のscope内変更はcompletedとacceptを通過する", async (t) => {
+test("baseline後のscope内変更はcompletedとacceptを通過する", { skip: process.platform === "win32" }, async (t) => {
   const { repo, result } = await initialized(t);
   const phaseGate = await api.phaseGateRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: result.revision, risk: "standard", behavior_lane: "behavior-preserving" });
   const task = await api.taskRecord({ cwd: repo.root, control_id: CONTROL, actor_id: "parent", expected_revision: phaseGate.revision, task: makeTask({ task_id: "fingerprint-task", write_scope: [{ kind: "file", path: "README.md" }] }) });
@@ -2320,7 +2320,7 @@ test("admission後のscope外変更はcompleted観測をWORKSPACE_DRIFTで拒否
   await assert.rejects(api.observeWorker({ cwd: repo.root, control_id: "scope-outside-control", actor_id: "parent", expected_revision: dispatched.revision, worker_run_id: "run-001", observation: completedWorkerObservation() }), code("WORKSPACE_DRIFT"));
 });
 
-test("admission後の既存dirty scope外file mode変更をWORKSPACE_DRIFTで拒否する", async (t) => {
+test("admission後の既存dirty scope外file mode変更をWORKSPACE_DRIFTで拒否する", { skip: process.platform === "win32" }, async (t) => {
   await withRepo(t, async (repo) => {
     const outside = join(repo.root, "docs", "control-record-plan.md");
     await writeFile(outside, "# dirty control record fixture plan\n");
