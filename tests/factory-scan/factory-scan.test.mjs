@@ -140,7 +140,7 @@ fi`);
   assert.equal(Object.keys(report.products).length, 9);
   assert.equal(report.products.codegraph.presence_status, 'not_applicable');
   assert.deepEqual(report.products.codegraph.checks, []);
-  assert.equal(report.products.markitdown.checks[0].status, 'pass');
+  assert.equal(report.products.markitdown.checks[0].status, 'pass', JSON.stringify(report.products.markitdown));
   assert.equal(report.products.oracle.checks[0].status, 'pass');
   assert.equal(report.products.caveat.installed_version, '1.2.3');
   assert.equal(report.products.caveat.state_schema_version, '3');
@@ -162,7 +162,7 @@ fi`);
     report.reporter.dotagents_revision,
     execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim(),
   );
-  assert.equal((await stat(box.output)).mode & 0o777, 0o600);
+  if (process.platform !== 'win32') assert.equal((await stat(box.output)).mode & 0o777, 0o600);
 });
 
 test('--oracle-retiredはOracle CLIを実行せずv1最終not_applicable snapshotを生成する', async (t) => {
