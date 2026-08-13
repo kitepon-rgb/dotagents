@@ -104,8 +104,8 @@ home, hook, state_root = map(Path, sys.argv[1:])
 for provider, path in (("claude", home / ".claude/settings.json"), ("codex", home / ".codex/hooks.json")):
     data = json.load(open(path))
     assert any("/other/keep" in str(entry) for entry in data["hooks"]["Stop"])
-    command = f"{hook} --provider {provider} --state-root {state_root}"
-    count = sum(1 for entry in data["hooks"]["Stop"] for item in (entry.get("hooks", []) if provider == "claude" else [entry]) if isinstance(item, dict) and item.get("command") == command)
+    command = f"{hook} --provider {provider} --state-root {state_root}".replace("\\", "/")
+    count = sum(1 for entry in data["hooks"]["Stop"] for item in (entry.get("hooks", []) if provider == "claude" else [entry]) if isinstance(item, dict) and item.get("command", "").replace("\\", "/") == command)
     assert count == 1
     assert "/old/state" not in str(data)
 PY
@@ -115,8 +115,9 @@ archive_path="$(find "$HOME_FIXTURE/Archives" -name '*.tar.gz' -print -quit)"
 python3 - "$archive_path" <<'PY' || fail 'backup modeが0600でない'
 import stat
 import sys
+import os
 from pathlib import Path
-raise SystemExit(0 if stat.S_IMODE(Path(sys.argv[1]).stat().st_mode) == 0o600 else 1)
+raise SystemExit(0 if os.name == "nt" or stat.S_IMODE(Path(sys.argv[1]).stat().st_mode) == 0o600 else 1)
 PY
 idempotent="$(HOME="$HOME_FIXTURE" OBSERVER_HOOK_CONFIG_BIN="$OBSERVER_CLI" "$ROOT/bin/apply-observer-hook-config.sh" --apply --observer-hook "$HOOK" --state-root "$STATE_ROOT")"
 printf '%s' "$idempotent" | grep -Fq '変更なし' || fail '二回目applyが冪等でない'
@@ -130,8 +131,8 @@ claude, codex, hook, state_root = sys.argv[1:]
 data = json.load(open(claude))
 json.dump(data, open(claude, "w", encoding="utf-8"), separators=(",", ":"))
 data = json.load(open(codex))
-command = f"{hook} --provider codex --state-root {state_root}"
-data["hooks"]["Stop"] = [entry for entry in data["hooks"]["Stop"] if entry.get("command") != command]
+command = f"{hook} --provider codex --state-root {state_root}".replace("\\", "/")
+data["hooks"]["Stop"] = [entry for entry in data["hooks"]["Stop"] if entry.get("command", "").replace("\\", "/") != command]
 json.dump(data, open(codex, "w", encoding="utf-8"), separators=(",", ":"))
 PY
 saved_claude="$(cat "$HOME_FIXTURE/.claude/settings.json")"
