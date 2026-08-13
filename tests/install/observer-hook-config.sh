@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+case "$(uname -s)" in MINGW*|MSYS*) export MSYS=winsymlinks:nativestrict ;; esac
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # 呼出元Codexの一時CODEX_HOMEを継承せず、各fixtureのHOME配下だけを検証する。
 unset CODEX_HOME
