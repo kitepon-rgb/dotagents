@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+# WSL一撃展開の順序、冪等cron、fresh delivery receiptを隔離fixtureで検証する。
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SOURCE="$ROOT/bin/setup-wsl-factory.sh"
+[ -x "$SOURCE" ] || { echo "FAIL: WSL一撃展開スクリプトがない: $SOURCE" >&2; exit 1; }
+
+FIXTURE="$(mktemp -d)"
+HOME_DIR="$FIXTURE/home"
+FIXTURE_ROOT="$FIXTURE/repo"
+STUB_BIN="$FIXTURE/bin"
+CALLS="$FIXTURE/calls.log"
+CRONTAB="$FIXTURE/crontab"
+trap 'rm -rf "$FIXTURE"' EXIT
+mkdir -p "$HOME_DIR" "$FIXTURE_ROOT/bin" "$FIXTURE_ROOT/lib/factory" "$STUB_BIN"
+cp "$SOURCE" "$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
+cp "$ROOT/lib/factory/delivery-receipt.mjs" "$FIXTURE_ROOT/lib/factory/delivery-receipt.mjs"
+chmod +x "$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
+
+fail() { echo "FAIL: $*" >&2; exit 1; }
+
+cat >"$FIXTURE_ROOT/install.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'install %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+mkdir -p "$HOME/.local/bin"
+ln -sfn "$DOTAGENTS_SETUP_TEST_ROOT/bin/setup-wsl-factory.sh" "$HOME/.local/bin/setup-wsl-factory"
+EOF
+cat >"$FIXTURE_ROOT/bin/apply-codex-config.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'apply-codex-config %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+mkdir -p "$HOME/.codex"
+printf '{}\n' >"$HOME/.codex/hooks.json"
+EOF
+cat >"$FIXTURE_ROOT/bin/verify-install.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'verify-install %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+printf 'verify-install: OK\n'
+EOF
+cat >"$FIXTURE_ROOT/bin/configure-windows-wsl-ssh.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'configure-windows-wsl-ssh %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
+cat >"$FIXTURE_ROOT/bin/agents-update.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+state="$HOME/.local/state/dotagents/factory-reporter-v7"
+log_dir="$HOME/.local/state/agents-update"
+mkdir -p "$state" "$log_dir"
+sequence_file="$state/fixture-sequence"
+sequence=0
+[ ! -f "$sequence_file" ] || sequence="$(cat "$sequence_file")"
+sequence=$((sequence + 1))
+printf '%s\n' "$sequence" >"$sequence_file"
+report_id="fixture-report-$sequence"
+printf '{"schema_version":"7.0","report_id":"%s"}\n' "$report_id" >"$state/latest-report.json"
+printf '{"schema":"dotagents.factory-delivery-receipt.v1","report_id":"%s","batch_token":"%s"}\n' \
+  "$report_id" "$AGENTS_UPDATE_BATCH_TOKEN" >"$state/delivery-receipt.json"
+{
+  printf 'agents-update batch-token: %s\n' "$AGENTS_UPDATE_BATCH_TOKEN"
+  printf 'agents-update end: fixture\n'
+} >>"$log_dir/agents-update.log"
+printf 'agents-update %s\n' "$AGENTS_UPDATE_BATCH_TOKEN" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
+chmod +x "$FIXTURE_ROOT/install.sh" "$FIXTURE_ROOT/bin/"*.sh
+
+cat >"$STUB_BIN/sudo" <<'EOF'
+#!/usr/bin/env bash
+set -e
+[ "${1:-}" != -n ] || shift
+exec "$@"
+EOF
+cat >"$STUB_BIN/docker" <<'EOF'
+#!/usr/bin/env bash
+[ "${1:-}" = info ]
+EOF
+cat >"$STUB_BIN/gh" <<'EOF'
+#!/usr/bin/env bash
+[ "${1:-} ${2:-}" = 'auth status' ]
+EOF
+cat >"$STUB_BIN/systemctl" <<'EOF'
+#!/usr/bin/env bash
+printf 'systemctl %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
+cat >"$STUB_BIN/crontab" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [ "${1:-}" = -l ]; then
+  [ -f "$DOTAGENTS_SETUP_TEST_CRONTAB" ] || exit 1
+  cat "$DOTAGENTS_SETUP_TEST_CRONTAB"
+else
+  cp "$1" "$DOTAGENTS_SETUP_TEST_CRONTAB"
+fi
+EOF
+cat >"$STUB_BIN/lattice" <<'EOF'
+#!/usr/bin/env bash
+printf 'lattice %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
+cat >"$STUB_BIN/spotter" <<'EOF'
+#!/usr/bin/env bash
+printf 'spotter %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
+cat >"$STUB_BIN/caveat" <<'EOF'
+#!/usr/bin/env bash
+set -e
+printf 'caveat %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+mkdir -p "$HOME/.caveat/own/.git"
+EOF
+cat >"$STUB_BIN/claude" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+state="$HOME/.fixture-claude-mcp"
+if [ "${1:-} ${2:-}" = 'mcp get' ]; then
+  grep -Fqx "$3" "$state" 2>/dev/null || exit 1
+  printf '%s:\n  Scope: User config\n  Status: ✔ Connected\n' "$3"
+elif [ "${1:-} ${2:-}" = 'mcp remove' ]; then
+  exit 0
+elif [ "${1:-} ${2:-}" = 'mcp add' ]; then
+  name=''
+  shift 2
+  while [ "$#" -gt 0 ]; do
+    case "$1" in --scope) shift 2 ;; --) shift; break ;; *) name="$1"; shift ;; esac
+  done
+  printf '%s\n' "$name" >>"$state"
+  printf 'claude-mcp-add %s %s\n' "$name" "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+else
+  exit 0
+fi
+EOF
+cat >"$STUB_BIN/codex" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+state="$HOME/.fixture-codex-mcp"
+if [ "${1:-} ${2:-}" = 'mcp get' ]; then
+  grep -Fqx "$3" "$state" 2>/dev/null || exit 1
+  command_name="$(awk -F= -v name="$3" '$1 == name { print $2 }' "$state.commands")"
+  printf '{"name":"%s","enabled":true,"transport":{"type":"stdio","command":"%s","args":[]}}\n' "$3" "$command_name"
+elif [ "${1:-} ${2:-}" = 'mcp remove' ]; then
+  exit 0
+elif [ "${1:-} ${2:-}" = 'mcp add' ]; then
+  name="$3"
+  command_name="$5"
+  printf '%s\n' "$name" >>"$state"
+  printf '%s=%s\n' "$name" "$command_name" >>"$state.commands"
+  printf 'codex-mcp-add %s %s\n' "$name" "$command_name" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+else
+  exit 0
+fi
+EOF
+for command_name in npm uv throughline markitdown gpt-connector aiterm-mcp codex-sidecar-mcp peertable-client; do
+  cat >"$STUB_BIN/$command_name" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+done
+chmod +x "$STUB_BIN/"*
+
+mkdir -p "$HOME_DIR/.config/dotagents"
+printf '%s\n' '.fixture-user-ignore' >"$HOME_DIR/.gitignore_global"
+printf '%s\n' '{"reporting":{"enabled":true,"endpoint":"https://example.invalid/api/factory/v7/reports"}}' \
+  >"$HOME_DIR/.config/dotagents/factory-reporter.json"
+{
+  printf '%s\n' "17 * * * * /usr/bin/node /fixture/factory-reporter # dotagents-factory-reporter"
+  printf '%s\n' "0 4 * * 1 '$HOME_DIR/.local/bin/agents-update' # legacy-dotagents-update"
+  printf '%s\n' "30 3 * * * '$HOME_DIR/.local/bin/update-npm-globals.sh'"
+} >"$CRONTAB"
+
+export HOME="$HOME_DIR"
+export PATH="$STUB_BIN:/usr/bin:/bin"
+export DOTAGENTS_SETUP_WSL_FORCE=1
+export DOTAGENTS_SETUP_TEST_CALLS="$CALLS"
+export DOTAGENTS_SETUP_TEST_CRONTAB="$CRONTAB"
+export DOTAGENTS_SETUP_TEST_ROOT="$FIXTURE_ROOT"
+
+"$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
+"$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
+
+[ "$(grep -Fxc '.fixture-user-ignore' "$HOME_DIR/.gitignore_global")" -eq 1 ] \
+  || fail '既存global gitignoreを保持しない'
+[ "$(grep -Fxc '.DS_Store' "$HOME_DIR/.gitignore_global")" -eq 1 ] \
+  || fail '.DS_Storeを冪等に補完しない'
+[ "$(grep -Fc '# dotagents-agents-update-wsl' "$CRONTAB")" -eq 1 ] || fail 'cron管理行が1件でない'
+grep -Fq '# dotagents-factory-reporter' "$CRONTAB" || fail '既存のfactory reporter cronを保持しない'
+if grep -E 'agents-update|update-npm-globals' "$CRONTAB" | grep -Fv 'setup-wsl-factory' >/dev/null; then
+  fail '旧update cronを残した'
+fi
+find "$HOME_DIR/.local/state/dotagents/backups" -name 'crontab-pre-wsl-setup-*' -type f | grep -q . \
+  || fail '変更前crontabをbackupしない'
+grep -Fq "0 2 * * * '$HOME_DIR/.local/bin/setup-wsl-factory' --scheduled-update" "$CRONTAB" \
+  || fail '毎日2:00のscheduled updateを登録しない'
+grep -Fq 'apply-codex-config --apply' "$CALLS" || fail 'Codex設定を適用しない'
+grep -Fq 'install --profile official' "$CALLS" || fail 'official profileを展開しない'
+grep -Fq 'lattice hooks install --host claude' "$CALLS" || fail 'Claude Lattice hookを配線しない'
+grep -Fq 'lattice hooks install --host codex' "$CALLS" || fail 'Codex Lattice hookを配線しない'
+grep -Fq 'spotter install -y' "$CALLS" || fail 'Spotterを配線しない'
+grep -Fq 'configure-windows-wsl-ssh --apply' "$CALLS" \
+  || fail 'Spotter後の正規hooksをWindowsへ再投影しない'
+spotter_line="$(grep -n -m1 -F 'spotter install -y' "$CALLS" | cut -d: -f1)"
+projection_line="$(grep -n -m1 -F 'configure-windows-wsl-ssh --apply' "$CALLS" | cut -d: -f1)"
+[ "$projection_line" -gt "$spotter_line" ] || fail 'Windows hooks再投影がSpotterより前にある'
+grep -Fq 'verify-install --profile official' "$CALLS" || fail '最終verifyを実行しない'
+[ "$(grep -Fc 'claude-mcp-add gpt_connector gpt-connector-mcp' "$CALLS")" -eq 1 ] \
+  || fail 'Claude gpt_connectorを一度だけ補完しない'
+[ "$(grep -Fc 'codex-mcp-add codex-sidecar codex-sidecar-mcp' "$CALLS")" -eq 1 ] \
+  || fail 'Codex sidecarを一度だけ補完しない'
+[ "$(grep -Fc 'agents-update ' "$CALLS")" -eq 2 ] || fail '各setup runでfresh updateを1回だけ実行しない'
+
+latest_report="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).report_id)' \
+  "$HOME_DIR/.local/state/dotagents/factory-reporter-v7/latest-report.json")"
+[ "$latest_report" = fixture-report-2 ] || fail '2回目のfresh reportが作られていない'
+
+minimal_output="$(env -i \
+  HOME="$HOME_DIR" \
+  PATH="$STUB_BIN:/usr/bin:/bin" \
+  DOTAGENTS_SETUP_WSL_FORCE=1 \
+  DOTAGENTS_SETUP_TEST_CALLS="$CALLS" \
+  "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" --scheduled-update)"
+grep -Fq '"delivery_acknowledged":true' <<<"$minimal_output" \
+  || fail 'cron最小環境でdelivery receiptを確認しない'
+latest_report="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).report_id)' \
+  "$HOME_DIR/.local/state/dotagents/factory-reporter-v7/latest-report.json")"
+[ "$latest_report" = fixture-report-3 ] || fail 'cron最小環境でfresh reportが作られていない'
+
+if "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" --unknown >/dev/null 2>&1; then
+  fail '未知引数を受理した'
+fi
+
+echo 'setup-wsl-factory install test: OK'
