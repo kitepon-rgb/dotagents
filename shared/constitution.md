@@ -73,6 +73,7 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 - **基準パス・フォルダ構成の変更（プロジェクトの移動・改名・削除）はオーナーの明示承認必須**。文書に正規パスが書いてあっても実環境を黙って動かす免罪符にしない＝食い違いは報告して裁定を仰ぐ。実行前に目的・影響・戻し方を申告、実行後に移動一覧を報告する。**端末限定の裁定を共有ドキュメントへ一般化して書かない**（他端末に波及する）。
 - **並行エージェント作業中の commit は必ず pathspec 明示**（対象だけ `git add` して直後に `git status` 確認、または `git commit -- <paths>`）。裸の `git commit` は他エージェントが stage した変更を巻き込む。
 - **複数行のコミットメッセージは `-F <file>` で渡す**。PTY へのインライン複数行 `-m` は引用崩れする。
+- **自作repositoryのownerは公開段階で分ける**。プロトタイプ段階は個人account `quolu` に置き、オーナーが正式リリースと扱う時点で `kitepon` Organizationへ移管する。正式リリース後の正規repositoryは `kitepon/<repository>` とする。
 - 通常のpushを完遂に含めるのは、project正典または恒久裁定がpush既定を定めるrepoだけ。それ以外のrepoでのpushと、force系・履歴改変・共有ブランチの巻き戻しは、ユーザーの明示指示時のみ行う。
 - push既定を認定できるのは、(a)適用中のrepo直下のAGENTS.md／CLAUDE.mdとそのhost展開import（直接・再帰の`@import`だけ。Markdownリンクは含まない）が通常pushを既定と明記している場合、(b)dotagents憲章が恒久裁定として既定を与える工場管理repo（dotagentsと自作コア11製品の正規repo。第三者製品・基盤toolchainは含まない）である場合、(c)現在のrequest／campaignで未撤回の、対象repoと通常pushを既定とする旨を明記したユーザー指示がある場合、だけとする。一回限りのpush指示は既定でなく明示指示として扱い、認定できない・矛盾する時はpushしない。
 - **publish・本番deployの対象commitは、所有repoの既定ブランチの祖先だけとする**。祖先でない成果は先に既定ブランチへ着地させてから出す（実行前に `git merge-base --is-ancestor <commit> origin/<既定>` で確認）。着地しないまま出すと、そのブランチが取り残された時点で公開物が後続releaseから消え、統合契約だけが存在しない面を指し続ける。
