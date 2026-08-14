@@ -138,7 +138,7 @@ for f in "$HERE/bin"/*.mjs; do
 done
 
 # Windows Codex Desktop から WSL2 projectを開く経路を、Windows native projectと分離する。
-# 非WSL hostではSKIP。WSLではWindows公開鍵とSSH configだけを冪等に配線する。
+# 非WSL hostではSKIP。WSLではSSH配線に加え、WSL正規hooksをWindows Desktopへ投影する。
 "$HERE/bin/configure-windows-wsl-ssh.sh" --apply
 
 echo "done."

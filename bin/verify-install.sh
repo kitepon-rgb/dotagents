@@ -751,7 +751,7 @@ then
   fail=1
 fi
 
-# WSL2ではWindows Codex DesktopがWindows native設定を持ち込まない独立SSH経路も配布契約に含む。
+# WSL2では独立SSH経路と、Windows Codex Desktopへ投影したWSL正規hooksを配布契約に含む。
 # 判定と検証はinstallerと同じ正規入口へ集約し、非WSL hostではその入口自身がSKIPする。
 if ! "$REPO/bin/configure-windows-wsl-ssh.sh" --check; then
   fail=1

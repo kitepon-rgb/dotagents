@@ -7,32 +7,20 @@ import test from 'node:test';
 const ROOT = resolve(import.meta.dirname, '..', '..');
 const SCHEDULER = join(ROOT, 'bin', 'agents-update-scheduler.mjs');
 
-test('Windows agents-update schedulerはdry-run既定で専用task・UTF-16 XML・rollbackを示す', async () => {
-  const result = spawnSync(process.execPath, [SCHEDULER, 'install', ...(process.platform === 'win32' ? [] : ['--sid', 'S-1-5-21-100-200-300-400'])], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr);
-  const value = JSON.parse(result.stdout);
-  assert.equal(value.dry_run, true);
-  assert.equal(value.task_name, 'dotagents-agents-update');
-  assert.match(value.artifact_content, /encoding="UTF-16"/u);
-  assert.match(value.artifact_content, /<LogonType>InteractiveToken<\/LogonType>/u);
-  assert.match(value.artifact_content, process.platform === 'win32' ? /<UserId>S-1-[0-9-]+<\/UserId>/u : /<UserId>S-1-5-21-100-200-300-400<\/UserId>/u);
-  assert.match(value.artifact_content, /agents-update-schedule-runner/u);
-  assert.match(value.rollback, /uninstall --apply/u);
+test('Windows native agents-update schedulerの再導入を拒否する', async () => {
+  for (const args of [['install'], ['install', '--apply'], ['install', '--sid', 'S-1-5-21-100-200-300-400']]) {
+    const result = spawnSync(process.execPath, [SCHEDULER, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /廃止済み/u);
+    assert.match(result.stderr, /WSL2側/u);
+  }
   const source = await readFile(SCHEDULER, 'utf8');
-  assert.match(source, /windowsTaskExists\(TASK_NAME\)/u);
-  assert.match(source, /登録後の読み戻し/u);
-  assert.match(source, /writeWindowsTaskXml/u);
   assert.doesNotMatch(source, /Start-ScheduledTask/u);
 });
 
-test('SIDはinstall dry-runだけが受理し、status/uninstallはSID照会なしで動く', () => {
+test('statusとuninstallは残し、SID付き照会を拒否する', () => {
   const status = spawnSync(process.execPath, [SCHEDULER, 'status'], { encoding: 'utf8' });
   assert.equal(status.status, 0, status.stderr);
-  const apply = spawnSync(process.execPath, [SCHEDULER, 'install', '--apply', '--sid', 'S-1-5-21-100-200-300-400'], { encoding: 'utf8' });
-  assert.equal(apply.status, 1); assert.match(apply.stderr, /install --dry-run専用/u);
-  const noSid = spawnSync(process.execPath, [SCHEDULER, 'install'], { encoding: 'utf8' });
-  if (process.platform === 'win32') assert.equal(noSid.status, 0, noSid.stderr);
-  else { assert.equal(noSid.status, 1); assert.match(noSid.stderr, /--sidが必要/u); }
   const statusSid = spawnSync(process.execPath, [SCHEDULER, 'status', '--sid', 'S-1-5-21-100-200-300-400'], { encoding: 'utf8' }); assert.equal(statusSid.status, 1); assert.match(statusSid.stderr, /install --dry-run専用/u);
   const uninstall = spawnSync(process.execPath, [SCHEDULER, 'uninstall'], { encoding: 'utf8' }); assert.equal(uninstall.status, 0, uninstall.stderr);
   const uninstallSid = spawnSync(process.execPath, [SCHEDULER, 'uninstall', '--sid', 'S-1-5-21-100-200-300-400'], { encoding: 'utf8' }); assert.equal(uninstallSid.status, 1); assert.match(uninstallSid.stderr, /install --dry-run専用/u);

@@ -160,7 +160,7 @@ Codex全対応の工程状態はLattice storeが正本で、現役4 host・5入�
   git config --global init.defaultBranch main   # 新規リポが master で生まれるのを防ぐ（2026-07-04 実被弾）
   printf '.DS_Store\n' > ~/.gitignore_global && git config --global core.excludesfile ~/.gitignore_global  # macOS ノイズを全リポで抑止
   ```
-- **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境）。`install.sh` は WSL の `$HOME` に symlink を張り、Windowsの既存 `~/.ssh/id_ed25519.pub` を WSLへ登録して、Windows `~/.ssh/config` にdotagents管理の `fox-wsl`（`localhost:2222`）を冪等生成する。Windows Codex DesktopではWindows側projectを流用せず、このSSH host上の `/home/kite/Developer/dotagents` を開く。cron の起動は下の「自動アップデート」節参照
+- **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境）。`install.sh` は WSL の `$HOME` に symlink を張り、Windowsの既存 `~/.ssh/id_ed25519.pub` を WSLへ登録して、Windows `~/.ssh/config` にdotagents管理の `fox-wsl`（`localhost:2222`）を冪等生成する。同時にWSLの `~/.codex/hooks.json` をWindows Codex Desktopの `~/.codex/hooks.json` へ投影し、DesktopのWSL実行がWindows commandを `/bin/bash` へ渡す事故を防ぐ。Windows Codex DesktopではWindows側projectを流用せず、このSSH host上の `/home/kite/Developer/dotagents` を開く。cron の起動は下の「自動アップデート」節参照
 - **ランタイム**: node>=22＋corepack・docker・python3（`command -v node docker` で存在確認、`node --version` が v22+、`docker info` が通ること。**python3 だけは実行判定 `python3 -c "print(1)"` で確認**——Windows のストア偽エイリアスは存在チェックを通り、黙って exit 0 を返す〔罠DB `windows-python3-store-exit-0`〕）
 - **CLI（必須）**: 管理12製品はCaveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager／peertable。共通requiredは基礎8＋`peertable-client`、macOSではObserver、macOS 15+ Apple SiliconではAIShell、main-serverではServerManagerの公開readiness/revisionだけを検証する。他hostのServerManagerは`not_applicable`、AIShell/Observerは`unsupported`である。基盤toolchainのClaude Code・Codex CLIは別管理。独立CodegraphはPATHに存在してはならない。MarkItDownの正規更新面は`uv tool`。
 - **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する（委譲は当面 Codex 主で回る＝必須ではない）
@@ -273,7 +273,7 @@ launchctl bootstrap gui/$UID ~/Library/LaunchAgents/com.kite.agents-update.plist
 
 - **Linux / WSL2（cron）**: cron 稼働確認（WSL2: `sudo service cron start`＋`/etc/wsl.conf` の `[boot]` に `command = "service cron start"`）→ `crontab -e` に `0 4 * * 1 $HOME/.local/bin/agents-update`（端末が起動している時間帯に合わせる）
 
-- **Windows native（Task Scheduler）**: `agents-update-scheduler install --dry-run`で専用task `dotagents-agents-update` のUTF-16LE XMLとrollbackを確認する。実登録は目的・影響・戻し方を確認したH承認後の`--apply`だけ。解除は`agents-update-scheduler uninstall --apply`。本番taskの手動起動は受入batch tokenで行い、`agents-update end`、exit code、v7 report、BugHub delivery acknowledgementを確認する。
+- **Windows native**: `agents-update`の常設Task Schedulerは廃止済み。`agents-update`と`dotagents-agents-update`は無効または未登録を維持し、更新はWSL2側で行う。`agents-update-scheduler install`は再導入を明示拒否し、残存taskの確認と解除用に`status` / `uninstall`だけを残す。
 
 **Step 2 — 実走行で検証**（配線したつもりで一度も走らない、を防ぐ）:
 
