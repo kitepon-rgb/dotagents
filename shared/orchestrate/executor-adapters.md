@@ -105,8 +105,9 @@ strict Worker Report参照を要求し、`buildWorkerControlObservation`はcalle
 
 配布済みaitermの一次source（`dist/index.js`）に従い、`aitermAgentStartRequest`は
 `codex_agent`、`grok_agent`、`composer_agent`の実schemaへ、prompt、`cwd`、`session_name`、model、
-`agent_done`を投影する。Codexだけが対話TUIで`reasoning_effort`を受け、Grok/Composerは同値を
-起動前エラーにする実装のため、adapterも拒否する。起動後のopaque handleはControl契約と同じ
+`reasoning_effort`を投影する。managed completionはlauncherが常時有効化するため、存在しない`agent_done`
+tool引数を生成しない。対応modelとeffortはAitermが起動時のlive catalogへ照合し、
+不在・非対応を別modelへfallbackせず明示エラーにする。起動後のopaque handleはControl契約と同じ
 `session_id / agent_kind`だけで相関し、`workspace_cwd`はlaunch observationのmetadataとして分離する。
 別sessionへfollow-upしない。
 

@@ -1,4 +1,4 @@
-# 前提: GPT-5.6 世代（2026-07 時点）。defaults の正は docs/02_models.md
+# 前提: GPT-5.6世代（2026-08-14時点）。defaultsの正はdocs/02_models.md
 #
 # スキーマは codex-sidecar-core/dist/{config.js,presets.js,types.js,profiles.js} を実読して確認
 # （2026-07-11・/opt/homebrew/lib/node_modules/codex-sidecar-core）。USAGE.md 等の文書は端末に
@@ -32,8 +32,7 @@ presets:
   advisory:
     workflow: explore
     readonly: true
-    model: gpt-5.6-luna
-    model_reasoning_effort: low
+    # Luna×maxはsidecar schema外。Luna×lowへ落とさずdefaultsのTerra×mediumを使う。
     prompt: "Return concise Caveat hook advisory with concrete next steps."
   auditor:
     workflow: auditor

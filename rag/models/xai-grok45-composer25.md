@@ -12,6 +12,8 @@ confidence: 高（価格・context window・effort 対応は端末実測で裏�
 
 # xAI: Grok 4.5 / Composer 2.5
 
+> **旧世代snapshot（2026-08-14）**: 現行の配置とGrok 4.6再評価は[[xai-grok46.md]]を正とする。本書はGrok 4.5とComposer 2.5がliveだった時点の履歴として残す。
+
 ## grok-4.5
 
 2026-07-08 リリース。**本セッションで `~/.grok/models_cache.json`（端末実測・fetched_at 2026-07-10T00:27:19Z）から裏取り**:

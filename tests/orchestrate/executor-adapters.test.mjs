@@ -104,14 +104,15 @@ test("codex-native observationはboundedなagent状態とrouting/report/evidence
 
 test("aiterm requestは実tool schemaに従う同一sessionの対話packetだけを純粋に投影する", () => {
   const start = adapters.aitermAgentStartRequest({ agent_kind: "codex", prompt: "Implement the bounded adapter.", workspace_cwd: "/workspace/source", agent_done: true, model: "gpt-5.6-terra", reasoning_effort: "medium", session_name: "aiterm_agent_001" });
-  assert.deepEqual(start, { schema_version: "dotagents.aiterm.request.v1", operation_id: "codex_agent", tool_name: "codex_agent", arguments: { prompt: "Implement the bounded adapter.", cwd: "/workspace/source", agent_done: true, model: "gpt-5.6-terra", reasoning_effort: "medium", session_name: "aiterm_agent_001" } });
+  assert.deepEqual(start, { schema_version: "dotagents.aiterm.request.v1", operation_id: "codex_agent", tool_name: "codex_agent", arguments: { prompt: "Implement the bounded adapter.", cwd: "/workspace/source", model: "gpt-5.6-terra", reasoning_effort: "medium", session_name: "aiterm_agent_001" } });
   const handle = { session_id: "aiterm_agent_001", agent_kind: "codex" };
   assert.deepEqual(adapters.aitermFollowupRequest({ handle, task: "Run focused tests.", timeout: 120 }).arguments, { session_id: "aiterm_agent_001", text: "Run focused tests.", enter: true, wait: "agent_done", timeout: 120, screen: true, mark: false, force: false, rtk: false, raw: false });
   assert.deepEqual(adapters.aitermTimeoutRecoveryRequest({ handle }).arguments, { session_id: "aiterm_agent_001", wait: false, screen: true, full: false, raw: false, rtk: false, agent_transcript: false });
   assert.deepEqual(adapters.aitermKeyRequest({ handle, key: "C-c" }).arguments, { session_id: "aiterm_agent_001", key: "C-c" });
   assert.deepEqual(adapters.aitermCloseRequest({ handle }).arguments, { session_id: "aiterm_agent_001" });
   assert.deepEqual(adapters.aitermListRequest().arguments, {});
-  assert.throws(() => adapters.aitermAgentStartRequest({ agent_kind: "grok", prompt: "task", workspace_cwd: "/workspace/source", agent_done: true, reasoning_effort: "high" }), code("INVALID_SCHEMA"));
+  assert.deepEqual(adapters.aitermAgentStartRequest({ agent_kind: "grok", prompt: "task", workspace_cwd: "/workspace/source", agent_done: true, model: "grok-4.6", reasoning_effort: "high" }).arguments, { prompt: "task", cwd: "/workspace/source", model: "grok-4.6", reasoning_effort: "high" });
+  assert.deepEqual(adapters.aitermAgentStartRequest({ agent_kind: "composer", prompt: "task", workspace_cwd: "/workspace/source", agent_done: true, reasoning_effort: "medium" }).arguments, { prompt: "task", cwd: "/workspace/source", reasoning_effort: "medium" });
   assert.throws(() => adapters.aitermFollowupRequest({ handle, task: "task", timeout: 0 }), code("INVALID_SCHEMA"));
 });
 

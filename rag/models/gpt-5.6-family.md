@@ -11,7 +11,7 @@ source: https://developers.openai.com/api/docs/models/gpt-5.6-sol ／
         codex-darwin-arm64 バイナリの strings 実読（agent_roles.rs 由来のバリデーションメッセージ・
         AgentRoleToml 構造）
 audit_by: ベル配下 implementer（作業委譲・2026-07-11）
-fetched: 2026-07-10（前セッション一次取得）／2026-07-11（実装再検証）／2026-08-11（公式Web・Codex 0.147.0 実測）
+fetched: 2026-07-10（前セッション一次取得）／2026-07-11（実装再検証）／2026-08-11（Codex 0.147.0 実測）／2026-08-14（公式Web再取得）
 confidence: 高（GA・価格は公式Web、effort 段階は端末実測）〜中（ultra の内部委譲メカニズムは
   前セッション由来で今回未再実行）。claim ごとに below 明記。
 -->
@@ -28,34 +28,37 @@ confidence: 高（GA・価格は公式Web、effort 段階は端末実測）〜�
 | `gpt-5.6-terra` | 中位（balanced・everyday work 向け） | **$2 / $12** |
 | `gpt-5.6-luna` | 軽量（fast and affordable） | **$0.20 / $1.20** |
 
-2026-07-30 に OpenAI は Terra を20%、Lunaを80%値下げした。Sol は $5/$30 のまま。Codex と ChatGPT Work の subscription 価格・quota budget 自体は不変だが、Terra/Luna は消費 credit が減る。model catalog / pricing page の一部にはローンチ時の旧価格（Terra $2.5/$15、Luna $1/$6）が残っているため、日付が新しい公式価格改定記事を正とする。
+2026-08-14にOpenAIの各model pageを直接再取得し、Sol $5/$30、Terra $2/$12、Luna $0.20/$1.20を確認した。検索indexには旧価格（Terra $2.5/$15、Luna $1/$6）のsnippetが残るため、検索結果の要約ではなく開いた現行model pageを正とする。
 
 `gpt-5.6` は `gpt-5.6-sol` へ route される（2026-08-11 の OpenAI 公式 model page と model guidance で確認）。
 
-GA: 2026-07-09。コンテキストは API ≈1.05M（Sol/Terra）と Codex CLI 運用窓 372K の2系統（前セッション由来・本セッション未再検証）。
+GA: 2026-07-09。現行API model pageは3tierとも1,050,000 context、128,000 max output、knowledge cutoff 2026-02-16を掲示する。Codex CLIの実効contextは製品側catalogを別途確認する。
 
 ## Effort（reasoning level）
 
-**2026-08-11 に Codex CLI 0.147.0 の `codex debug models` で再確認**:
+APIとCodex CLIの語彙を分ける。
 
-| slug | 既定 effort | 対応 effort 段階 |
+| 面 | 既定 effort | 対応 effort 段階 |
 |---|---|---|
-| `gpt-5.6-sol` | **low** | low / medium / high / xhigh / max / ultra（6段階） |
-| `gpt-5.6-terra` | **medium** | low / medium / high / xhigh / max / ultra（6段階） |
-| `gpt-5.6-luna` | **medium** | low / medium / high / xhigh / max（**ultra が無い5段階**） |
+| OpenAI API（3tier共通） | **medium** | none / low / medium / high / xhigh / max |
+| Codex CLI 0.147.0 `gpt-5.6-sol` | **low**（当時のlive catalog実測） | low / medium / high / xhigh / max / ultra |
+| Codex CLI 0.147.0 `gpt-5.6-terra` | **medium** | low / medium / high / xhigh / max / ultra |
+| Codex CLI 0.147.0 `gpt-5.6-luna` | **medium** | low / medium / high / xhigh / max（ultraなし） |
 
-**発見（前セッション未言及・本セッションで確定）**: `gpt-5.6-luna` は `ultra` に対応しない。6段階あるのは Sol と Terra のみ。Luna の既定は low でなく **medium**。
+API公式はmediumを均衡点とする一方、Codex製品catalogは別の既定や`ultra`を持ちうる。子の実行は継承に依存せずmodel/effortを明示する。
 
 公式指針（一次: OpenAI Model guidance）:
 
 - `medium` を均衡点、`low` を latency 重視の起点にする。
 - `high` / `xhigh` は追加 reasoning が測定可能な品質差を出す時に使う。
 - `max` は最難関の品質優先 workload 向けで、`xhigh` と代表タスク上の品質・latency・cost を比較する。
-- `gpt-5.6-luna` は cost-sensitive / high-volume workload 向け。**Luna×max を仕様固定の局所 coding に置くのは dotagents の配置裁定であり、OpenAI の個別推奨ではない**。
+- `gpt-5.6-luna` はcost-sensitive / high-volume workload向け。
+
+**dotagents実測（一般化禁止）**: オーナーの実taskではLuna medium以下の成果がほぼ監査を通らず、再監査・手戻りの総費用が増えた。この観測から、dotagentsでLunaを使う場合はmaxだけとし、maxが過剰な軽作業はLunaのeffortを下げず別modelへ置く。これはOpenAI公式の個別推奨でも客観的な全task性能でもなく、ローカル実測に基づく運用判断である。
 
 ## ultra の正体
 
-**ultra = max 推論 ＋ proactive マルチエージェント自動委譲 ON**（一次: `core/src/client.rs` の Ultra→Max マッピング、`session/multi_agents.rs` の Ultra→Proactive。前セッション調査・本セッション未再実行、**確度: 中**）。
+`ultra`はAPIの`reasoning.effort`ではなくCodex harness側のmodeである。**ultra = max推論＋proactiveマルチエージェント自動委譲ON**（一次: `core/src/client.rs`のUltra→Max、`session/multi_agents.rs`のUltra→Proactive。前セッション調査・今回未再実行、確度中）。
 
 - `~/.codex/models_cache.json` の `gpt-5.6-sol`/`gpt-5.6-terra` の effort 説明文でも "Maximum reasoning with automatic task delegation" と ultra を明記（本セッション実測で裏付け）。
 - 高並列時の使用量急増につき公式警告あり（CLI v0.144.0 で導入。閾値「8スレッド」は前セッション由来で本セッション裏取り不能＝**確度: 低〜中**）。
@@ -89,7 +92,7 @@ codex-sidecar は端末 config の `model`/`model_provider`/`model_reasoning_eff
 
 ## 選定上の注意
 
-- 2026-08-11 の API 定価は Sol $5/$30、Terra $2/$12、Luna $0.20/$1.20。7月30日の改定前ページを current price として使わない。
+- 2026-08-14のAPI定価はSol $5/$30、Terra $2/$12、Luna $0.20/$1.20。検索snippetの旧価格をcurrent priceとして使わない。
 - 272K tokens を超える入力は request 全体が input 2倍・output 1.5倍になる。長大 context ではモデル単価だけで見積もらない。
 - provider 公表 benchmark は harness・token budget・比較価格が揃わないため、dotagents の配置表では横断順位を採用しない。代表的な repo task の成功率、総 token、所要時間、手戻りで判断する。
 - Artificial Analysis v4.1.1 では Luna×max=52、Terra×max=57、Sol×max=61。合成指数は広い思考力そのものではないが、Luna×max を局所実装候補として試す根拠にはなる。詳細は [[benchmark-snapshot-20260811.md]]。
