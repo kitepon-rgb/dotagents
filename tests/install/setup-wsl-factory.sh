@@ -16,6 +16,7 @@ trap 'rm -rf "$FIXTURE"' EXIT
 mkdir -p "$HOME_DIR" "$FIXTURE_ROOT/bin" "$FIXTURE_ROOT/lib/factory" "$STUB_BIN"
 cp "$SOURCE" "$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
 cp "$ROOT/lib/factory/delivery-receipt.mjs" "$FIXTURE_ROOT/lib/factory/delivery-receipt.mjs"
+cp "$ROOT/lib/factory/deployment-contract.mjs" "$FIXTURE_ROOT/lib/factory/deployment-contract.mjs"
 chmod +x "$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -54,7 +55,28 @@ sequence=0
 sequence=$((sequence + 1))
 printf '%s\n' "$sequence" >"$sequence_file"
 report_id="fixture-report-$sequence"
-printf '{"schema_version":"7.0","report_id":"%s"}\n' "$report_id" >"$state/latest-report.json"
+node - "$state/latest-report.json" "$report_id" <<'NODE'
+const fs = require('fs');
+const [output, reportId] = process.argv.slice(2);
+const required = [
+  'caveat', 'throughline', 'spotter', 'lattice', 'markitdown', 'gpt-connector',
+  'aiterm-mcp', 'codex-sidecar', 'peertable', 'claude-code', 'codex-cli', 'grok-build',
+];
+const products = Object.fromEntries(required.map((id) => [id, {
+  presence_status: 'installed', compatibility_status: 'compatible', checks: [],
+}]));
+products.servermanager = { presence_status: 'not_applicable', checks: [] };
+for (const id of ['aishell', 'observer']) products[id] = {
+  presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [],
+};
+if (process.env.DOTAGENTS_SETUP_TEST_BROKEN_PRODUCT) {
+  products[process.env.DOTAGENTS_SETUP_TEST_BROKEN_PRODUCT].presence_status = 'missing';
+}
+fs.writeFileSync(output, `${JSON.stringify({
+  schema_version: '7.0', report_id: reportId, host_profile: 'wsl',
+  platform: { os: 'linux', arch: 'x64' }, products,
+})}\n`);
+NODE
 printf '{"schema":"dotagents.factory-delivery-receipt.v1","report_id":"%s","batch_token":"%s"}\n' \
   "$report_id" "$AGENTS_UPDATE_BATCH_TOKEN" >"$state/delivery-receipt.json"
 {
@@ -218,9 +240,16 @@ minimal_output="$(env -i \
   "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" --scheduled-update)"
 grep -Fq '"delivery_acknowledged":true' <<<"$minimal_output" \
   || fail 'cron最小環境でdelivery receiptを確認しない'
+grep -Fq '"factory_products_checked":15' <<<"$minimal_output" \
+  || fail 'cron最小環境で全15製品を確認しない'
 latest_report="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).report_id)' \
   "$HOME_DIR/.local/state/dotagents/factory-reporter-v7/latest-report.json")"
 [ "$latest_report" = fixture-report-3 ] || fail 'cron最小環境でfresh reportが作られていない'
+
+if DOTAGENTS_SETUP_TEST_BROKEN_PRODUCT=caveat \
+  "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" --scheduled-update >/dev/null 2>&1; then
+  fail 'required製品欠落を成功扱いした'
+fi
 
 if "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" --unknown >/dev/null 2>&1; then
   fail '未知引数を受理した'
