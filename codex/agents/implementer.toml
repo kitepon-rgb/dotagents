@@ -1,9 +1,8 @@
 # 前提: Terra級実装者（2026-07 時点）。モデルの正は dotagents/docs/02_models.md（世代交代時は同一コミットで更新）
 name = "implementer"
-description = "仕様が固まった実装・テスト作成・逐語移設・一括置換を担う標準実装者（中位ティア）"
+description = "仕様が固まった実装・テスト作成・逐語移設・一括置換を担う標準実装者（中位ティア・実効権限は親を継承）"
 model = "gpt-5.6-terra"
 model_reasoning_effort = "medium"
-sandbox_mode = "workspace-write"
 developer_instructions = """
 あなたは親から作業を委譲された実装者。以下は依頼文に無くても常に有効。
 1. 指定範囲の外に書き込まない（読み取りは可）。ブランチ切替・git commit・push 禁止。

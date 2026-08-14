@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Codex 子セッションが指定 role の実効設定で起動したかを rollout JSONL から検証する。
-# 実作業はこの検証が green になってから follow-up task として渡す。
+# Codex Control 配下の書込み Worker が指定 role の実効設定で起動したかを rollout JSONL から検証する。
+# 書込み作業はこの検証が green になってから follow-up task として渡す。
 set -euo pipefail
 
 usage() {
@@ -29,7 +29,6 @@ repo="$(cd "$(dirname "$self")/.." && pwd)"
 role_file="$repo/codex/agents/$role.toml"
 sessions_dir="${CODEX_HOME:-$HOME/.codex}/sessions"
 max_age_seconds="${CODEX_AGENT_ROUTING_MAX_AGE_SECONDS:-300}"
-require_sandbox="${CODEX_AGENT_ROUTING_REQUIRE_SANDBOX:-0}"
 python_role_file="$role_file"
 python_sessions_dir="$sessions_dir"
 python_bin=python3
@@ -44,11 +43,6 @@ if command -v cygpath >/dev/null 2>&1 \
   python_sessions_dir="$(cygpath -w "$sessions_dir")"
 fi
 
-case "$require_sandbox" in
-  0|1) ;;
-  *) echo "FAIL: CODEX_AGENT_ROUTING_REQUIRE_SANDBOX は 0 または 1 で指定" >&2; exit 2 ;;
-esac
-
 if [ ! -f "$role_file" ]; then
   echo "FAIL: role 定義が不在: $role_file" >&2
   exit 1
@@ -58,7 +52,7 @@ if [ ! -d "$sessions_dir" ]; then
   exit 1
 fi
 
-PYTHONUTF8=1 MSYS2_ARG_CONV_EXCL='*' "$python_bin" - "$python_role_file" "$python_sessions_dir" "$role" "$agent_path" "$max_age_seconds" "$require_sandbox" <<'PY'
+PYTHONUTF8=1 MSYS2_ARG_CONV_EXCL='*' "$python_bin" - "$python_role_file" "$python_sessions_dir" "$role" "$agent_path" "$max_age_seconds" <<'PY'
 import json
 import re
 import sys
@@ -74,8 +68,6 @@ try:
 except ValueError:
     print(f"FAIL: CODEX_AGENT_ROUTING_MAX_AGE_SECONDS は整数で指定: {sys.argv[5]}", file=sys.stderr)
     raise SystemExit(2)
-require_sandbox = sys.argv[6] == "1"
-
 role_text = role_file.read_text(encoding="utf-8")
 
 
@@ -99,7 +91,6 @@ role_config = {
     "description": parse_quoted("description"),
     "model": parse_quoted("model"),
     "model_reasoning_effort": parse_quoted("model_reasoning_effort"),
-    "sandbox_mode": parse_quoted("sandbox_mode"),
     "developer_instructions": parse_multiline("developer_instructions"),
 }
 
@@ -120,9 +111,6 @@ expected = {
     "model": role_config.get("model"),
     "effort": role_config.get("model_reasoning_effort"),
 }
-expected_sandbox = role_config.get("sandbox_mode")
-
-
 def first_session_meta(path: Path):
     try:
         with path.open(encoding="utf-8") as handle:
@@ -220,23 +208,12 @@ instructions_applied = expected_instructions in developer_text
 if not instructions_applied:
     errors.append("developer_instructions: role TOML の本文が developer message に存在しない")
 
-sandbox_mismatch = expected_sandbox is not None and actual.get("sandbox") != expected_sandbox
-if sandbox_mismatch and require_sandbox:
-    errors.append(
-        f"sandbox: expected={expected_sandbox!r}, actual={actual.get('sandbox')!r}"
-    )
-
 print(f"rollout: {rollout_path}")
 print(f"agent_path: {expected_agent_path}")
 for key in ("agent_role", "model", "effort", "sandbox"):
     print(f"{key}: {actual.get(key)}")
 print(f"developer_instructions: {'applied' if instructions_applied else 'missing'}")
-if sandbox_mismatch and not require_sandbox:
-    print(
-        f"WARN: sandbox は role TOML と不一致（expected={expected_sandbox!r}, "
-        f"actual={actual.get('sandbox')!r}）。routing 判定とは分離",
-        file=sys.stderr,
-    )
+print("sandbox_contract: observed-only（実効権限は親から継承）")
 
 if errors:
     for error in errors:
@@ -244,5 +221,5 @@ if errors:
     print("routing-check: FAIL — 実作業を渡さず、この子を停止すること", file=sys.stderr)
     raise SystemExit(1)
 
-print("routing-check: OK — role/model/effort/developer_instructions の実効設定を確認")
+print("routing-check: OK — role/model/effort/developer_instructions の実効設定を確認（sandbox は観測のみ）")
 PY

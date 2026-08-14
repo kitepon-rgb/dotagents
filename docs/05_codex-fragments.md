@@ -51,15 +51,17 @@ tool_namespace = "agents"
 - `features list` が `multi_agent_v2 = false` を表示しても、Sol/Terra のモデルカタログ指定が V2 を選ぶため、上記断片は必要。
 - `fork_turns` の V2 既定は `all`。これは full-history fork となり、`agent_type / model / reasoning_effort` を指定すると起動前に拒否される。custom role の spawn は必ず `fork_turns = "none"` を明示する。
 - `task_name` を role selector として使わない。`agent_type = "implementer"` のように明示する。
-- 最初の message は routing smoke だけにし、本作業を渡さない。起動後に
+- Control配下の書込み Workerだけは最初の message を routing smoke に限定する。起動後に
   `verify-codex-agent-routing <role> <agent-path>` で `agent_role / model / effort /
-  developer_instructions` を照合し、green の時だけ follow-up task を渡す。sandbox は実効値を別表示し、
-  一致まで要求する時だけ `CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` を付ける。
+  developer_instructions` を照合し、green の時だけ follow-up task を渡す。通常のnative audit・
+  refuter・sorterはspawn時の任務をそのまま実行し、この事前gateを要求しない。
 - 現行 spawn 応答は実効 role/model/effort/sandbox を返さないため、上記スクリプトが rollout JSONL を読む。
 
-**未解決の上流バグ（2026-07-11）**: 0.144.1 は role config 適用後に親 turn の live
-permission profile を子へ再適用するため、custom agent の `sandbox_mode` を親 sandbox で上書きする（公式文書の「custom agent ごとに sandbox を override できる」と不一致）。role/model/effort 誤配線とは別論点なので既定の routing 判定からは分離し、
-`CODEX_AGENT_ROUTING_REQUIRE_SANDBOX=1` の時だけ差を FAIL にする。
+**実効権限の現行契約（2026-08-14 実測）**: custom agent の実効sandboxは親 turn の live
+permission profileを継承する。macOSでは`danger-full-access`、WSL2 Codex CLI 0.147.0では
+`workspace-write`を同じrefuterが継承した。role TOMLに強制不能な`sandbox_mode`を置かず、
+refuter / sorter の書込み禁止は行動契約として明示する。verifierは実効sandboxを観測表示するが、
+role別の期待値や警告を生成しない。
 
 グローバル `[agents]` の `max_threads` / `max_depth` は公開設定で、公式既定はそれぞれ `6` / `1`。
 通常は既定で足りるため明示しないが、必要なら user config または信頼済みproject configで設定できる。

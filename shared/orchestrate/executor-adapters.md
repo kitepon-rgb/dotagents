@@ -93,6 +93,8 @@ spawn packetは`agent_type`を必須にし、`fork_turns="none"`と固定のhand
 verification_ref`を持ち、そのcanonical payloadを`verification_digest`が拘束する。follow-up対象はreceiptの
 `agent_path`と一致しなければならない。host tool引数は
 実schemaどおり`target`へ同じpathを渡す。interrupt packetも既存の`agent_path`を`target`にする。
+このhandshakeとreceiptはControl配下の書込みWorkerだけの契約であり、通常のnative audit・refuter・
+sorterへ事前gateとして適用しない。
 
 `projectCodexNativeObservation`はagent path、状態（`created`、`running`、`completed`、`failed`、`unknown`、
 `interrupted`）、green routing receipt、report参照、evidence参照だけをboundedに投影する。Controlへ渡す
