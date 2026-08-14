@@ -6,7 +6,8 @@
 - [ ] `GF01`: Grok実効Hook面とAiterm完了経路を実測する。
 - [ ] `GF02`: dotagentsのGrok入口正典driftを最小同期する。
 - [ ] `GF03`: 観測結果を所有者別に監査し修理集合を凍結する。
-- [ ] `GF04`: SpotterのGrok envelope負系fixtureを現行codeへ固定する。
+- [ ] `GF04`: 所有repo別修理とControl gateのLattice revisionを確定する。
+- [ ] `GF04S`: SpotterのGrok envelope負系fixtureを現行codeへ固定する。
 - [ ] `GF04T`: ThroughlineのGrok envelope負系fixtureを現行codeへ固定する。
 - [ ] `GF04G`: Control safety_netを確定して製品修理を解錠する。
 - [ ] `GF04SR`: Spotterの非Claude envelopeを副作用前に非ブロック化する。
