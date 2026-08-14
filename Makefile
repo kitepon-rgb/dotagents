@@ -52,6 +52,7 @@ test-constitution: ## 共通憲法generatorの冪等性とdrift拒否
 
 test-install: ## 隔離 HOME の install/profile/config apply 検証
 	bash tests/install/clean-home.sh
+	bash tests/install/wsl-remote-ssh.sh
 
 test-observer-hook-config: ## 隔離 HOME のObserver parent Stop hook transaction検証
 	bash tests/install/observer-hook-config.sh
