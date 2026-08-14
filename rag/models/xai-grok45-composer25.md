@@ -47,11 +47,9 @@ Composer 2.5（2026-06-01 Grok Build 搭載・Kimi K2.5 基盤・Cursor 由来�
 
 ## aiterm 連携（`mcp__aiterm__grok_agent` / `composer_agent`）
 
-- grok/composer は**隔離 `GROK_HOME` ＋ OAuth のみ共有**という設計（一次: aiterm-mcp `core.js`、前セッション調査）。config 丸ごとコピー問題は無い。
-- 既知の齟齬（前セッション調査・本セッション未再検証）:
-  1. `grok_agent` の `--model grok-build` はハードコードされた stale 値（ライブカタログ = 本セッション実測の `~/.grok/models_cache.json` にも `grok-build` という slug は存在しない。現行は `grok-4.5`）。
-  2. aiterm の `reasoning_effort` enum は grok の非対応段階（`xhigh`/`max`）を許容してしまう（grok 側の実際の対応段階は `low`/`medium`/`high` のみ、本セッション実測で確認）。
-  3. → aiterm プロジェクト側への改修依頼リストとして [[../../docs/archive/plan_gpt56-rewiring.md]] に4件登録済み。
+- grok/composer は通常の`HOME`/`GROK_HOME`、project/user/local設定、MCP、plugin、skill、permission/trustを共有する。OAuthだけを共有する隔離環境ではない（現行aiterm契約）。
+- `grok_agent`の既定は`grok-4.5`、`composer_agent`の既定は`grok-composer-2.5-fast`。明示modelを含む可用性は起動時のlive catalogで照合され、不在時に別modelへfallbackしない。
+- `reasoning_effort`の可否と値はCLI/modelのlive catalogに従う。`write_scope=read-only`を指定したgrok/composerはCLI sandboxで書込みが強制禁止される。
 
 ## API と CLI 契約を混ぜない
 
