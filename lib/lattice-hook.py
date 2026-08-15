@@ -1,6 +1,7 @@
 """Lattice工程表をSessionStartへ案内するread-only共通ロジック。"""
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -9,6 +10,13 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
+
+
+HOOK_STATE_LIB = Path(__file__).resolve().parent / "orchestrate"
+if str(HOOK_STATE_LIB) not in sys.path:
+    sys.path.insert(0, str(HOOK_STATE_LIB))
+from hook_state import safe_exists, safe_read, safe_touch, safe_unlink, safe_write, state_dir
 
 
 CAPTURE_LIMIT = 64 * 1024
@@ -74,11 +82,11 @@ DISCOVERY_INVALID = "discovery_invalid"
 SESSION_CONTEXT_ABSENT = "session_context_absent"
 
 
-def emit(frontend, message):
+def emit(frontend, message, event="SessionStart"):
     if frontend == "codex":
         payload = {
             "hookSpecificOutput": {
-                "hookEventName": "SessionStart",
+                "hookEventName": event,
                 "additionalContext": message,
             }
         }
@@ -789,75 +797,151 @@ def status_message(root, status_value, independence=None):
     )
 
 
+def lattice_message(root):
+    """既存のLattice CLI呼び出しをすべてworker側で実行して案内文だけを返す。"""
+    lattice = executable("lattice")
+    if lattice is None:
+        return missing_cli_message()
+    context, context_reason = read_session_context(lattice, root)
+    if context is None and context_reason != SESSION_CONTEXT_ABSENT:
+        return status_unavailable_message(context_reason)
+    if context is not None:
+        state = context["status"]["state"]
+        if state in PROJECT_STATES_QUIET:
+            return None
+        if state in PROJECT_STATES_ERROR:
+            return discovery_unavailable_message(DISCOVERY_INVALID)
+        if context["todo"] is None:
+            return status_unavailable_message(STATUS_INVALID_RESPONSE)
+        return status_message(root, context["todo"], context["independence"]) if has_guidance(context["todo"]) else None
+    project_status, discovery_reason = read_project_status(lattice, root)
+    if project_status is None:
+        return discovery_unavailable_message(discovery_reason)
+    if project_status["state"] in PROJECT_STATES_QUIET:
+        return None
+    if project_status["state"] in PROJECT_STATES_ERROR:
+        return discovery_unavailable_message(DISCOVERY_INVALID)
+    status_value, reason = read_status(lattice, root)
+    if status_value is None:
+        return status_unavailable_message(reason)
+    return status_message(root, status_value) if has_guidance(status_value) else None
+
+
+def session_key(session_id):
+    return hashlib.sha256(session_id.encode("utf-8")).hexdigest()
+
+
+def relay_paths(session_id, root):
+    directory = state_dir()
+    if directory is None:
+        return None
+    repo = hashlib.sha256(str(root).encode("utf-8")).hexdigest()
+    stem = f"{session_key(session_id)}.{repo}.lattice-gantt"
+    return {name: os.path.join(directory, stem + suffix) for name, suffix in {
+        "pending": ".pending", "waiting": ".waiting", "result": ".result", "consumed": ".consumed",
+    }.items()}
+
+
+def gc_relay(directory):
+    try:
+        cutoff = time.time() - 7 * 24 * 60 * 60
+        for entry in os.scandir(directory):
+            if entry.name.endswith((".lattice-gantt.pending", ".lattice-gantt.waiting", ".lattice-gantt.result", ".lattice-gantt.consumed")) and entry.is_file(follow_symlinks=False) and entry.stat(follow_symlinks=False).st_mtime < cutoff:
+                safe_unlink(entry.path)
+    except OSError:
+        return
+
+
+def write_result(paths, message):
+    if not message:
+        return True
+    temporary = paths["result"] + ".tmp"
+    if not safe_write(temporary, message + "\n"):
+        return False
+    try:
+        os.replace(temporary, paths["result"])
+        return True
+    except OSError:
+        safe_unlink(temporary)
+        return False
+
+
+def worker(session_id, root_text):
+    try:
+        root = Path(root_text).resolve(strict=True)
+        paths = relay_paths(session_id, root)
+        if paths is None:
+            return
+        write_result(paths, lattice_message(root))
+        safe_unlink(paths["pending"])
+        safe_unlink(paths["waiting"])
+    except Exception:
+        return
+
+
+if __name__ == "__main__" and len(sys.argv) == 4 and sys.argv[1] == "--worker":
+    worker(sys.argv[2], sys.argv[3])
+
+
+def start_worker(session_id, root):
+    paths = relay_paths(session_id, root)
+    if paths is None:
+        return
+    gc_relay(os.path.dirname(paths["pending"]))
+    if any(safe_exists(paths[name]) for name in ("pending", "result", "consumed")) or not safe_touch(paths["pending"]):
+        return
+    kwargs = {"cwd": str(root), "stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL, "close_fds": True}
+    if os.name == "nt":
+        kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    else:
+        kwargs["start_new_session"] = True
+    try:
+        subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "--worker", session_id, str(root)], **kwargs)
+    except OSError:
+        write_result(paths, discovery_unavailable_message(STATUS_EXECUTION_FAILED))
+        safe_unlink(paths["pending"])
+
+
+def consume_relay(frontend, session_id, root):
+    paths = relay_paths(session_id, root)
+    if paths is None or safe_exists(paths["consumed"]):
+        return
+    if safe_exists(paths["result"]):
+        message = (safe_read(paths["result"]) or "").strip()
+        if safe_touch(paths["consumed"]):
+            safe_unlink(paths["result"])
+            safe_unlink(paths["waiting"])
+            if message:
+                emit(frontend, message, "UserPromptSubmit")
+        return
+    if safe_exists(paths["pending"]) and not safe_exists(paths["waiting"]) and safe_touch(paths["waiting"]):
+        emit(frontend, "INFO: Lattice工程表: status取得をバックグラウンドで実行中です。このINFOは依頼範囲を拡張しません。", "UserPromptSubmit")
+
+
 def main(frontend):
     if frontend not in {"claude", "codex"}:
         return
     if os.environ.get("DOTAGENTS_LATTICE_HOOK") == "off":
         return
-    if len(sys.argv) != 2 or sys.argv[1] != "session-start":
+    if len(sys.argv) != 2 or sys.argv[1] not in {"session-start", "user-prompt-submit"}:
         return
     try:
         raw = sys.stdin.buffer.read(CAPTURE_LIMIT + 1)
         if len(raw) > CAPTURE_LIMIT:
             return
         data = json.loads(raw.decode("utf-8", "strict"))
-        required = (data.get("session_id"), data.get("source"), data.get("cwd"))
+        required = (data.get("session_id"), data.get("cwd"))
         if not isinstance(data, dict) or not all(isinstance(value, str) and value for value in required):
-            return
-        if data["source"] not in {"startup", "clear"}:
             return
         root = git_root(data["cwd"])
         if root is None:
             return
-        lattice = executable("lattice")
-        if lattice is None:
-            emit(frontend, missing_cli_message())
+        if sys.argv[1] == "user-prompt-submit":
+            consume_relay(frontend, data["session_id"], root)
             return
-        # 統合入口（Lattice 0.14.0以降）はdiscoveryと工程状態と並列可否を1プロセスで返す。
-        # 旧2呼び出しは同じstoreを二重に読み、storeが育ったprojectでは実行枠を超えて
-        # 案内ごと捨てられていた。入口を持たないCLIだけ従来経路へ回る。
-        context, context_reason = read_session_context(lattice, root)
-        if context is None and context_reason != SESSION_CONTEXT_ABSENT:
-            emit(frontend, status_unavailable_message(context_reason))
+        if data.get("source") not in {"startup", "clear"}:
             return
-        if context is not None:
-            project_status = context["status"]
-            state = project_status["state"]
-            if state in PROJECT_STATES_QUIET:
-                return
-            if state in PROJECT_STATES_ERROR:
-                emit(frontend, discovery_unavailable_message(DISCOVERY_INVALID))
-                return
-            if context["todo"] is None:
-                emit(frontend, status_unavailable_message(STATUS_INVALID_RESPONSE))
-                return
-            # オーナー裁定: 空の現在地通知は無視を学習させるため、正常な空frontierでは沈黙する。
-            # ただし監査待ちが残っている間は「空」ではない（has_guidance）。
-            if not has_guidance(context["todo"]):
-                return
-            emit(frontend, status_message(root, context["todo"], context["independence"]))
-            return
-
-        # typed discovery: lattice status --json が接続判定の正本。.lattice/todoの
-        # ディレクトリ有無で早期判定しない（uninitialized/invalid/store ref変更を
-        # 区別できないため）。案内する工程が無いmissing/uninitializedは静かに終了し、
-        # ready/active_runだけ工程を読み、invalidと検証不能はfail-visibleにする。
-        project_status, discovery_reason = read_project_status(lattice, root)
-        if project_status is None:
-            emit(frontend, discovery_unavailable_message(discovery_reason))
-            return
-        state = project_status["state"]
-        if state in PROJECT_STATES_QUIET:
-            return
-        if state in PROJECT_STATES_ERROR:
-            emit(frontend, discovery_unavailable_message(DISCOVERY_INVALID))
-            return
-        status_value, reason = read_status(lattice, root)
-        if status_value is None:
-            emit(frontend, status_unavailable_message(reason))
-            return
-        if not has_guidance(status_value):
-            return
-        emit(frontend, status_message(root, status_value))
+        start_worker(data["session_id"], root)
+        return
     except Exception:
         return

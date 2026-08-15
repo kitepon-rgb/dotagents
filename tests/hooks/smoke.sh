@@ -66,6 +66,29 @@ fail_case() {
 run() {
   name=$1; shift
   out=$(mktemp); err=$(mktemp)
+  if [[ "$*" == *"lattice-gantt-hook.sh session-start"* ]]; then
+    lattice_input=$(cat)
+    "$@" <<<"$lattice_input" >"$out" 2>"$err"; RUN_STATUS=$?
+    if [ "$RUN_STATUS" -eq 0 ] && [ ! -s "$err" ]; then
+      lattice_key=$(printf '%s' "$lattice_input" | "$PYTHON_EXE" -c 'import hashlib,json,sys; print(hashlib.sha256(json.load(sys.stdin)["session_id"].encode()).hexdigest())')
+      for _ in $(seq 1 70); do
+        find "$STATE/dotagents/hooks" -maxdepth 1 -name "$lattice_key.*.lattice-gantt.pending" -type f | grep -q . || break
+        sleep 0.1
+      done
+      set -- "${@:1:$(($# - 1))}" user-prompt-submit
+      "$@" <<<"$lattice_input" >"$out" 2>"$err"; RUN_STATUS=$?
+    fi
+  else
+    "$@" >"$out" 2>"$err"; RUN_STATUS=$?
+  fi
+  RUN_OUT=$(cat "$out"); RUN_BYTES=$(wc -c <"$out" | tr -d ' '); RUN_ERR=$(cat "$err")
+  rm -f "$out" "$err"
+  if [ "$RUN_STATUS" -ne 0 ] || [ -n "$RUN_ERR" ]; then fail_case "$name exit/stderr"; return 1; fi
+  return 0
+}
+run_direct() {
+  name=$1; shift
+  out=$(mktemp); err=$(mktemp)
   "$@" >"$out" 2>"$err"; RUN_STATUS=$?
   RUN_OUT=$(cat "$out"); RUN_BYTES=$(wc -c <"$out" | tr -d ' '); RUN_ERR=$(cat "$err")
   rm -f "$out" "$err"
@@ -517,6 +540,45 @@ esac
 EOF
 chmod +x "$STATE/lattice-bin/lattice"
 install_windows_fixture_wrapper "$STATE/lattice-bin/lattice" bash
+async_started=$("$PYTHON_EXE" -c 'import time; print(time.monotonic_ns())')
+run_direct lattice-async-start env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-async","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+async_finished=$("$PYTHON_EXE" -c 'import time; print(time.monotonic_ns())')
+async_elapsed_ms=$("$PYTHON_EXE" -c "print(($async_finished - $async_started) // 1000000)")
+[ "$RUN_BYTES" -eq 0 ] && [ "$async_elapsed_ms" -lt 1000 ] && pass lattice-async-immediate || fail_case lattice-async-immediate
+run_direct lattice-async-pending env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" user-prompt-submit <<EOF
+{"session_id":"lattice-async","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'バックグラウンドで実行中'* && "$RUN_OUT" == *'このINFOは依頼範囲を拡張しません。'* ]] && pass lattice-async-pending || fail_case lattice-async-pending
+run_direct lattice-async-pending-once env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" user-prompt-submit <<EOF
+{"session_id":"lattice-async","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-async-pending-once || fail_case lattice-async-pending-once
+for _ in $(seq 1 40); do
+  find "$STATE/dotagents/hooks" -maxdepth 1 -name "$(session_key lattice-async).*lattice-gantt.pending" -type f | grep -q . || break
+  sleep 0.1
+done
+run_direct lattice-async-result env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" user-prompt-submit <<EOF
+{"session_id":"lattice-async","cwd":"$HOOK_REPO"}
+EOF
+[[ "$RUN_OUT" == *'active=master/G4'* ]] && pass lattice-async-result || fail_case lattice-async-result
+run_direct lattice-async-result-once env PATH="$STATE/lattice-bin:$PATH" LATTICE_TEST_MODE=slow_success "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" user-prompt-submit <<EOF
+{"session_id":"lattice-async","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-async-result-once || fail_case lattice-async-result-once
+run_direct lattice-codex-async-start env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" session-start <<EOF
+{"session_id":"lattice-codex-async","source":"startup","cwd":"$HOOK_REPO"}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass lattice-codex-async-start || fail_case lattice-codex-async-start
+for _ in $(seq 1 20); do
+  find "$STATE/dotagents/hooks" -maxdepth 1 -name "$(session_key lattice-codex-async).*lattice-gantt.pending" -type f | grep -q . || break
+  sleep 0.1
+done
+run_direct lattice-codex-async-result env PATH="$STATE/lattice-bin:$PATH" "$PYTHON_EXE" "$ROOT/bin/codex-lattice-gantt-hook.sh" user-prompt-submit <<EOF
+{"session_id":"lattice-codex-async","cwd":"$HOOK_REPO"}
+EOF
+json && [[ "$RUN_OUT" == *'"hookEventName": "UserPromptSubmit"'* && "$RUN_OUT" == *'active=master/G4'* ]] && pass lattice-codex-async-result || fail_case lattice-codex-async-result
 run lattice-nongit-missing env PATH="$STATE/git-only" "$PYTHON_EXE" "$ROOT/bin/lattice-gantt-hook.sh" session-start <<EOF
 {"session_id":"lattice-nongit","source":"startup","cwd":"$STATE/non-git"}
 EOF

@@ -3,7 +3,7 @@
 <!-- 前提: GPT-5.6 世代（2026-08-11 時点）。defaults の正は docs/02_models.md。本ファイルの体裁・構成は
      docs/03_settings-fragments.md（Claude Code settings.json の推奨断片カタログ）を踏襲する -->
 
-`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベント、SessionStart advisory 1件、SessionStart Lattice工程表案内1件だけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
+`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベント、SessionStart advisory 1件、Lattice工程表のSessionStart / UserPromptSubmit entryだけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
 
 ## 1. 親既定モデル×エフォート（オーナー領分・情報提供のみ）
 
@@ -119,7 +119,7 @@ codex --profile work
 | 対象 | 許可する変更 |
 |---|---|
 | `config.toml` | `[features.multi_agent_v2]` の `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"`。旧`[features].codex_hooks`があれば現行`hooks`へ移行し、両方あれば現行値を保持して旧キーだけ除去 |
-| `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handlerを各1件、およびSessionStartの`orchestrate-advisory-hook`と`codex-lattice-gantt-hook session-start`を各1件のcanonical entryに正規化 |
+| `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handlerを各1件、およびSessionStartの`orchestrate-advisory-hook`、Lattice工程表のSessionStart / UserPromptSubmit entryを各1件のcanonical entryに正規化 |
 
 `--apply` は端末設定を書き換えるので、dry-run の差分を確認し、対象端末への適用承認を得てからだけ実行する。
 
@@ -162,7 +162,7 @@ X2 の `spawn_agent` は、具体 `model` があれば許可する。省略時�
 
 各 command は、WSL2 interop の拡張子dispatchへ落ちないよう、展開済み絶対pathのscriptを明示interpreterで起動する。POSIXではPython製のcalloutとLattice案内を `/usr/bin/env python3 $HOME/.local/bin/<hook> ...`、shell製のorchestrate advisoryを `/bin/sh $HOME/.local/bin/orchestrate-advisory-hook` とする。Windows nativeではPowerShellのcall operator `&` に続けてapplier自身の`python.exe`とGit for Windowsの`sh.exe`を絶対pathで固定し、全tokenを二重引用符で囲む。Codex hook runnerは現在のturn shellを使うため、`&`がquoted executableの呼出しを成立させ、引用はspaceとbackslashを保つ。各hookはmatcherのない専用entryに1件だけ置き、旧direct-exec表記はapplierが同一hookとして回収してhost別canonical表記へ置換する。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
 
-`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話Codex CLIの`/hooks`でtrustを承認し、新規sessionでX1から実火確認する。App／IDE入口を受け入れる場合も、同じuser homeのCLIでtrustした後、その入口の新規sessionで実火する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook session-start`が各1件のcanonical entryであることを検証する。
+`~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話Codex CLIの`/hooks`でtrustを承認し、新規sessionでX1から実火確認する。App／IDE入口を受け入れる場合も、同じuser homeのCLIでtrustした後、その入口の新規sessionで実火する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook`のSessionStart / UserPromptSubmit entryが各1件のcanonical entryであることを検証する。
 
 ### Orchestrate advisory（SessionStart）
 
@@ -177,12 +177,13 @@ stdout/stderr 0byte・exit 0で沈黙する。`DOTAGENTS_ORCHESTRATE_ADVISORY=of
 session×repoで一度表示するcache markerを置き、7日後にGCする。cache baseと`dotagents/hooks`がowner-owned
 directoryかつsymlinkでないことを先に確認し、不適合ならcacheを作成・変更せず沈黙する。
 
-### Lattice工程表案内（SessionStart）
+### Lattice工程表案内（SessionStart → UserPromptSubmit）
 
-`codex-lattice-gantt-hook session-start`を同じSessionStartへ別entryとして追加する。commandは
+`codex-lattice-gantt-hook session-start`を同じSessionStartへ別entryとして、`codex-lattice-gantt-hook user-prompt-submit`をUserPromptSubmitへ別entryとして追加する。commandは
 `$HOME/.local/bin/codex-lattice-gantt-hook session-start`の展開済み絶対path、`timeout: 6`、
-`async: false`、`statusMessage: null`とする。Claude側と共通のread-only coreを使い、成功INFOだけを
-`hookSpecificOutput.additionalContext`へ包む。`source=startup|clear`ごとに発火し、スロットルしない。
+`async: false`、`statusMessage: null`とする。SessionStartはworkerを起動して即returnし、UserPromptSubmitが同じsession×repoの中継結果を一度だけ`hookSpecificOutput.additionalContext`へ包む。最初のUserPromptSubmit時点で未完了なら「status取得をバックグラウンドで実行中です。このINFOは依頼範囲を拡張しません。」を一度だけ返す。`source=startup|clear`ごとに発火し、スロットルしない。
+
+中継はClaude側と共通で、owner-ownedかつsymlinkでない`$XDG_CACHE_HOME`（未設定時は`~/.cache`）配下の`dotagents/hooks/`に`SHA-256(session_id).SHA-256(repo-root).lattice-gantt.*`として置き、`.pending`／`.waiting`／`.result`／`.consumed`を7日後に掃除する。
 
 `lattice` CLI不在時は未導入INFOを一行返す。導入済みでstoreがないrepo、非git、`resume|compact`は
 沈黙する。storeが存在するのにtimeoutなら「status取得が期限超過」、CLI失敗なら「CLI実行失敗」、

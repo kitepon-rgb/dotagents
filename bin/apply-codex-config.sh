@@ -37,6 +37,7 @@ HOOKS = {
 }
 ADVISORY_HOOK = ("SessionStart", 5)
 LATTICE_HOOK = ("SessionStart", "session-start", 6)
+LATTICE_USER_PROMPT_HOOK = ("UserPromptSubmit", "user-prompt-submit", 5)
 PYTHON_HOOK_PREFIX = (
     (str(Path(sys.executable).resolve()),)
     if os.name == "nt"
@@ -316,6 +317,37 @@ def update_hooks(data: dict, home: Path) -> dict:
                 isinstance(hook, dict)
                 and is_callout_command(hook.get("command"), hook_path, subcommand, home)
             )
+        ]
+        if hooks:
+            copied = dict(entry)
+            copied["hooks"] = hooks
+            normalized.append(copied)
+        elif set(entry) != {"hooks"}:
+            copied = dict(entry)
+            copied["hooks"] = []
+            normalized.append(copied)
+    normalized.append({"hooks": [canonical]})
+    data["hooks"][event] = normalized
+
+    event, subcommand, timeout = LATTICE_USER_PROMPT_HOOK
+    entries = data["hooks"].setdefault(event, [])
+    if not isinstance(entries, list):
+        raise ValueError(f"hooks.{event} は配列である必要がある")
+    canonical = {
+        "type": "command",
+        "command": python_hook_command(hook_path, subcommand),
+        "timeout": timeout,
+        "async": False,
+        "statusMessage": None,
+    }
+    normalized = []
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("hooks"), list):
+            normalized.append(entry)
+            continue
+        hooks = [
+            hook for hook in entry["hooks"]
+            if not (isinstance(hook, dict) and is_callout_command(hook.get("command"), hook_path, subcommand, home))
         ]
         if hooks:
             copied = dict(entry)

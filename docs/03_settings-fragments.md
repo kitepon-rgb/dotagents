@@ -171,12 +171,14 @@ fi
 hook自身のcache markerは7日後に掃除する。cache baseと`dotagents/hooks`はowner directoryかつsymlink
 でないことを検査し、不適合時は作成・変更せず沈黙する。
 
-#### Lattice工程表案内（SessionStart・読み取り専用）
+#### Lattice工程表案内（SessionStart → UserPromptSubmit・読み取り専用）
 
 `source=startup|clear`のたびに、正規statusでstore上の`active`／`next-ready`のどちらかが存在する時だけ、
-Lattice工程表の安定パスと現在地を短いINFOとして表示し、両方空なら沈黙する。24時間スロットルは掛けない。hookは`lattice todo status`の
+SessionStartはLattice CLI呼び出しを待たずにbackground workerを起動する。次のUserPromptSubmitは同じsession×repoの中継結果を一度だけ配送し、まだ完了していなければ「status取得をバックグラウンドで実行中です。このINFOは依頼範囲を拡張しません。」と事実を一度だけ表示する。worker完了後はLattice工程表の安定パスと現在地を短いINFOとして表示し、両方空なら沈黙する。24時間スロットルは掛けない。hookは`lattice todo status`の
 `lattice.todo_status_result.v1`／`v2`をstrictに読み、HTMLや`.lattice/todo/`を直接解釈せず、
-`lattice todo gantt`も自動実行しない。既存SessionStart entryを変更せず、次の1件だけ追加する。
+`lattice todo gantt`も自動実行しない。既存entryを変更せず、次の2件だけ追加する。
+
+中継はowner-ownedかつsymlinkでない`$XDG_CACHE_HOME`（未設定時は`~/.cache`）配下の`dotagents/hooks/`へ、`SHA-256(session_id).SHA-256(repo-root).lattice-gantt.*`として保存する。`.pending`／`.waiting`／`.result`／`.consumed`は7日後にhook自身が掃除する。
 
 ```bash
 S=~/.claude/settings.json
@@ -184,6 +186,12 @@ if ! jq -e --arg home "$HOME" '[.hooks.SessionStart[]?.hooks[]? | select(.type==
   cp "$S" "$S.bak-lattice-gantt"
   tmp=$(mktemp)
   jq '.hooks.SessionStart += [{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook session-start","timeout":6}]}]' "$S" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
+fi
+if ! jq -e --arg home "$HOME" '[.hooks.UserPromptSubmit[]?.hooks[]? | select(.type=="command" and .timeout==5 and (.command=="~/.local/bin/lattice-gantt-hook user-prompt-submit" or .command==($home+"/.local/bin/lattice-gantt-hook user-prompt-submit"))] | length == 1' "$S" >/dev/null; then
+  cp "$S" "$S.bak-lattice-gantt"
+  tmp=$(mktemp)
+  jq '.hooks.UserPromptSubmit += [{"hooks":[{"type":"command","command":"~/.local/bin/lattice-gantt-hook user-prompt-submit","timeout":5}]}]' "$S" > "$tmp" \
     && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
 fi
 ```
@@ -231,7 +239,7 @@ fi
 - `DOTAGENTS_PLACEMENT_GATE=off` — C1 の初回委譲 INFO と上記denyをともに無効化。
 - `DOTAGENTS_TODO_GATE=off` — C2 の棚卸しと C3 の pending 保存・配送を無効化。旧 `block` 値に特別な昇格動作はない。
 - `DOTAGENTS_ONSET_GATE=off` — C4 の初回案内 INFO を無効化。C3 pending の配送は `DOTAGENTS_TODO_GATE` 側で制御する。
-- `DOTAGENTS_LATTICE_HOOK=off` — SessionStartのLattice工程表案内を無効化。
+- `DOTAGENTS_LATTICE_HOOK=off` — Lattice工程表案内のbackground起動とUserPromptSubmit配送を無効化。
 
 ## 適用チェック
 

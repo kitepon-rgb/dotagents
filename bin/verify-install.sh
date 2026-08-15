@@ -624,6 +624,27 @@ for entry in data.get("hooks", {}).get("SessionStart", []):
 if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 6}:
     print("FAIL: Claude SessionStart の lattice-gantt-hook session-start は canonical command / type=command / timeout=6 の1件である必要がある")
     raise SystemExit(1)
+relevant = []
+canonical = []
+for entry in data.get("hooks", {}).get("UserPromptSubmit", []):
+    if not isinstance(entry, dict):
+        continue
+    for hook in entry.get("hooks", []):
+        if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
+            continue
+        command = hook["command"]
+        if "lattice-gantt-hook" in command:
+            relevant.append(hook)
+        try:
+            executable, subcommand = command.rsplit(maxsplit=1)
+        except ValueError:
+            continue
+        normalized = Path(str(home) + executable[1:] if executable.startswith("~/") else executable).expanduser().resolve(strict=False)
+        if normalized == lattice and subcommand == "user-prompt-submit":
+            canonical.append(hook)
+if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 5}:
+    print("FAIL: Claude UserPromptSubmit の lattice-gantt-hook user-prompt-submit は canonical command / type=command / timeout=5 の1件である必要がある")
+    raise SystemExit(1)
 PY
 then
   fail=1
@@ -744,10 +765,27 @@ for entry in data.get("hooks", {}).get("SessionStart", []):
             relevant.append(hook)
         if hook["command"] == command:
             matches.append(hook)
+if relevant != [expected] or matches != [expected]:
+    raise SystemExit(1)
+parts = [*python_prefix, path, "user-prompt-submit"]
+command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
+expected = {"type": "command", "command": command, "timeout": 5, "async": False, "statusMessage": None}
+relevant = []
+matches = []
+for entry in data.get("hooks", {}).get("UserPromptSubmit", []):
+    if not isinstance(entry, dict):
+        continue
+    for hook in entry.get("hooks", []):
+        if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
+            continue
+        if "codex-lattice-gantt-hook" in hook["command"]:
+            relevant.append(hook)
+        if hook["command"] == command:
+            matches.append(hook)
 raise SystemExit(0 if relevant == [expected] and matches == [expected] else 1)
 PY
 then
-  echo "FAIL: Codex SessionStart に codex-lattice-gantt-hook session-start の正規 entry がない"
+  echo "FAIL: Codex Lattice工程表hook（SessionStart / UserPromptSubmit）の正規 entry がない"
   fail=1
 fi
 
