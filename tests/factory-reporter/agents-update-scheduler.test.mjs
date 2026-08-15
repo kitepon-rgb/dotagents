@@ -7,20 +7,35 @@ import test from 'node:test';
 const ROOT = resolve(import.meta.dirname, '..', '..');
 const SCHEDULER = join(ROOT, 'bin', 'agents-update-scheduler.mjs');
 
-test('Windows native agents-update schedulerの再導入を拒否する', async () => {
-  for (const args of [['install'], ['install', '--apply'], ['install', '--sid', 'S-1-5-21-100-200-300-400']]) {
-    const result = spawnSync(process.execPath, [SCHEDULER, ...args], { encoding: 'utf8' });
-    assert.equal(result.status, 1);
-    assert.match(result.stderr, /廃止済み/u);
-    assert.match(result.stderr, /WSL2側/u);
-  }
+test('Windows native daily factory schedulerはdry-run既定で2:00・一撃setup・rollbackを示す', async () => {
+  const result = spawnSync(process.execPath, [SCHEDULER, 'install', ...(process.platform === 'win32' ? [] : ['--sid', 'S-1-5-21-100-200-300-400'])], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const value = JSON.parse(result.stdout);
+  assert.equal(value.dry_run, true);
+  assert.equal(value.task_name, 'dotagents-agents-update');
+  assert.match(value.artifact_content, /encoding="UTF-16"/u);
+  assert.match(value.artifact_content, /<StartBoundary>2026-01-01T02:00:00<\/StartBoundary>/u);
+  assert.match(value.artifact_content, /<ScheduleByDay><DaysInterval>1<\/DaysInterval><\/ScheduleByDay>/u);
+  assert.match(value.artifact_content, /<LogonType>InteractiveToken<\/LogonType>/u);
+  assert.match(value.artifact_content, process.platform === 'win32' ? /<UserId>S-1-[0-9-]+<\/UserId>/u : /<UserId>S-1-5-21-100-200-300-400<\/UserId>/u);
+  assert.match(value.artifact_content, /setup-windows-native-factory\.ps1/u);
+  assert.match(value.artifact_content, /-ScheduledRun/u);
+  assert.match(value.rollback, /uninstall --apply/u);
   const source = await readFile(SCHEDULER, 'utf8');
+  assert.match(source, /windowsTaskExists\(TASK_NAME\)/u);
+  assert.match(source, /登録後の読み戻し/u);
+  assert.match(source, /writeWindowsTaskXml/u);
   assert.doesNotMatch(source, /Start-ScheduledTask/u);
 });
 
-test('statusとuninstallは残し、SID付き照会を拒否する', () => {
+test('SIDはinstall dry-runだけが受理され、status/uninstallはSID照会なしで動く', () => {
   const status = spawnSync(process.execPath, [SCHEDULER, 'status'], { encoding: 'utf8' });
   assert.equal(status.status, 0, status.stderr);
+  const apply = spawnSync(process.execPath, [SCHEDULER, 'install', '--apply', '--sid', 'S-1-5-21-100-200-300-400'], { encoding: 'utf8' });
+  assert.equal(apply.status, 1); assert.match(apply.stderr, /install --dry-run専用/u);
+  const noSid = spawnSync(process.execPath, [SCHEDULER, 'install'], { encoding: 'utf8' });
+  if (process.platform === 'win32') assert.equal(noSid.status, 0, noSid.stderr);
+  else { assert.equal(noSid.status, 1); assert.match(noSid.stderr, /--sidが必要/u); }
   const statusSid = spawnSync(process.execPath, [SCHEDULER, 'status', '--sid', 'S-1-5-21-100-200-300-400'], { encoding: 'utf8' }); assert.equal(statusSid.status, 1); assert.match(statusSid.stderr, /install --dry-run専用/u);
   const uninstall = spawnSync(process.execPath, [SCHEDULER, 'uninstall'], { encoding: 'utf8' }); assert.equal(uninstall.status, 0, uninstall.stderr);
   const uninstallSid = spawnSync(process.execPath, [SCHEDULER, 'uninstall', '--sid', 'S-1-5-21-100-200-300-400'], { encoding: 'utf8' }); assert.equal(uninstallSid.status, 1); assert.match(uninstallSid.stderr, /install --dry-run専用/u);
@@ -47,6 +62,9 @@ test('scheduled runnerは実行ごとのbatch tokenと今回のv7 delivery recei
   const source = await readFile(join(ROOT, 'bin', 'agents-update-schedule-runner.mjs'), 'utf8');
   assert.match(source, /randomUUID\(\)/u);
   assert.match(source, /FACTORY_REPORTER_RUNNER/u);
+  assert.match(source, /HOME: home/u);
+  assert.match(source, /CODEX_HOME: join\(home, '\.codex'\)/u);
+  assert.match(source, /AGENTS_UPDATE_PATH_PREFIX/u);
   assert.match(source, /agents-update end/u);
   assert.match(source, /latest-report\.json/u);
   assert.match(source, /delivery-receipt\.json/u);

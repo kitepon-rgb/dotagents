@@ -1,0 +1,121 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import test from 'node:test';
+import { CURRENT_WIRE_PRODUCT_IDS } from '../../lib/factory/deployment-contract.mjs';
+import { assertWindowsNativeProductSmoke } from '../../bin/windows-native-product-smoke.mjs';
+
+const ROOT = resolve(import.meta.dirname, '..', '..');
+const SETUP = join(ROOT, 'bin', 'setup-windows-native-factory.ps1');
+
+test('Windows native一撃setupは工場展開・配線・fresh BugHub受理・検証・2時schedulerを一入口に閉じる', async () => {
+  const source = await readFile(SETUP, 'utf8');
+  const ordered = [
+    'install.sh',
+    'agents-update.sh',
+    'apply-codex-config.sh',
+    'throughline',
+    'caveat',
+    'markitdown',
+    'lattice hooks install --host claude',
+    'lattice hooks install --host codex',
+    'spotter install -y',
+    'verify-install.sh',
+    'factory-reporter-v7-schedule-runner.mjs',
+    'agents-update-scheduler.mjs',
+  ];
+  let cursor = -1;
+  for (const token of ordered) {
+    const next = source.indexOf(token, cursor + 1);
+    assert.ok(next > cursor, `${token} が正規順序にない`);
+    cursor = next;
+  }
+  assert.match(source, /factory-reporter-scheduler\.mjs.*uninstall.*--apply/su);
+  assert.match(source, /WindowsPrincipal.*ScheduledRun.*Administrator.*Start-Process.*-Verb RunAs.*-Wait.*-PassThru/su);
+  assert.match(source, /Stop-ScheduledTask.*factory-reporter-scheduler\.mjs.*uninstall.*Remove-LegacyCron.*install\.sh/su);
+  assert.match(source, /function Normalize-WindowsReporterConfig.*UTF-8 without BOM.*factory-reporter-config.*\.bak.*UTF8Encoding.*\$false.*still has a UTF-8 BOM/su);
+  assert.match(source, /python3.*apply-codex-config\.sh/su);
+  assert.match(source, /HOST_PLATFORM_UNSUPPORTED.*structurally unsupported/su);
+  assert.match(source, /known Lattice native-Windows status\/install contract mismatch/su);
+  assert.match(source, /failureMarkers.*FAIL: .*latticeFailures.*FAIL: Lattice.*latticeHosts.*Sort-Object -Unique/su);
+  assert.match(source, /function Normalize-WindowsCodexHooks.*codex-callout-hook.*orchestrate-advisory-hook.*codex-lattice-gantt-hook/su);
+  assert.match(source, /CODEX_HOME.*native-product-wiring: caveat/su);
+  assert.match(source, /legacy undefined HOME/su);
+  assert.match(source, /function Test-External.*Get-Command.*ErrorActionPreference = 'Continue'.*return \$code -eq 0/su);
+  assert.match(source, /function Invoke-Checked.*& \$File @Arguments \| ForEach-Object \{ Write-Host \$_ \}.*\$LASTEXITCODE/su);
+  assert.match(source, /FACTORY_REPORTER_RUNNER.*factory-reporter-v7-schedule-runner/su);
+  assert.match(source, /function Update-WindowsNativeClaude.*\.local\\bin\\claude\.exe.*factory-products-bootstrap: Claude native update.*install\.sh.*Update-WindowsNativeClaude.*Invoke-BootstrapUpdate/su);
+  assert.match(source, /function Remove-LegacyCron.*crontab -l.*agents-update.*factory-reporter.*crontab -/su);
+  assert.match(source, /Caveat-Private/u);
+  assert.match(source, /delivery_acknowledged/u);
+  assert.match(source, /--post-update.*--finalize-update/su);
+  assert.match(source, /Set-ToolchainPostGateSuccess.*--post-gate', 'success'/su);
+  assert.match(source, /@\(Compare-Object -ReferenceObject \(\$expected \| Sort-Object\) -DifferenceObject \$actual\)\.Count -ne 0/u);
+  assert.match(source, /windows-native-product-smoke\.mjs/u);
+  assert.match(source, /checked_products -ne 15/u);
+  assert.match(source, /run-\$RunId\.log.*Start-Transcript.*Set-OwnerOnlyAcl \$TranscriptPath.*Stop-Transcript/su);
+  assert.match(source, /function Set-OwnerOnlyAcl.*DirectorySecurity.*FileSecurity.*SetOwner\(\$sid\).*SetAccessRuleProtection/su);
+  assert.match(source, /THROUGHLINE_CODEX_THREAD_ID.*CODEX_THREAD_ID/su);
+  assert.match(source, /-ScheduledRun/u);
+  assert.doesNotMatch(source, /\bwsl(?:\.exe)?\b/iu);
+});
+
+test('Windows native一撃setupのPlanOnlyは端末を書き換えず全工程を同じ順序で公開する', { skip: process.platform !== 'win32' }, async () => {
+  const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', SETUP, '-PlanOnly'], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const value = JSON.parse(result.stdout.trim().split(/\r?\n/u).at(-1));
+  assert.equal(value.schema, 'dotagents.windows-native-factory-setup-plan.v1');
+  assert.equal(value.platform, 'windows-native');
+  assert.deepEqual(value.steps, [
+    'factory-reporter-config',
+    'retire-legacy-schedulers',
+    'dotagents-links',
+    'factory-products-bootstrap',
+    'codex-config',
+    'native-product-wiring',
+    'lattice-hooks',
+    'spotter-project',
+    'mcp-registration',
+    'caveat-sync',
+    'verify-install',
+    'fresh-bughub-delivery',
+    'toolchain-finalization',
+    'all-product-smoke',
+    'daily-0200-task',
+  ]);
+});
+
+function passingProduct(checkIds) {
+  return { presence_status: 'installed', installed_version: '1.0.0', compatibility_status: 'compatible', checks: checkIds.map((check_id) => ({ check_id, status: 'pass' })) };
+}
+
+test('Windows native全製品smokeはwire v7の15 ID・製品別実動作・構造的非対応を全件検証する', () => {
+  const report = {
+    schema_version: '7.0', host_profile: 'windows-native', platform: { os: 'windows', arch: process.arch },
+    products: Object.fromEntries(CURRENT_WIRE_PRODUCT_IDS.map((id) => [id, passingProduct(['native_diagnostics'])])),
+  };
+  report.products.caveat = passingProduct(['native_diagnostics']);
+  report.products.throughline = passingProduct(['database_schema', 'codex_hooks', 'restore']);
+  report.products.spotter = passingProduct(['project_activation', 'marker_schema', 'throughline_context', 'claude_catalog', 'codex_catalog', 'audit_catalog_readiness']);
+  report.products.lattice = passingProduct(['native_diagnostics']);
+  report.products.markitdown = passingProduct(['local_fixture']);
+  report.products['gpt-connector'] = passingProduct(['version', 'state_schema', 'job_schema', 'mcp_contract']);
+  report.products['aiterm-mcp'] = passingProduct(['mcp', 'runtime_error_store']);
+  report.products['codex-sidecar'] = passingProduct(['native_diagnostics']);
+  report.products.peertable = passingProduct(['version_consistency', 'bin_integrity', 'node_runtime', 'skill_bundle']);
+  report.products['claude-code'] = passingProduct(['installed_version', 'required_hooks', 'last_update']);
+  report.products['codex-cli'] = passingProduct(['installed_version', 'config_parser', 'native_routing', 'required_hooks', 'last_update']);
+  report.products['grok-build'] = passingProduct(['stable_update', 'last_update']);
+  report.products.aishell = { presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [{ check_id: 'native_diagnostics', status: 'unsupported', reason_code: 'platform_unsupported' }] };
+  report.products.observer = { presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [{ check_id: 'platform', status: 'unsupported', reason_code: 'platform_unsupported' }] };
+  report.products.servermanager = { presence_status: 'not_applicable', checks: [] };
+
+  const receipt = assertWindowsNativeProductSmoke(report, process.arch);
+  assert.equal(receipt.checked_products, 15);
+  assert.equal(receipt.status, 'passed');
+  const broken = structuredClone(report); broken.products.markitdown.checks[0].status = 'fail';
+  assert.throws(() => assertWindowsNativeProductSmoke(broken, process.arch), /markitdown/u);
+  const incomplete = structuredClone(report); delete incomplete.products.peertable;
+  assert.throws(() => assertWindowsNativeProductSmoke(incomplete, process.arch), /product set/u);
+});
