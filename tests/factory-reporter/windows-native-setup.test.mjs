@@ -45,6 +45,7 @@ test('Windows native一撃setupは工場展開・配線・fresh BugHub受理・�
   assert.match(source, /function Test-External.*Get-Command.*ErrorActionPreference = 'Continue'.*return \$code -eq 0/su);
   assert.match(source, /function Invoke-Checked.*& \$File @Arguments \| ForEach-Object \{ Write-Host \$_ \}.*\$LASTEXITCODE/su);
   assert.match(source, /FACTORY_REPORTER_RUNNER.*factory-reporter-v7-schedule-runner/su);
+  assert.match(source, /function Remove-WindowsGlobalNpmLink.*npm root --global.*LinkType.*npm unlink --global.*Global npm link remains.*Remove-WindowsGlobalNpmLink 'aiterm-mcp'.*Invoke-BootstrapUpdate/su);
   assert.match(source, /function Update-WindowsNativeClaude.*\.local\\bin\\claude\.exe.*factory-products-bootstrap: Claude native update.*install\.sh.*Update-WindowsNativeClaude.*Invoke-BootstrapUpdate/su);
   assert.match(source, /function Remove-LegacyCron.*crontab -l.*agents-update.*factory-reporter.*crontab -/su);
   assert.match(source, /Caveat-Private/u);

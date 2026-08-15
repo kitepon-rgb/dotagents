@@ -222,6 +222,25 @@ function Invoke-BootstrapUpdate([string]$UpdateScript) {
   Write-Warning 'Bootstrap installed the products but the pre-wiring post-update gate failed. A green fresh run remains mandatory.'
 }
 
+function Remove-WindowsGlobalNpmLink([string]$PackageName) {
+  $globalRootOutput = & npm root --global
+  $code = $LASTEXITCODE
+  if ($code -ne 0) { throw "Cannot resolve the global npm root for $PackageName" }
+  $globalRoot = [string]$globalRootOutput
+  if ([string]::IsNullOrWhiteSpace($globalRoot) -or -not [IO.Path]::IsPathRooted($globalRoot.Trim())) {
+    throw "Global npm root is invalid for $PackageName"
+  }
+  $packagePath = Join-Path $globalRoot.Trim() $PackageName
+  if (-not (Test-Path -LiteralPath $packagePath)) { return }
+  $package = Get-Item -LiteralPath $packagePath -Force
+  if ([string]::IsNullOrWhiteSpace([string]$package.LinkType)) { return }
+
+  Write-Step "factory-products-bootstrap: retire global npm link $PackageName"
+  & npm unlink --global $PackageName | ForEach-Object { Write-Host $_ }
+  if ($LASTEXITCODE -ne 0) { throw "npm unlink failed for $PackageName" }
+  if (Test-Path -LiteralPath $packagePath) { throw "Global npm link remains for $PackageName" }
+}
+
 function Update-WindowsNativeClaude {
   $nativeClaude = Join-Path $env:USERPROFILE '.local\bin\claude.exe'
   if (-not (Test-Path -LiteralPath $nativeClaude -PathType Leaf)) { return }
@@ -512,6 +531,7 @@ try {
   # install.sh
   Invoke-Checked -File $GitBash -Arguments @($install, '--profile', 'official') -Label 'dotagents-links: install.sh'
   Update-WindowsNativeClaude
+  Remove-WindowsGlobalNpmLink 'aiterm-mcp'
   # agents-update.sh
   Invoke-BootstrapUpdate $update
   # apply-codex-config.sh
