@@ -113,7 +113,7 @@ host別cutoverの順序（全4現役hostで実測済みの形）:
 4. `factory-reporter-scheduler install --wire-major v7 --dry-run --platform <OS>`でartifactを確認し、H承認後に`--apply`する。**v6 state/outbox（`~/.local/state/dotagents/factory-reporter-v6/`）は削除しない**——rollback即再開の前提になる。
 5. scan → enqueue → flushを1回手動実行し、BugHubのcurrent viewで対象hostの15製品が`contract_version 7.0`で反映されることを確認する。
 
-v6へ戻す時は退避configを書き戻し、`--wire-major v6`で再installする（state/outboxが無傷なら即再開できる）。§4aと同じく、全hostを一括切替しない。
+v6へ戻す時は退避configを書き戻し、`--wire-major v6`で再installする（state/outboxが無傷なら即再開できる。v6経路のpayloadは`schema_version="6.0"`・endpoint `/api/factory/v6/reports`のまま変えない）。§4aと同じく、全hostを一括切替しない。
 
 ## 5. rotation
 
