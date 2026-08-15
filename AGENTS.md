@@ -13,7 +13,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 - **BugHubは独立した製品ではなく、ServerManager内部のコンポーネント**。既存の読み取り専用集約、報告元アプリによる重大度決定、`resolve` / `reopen`、`/ai`という契約を守り、各製品のversion・bug・compatibility結果を統括する連携先として活用する。
 - 各製品は自身のソース・状態・schema・migration・正規診断を所有する。dotagentsはそれらを複製せず統合契約を所有し、ServerManager/BugHubはdotagentsの代わりに工場方針を決めたり製品状態を直接書き換えたりしない。
 - オーナーは、dotagentsの統括AIが**自作コア製品**の正規repoへ必要な修正とrelease管理を行うことを明示許可している。これは責務範囲の恒久裁定であり、第三者製品のfork/patch許可や、H操作に対する目的/影響/rollback説明と実行時承認を省略するものではない。各製品repoの正典・release gate・独立履歴を守る。修理から公開までの完遂規律とrelease gate要件は[製品契約台帳](docs/factory-product-contracts.md)「共通境界」が正。
-- 工場欠陥の重大度分類とmaintenance wave処理は[shared/orchestrate/contract.md](shared/orchestrate/contract.md)「Phase maintenance」が正。dotagents固有の境界: **原因と修理所有者がコア製品、ServerManager/BugHub、dotagentsのいずれにも属さない第三者製品または基盤toolchain本体の欠陥は、dotagentsのToDo、maintenance queue、H承認待ちへ登録せず完全に範囲外とする。** ただしdotagents所有adapter・設定生成・互換projectionの欠陥はdotagents欠陥であり、外部製品名が入力に現れるだけで範囲外へ逃がさない。
+- 工場欠陥の重大度分類とmaintenance wave処理は[shared/orchestrate/contract.md](shared/orchestrate/contract.md)「Phase maintenance」、dotagents固有の範囲内外境界（第三者・基盤toolchain欠陥の除外とdotagents所有adapterの範囲内判定）は[製品契約台帳](docs/factory-product-contracts.md)「共通境界」が正（本ファイルへ複製しない）。
 - **ControlのDecision証拠・fixed Worker中の親commit**などControl lifecycleの製品中立規則は[shared/orchestrate/contract.md](shared/orchestrate/contract.md)を正とする（本ファイルへ複製しない）。
 - コア製品の追加・削除・第三者化・所有移管は、単なる一覧編集ではない。[README.md](README.md)「工場コア製品の変更管理」に従う。**source repoの移動・改名は別途オーナー承認が必要**であり、管理区分の変更をその承認の代用にしない。
 

@@ -61,7 +61,7 @@ Claude と Codex が全端末・全プロジェクトで従う共通正典。人
 
 ## 作業レーンと統制
 
-- **モデル・effort配置の正本は独立文書だけ**: 子、相談役、外部agentの役割→model×effortは`~/Developer/dotagents/docs/02_models.md`を唯一の参照点とし、本書やskillへ具体modelを複製しない。親のmodel×effortはオーナー領分のまま、新候補を現状維持より不利に扱わず、代表実務の成功率・手戻り・監査工数・総token・所要時間・quotaで比較する。
+- **モデル・effort配置の正本は独立文書だけ**: 子、相談役、外部agentの役割→model×effortはdotagentsの`docs/02_models.md`を唯一の参照点とし、本書やskillへ具体modelを複製しない。親のmodel×effortはオーナー領分のまま、新候補を現状維持より不利に扱わず、代表実務の成功率・手戻り・監査工数・総token・所要時間・quotaで比較する。
 - **通常レーンが強い既定**: 作業は原則通常レーンで行い、短い成功条件・focused test・対象限定commitだけで閉じる。委譲・fan-out等の技法はどのレーンでも使える（委譲の最低安全契約は`shared/orchestrate/delegation-contract.md`）。
 - **統括レーンになるのは次の4つのどれかが着手時点の事実として確定している作業だけ**（ADR 0061）: ①計画に中断が組み込まれている（承認待ち・外部完了待ち・波間停止）②受入が多段に連鎖する③複数repoの書込みを調整する④裁定の検証可能な証跡が必要。該当したら`shared/orchestrate/contract.md`と`orchestrate`正典に従う。それ以外はすべて通常レーンで、予定外に途切れた時はhandoff（planへ現在地1行＋バトン）で閉じて通常レーンのまま終える。
 - **WIPとスレッド寿命**: active WIPは本筋1件＋緊急割込み1件まで。これはproject別に枠を増やさず、同じオーナー依頼を処理するactive thread全体で数える。ただしcampaign／Phaseを本筋WIP 1件と数え、その内部でLatticeが独立と検証した複数ToDoを複数workerへ同時dispatchすることはWIP超過ではない。worker数やactive ToDo数をWIP件数と読み替えて直列化しない。1スレッドは1成果または1 Phaseだけ。context compaction後は現在の原子的作業を閉じてhandoffを準備し、新Phaseは次のスレッドで始める。

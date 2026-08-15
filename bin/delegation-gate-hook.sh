@@ -249,7 +249,7 @@ def main():
             gc()
             shown_model = str(model) if model not in (None, "") else "省略"
             shown_effort = str(effort) if effort not in (None, "") else "未指定"
-            message = f"INFO: このセッションで最初の委譲を検出しました（{tool_name}: model={shown_model}, effort={shown_effort}）。配置・委譲契約・モデル選択の基準は、グローバル CLAUDE.md / AGENTS.md「モデルとエフォート」および docs/02_models.md を参照。このINFO自体は追加の委譲や依頼範囲の拡張を要求しません。"
+            message = f"INFO: このセッションで最初の委譲を検出しました（{tool_name}: model={shown_model}, effort={shown_effort}）。配置・委譲契約・モデル選択の基準は、グローバル CLAUDE.md / AGENTS.md「作業レーンと統制」および docs/02_models.md を参照。このINFO自体は追加の委譲や依頼範囲の拡張を要求しません。"
             emit({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": message}})
     except Exception as exc:
         error_log("delegation-gate-hook")

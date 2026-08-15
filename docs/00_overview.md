@@ -33,7 +33,7 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | [factory-product-contracts.md](factory-product-contracts.md) | 管理12製品＋基盤toolchain 3製品の**有限契約台帳**。version入口・正規diagnostics・adapter・禁止事項 |
 | [factory-host-product-matrix.md](factory-host-product-matrix.md) | host別の期待状態（required／optional／unsupported／not_applicable）と親別connector |
 | [factory-reporter-runbook.md](factory-reporter-runbook.md) | credential・設定・送信・rotation・**wire major別のserver-first cutoverとrollback**の運用手順 |
-| `wire-vN-design.md` | wire major各版の契約正本。現役は[v7](wire-v7-design.md)（mac-kite）と[v6](wire-v6-design.md)（他host）で、**段階cutover中は並存が正常**。[v5](wire-v5-design.md)は履歴 |
+| `wire-vN-design.md` | wire major各版の契約正本。現役は[v7](wire-v7-design.md)のみ（**2026-08-10に全4現役hostでcutover完了**）。[v6](wire-v6-design.md)・[v5](wire-v5-design.md)は履歴 |
 
 製品の追加・削除・第三者化・所有移管の手順は [../README.md](../README.md)「工場コア製品の変更管理」が正。
 

@@ -299,7 +299,7 @@ def pre_tool_use(data):
         if not safe_touch(shown):
             return
         gc()
-        message = "INFO: このセッションで最初のネイティブ委譲を検出しました。配置・routing・委譲契約の基準は、グローバル AGENTS.md「モデルとエフォート」および docs/02_models.md を参照。このINFO自体は追加の委譲や依頼範囲の拡張を要求しません。"
+        message = "INFO: このセッションで最初のネイティブ委譲を検出しました。配置・routing・委譲契約の基準は、グローバル AGENTS.md「作業レーンと統制」および docs/02_models.md を参照。このINFO自体は追加の委譲や依頼範囲の拡張を要求しません。"
         emit({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": message}})
         return
 

@@ -13,7 +13,7 @@ cat >/dev/null 2>&1 || true
 
 # additionalContext = モデルへ注入される正本化リマインダ（文言の集約点）。
 # " \ 生改行を含めない（下の printf で JSON 文字列へ直書きするため）。
-context='INFO: プランが承認されました。統括レーン（計画に組込済みの中断・多段の受入連鎖・複数repo書込調整・裁定証跡のいずれかが確定する戦役）なら、保存先と進捗管理はグローバル CLAUDE.md / AGENTS.md「計画文書の作法」に従います。それ以外の通常レーンは会話上の成功条件や内蔵planだけで足ります。このINFO自体は作業範囲を拡張しません。'
+context='INFO: プランが承認されました。統括レーン（計画に組込済みの中断・多段の受入連鎖・複数repo書込調整・裁定証跡のいずれかが着手時に確定する戦役）なら、保存先と進捗管理はグローバル CLAUDE.md / AGENTS.md「計画文書の作法」に従います。それ以外の通常レーンは会話上の成功条件や内蔵planだけで足ります。このINFO自体は作業範囲を拡張しません。'
 
 printf '{"continue":true,"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"%s"}}\n' "$context"
 exit 0
