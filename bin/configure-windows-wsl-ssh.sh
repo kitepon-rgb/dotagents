@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Windows Codex Desktop が WSL2 を Windows native と混ぜず、独立 SSH host として開くための配線。
+# Windows から WSL2 を独立 SSH host として開くための配線。
 set -euo pipefail
 
 mode=apply
@@ -47,22 +47,11 @@ case "$windows_home" in /*) ;; *) echo "FAIL: Windows home が絶対pathでな�
 windows_ssh_dir="$windows_home/.ssh"
 windows_public_key="$windows_ssh_dir/id_ed25519.pub"
 windows_config="$windows_ssh_dir/config"
-windows_codex_dir="$windows_home/.codex"
-windows_codex_hooks="$windows_codex_dir/hooks.json"
 wsl_ssh_dir="$HOME/.ssh"
 wsl_authorized_keys="$wsl_ssh_dir/authorized_keys"
-wsl_codex_hooks="$HOME/.codex/hooks.json"
 begin_marker="# BEGIN dotagents $remote_host"
 end_marker="# END dotagents $remote_host"
 
-[ -f "$wsl_codex_hooks" ] || {
-  echo "FAIL: WSL Codex hooks がない: $wsl_codex_hooks" >&2
-  exit 1
-}
-[ ! -L "$windows_codex_hooks" ] || {
-  echo "FAIL: Windows Codex hooks がsymlink: $windows_codex_hooks" >&2
-  exit 1
-}
 [ -f "$windows_public_key" ] || {
   echo "FAIL: Windows 公開鍵がない: $windows_public_key" >&2
   echo '      Windows側で ssh-keygen -t ed25519 を一度実行してから install.sh を再実行' >&2
@@ -119,21 +108,15 @@ if [ "$marker_begin_count" -eq 1 ]; then
   ' "$windows_config")"
   [ "$current_block" = "$managed_block" ] && config_ok=true
 fi
-hooks_ok=false
-if [ -f "$windows_codex_hooks" ] && cmp -s "$wsl_codex_hooks" "$windows_codex_hooks"; then
-  hooks_ok=true
-fi
-
 if [ "$mode" = check ]; then
   [ "$authorized_ok" = true ] || { echo "FAIL: Windows 公開鍵が WSL authorized_keys にない: $wsl_authorized_keys" >&2; exit 1; }
   [ "$config_ok" = true ] || { echo "FAIL: Windows SSH の $remote_host managed block が不一致: $windows_config" >&2; exit 1; }
-  [ "$hooks_ok" = true ] || { echo "FAIL: Windows Codex Desktop hooks が WSL 正規hooksと不一致: $windows_codex_hooks" >&2; exit 1; }
-  echo "OK: Windows→WSL 配線 ($remote_host -> localhost:$remote_port, user=$remote_user, hooks=WSL)"
+  echo "OK: Windows→WSL SSH配線 ($remote_host -> localhost:$remote_port, user=$remote_user)"
   exit 0
 fi
 
-if [ "$authorized_ok" = true ] && [ "$config_ok" = true ] && [ "$hooks_ok" = true ]; then
-  echo "OK: Windows→WSL 配線は適用済み ($remote_host, hooks=WSL)"
+if [ "$authorized_ok" = true ] && [ "$config_ok" = true ]; then
+  echo "OK: Windows→WSL SSH配線は適用済み ($remote_host)"
   exit 0
 fi
 
@@ -146,11 +129,7 @@ fi
 if [ -f "$windows_config" ]; then
   tar -czf "$backup_dir/windows-ssh-config.tar.gz" -C "$windows_home" .ssh/config
 fi
-if [ -f "$windows_codex_hooks" ]; then
-  tar -czf "$backup_dir/windows-codex-hooks.tar.gz" -C "$windows_home" .codex/hooks.json
-fi
-
-mkdir -p "$wsl_ssh_dir" "$windows_ssh_dir" "$windows_codex_dir"
+mkdir -p "$wsl_ssh_dir" "$windows_ssh_dir"
 chmod 700 "$wsl_ssh_dir"
 
 if [ "$authorized_ok" != true ]; then
@@ -177,11 +156,6 @@ if [ "$config_ok" != true ]; then
   printf '%s\n' "$managed_block" >>"$config_candidate"
   cp "$config_candidate" "$windows_config"
 fi
-if [ "$hooks_ok" != true ]; then
-  install -m 600 "$wsl_codex_hooks" "$windows_codex_hooks"
-fi
-
 echo "configured: Windows SSH $remote_host -> localhost:$remote_port (user=$remote_user)"
 echo "authorized: $windows_public_key -> $wsl_authorized_keys"
-echo "projected: $wsl_codex_hooks -> $windows_codex_hooks"
 echo "backup: $backup_dir"

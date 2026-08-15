@@ -39,10 +39,6 @@ cat >"$FIXTURE_ROOT/bin/verify-install.sh" <<'EOF'
 printf 'verify-install %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
 printf 'verify-install: OK\n'
 EOF
-cat >"$FIXTURE_ROOT/bin/configure-windows-wsl-ssh.sh" <<'EOF'
-#!/usr/bin/env bash
-printf 'configure-windows-wsl-ssh %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
-EOF
 cat >"$FIXTURE_ROOT/bin/agents-update.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -216,11 +212,6 @@ grep -Fq 'install --profile official' "$CALLS" || fail 'official profileを展�
 grep -Fq 'lattice hooks install --host claude' "$CALLS" || fail 'Claude Lattice hookを配線しない'
 grep -Fq 'lattice hooks install --host codex' "$CALLS" || fail 'Codex Lattice hookを配線しない'
 grep -Fq 'spotter install -y' "$CALLS" || fail 'Spotterを配線しない'
-grep -Fq 'configure-windows-wsl-ssh --apply' "$CALLS" \
-  || fail 'Spotter後の正規hooksをWindowsへ再投影しない'
-spotter_line="$(grep -n -m1 -F 'spotter install -y' "$CALLS" | cut -d: -f1)"
-projection_line="$(grep -n -m1 -F 'configure-windows-wsl-ssh --apply' "$CALLS" | cut -d: -f1)"
-[ "$projection_line" -gt "$spotter_line" ] || fail 'Windows hooks再投影がSpotterより前にある'
 grep -Fq 'verify-install --profile official' "$CALLS" || fail '最終verifyを実行しない'
 [ "$(grep -Fc 'claude-mcp-add gpt_connector gpt-connector-mcp' "$CALLS")" -eq 1 ] \
   || fail 'Claude gpt_connectorを一度だけ補完しない'

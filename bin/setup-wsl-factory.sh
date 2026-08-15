@@ -307,7 +307,6 @@ run_setup() {
   lattice hooks install --host claude
   lattice hooks install --host codex
   spotter install -y
-  "$ROOT/bin/configure-windows-wsl-ssh.sh" --apply
   install_cron
   "$ROOT/bin/verify-install.sh" --profile official
   run_scheduled_update
