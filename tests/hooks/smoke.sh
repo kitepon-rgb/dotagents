@@ -111,6 +111,52 @@ git -C "$REPO" init -q && git -C "$REPO" config user.email smoke@example.test &&
 mkdir "$REPO/docs"; printf '%s\n' '- [ ] task' >"$REPO/docs/plan_x.md"; printf '%s\n' base >"$REPO/source.txt"
 git -C "$REPO" add . && git -C "$REPO" commit -qm initial
 
+# WindowsではshimをCreateProcessが解決できないため、実repoの状態でgateを検証する。
+printf '%s\n' dirty >"$REPO/source.txt"
+run git-destroy-dirty "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"Bash","tool_input":{"command":"git checkout -- source.txt","cwd":"$HOOK_REPO"}}
+EOF
+json && [[ "$RUN_OUT" == *'permissionDecision'* && "$RUN_OUT" == *'P12_UNCOMMITTED_DESTROY'* && "$RUN_OUT" == *'stash push'* ]] && pass git-destroy-dirty || fail_case git-destroy-dirty
+printf '%s\n' base >"$REPO/source.txt"
+run git-destroy-clean "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"Bash","tool_input":{"command":"git restore --worktree source.txt","cwd":"$HOOK_REPO"}}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass git-destroy-clean || fail_case git-destroy-clean
+printf '%s\n' dirty >"$REPO/source.txt"
+run git-destroy-restore-staged "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"Bash","tool_input":{"command":"git restore --staged source.txt","cwd":"$HOOK_REPO"}}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass git-destroy-restore-staged || fail_case git-destroy-restore-staged
+printf '%s\n' clean-target >"$REPO/clean-target.txt"
+run git-destroy-clean-force "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"Bash","tool_input":{"command":"git clean -fd","cwd":"$HOOK_REPO"}}
+EOF
+json && [[ "$RUN_OUT" == *'P12_UNCOMMITTED_DESTROY'* ]] && pass git-destroy-clean-force || fail_case git-destroy-clean-force
+rm "$REPO/clean-target.txt"; printf '%s\n' base >"$REPO/source.txt"
+mkdir -p "$STATE/non-git"
+run git-destroy-nongit "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"Bash","tool_input":{"command":"git clean -f","cwd":"$STATE/non-git"}}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass git-destroy-nongit || fail_case git-destroy-nongit
+printf '%s\n' dirty >"$REPO/source.txt"
+run git-destroy-off env DOTAGENTS_GIT_DESTROY_GATE=off "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"Bash","tool_input":{"command":"git reset --hard","cwd":"$HOOK_REPO"}}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass git-destroy-off || fail_case git-destroy-off
+run git-destroy-branch "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"Bash","tool_input":{"command":"git checkout main","cwd":"$HOOK_REPO"}}
+EOF
+[ "$RUN_BYTES" -eq 0 ] && pass git-destroy-branch || fail_case git-destroy-branch
+run git-destroy-composite "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"Bash","tool_input":{"command":"echo before && git stash clear","cwd":"$HOOK_REPO"}}
+EOF
+json && [[ "$RUN_OUT" == *'P12_UNCOMMITTED_DESTROY'* ]] && pass git-destroy-composite || fail_case git-destroy-composite
+run git-destroy-codex "$PYTHON_EXE" "$ROOT/bin/codex-git-destroy-gate-hook.sh" <<EOF
+{"tool_name":"shell_command","tool_input":{"command":"git checkout .","cwd":"$HOOK_REPO"}}
+EOF
+json && [[ "$RUN_OUT" == *'"decision": "deny"'* && "$RUN_OUT" == *'P12_UNCOMMITTED_DESTROY'* ]] && pass git-destroy-codex || fail_case git-destroy-codex
+printf '%s\n' base >"$REPO/source.txt"
+
 # C1 enforcement fixtures: fixed role, sidecar defaults, routing declaration,
 # writer reservation/release, and operational failures all have distinct paths.
 mkdir -p "$STATE/claude-project/.claude/agents" "$STATE/claude-home/.claude/agents"

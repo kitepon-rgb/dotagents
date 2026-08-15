@@ -136,6 +136,20 @@ if ! jq -e --arg m "$MATCHER" '.hooks.PreToolUse[]?|select(.matcher==$m)' "$S" >
 fi
 ```
 
+#### Git破壊操作ゲート（PreToolUse・Bash）
+
+`git checkout -- <pathspec>`／`checkout .`、worktreeを戻す`restore`、`clean -f`系、`reset --hard`、`stash drop`／`clear`を検知する。対象pathspec（不明時はworktree全体）に未commit差分がある時だけ`P12_UNCOMMITTED_DESTROY`でdenyし、branch切替checkout、`restore --staged`のみ、clean・非git・status失敗はallowする。退避は`stash push`またはdiffのpatch保存を使う。`DOTAGENTS_GIT_DESTROY_GATE=off`で無効化できる。
+
+```bash
+S=~/.claude/settings.json
+if ! jq -e '.hooks.PreToolUse[]?.hooks[]?.command | select(.=="~/.local/bin/git-destroy-gate-hook")' "$S" >/dev/null; then
+  cp "$S" "$S.bak-git-destroy-gate"
+  tmp=$(mktemp)
+  jq '.hooks.PreToolUse += [{"matcher":"Bash","hooks":[{"type":"command","command":"~/.local/bin/git-destroy-gate-hook","timeout":5}]}]' "$S" > "$tmp" \
+    && jq -e . "$tmp" >/dev/null && mv "$tmp" "$S"
+fi
+```
+
 #### C2 TODO 棚卸し（SessionStart・source=startup/clear のみ発火）
 
 docs/ の `plan_*.md`/`queue_*.md` の未消化・archive 未退避をリポ×24h スロットルで棚卸しし、観測事実と正典への参照だけを INFO で返す（[`../bin/todo-gate-hook.sh`](../bin/todo-gate-hook.sh) の `session-start` サブコマンド）。
@@ -240,6 +254,7 @@ fi
 - `DOTAGENTS_TODO_GATE=off` — C2 の棚卸しと C3 の pending 保存・配送を無効化。旧 `block` 値に特別な昇格動作はない。
 - `DOTAGENTS_ONSET_GATE=off` — C4 の初回案内 INFO を無効化。C3 pending の配送は `DOTAGENTS_TODO_GATE` 側で制御する。
 - `DOTAGENTS_LATTICE_HOOK=off` — Lattice工程表案内のbackground起動とUserPromptSubmit配送を無効化。
+- `DOTAGENTS_GIT_DESTROY_GATE=off` — Git破壊操作ゲートを無効化。
 
 ## 適用チェック
 

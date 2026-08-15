@@ -3,7 +3,7 @@
 <!-- 前提: GPT-5.6 世代（2026-08-11 時点）。defaults の正は docs/02_models.md。本ファイルの体裁・構成は
      docs/03_settings-fragments.md（Claude Code settings.json の推奨断片カタログ）を踏襲する -->
 
-`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベント、SessionStart advisory 1件、Lattice工程表のSessionStart / UserPromptSubmit entryだけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
+`~/.codex/config.toml` と `~/.codex/hooks.json` は端末固有（コミットしない）。このファイルは「各端末で貼る断片」と限定適用器の正典である。routing 必須2キー、deprecated hook flag移行、dotagents callout hook 4イベント、PreToolUseのGit破壊操作ゲート、SessionStart advisory 1件、Lattice工程表のSessionStart / UserPromptSubmit entryだけは [`../bin/apply-codex-config.sh`](../bin/apply-codex-config.sh) が安全に扱い、それ以外は手で判断する。スキーマの根拠は [公式 Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference#configtoml)・[公式Feature Flags](https://developers.openai.com/codex/config-basic#feature-flags)・[公式 Subagents 文書](https://learn.chatgpt.com/docs/agent-configuration/subagents)と、端末Codexの実効parser。端末バイナリと実セッションrolloutも突合し、未再現の主張には確度を明記する。
 
 ## 1. 親既定モデル×エフォート（オーナー領分・情報提供のみ）
 
@@ -119,7 +119,7 @@ codex --profile work
 | 対象 | 許可する変更 |
 |---|---|
 | `config.toml` | `[features.multi_agent_v2]` の `hide_spawn_agent_metadata = false` と `tool_namespace = "agents"`。旧`[features].codex_hooks`があれば現行`hooks`へ移行し、両方あれば現行値を保持して旧キーだけ除去 |
-| `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handlerを各1件、およびSessionStartの`orchestrate-advisory-hook`、Lattice工程表のSessionStart / UserPromptSubmit entryを各1件のcanonical entryに正規化 |
+| `hooks.json` | `SessionStart` / `PreToolUse` / `UserPromptSubmit` / `Stop` の dotagents callout handlerを各1件、PreToolUseの`codex-git-destroy-gate-hook`、SessionStartの`orchestrate-advisory-hook`、Lattice工程表のSessionStart / UserPromptSubmit entryを各1件のcanonical entryに正規化 |
 
 `--apply` は端末設定を書き換えるので、dry-run の差分を確認し、対象端末への適用承認を得てからだけ実行する。
 
@@ -163,6 +163,10 @@ X2 の `spawn_agent` は、具体 `model` があれば許可する。省略時�
 各 command は、WSL2 interop の拡張子dispatchへ落ちないよう、展開済み絶対pathのscriptを明示interpreterで起動する。POSIXではPython製のcalloutとLattice案内を `/usr/bin/env python3 $HOME/.local/bin/<hook> ...`、shell製のorchestrate advisoryを `/bin/sh $HOME/.local/bin/orchestrate-advisory-hook` とする。Windows nativeではPowerShellのcall operator `&` に続けてapplier自身の`python.exe`とGit for Windowsの`sh.exe`を絶対pathで固定し、全tokenを二重引用符で囲む。Codex hook runnerは現在のturn shellを使うため、`&`がquoted executableの呼出しを成立させ、引用はspaceとbackslashを保つ。各hookはmatcherのない専用entryに1件だけ置き、旧direct-exec表記はapplierが同一hookとして回収してhost別canonical表記へ置換する。`async` は **必ず `false`**（Codex CLI 0.144.1 では `async: true` が非対応で、trust にも乗らない）。他ツール（Throughline / caveat / claude-spotter など）の entry は保持する。
 
 `~/.codex/hooks.json` は共有 append ファイルであり、hook trust は applier が変更しない。適用後に対話Codex CLIの`/hooks`でtrustを承認し、新規sessionでX1から実火確認する。App／IDE入口を受け入れる場合も、同じuser homeのCLIでtrustした後、その入口の新規sessionで実火する。`verify-install` は4イベントのcallout、SessionStartの`orchestrate-advisory-hook`、`codex-lattice-gantt-hook`のSessionStart / UserPromptSubmit entryが各1件のcanonical entryであることを検証する。
+
+### Git破壊操作ゲート（PreToolUse）
+
+`codex-git-destroy-gate-hook`をPreToolUseへ1件だけ追加する。shell系toolの`command`から`checkout -- <pathspec>`／`checkout .`、worktreeを戻す`restore`、`clean -f`系、`reset --hard`、`stash drop`／`clear`だけを保守的に検知する。対象pathspec（不明時はworktree全体）に未commit差分がある時だけ`P12_UNCOMMITTED_DESTROY`でdenyする。branch切替checkout、`restore --staged`だけ、clean・非git・status失敗はallowする。退避には`stash push`またはdiffのpatch保存を使う。`DOTAGENTS_GIT_DESTROY_GATE=off`で無効化できる。
 
 ### Orchestrate advisory（SessionStart）
 

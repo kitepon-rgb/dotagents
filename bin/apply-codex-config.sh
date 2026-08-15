@@ -36,6 +36,7 @@ HOOKS = {
     "Stop": ("stop", 10),
 }
 ADVISORY_HOOK = ("SessionStart", 5)
+GIT_DESTROY_HOOK = ("PreToolUse", 5)
 LATTICE_HOOK = ("SessionStart", "session-start", 6)
 LATTICE_USER_PROMPT_HOOK = ("UserPromptSubmit", "user-prompt-submit", 5)
 PYTHON_HOOK_PREFIX = (
@@ -227,6 +228,10 @@ def is_callout_command(command: object, hook_path: Path, subcommand: str, home: 
     return is_script_command(command, hook_path, (subcommand,), home, PYTHON_HOOK_PREFIX)
 
 
+def is_python_hook_command(command: object, hook_path: Path, home: Path) -> bool:
+    return is_script_command(command, hook_path, (), home, PYTHON_HOOK_PREFIX)
+
+
 def is_advisory_command(command: object, hook_path: Path, home: Path) -> bool:
     return is_script_command(command, hook_path, (), home, SHELL_HOOK_PREFIX)
 
@@ -282,6 +287,35 @@ def update_hooks(data: dict, home: Path) -> dict:
             normalized.append(entry)
             continue
         hooks = [hook for hook in entry["hooks"] if not (isinstance(hook, dict) and is_advisory_command(hook.get("command"), hook_path, home))]
+        if hooks:
+            copied = dict(entry)
+            copied["hooks"] = hooks
+            normalized.append(copied)
+        elif set(entry) != {"hooks"}:
+            copied = dict(entry)
+            copied["hooks"] = []
+            normalized.append(copied)
+    normalized.append({"hooks": [canonical]})
+    data["hooks"][event] = normalized
+
+    event, timeout = GIT_DESTROY_HOOK
+    hook_path = home / ".local/bin/codex-git-destroy-gate-hook"
+    entries = data["hooks"].setdefault(event, [])
+    if not isinstance(entries, list):
+        raise ValueError(f"hooks.{event} は配列である必要がある")
+    canonical = {
+        "type": "command",
+        "command": python_hook_command(hook_path),
+        "timeout": timeout,
+        "async": False,
+        "statusMessage": None,
+    }
+    normalized = []
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("hooks"), list):
+            normalized.append(entry)
+            continue
+        hooks = [hook for hook in entry["hooks"] if not (isinstance(hook, dict) and is_python_hook_command(hook.get("command"), hook_path, home))]
         if hooks:
             copied = dict(entry)
             copied["hooks"] = hooks

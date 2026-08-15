@@ -73,7 +73,23 @@ fail_case() {
 run() {
   name=$1; shift
   out=$(mktemp); err=$(mktemp)
-  "$@" >"$out" 2>"$err"; RUN_STATUS=$?
+  if [[ "$*" == *"codex-lattice-gantt-hook.sh session-start"* ]]; then
+    lattice_input=$(cat)
+    "$@" <<<"$lattice_input" >"$out" 2>"$err"; RUN_STATUS=$?
+    if [ "$RUN_STATUS" -eq 0 ] && [ ! -s "$err" ]; then
+      lattice_key=$(printf '%s' "$lattice_input" | "$PYTHON_EXE" -c 'import hashlib,json,sys; print(hashlib.sha256(json.load(sys.stdin)["session_id"].encode()).hexdigest())')
+      for _ in $(seq 1 70); do
+        find "$STATE/dotagents/hooks" -maxdepth 1 -name "$lattice_key.*.lattice-gantt.pending" -type f 2>/dev/null | grep -q . || break
+        sleep 0.1
+      done
+      # Windowsのcleanupより先に、workerが中継fileを閉じて終了する余地を与える。
+      sleep 0.1
+      set -- "${@:1:$(($# - 1))}" user-prompt-submit
+      "$@" <<<"$lattice_input" >"$out" 2>"$err"; RUN_STATUS=$?
+    fi
+  else
+    "$@" >"$out" 2>"$err"; RUN_STATUS=$?
+  fi
   RUN_OUT=$(cat "$out"); RUN_BYTES=$(wc -c <"$out" | tr -d ' '); RUN_ERR=$(cat "$err")
   rm -f "$out" "$err"
   if [ "$RUN_STATUS" -ne 0 ] || [ -n "$RUN_ERR" ]; then fail_case "$name exit/stderr"; return 1; fi

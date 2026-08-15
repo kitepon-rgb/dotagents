@@ -105,7 +105,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `factory-reporter.mjs` | 明示opt-inされた工場reportを検証・outbox保存・BugHubへ冪等送信 |
 | bin | `factory-external-event.mjs` | Pi5等の外部監視結果をmain-serverの所有者限定stateへ固定ServerManager eventとしてappend-only記録し、BugHub受理後だけack |
 | bin | `verify-codex-agent-routing.sh` | Control配下の書込みWorkerのspawn後、role/model/effort/developer instructionsを検証し、親継承のsandbox実効値を観測表示 |
-| bin | `apply-codex-config.sh` | routing 2キー、dotagents callout hook 4イベント、SessionStart advisory 1件、Lattice工程表のSessionStart / UserPromptSubmit entryを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
+| bin | `apply-codex-config.sh` | routing 2キー、dotagents callout hook 4イベント、PreToolUseのGit破壊操作ゲート、SessionStart advisory 1件、Lattice工程表のSessionStart / UserPromptSubmit entryを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
 | 自作コア11製品 | Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager／peertable（いずれもdotagents 外） | 罠知識、セッション継続、未使用ツール監査、工程graphとコード構造理解、ChatGPT接続、PTYと外部モデル枠、隔離Codex実行、macOS native開発面、親watchと監査、中央運用管理、対等マルチエージェント円卓を担う。AIShellはmacOS arm64専用、ObserverはmacOS専用。peertableはnpm配布のskill同梱製品で、0.3.6公開とwire v7 enroll済み。全4現役hostのcutoverも2026-08-10に完了済み |
 | 第三者管理製品 | MarkItDown | 自作コアではなく、公開CLIだけをblack-box管理する資料変換器。fork・内部patchは行わない |

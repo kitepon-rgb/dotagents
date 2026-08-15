@@ -557,6 +557,7 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
 
 required = (
     ("PreToolUse", "delegation-gate-hook"),
+    ("PreToolUse", "git-destroy-gate-hook"),
     ("SessionStart", "todo-gate-hook session-start"),
     ("Stop", "todo-gate-hook stop"),
     ("UserPromptSubmit", "onset-gate-hook"),
@@ -645,6 +646,21 @@ for entry in data.get("hooks", {}).get("UserPromptSubmit", []):
 if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 5}:
     print("FAIL: Claude UserPromptSubmit の lattice-gantt-hook user-prompt-submit は canonical command / type=command / timeout=5 の1件である必要がある")
     raise SystemExit(1)
+gate = (home / ".local/bin/git-destroy-gate-hook").resolve(strict=False)
+matches = []
+for entry in data.get("hooks", {}).get("PreToolUse", []):
+    if not isinstance(entry, dict) or entry.get("matcher") != "Bash":
+        continue
+    for hook in entry.get("hooks", []):
+        if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
+            continue
+        command = hook["command"]
+        normalized = Path(str(home) + command[1:] if command.startswith("~/") else command).expanduser().resolve(strict=False)
+        if normalized == gate:
+            matches.append(hook)
+if len(matches) != 1 or set(matches[0]) != {"type", "command", "timeout"} or matches[0].get("type") != "command" or matches[0].get("timeout") != 5:
+    print("FAIL: Claude PreToolUse の git-destroy-gate-hook は matcher=Bash / canonical command / timeout=5 の1件である必要がある")
+    raise SystemExit(1)
 PY
 then
   fail=1
@@ -695,6 +711,20 @@ for event, (subcommand, timeout) in required.items():
         "statusMessage": None,
     }:
         missing.append(f"{event}: codex-callout-hook {subcommand} の正規 entry")
+
+gate_path = str(Path(os.environ["HOME"]).expanduser().resolve() / ".local/bin/codex-git-destroy-gate-hook")
+parts = [*python_prefix, gate_path]
+gate_command = "& " + " ".join(f'"{part}"' for part in parts) if os.name == "nt" else shlex.join(parts)
+gate_expected = {"type": "command", "command": gate_command, "timeout": 5, "async": False, "statusMessage": None}
+gate_matches = [
+    hook
+    for entry in data.get("hooks", {}).get("PreToolUse", [])
+    if isinstance(entry, dict)
+    for hook in entry.get("hooks", [])
+    if isinstance(hook, dict) and hook.get("command") == gate_command
+]
+if gate_matches != [gate_expected]:
+    missing.append("PreToolUse: codex-git-destroy-gate-hook のcanonical entry")
 
 if missing:
     print("FAIL: Codex 必須 hook が欠落: " + "、".join(missing))
