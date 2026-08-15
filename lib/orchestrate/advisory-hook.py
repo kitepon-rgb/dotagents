@@ -192,7 +192,11 @@ def run_cli(node, cli, payload, deadline):
     process = None
     try:
         fd, input_path = tempfile.mkstemp(prefix="dotagents-orchestrate-advisory-", suffix=".json")
-        os.fchmod(fd, 0o600)
+        # os.fchmodはWindowsではPython 3.13で追加された。3.12以下のWindows pythonでは
+        # AttributeErrorがmainのexceptに飲まれてadvisory全体が沈黙する実被弾があったため、
+        # 能力で分岐する（POSIXは常に締める。Windowsの権限はACL準拠でmkstempの既定に従う）。
+        if hasattr(os, "fchmod"):
+            os.fchmod(fd, 0o600)
         with os.fdopen(fd, "wb") as handle:
             handle.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
             handle.flush(); os.fsync(handle.fileno())
