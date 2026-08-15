@@ -60,7 +60,7 @@ xAI公式値では agentic office task と複数のcoding/agent benchmarkでSol/
 | 裁定・契約クリティカル | 主直轄。必要時だけ`fable`をスポット諮問 | 旗艦×high以上 | 旗艦×highを敵対的な裁定材料に使う。単独最終票にはしない | 純推論の裁定材料にconsult可 |
 | 最新情報・Xの事実探索 | `sonnet`（X直結でない時の補助） | Web調査の独立確認 | **旗艦×low**で投稿・日時・原文を回収、**medium**で複数投稿と一次資料を統合 | — |
 | 監査・発見（finder） | `sonnet`×low | 中位×medium・codex_auditor/explore | **旗艦×medium**。数を出す発見とX裏取り | — |
-| 反証・検証（リポ実読あり） | 主同値×high・refuter。契約criticalは`fable`×highをスポット使用 | 旗艦×high・refuter/codex_risk_check | **旗艦×high**・cross-provider refuter。根拠行と再現を必須化 | — |
+| 反証・検証（リポ実読あり） | 主同値×high・refuter。契約criticalは`fable`×highをスポット使用。**親がFableの時はxAIレーンを第一候補**とする（オーナー裁定 2026-08-15） | 旗艦×high・refuter/codex_risk_check | **旗艦×high**・cross-provider refuter。根拠行と再現を必須化。Fable親の反証は本レーンが第一候補（OpenLogicool計画監査で実戦受入: 固有発見6/13件・一次資料裏取りあり） | — |
 | second opinion（実読不要） | — | — | **旗艦×medium**。実務判断と最新情報を含む別視点 | **第一選択**: `gpt_connector`（[06_gpt-connector.md](06_gpt-connector.md)） |
 | 設計（並列Plan） | 主同値×medium〜high | 旗艦×medium | **旗艦×high**。統括候補と同じく境界・停止判断を評価 | 設計意見の別視点 |
 | 実装物量 | `sonnet`×medium | 中位×medium・implementer | **Grok 4.6×medium**を仕様固定の比較基準、repo横断・長時間agentはhigh。Composerはcatalog復帰まで不使用 | — |
