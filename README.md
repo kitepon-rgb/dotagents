@@ -99,7 +99,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | Codexグローバル規範 | `codex/AGENTS.delta.md` → `codex/AGENTS.md` | 共通憲法＋Codex固有deltaから合成する配布生成物。配置・配線の正典はdocs/02・docs/05 |
 | bin | `render-global-constitution.mjs` | 共通憲法＋host deltaから両runtime向け完全指示を冪等生成し、driftを検査 |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲のrole定義（役割→model×effortの正は docs/02_models.md） |
-| bin | `agents-update.sh` | curated CLI / SDK 群を `@latest` に一括更新（週1 cron 推奨） |
+| bin | `agents-update.sh` | deployment contractのhost別CLI／SDK集合を`@latest`へ更新し、post-update gateとreportを実行 |
 | bin | `setup-macos-factory.sh` / `setup-wsl-factory.sh` / `setup-windows-native-factory.ps1` | host別の工場一撃展開。共通配備契約を消費し、各OS固有の配線と全製品smokeを行う |
 | bin | `bughub-external-probe.mjs` | server profileからloopback `/readyz`とdeploy revision manifestを照合し、安全な固定checkへ投影 |
 | bin | `factory-reporter.mjs` | 明示opt-inされた工場reportを検証・outbox保存・BugHubへ冪等送信 |
@@ -204,13 +204,26 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 
 **caveat の own は Caveat 自身が同期する**（v0.15+。dotagents は所有しない）: 新端末では `caveat sync --init --repo https://github.com/kitepon-rgb/Caveat-Private.git` で `~/.caveat/own` に Caveat-Private を clone → 以降 `caveat sync` で往復。既存端末に端末ローカルの罠が残っていたら、`caveat sync` の前に中身を `~/.caveat/own/entries/<category>/` へマージしてから同期する（同名衝突は中身を見て統合）。`verify-install` は own が Caveat-Private を remote に持つか確認する。
 
-### 3. install → 検証バッテリー
+### 3. 一撃展開 → 検証バッテリー
 
-macOSでは、下記の手順とMac固有製品（AIShell／Observer）、MCP、週次LaunchAgent、fresh wire v7 deliveryの検証を一括実行できる。
+初回導入と再適用の正規入口はhost別の一撃展開スクリプトである。3入口は同じ
+`lib/factory/deployment-contract.mjs`を消費し、既存のWindows native／WSL2固有配線を共有実装へ
+押し込まない。いずれも公式skill面、現役製品、MCP、Lattice／Spotter hook、定期更新、
+`verify-install`、fresh wire v7 reportとBugHub delivery receiptまでを一括検証する。
 
-```bash
-./bin/setup-macos-factory.sh
-```
+実行前にfactory reporter runbook §1〜4に従い、そのhost専用のconfigとcredentialを配置して
+wire v7 reportingを有効にする。MCP login、GitHub認証、Docker稼働など「0. 前提」の外部状態は
+スクリプトが捏造せず、欠けていれば名指しで停止する。
+
+| host | 正規入口 | 定期更新 |
+|---|---|---|
+| macOS | `./bin/setup-macos-factory.sh` | LaunchAgent、毎週月曜04:00 |
+| WSL2 | `./bin/setup-wsl-factory.sh` | cron、毎日02:00。`systemd`と非対話`sudo`が必要 |
+| Windows native | `powershell -ExecutionPolicy Bypass -File .\bin\setup-windows-native-factory.ps1` | Task Scheduler、毎日02:00。初回はUAC昇格 |
+
+macOSではAIShell（Apple Silicon／macOS 15+）とObserverも配備する。WSL2とWindows nativeは別hostであり、
+config、hook、credential、scheduler、delivery receiptを共有しない。Windows Codex DesktopからWSL2を使う時は、
+上記WSL2入口が作る`fox-wsl` SSH hostでWSL側projectを開く。
 
 個別に適用・切り分ける場合は、以下の正規入口を順に使う。
 
@@ -250,7 +263,17 @@ permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを�
 
 `~/.local/bin/agents-update` はdeployment contractが返すOS/arch別の完全なnpm package集合を `@latest` へ更新する（DarwinはObserver、Darwin arm64はAIShell、全対応hostはpeertable）。MarkItDownは`uv tool list`成功時だけ、不在なら`uv tool install markitdown`、存在すれば`uv tool upgrade markitdown`を実行し、list失敗はfail-closedにする。失敗は製品名付きで記録し、更新後のfactory contract scan/reportも継続する。更新処理とreporterの成否は別々に記録し、どちらか一方でも失敗ならjobを非0終了する。詳細は [factory reporterランブック](docs/factory-reporter-runbook.md#9-agents-updateとの接続) を参照。
 
-**Step 0 — 旧自動更新の撲滅（一つの真実）**: 先に古い npm 自動更新が居ないか掃引し、居たら停止・撤去する。
+常設schedulerの生成・旧schedulerの整理・読み戻しは、上記host別一撃展開スクリプトだけが所有する。
+手書きのplist／crontab／Task XMLを第二の正本にしない。
+
+| host | 登録される入口 | 読み戻し・受入 |
+|---|---|---|
+| macOS | LaunchAgent `com.kite.agents-update` → `~/.local/bin/agents-update` | plist構文、登録状態、初回一撃展開中のfresh v7 delivery |
+| WSL2 | cron `# dotagents-agents-update-wsl` → `setup-wsl-factory --scheduled-update` | 完全一致行、batch token、全15製品、fresh delivery receipt |
+| Windows native | Task `dotagents-agents-update` → `setup-windows-native-factory.ps1 -ScheduledRun` | SID／02:00／action、実Task起動、終了code、全15製品、fresh delivery receipt |
+
+旧自動更新を手動で調査する場合だけ、次を使う。一撃展開は自管理entryを冪等に置換し、既知の旧
+`agents-update`／`update-npm-globals` entryを整理する。
 
 ```bash
 crontab -l 2>/dev/null | grep -i npm                    # 旧 cron 行
@@ -258,40 +281,22 @@ ls ~/Library/LaunchAgents/ 2>/dev/null | grep -i -E "npm|update"  # 旧 LaunchAg
 # 居たら: plist を tar でバックアップ → launchctl bootout gui/$UID/<label> → plist 削除／crontab 行削除
 ```
 
-**Step 1 — 常設**:
-
-- **macOS（launchd）**:
+実走行の切り分けは次を使う。通常の初回検証は一撃展開内で完了する。
 
 ```bash
-cat > ~/Library/LaunchAgents/com.kite.agents-update.plist <<'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict>
-  <key>Label</key><string>com.kite.agents-update</string>
-  <key>ProgramArguments</key><array>
-    <string>/bin/sh</string><string>-c</string><string>"$HOME"/.local/bin/agents-update</string>
-  </array>
-  <key>StartCalendarInterval</key><dict>
-    <key>Weekday</key><integer>1</integer><key>Hour</key><integer>4</integer><key>Minute</key><integer>0</integer>
-  </dict>
-  <key>RunAtLoad</key><false/>
-</dict></plist>
-EOF
-launchctl bootstrap gui/$UID ~/Library/LaunchAgents/com.kite.agents-update.plist
-```
-
-- **Linux / WSL2（cron）**: cron 稼働確認（WSL2: `sudo service cron start`＋`/etc/wsl.conf` の `[boot]` に `command = "service cron start"`）→ `crontab -e` に `0 4 * * 1 $HOME/.local/bin/agents-update`（端末が起動している時間帯に合わせる）
-
-- **Windows native**: `agents-update`の常設Task Schedulerは廃止済み。`agents-update`と`dotagents-agents-update`は無効または未登録を維持し、更新はWSL2側で行う。`agents-update-scheduler install`は再導入を明示拒否し、残存taskの確認と解除用に`status` / `uninstall`だけを残す。
-
-**Step 2 — 実走行で検証**（配線したつもりで一度も走らない、を防ぐ）:
-
-```bash
-launchctl kickstart gui/$UID/com.kite.agents-update   # macOS。Linux は $HOME/.local/bin/agents-update を直接一回
+launchctl kickstart gui/$UID/com.kite.agents-update   # macOS
+setup-wsl-factory --scheduled-update                  # WSL2
 tail -5 ~/.local/state/agents-update/agents-update.log # "agents-update end" 行が出ること（実ログの完了行。旧記載 "Finished" は実装と不一致だった）
 ```
 
-対象 package は `bin/agents-update.sh` 先頭の `PACKAGES=( ... )` を直接編集（**`npm link` / `npm install -g .` 中の package は先に外す**——registry 版で上書きされる）。
+Windows nativeの状態確認とrollbackはPowerShellから
+`node .\bin\agents-update-scheduler.mjs status --apply`／
+`node .\bin\agents-update-scheduler.mjs uninstall --apply`を使う。解除はTaskと管理artifactだけを外し、
+report／outbox／credentialを削除しない。
+
+対象packageを変える時は`lib/factory/deployment-contract.mjs`のOS/arch別集合と対応fixtureを同時に更新する。
+`bin/agents-update.sh`へ別の固定一覧を作らない。**`npm link` / `npm install -g .`中のpackageは、registry版で
+上書きされる前に更新集合から外す**。
 
 ## 編集ワークフロー
 

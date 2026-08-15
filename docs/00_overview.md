@@ -17,6 +17,7 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | [05_codex-fragments.md](05_codex-fragments.md) | Codex 端末設定の断片カタログ（MultiAgent V2 role routing 必須断片・実効値ゲート・親既定はオーナー領分） |
 | [06_gpt-connector.md](06_gpt-connector.md) | ChatGPT接続の正規ランブック（`gpt_connector` / `gpt-connector-mcp`・専用Chrome・session回収） |
 | [06_oracle-mcp.md](06_oracle-mcp.md) | Oracleの互換・手動rollback記録（新規導入の正本ではない） |
+| [../README.md](../README.md#他端末セットアップランブック) | Mac／WSL2／Windows nativeの一撃展開、定期更新、実host受入の人間向け正規手順 |
 | [../shared/orchestrate/contract.md](../shared/orchestrate/contract.md) | 両親共通のorchestrate use-not-use・Control lifecycle・統括ゲート |
 | [../shared/orchestrate/delegation-contract.md](../shared/orchestrate/delegation-contract.md) | 製品中立のDelegation Packet／Worker Reportと統括側受入契約 |
 | `plan_*.md` | 進行中の子計画（詳細TODO・受入条件。マスターの実行順に従い、完遂で `YYYY-MM_` 接頭辞にして archive へ移し、docs/直下には archive を指す短いスタブだけ残す） |
@@ -43,5 +44,5 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 - 調査資産: [../rag/INDEX.md](../rag/INDEX.md)
 - 人格・全端末共通規範: [../shared/constitution.md](../shared/constitution.md)（唯一の共通正本。Claude／Codex固有差分と配布生成物は各hostディレクトリ）
 - 規範の入口: ルート [../AGENTS.md](../AGENTS.md) は全AI向けのproject正典であり、Claude Code はルート [../CLAUDE.md](../CLAUDE.md) の `@AGENTS.md` 経由で取り込む。共通憲法は `shared/constitution.md`、host固有差分は各host delta、runtime配布物は生成物として管理する。
-- 同期ハブ: `install.sh` がskill・command・agent・rule・binを端末へsymlink配布し、GitHubを真実の源とする。知識台帳は `rag/`（調査）と `docs/`（判断・計画）、Caveatのown DBはdotagents外でCaveat自身が管理する。
+- 同期ハブ: `install.sh` がskill・command・agent・rule・binを端末へsymlink配布し、GitHubを真実の源とする。初回導入と再適用は`setup-macos-factory`／`setup-wsl-factory`／`setup-windows-native-factory.ps1`がhost固有配線を所有し、共有する製品集合だけをdeployment contractから読む。知識台帳は `rag/`（調査）と `docs/`（判断・計画）、Caveatのown DBはdotagents外でCaveat自身が管理する。
 - 文書は趣旨（憲章・正典）、統括レーンのプラン、役目を終えた文書の3種に分ける。完了した文書は `archive/` へ退避し、`docs/`直下には生きた文書だけを置く。

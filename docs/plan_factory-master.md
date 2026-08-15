@@ -32,6 +32,8 @@ Lattice storeが唯一の正本であり、Markdown checkboxや旧queueへ二重
 - [peertable編入](archive/2026-08_peertable-onboarding.md)（設計・実装）と
   [wire v7実行](archive/2026-08_peertable-wire-v7-execution.md)（publish・enroll・cutover・正典更新）。
   cutoverは2026-08-10に全4現役hostで完遂（実送信・gate success・matrix 7.0を各host実測）
+- [工場全製品の展開閉包](handoff_factory-deployment-closure-20260811.md)。12管理製品の初回導入・継続更新・
+  post-update gateを閉じ、Mac／WSL2／Windows nativeのhost別一撃展開と定期更新を2026-08-15までに完遂
 
 ## 現在のwave
 

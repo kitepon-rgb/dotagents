@@ -31,7 +31,7 @@ dotagents は**開発工場そのもの**。全プロジェクトに共通して
 ## 定常運用
 
 - **プロジェクト作業は sync-sweep green から始める**。掃引の検査項目・台帳運用と、リポ終活トリアージ（三分類・安全に消せる条件・救済手順・GitHub 側は archive）は git-hygiene runbook が正。**「休眠」は端末単位の状態であってプロジェクトの生死ではない——生死はオーナー宣言でのみ決まり、削除承認は常に H・端末ごと**。
-- **週次**: `agents-update` の常設（全端末必須。手順は README「自動アップデート」節が正）。**月次**: メモリ棚卸し＋ rag/ Lint（枠と手順は knowledge-return runbook が正）。世代交代時の更新手順は docs/02_models.md が正。
+- **定期**: `agents-update` の常設（全端末必須。Macは週次、WSL2／Windows nativeは日次。登録と受入はREADME「他端末セットアップ」「自動アップデート」のhost別一撃展開が正）。**月次**: メモリ棚卸し＋ rag/ Lint（枠と手順は knowledge-return runbook が正）。世代交代時の更新手順は docs/02_models.md が正。
 
 ## 残件
 

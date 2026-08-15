@@ -85,9 +85,13 @@ src/  tests/  package.json（or pyproject 等）
 | Codex rule | `codex/rules/<file>` | `~/.codex/rules/<file>` | 任意ファイル |
 | Codex グローバル規範 | 正本: `shared/constitution.md`＋`codex/AGENTS.delta.md`／生成物: `codex/AGENTS.md` | `~/.codex/AGENTS.md` | generatorで合成する単一Markdown |
 | Codex サブエージェント | `codex/agents/<name>.toml` | `~/.codex/agents/<name>.toml` | `name`/`description`/`developer_instructions`必須 |
-| 実行スクリプト | `bin/<name>.sh` / `bin/<name>.mjs` | `~/.local/bin/<name>` | shebangに従う単一実行スクリプト（bash / Python / Node.js）。拡張子は配置時に外れる。 `chmod +x` 必須 |
+| 実行スクリプト | `bin/<name>.sh` / `bin/<name>.mjs` / `bin/<name>.ps1` | POSIXは`~/.local/bin/<name>`、Windows PowerShell入口はrepo内path | shebangまたはhost native shellに従う。POSIXの拡張子は配置時に外れる。`chmod +x`対象はPOSIX実行体 |
 
 `install.sh`は配布対象を1階層だけ走査しsymlinkを張る。Codex skill面は`--profile official|legacy`の一方だけを選び、新規entryの追加・削除・改名後は`./install.sh --profile <面>`を再実行する。
+
+host全体の初回導入・再適用はREADMEの`setup-macos-factory.sh`／`setup-wsl-factory.sh`／
+`setup-windows-native-factory.ps1`だけを正規入口とする。3入口は共通deployment contractを読むが、
+LaunchAgent／cron／Task Scheduler、config、hook、credentialはhost別実装が所有し、相互に投影しない。
 
 ### Skill の frontmatter
 

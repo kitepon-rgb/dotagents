@@ -1,6 +1,6 @@
 # Factory reporter credential・設定ランブック
 
-更新日: 2026-07-25
+更新日: 2026-08-15
 正本: dotagents  
 対象: Mac / main-server / FOX WSL2 / FOX Windows native
 
@@ -79,16 +79,16 @@ reporter configの`reporting`を次の形へ編集する。tokenが存在する�
 ```json
 {
   "enabled": true,
-  "endpoint": "http://192.168.1.2:39310/api/factory/v6/reports",
+  "endpoint": "http://192.168.1.2:39310/api/factory/v7/reports",
   "credential_file": "/home/kite/.config/dotagents/credentials/factory.token"
 }
 ```
 
-Windowsでは`credential_file`にWindows nativeの絶対pathをJSON escapingして指定する。host clientをONにする前に、次のserver-first順序を完了する。v5入口はhost別rollbackのためv6と独立して維持する。
+Windowsでは`credential_file`にWindows nativeの絶対pathをJSON escapingして指定する。host clientをONにする前に、次のserver-first順序を完了する。v6入口は現役v7のhost別rollback先として独立して維持する。
 
-## 4a. server-first cutover と host別rollback
+## 4a. 旧wireのserver-first履歴とhost別rollback
 
-main-serverはv5入口を維持したまま、`FACTORY_V6_INGEST_ENABLED=false`でschema v6対応codeをdeployする。`bughub/deploy.sh`は引数なしでdry-run（削除一覧確認）してからH承認後に`--apply`する。`/readyz`とv5 report受理を確認し、server `.env`を退避してからv6 flagを`true`にして再deployする。v6 canary後、host clientを1台ずつv5/v6 dual-runで照合し、全hostを一括切替しない。
+wire v6導入時は、main-serverでv5入口を維持したまま`FACTORY_V6_INGEST_ENABLED=false`でschema v6対応codeを先行deployし、server flagをONにしてからhostを1台ずつdual-runした。この順序は完了履歴であり、新規hostをv6へ導入する手順ではない。現役は§4bのv7である。
 
 v6からそのhostだけをrollbackする時は、次の順序を守る。
 
@@ -99,9 +99,9 @@ v6からそのhostだけをrollbackする時は、次の順序を守る。
 
 v6へ復帰する時はconfigの`reporting.endpoint`を`/api/factory/v6/reports`へ戻し、`factory-reporter-scheduler install --wire-major v6 --dry-run --platform <OS>`を確認後、H承認済みの`--apply`でv6 schedulerを登録する。最初のfull snapshotは固定14製品集合として送信する。serverのv6 flagを戻す必要がある場合は、先に全hostをv5へ戻して受理を確認し、退避した`.env`からflagだけを復元する。どちらのrollbackでも履歴・issue・releaseを削除しない。
 
-## 4b. wire v7への段階cutover（2026-08-10〜・進行中）
+## 4b. 現役wire v7と完了済み段階cutover
 
-peertable編入に伴うwire v7（固定15製品）は、§4aと同じserver-first順序で進めている。契約は[wire v7設計](wire-v7-design.md)、承認記録は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)が正。
+peertable編入に伴うwire v7（固定15製品）は、§4aと同じserver-first順序で2026-08-10に移行を完了した。契約は[wire v7設計](wire-v7-design.md)、承認記録は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)が正。
 
 **現在のhost別状態（2026-08-10 完了）**: 全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）がv7へcutover済み。各hostにv6退避config（`*.bak-v6-<timestamp>`）とv6 state/outboxが残っており、rollbackは§4a同様に即応できる。
 
@@ -147,26 +147,26 @@ scan、preview、enqueue、flushは別操作である。`reporting.enabled=false
 ```bash
 # 1. read-only scan。outputはcredential/outboxと別の所有者限定pathへ置く。
 umask 077
-factory-scan-v6 --config ~/.config/dotagents/factory-reporter.json \
-  --output ~/.local/state/dotagents/factory-reporter-v6/latest-report.json \
-  --ack-output ~/.local/state/dotagents/factory-reporter-v6/latest-acks.json
+factory-scan-v7 --config ~/.config/dotagents/factory-reporter.json \
+  --output ~/.local/state/dotagents/factory-reporter-v7/latest-report.json \
+  --ack-output ~/.local/state/dotagents/factory-reporter-v7/latest-acks.json
 
 # 2. 送らずにschema・host identity・privacyを確認する。
-factory-reporter-v6 preview \
+factory-reporter-v7 preview \
   --config ~/.config/dotagents/factory-reporter.json \
-  --report ~/.local/state/dotagents/factory-reporter-v6/latest-report.json
+  --report ~/.local/state/dotagents/factory-reporter-v7/latest-report.json
 
 # 3. 明示ON済みの時だけoutboxへ保存する。OFFなら成功終了でもenqueued=false。
-factory-reporter-v6 enqueue \
+factory-reporter-v7 enqueue \
   --config ~/.config/dotagents/factory-reporter.json \
-  --report ~/.local/state/dotagents/factory-reporter-v6/latest-report.json \
-  --ack-metadata ~/.local/state/dotagents/factory-reporter-v6/latest-acks.json
+  --report ~/.local/state/dotagents/factory-reporter-v7/latest-report.json \
+  --ack-metadata ~/.local/state/dotagents/factory-reporter-v7/latest-acks.json
 
 # 4. 明示ON済みの時だけnetwork送信。accepted確認後だけoutboxから削除する。
-factory-reporter-v6 flush --config ~/.config/dotagents/factory-reporter.json
+factory-reporter-v7 flush --config ~/.config/dotagents/factory-reporter.json
 ```
 
-`preview`は常にnetworkゼロである。`enqueue`と`flush`はOFFならnetworkゼロで、既存outboxを消さない。v6 ACKはBugHub accepted後だけ公開ACK entryへ実行する。tokenの存在、scheduler、過去のON状態は送信許可にならない。
+`preview`は常にnetworkゼロである。`enqueue`と`flush`はOFFならnetworkゼロで、既存outboxを消さない。v7 ACKはBugHub accepted後だけ公開ACK entryへ実行する。tokenの存在、scheduler、過去のON状態は送信許可にならない。
 
 ### Pi5 external outage event
 
@@ -181,28 +181,28 @@ factory-external-event resolve --check availability --reason unreachable \
   --observed-at 2026-07-13T00:01:00.000Z --json
 ```
 
-このPi5 external eventのstateはPOSIXで`~/.local/state/dotagents/factory-reporter/`（directory `0700`、file/lock `0600`）にあり、symlink・schema改ざん・同時書込みを拒否する。これは固定external eventの互換stateであり、通常のv6 reporter outboxは`factory-reporter-v6/`を使う。open/resolveは冪等でappend-only sequenceを持ち、同一fingerprintはopen phaseをBugHubが受理してackするまでresolve phaseを送らない。`snapshot --json`と`status --json`は運用確認専用、`ack --cursor N --json`はreporterだけがBugHub accepted後に実行する。reporting OFFまたはack失敗時もstateは保持される。
+このPi5 external eventのstateはPOSIXで`~/.local/state/dotagents/factory-reporter/`（directory `0700`、file/lock `0600`）にあり、symlink・schema改ざん・同時書込みを拒否する。これは固定external eventの互換stateであり、通常の現役reporter outboxは`factory-reporter-v7/`を使う。open/resolveは冪等でappend-only sequenceを持ち、同一fingerprintはopen phaseをBugHubが受理してackするまでresolve phaseを送らない。`snapshot --json`と`status --json`は運用確認専用、`ack --cursor N --json`はreporterだけがBugHub accepted後に実行する。reporting OFFまたはack失敗時もstateは保持される。
 
 ### exitと出力の扱い
 
-- `factory-scan-v6`非0: config/profile、dotagents revision、report schema、atomic outputのいずれかに失敗した。outputの成功扱い・enqueueはしない。個別製品CLIの不在・非対応はreport全体を偽成功/失敗へ丸めず、その製品を`unverified`として残す。
-- `factory-reporter-v6`非0: stdoutの`{ok:false,code:"FACTORY_REPORTER_V6_ERROR"}`とstderrを確認する。409/413/422はdead-letter、401/403/429/5xx/timeout/network/backoffはoutbox保持であり、いずれも成功ではない。
+- `factory-scan-v7`非0: config/profile、dotagents revision、report schema、atomic outputのいずれかに失敗した。outputの成功扱い・enqueueはしない。個別製品CLIの不在・非対応はreport全体を偽成功/失敗へ丸めず、その製品を`unverified`として残す。
+- `factory-reporter-v7`非0: stdoutの`{ok:false,code:"FACTORY_REPORTER_V7_ERROR"}`とstderrを確認する。409/413/422はdead-letter、401/403/429/5xx/timeout/network/backoffはoutbox保持であり、いずれも成功ではない。
 - stdout JSONは機械判定用で、token本文を出さない。report JSONには秘密・prompt・absolute pathを入れない。
 - config、credential、wire別state/outbox、scan outputは0700 directory/0600 fileにする。Windows nativeではstate root、outbox/dead-letter/retry/lock、生成fileの継承を遮断し、現在SIDだけにFullControlを許可する。ACL設定失敗は非0であり、pathや秘密を成功JSONへ出さない。reportを共有・git add・チャット貼付けしない。
 
 ## 8. 定期scheduler（dry-runから開始）
 
-`factory-reporter-scheduler` は毎時17分に起動するOS別schedulerを管理する。本番登録では`--wire-major v6`を明示し、`factory-reporter-v6-schedule-runner`と`factory-reporter-v6` stateを使う。引数省略時のv4は既存利用者向け互換であり、新規登録には使わない。手動rollback時だけ`--wire-major v5`を指定する。runnerは該当wireの契約に従ってscan → enqueue → flush を行い、設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushはnetwork I/Oをしない。
+`factory-reporter-scheduler` は毎時17分に起動するOS別schedulerを管理する。本番登録では`--wire-major v7`を明示し、`factory-reporter-v7-schedule-runner`と`factory-reporter-v7` stateを使う。引数省略時のv4は既存利用者向け互換であり、新規登録には使わない。手動rollback時だけ`--wire-major v6`または`v5`を指定する。runnerは該当wireの契約に従ってscan → enqueue → flush を行い、設定を作成・変更せず、`collection.enabled`／`reporting.enabled`をONにしない。送信OFFならrunnerのenqueue/flushはnetwork I/Oをしない。
 
 最初は必ずdry-runで生成物・登録commandを確認する。実登録は明示`--apply`だけであり、通常のinstall/updateはschedulerを登録しない。configが未配置または不正ならinstall/runnerはfail closedで、scheduler登録もscanも行わない。停止のためのuninstallだけはconfigなしでも実行できる。
 
 ```bash
 # macOS
-factory-reporter-scheduler install --dry-run --platform darwin --wire-major v6
+factory-reporter-scheduler install --dry-run --platform darwin --wire-major v7
 # Linux / WSL2
-factory-reporter-scheduler install --dry-run --platform linux --wire-major v6
+factory-reporter-scheduler install --dry-run --platform linux --wire-major v7
 # Windows native PowerShell
-factory-reporter-scheduler install --dry-run --platform win32 --wire-major v6
+factory-reporter-scheduler install --dry-run --platform win32 --wire-major v7
 ```
 
 承認済みの対象hostだけで、dry-runの出力を確認してから同じcommandに`--apply`を付ける。`--apply`は実行中OSと一致するplatformだけを受け付ける。uninstallは登録済みの共通launchd label / cron marker / Task Scheduler名を外すためwire-major非依存である。
@@ -215,7 +215,13 @@ factory-reporter-scheduler install --dry-run --platform win32 --wire-major v6
 
 ## 9. agents-updateとの接続
 
-`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、`factory-reporter-v6-schedule-runner --config <host config>`を必ず1回呼ぶ。MarkItDownは`uv tool list`成功時だけ存在→upgrade／不在→installを選び、list失敗はfail-closedにする。runnerが担う順序はv6 scan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
+`agents-update`はcurated packageとMarkItDownの更新をすべて試した後、host configのendpointが指すwire majorの`factory-reporter-vN-schedule-runner --config <host config>`を必ず1回呼ぶ。現役4 hostではv7 runnerになる。MarkItDownは`uv tool list`成功時だけ存在→upgrade／不在→installを選び、list失敗はfail-closedにする。runnerが担う順序は該当wireのscan → enqueue → flushであり、更新途中のnpm/uv失敗やnpm自体の不在でもreporter呼び出しを省略しない。
+
+常設更新の正規入口はhost別一撃展開が所有する。
+
+- macOS: `setup-macos-factory.sh`がLaunchAgent `com.kite.agents-update`を毎週月曜04:00で登録し、初回実行中に全15製品とfresh v7 deliveryを検証する。
+- WSL2: `setup-wsl-factory.sh`が`setup-wsl-factory --scheduled-update`を毎日02:00のcronへ登録する。scheduled runはbatch token、全15製品、同一tokenのdelivery receiptを検証する。
+- Windows native: `setup-windows-native-factory.ps1`が`agents-update-scheduler`を通じて`dotagents-agents-update`を毎日02:00に登録する。初回は登録した実Taskを起動してdelivery receiptまで確認する。WSL2側のcronで代用しない。
 
 Windows nativeの常設更新は`agents-update-scheduler`が所有する。`install|status|uninstall`はdry-run既定で、専用task `dotagents-agents-update`、現在SIDの`UserId`と`InteractiveToken`を組にしたUTF-16LE BOM XML、locale非依存の`Get-ScheduledTask`照会、Create後の読み戻し、runner preflight、DACL `Access`だけのowner-only ACLを使う。`--apply`とTask手動起動はH承認が必要である。scheduled runnerは実行ごとに新しいbatch tokenを発行して`agents-update`へ渡し、終了codeだけでなく、BugHub accepted後にv7 runnerが原子的に保存した同一report_id・同一tokenのdelivery receiptを確認する。runtime-error acknowledgement metadataはdelivery証拠に使わない。rollbackはtaskだけを`uninstall --apply`で外し、report/outboxを削除しない。
 
@@ -225,17 +231,17 @@ Windows nativeの常設更新は`agents-update-scheduler`が所有する。`inst
 - 最終行直前の`agents-update result: update=<success|failed> report=<success|failed>`で両系統を判定でき、どちらかが`failed`なら終了codeは1。
 - 試験時だけ`FACTORY_REPORTER_RUNNER`と`FACTORY_REPORTER_CONFIG`で入口を差し替えられる。通常運用でこのoverrideを使わない。
 
-Claude Code、Codex、Grok Build は更新ごとにowner-onlyのtoolchain ledgerへ `before`、`latest`、`operation`、`after`、`post_gate`、`reason`、UTC観測時刻を記録する。Claude/Codexはnpm registryのsemverと`npm install -g @latest`、Grokは`grok update --check --json`とstable updateを正規入力とする。post-update v6 runnerが失敗すれば全3製品の`post_gate=failed`となり、更新自体の成功を全体成功へ丸めない。
+Claude Code、Codex、Grok Build は更新ごとにowner-onlyのtoolchain ledgerへ `before`、`latest`、`operation`、`after`、`post_gate`、`reason`、UTC観測時刻を記録する。Claude/Codexはnpm registryのsemverと`npm install -g @latest`、Grokは`grok update --check --json`とstable updateを正規入力とする。解決されたpost-update runnerが失敗すれば全3製品の`post_gate=failed`となり、更新自体の成功を全体成功へ丸めない。
 
 この接続はschedulerを新規登録せず、configを作成・変更せず、collection/reportingをONにしない。実hostへのconfig・credential配置とON操作は前節までのH手順で別途行う。
 
-### v6 component health と post-update gate
+### 現役wireのcomponent healthとpost-update gate
 
 `agents-update`のpost-update gateが使うrunnerは、hostの実configの`reporting.endpoint`が指すwire majorから
 解決される（2026-08-10修理済み。env `FACTORY_REPORTER_RUNNER`の明示が最優先、endpointが読めない時はv6へ倒す）。
 host別段階cutover中でも、cutover済みhostは自動でそのmajorのrunnerがgateを回す。
 
-v6 report は各製品のnative diagnosticsを単一の `native_diagnostics` へ縮約しない。各componentの `pass` / `fail` / `unverified` / `skipped` とreasonをそのまま送る。通常定期実行はscan → enqueue → flushの成否だけでexitを決め、component healthの判定はraw reportとBugHubのhost matrixに委譲する。
+現役v7 reportは各製品のnative diagnosticsを単一の`native_diagnostics`へ縮約しない。各componentの`pass` / `fail` / `unverified` / `skipped`とreasonをそのまま送る。通常定期実行はscan → enqueue → flushの成否だけでexitを決め、component healthの判定はraw reportとBugHubのhost matrixに委譲する。
 
 `--post-update` だけは default-deny gate を適用する。`fail` は常時 blocking、`unverified` は次の完全一致 tuple だけ non-blocking とする: Spotter `codex_hooks/trust_not_machine_verifiable`、Throughline `evidence_restore_smoke/diagnostic_unverified` と `claude_connector/diagnostic_unverified`、aiterm-mcp `pty_list/pty_list_unverified`、claude-code / codex-cli `last_update/post_gate_failed`（前回gate失敗の残響。実際の更新失敗は`operation_status=failed`→failでblockingのまま）、gpt-connector `cdp/chrome_idle`と`official_origin`・`auth`・`runtime_bridge`の`cdp_not_inspected`（専用Chrome未起動＝on-demand設計のidle平常状態。0.4.12+のchrome_idle意味論）。未知の check、reason 違い、別 product は blocking である。`post_gate_pending` の既存例外は維持する。
 
@@ -262,14 +268,15 @@ runner全体へ別の強制timeoutは重ねない。各外部境界を上表でb
 
 ## 11. BugHub wire schema major互換matrix
 
-通常経路はpayload `schema_version="6.0"`、`report_mode="full"`、endpoint `/api/factory/v6/reports`である。v5 command/state/endpointはhost別手動rollback専用で、通常運用は参照しない。v1/v4はretention対象である。未知major/minor、未知field、deltaを推測・黙示変換しない。
+通常経路はpayload `schema_version="7.0"`、`report_mode="full"`、endpoint `/api/factory/v7/reports`である。v6 command/state/endpointはhost別手動rollback、v5はv6からの二段目rollback専用で、通常運用は参照しない。v1/v4はretention対象である。未知major/minor、未知field、deltaを推測・黙示変換しない。
 
 | client | server入口 | 結果 | rollout可否 |
 |---|---|---|---|
-| v5 | v5 endpoint | v5契約のまま受理 | host別rollback時だけ |
-| v6 | v6 endpoint | v6 schema/semantic fixtureとcredential契約がgreenの時だけ受理 | 現行本番 |
-| v6 payload | v5 endpoint | `422`、clientはdead-letter。v5へ自動downgradeしない | 本番送信禁止 |
-| v5 payload | v6 endpoint | 明示reject。v6へ自動upgradeしない | 本番送信禁止 |
+| v7 | v7 endpoint | v7 schema/semantic fixtureとcredential契約がgreenの時だけ受理 | 現行本番 |
+| v6 | v6 endpoint | v6契約のまま受理 | host別rollback時だけ |
+| v5 | v5 endpoint | v5契約のまま受理 | v6からの二段目rollback時だけ |
+| v7 payload | v6 endpoint | `422`、clientはdead-letter。v6へ自動downgradeしない | 本番送信禁止 |
+| v6 payload | v7 endpoint | 明示reject。v7へ自動upgradeしない | 本番送信禁止 |
 | v1 / v4 | 対応する旧endpoint | 履歴・既存outbox保持用。新規登録しない | retentionだけ |
 | 未知major | 任意の既知endpoint | 明示reject。fallback、field削除、再serializeをしない | 不可 |
 

@@ -1,6 +1,6 @@
 # 工場 host × product 期待matrix
 
-更新日: 2026-08-10
+更新日: 2026-08-15
 正本: dotagents
 対象: Mac、main-server、FOX WSL2、FOX Windows native
 
@@ -73,3 +73,16 @@ Spotterは全projectへ無条件activationしない。dotagentsなど工場管�
 - `windows-native`: 上表FOX Windows native列
 
 BugHub serverはhost credentialにprofileを結び付け、このmatrixから期待状態を決める。dotagentsの`lib/factory/deployment-contract.mjs`も同じ12管理製品・host projectionを更新後gateとverify-installへ供給し、profile/OS/arch/macOS majorがmatrix外なら停止する。期待状態はclient payloadへ重複保持せず、serverだけがpresenceとの組合せとseverityを判定する。
+
+## host別展開と定期更新
+
+製品集合は上表とdeployment contractが共有するが、host配線は次の入口が個別に所有する。
+WSL2とWindows nativeは同一物理端末でも別hostとして扱い、設定・credential・scheduler・receiptを共有しない。
+
+| host | 一撃展開 | 定期更新 | 実host受入 |
+|---|---|---|---|
+| Mac | `setup-macos-factory.sh` | LaunchAgent `com.kite.agents-update`、毎週月曜04:00 | `verify-install`、15製品、fresh v7 delivery |
+| FOX WSL2 | `setup-wsl-factory.sh` | cron `# dotagents-agents-update-wsl`、毎日02:00 | batch token、15製品、fresh v7 delivery |
+| FOX Windows native | `setup-windows-native-factory.ps1` | Task `dotagents-agents-update`、毎日02:00 | 実Task smoke、終了code、15製品、fresh v7 delivery |
+
+main-serverは本表のserver profileと製品契約に従うが、今回の3つのworkstation一撃展開入口の対象外である。
