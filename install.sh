@@ -128,6 +128,9 @@ fi
 
 # bin scripts (extension dropped at the destination, e.g. agents-update.sh -> agents-update)
 mkdir -p "$HOME/.local/bin"
+remove_retired_link \
+  "$HOME/.local/bin/windows-native-product-smoke" \
+  "$HERE/bin/windows-native-product-smoke.mjs"
 for f in "$HERE/bin"/*.sh; do
   [ -e "$f" ] || continue
   link_one "$f" "$HOME/.local/bin/$(basename "$f" .sh)"

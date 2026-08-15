@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { CURRENT_WIRE_PRODUCT_IDS } from '../../lib/factory/deployment-contract.mjs';
-import { assertWindowsNativeProductSmoke } from '../../bin/windows-native-product-smoke.mjs';
+import { assertWindowsNativeProductSmoke } from '../../lib/factory/windows-native-product-smoke.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..', '..');
 const SETUP = join(ROOT, 'bin', 'setup-windows-native-factory.ps1');
@@ -53,7 +53,7 @@ test('Windows native一撃setupは工場展開・配線・fresh BugHub受理・�
   assert.match(source, /--post-update.*--finalize-update/su);
   assert.match(source, /Set-ToolchainPostGateSuccess.*--post-gate', 'success'/su);
   assert.match(source, /@\(Compare-Object -ReferenceObject \(\$expected \| Sort-Object\) -DifferenceObject \$actual\)\.Count -ne 0/u);
-  assert.match(source, /windows-native-product-smoke\.mjs/u);
+  assert.match(source, /lib\\factory\\windows-native-product-smoke\.mjs/u);
   assert.match(source, /checked_products -ne 15/u);
   assert.match(source, /run-\$RunId\.log.*Start-Transcript.*Set-OwnerOnlyAcl \$TranscriptPath.*Stop-Transcript/su);
   assert.match(source, /function Set-OwnerOnlyAcl.*DirectorySecurity.*FileSecurity.*SetOwner\(\$sid\).*SetAccessRuleProtection/su);

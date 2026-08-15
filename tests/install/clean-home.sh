@@ -138,11 +138,12 @@ PY
 
 seed_config "$OFFICIAL_HOME"
 mkdir -p "$OFFICIAL_HOME/.claude/skills" "$OFFICIAL_HOME/.claude/commands" \
-  "$OFFICIAL_HOME/.agents/skills" "$OFFICIAL_HOME/.codex/skills"
+  "$OFFICIAL_HOME/.agents/skills" "$OFFICIAL_HOME/.codex/skills" "$OFFICIAL_HOME/.local/bin"
 ln -s "$ROOT/claude/skills/audit-gauntlet" "$OFFICIAL_HOME/.claude/skills/audit-gauntlet"
 ln -s "$ROOT/claude/commands/audit-gauntlet.md" "$OFFICIAL_HOME/.claude/commands/audit-gauntlet.md"
 ln -s "$ROOT/codex/skills/audit-gauntlet" "$OFFICIAL_HOME/.agents/skills/audit-gauntlet"
 ln -s "$ROOT/codex/skills/audit-gauntlet" "$OFFICIAL_HOME/.codex/skills/audit-gauntlet"
+ln -s "$ROOT/bin/windows-native-product-smoke.mjs" "$OFFICIAL_HOME/.local/bin/windows-native-product-smoke"
 if HOME="$OFFICIAL_HOME" "$ROOT/install.sh" --profile official --profile official >/dev/null 2>&1; then
   fail 'install が重複 profile を受理した'
 fi
@@ -170,6 +171,8 @@ assert_link "$OFFICIAL_HOME/.claude/runbooks" "$ROOT/shared/runbooks"
 [ ! -L "$OFFICIAL_HOME/.claude/commands/audit-gauntlet.md" ] || fail '廃止済みClaude command linkを除去しない'
 [ ! -L "$OFFICIAL_HOME/.agents/skills/audit-gauntlet" ] || fail '廃止済みofficial Codex skill linkを除去しない'
 [ ! -L "$OFFICIAL_HOME/.codex/skills/audit-gauntlet" ] || fail '廃止済みlegacy Codex skill linkを除去しない'
+[ ! -L "$OFFICIAL_HOME/.local/bin/windows-native-product-smoke" ] \
+  || fail 'Windows native内部helperの旧global CLI linkを除去しない'
 before_config="$(cat "$OFFICIAL_HOME/.codex/config.toml")"
 before_hooks="$(cat "$OFFICIAL_HOME/.codex/hooks.json")"
 if apply_config "$OFFICIAL_HOME" --unknown >/dev/null 2>&1; then

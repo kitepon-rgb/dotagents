@@ -515,7 +515,7 @@ try {
   $verify = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\verify-install.sh')
   $deliveryRunner = Join-Path $RepoRoot 'bin\factory-reporter-v7-schedule-runner.mjs'
   $ledgerHelper = Join-Path $RepoRoot 'bin\factory-toolchain-ledger.mjs'
-  $productSmoke = Join-Path $RepoRoot 'bin\windows-native-product-smoke.mjs'
+  $productSmoke = Join-Path $RepoRoot 'lib\factory\windows-native-product-smoke.mjs'
   $reporterScheduler = Join-Path $RepoRoot 'bin\factory-reporter-scheduler.mjs'
   $dailyScheduler = Join-Path $RepoRoot 'bin\agents-update-scheduler.mjs'
 
