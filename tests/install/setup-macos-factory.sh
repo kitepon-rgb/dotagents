@@ -2,6 +2,13 @@
 # Mac一撃展開の順序、冪等launchd、fresh delivery receiptを隔離fixtureで検証する。
 set -euo pipefail
 
+# Windows native（Git Bash/MSYS）には/usr/bin/gitが無く、POSIX固定PATHのfixtureが
+# 成立しない。検証対象のmacOS展開自体がWindowsを対象にしないため明示SKIPする。
+if [ "${OS:-}" = "Windows_NT" ]; then
+  echo "SKIP: Windows nativeは対象外（POSIX PATH fixture不成立・検証対象はmacOS展開）"
+  exit 0
+fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SOURCE="$ROOT/bin/setup-macos-factory.sh"
 [ -x "$SOURCE" ] || { echo "FAIL: Mac一撃展開スクリプトがない: $SOURCE" >&2; exit 1; }
