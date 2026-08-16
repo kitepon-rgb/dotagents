@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 5 F/A着地（2026-08-16）。host matrixにGrok親列を追加。セルはWave 1〜4実測だけ。GF07は書き換えずgreenへ丸めていない。READMEランブックに所有面とcompat切断を書いた。setup-macos/wslは未loginで`apply-grok-config`をスキップする。Windows nativeにGrok親は入れない。verify-installがGrok rules/runbooks/skills/agents/hooksと工場hook JSONを見る。focusedと`test-install`は隔離HOMEでgreen。`make ci`は`test-orchestrate`がシステム`python3` 3.9で`tomllib`不在（本変更外）。H（実HOME適用・login済み`--apply`・Mac/FOX WSL2の新規session受入）は未実施。Wave 6は別H。
+Wave 5 このMac H適用（2026-08-16）。`install.sh --profile official` 済み。`apply-grok-config --apply` は変更なし（agents/hooks=false、工場MCP 6は既載）。Grok面は本リポ向きsymlink。このsessionは受入に数えない。FOX WSL2と新規session受入は未実施。Wave 6は別H。
