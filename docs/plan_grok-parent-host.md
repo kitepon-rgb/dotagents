@@ -1,6 +1,6 @@
 # Grok 親host 全対応
 
-**状態:** Active
+**状態:** Active（Wave 5 H受入済み。次はPhase監査）
 **開始:** 2026-08-16
 **工程正本:** 本ファイル（Lattice未適用。オーナーが指示した時だけ移管する）
 **親導線:** [開発工場 統合マスター計画](plan_factory-master.md)
@@ -159,6 +159,7 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 - Codex公式skill面`$HOME/.agents/skills`はGrokが`.agents`として別スキャンする。`compat.codex`はinertでもここは生きる。
 - `apply-*-config --apply`は端末承認後。backupなしで`config.toml`を触らない。
 - 既存Grok sessionはconfig/hook変更を引き継がない。受入は新規sessionだけ。
+- Windows nativeの`apply-grok-config`は shebang 直起動を避けるため`~/.grok/hooks/factory.json`を実ファイル化する。`install.sh`は実ファイルをSKIPするので、正本`grok/hooks/factory.json`を直したあとはWindows面へ再applyする。symlinkのままに戻さない。
 
 ## 7. 検証
 
@@ -170,7 +171,7 @@ Wave内は変更に直結するfocusedだけ。関連gateはwave完了時に1回
 | 2 | installのGrok skills/agents、skill smoke | `make lint-skills` | `/skills`相当の列挙 |
 | 3 | apply-grok-configのdry-run/backup/冪等test | `make test-install` | `grok mcp doctor` |
 | 4 | Grok envelopeの負系fixture、Claude/Codex hook smoke不変 | `make lint-hooks` | 新規sessionでClaude hookが無い |
-| 5 | verify-install Grok面、setupの未login通過 | `make ci` 1回 | MacとWSL2の新規session |
+| 5 | verify-install Grok面、setupの未login通過 | `make ci` 1回 | 4席の新規session |
 
 Phase完了時の重い監査はWave 5のあと1回。検証者は親と異なるprovider（ClaudeまたはCodex）。Wave 1〜4の完了候補は統括自身のdiff確認で閉じる。
 
@@ -178,13 +179,13 @@ Phase完了時の重い監査はWave 5のあと1回。検証者は親と異な�
 
 - **F:** 3親憲法（Claude / Codex / Grok）、共通→deltaの条文移動、compat切断、host matrix Grok親列、工場4席は全部本線、8/14 Spotter棄却の維持、工場MCPの失敗を丸めないこと。
 - **A:** generator拡張、`grok/`エントリ、install/verify、apply-grok-config、Grok appendix、hook adapter。
-- **H:** `install.sh`の実HOME適用、`apply-grok-config --apply`、compat切断後の新規session確認、Windows nativeの適用後新規session、Wave 6の製品repo着手、Grok login。
+- **H:** 実HOMEの`install.sh` / `apply-grok-config --apply` / 4席の新規session確認は2026-08-16に閉じた。残HはWave 6の製品repo着手と、未login席でのGrok login。
 
-Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs正本だけなのでControlを作らない。
+Wave 1〜5はdocs正本だけで進めた。Control Recordは作っていない。事後に`init`しない。
 
 ## 9. 現在地
 
-Mac側のWave 5 Hは閉じた（2026-08-16 session `01a0091e`）。FOX WSL2の新規Grok session受入も閉じた（2026-08-16 session `01a00964`）。FOX Windows nativeの適用後新規session受入も閉じた（2026-08-16 session `01a00999`）。Windows hook修正後の新規session受入も閉じた（2026-08-16 session `01a009d3`）。Linux / main-serverの新規session受入も閉じた（2026-08-16 session `01a00a9c`）。工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。Windows nativeを対象外にした旧裁定8は2026-08-16に破棄。Windows nativeのGrok親配線とlogin済みapplyは着地（2026-08-16）。製品未対応面は`unsupported`のまま残してよい。Wave 5の4席人の目は閉じた。Wave 6は別H。
+オーナーH受入（2026-08-16）。Wave 5の4席人の目は閉じた。このMacでWave 5閉じの`make ci`を回した。lint・constitution・hooks・`test-install`（setup-macos / wsl / linux 含む）はpass。Linux第4入口に合わせてcanon-migrationの受け側文言を追従し、隔離HOMEの`verify`がdarwinへ`wsl`を上書きしていたのを外した。`test-observer-package`はObserver diagnostics schemaで落ちた（Grok親Wave 5の範囲外）。Mac `01a0091e`、FOX WSL2 `01a00964`、Windows native 適用`01a0097e` / 受入`01a00999` / hook修正後`01a009d3`、Linux / main-server `01a00a9c`。工場の4席は全部本線。旧裁定8（Windows native対象外）は2026-08-16に破棄。製品未対応面は`unsupported`のまま残してよい。次はPhase監査（親と異なるprovider）。Wave 6は別H。
 
 Wave 5 Mac受入を通し直し（2026-08-16 前session）。DesktopのGUI PATH（`/usr/bin:/bin:/usr/sbin:/sbin`）では工場MCPの名前解決と `env node` ができないのが、そのsessionの`connection failed`の原因。`apply-grok-config`は解決できたcommandを絶対パスで書き、親dirを`env.PATH`先頭に置く。実HOME再apply済み（`[models]` grok-4.6 / xhigh 不変。Stripeコメント保持）。GUI PATHの`grok mcp doctor`で工場6はhandshake OK。そのDesktop session自体のtool列挙は起動時handshakeのまま失敗（config変更を引き継がない）。inspect: 有効globalは`~/.grok/rules/AGENTS.md`、工場skill 4、工場hook enabled 9、Claude settings hook 22件disabled。`verify-install`のGrok面は通る。全体はMarkItDown / uv tool不在でFAIL（Grok範囲外）。`PATH=/opt/homebrew/bin:$PATH make ci`はpass（python 3.14）。FOX新規sessionは未実施。Windows nativeは当時の計画では対象外（2026-08-16裁定で破棄）。Wave 6は別H。
 

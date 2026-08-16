@@ -44,7 +44,7 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
 ## 並行campaign
 
 - [Grok 親host 全対応](plan_grok-parent-host.md)（2026-08-16開始。工程正本は当該Markdown。Lattice未適用）。
-  Wave 0〜4着地。Wave 5はMacとFOX WSL2の新規session受入済み。Windows nativeのGrok親配線とlogin済みapplyは着地。工場の4席は全部本線。残HはWindows nativeの適用後新規session。製品未対応面は`unsupported`のまま残してよい。Wave 6は製品repo・別H。
+  Wave 0〜5着地。4席（Mac / Windows native / WSL2 / Linux）の新規session受入は2026-08-16に閉じた。製品未対応面は`unsupported`のまま残してよい。次はPhase監査（親と異なるprovider）。Wave 6は製品repo・別H。
 
 ## maintenance queue
 
