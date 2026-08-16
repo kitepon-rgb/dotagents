@@ -154,11 +154,8 @@ if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
 fi
 
 expected_npm_packages=14
-if [ "$(uname -s)" = Darwin ]; then
-  expected_npm_packages=15
-fi
 if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then
-  expected_npm_packages=16
+  expected_npm_packages=15
 fi
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*|Windows_NT)
@@ -175,8 +172,8 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const winBase = base.filter((name) => name !== 'aiterm-mcp');
 if (!same(npmPackagesForHost({ os: 'Linux', arch: 'x64' }), base)
  || !same(npmPackagesForHost({ os: 'Windows_NT', arch: 'x64' }), winBase)
- || !same(npmPackagesForHost({ os: 'Darwin', arch: 'x64' }), [...base, '@quolu/observer'])
- || !same(npmPackagesForHost({ os: 'Darwin', arch: 'arm64' }), [...base, '@quolu/observer', '@quolu/aishell'])) process.exit(1);
+ || !same(npmPackagesForHost({ os: 'Darwin', arch: 'x64' }), [...base])
+ || !same(npmPackagesForHost({ os: 'Darwin', arch: 'arm64' }), [...base, '@quolu/aishell'])) process.exit(1);
 EOF
 [ "$(grep -c '^normal:' "$TEST_HOME/npm-calls.log")" -eq "$expected_npm_packages" ] \
   || fail "curated package集合を fake npm へ正確に渡していない"

@@ -59,7 +59,7 @@ exit 64
 EOF
 chmod +x "$BIN_DIR/uv"
 
-for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp lattice aishell-mcp observer peertable-client; do
+for command in oracle gpt-connector aiterm-mcp codex-sidecar-mcp lattice aishell-mcp peertable-client; do
   cat > "$BIN_DIR/$command" <<'EOF'
 #!/bin/sh
 [ "$1" = --version ] && exit 0
@@ -178,12 +178,6 @@ for command in aiterm-mcp codex-sidecar-mcp lattice peertable-client; do
   assert_rejected "$command CLI 欠落"
   mv "$BIN_DIR/$command.off" "$BIN_DIR/$command"
 done
-
-if [ "$(uname -s)" = Darwin ]; then
-  mv "$BIN_DIR/observer" "$BIN_DIR/observer.off"
-  assert_rejected 'observer CLI 欠落'
-  mv "$BIN_DIR/observer.off" "$BIN_DIR/observer"
-fi
 
 if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ] \
   && [ "$(sw_vers -productVersion | cut -d. -f1)" -ge 15 ]; then

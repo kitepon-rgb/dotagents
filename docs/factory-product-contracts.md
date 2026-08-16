@@ -1,12 +1,12 @@
-# 工場管理12製品＋基盤toolchain 3製品の有限契約台帳
+# 工場管理11製品＋基盤toolchain 3製品の有限契約台帳
 
 更新日: 2026-08-16。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
 ## 共通境界
 
-- 現役管理対象は自作コア11製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、Observer、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計12製品である。AIShellはmacOS arm64、ObserverはmacOS専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。peertableはpeertable-onboarding campaignで編入し、H承認4件（npm 0.3.6公開・ServerManager wire v7 enroll・公開後smoke・正典の製品数更新）を2026-08-10に実行済み。wire v7 cutoverは2026-08-10に全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）で完了し、各hostの実送信とBugHub matrix反映を実測済み（経緯は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)）。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。
+- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Observerは2026-08-16に工場コアから撤去し、現役の製品・依存・配線へ含めない。peertableはpeertable-onboarding campaignで編入し、H承認4件（npm 0.3.6公開・ServerManager wire v7 enroll・公開後smoke・正典の製品数更新）を2026-08-10に実行済み。wire v7 cutoverは2026-08-10に全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）で完了し、各hostの実送信とBugHub matrix反映を実測済み（経緯は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)）。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。
 - 現役契約はLattice `docs/01_integration-package.md`と本台帳・[factory-host-product-matrix.md](factory-host-product-matrix.md)が正、導入経緯は[docs/archive/plan_lattice-factory-integration.md](archive/plan_lattice-factory-integration.md)と[docs/archive/plan_observer-core-integration.md](archive/plan_observer-core-integration.md)が正。
-- dotagents所有の導入・更新後gate・verify-install用の機械可読な単一契約は`lib/factory/deployment-contract.mjs`である。managed 12 IDとcurrent wire v7の15 IDを分け、v2-v6の履歴集合を変更しない。host projectionはmatrixの`required`／`unsupported`／`not_applicable`だけを返し、profile/OS/arch/macOS majorの未知値・不整合をfail-closedにする。ServerManagerはserver profileの公開readiness/revision検証に限定する。
+- dotagents所有の導入・更新後gate・verify-install用の機械可読な単一契約は`lib/factory/deployment-contract.mjs`である。managed 11 IDとcurrent wire v7の15 IDを分け、v2-v6の履歴集合を変更しない。host projectionはmatrixの`required`／`unsupported`／`not_applicable`だけを返し、profile/OS/arch/macOS majorの未知値・不整合をfail-closedにする。ServerManagerはserver profileの公開readiness/revision検証に限定する。
 - 初回導入と再適用はMacの`setup-macos-factory.sh`、Linuxの`setup-linux-factory.sh`、WSL2の`setup-wsl-factory.sh`、Windows nativeの`setup-windows-native-factory.ps1`が所有する。4入口はdeployment contractの製品集合だけを共有し、OS固有のLaunchAgent／cron／Task Scheduler、config、hook、credential、delivery receiptを混同しない。各入口は定期更新を冪等登録し、`verify-install`、固定15製品のfresh wire v7 report、BugHub delivery receiptまでを受け入れる。
 - コア製品の修理・機能追加はcommit/pushで止めず、version bump→publish→対象端末へのglobal install→公開後smoke→公開証跡記録までを同一waveで完遂する。release gateは「publish対象は既定ブランチの祖先だけ」を機械gateとして実装したものだけを合格とし、AIShellの`scripts/verify-release-commit.mjs`＋`prepublishOnly`をreference実装とする。gate未実装の製品は、次にrelease作業を行うwaveで同時に導入する。
 - 工場の再現欠陥の重大度分類（P0/P1即時修理の閾値）とmaintenance wave処理は[shared/orchestrate/contract.md](../shared/orchestrate/contract.md)「Phase maintenance」が正で、本台帳へ複製しない。dotagents固有の境界: 原因と修理所有者が第三者製品または基盤toolchain本体である欠陥はdotagentsのToDo、maintenance queue、H承認待ちへ登録せず完全に範囲外とし、dotagents所有adapter・設定生成・互換projectionの欠陥は範囲内とする（外部製品名が入力に現れるだけで範囲外へ逃がさない）。権限外変更、コア製品publish、本番deploy、credential/login、意図的障害試験は理由と必要条件を記録しH承認待ちとしてcarry overする。
@@ -107,12 +107,10 @@
 
 ### `observer`
 
-- 所有/修正先: 自作 / `kitepon/Observer`。version入口は`observer diagnostics`の`manifest.version`とnpm package versionの一致。
-- diagnostics/state正本: `observer diagnostics`（schema `observer.product_diagnostics.v1`）と`observer-mcp --diagnostics`（schema `observer.mcp_diagnostics.v1`）。package manifest、instruction、bin integrity、Node runtime、platformをread-onlyで返す。
-- 現adapter: macOSだけ正規diagnosticsをexact allowlistで検証し、全check passを`installed / compatible`へ射影する。server / WSL / Windows nativeはCLI探索や内部state推測をせず`not_applicable / unsupported`にする。
-- update/rollback: macOSで`@quolu/observer@latest`をglobal更新する。公開済みversionをunpublishせず、必要時はdeprecateしてglobal installを旧版へ戻す。
-- wire: v5固定13製品を変更せず、wire v6の固定14製品目としてserver-first、dual-run、4 host cutover済み。
-- 禁止: watch/session/prompt/path/内部DBをfactory reportへ送信、非対応hostを`missing`扱い、ServerManagerからObserver内部stateを修復。
+- 所有/修正先: 自作 / `kitepon/Observer`。2026-08-16に工場コアから撤去。製品repoは残す。
+- 現adapter: 全host `not_applicable`。CLI探索も更新も一撃展開もしない。wire v6/v7の製品キーは履歴互換のため残し、presenceは`not_applicable`だけを出す。
+- update/rollback: `@quolu/observer`を工場更新集合に含めない。
+- 禁止: 工場管理対象へ戻すこと、欠落を`missing`/`high`へすること、ServerManagerから内部stateを修復すること。履歴の物理削除。
 
 ### `peertable`
 

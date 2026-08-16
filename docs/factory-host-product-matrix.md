@@ -29,7 +29,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | codex-sidecar | required | required | required | required | high |
 | Lattice | required | required | required | required | high |
 | AIShell | required（Apple Silicon / macOS 15+） | unsupported（macOS native API不在） | unsupported（同左） | unsupported（同左） | high（対応Macのみ） |
-| Observer | required（macOS） | unsupported（v1 platform support外） | unsupported（同左） | unsupported（同左） | high（対応Macのみ） |
+| Observer | not_applicable（工場コア撤去・2026-08-16） | not_applicable | not_applicable | not_applicable | info |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
 | peertable | required（client。実測済み） | required（server。`deploy/compose.yaml`でcompose常駐） | required（client。2026-08-10実測済み） | required（client。2026-08-10実測済み） | high |
 | Claude Code CLI | required | required | required | unsupported | high |
@@ -53,7 +53,7 @@ Grok親列はWave 1〜5の実測を書く。工場の4席（Mac / Windows native
 | codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う | MCP required（Wave 5 4席 session）。隔離Codex実行用 |
 | Lattice | required。`lattice-mcp`のsensor 8 toolを配線。`codegraph_*`互換名はLattice提供者identityを返す | 同左。Windows nativeは親CLIを運用する端末だけMCP登録 | MCP required（Wave 5 4席 session）。`lattice-gantt`はdotagents所有の案内。`lattice hooks install --host` のGrok hostは増やさない＝製品host hook unsupported |
 | AIShell | MCP `aishell` required（Apple Silicon / macOS 15+のみ）。`AISHELL_CAPABILITY_SET=expanded-v1`で登録し、工場監視はpath非露出の`AISHELL_TOOL_PROFILE=factory`を使う | 同左 | MCP required（Apple Silicon / macOS 15+のみ。Wave 5 Mac `01a0091e` connected）。他hostはunsupported（WSL2 / Windows / Linux は typed `spawn_failed`） |
-| Observer | macOSでStop hookとparent watchをversioned fragmentからH適用。同provider familyの伴走専用 | 同左。`run-observer-parent-watch`を正規入口とし、一般Worker・Control票へ混ぜない | unsupported（同provider family専用。Grok面なし。Wave 6） |
+| Observer | not_applicable（工場コア撤去） | not_applicable | not_applicable |
 | ServerManager | connector not_applicable | connector not_applicable | connector not_applicable |
 | peertable | team編成時（peertable setup）だけMCP `room` required。teardownで解除 | 同左 | unsupported（Wave 2: roomはClaude面のまま。Grok所有のroom MCPなし） |
 

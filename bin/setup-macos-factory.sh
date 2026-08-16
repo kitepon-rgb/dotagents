@@ -265,7 +265,7 @@ ensure_codex_aishell() {
 
 ensure_managed_commands() {
   local -a commands=(caveat throughline spotter lattice markitdown gpt-connector
-    aiterm-mcp codex-sidecar-mcp peertable-client observer)
+    aiterm-mcp codex-sidecar-mcp peertable-client)
   supports_aishell && commands+=(aishell-mcp)
   local command_name missing=0
   for command_name in "${commands[@]}"; do

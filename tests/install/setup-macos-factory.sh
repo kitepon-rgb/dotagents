@@ -213,7 +213,7 @@ else
 fi
 EOF
 for command_name in npm uv throughline markitdown gpt-connector aiterm-mcp codex-sidecar-mcp \
-  peertable-client observer aishell-mcp; do
+  peertable-client aishell-mcp; do
   cat >"$STUB_BIN/$command_name" <<'EOF'
 #!/usr/bin/env bash
 exit 0
@@ -281,7 +281,7 @@ latest_report="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFile
   "$HOME_DIR/.local/state/dotagents/factory-reporter-v7/latest-report.json")"
 [ "$latest_report" = fixture-report-2 ] || fail '2回目のfresh reportが作られていない'
 
-if DOTAGENTS_SETUP_TEST_BROKEN_PRODUCT=observer \
+if DOTAGENTS_SETUP_TEST_BROKEN_PRODUCT=peertable \
   "$FIXTURE_ROOT/bin/setup-macos-factory.sh" >/dev/null 2>&1; then
   fail 'Mac required製品欠落を成功扱いした'
 fi

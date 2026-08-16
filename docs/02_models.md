@@ -49,7 +49,7 @@ xAI公式値では agentic office task と複数のcoding/agent benchmarkでSol/
 
 ### provider配置の原則
 
-- **Observerは親と同じprovider family**: 伴走と継続観測の役であり、独立反証票へ数えない。
+- **Observerは工場コアから撤去**（2026-08-16）。伴走役として工場に置かない。
 - **相談・反証は異なるproviderを優先**: Codex親はClaudeまたはGrok、Claude親はCodexまたはGrokを候補にする。Grokを恒常的な補欠へ固定しない。
 - **Phase検証はcross-provider**: 契約クリティカルな完了は、成果providerと異なるproviderが実物を1回検証し、統括が採否を裁定する。Grok 4.6はこの反証役の現役候補である。
 - **役割と配置関係の機械可読な対応**は`lib/orchestrate/placement-policy.mjs` v1が固定する。自動ConsultationはAnthropic/OpenAIだけだが、これは現行配線のclosed enumであり、xAIの能力評価ではない。xAIはAitermの明示laneで使う。

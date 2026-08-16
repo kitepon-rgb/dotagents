@@ -69,7 +69,7 @@ if not set(sys.argv[2:]).issubset(keys):
 PY
 }
 
-for skill in orchestrate auto-deploy-on-push polish-github run-observer-parent-watch; do
+for skill in orchestrate auto-deploy-on-push polish-github; do
   file="$ROOT/codex/skills/$skill/SKILL.md"
   [ -f "$file" ] || fail "$file がない"
   frontmatter_is_name_and_description_only "$file"
@@ -93,7 +93,7 @@ contains "$ROOT/claude/skills/orchestrate/SKILL.md" '](../../../shared/orchestra
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '](../../../shared/orchestrate/delegation-contract.md)'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" 'references/workflow-templates.md'
 contains "$ROOT/PLAN.md" 'ラベル運用は統括レーンの4関節（writer委譲・受入裁定・Phase gate・H操作）の裁定用とする。'
-contains "$ROOT/PLAN.md" '作業後はpushで真実を返す（本原則は、dotagentsと自作コア11製品の正規repoに対する恒久push裁定である。第三者製品・基盤toolchainには適用しない。認定手順は憲法git鉄則に従う）'
+contains "$ROOT/PLAN.md" '作業後はpushで真実を返す（本原則は、dotagentsと自作コア10製品の正規repoに対する恒久push裁定である。第三者製品・基盤toolchainには適用しない。認定手順は憲法git鉄則に従う）'
 contains "$ROOT/PLAN.md" '10. （書込みscopeは憲法「調査と知識の置き場」冒頭に従う）**知識は還流させて育てる（第二の脳）**'
 contains "$ROOT/PLAN.md" '（書込みscopeは憲法「調査と知識の置き場」冒頭に従う）**方針級の発見はその場で正典へ**'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '**配置は統括レーンの4関節で宣言**'
@@ -183,20 +183,6 @@ for file in \
     absent "$file" "$claude_entry"
   done
 done
-
-observer="$ROOT/codex/skills/run-observer-parent-watch/SKILL.md"
-contains "$observer" 'parent codex run'
-contains "$observer" '別providerやprivate protocolへfallbackしない'
-# shellcheck disable=SC2016 # backticks are literal Markdown from the skill contract.
-contains "$observer" '`--runtime-root`は渡さない'
-contains "$observer" '重複起動しない'
-contains "$observer" '別transport、別thread、別spawn'
-assert_order "$observer" \
-  'observer watch status' \
-  '承認を待つ' \
-  'PTY付きforeground' \
-  'session ID' \
-  'SIGINT'
 
 # 現行 Claude surface: 配布される skill / command / agent の入口契約だけを確認する。
 for skill in auto-deploy-on-push gpt-connector orchestrate; do

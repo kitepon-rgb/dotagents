@@ -17,7 +17,7 @@ test('v6正典はObserverを自作コア、MarkItDownを第三者管理として
   assert.match(contracts, /^# 工場管理\d+製品＋基盤toolchain 3製品/mu);
   assert.match(contracts, /### `markitdown`[\s\S]*所有\/修正先: 第三者/u);
   assert.match(contracts, /### `observer`[\s\S]*所有\/修正先: 自作 \/ `kitepon\/Observer`/u);
-  assert.match(matrix, /^\| Observer \| required（macOS） \| unsupported/mu);
+  assert.match(matrix, /^\| Observer \| not_applicable（工場コア撤去/mu);
   assert.doesNotMatch(contracts, /Observerは予約枠のまま未編入/u);
 });
 

@@ -80,7 +80,7 @@ Claude と Codex と Grok が全端末・全プロジェクトで従う共通正
 - **複数行のコミットメッセージは `-F <file>` で渡す**。PTY へのインライン複数行 `-m` は引用崩れする。
 - **自作repositoryのownerは公開段階で分ける**。プロトタイプ段階は個人account `quolu` に置き、オーナーが正式リリースと扱う時点で `kitepon` Organizationへ移管する。正式リリース後の正規repositoryは `kitepon/<repository>` とする。
 - 通常のpushを完遂に含めるのは、project正典または恒久裁定がpush既定を定めるrepoだけ。それ以外のrepoでのpushと、force系・履歴改変・共有ブランチの巻き戻しは、ユーザーの明示指示時のみ行う。
-- push既定を認定できるのは、(a)適用中のrepo直下のAGENTS.md／CLAUDE.mdとそのhost展開import（直接・再帰の`@import`だけ。Markdownリンクは含まない）が通常pushを既定と明記している場合、(b)dotagents憲章が恒久裁定として既定を与える工場管理repo（dotagentsと自作コア11製品の正規repo。第三者製品・基盤toolchainは含まない）である場合、(c)現在のrequest／campaignで未撤回の、対象repoと通常pushを既定とする旨を明記したユーザー指示がある場合、だけとする。一回限りのpush指示は既定でなく明示指示として扱い、認定できない・矛盾する時はpushしない。
+- push既定を認定できるのは、(a)適用中のrepo直下のAGENTS.md／CLAUDE.mdとそのhost展開import（直接・再帰の`@import`だけ。Markdownリンクは含まない）が通常pushを既定と明記している場合、(b)dotagents憲章が恒久裁定として既定を与える工場管理repo（dotagentsと自作コア10製品の正規repo。第三者製品・基盤toolchainは含まない）である場合、(c)現在のrequest／campaignで未撤回の、対象repoと通常pushを既定とする旨を明記したユーザー指示がある場合、だけとする。一回限りのpush指示は既定でなく明示指示として扱い、認定できない・矛盾する時はpushしない。
 - **publish・本番deployの対象commitは、所有repoの既定ブランチの祖先だけとする**。祖先でない成果は先に既定ブランチへ着地させてから出す（実行前に `git merge-base --is-ancestor <commit> origin/<既定>` で確認）。着地しないまま出すと、そのブランチが取り残された時点で公開物が後続releaseから消え、統合契約だけが存在しない面を指し続ける。
 - **未commit差分が乗ったpathへのworktree破棄形git操作（`checkout --`／`checkout .`／`restore`／`clean -f`系／`--hard`系reset／`stash drop|clear`）は、patch保存またはstash退避を済ませた後だけ**。一時変更の復元にworktree破棄形を反射で使わない（実被弾 2026-08-15: 復元反射の`checkout --`で未commit実装を消失。物理ゲートはdotagentsのgit-destroy-gate hook）。
 - **`rsync --delete` の前に必ず `-n -v` の dry-run**（削除一覧と秘密混入の確認。gitignore済み資産の扱いは git-hygiene runbook）。
