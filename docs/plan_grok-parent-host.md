@@ -140,7 +140,7 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 
 | 製品 | 内容 | 今の状態 |
 |---|---|---|
-| Throughline | Grok turnのcapture / restore / handoff | Mac capture/restoreは閉じた。`01a00cf9`はchat_history注入まで成功したが独自synthetic_reasonでモデルに届かず。`system_reminder`へ直した。live再測は未了。他席は未了 |
+| Throughline | Grok turnのcapture / restore / handoff | Mac captureと`handoff-context` restoreは閉じた。`01a00cfe`はchat_historyへ書けたがライブ文脈（updates）に乗らずモデルは未継承。Grok hookにprompt注入面は無い。他席は未了 |
 | Observer | 工場コアから撤去 | 2026-08-16裁定。Grok familyは開かない。撤去は独立wave |
 | Spotter | 正式Grok host | コア維持。8/14棄却を撤回。Wave 6で正式host化する |
 
@@ -218,3 +218,5 @@ Wave 6 Throughline Grok `/tl` 判定修正（2026-08-17 session `01a00b38`）。
 Wave 6 Throughline Grok handoff注入をchat_historyへ（2026-08-17）。`01a00ce5-0169`はbaton消費とstdout 8600字まで成功したがGrokはUserPromptSubmit stdoutを無視。注入を`chat_history.jsonl`の最新`<user_query>`直前へ`synthetic_reason=throughline_handoff`行として書く。Claude stdoutは維持。live再測は未了。
 
 Wave 6 Throughline Grok注入のsynthetic_reason修正（2026-08-17 session `01a00cf9`）。baton消費とchat_history行は成功したが、独自`throughline_handoff`理由をGrokがモデル文脈から外した。`system_reminder`へ直した。live再測は未了。
+
+Wave 6 Throughline Grok live注入はhost非対応（2026-08-17 session `01a00cfe`）。baton消費・merge・chat_history L5のsystem_reminderは成功。updates.jsonlとprompt_contextと初回assistantに注入文は無い。Grokのライブ文脈はchat_historyを再読しない。UserPromptSubmitでモデルへ記憶を足す公式面は無い。
