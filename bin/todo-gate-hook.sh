@@ -101,8 +101,17 @@ def lattice_store_is_canonical(root):
         return False
 
 
+def grok_host():
+    return os.environ.get("DOTAGENTS_HOOK_HOST") == "grok"
+
+
 def session_start(data):
-    session_id, source, cwd = data["session_id"], data["source"], data["cwd"]
+    if grok_host():
+        session_id = data.get("sessionId")
+        source = data.get("source") or "startup"
+        cwd = data.get("cwd") or data.get("workspaceRoot")
+    else:
+        session_id, source, cwd = data["session_id"], data["source"], data["cwd"]
     if not all(isinstance(value, str) for value in (session_id, source, cwd)):
         raise ValueError
     root, repo_key, porcelain_hash, head, _ = repo_info(cwd)
@@ -151,12 +160,20 @@ def session_start(data):
 
 
 def stop(data):
-    session_id, cwd = data["session_id"], data["cwd"]
+    if grok_host():
+        session_id = data.get("sessionId")
+        cwd = data.get("cwd") or data.get("workspaceRoot")
+        if data.get("reason") not in (None, "end_turn"):
+            return
+        if data.get("stopHookActive") is True:
+            return
+    else:
+        session_id, cwd = data["session_id"], data["cwd"]
+        if data.get("stop_hook_active") is True:
+            return
     if not isinstance(session_id, str) or not isinstance(cwd, str):
         raise ValueError
     if os.environ.get("DOTAGENTS_TODO_GATE") == "off":
-        return
-    if data.get("stop_hook_active") is True:
         return
     root, repo_key, porcelain_hash, head, porcelain = repo_info(cwd)
     snap = snapshot_path(session_id, repo_key)
@@ -208,8 +225,15 @@ def main():
     except Exception:
         error_log()
         return
-    required = ("session_id", "source", "cwd") if sys.argv[1] == "session-start" else ("session_id", "cwd", "stop_hook_active")
-    if any(key not in data for key in required):
+    if grok_host():
+        if sys.argv[1] == "session-start":
+            required_ok = isinstance(data.get("sessionId"), str) and isinstance(data.get("cwd") or data.get("workspaceRoot"), str)
+        else:
+            required_ok = isinstance(data.get("sessionId"), str) and isinstance(data.get("cwd") or data.get("workspaceRoot"), str)
+    else:
+        required = ("session_id", "source", "cwd") if sys.argv[1] == "session-start" else ("session_id", "cwd", "stop_hook_active")
+        required_ok = all(key in data for key in required)
+    if not required_ok:
         error_log()
         return
     try:

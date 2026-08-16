@@ -24,7 +24,10 @@ def session_key(session_id):
 
 try:
     data = json.loads(sys.stdin.read())
-    session_id = data.get("session_id")
+    if os.environ.get("DOTAGENTS_HOOK_HOST") == "grok":
+        session_id = data.get("sessionId")
+    else:
+        session_id = data.get("session_id")
     if not isinstance(session_id, str):
         raise ValueError
     parts = []

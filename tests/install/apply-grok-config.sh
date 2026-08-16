@@ -22,6 +22,7 @@ assert_link "$HOME_FIXTURE/.grok/rules/AGENTS.md" "$ROOT/grok/AGENTS.md"
 assert_link "$HOME_FIXTURE/.grok/runbooks" "$ROOT/shared/runbooks"
 assert_link "$HOME_FIXTURE/.grok/skills/orchestrate" "$ROOT/grok/skills/orchestrate"
 assert_link "$HOME_FIXTURE/.grok/agents/refuter.md" "$ROOT/grok/agents/refuter.md"
+assert_link "$HOME_FIXTURE/.grok/hooks/factory.json" "$ROOT/grok/hooks/factory.json"
 
 mkdir -p "$HOME_FIXTURE/.grok"
 cat >"$HOME_FIXTURE/.grok/config.toml" <<'EOF'
@@ -47,6 +48,7 @@ EOF
 before="$(cat "$HOME_FIXTURE/.grok/config.toml")"
 dry="$(HOME="$HOME_FIXTURE" "$HOME_FIXTURE/.local/bin/apply-grok-config" --dry-run)"
 grep -Fq 'agents = false' <<<"$dry" || fail 'dry-run が agents = false を出さない'
+grep -Fq 'hooks = false' <<<"$dry" || fail 'dry-run が hooks = false を出さない'
 grep -Fq '[mcp_servers.aiterm]' <<<"$dry" || fail 'dry-run が工場MCPを出さない'
 [ "$(cat "$HOME_FIXTURE/.grok/config.toml")" = "$before" ] || fail 'dry-run が config.toml を書き換えた'
 [ ! -d "$HOME_FIXTURE/Archives" ] || fail 'dry-run が backup を作った'
@@ -58,8 +60,11 @@ grep -Fq 'default_reasoning_effort = "xhigh"' <<<"$applied" || fail 'models.effo
 grep -Fq 'permission_mode = "always-approve"' <<<"$applied" || fail 'permission を書き換えた'
 grep -Fq 'privacy_banner_acked = "keep-login"' <<<"$applied" || fail 'login/privacy を書き換えた'
 grep -Fq 'skills = true' <<<"$applied" || fail 'compat.claude.skills を書き換えた'
-grep -Fq 'hooks = true' <<<"$applied" || fail 'compat.claude.hooks を書き換えた'
+grep -Fq 'hooks = false' <<<"$applied" || fail 'compat.claude.hooks を false にしない'
 grep -Fq 'agents = false' <<<"$applied" || fail 'compat.claude.agents を false にしない'
+if grep -Eq 'hooks[ \t]*=[ \t]*true' <<<"$applied"; then
+  fail 'hooks = true が残っている'
+fi
 if grep -Eq 'agents[ \t]*=[ \t]*true' <<<"$applied"; then
   fail 'agents = true が残っている'
 fi
@@ -77,6 +82,7 @@ HOME="$HOME_FIXTURE" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply | grep
 HOME="$ABSENT_HOME" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply >/dev/null
 grep -Fq '[compat.claude]' "$ABSENT_HOME/.grok/config.toml" || fail '不在の config.toml を作らない'
 grep -Fq 'agents = false' "$ABSENT_HOME/.grok/config.toml" || fail '新規 config に agents = false を書かない'
+grep -Fq 'hooks = false' "$ABSENT_HOME/.grok/config.toml" || fail '新規 config に hooks = false を書かない'
 grep -Fq '[mcp_servers.lattice]' "$ABSENT_HOME/.grok/config.toml" || fail '新規 config に工場MCPを書かない'
 
 mkdir -p "$SYMLINK_HOME/.grok" "$SYMLINK_HOME/target"

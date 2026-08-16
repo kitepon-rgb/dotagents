@@ -371,17 +371,23 @@ def main():
         if len(raw) > CAPTURE_LIMIT:
             return
         data = json.loads(raw.decode("utf-8", "strict"))
-        if not isinstance(data, dict) or not isinstance(data.get("session_id"), str) or not isinstance(data.get("cwd"), str) or not data["session_id"] or len(data["session_id"]) > 256:
+        if os.environ.get("DOTAGENTS_HOOK_HOST") == "grok":
+            session_id = data.get("sessionId") if isinstance(data, dict) else None
+            cwd = (data.get("cwd") or data.get("workspaceRoot")) if isinstance(data, dict) else None
+        else:
+            session_id = data.get("session_id") if isinstance(data, dict) else None
+            cwd = data.get("cwd") if isinstance(data, dict) else None
+        if not isinstance(data, dict) or not isinstance(session_id, str) or not isinstance(cwd, str) or not session_id or len(session_id) > 256:
             return
         git = trusted_executable(GIT_CANDIDATES); node = trusted_executable(NODE_CANDIDATES)
         if git is None or node is None:
             return
-        root = git_root(git, data["cwd"], deadline)
+        root = git_root(git, cwd, deadline)
         directory = state_dir()
         if root is None or directory is None or time.monotonic() >= deadline:
             return
         gc(directory)
-        marker = marker_path(directory, data["session_id"], root)
+        marker = marker_path(directory, session_id, root)
         marker_state = safe_marker(marker)
         if marker_state is None or marker_state:
             return

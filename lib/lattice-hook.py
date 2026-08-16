@@ -83,7 +83,7 @@ SESSION_CONTEXT_ABSENT = "session_context_absent"
 
 
 def emit(frontend, message, event="SessionStart"):
-    if frontend == "codex":
+    if frontend in {"codex", "grok"}:
         payload = {
             "hookSpecificOutput": {
                 "hookEventName": event,
@@ -919,7 +919,7 @@ def consume_relay(frontend, session_id, root):
 
 
 def main(frontend):
-    if frontend not in {"claude", "codex"}:
+    if frontend not in {"claude", "codex", "grok"}:
         return
     if os.environ.get("DOTAGENTS_LATTICE_HOOK") == "off":
         return
@@ -930,18 +930,29 @@ def main(frontend):
         if len(raw) > CAPTURE_LIMIT:
             return
         data = json.loads(raw.decode("utf-8", "strict"))
-        required = (data.get("session_id"), data.get("cwd"))
-        if not isinstance(data, dict) or not all(isinstance(value, str) and value for value in required):
+        if not isinstance(data, dict):
             return
-        root = git_root(data["cwd"])
+        if frontend == "grok":
+            session_id = data.get("sessionId")
+            cwd = data.get("cwd") or data.get("workspaceRoot")
+            source = data.get("source")
+            if source is None:
+                source = "startup"
+        else:
+            session_id = data.get("session_id")
+            cwd = data.get("cwd")
+            source = data.get("source")
+        if not all(isinstance(value, str) and value for value in (session_id, cwd)):
+            return
+        root = git_root(cwd)
         if root is None:
             return
         if sys.argv[1] == "user-prompt-submit":
-            consume_relay(frontend, data["session_id"], root)
+            consume_relay(frontend, session_id, root)
             return
-        if data.get("source") not in {"startup", "clear"}:
+        if source not in {"startup", "clear"}:
             return
-        start_worker(data["session_id"], root)
+        start_worker(session_id, root)
         return
     except Exception:
         return

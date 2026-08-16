@@ -7,7 +7,15 @@ import subprocess
 import sys
 
 
-SHELL_TOOLS = {"Bash", "bash", "Shell", "shell", "shell_command", "functions.shell_command"}
+SHELL_TOOLS = {
+    "Bash",
+    "bash",
+    "Shell",
+    "shell",
+    "shell_command",
+    "functions.shell_command",
+    "run_terminal_command",
+}
 
 
 def emit_deny(frontend, target):
@@ -16,7 +24,7 @@ def emit_deny(frontend, target):
         "正しい手順: stash push または diff のpatch保存で退避してから再実行してください。\n"
         "正典: グローバル AGENTS.md「git・shell・ファイルの作法」"
     )
-    if frontend == "codex":
+    if frontend in {"codex", "grok"}:
         payload = {"decision": "deny", "reason": message}
     else:
         payload = {
@@ -138,14 +146,19 @@ def has_changes(cwd, target):
 
 
 def main(frontend):
-    if frontend not in {"claude", "codex"} or os.environ.get("DOTAGENTS_GIT_DESTROY_GATE") == "off":
+    if frontend not in {"claude", "codex", "grok"} or os.environ.get("DOTAGENTS_GIT_DESTROY_GATE") == "off":
         return
     try:
         data = json.loads(sys.stdin.read())
-        if not isinstance(data, dict) or data.get("tool_name") not in SHELL_TOOLS:
+        if not isinstance(data, dict):
             return
-        tool_input = data.get("tool_input")
-        if not isinstance(tool_input, dict):
+        if frontend == "grok":
+            tool_name = data.get("toolName")
+            tool_input = data.get("toolInput")
+        else:
+            tool_name = data.get("tool_name")
+            tool_input = data.get("tool_input")
+        if tool_name not in SHELL_TOOLS or not isinstance(tool_input, dict):
             return
         targets = detected_targets(tool_input.get("command"))
         if not targets:

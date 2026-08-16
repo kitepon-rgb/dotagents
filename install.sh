@@ -112,8 +112,8 @@ for f in "$HERE/codex/agents"/*.toml; do
   link_one "$f" "$HOME/.codex/agents/$(basename "$f")"
 done
 
-# Grok（憲法・runbook・skill・agent。hookは後続wave）
-mkdir -p "$HOME/.grok/rules" "$HOME/.grok/skills" "$HOME/.grok/agents"
+# Grok（憲法・runbook・skill・agent・hook）
+mkdir -p "$HOME/.grok/rules" "$HOME/.grok/skills" "$HOME/.grok/agents" "$HOME/.grok/hooks"
 if [ -e "$HERE/grok/AGENTS.md" ]; then
   link_one "$HERE/grok/AGENTS.md" "$HOME/.grok/rules/AGENTS.md"
 fi
@@ -127,6 +127,10 @@ done
 for f in "$HERE/grok/agents"/*.md; do
   [ -e "$f" ] || continue
   link_one "$f" "$HOME/.grok/agents/$(basename "$f")"
+done
+for f in "$HERE/grok/hooks"/*.json; do
+  [ -e "$f" ] || continue
+  link_one "$f" "$HOME/.grok/hooks/$(basename "$f")"
 done
 
 # caveat own entries — Caveat v0.15+ manages its own sync (dotagents no longer

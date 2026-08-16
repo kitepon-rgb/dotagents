@@ -44,8 +44,15 @@ def session_key(session_id):
     return hashlib.sha256(session_id.encode("utf-8")).hexdigest()
 
 
+def hook_host():
+    return os.environ.get("DOTAGENTS_HOOK_HOST", "claude")
+
+
 def deny(code, missing, example):
     message = f"{code}: {missing}\n正しい呼び方: {example}\n正典: shared/orchestrate/delegation-contract.md"
+    if hook_host() == "grok":
+        emit({"decision": "deny", "reason": message})
+        return
     emit({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": message}})
 
 
@@ -157,7 +164,8 @@ def common_dir(cwd):
 
 def writer_record(data, tool_name, tool_input, cwd):
     hint = tool_input.get("session_name") or tool_input.get("sessionName") or tool_input.get("cwd") or str(cwd)
-    return {"common_dir": common_dir(cwd), "tool": tool_name, "session_hint": str(hint), "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(), "dispatch_id": data.get("session_id", "unknown")}
+    dispatch = data.get("sessionId") if hook_host() == "grok" else data.get("session_id", "unknown")
+    return {"common_dir": common_dir(cwd), "tool": tool_name, "session_hint": str(hint), "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(), "dispatch_id": dispatch}
 
 
 def reserve_writer(data, tool_name, tool_input, cwd):
@@ -204,9 +212,14 @@ def main():
         return
     try:
         data = json.loads(raw)
-        session_id = data["session_id"]
-        tool_name = data["tool_name"]
-        tool_input = data["tool_input"]
+        if hook_host() == "grok":
+            session_id = data.get("sessionId")
+            tool_name = data.get("toolName")
+            tool_input = data.get("toolInput")
+        else:
+            session_id = data["session_id"]
+            tool_name = data["tool_name"]
+            tool_input = data["tool_input"]
         if not isinstance(session_id, str) or not isinstance(tool_name, str) or not isinstance(tool_input, dict):
             raise ValueError
     except Exception:
@@ -217,9 +230,18 @@ def main():
         model = tool_input.get("model")
         effort_values = [tool_input.get(key) for key in ("reasoning_effort", "effort", "modelReasoningEffort")]
         effort = next((value for value in effort_values if value is not None), None)
-        sidecar_writers = {"mcp__codex-sidecar__codex_work", "mcp__codex-sidecar__codex_work_start", "mcp__codex-sidecar__codex_generate"}
+        sidecar_writers = {
+            "mcp__codex-sidecar__codex_work",
+            "mcp__codex-sidecar__codex_work_start",
+            "mcp__codex-sidecar__codex_generate",
+            "codex-sidecar__codex_work",
+            "codex-sidecar__codex_work_start",
+            "codex-sidecar__codex_generate",
+        }
+        aiterm_codex = tool_name in {"mcp__aiterm__codex_agent", "aiterm__codex_agent"}
+        spawn = tool_name in {"Agent", "Task", "spawn_subagent"}
         cwd = None
-        if tool_name == "mcp__aiterm__codex_agent":
+        if aiterm_codex:
             if not (concrete_value(model) and concrete_value(tool_input.get("reasoning_effort"))):
                 deny("P10_MODEL_EFFORT_MISSING", "codex_agent に model と reasoning_effort が必要です", "model と reasoning_effort を両方指定した mcp__aiterm__codex_agent")
                 return
@@ -228,11 +250,11 @@ def main():
             if not (concrete_value(model) and concrete_value(tool_input.get("modelReasoningEffort"))) and not sidecar_defaults_exist(cwd):
                 deny("P10_MODEL_EFFORT_MISSING", "sidecar の model/effort または repo defaults がありません", "model/effort を指定するか .codex-sidecar.yml のある repo から呼ぶ")
                 return
-        elif tool_name in ("Agent", "Task") and not (concrete_value(model) or agent_definition_has_model(tool_input)):
+        elif spawn and not (concrete_value(model) or agent_definition_has_model(tool_input)):
             deny("P10_MODEL_EFFORT_MISSING", "Agent/Task の model が未指定で、role定義にも model がありません", "model を指定するか model 固定の subagent_type を使う")
             return
 
-        if tool_name == "mcp__aiterm__codex_agent" or tool_name in sidecar_writers:
+        if aiterm_codex or tool_name in sidecar_writers:
             declaration = scope_declaration(tool_input)
             if declaration == "missing":
                 deny("P9_SCOPE_DECL_MISSING", "scope 宣言トークンがありません", "prompt/input に [scope:read-only] または [scope:write] を一つだけ入れる")

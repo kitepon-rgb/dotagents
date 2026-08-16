@@ -165,6 +165,7 @@ assert_link "$OFFICIAL_HOME/.grok/skills/gpt-connector" "$ROOT/grok/skills/gpt-c
 assert_link "$OFFICIAL_HOME/.grok/skills/polish-github" "$ROOT/grok/skills/polish-github"
 assert_link "$OFFICIAL_HOME/.grok/agents/implementer.md" "$ROOT/grok/agents/implementer.md"
 assert_link "$OFFICIAL_HOME/.grok/agents/refuter.md" "$ROOT/grok/agents/refuter.md"
+assert_link "$OFFICIAL_HOME/.grok/hooks/factory.json" "$ROOT/grok/hooks/factory.json"
 rm "$OFFICIAL_HOME/.claude/runbooks"
 if runbook_missing_output="$(verify "$OFFICIAL_HOME" official 2>&1)"; then
   fail 'Claude runbooks欠落をverifyが見逃した'
@@ -571,6 +572,7 @@ assert_link "$LEGACY_HOME/.grok/rules/AGENTS.md" "$ROOT/grok/AGENTS.md"
 assert_link "$LEGACY_HOME/.grok/runbooks" "$ROOT/shared/runbooks"
 assert_link "$LEGACY_HOME/.grok/skills/orchestrate" "$ROOT/grok/skills/orchestrate"
 assert_link "$LEGACY_HOME/.grok/agents/implementer.md" "$ROOT/grok/agents/implementer.md"
+assert_link "$LEGACY_HOME/.grok/hooks/factory.json" "$ROOT/grok/hooks/factory.json"
 apply_config "$LEGACY_HOME" --apply
 verify "$LEGACY_HOME" legacy
 assert_link "$LEGACY_HOME/.codex/skills/orchestrate" "$ROOT/codex/skills/orchestrate"

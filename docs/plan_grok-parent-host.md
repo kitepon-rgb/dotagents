@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 3着地（2026-08-16 H適用）。工場6は`~/.grok/config.toml`由来。`grok mcp doctor`で6つともhealthy。個人MCPとx-articleは残した。失敗したremote（relay等）はtypedのまま。次はWave 4（工場hook）。
+Wave 4隔離証明済み（2026-08-16）。`~/.grok/hooks/factory.json` に工場7 hook。隔離HOMEの `grok inspect` で enabled はすべて `source.type=user` / `.grok/hooks`。Claude settings の sentinel は `vendor=claude` `disabled`。`externalCompat.claude.hooks.enabled=false`。実HOMEの `install.sh` と `apply-grok-config --apply` はH。Wave 5 / Wave 6 には入らない。

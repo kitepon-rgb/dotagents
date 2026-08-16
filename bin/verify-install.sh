@@ -473,6 +473,9 @@ done
 for f in "$REPO/grok/agents"/*.md; do
   [ -e "$f" ] && check "$HOME/.grok/agents/$(basename "$f")" "$f"
 done
+for f in "$REPO/grok/hooks"/*.json; do
+  [ -e "$f" ] && check "$HOME/.grok/hooks/$(basename "$f")" "$f"
+done
 for d in "$REPO/codex/skills"/*/; do
   [ -d "$d" ] || continue
   skill_name="$(basename "$d")"

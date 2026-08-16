@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 SECTION = "compat.claude"
-KEY = "agents"
+COMPAT_FALSE_KEYS = ("agents", "hooks")
 VALUE = "false"
 
 FACTORY_SERVERS = (
@@ -30,7 +30,7 @@ FACTORY_SERVERS = (
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Grok の工場MCPと compat.claude.agents を差分適用する。")
+    parser = argparse.ArgumentParser(description="Grok の工場MCPと compat.claude.agents/hooks を差分適用する。")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--dry-run", action="store_true", help="差分を表示する（既定）")
     group.add_argument("--apply", action="store_true", help="backup 後に差分を適用する")
@@ -51,11 +51,11 @@ def normalize_toml(text: str) -> str:
     return body
 
 
-def set_compat_claude_agents_false(text: str) -> str:
+def set_compat_claude_false(text: str, key: str) -> str:
     body = normalize_toml(text)
     header = re.compile(r"^[ \t]*\[compat\.claude\][ \t]*(?:#.*)?$")
     next_header = re.compile(r"^[ \t]*\[")
-    key_line = re.compile(r"^([ \t]*agents[ \t]*=[ \t]*)(.*?)([ \t]*(?:#.*)?)?$")
+    key_line = re.compile(rf"^([ \t]*{re.escape(key)}[ \t]*=[ \t]*)(.*?)([ \t]*(?:#.*)?)?$")
     lines = body.splitlines(keepends=True)
     start = None
     for index, line in enumerate(lines):
@@ -64,7 +64,7 @@ def set_compat_claude_agents_false(text: str) -> str:
             break
     if start is None:
         prefix = "" if not body.strip() else "\n"
-        return f"{body}{prefix}[{SECTION}]\n{KEY} = {VALUE}\n"
+        return f"{body}{prefix}[{SECTION}]\n{key} = {VALUE}\n"
     end = len(lines)
     for index in range(start + 1, len(lines)):
         if next_header.match(lines[index]) and not header.match(lines[index].rstrip("\n")):
@@ -80,7 +80,7 @@ def set_compat_claude_agents_false(text: str) -> str:
     insert_at = start + 1
     while insert_at < end and lines[insert_at].strip() == "":
         insert_at += 1
-    lines.insert(insert_at, f"{KEY} = {VALUE}\n")
+    lines.insert(insert_at, f"{key} = {VALUE}\n")
     return "".join(lines)
 
 
@@ -152,7 +152,10 @@ def upsert_factory_mcp(text: str) -> str:
 
 
 def propose(text: str) -> str:
-    return upsert_factory_mcp(set_compat_claude_agents_false(text))
+    body = text
+    for key in COMPAT_FALSE_KEYS:
+        body = set_compat_claude_false(body, key)
+    return upsert_factory_mcp(body)
 
 
 def show_diff(path: Path, before: str, after: str) -> str:

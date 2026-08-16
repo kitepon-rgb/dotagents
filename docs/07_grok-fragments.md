@@ -7,6 +7,7 @@
 ## 1. 工場が書く面
 
 - `[compat.claude] agents = false`（Wave 1。`~/.claude/CLAUDE.md` を吸わない）
+- `[compat.claude] hooks = false`（Wave 4。Claude `settings.json` の hook は `disabled` になり発火しない。`grok inspect` には vendor=claude の行が残ることがある）
 - 工場MCP 6サーバ（stdio）。同名が `~/.claude.json` にあっても **toml 側が勝つ**（2026-08-16 隔離HOME実測）。個人MCP（Gmail等）は Claude json に残してよい。`compat.claude.mcps` は切らない。
 
 | name | command | args / env |
@@ -26,7 +27,12 @@
 - `[ui] permission_mode` ほか permission
 - `[privacy]` と login
 - 工場6以外の MCP
-- `compat.claude.skills` / `hooks` / `mcps`（skillsはWave 2で切らない裁定済み。hooksはWave 4）
+- `compat.claude.skills` / `mcps`（skillsはWave 2で切らない裁定済み。工場MCPの所有のために mcps は切らない）
+- 個人hook。所有面は `~/.grok/hooks/factory.json` と `~/.local/bin/grok-*-hook` だけ
+
+工場hookはGrok camelCaseをそのまま読む。Claude 形へ canonicalize しない。Spotter / Throughline / Caveat / Observer の製品hookは載せない。
+
+Grokの `UserPromptSubmit` / `SessionStart` / `PostToolUse` は stdout を制御に使わない。観察系工場hookは exit 0 と空または非block JSONだけを返し、Stop で `decision=block` や exit 2 を出さない。
 
 ## 3. 受入
 
