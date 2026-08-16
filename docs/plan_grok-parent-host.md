@@ -140,7 +140,7 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 
 | 製品 | 内容 | 今の状態 |
 |---|---|---|
-| Throughline | Grok turnのcapture / restore / handoff | hook capture実装は`8ca1e5c`。Mac Desktop新規session受入は失敗（`01a00b2f`）。hookはロード済みだがbare `throughline`がGUI PATHで127。DBに`grok:`行なし。restore/handoff実機と他席installは未了 |
+| Throughline | Grok turnのcapture / restore / handoff | `01a00b2f`はbare commandで127失敗。installを絶対`node`+`throughline.mjs`へ直した。このsession再受入は数えない。新規sessionで`grok:`行とL2を取る。restore/handoff実機と他席は未了 |
 | Observer | 工場コアから撤去 | 2026-08-16裁定。Grok familyは開かない。撤去は独立wave |
 | Spotter | 正式Grok host | コア維持。8/14棄却を撤回。Wave 6で正式host化する |
 
