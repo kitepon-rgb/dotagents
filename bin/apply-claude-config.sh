@@ -8,7 +8,10 @@ import difflib
 import io
 import json
 import os
+import shlex
+import shutil
 import stat
+import sys
 import tarfile
 import tempfile
 from datetime import datetime, timezone
@@ -39,7 +42,39 @@ def parse_args() -> argparse.Namespace:
 def command_path(command: object, home: Path) -> tuple[Path, tuple[str, ...]] | None:
     if not isinstance(command, str):
         return None
-    parts = command.split()
+    try:
+        parts = shlex.split(command, posix=os.name != "nt")
+    except ValueError:
+        return None
+    if os.name == "nt":
+        parts = [
+            part[1:-1]
+            if len(part) >= 2 and part[0] == part[-1] and part[0] in {"'", '"'}
+            else part
+            for part in parts
+        ]
+    if not parts:
+        return None
+    while parts:
+        first = Path(parts[0]).name.lower()
+        wsl = Path(parts[0]).name.lower() in {"bash.exe", "bash"} and "system32" in parts[0].replace("/", "\\").lower()
+        if wsl or first in {
+            "python.exe",
+            "python3.exe",
+            "python",
+            "python3",
+            "sh.exe",
+            "bash.exe",
+            "sh",
+            "bash",
+            "cmd.exe",
+        }:
+            parts = parts[1:]
+            continue
+        if parts[0] in {"/usr/bin/env", "env"} and len(parts) > 1:
+            parts = parts[2:]
+            continue
+        break
     if not parts:
         return None
     path = parts[0]
@@ -48,7 +83,57 @@ def command_path(command: object, home: Path) -> tuple[Path, tuple[str, ...]] | 
     return Path(path).expanduser().resolve(strict=False), tuple(parts[1:])
 
 
-def has_hook(entries: list[object], matcher: str | None, name: str, arguments: tuple[str, ...], timeout: int, home: Path) -> bool:
+def win_quote(token: str) -> str:
+    if any(ch in token for ch in (' ', '\t', '"')):
+        return '"' + token.replace('"', '\\"') + '"'
+    return token
+
+
+def is_wsl_bash(path: str) -> bool:
+    value = path.replace("/", "\\").lower()
+    return Path(path).name.lower() in {"bash.exe", "bash"} and "system32" in value
+
+
+def windows_shell() -> str:
+    roots = (
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "Git",
+        Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Git",
+    )
+    for root in roots:
+        for candidate in (root / "bin" / "sh.exe", root / "usr" / "bin" / "sh.exe"):
+            if candidate.is_file():
+                return str(candidate)
+    found = shutil.which("sh")
+    if found and not is_wsl_bash(found):
+        return str(Path(found).resolve())
+    raise ValueError("Windows hook用の Git sh.exe が無い")
+
+
+def hook_interpreter(script: Path) -> str:
+    shebang = ""
+    if script.is_file():
+        first = script.read_text(encoding="utf-8", errors="replace").splitlines()[:1]
+        shebang = first[0] if first else ""
+    if "python" in shebang or not shebang:
+        return str(Path(sys.executable).resolve())
+    return windows_shell()
+
+
+def canonical_hook_command(home: Path, name: str, arguments: tuple[str, ...]) -> str:
+    script = home / ".local/bin" / name
+    if os.name != "nt":
+        command = "~/.local/bin/" + name
+        if arguments:
+            command += " " + " ".join(arguments)
+        return command
+    interpreter = hook_interpreter(script)
+    tokens = [interpreter, str(script), *arguments]
+    return " ".join(win_quote(token) for token in tokens)
+
+
+def matching_hook(
+    entries: list[object], matcher: str | None, name: str, arguments: tuple[str, ...], timeout: int, home: Path
+) -> dict | None:
     target = (home / ".local/bin" / name).resolve(strict=False)
     for entry in entries:
         if not isinstance(entry, dict) or entry.get("matcher") != matcher:
@@ -61,8 +146,8 @@ def has_hook(entries: list[object], matcher: str | None, name: str, arguments: t
                 continue
             parsed = command_path(hook.get("command"), home)
             if parsed == (target, arguments):
-                return True
-    return False
+                return hook
+    return None
 
 
 def update(data: dict, home: Path) -> bool:
@@ -74,11 +159,13 @@ def update(data: dict, home: Path) -> bool:
         entries = hooks.setdefault(event, [])
         if not isinstance(entries, list):
             raise ValueError(f"hooks.{event} は配列である必要があります")
-        if has_hook(entries, matcher, name, arguments, timeout, home):
+        command = canonical_hook_command(home, name, arguments)
+        found = matching_hook(entries, matcher, name, arguments, timeout, home)
+        if found is not None:
+            if found.get("command") != command:
+                found["command"] = command
+                changed = True
             continue
-        command = "~/.local/bin/" + name
-        if arguments:
-            command += " " + " ".join(arguments)
         entry: dict[str, object] = {"hooks": [{"type": "command", "command": command, "timeout": timeout}]}
         if matcher is not None:
             entry["matcher"] = matcher

@@ -3,6 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+export PYTHONIOENCODING=utf-8
 HOME_FIXTURE="$(mktemp -d)"
 ROLLBACK_HOME="$(mktemp -d)"
 ABSENT_HOME="$(mktemp -d)"
@@ -47,13 +48,18 @@ expected = {
     ("UserPromptSubmit", "lattice-gantt-hook user-prompt-submit"),
     ("PostToolUse", "plan-gate-hook"),
 }
-actual = {
-    (event, hook["command"].removeprefix("~/.local/bin/"))
+commands = [
+    (event, hook["command"])
     for event, entries in data["hooks"].items()
     for entry in entries if isinstance(entry, dict)
     for hook in entry.get("hooks", []) if isinstance(hook, dict) and isinstance(hook.get("command"), str)
-}
-assert expected <= actual
+]
+missing = [
+    f"{event}: {needle}"
+    for event, needle in expected
+    if not any(item_event == event and needle in command for item_event, command in commands)
+]
+assert not missing, missing
 PY
 
 second="$(HOME="$HOME_FIXTURE" "$HOME_FIXTURE/.local/bin/apply-claude-config" --apply)"

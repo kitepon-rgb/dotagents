@@ -36,6 +36,8 @@ Windows native では同じ契約を Windows の語に写す。`env.PATH` の区
 
 工場hookはGrok camelCaseをそのまま読む。Claude 形へ canonicalize しない。Spotter / Throughline / Caveat / Observer の製品hookは載せない。
 
+Windows native の工場hook command は shebang ファイルを直接実行しない。`apply-grok-config` が `~/.grok/hooks/factory.json` を symlink から実ファイルへ置き、解決できた `python.exe` / `sh.exe` を絶対パスで前置する。拡張子なしの hook を Windows が「次のアプリで開きますか？」で開くのを防ぐ。POSIX は repo の shebang command のまま。
+
 Grokの `UserPromptSubmit` / `SessionStart` / `PostToolUse` は stdout を制御に使わない。観察系工場hookは exit 0 と空または非block JSONだけを返し、Stop で `decision=block` や exit 2 を出さない。
 
 ## 3. 受入

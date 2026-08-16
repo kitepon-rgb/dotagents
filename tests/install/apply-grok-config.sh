@@ -81,6 +81,14 @@ if ! grep -Eqi 'command = "([^"]*[/\\])?caveat(\.cmd)?"' <<<"$applied"; then
 fi
 grep -Fq 'args = ["mcp-server"]' <<<"$applied" || fail 'caveat args が契約と違う'
 grep -Fq 'AISHELL_CAPABILITY_SET = "expanded-v1"' <<<"$applied" || fail 'aishell env が契約と違う'
+if [ "${OS:-}" = "Windows_NT" ]; then
+  [ ! -L "$HOME_FIXTURE/.grok/hooks/factory.json" ] \
+    || fail 'Windows で factory.json が symlink のまま'
+  grep -Fq 'grok-lattice-gantt-hook' "$HOME_FIXTURE/.grok/hooks/factory.json" \
+    || fail 'Windows factory.json に工場hook名が無い'
+  grep -Eiq 'python' "$HOME_FIXTURE/.grok/hooks/factory.json" \
+    || fail 'Windows factory.json が python interpreter を書かない'
+fi
 
 HOME="$HOME_FIXTURE" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply | grep -Fq '変更なし' \
   || fail '2回目 apply が冪等でない'

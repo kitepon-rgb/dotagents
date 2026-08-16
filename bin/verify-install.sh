@@ -485,8 +485,21 @@ done
 for f in "$REPO/grok/agents"/*.md; do
   [ -e "$f" ] && check "$HOME/.grok/agents/$(basename "$f")" "$f"
 done
+windows_native=0
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) windows_native=1 ;; esac
+[ -n "${WINDIR:-}" ] && windows_native=1
 for f in "$REPO/grok/hooks"/*.json; do
-  [ -e "$f" ] && check "$HOME/.grok/hooks/$(basename "$f")" "$f"
+  [ -e "$f" ] || continue
+  if [ "$windows_native" = 1 ] && [ "$(basename "$f")" = factory.json ]; then
+    dest="$HOME/.grok/hooks/factory.json"
+    if [ ! -f "$dest" ]; then
+      echo "FAIL: $dest 不在（Windows 工場hookは apply-grok-config が実ファイルを書く）"; fail=1
+    elif [ -L "$dest" ]; then
+      echo "FAIL: $dest が symlink のまま（Windows では interpreter 付き実ファイルが正）"; fail=1
+    fi
+    continue
+  fi
+  check "$HOME/.grok/hooks/$(basename "$f")" "$f"
 done
 grok_factory_hooks="$HOME/.grok/hooks/factory.json"
 if [ -f "$grok_factory_hooks" ] || [ -L "$grok_factory_hooks" ]; then
