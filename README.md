@@ -234,6 +234,8 @@ Grok親の配布面（`~/.grok/rules` / `runbooks` / `skills` / `agents` / `hook
 wire v7 reportingを有効にする。MCP login、GitHub認証、Docker稼働など「0. 前提」の外部状態は
 スクリプトが捏造せず、欠けていれば名指しで停止する。
 
+工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。下表はworkstation 3入口。Linux（main-server）はserver profileで別配線し、席として捨てない。
+
 | host | 正規入口 | 定期更新 |
 |---|---|---|
 | macOS | `./bin/setup-macos-factory.sh` | LaunchAgent、毎週月曜04:00 |

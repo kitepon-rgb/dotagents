@@ -89,4 +89,4 @@ WSL2とWindows nativeは同一物理端末でも別hostとして扱い、設定�
 | FOX WSL2 | `setup-wsl-factory.sh` | cron `# dotagents-agents-update-wsl`、毎日02:00 | batch token、15製品、fresh v7 delivery |
 | FOX Windows native | `setup-windows-native-factory.ps1` | Task `dotagents-agents-update`、毎日02:00 | 実Task smoke、終了code、15製品、fresh v7 delivery |
 
-main-serverは本表のserver profileと製品契約に従うが、今回の3つのworkstation一撃展開入口の対象外である。
+main-server（Linux）は工場の4席の1つであり、本表のserver profileと製品契約に従う。workstation一撃展開の3入口（Mac / WSL2 / Windows native）には載せないだけで、席として捨てない。

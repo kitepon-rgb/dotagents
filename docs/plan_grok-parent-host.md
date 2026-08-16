@@ -7,6 +7,8 @@
 **レーン:** 統括（受入が多段、後続波は製品repo、compat切断に証跡が要る）
 **終着:** B。Grok BuildをClaude Code / Codexと同格の工場親にする。Claude面への寄生を完成形にしない。
 
+語彙を混ぜない。**親**はClaude / Codex / Grok。**席**はMac / Windows native / WSL2 / Linuxの4つで、全部本線。憲法generatorの3親と工場席を「3 host」と書かない。
+
 Codex全対応の型を踏襲する。全対応はファイル数の左右対称ではなく**能力対称**である。製品固有機能は無理に移植せず、`対応 / 製品固有 / 非採用（理由）` のいずれかを明記できればその面は閉じる。
 
 ## 0. 目的
@@ -74,13 +76,13 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2のsession受入は着�
 
 ### Wave 1 — 憲法と配布の骨格
 
-**F:** 3 host化。共通憲法のhost固有ツール入口をdeltaへ移す。`compat.claude.agents`切断。
+**F:** 3親化（Claude / Codex / Grok）。共通憲法の親固有ツール入口をdeltaへ移す。`compat.claude.agents`切断。
 **A:** generator、`grok/`、`install.sh`、`verify-install`、constitution test、layout/READMEの最小追記。
 **H:** このMacで`install.sh`再実行のあと、新規Grok sessionで憲法が`~/.grok/rules/AGENTS.md`だけから乗ること。
 
 受入:
 
-- `node bin/render-global-constitution.mjs --check`が3 hostで通る。
+- `node bin/render-global-constitution.mjs --check`が3親（Claude / Codex / Grok）で通る。
 - `make test-constitution`が`grok/`を含む。
 - 隔離HOMEのinstallが`~/.grok/rules/AGENTS.md`と`~/.grok/runbooks`を本リポ向きsymlinkにする。
 - 新規Grok sessionのuser rulesにClaude delta固有条文が無い。人格（ベル）と共通原則は残る。
@@ -174,7 +176,7 @@ Phase完了時の重い監査はWave 5のあと1回。検証者は親と異な�
 
 ## 8. F / A / H
 
-- **F:** 3 host憲法、共通→deltaの条文移動、compat切断、host matrix Grok親列、8/14 Spotter棄却の維持、工場MCPの失敗を丸めないこと。
+- **F:** 3親憲法（Claude / Codex / Grok）、共通→deltaの条文移動、compat切断、host matrix Grok親列、工場4席は全部本線、8/14 Spotter棄却の維持、工場MCPの失敗を丸めないこと。
 - **A:** generator拡張、`grok/`エントリ、install/verify、apply-grok-config、Grok appendix、hook adapter。
 - **H:** `install.sh`の実HOME適用、`apply-grok-config --apply`、compat切断後の新規session確認、Windows nativeのGrok親配線と新規session、Wave 6の製品repo着手、Grok login。
 
@@ -184,8 +186,8 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 Mac側のWave 5 Hは閉じた（2026-08-16 session `01a0091e`）。FOX WSL2の新規Grok session受入も閉じた（2026-08-16 session `01a00964`）。工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。Windows nativeを対象外にした旧裁定8は2026-08-16に破棄。残HはWindows nativeのGrok親配線と新規session。製品未対応面は`unsupported`のまま残してよい。Wave 6は別H。
 
-Wave 5 Mac受入を通し直し（2026-08-16 前session）。DesktopのGUI PATH（`/usr/bin:/bin:/usr/sbin:/sbin`）では工場MCPの名前解決と `env node` ができないのが、そのsessionの`connection failed`の原因。`apply-grok-config`は解決できたcommandを絶対パスで書き、親dirを`env.PATH`先頭に置く。実HOME再apply済み（`[models]` grok-4.6 / xhigh 不変。Stripeコメント保持）。GUI PATHの`grok mcp doctor`で工場6はhandshake OK。そのDesktop session自体のtool列挙は起動時handshakeのまま失敗（config変更を引き継がない）。inspect: 有効globalは`~/.grok/rules/AGENTS.md`、工場skill 4、工場hook enabled 9、Claude settings hook 22件disabled。`verify-install`のGrok面は通る。全体はMarkItDown / uv tool不在でFAIL（Grok範囲外）。`PATH=/opt/homebrew/bin:$PATH make ci`はpass（python 3.14）。FOX新規sessionは未実施。Windows nativeは入れない。Wave 6は別H。
+Wave 5 Mac受入を通し直し（2026-08-16 前session）。DesktopのGUI PATH（`/usr/bin:/bin:/usr/sbin:/sbin`）では工場MCPの名前解決と `env node` ができないのが、そのsessionの`connection failed`の原因。`apply-grok-config`は解決できたcommandを絶対パスで書き、親dirを`env.PATH`先頭に置く。実HOME再apply済み（`[models]` grok-4.6 / xhigh 不変。Stripeコメント保持）。GUI PATHの`grok mcp doctor`で工場6はhandshake OK。そのDesktop session自体のtool列挙は起動時handshakeのまま失敗（config変更を引き継がない）。inspect: 有効globalは`~/.grok/rules/AGENTS.md`、工場skill 4、工場hook enabled 9、Claude settings hook 22件disabled。`verify-install`のGrok面は通る。全体はMarkItDown / uv tool不在でFAIL（Grok範囲外）。`PATH=/opt/homebrew/bin:$PATH make ci`はpass（python 3.14）。FOX新規sessionは未実施。Windows nativeは当時の計画では対象外（2026-08-16裁定で破棄）。Wave 6は別H。
 
-Wave 5 Mac新規session受入（2026-08-16 session `01a0091e`、このDesktop窓。前sessionの人の目は数えない）。起動時`mcp_init_completed`は total 14 / succeeded 7 / failed 6 / auth_required 1。工場6（caveat / lattice / aiterm / aishell / gpt_connector / codex-sidecar）は`~/.grok/config.toml`の絶対パスで`mcp_server_connected`、このsessionからtool call完了。失敗はtypedのまま残した: chrome-devtools `spawn_failed`（`npx`不在）、playwright / sprite-forge / relay-local / ipmcp-local / x-article `handshake_failed`、stripe `auth_required`。失敗を登録成功へ丸めていない。homebrew入りPATHの`grok mcp doctor`は工場6 healthyだが、同じ実行が chrome-devtools / playwright も healthy にしたので doctor成功をこのsession成功に読み替えない。user rulesのglobal有効は`~/.grok/rules/AGENTS.md`だけ（`~/.claude/Claude.md`はinspect disabled。projectの`Agents.md` / `Claude.md`はリポ正典として残る）。Claude delta固有のaiterm-mcp永続PTY既定は無い。人格（ベル）とGrok native shell既定は残る。工場skill 4は`~/.grok/skills`から列挙、bundled（imagine等）は残る。`compat.claude.skills` / `mcps`は切っていない。工場hook enabled 9は`~/.grok/hooks`、Claude settings/project hook 22件はvendor=claude disabled。このsessionの`events.jsonl`にthroughline / Spotter / Caveat製品hook / `lattice hooks emit --host claude`の実行記録は無い。FOX新規sessionは未実施。Windows nativeは入れない。Wave 6は別H。
+Wave 5 Mac新規session受入（2026-08-16 session `01a0091e`、このDesktop窓。前sessionの人の目は数えない）。起動時`mcp_init_completed`は total 14 / succeeded 7 / failed 6 / auth_required 1。工場6（caveat / lattice / aiterm / aishell / gpt_connector / codex-sidecar）は`~/.grok/config.toml`の絶対パスで`mcp_server_connected`、このsessionからtool call完了。失敗はtypedのまま残した: chrome-devtools `spawn_failed`（`npx`不在）、playwright / sprite-forge / relay-local / ipmcp-local / x-article `handshake_failed`、stripe `auth_required`。失敗を登録成功へ丸めていない。homebrew入りPATHの`grok mcp doctor`は工場6 healthyだが、同じ実行が chrome-devtools / playwright も healthy にしたので doctor成功をこのsession成功に読み替えない。user rulesのglobal有効は`~/.grok/rules/AGENTS.md`だけ（`~/.claude/Claude.md`はinspect disabled。projectの`Agents.md` / `Claude.md`はリポ正典として残る）。Claude delta固有のaiterm-mcp永続PTY既定は無い。人格（ベル）とGrok native shell既定は残る。工場skill 4は`~/.grok/skills`から列挙、bundled（imagine等）は残る。`compat.claude.skills` / `mcps`は切っていない。工場hook enabled 9は`~/.grok/hooks`、Claude settings/project hook 22件はvendor=claude disabled。このsessionの`events.jsonl`にthroughline / Spotter / Caveat製品hook / `lattice hooks emit --host claude`の実行記録は無い。FOX新規sessionは未実施。Windows nativeは当時の計画では対象外（2026-08-16裁定で破棄）。Wave 6は別H。
 
-Wave 5 FOX WSL2新規session受入（2026-08-16 session `01a00964`、このFOX窓。前の人の目は数えない）。起動時`mcp_init_completed`は total 13 / succeeded 9 / failed 3 / auth_required 1。工場5（caveat / lattice / aiterm / gpt_connector / codex-sidecar）は`~/.grok/config.toml`のbare commandで`mcp_server_connected`、このsessionからtool call完了。aishellは`mcp_server_failed` `spawn_failed`（`aishell-mcp` No such file or directory。WSLはmatrixどおりunsupported）。`mcp_init_completed.failed_servers`はaishellを載せず ai-news / sprite-forge / vercel だけを書いたが、aishellを登録成功へ丸めていない。その他のtyped失敗: ai-news / sprite-forge `handshake_failed`、vercel `auth_required`。追加applyはしていない（不足はaishell不在だけ。bare名はFOXのPATHで5本解決）。`grok mcp doctor --json`は工場5 handshake OK・aishell `command not found`。doctor成功をこのsession成功に読み替えない。user rulesのglobal有効は`~/.grok/rules/AGENTS.md`だけ（`~/.claude/CLAUDE.md`はinspect vendor=claude disabled。projectの`AGENTS.md` / `CLAUDE.md`はリポ正典として残る）。Claude delta固有のaiterm-mcp永続PTY既定は無い。人格（ベル）とGrok native shell既定は残る。工場skill 4は`~/.grok/skills`から列挙、bundled（imagine等）は残る。`compat.claude.skills` / `mcps`は切っていない。工場hook enabled 9は`~/.grok/hooks`、Claude settings/project hook 30件はvendor=claude disabled。vercel plugin hook 1件はenabledのまま（settings.json由来ではない）。このsessionの`events.jsonl` / `sandbox-events.jsonl` / `logs/unified.jsonl`にthroughline / Spotter / Caveat製品hook / `lattice hooks emit --host claude`の実行記録は無い。Windows nativeは入れない。Wave 6は別H。
+Wave 5 FOX WSL2新規session受入（2026-08-16 session `01a00964`、このFOX窓。前の人の目は数えない）。起動時`mcp_init_completed`は total 13 / succeeded 9 / failed 3 / auth_required 1。工場5（caveat / lattice / aiterm / gpt_connector / codex-sidecar）は`~/.grok/config.toml`のbare commandで`mcp_server_connected`、このsessionからtool call完了。aishellは`mcp_server_failed` `spawn_failed`（`aishell-mcp` No such file or directory。WSLはmatrixどおりunsupported）。`mcp_init_completed.failed_servers`はaishellを載せず ai-news / sprite-forge / vercel だけを書いたが、aishellを登録成功へ丸めていない。その他のtyped失敗: ai-news / sprite-forge `handshake_failed`、vercel `auth_required`。追加applyはしていない（不足はaishell不在だけ。bare名はFOXのPATHで5本解決）。`grok mcp doctor --json`は工場5 handshake OK・aishell `command not found`。doctor成功をこのsession成功に読み替えない。user rulesのglobal有効は`~/.grok/rules/AGENTS.md`だけ（`~/.claude/CLAUDE.md`はinspect vendor=claude disabled。projectの`AGENTS.md` / `CLAUDE.md`はリポ正典として残る）。Claude delta固有のaiterm-mcp永続PTY既定は無い。人格（ベル）とGrok native shell既定は残る。工場skill 4は`~/.grok/skills`から列挙、bundled（imagine等）は残る。`compat.claude.skills` / `mcps`は切っていない。工場hook enabled 9は`~/.grok/hooks`、Claude settings/project hook 30件はvendor=claude disabled。vercel plugin hook 1件はenabledのまま（settings.json由来ではない）。このsessionの`events.jsonl` / `sandbox-events.jsonl` / `logs/unified.jsonl`にthroughline / Spotter / Caveat製品hook / `lattice hooks emit --host claude`の実行記録は無い。Windows nativeは当時の計画では対象外（2026-08-16裁定で破棄）。Wave 6は別H。
