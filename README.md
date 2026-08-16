@@ -179,7 +179,7 @@ Codex全対応の工程状態はLattice storeが正本で、現役4 host・5入�
 - **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境）。`install.sh` は WSL の `$HOME` に symlink を張り、Windowsの既存 `~/.ssh/id_ed25519.pub` を WSLへ登録して、Windows `~/.ssh/config` にdotagents管理の `fox-wsl`（`localhost:2222`）を冪等生成する。同時にWSLの `~/.codex/hooks.json` をWindows Codex Desktopの `~/.codex/hooks.json` へ投影し、DesktopのWSL実行がWindows commandを `/bin/bash` へ渡す事故を防ぐ。Windows Codex DesktopではWindows側projectを流用せず、このSSH host上の `/home/kite/Developer/dotagents` を開く。cron の起動は下の「自動アップデート」節参照
 - **ランタイム**: node>=22＋corepack・docker・python3（`command -v node docker` で存在確認、`node --version` が v22+、`docker info` が通ること。**python3 だけは実行判定 `python3 -c "print(1)"` で確認**——Windows のストア偽エイリアスは存在チェックを通り、黙って exit 0 を返す〔罠DB `windows-python3-store-exit-0`〕）
 - **CLI（必須）**: 管理12製品はCaveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager／peertable。共通requiredは基礎8＋`peertable-client`、macOSではObserver、macOS 15+ Apple SiliconではAIShell、main-serverではServerManagerの公開readiness/revisionだけを検証する。他hostのServerManagerは`not_applicable`、AIShell/Observerは`unsupported`である。基盤toolchainのClaude Code・Codex CLIは別管理。独立CodegraphはPATHに存在してはならない。MarkItDownの正規更新面は`uv tool`。
-- **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する。一撃展開は未loginでも止まらない（toolchain optional）。login済みの工場MCP適用（`apply-grok-config --apply`）はH。工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。Windows nativeのGrok親配線は残H
+- **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する。一撃展開は未loginでも止まらない（toolchain optional）。login済みの工場MCP適用（`apply-grok-config --apply`）はH。工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。Windows nativeのGrok親配線は`setup-windows-native-factory`が書く。適用後の新規session受入は残H
 - **MCP 用 CLI を先に入れる**（下の登録が参照する。`agents-update`が入れる各packageと同源）: `aiterm-mcp`・`caveat`・`codex-sidecar-mcp`・`gpt-connector-mcp`・`lattice-mcp`がPATHにあること。独立Codegraphは登録しない。Codex親もnative枠外の実行用にaitermとcodex-sidecarを登録する。登録・loginは端末configを変えるH操作。
 - **MCP（ユーザースコープ登録。上の CLI 導入後）**:
   ```bash
@@ -228,7 +228,7 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 押し込まない。いずれも公式skill面、現役製品、MCP、Lattice／Spotter hook、定期更新、
 `verify-install`、fresh wire v7 reportとBugHub delivery receiptまでを一括検証する。
 Grok親の配布面（`~/.grok/rules` / `runbooks` / `skills` / `agents` / `hooks`）は`install.sh`がsymlinkする。
-工場MCPと`compat.claude.agents`/`hooks`切断はlogin済みなら`apply-grok-config`が書く。未loginではスキップし、一撃展開は止まらない。Windows nativeもGrok親の対象。`setup-windows-native-factory`への配線は残H。
+工場MCPと`compat.claude.agents`/`hooks`切断はlogin済みなら`apply-grok-config`が書く。未loginではスキップし、一撃展開は止まらない。Windows nativeもGrok親の対象。`setup-windows-native-factory`はlogin済みならそれを呼ぶ。
 
 実行前にfactory reporter runbook §1〜4に従い、そのhost専用のconfigとcredentialを配置して
 wire v7 reportingを有効にする。MCP login、GitHub認証、Docker稼働など「0. 前提」の外部状態は

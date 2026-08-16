@@ -23,6 +23,8 @@
 
 command の論理名は上表どおり。適用時に `PATH` 上で解決できた command は絶対パスで書き、その親ディレクトリを `env.PATH` の先頭に置く。Grok Build Desktop の GUI PATH（`/usr/bin:/bin:/usr/sbin:/sbin`）では brew の名前解決も `#!/usr/bin/env node` もできない。未解決なら名前のまま残し、handshake は typed 失敗。既に実行可能な絶対パスがあり basename が論理名と一致し、`env.PATH` が契約どおりなら、適用器の PATH が空でも書き戻さない。
 
+Windows native では同じ契約を Windows の語に写す。`env.PATH` の区切りは `;`。解決できた command は PATHEXT どおり `.cmd` / `.exe` になりうる。npm の global bin と `node.exe` は別ディレクトリなので、よくある配置（`Program Files\\nodejs` 等）に `node.exe` があればその親も `env.PATH` に置く（`.cmd` shim が `node` を呼ぶため。macOS で command 親に node が同居するのと同型）。この判定は適用時 PATH に依存しない。TOML の `\` はエスケープする。Windows の GUI PATH 基底は上記 node 親（あれば）と `WINDIR\\System32` / `WINDIR` / Wbem / PowerShell だけとし、不足は実測のあとだけ足す。
+
 ## 2. 触らない面
 
 - `[models]` と `default_reasoning_effort`

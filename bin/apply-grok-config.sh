@@ -85,6 +85,35 @@ def set_compat_claude_false(text: str, key: str) -> str:
     return "".join(lines)
 
 
+WINDOWS_COMMAND_SUFFIXES = {".exe", ".cmd", ".bat", ".com"}
+
+
+def toml_quote(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def toml_unquote(value: str) -> str:
+    out: list[str] = []
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if char == "\\" and index + 1 < len(value) and value[index + 1] in {"\\", '"'}:
+            out.append(value[index + 1])
+            index += 2
+            continue
+        out.append(char)
+        index += 1
+    return "".join(out)
+
+
+def command_name_matches(path: Path, logical_name: str) -> bool:
+    if path.name == logical_name:
+        return True
+    if os.name != "nt":
+        return False
+    return path.stem.lower() == logical_name.lower() and path.suffix.lower() in WINDOWS_COMMAND_SUFFIXES
+
+
 def realized_command(name: str) -> str:
     found = shutil.which(name)
     if not found:
@@ -93,15 +122,19 @@ def realized_command(name: str) -> str:
 
 
 def existing_command(body: str) -> str | None:
-    match = re.search(r'^[ \t]*command[ \t]*=[ \t]*"([^"]+)"[ \t]*(?:#.*)?$', body, re.M)
+    match = re.search(r'^[ \t]*command[ \t]*=[ \t]*"((?:\\.|[^"\\])*)"[ \t]*(?:#.*)?$', body, re.M)
     if match is None:
         return None
-    return match.group(1)
+    return toml_unquote(match.group(1))
 
 
 def usable_absolute_command(command: str, name: str) -> bool:
     path = Path(command)
-    return path.name == name and path.is_file() and os.access(path, os.X_OK)
+    if not path.is_absolute() or not command_name_matches(path, name) or not path.is_file():
+        return False
+    if os.name == "nt":
+        return True
+    return os.access(path, os.X_OK)
 
 
 def command_to_write(spec: dict, existing_body: str | None = None) -> str:
@@ -126,28 +159,57 @@ def command_satisfies_contract(body: str, spec: dict) -> bool:
     return usable_absolute_command(current, name)
 
 
+def windows_node_dir() -> str | None:
+    home_local = Path.home() / "AppData" / "Local"
+    candidates = (
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "nodejs" / "node.exe",
+        Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "nodejs" / "node.exe",
+        Path(os.environ.get("LOCALAPPDATA", str(home_local))) / "Programs" / "nodejs" / "node.exe",
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate.parent)
+    return None
+
+
+def default_gui_path_dirs() -> list[str]:
+    if os.name == "nt":
+        windir = Path(os.environ.get("WINDIR", r"C:\Windows"))
+        dirs = [
+            str(windir / "System32"),
+            str(windir),
+            str(windir / "System32" / "Wbem"),
+            str(windir / "System32" / "WindowsPowerShell" / "v1.0"),
+        ]
+        node_dir = windows_node_dir()
+        if node_dir and node_dir not in dirs:
+            dirs.insert(0, node_dir)
+        return dirs
+    return ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]
+
+
 def mcp_env(spec: dict, command: str) -> dict[str, str]:
     env = dict(spec.get("env") or {})
-    path_dirs = ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]
+    path_dirs = default_gui_path_dirs()
     command_path = Path(command)
     if command_path.is_absolute():
         bindir = str(command_path.parent)
         if bindir not in path_dirs:
             path_dirs.insert(0, bindir)
-    env["PATH"] = ":".join(path_dirs)
+    env["PATH"] = os.pathsep.join(path_dirs)
     return env
 
 
 def render_mcp_section(name: str, spec: dict, existing_body: str | None = None) -> str:
     command = command_to_write(spec, existing_body)
-    lines = [f"[mcp_servers.{name}]", f'command = "{command}"']
+    lines = [f"[mcp_servers.{name}]", f"command = {toml_quote(command)}"]
     args = spec.get("args") or ()
     if args:
-        rendered = ", ".join(f'"{item}"' for item in args)
+        rendered = ", ".join(toml_quote(item) for item in args)
         lines.append(f"args = [{rendered}]")
     env = mcp_env(spec, command)
     if env:
-        rendered = ", ".join(f'{key} = "{value}"' for key, value in env.items())
+        rendered = ", ".join(f"{key} = {toml_quote(value)}" for key, value in env.items())
         lines.append(f"env = {{ {rendered} }}")
     lines.append("enabled = true")
     return "\n".join(lines) + "\n"
@@ -183,7 +245,7 @@ def section_has_factory_contract(body: str, spec: dict) -> bool:
             return False
     command = command_to_write(spec, body)
     for key, value in mcp_env(spec, command).items():
-        if key not in body or f'"{value}"' not in body:
+        if key not in body or toml_quote(value) not in body:
             return False
     return True
 

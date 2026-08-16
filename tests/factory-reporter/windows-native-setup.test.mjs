@@ -15,6 +15,7 @@ test('Windows native一撃setupは工場展開・配線・fresh BugHub受理・�
     'install.sh',
     'agents-update.sh',
     'apply-codex-config.sh',
+    'apply-grok-config.sh',
     'throughline',
     'caveat',
     'markitdown',
@@ -36,6 +37,11 @@ test('Windows native一撃setupは工場展開・配線・fresh BugHub受理・�
   assert.match(source, /Stop-ScheduledTask.*factory-reporter-scheduler\.mjs.*uninstall.*Remove-LegacyCron.*install\.sh/su);
   assert.match(source, /function Normalize-WindowsReporterConfig.*UTF-8 without BOM.*factory-reporter-config.*\.bak.*UTF8Encoding.*\$false.*still has a UTF-8 BOM/su);
   assert.match(source, /python3.*apply-codex-config\.sh/su);
+  assert.match(source, /\.grok\\auth\.json/u);
+  assert.match(source, /XAI_API_KEY/u);
+  assert.match(source, /Grok not logged in\. Skipping apply-grok-config/u);
+  assert.match(source, /python.*apply-grok-config\.sh/su);
+  assert.doesNotMatch(source, /lattice hooks install --host grok/u);
   assert.match(source, /HOST_PLATFORM_UNSUPPORTED.*structurally unsupported/su);
   assert.match(source, /known Lattice native-Windows status\/install contract mismatch/su);
   assert.match(source, /failureMarkers.*FAIL: .*latticeFailures.*FAIL: Lattice.*latticeHosts.*Sort-Object -Unique/su);

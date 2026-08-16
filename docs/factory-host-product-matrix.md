@@ -40,7 +40,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 
 製品導入とconnector有効化を混同しない。外部実行connectorの4段階（installed→execution-verified）とwriter制限は[docs/02_models.md](02_models.md)「入口と使い分け」が正典。
 
-Grok親列はWave 1〜5の実測を書く。工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。Mac新規session（2026-08-16 `01a0091e`）で工場MCP 6は session 面 connected。FOX WSL2新規session（2026-08-16 `01a00964`）は工場5 connected、aishellはtyped `spawn_failed`（WSLは製品どおりunsupported）。Windows nativeのGrok親配線と新規sessionは残H。`required`はGrok所有が`install`で証明された面。handshakeの人の目は新規sessionだけを数え、`grok mcp doctor`成功をsession成功に読み替えない。2026-08-14のGF07 12製品matrix（`supported` / `partial` を含む）は到達性の履歴であり、本列へ写してgreenへ丸めない。既存Grok sessionの見た目は受入に数えない。
+Grok親列はWave 1〜5の実測を書く。工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。Mac新規session（2026-08-16 `01a0091e`）で工場MCP 6は session 面 connected。FOX WSL2新規session（2026-08-16 `01a00964`）は工場5 connected、aishellはtyped `spawn_failed`（WSLは製品どおりunsupported）。Windows nativeのGrok親配線とlogin済みapplyは着地。適用後の新規session受入は残H。`required`はGrok所有が`install`で証明された面。handshakeの人の目は新規sessionだけを数え、`grok mcp doctor`成功をsession成功に読み替えない。2026-08-14のGF07 12製品matrix（`supported` / `partial` を含む）は到達性の履歴であり、本列へ写してgreenへ丸めない。既存Grok sessionの見た目は受入に数えない。
 
 | product | Claude親 | Codex親 | Grok親 |
 |---|---|---|---|
@@ -61,7 +61,7 @@ Grok親列はWave 1〜5の実測を書く。工場の4席（Mac / Windows native
 `not_applicable`として保持する。Latticeの`codegraph_*` tool名はLattice所有の入力互換ABIであり、
 独立Codegraph MCP登録を意味しない。
 
-Grok親列は工場の4席が対象である。Grok Buildの導入は4席とも`optional`（未loginで一撃展開を止めない。loginと`apply-grok-config`はH）。Windows nativeの親session受入は残H。製品または上流が正規入口を持たない面だけを`unsupported`にする。Grok親の憲法・skill・工場MCP・工場hookは`~/.grok`が所有し、`compat.claude.agents`と`compat.claude.hooks`は切る。`compat.claude.skills`と`compat.claude.mcps`は切らない。
+Grok親列は工場の4席が対象である。Grok Buildの導入は4席とも`optional`（未loginで一撃展開を止めない。loginと`apply-grok-config`はH）。Windows nativeの適用後新規session受入は残H。製品または上流が正規入口を持たない面だけを`unsupported`にする。Grok親の憲法・skill・工場MCP・工場hookは`~/.grok`が所有し、`compat.claude.agents`と`compat.claude.hooks`は切る。`compat.claude.skills`と`compat.claude.mcps`は切らない。
 
 Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。peertableも同様にteam編成（`peertable setup`）した対象projectだけがMCP `room`のrequired対象で、未編成projectでの未導入をissueにしない。FOX WSL2／FOX Windows nativeのclient稼働は2026-08-10のwire v7 cutoverで実測済み（installed/compatible）となり、宣言どおり`required`へ昇格した。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。
 

@@ -513,6 +513,7 @@ try {
   $update = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\agents-update.sh')
   $applyCodex = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\apply-codex-config.sh')
   $applyClaude = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\apply-claude-config.sh')
+  $applyGrok = Join-Path $RepoRoot 'bin\apply-grok-config.sh'
   $verify = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\verify-install.sh')
   $deliveryRunner = Join-Path $RepoRoot 'bin\factory-reporter-v7-schedule-runner.mjs'
   $ledgerHelper = Join-Path $RepoRoot 'bin\factory-toolchain-ledger.mjs'
@@ -541,6 +542,22 @@ try {
   # verify-install は既存の Claude settings.json がある時だけ Claude hook を必須検査する。
   if (Test-Path -LiteralPath (Join-Path $env:USERPROFILE '.claude\settings.json') -PathType Leaf) {
     Invoke-Checked -File $GitBash -Arguments @('-lc', 'python3 "$1" --apply', 'dotagents-apply-claude', $applyClaude) -Label 'claude-config: apply-claude-config.sh'
+  }
+  $grokAuth = Join-Path $env:USERPROFILE '.grok\auth.json'
+  $grokLoggedIn = -not [string]::IsNullOrWhiteSpace($env:XAI_API_KEY)
+  if (-not $grokLoggedIn -and (Test-Path -LiteralPath $grokAuth -PathType Leaf)) {
+    $grokLoggedIn = (Get-Item -LiteralPath $grokAuth).Length -gt 0
+  }
+  if (-not $grokLoggedIn) {
+    Write-Host 'INFO: Grok not logged in. Skipping apply-grok-config (toolchain optional)'
+  } else {
+    $previousGrokHome = $env:HOME
+    $env:HOME = $env:USERPROFILE
+    try {
+      Invoke-Checked -File 'python' -Arguments @($applyGrok, '--apply') -Label 'grok-config: apply-grok-config.sh'
+    } finally {
+      $env:HOME = $previousGrokHome
+    }
   }
   $previousHome = $env:HOME
   $previousCodexHome = $env:CODEX_HOME
