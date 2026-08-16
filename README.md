@@ -223,6 +223,8 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 
 ### 3. 一撃展開 → 検証バッテリー
 
+席への手作業の展開（SSHで1箇所から他席を回す場合を含む）は次だけとする。その席のdotagents作業ディレクトリへ移り、そこで親AI（Grok／Claude／Codex）を起動し、その親に下表の正規入口を実行させる。失敗はその席で原因を直してから閉じる。スクリプトをSSH先で無人実行して成功扱いにしない。`verify-install`やsetupのexit 0を親session受入の代用にしない。定期更新のcron／Taskはこの節の対象外。
+
 初回導入と再適用の正規入口はhost別の一撃展開スクリプトである。4入口は同じ
 `lib/factory/deployment-contract.mjs`を消費し、既存のWindows native／WSL2固有配線を共有実装へ
 押し込まない。いずれも公式skill面、現役製品、MCP、Lattice／Spotter hook、定期更新、

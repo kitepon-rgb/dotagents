@@ -19,7 +19,7 @@ Claude Code と Codex の自作 skill / slash command / rule を複数端末で�
 
 ## AI オンボーディング（この URL を渡された AI へ）
 
-新しい端末での稼働手順は [README.md](README.md)「他端末セットアップ・ランブック」（§0〜4）だけが正典。`settings.json` 断片の冪等マージは [docs/03_settings-fragments.md](docs/03_settings-fragments.md)、Codex routing / hook 断片は [docs/05_codex-fragments.md](docs/05_codex-fragments.md) が正。親モデル×effort の既定はオーナー領分（AI は変更しない）。
+新しい端末での稼働手順は [README.md](README.md)「他端末セットアップ・ランブック」（§0〜4）だけが正典。席への手作業の工場展開は、その席のdotagents作業ディレクトリの親AIに正規入口を実行させ、失敗はその席で直す（同ランブック§3）。`settings.json` 断片の冪等マージは [docs/03_settings-fragments.md](docs/03_settings-fragments.md)、Codex routing / hook 断片は [docs/05_codex-fragments.md](docs/05_codex-fragments.md) が正。親モデル×effort の既定はオーナー領分（AI は変更しない）。
 
 ## 掟（複数端末リポの作法）
 

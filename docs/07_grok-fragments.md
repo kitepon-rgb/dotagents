@@ -21,7 +21,7 @@
 
 既存の工場セクションは command / args / 必須env / `enabled` が契約どおりなら触らない。`enabled = false` や command の食い違いは工場契約へ戻す。`[mcp_servers.<name>.env]` のような工場サーバのサブ表は inline `env` へ畳み、本体と二重に残さない。`[mcp_servers.x-article]` など工場外のセクションは触らない。
 
-command の論理名は上表どおり。適用時に `PATH` 上で解決できた command は絶対パスで書き、その親ディレクトリを `env.PATH` の先頭に置く。この解決は適用した席の PATH だけを見る。SSHで席へ入ってその席上で apply するのは正規。Mac で書いた `config.toml` を他席 HOME へ転送して置かない。Grok Build Desktop の GUI PATH（`/usr/bin:/bin:/usr/sbin:/sbin`）では brew の名前解決も `#!/usr/bin/env node` もできない。未解決なら名前のまま残し、handshake は typed 失敗。既に実行可能な絶対パスがあり basename が論理名と一致し、`env.PATH` が契約どおりなら、適用器の PATH が空でも書き戻さない。
+command の論理名は上表どおり。適用時に `PATH` 上で解決できた command は絶対パスで書き、その親ディレクトリを `env.PATH` の先頭に置く。この解決は適用した席の PATH だけを見る。席への手作業の展開は、その席の親AIに正規入口を実行させる。Mac で書いた `config.toml` を他席 HOME へ転送して置かない。Grok Build Desktop の GUI PATH（`/usr/bin:/bin:/usr/sbin:/sbin`）では brew の名前解決も `#!/usr/bin/env node` もできない。未解決なら名前のまま残し、handshake は typed 失敗。既に実行可能な絶対パスがあり basename が論理名と一致し、`env.PATH` が契約どおりなら、適用器の PATH が空でも書き戻さない。
 
 Windows native では同じ契約を Windows の語に写す。`env.PATH` の区切りは `;`。解決できた command は PATHEXT どおり `.cmd` / `.exe` になりうる。npm の global bin と `node.exe` は別ディレクトリなので、よくある配置（`Program Files\\nodejs` 等）に `node.exe` があればその親も `env.PATH` に置く（`.cmd` shim が `node` を呼ぶため。macOS で command 親に node が同居するのと同型）。この判定は適用時 PATH に依存しない。TOML の `\` はエスケープする。Windows の GUI PATH 基底は上記 node 親（あれば）と `WINDIR\\System32` / `WINDIR` / Wbem / PowerShell だけとし、不足は実測のあとだけ足す。
 

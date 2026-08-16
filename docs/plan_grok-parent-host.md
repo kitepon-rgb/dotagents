@@ -160,7 +160,7 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 - `apply-*-config --apply`は端末承認後。backupなしで`config.toml`を触らない。
 - 既存Grok sessionはconfig/hook変更を引き継がない。受入は新規sessionだけ。
 - Windows nativeの`apply-grok-config`は shebang 直起動を避けるため`~/.grok/hooks/factory.json`を実ファイル化する。`install.sh`は実ファイルをSKIPするので、正本`grok/hooks/factory.json`を直したあとはWindows面へ再applyする。symlinkのままに戻さない。
-- 工場はWave 5より前からあり、MacからSSHで他3席へ展開していた。3席は壊れていた。SSHは席へ入る経路であり、展開はその先の席上で正規入口を走らせる。Macで解決した絶対パス・`config.toml`・hookを転送して置かない。Wave 5はGrok親を4席の席上適用で直した。
+- 席への手作業の展開は、その席のdotagentsで親AIを起動して正規入口を走らせ、失敗はその席で直す。SSHは席へ入る経路。スクリプト単独の無人実行とsetupのexit 0を親受入にしない。Macで解決した絶対パス・`config.toml`・hookを転送して置かない。
 
 ## 7. 検証
 
