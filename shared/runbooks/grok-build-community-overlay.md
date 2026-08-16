@@ -11,9 +11,9 @@
 1. 両作業ディレクトリが dirty でないことを確認する。
 2. `bin/update-grok-community-overlay.sh` を実行する。衝突したら overlay コミットだけ直して続行する。
 3. 問題なければ `--push`。
-4. Desktop: `~/Developer/grok-build-vscode` で `npm run compile` と `npx electron-builder --mac dir --arm64 --publish never`。できた app を `/Applications/Grok Build Desktop (kitepon).app` へ。公式 app は触らない。
-5. リモート UI を変えたら AFK 作業ディレクトリで `npm run sync-ui`。上げるなら source を main-server `~/afkpilot` へ rsync（`--delete` の前は dry-run）し、`deploy/kitepon` で `docker compose up -d --build`。`.env` の `DEVICE_KEYS_PEPPER` を回さない。
-6. LAN `http://192.168.1.2:18870/api/health` が 200、公開トップが Access のまま、kitepon Desktop のリンクが残ることを見る。
+4. Desktop: `~/Developer/grok-build-vscode` で `npm run compile` と `npx electron-builder --mac dir --arm64 --publish never`。できた app を `/Applications/Grok Build Desktop (kitepon).app` へ。公式 app は触らない。差し替えたら**席で**開き直す。リモート席から quit しない。
+5. リモート UI を変えたら AFK 作業ディレクトリで `npm run sync-ui`。送信経路（`web/chat.html`）を変えたら vendor と一緒に上げる。上げるなら source を main-server `~/afkpilot` へ rsync（`--delete` の前は dry-run。`.env` と `*.bak.json` は除外）し、`deploy/kitepon` で `docker compose up -d --build`。`.env` の `DEVICE_KEYS_PEPPER` を回さない。
+6. LAN `http://192.168.1.2:18870/api/health` が 200、公開トップが Access のまま、kitepon Desktop のリンクが残ることを見る。スマホはタブを閉じて入り直す。
 
 ## やってはいけないこと
 

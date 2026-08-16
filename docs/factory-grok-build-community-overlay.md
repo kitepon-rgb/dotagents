@@ -22,6 +22,14 @@ Desktop のレール「Update available」は上流 `phuryn/grok-build-vscode` �
 
 ## 差分の置き場
 
-Desktop: 既定リレー `wss://afk.kitepon.dev`、パッケージ済みでも `GROK_RELAY_URL` / `~/.grok/afk-relay.json`、公式 updater 遮断、appId/profile 分離、空 cwd の回復。リモートの PROJECTS `＋` は `$HOME` 配下のフォルダ一覧（ホーム自体は追加不可）。外す操作はデスクだけ。
+Desktop: 既定リレー `wss://afk.kitepon.dev`、パッケージ済みでも `GROK_RELAY_URL` / `~/.grok/afk-relay.json`、公式 updater 遮断、appId/profile 分離、空 cwd の回復。
 
-AFK: `RELAY_DEVICE_STORE` のファイル永続、`deploy/kitepon/`。`web/vendor` は手で持たず、必要なら上流手順の `npm run sync-ui`。
+AFK: `RELAY_DEVICE_STORE` のファイル永続、`deploy/kitepon/`。`web/vendor` は手で持たず、必要なら上流手順の `npm run sync-ui`。`web/chat.html` は vendor ではない。
+
+## リモートでプロジェクトを足す
+
+入口は PROJECTS の `＋`。`$HOME` 配下のディレクトリ一覧で、`~/Developer` があればそこから始める。ホーム自体は追加しない。外す操作はデスクだけ。
+
+届ける面は二つ。Desktop host が `listHostDir` / パス付き `addProjectFolder` を処理し、AFK の vendored `chat.js` と `web/chat.html` が一覧 UI と即送信を持つ。片方だけ新しいと `Loading folders...` のまま止まる。`hostDirListing` に会話スコープを付けない。`listHostDir` は identity 復元の outbox に入れない。
+
+Desktop の差し替えは席でアプリを開き直す。動いているプロセスは古い asar のまま。リモート作業中に Desktop を quit しない（uplink が切れ、その作業も止まる）。
