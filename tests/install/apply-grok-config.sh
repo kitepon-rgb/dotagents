@@ -35,6 +35,10 @@ permission_mode = "always-approve"
 [privacy]
 privacy_banner_acked = "keep-login"
 
+[mcp_servers.x-article]
+url = "https://example.invalid/mcp"
+enabled = true
+
 [compat.claude]
 skills = true
 agents = true
@@ -43,6 +47,7 @@ EOF
 before="$(cat "$HOME_FIXTURE/.grok/config.toml")"
 dry="$(HOME="$HOME_FIXTURE" "$HOME_FIXTURE/.local/bin/apply-grok-config" --dry-run)"
 grep -Fq 'agents = false' <<<"$dry" || fail 'dry-run が agents = false を出さない'
+grep -Fq '[mcp_servers.aiterm]' <<<"$dry" || fail 'dry-run が工場MCPを出さない'
 [ "$(cat "$HOME_FIXTURE/.grok/config.toml")" = "$before" ] || fail 'dry-run が config.toml を書き換えた'
 [ ! -d "$HOME_FIXTURE/Archives" ] || fail 'dry-run が backup を作った'
 
@@ -58,6 +63,13 @@ grep -Fq 'agents = false' <<<"$applied" || fail 'compat.claude.agents を false 
 if grep -Eq 'agents[ \t]*=[ \t]*true' <<<"$applied"; then
   fail 'agents = true が残っている'
 fi
+grep -Fq 'url = "https://example.invalid/mcp"' <<<"$applied" || fail '個人MCP x-article を消した'
+for name in aiterm caveat lattice codex-sidecar gpt_connector aishell; do
+  grep -Fq "[mcp_servers.$name]" <<<"$applied" || fail "工場MCP $name を書かない"
+done
+grep -Fq 'command = "caveat"' <<<"$applied" || fail 'caveat command が契約と違う'
+grep -Fq 'args = ["mcp-server"]' <<<"$applied" || fail 'caveat args が契約と違う'
+grep -Fq 'AISHELL_CAPABILITY_SET = "expanded-v1"' <<<"$applied" || fail 'aishell env が契約と違う'
 
 HOME="$HOME_FIXTURE" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply | grep -Fq '変更なし' \
   || fail '2回目 apply が冪等でない'
@@ -65,6 +77,7 @@ HOME="$HOME_FIXTURE" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply | grep
 HOME="$ABSENT_HOME" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply >/dev/null
 grep -Fq '[compat.claude]' "$ABSENT_HOME/.grok/config.toml" || fail '不在の config.toml を作らない'
 grep -Fq 'agents = false' "$ABSENT_HOME/.grok/config.toml" || fail '新規 config に agents = false を書かない'
+grep -Fq '[mcp_servers.lattice]' "$ABSENT_HOME/.grok/config.toml" || fail '新規 config に工場MCPを書かない'
 
 mkdir -p "$SYMLINK_HOME/.grok" "$SYMLINK_HOME/target"
 printf '%s\n' 'agents = true' >"$SYMLINK_HOME/target/config.toml"

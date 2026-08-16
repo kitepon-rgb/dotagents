@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Grok config の Wave 1 所有面だけを差分適用する。compat.claude.agents 以外は触らない。"""
+"""Grok config の工場所有面を差分適用する。model / login / permission は触らない。"""
 
 from __future__ import annotations
 
@@ -19,9 +19,18 @@ SECTION = "compat.claude"
 KEY = "agents"
 VALUE = "false"
 
+FACTORY_SERVERS = (
+    ("aiterm", {"command": "aiterm-mcp"}),
+    ("caveat", {"command": "caveat", "args": ("mcp-server",)}),
+    ("lattice", {"command": "lattice-mcp"}),
+    ("codex-sidecar", {"command": "codex-sidecar-mcp"}),
+    ("gpt_connector", {"command": "gpt-connector-mcp"}),
+    ("aishell", {"command": "aishell-mcp", "env": {"AISHELL_CAPABILITY_SET": "expanded-v1"}}),
+)
+
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Grok の compat.claude.agents を false にする。")
+    parser = argparse.ArgumentParser(description="Grok の工場MCPと compat.claude.agents を差分適用する。")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--dry-run", action="store_true", help="差分を表示する（既定）")
     group.add_argument("--apply", action="store_true", help="backup 後に差分を適用する")
@@ -54,7 +63,7 @@ def set_compat_claude_agents_false(text: str) -> str:
             start = index
             break
     if start is None:
-        prefix = "" if not body.strip() else ("\n" if body.endswith("\n") else "\n\n")
+        prefix = "" if not body.strip() else "\n"
         return f"{body}{prefix}[{SECTION}]\n{KEY} = {VALUE}\n"
     end = len(lines)
     for index in range(start + 1, len(lines)):
@@ -73,6 +82,77 @@ def set_compat_claude_agents_false(text: str) -> str:
         insert_at += 1
     lines.insert(insert_at, f"{KEY} = {VALUE}\n")
     return "".join(lines)
+
+
+def render_mcp_section(name: str, spec: dict) -> str:
+    lines = [f"[mcp_servers.{name}]", f'command = "{spec["command"]}"']
+    args = spec.get("args") or ()
+    if args:
+        rendered = ", ".join(f'"{item}"' for item in args)
+        lines.append(f"args = [{rendered}]")
+    env = spec.get("env") or {}
+    if env:
+        rendered = ", ".join(f'{key} = "{value}"' for key, value in env.items())
+        lines.append(f"env = {{ {rendered} }}")
+    lines.append("enabled = true")
+    return "\n".join(lines) + "\n"
+
+
+def find_table_section(text: str, header_re: re.Pattern[str]) -> tuple[int, int] | None:
+    lines = text.splitlines(keepends=True)
+    start = None
+    for index, line in enumerate(lines):
+        if header_re.match(line.rstrip("\n")):
+            start = index
+            break
+    if start is None:
+        return None
+    end = len(lines)
+    next_header = re.compile(r"^[ \t]*\[")
+    for index in range(start + 1, len(lines)):
+        if next_header.match(lines[index]):
+            end = index
+            break
+    return start, end
+
+
+def section_has_factory_contract(body: str, spec: dict) -> bool:
+    if not re.search(rf'^[ \t]*command[ \t]*=[ \t]*"{re.escape(spec["command"])}"[ \t]*(?:#.*)?$', body, re.M):
+        return False
+    if re.search(r"^[ \t]*enabled[ \t]*=[ \t]*false[ \t]*(?:#.*)?$", body, re.M):
+        return False
+    args = spec.get("args") or ()
+    if args:
+        needle = ", ".join(f'"{item}"' for item in args)
+        if f"[{needle}]" not in body:
+            return False
+    for key, value in (spec.get("env") or {}).items():
+        if key not in body or f'"{value}"' not in body:
+            return False
+    return True
+
+
+def upsert_factory_mcp(text: str) -> str:
+    body = normalize_toml(text)
+    for name, spec in FACTORY_SERVERS:
+        header_re = re.compile(rf"^[ \t]*\[mcp_servers\.{re.escape(name)}\][ \t]*(?:#.*)?$")
+        found = find_table_section(body, header_re)
+        canonical = render_mcp_section(name, spec)
+        if found is None:
+            prefix = "" if not body.strip() else "\n"
+            body = f"{body}{prefix}{canonical}"
+            continue
+        start, end = found
+        lines = body.splitlines(keepends=True)
+        existing = "".join(lines[start:end])
+        if section_has_factory_contract(existing, spec):
+            continue
+        body = "".join(lines[:start]) + canonical + "".join(lines[end:])
+    return normalize_toml(body)
+
+
+def propose(text: str) -> str:
+    return upsert_factory_mcp(set_compat_claude_agents_false(text))
 
 
 def show_diff(path: Path, before: str, after: str) -> str:
@@ -149,7 +229,7 @@ def main() -> int:
         raise ValueError("config.toml は symlink では適用できません")
     existed = path.exists()
     original = path.read_text(encoding="utf-8") if existed else ""
-    proposed = set_compat_claude_agents_false(original)
+    proposed = propose(original)
     if proposed == normalize_toml(original):
         print("apply-grok-config: 変更なし")
         return 0

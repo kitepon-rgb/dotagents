@@ -112,7 +112,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | Grok skill | `orchestrate` / `auto-deploy-on-push` / `gpt-connector` / `polish-github` | 共通契約＋Grok appendix。`~/.grok/skills`が同名のCodex/Claude面に勝つ |
 | Grok agent | `implementer` / `refuter` | `~/.grok/agents`。bundled explore/planは置換えない |
 | bin | `render-global-constitution.mjs` | 共通憲法＋host deltaから3 runtime向け完全指示を冪等生成し、driftを検査 |
-| bin | `apply-grok-config` | Grok `compat.claude.agents=false` を dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
+| bin | `apply-grok-config` | Grok の `compat.claude.agents=false` と工場MCP 6を dry-run / backup / 冪等適用する（`--apply` は端末承認後。正典はdocs/07） |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲のrole定義（役割→model×effortの正は docs/02_models.md） |
 | bin | `agents-update.sh` | deployment contractのhost別CLI／SDK集合を`@latest`へ更新し、post-update gateとreportを実行 |
 | bin | `setup-macos-factory.sh` / `setup-wsl-factory.sh` / `setup-windows-native-factory.ps1` | host別の工場一撃展開。共通配備契約を消費し、各OS固有の配線と全製品smokeを行う |
