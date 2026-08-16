@@ -14,6 +14,7 @@ trap 'rm -rf "$TEST_HOME" "$EMPTY_HOME"' EXIT
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
 mkdir -p "$TEST_HOME/.nvm/fake-bin" "$TEST_HOME/base-bin" "$TEST_HOME/npm-global/bin" "$TEST_HOME/shadow-bin"
+mkdir -p "$TEST_HOME/system-bin"
 for command_path in /bin/date /bin/mkdir /usr/bin/tee "$(command -v readlink)" "$(command -v node)" "$(command -v uname)"; do
   [ -x "$command_path" ] || fail "test prerequisite がない: $command_path"
   ln -s "$command_path" "$TEST_HOME/base-bin/${command_path##*/}"
@@ -41,6 +42,12 @@ case "$*" in
 esac
 EOF
 chmod +x "$TEST_HOME/.nvm/fake-bin/npm"
+cat > "$TEST_HOME/system-bin/npm" <<'EOF'
+#!/bin/sh
+printf 'system-npm:%s\n' "$*" >> "$HOME/update-events.log"
+exit 91
+EOF
+chmod +x "$TEST_HOME/system-bin/npm"
 cat > "$TEST_HOME/.nvm/fake-bin/claude" <<'EOF'
 #!/bin/sh
 echo '2.1.207'
@@ -195,6 +202,18 @@ node -e '
   for(const id of ["claude-code","codex-cli","grok-build"]){const r=v.products[id];if(!r||r.post_gate_status!=="success"||!["success","skipped"].includes(r.operation_status))process.exit(1)}
 ' "$TEST_HOME/.local/state/agents-update/toolchain-ledger.json" \
   || fail '3基盤CLIの更新前後・post-gate台帳を保存していない'
+
+if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/base-bin" \
+  AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/system-bin" \
+  FACTORY_REPORTER_RUNNER="$REPORTER" FACTORY_REPORTER_CONFIG="$REPORTER_CONFIG" \
+  RUN_ID=system-npm-shadow \
+  /bin/bash "$ROOT/bin/agents-update.sh" >"$TEST_HOME/system-npm-shadow.out" 2>&1; then
+  cat "$TEST_HOME/system-npm-shadow.out" >&2
+  fail 'system npmが存在する環境でNVM npmを復元できない'
+fi
+if grep -q '^system-npm:' "$TEST_HOME/update-events.log"; then
+  fail 'system npmをNVM npmより優先した'
+fi
 
 if ! env -i HOME="$TEST_HOME" PATH="$TEST_HOME/shadow-bin:$TEST_HOME/base-bin" \
   AGENTS_UPDATE_PATH_PREFIX="$TEST_HOME/no-system-bin" \

@@ -93,8 +93,8 @@ src/  tests/  package.json（or pyproject 等）
 
 `install.sh`は配布対象を1階層だけ走査しsymlinkを張る。Codex skill面は`--profile official|legacy`の一方だけを選び、新規entryの追加・削除・改名後は`./install.sh --profile <面>`を再実行する。
 
-host全体の初回導入・再適用はREADMEの`setup-macos-factory.sh`／`setup-wsl-factory.sh`／
-`setup-windows-native-factory.ps1`だけを正規入口とする。3入口は共通deployment contractを読むが、
+host全体の初回導入・再適用はREADMEの`setup-macos-factory.sh`／`setup-linux-factory.sh`／`setup-wsl-factory.sh`／
+`setup-windows-native-factory.ps1`だけを正規入口とする。4入口は共通deployment contractを読むが、
 LaunchAgent／cron／Task Scheduler、config、hook、credentialはhost別実装が所有し、相互に投影しない。
 
 ### Skill の frontmatter

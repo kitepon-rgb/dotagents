@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# WSL一撃展開の順序、冪等cron、fresh delivery receiptを隔離fixtureで検証する。
+# WSL／native Linux一撃展開の順序、冪等cron、fresh delivery receiptを隔離fixtureで検証する。
 set -euo pipefail
 
 # Windows native（Git Bash/MSYS）には/usr/bin/gitが無く、POSIX固定PATHのfixtureが
@@ -10,8 +10,15 @@ if [ "${OS:-}" = "Windows_NT" ]; then
 fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SOURCE="$ROOT/bin/setup-wsl-factory.sh"
-[ -x "$SOURCE" ] || { echo "FAIL: WSL一撃展開スクリプトがない: $SOURCE" >&2; exit 1; }
+SETUP_VARIANT="${DOTAGENTS_SETUP_TEST_VARIANT:-wsl}"
+case "$SETUP_VARIANT" in
+  wsl) SETUP_COMMAND=setup-wsl-factory; HOST_PROFILE=wsl ;;
+  linux) SETUP_COMMAND=setup-linux-factory; HOST_PROFILE=server ;;
+  *) echo "FAIL: 未対応のtest variant: $SETUP_VARIANT" >&2; exit 1 ;;
+esac
+export SETUP_COMMAND
+SOURCE="$ROOT/bin/$SETUP_COMMAND.sh"
+[ -x "$SOURCE" ] || { echo "FAIL: $SETUP_VARIANT一撃展開スクリプトがない: $SOURCE" >&2; exit 1; }
 
 FIXTURE="$(mktemp -d)"
 HOME_DIR="$FIXTURE/home"
@@ -22,10 +29,11 @@ CRONTAB="$FIXTURE/crontab"
 NODE_BIN="$(command -v node)"
 trap 'rm -rf "$FIXTURE"' EXIT
 mkdir -p "$HOME_DIR" "$FIXTURE_ROOT/bin" "$FIXTURE_ROOT/lib/factory" "$STUB_BIN"
-cp "$SOURCE" "$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
+cp "$ROOT/bin/setup-wsl-factory.sh" "$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
+cp "$SOURCE" "$FIXTURE_ROOT/bin/$SETUP_COMMAND.sh"
 cp "$ROOT/lib/factory/delivery-receipt.mjs" "$FIXTURE_ROOT/lib/factory/delivery-receipt.mjs"
 cp "$ROOT/lib/factory/deployment-contract.mjs" "$FIXTURE_ROOT/lib/factory/deployment-contract.mjs"
-chmod +x "$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
+chmod +x "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" "$FIXTURE_ROOT/bin/$SETUP_COMMAND.sh"
 ln -s "$NODE_BIN" "$STUB_BIN/node"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -35,7 +43,7 @@ cat >"$FIXTURE_ROOT/install.sh" <<'EOF'
 set -euo pipefail
 printf 'install %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
 mkdir -p "$HOME/.local/bin"
-ln -sfn "$DOTAGENTS_SETUP_TEST_ROOT/bin/setup-wsl-factory.sh" "$HOME/.local/bin/setup-wsl-factory"
+ln -sfn "$DOTAGENTS_SETUP_TEST_ROOT/bin/$SETUP_COMMAND.sh" "$HOME/.local/bin/$SETUP_COMMAND"
 EOF
 cat >"$FIXTURE_ROOT/bin/apply-codex-config.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -78,7 +86,9 @@ const required = [
 const products = Object.fromEntries(required.map((id) => [id, {
   presence_status: 'installed', compatibility_status: 'compatible', checks: [],
 }]));
-products.servermanager = { presence_status: 'not_applicable', checks: [] };
+products.servermanager = process.env.DOTAGENTS_SETUP_TEST_HOST_PROFILE === 'server'
+  ? { presence_status: 'installed', compatibility_status: 'compatible', checks: [] }
+  : { presence_status: 'not_applicable', checks: [] };
 for (const id of ['aishell', 'observer']) products[id] = {
   presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [],
 };
@@ -86,7 +96,7 @@ if (process.env.DOTAGENTS_SETUP_TEST_BROKEN_PRODUCT) {
   products[process.env.DOTAGENTS_SETUP_TEST_BROKEN_PRODUCT].presence_status = 'missing';
 }
 fs.writeFileSync(output, `${JSON.stringify({
-  schema_version: '7.0', report_id: reportId, host_profile: 'wsl',
+  schema_version: '7.0', report_id: reportId, host_profile: process.env.DOTAGENTS_SETUP_TEST_HOST_PROFILE,
   platform: { os: 'linux', arch: 'x64' }, products,
 })}\n`);
 NODE
@@ -183,17 +193,22 @@ else
   exit 0
 fi
 EOF
-for command_name in npm uv throughline markitdown gpt-connector aiterm-mcp codex-sidecar-mcp peertable-client; do
+for command_name in npm uv markitdown gpt-connector aiterm-mcp codex-sidecar-mcp peertable-client; do
   cat >"$STUB_BIN/$command_name" <<'EOF'
 #!/usr/bin/env bash
 exit 0
 EOF
 done
+cat >"$STUB_BIN/throughline" <<'EOF'
+#!/usr/bin/env bash
+printf 'throughline %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
+chmod +x "$STUB_BIN/throughline"
 chmod +x "$STUB_BIN/"*
 
 mkdir -p "$HOME_DIR/.config/dotagents"
 printf '%s\n' '.fixture-user-ignore' >"$HOME_DIR/.gitignore_global"
-printf '%s\n' '{"reporting":{"enabled":true,"endpoint":"https://example.invalid/api/factory/v7/reports"}}' \
+printf '{"host":{"id":"fixture","profile":"%s"},"reporting":{"enabled":true,"endpoint":"https://example.invalid/api/factory/v7/reports"}}\n' "$HOST_PROFILE" \
   >"$HOME_DIR/.config/dotagents/factory-reporter.json"
 {
   printf '%s\n' "17 * * * * /usr/bin/node /fixture/factory-reporter # dotagents-factory-reporter"
@@ -205,25 +220,27 @@ export HOME="$HOME_DIR"
 export PATH="$STUB_BIN:/usr/bin:/bin"
 unset XAI_API_KEY
 export DOTAGENTS_SETUP_WSL_FORCE=1
+export DOTAGENTS_SETUP_LINUX_FORCE=1
+export DOTAGENTS_SETUP_TEST_HOST_PROFILE="$HOST_PROFILE"
 export DOTAGENTS_SETUP_TEST_CALLS="$CALLS"
 export DOTAGENTS_SETUP_TEST_CRONTAB="$CRONTAB"
 export DOTAGENTS_SETUP_TEST_ROOT="$FIXTURE_ROOT"
 
-"$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
-"$FIXTURE_ROOT/bin/setup-wsl-factory.sh"
+"$FIXTURE_ROOT/bin/$SETUP_COMMAND.sh"
+"$FIXTURE_ROOT/bin/$SETUP_COMMAND.sh"
 
 [ "$(grep -Fxc '.fixture-user-ignore' "$HOME_DIR/.gitignore_global")" -eq 1 ] \
   || fail '既存global gitignoreを保持しない'
 [ "$(grep -Fxc '.DS_Store' "$HOME_DIR/.gitignore_global")" -eq 1 ] \
   || fail '.DS_Storeを冪等に補完しない'
-[ "$(grep -Fc '# dotagents-agents-update-wsl' "$CRONTAB")" -eq 1 ] || fail 'cron管理行が1件でない'
+[ "$(grep -Fc "# dotagents-agents-update-$SETUP_VARIANT" "$CRONTAB")" -eq 1 ] || fail 'cron管理行が1件でない'
 grep -Fq '# dotagents-factory-reporter' "$CRONTAB" || fail '既存のfactory reporter cronを保持しない'
-if grep -E 'agents-update|update-npm-globals' "$CRONTAB" | grep -Fv 'setup-wsl-factory' >/dev/null; then
+if grep -E 'agents-update|update-npm-globals' "$CRONTAB" | grep -Fv "$SETUP_COMMAND" >/dev/null; then
   fail '旧update cronを残した'
 fi
-find "$HOME_DIR/.local/state/dotagents/backups" -name 'crontab-pre-wsl-setup-*' -type f | grep -q . \
+find "$HOME_DIR/.local/state/dotagents/backups" -name "crontab-pre-$SETUP_VARIANT-setup-*" -type f | grep -q . \
   || fail '変更前crontabをbackupしない'
-grep -Fq "0 2 * * * '$HOME_DIR/.local/bin/setup-wsl-factory' --scheduled-update" "$CRONTAB" \
+grep -Fq "0 2 * * * '$HOME_DIR/.local/bin/$SETUP_COMMAND' --scheduled-update" "$CRONTAB" \
   || fail '毎日2:00のscheduled updateを登録しない'
 grep -Fq 'apply-codex-config --apply' "$CALLS" || fail 'Codex設定を適用しない'
 grep -Fq 'apply-claude-config --apply' "$CALLS" || fail 'Claude設定を適用しない'
@@ -234,6 +251,8 @@ if grep -Fq 'lattice hooks install --host grok' "$CALLS"; then
   fail 'lattice hooks install --host grok を呼んだ'
 fi
 grep -Fq 'install --profile official' "$CALLS" || fail 'official profileを展開しない'
+grep -Fq 'throughline install' "$CALLS" || fail 'Throughline製品管理hookを導入しない'
+grep -Fq 'caveat codex-hook install' "$CALLS" || fail 'Caveat Codex hookを導入しない'
 grep -Fq 'lattice hooks install --host claude' "$CALLS" || fail 'Claude Lattice hookを配線しない'
 grep -Fq 'lattice hooks install --host codex' "$CALLS" || fail 'Codex Lattice hookを配線しない'
 grep -Fq 'spotter install -y' "$CALLS" || fail 'Spotterを配線しない'
@@ -252,8 +271,10 @@ minimal_output="$(env -i \
   HOME="$HOME_DIR" \
   PATH="$STUB_BIN:/usr/bin:/bin" \
   DOTAGENTS_SETUP_WSL_FORCE=1 \
+  DOTAGENTS_SETUP_LINUX_FORCE=1 \
+  DOTAGENTS_SETUP_TEST_HOST_PROFILE="$HOST_PROFILE" \
   DOTAGENTS_SETUP_TEST_CALLS="$CALLS" \
-  "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" --scheduled-update)"
+  "$FIXTURE_ROOT/bin/$SETUP_COMMAND.sh" --scheduled-update)"
 grep -Fq '"delivery_acknowledged":true' <<<"$minimal_output" \
   || fail 'cron最小環境でdelivery receiptを確認しない'
 grep -Fq '"factory_products_checked":15' <<<"$minimal_output" \
@@ -263,12 +284,12 @@ latest_report="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFile
 [ "$latest_report" = fixture-report-3 ] || fail 'cron最小環境でfresh reportが作られていない'
 
 if DOTAGENTS_SETUP_TEST_BROKEN_PRODUCT=caveat \
-  "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" --scheduled-update >/dev/null 2>&1; then
+  "$FIXTURE_ROOT/bin/$SETUP_COMMAND.sh" --scheduled-update >/dev/null 2>&1; then
   fail 'required製品欠落を成功扱いした'
 fi
 
-if "$FIXTURE_ROOT/bin/setup-wsl-factory.sh" --unknown >/dev/null 2>&1; then
+if "$FIXTURE_ROOT/bin/$SETUP_COMMAND.sh" --unknown >/dev/null 2>&1; then
   fail '未知引数を受理した'
 fi
 
-echo 'setup-wsl-factory install test: OK'
+echo "$SETUP_COMMAND install test: OK"

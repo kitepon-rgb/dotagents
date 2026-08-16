@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# WSL2へdotagents工場を一撃展開し、定期更新のdelivery receiptまで検証する。
+# WSL2／native Linuxへdotagents工場を一撃展開し、定期更新のdelivery receiptまで検証する。
 set -euo pipefail
 
 script_source="${BASH_SOURCE[0]}"
@@ -9,7 +9,20 @@ while [ -L "$script_source" ]; do
   case "$script_source" in /*) ;; *) script_source="$script_dir/$script_source" ;; esac
 done
 ROOT="$(cd "$(dirname "$script_source")/.." && pwd)"
-CRON_MARKER='# dotagents-agents-update-wsl'
+SETUP_VARIANT="${DOTAGENTS_SETUP_VARIANT:-wsl}"
+case "$SETUP_VARIANT" in
+  wsl)
+    HOST_PROFILE=wsl
+    SETUP_COMMAND=setup-wsl-factory
+    CRON_MARKER='# dotagents-agents-update-wsl'
+    ;;
+  linux)
+    HOST_PROFILE=server
+    SETUP_COMMAND=setup-linux-factory
+    CRON_MARKER='# dotagents-agents-update-linux'
+    ;;
+  *) echo "FAIL: 未対応のsetup variant: $SETUP_VARIANT" >&2; exit 1 ;;
+esac
 REPORT_CONFIG="${FACTORY_REPORTER_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/dotagents/factory-reporter.json}"
 REPORT_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/dotagents/factory-reporter-v7"
 UPDATE_LOG="${XDG_STATE_HOME:-$HOME/.local/state}/agents-update/agents-update.log"
@@ -17,15 +30,23 @@ UPDATE_LOG="${XDG_STATE_HOME:-$HOME/.local/state}/agents-update/agents-update.lo
 die() { echo "FAIL: $*" >&2; exit 1; }
 need() { command -v "$1" >/dev/null 2>&1 || die "必須commandがない: $1"; }
 
-is_wsl() {
+is_target_host() {
   [ "${DOTAGENTS_SETUP_WSL_FORCE:-0}" = 1 ] && return 0
-  [ "$(uname -s 2>/dev/null || true)" = Linux ] \
-    && grep -qiE '(microsoft|wsl)' /proc/sys/kernel/osrelease 2>/dev/null
+  [ "${DOTAGENTS_SETUP_LINUX_FORCE:-0}" = 1 ] && [ "$SETUP_VARIANT" = linux ] && return 0
+  [ "$(uname -s 2>/dev/null || true)" = Linux ] || return 1
+  if [ "$SETUP_VARIANT" = wsl ]; then
+    grep -qiE '(microsoft|wsl)' /proc/sys/kernel/osrelease 2>/dev/null
+  else
+    if grep -qiE '(microsoft|wsl)' /proc/sys/kernel/osrelease 2>/dev/null; then
+      return 1
+    fi
+    return 0
+  fi
 }
 
 validate_report_config() {
   [ -f "$REPORT_CONFIG" ] || die "factory reporter configがない: $REPORT_CONFIG"
-  node - "$REPORT_CONFIG" <<'NODE' || exit 1
+  node - "$REPORT_CONFIG" "$HOST_PROFILE" <<'NODE' || exit 1
 const fs = require('fs');
 const path = process.argv[2];
 let value;
@@ -34,8 +55,9 @@ catch (error) { process.stderr.write(`FAIL: factory reporter configを読めな�
 let endpoint;
 try { endpoint = new URL(value?.reporting?.endpoint); }
 catch { process.stderr.write('FAIL: factory reporter endpointが不正\n'); process.exit(1); }
-if (value?.reporting?.enabled !== true || endpoint.pathname !== '/api/factory/v7/reports') {
-  process.stderr.write('FAIL: factory reporterはenabledなwire v7でなければならない\n');
+if (value?.host?.profile !== process.argv[3]
+  || value?.reporting?.enabled !== true || endpoint.pathname !== '/api/factory/v7/reports') {
+  process.stderr.write(`FAIL: factory reporterは${process.argv[3]} profileのenabledなwire v7でなければならない\n`);
   process.exit(1);
 }
 NODE
@@ -79,16 +101,16 @@ NODE
 validate_factory_products() {
   node --input-type=module - \
     "$ROOT/lib/factory/deployment-contract.mjs" \
-    "$REPORT_STATE/latest-report.json" <<'NODE'
+    "$REPORT_STATE/latest-report.json" "$HOST_PROFILE" <<'NODE'
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-const [contractPath, reportPath] = process.argv.slice(2);
+const [contractPath, reportPath, expectedProfile] = process.argv.slice(2);
 const { CURRENT_WIRE_PRODUCT_IDS, hostProjection, postUpdateFailures } =
   await import(pathToFileURL(contractPath).href);
 const report = JSON.parse(readFileSync(reportPath, 'utf8'));
 const facts = { profile: report.host_profile, os: report.platform?.os, arch: report.platform?.arch };
-if (report.schema_version !== '7.0' || facts.profile !== 'wsl' || facts.os !== 'linux') {
-  throw new Error('WSL wire v7 reportでない');
+if (report.schema_version !== '7.0' || facts.profile !== expectedProfile || facts.os !== 'linux') {
+  throw new Error(`${expectedProfile} wire v7 reportでない`);
 }
 const actualIds = Object.keys(report.products ?? {}).sort();
 const expectedIds = [...CURRENT_WIRE_PRODUCT_IDS].sort();
@@ -96,7 +118,12 @@ if (actualIds.length !== expectedIds.length || actualIds.some((id, index) => id 
   throw new Error('factory reportが固定15製品をすべて含まない');
 }
 const projection = hostProjection(facts);
-const failures = postUpdateFailures(report, facts, { postUpdate: false });
+let failures = postUpdateFailures(report, facts, { postUpdate: false });
+if (expectedProfile === 'server') {
+  // self-ingest鮮度はdelivery後のverify-installがloopback readinessで受け入れる。
+  failures = failures.filter((failure) => failure !== 'servermanager:compatibility'
+    && failure !== 'servermanager:readiness_factory_ingest');
+}
 for (const [id, expectation] of Object.entries(projection.expected)) {
   const product = report.products[id];
   if (expectation === 'unsupported'
@@ -278,7 +305,7 @@ install_cron() {
   crontab -l >"$current" 2>/dev/null || true
   backup_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotagents/backups"
   mkdir -p "$backup_dir"
-  backup_file="$(mktemp "$backup_dir/crontab-pre-wsl-setup-$(date +%Y%m%d-%H%M%S)-XXXXXX")"
+  backup_file="$(mktemp "$backup_dir/crontab-pre-$SETUP_VARIANT-setup-$(date +%Y%m%d-%H%M%S)-XXXXXX")"
   cp "$current" "$backup_file"
   awk -v marker="$CRON_MARKER" '
     index($0, marker) { next }
@@ -286,7 +313,7 @@ install_cron() {
     $0 ~ /(^|[[:space:]\047"])([^[:space:]\047"]*\/)?update-npm-globals(\.sh)?([[:space:]\047"]|$)/ { next }
     { print }
   ' "$current" >"$candidate"
-  setup_bin="$HOME/.local/bin/setup-wsl-factory"
+  setup_bin="$HOME/.local/bin/$SETUP_COMMAND"
   scheduler_log="${XDG_STATE_HOME:-$HOME/.local/state}/agents-update/scheduler.log"
   line="0 2 * * * $(cron_quote "$setup_bin") --scheduled-update >> $(cron_quote "$scheduler_log") 2>&1 $CRON_MARKER"
   printf '%s\n' "$line" >>"$candidate"
@@ -297,7 +324,7 @@ install_cron() {
 }
 
 run_setup() {
-  is_wsl || die 'このスクリプトはWSL2専用'
+  is_target_host || die "このスクリプトは$SETUP_VARIANT専用"
   local command_name
   for command_name in git gh node npm docker python3 claude codex uv crontab sudo systemctl; do
     need "$command_name"
@@ -318,22 +345,32 @@ run_setup() {
   "$ROOT/install.sh" --profile official
   ensure_managed_commands
   ensure_caveat_sync
+  throughline install
+  caveat codex-hook install
   ensure_mcp
   lattice hooks install --host claude
   lattice hooks install --host codex
   spotter install -y
   install_cron
-  "$ROOT/bin/verify-install.sh" --profile official
-  run_scheduled_update
-  echo 'setup-wsl-factory: OK'
+  if [ "$HOST_PROFILE" = server ]; then
+    # server readinessはfactory ingest鮮度も含む。先に今回のreportを届けてから検証する。
+    run_scheduled_update
+    SERVERMANAGER_READY_URL="${SERVERMANAGER_READY_URL:-http://127.0.0.1:39310/readyz}" \
+      DOTAGENTS_FACTORY_HOST_PROFILE=server \
+      "$ROOT/bin/verify-install.sh" --profile official
+  else
+    "$ROOT/bin/verify-install.sh" --profile official
+    run_scheduled_update
+  fi
+  echo "$SETUP_COMMAND: OK"
 }
 
 case "${1:-}" in
   '') run_setup ;;
   --scheduled-update)
-    [ "$#" -eq 1 ] || die '使い方: setup-wsl-factory.sh [--scheduled-update]'
-    is_wsl || die 'このスクリプトはWSL2専用'
+    [ "$#" -eq 1 ] || die "使い方: $SETUP_COMMAND.sh [--scheduled-update]"
+    is_target_host || die "このスクリプトは$SETUP_VARIANT専用"
     run_scheduled_update
     ;;
-  *) die '使い方: setup-wsl-factory.sh [--scheduled-update]' ;;
+  *) die "使い方: $SETUP_COMMAND.sh [--scheduled-update]" ;;
 esac

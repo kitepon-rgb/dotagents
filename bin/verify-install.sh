@@ -121,7 +121,13 @@ verify_factory_core() {
   case "$(uname -s 2>/dev/null || true)" in
     Darwin) host_profile=mac ;;
     MINGW*|MSYS*|Windows_NT) host_profile=windows-native ;;
-    Linux) host_profile=wsl ;;
+    Linux)
+      if grep -qiE '(microsoft|wsl)' /proc/sys/kernel/osrelease 2>/dev/null; then
+        host_profile=wsl
+      else
+        host_profile=server
+      fi
+      ;;
     *) echo "FAIL: 未対応OSをhost profileへ射影できない"; fail=1; return ;;
   esac
   host_profile="${DOTAGENTS_FACTORY_HOST_PROFILE:-$host_profile}"
@@ -167,11 +173,23 @@ verify_factory_core() {
     if [ -z "${SERVERMANAGER_READY_URL:-}" ]; then
       echo "FAIL: ServerManager readiness URL が未指定（SERVERMANAGER_READY_URL）"
       fail=1
-    elif ! node -e 'const url=process.argv[1];fetch(url).then(async r=>{const v=await r.json();process.exit(r.ok&&typeof v?.source_revision==="string"&&v.source_revision.length>=7?0:1)}).catch(()=>process.exit(1))' "$SERVERMANAGER_READY_URL"; then
+    elif ! node -e '
+const url = process.argv[1];
+fetch(url).then(async (response) => {
+  const value = await response.json();
+  const checks = new Map((value?.checks ?? []).map((item) => [item.id, item]));
+  const localReady = ["database", "schema", "source_revision"]
+    .every((id) => checks.get(id)?.status === "pass");
+  const onlyRemoteFreshnessMayFail = [...checks.values()]
+    .every((item) => item.status !== "fail" || item.id === "factory_ingest");
+  process.exit(localReady && onlyRemoteFreshnessMayFail
+    && typeof value?.source_revision === "string" && value.source_revision.length >= 7 ? 0 : 1);
+}).catch(() => process.exit(1));
+' "$SERVERMANAGER_READY_URL"; then
       echo "FAIL: ServerManager public readiness/revision が不正"
       fail=1
     else
-      echo "OK  ServerManager public readiness/revision"
+      echo "OK  ServerManager local readiness/revision（他hostのfactory_ingest鮮度は集約監視へ委譲）"
     fi
   else
     echo "OK  ServerManager → not_applicable（server profile専用）"

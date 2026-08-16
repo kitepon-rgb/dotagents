@@ -115,7 +115,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `apply-grok-config` | Grok の `compat.claude.agents=false` / `hooks=false` と工場MCP 6を dry-run / backup / 冪等適用する（`--apply` は端末承認後。正典はdocs/07） |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲のrole定義（役割→model×effortの正は docs/02_models.md） |
 | bin | `agents-update.sh` | deployment contractのhost別CLI／SDK集合を`@latest`へ更新し、post-update gateとreportを実行 |
-| bin | `setup-macos-factory.sh` / `setup-wsl-factory.sh` / `setup-windows-native-factory.ps1` | host別の工場一撃展開。共通配備契約を消費し、各OS固有の配線と全製品smokeを行う |
+| bin | `setup-macos-factory.sh` / `setup-linux-factory.sh` / `setup-wsl-factory.sh` / `setup-windows-native-factory.ps1` | host別の工場一撃展開。共通配備契約を消費し、各OS固有の配線と全製品smokeを行う |
 | bin | `bughub-external-probe.mjs` | server profileからloopback `/readyz`とdeploy revision manifestを照合し、安全な固定checkへ投影 |
 | bin | `factory-reporter.mjs` | 明示opt-inされた工場reportを検証・outbox保存・BugHubへ冪等送信 |
 | bin | `factory-external-event.mjs` | Pi5等の外部監視結果をmain-serverの所有者限定stateへ固定ServerManager eventとしてappend-only記録し、BugHub受理後だけack |
@@ -223,7 +223,7 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 
 ### 3. 一撃展開 → 検証バッテリー
 
-初回導入と再適用の正規入口はhost別の一撃展開スクリプトである。3入口は同じ
+初回導入と再適用の正規入口はhost別の一撃展開スクリプトである。4入口は同じ
 `lib/factory/deployment-contract.mjs`を消費し、既存のWindows native／WSL2固有配線を共有実装へ
 押し込まない。いずれも公式skill面、現役製品、MCP、Lattice／Spotter hook、定期更新、
 `verify-install`、fresh wire v7 reportとBugHub delivery receiptまでを一括検証する。
@@ -234,11 +234,12 @@ Grok親の配布面（`~/.grok/rules` / `runbooks` / `skills` / `agents` / `hook
 wire v7 reportingを有効にする。MCP login、GitHub認証、Docker稼働など「0. 前提」の外部状態は
 スクリプトが捏造せず、欠けていれば名指しで停止する。
 
-工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。下表はworkstation 3入口。Linux（main-server）はserver profileで別配線し、席として捨てない。
+工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線で、各席に独立した正規入口を持つ。
 
 | host | 正規入口 | 定期更新 |
 |---|---|---|
 | macOS | `./bin/setup-macos-factory.sh` | LaunchAgent、毎週月曜04:00 |
+| Linux | `./bin/setup-linux-factory.sh` | cron、毎日02:00。native Linuxの`server` profile専用 |
 | WSL2 | `./bin/setup-wsl-factory.sh` | cron、毎日02:00。`systemd`と非対話`sudo`が必要 |
 | Windows native | `powershell -ExecutionPolicy Bypass -File .\bin\setup-windows-native-factory.ps1` | Task Scheduler、毎日02:00。初回はUAC昇格 |
 
@@ -305,6 +306,7 @@ Grok親の所有面は次だけである。Claude面を吸うことを完成形�
 | host | 登録される入口 | 読み戻し・受入 |
 |---|---|---|
 | macOS | LaunchAgent `com.kite.agents-update` → `~/.local/bin/agents-update` | plist構文、登録状態、初回一撃展開中のfresh v7 delivery |
+| Linux | cron `# dotagents-agents-update-linux` → `setup-linux-factory --scheduled-update` | `server` profile、完全一致行、15製品、fresh delivery receipt |
 | WSL2 | cron `# dotagents-agents-update-wsl` → `setup-wsl-factory --scheduled-update` | 完全一致行、batch token、全15製品、fresh delivery receipt |
 | Windows native | Task `dotagents-agents-update` → `setup-windows-native-factory.ps1 -ScheduledRun` | SID／02:00／action、実Task起動、終了code、全15製品、fresh delivery receipt |
 
@@ -321,6 +323,7 @@ ls ~/Library/LaunchAgents/ 2>/dev/null | grep -i -E "npm|update"  # 旧 LaunchAg
 
 ```bash
 launchctl kickstart gui/$UID/com.kite.agents-update   # macOS
+setup-linux-factory --scheduled-update                # Linux
 setup-wsl-factory --scheduled-update                  # WSL2
 tail -5 ~/.local/state/agents-update/agents-update.log # "agents-update end" 行が出ること（実ログの完了行。旧記載 "Finished" は実装と不一致だった）
 ```

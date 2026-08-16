@@ -13,8 +13,8 @@ set -uo pipefail
 PATH="${AGENTS_UPDATE_PATH_PREFIX:-$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin}:$PATH"
 
 # Linux / WSL2 の cron は NVM の選択済み Node を PATH に含めない。
-# 対話 shell 側の偶然の PATH に頼らず、NVM がある端末では正規入口から復元する。
-if ! command -v npm >/dev/null 2>&1 && [[ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]]; then
+# system npmがPATHにあっても選ばず、NVMがある端末では正規入口から必ず復元する。
+if [[ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]]; then
   export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
   # shellcheck disable=SC1090,SC1091
   . "$NVM_DIR/nvm.sh"

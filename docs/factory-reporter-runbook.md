@@ -220,6 +220,7 @@ factory-reporter-scheduler install --dry-run --platform win32 --wire-major v7
 常設更新の正規入口はhost別一撃展開が所有する。
 
 - macOS: `setup-macos-factory.sh`がLaunchAgent `com.kite.agents-update`を毎週月曜04:00で登録し、初回実行中に全15製品とfresh v7 deliveryを検証する。
+- Linux: `setup-linux-factory.sh`が`setup-linux-factory --scheduled-update`を毎日02:00の専用cronへ登録する。server profile、ServerManager local readiness/revision、全15製品とfresh v7 deliveryを検証する。他hostの`factory_ingest`鮮度はBugHub集約監視が所有し、main-server展開を阻害しない。
 - WSL2: `setup-wsl-factory.sh`が`setup-wsl-factory --scheduled-update`を毎日02:00のcronへ登録する。scheduled runはbatch token、全15製品、同一tokenのdelivery receiptを検証する。
 - Windows native: `setup-windows-native-factory.ps1`が`agents-update-scheduler`を通じて`dotagents-agents-update`を毎日02:00に登録する。初回は登録した実Taskを起動してdelivery receiptまで確認する。WSL2側のcronで代用しない。
 

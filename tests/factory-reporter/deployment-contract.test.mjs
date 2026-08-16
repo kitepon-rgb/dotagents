@@ -43,3 +43,27 @@ test('post-update gateは対応hostのAIShell・Observer・peertable欠落を拒
   const windows = { products: Object.fromEntries(['caveat', 'throughline', 'spotter', 'lattice', 'markitdown', 'gpt-connector', 'aiterm-mcp', 'codex-sidecar', 'peertable'].map((id) => [id, { presence_status: 'installed', compatibility_status: 'compatible', checks: [] }])) };
   assert.deepEqual(postUpdateFailures(windows, { profile: 'windows-native', os: 'win32', arch: 'x64' }), []);
 });
+
+test('server post-update gateは自己report前のingest staleだけをdelivery後readinessへ委ねる', () => {
+  const facts = { profile: 'server', os: 'linux', arch: 'x64' };
+  const required = [...hostProjection(facts).required, 'claude-code', 'codex-cli'];
+  const report = { products: Object.fromEntries(required.map((id) => [id, {
+    presence_status: 'installed', compatibility_status: 'compatible', checks: [],
+  }])) };
+  report.products.servermanager = {
+    presence_status: 'installed', compatibility_status: 'incompatible', checks: [
+      { check_id: 'readiness_factory_ingest', status: 'fail', reason_code: 'stale' },
+      { check_id: 'readiness_database', status: 'pass', reason_code: 'ready' },
+    ],
+  };
+  assert.deepEqual(postUpdateFailures(report, facts), []);
+  assert.deepEqual(postUpdateFailures(report, facts, { postUpdate: false }), [
+    'servermanager:compatibility', 'servermanager:readiness_factory_ingest',
+  ]);
+  report.products.servermanager.checks.push({
+    check_id: 'readiness_schema', status: 'fail', reason_code: 'mismatch',
+  });
+  assert.deepEqual(postUpdateFailures(report, facts), [
+    'servermanager:compatibility', 'servermanager:readiness_factory_ingest', 'servermanager:readiness_schema',
+  ]);
+});
