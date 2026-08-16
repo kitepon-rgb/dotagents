@@ -24,9 +24,9 @@ Grok親について次がすべて言える。
 3. 工場MCP（caveat / lattice / aiterm / aishell / gpt_connector / codex-sidecar）は`~/.grok/config.toml`が所有する。handshake失敗を成功扱いしない。
 4. 工場hookは`~/.grok/hooks`が所有し、Claude `settings.json`からの流入を切る。Grok envelope（camelCase）をClaude形へ変換しない。
 5. [factory-host-product-matrix.md](factory-host-product-matrix.md)にGrok親列がある。各セルは実測どおり`required` / `optional` / `unsupported` / `not_applicable`だけを使う。
-6. MacとFOX WSL2で、新規Grok sessionが憲法・工場MCP・工場skillを自前面から読む。Windows nativeのGrok Buildは現行どおり`unsupported`。
+6. 工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。Grok親を置く席では、新規sessionが憲法・工場MCP・工場skillを自前面から読む。WSL2の席でWindows nativeを代替しない。製品または上流が正規入口を持たない面だけを`unsupported`にする。
 
-Wave 1〜5がdotagentsで閉じる範囲。Wave 6は製品repoであり、本計画の完了条件に含めず導線だけ置く。
+Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2のsession受入は着地済み。残HはWindows nativeのGrok親配線と新規session（Linux / main-serverは導入matrixでは既にoptional。その席でGrokを親にするときの人の目は未実施）。Wave 6は製品repoであり、本計画の完了条件に含めず導線だけ置く。
 
 ## 2. 現状（着手時点の事実）
 
@@ -44,7 +44,7 @@ Wave 1〜5がdotagentsで閉じる範囲。Wave 6は製品repoであり、本計
 5. **製品host化は親host化と分けないで混ぜない。** Spotter正式Grok hostは8/14棄却を維持する。ThroughlineのGrok captureとObserverのGrok familyはWave 6の製品repo作業であり、本計画のdotagents完了を待たないが、Wave 1〜5の受入条件にもしない。
 6. **Pluginsは非採用。** 個人git＋symlink配布とmarketplaceを二重化しない。
 7. **親のmodel×effortは触らない。** `apply-grok-config`は工場MCP、compatセル、工場hook entryだけを扱い、`[models]`とpermissionとloginを書き換えない。
-8. **Windows nativeは対象外。** host matrixのGrok Build `unsupported`を変えない。
+8. **工場の4席は全部本線。** Mac / Windows native / WSL2 / Linux（main-server）を工場親の対象から外さない。製品対応は順次実測で上げる。製品または上流が正規入口を持たない面（AIShellの非macOS、Observerの非macOS、ServerManager runtimeの非main-serverなど）だけを`unsupported` / `not_applicable`にする。Grok BuildのWindows nativeは上流にPowerShell `install.ps1`があるので、導入matrixの`unsupported`を維持しない。WSL2の席でWindows nativeを代替しない。
 9. **工程正本は本Markdown。** Lattice planはオーナー指示があるまで作らない。
 
 ### 面ごとの所有
@@ -123,13 +123,13 @@ Wave 1〜5がdotagentsで閉じる範囲。Wave 6は製品repoであり、本計
 ### Wave 5 — 親として閉じる
 
 **F:** host matrixにGrok親列を追加し、Wave 1〜4の実測を書く。
-**A:** READMEランブック、`setup-macos-factory` / `setup-wsl-factory`の任意Grok配線、`verify-install`のGrok面。
-**H:** MacとFOX WSL2で新規Grok sessionの受入。Windows nativeはGrokを入れない。
+**A:** READMEランブック、`setup-macos-factory` / `setup-wsl-factory`の任意Grok配線、`verify-install`のGrok面。`setup-windows-native-factory`のGrok親配線は残H。
+**H:** MacとFOX WSL2の新規Grok session受入は着地済み。残HはFOX Windows native（配線＋login済みapply＋新規session）。Linux / main-serverでGrokを親にするときの人の目も残る。
 
 受入:
 
-- Grok親列の各セルに、requiredにする根拠の実測がある。根拠が無いセルは`unsupported`または`not_applicable`のまま残す。
-- 一撃展開はGrok未loginでも止まらない（toolchain optionalのまま）。login済みならWave 3の工場MCPを適用する。
+- Grok親列の各セルに、requiredにする根拠の実測がある。根拠が無いセルは`unsupported`または`not_applicable`のまま残す。工場の席自体を対象外にしてセルを固定しない。
+- 一撃展開はGrok未loginでも止まらない（toolchain optionalのまま）。login済みならWave 3の工場MCPを適用する。Windows nativeも同じ。
 
 ### Wave 6 — 製品repo（本計画の外側、導線のみ）
 
@@ -147,7 +147,7 @@ Wave 1〜5がdotagentsで閉じる範囲。Wave 6は製品repoであり、本計
 - gpt-connectorの多provider化。
 - Grok marketplace / pluginを工場の配布面にする。
 - 共通canonicalizerでGrok payloadをClaude形にする。
-- Windows nativeへGrok Buildをrequiredにする。
+- 製品が入口を持たない面（AIShell / Observerの非macOSなど）を工場の非対応席へ読み替えること。
 - 8/14のGF07 12製品matrixを、本計画の完了前に書き換えない。
 
 ## 6. 既知の罠
@@ -176,13 +176,13 @@ Phase完了時の重い監査はWave 5のあと1回。検証者は親と異な�
 
 - **F:** 3 host憲法、共通→deltaの条文移動、compat切断、host matrix Grok親列、8/14 Spotter棄却の維持、工場MCPの失敗を丸めないこと。
 - **A:** generator拡張、`grok/`エントリ、install/verify、apply-grok-config、Grok appendix、hook adapter。
-- **H:** `install.sh`の実HOME適用、`apply-grok-config --apply`、compat切断後の新規session確認、Wave 6の製品repo着手、Grok login。
+- **H:** `install.sh`の実HOME適用、`apply-grok-config --apply`、compat切断後の新規session確認、Windows nativeのGrok親配線と新規session、Wave 6の製品repo着手、Grok login。
 
 Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs正本だけなのでControlを作らない。
 
 ## 9. 現在地
 
-Mac側のWave 5 Hは閉じた（2026-08-16 session `01a0091e`）。FOX WSL2の新規Grok session受入も閉じた（2026-08-16 session `01a00964`）。Windows nativeのGrok Buildは`unsupported`のまま入れない。Wave 6は別H。
+Mac側のWave 5 Hは閉じた（2026-08-16 session `01a0091e`）。FOX WSL2の新規Grok session受入も閉じた（2026-08-16 session `01a00964`）。工場の4席（Mac / Windows native / WSL2 / Linux）は全部本線。Windows nativeを対象外にした旧裁定8は2026-08-16に破棄。残HはWindows nativeのGrok親配線と新規session。製品未対応面は`unsupported`のまま残してよい。Wave 6は別H。
 
 Wave 5 Mac受入を通し直し（2026-08-16 前session）。DesktopのGUI PATH（`/usr/bin:/bin:/usr/sbin:/sbin`）では工場MCPの名前解決と `env node` ができないのが、そのsessionの`connection failed`の原因。`apply-grok-config`は解決できたcommandを絶対パスで書き、親dirを`env.PATH`先頭に置く。実HOME再apply済み（`[models]` grok-4.6 / xhigh 不変。Stripeコメント保持）。GUI PATHの`grok mcp doctor`で工場6はhandshake OK。そのDesktop session自体のtool列挙は起動時handshakeのまま失敗（config変更を引き継がない）。inspect: 有効globalは`~/.grok/rules/AGENTS.md`、工場skill 4、工場hook enabled 9、Claude settings hook 22件disabled。`verify-install`のGrok面は通る。全体はMarkItDown / uv tool不在でFAIL（Grok範囲外）。`PATH=/opt/homebrew/bin:$PATH make ci`はpass（python 3.14）。FOX新規sessionは未実施。Windows nativeは入れない。Wave 6は別H。
 
