@@ -42,7 +42,7 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 
 - 罠DB: [../caveat/](../caveat/)（own エントリの正本。caveat MCP が symlink 越しに読む）
 - 調査資産: [../rag/INDEX.md](../rag/INDEX.md)
-- 人格・全端末共通規範: [../shared/constitution.md](../shared/constitution.md)（唯一の共通正本。Claude／Codex固有差分と配布生成物は各hostディレクトリ）
+- 人格・全端末共通規範: [../shared/constitution.md](../shared/constitution.md)（唯一の共通正本。host固有差分と配布生成物は各hostディレクトリ。Grok親の3 host化は[plan_grok-parent-host.md](plan_grok-parent-host.md)が所有）
 - 規範の入口: ルート [../AGENTS.md](../AGENTS.md) は全AI向けのproject正典であり、Claude Code はルート [../CLAUDE.md](../CLAUDE.md) の `@AGENTS.md` 経由で取り込む。共通憲法は `shared/constitution.md`、host固有差分は各host delta、runtime配布物は生成物として管理する。
 - 同期ハブ: `install.sh` がskill・command・agent・rule・binを端末へsymlink配布し、GitHubを真実の源とする。初回導入と再適用は`setup-macos-factory`／`setup-wsl-factory`／`setup-windows-native-factory.ps1`がhost固有配線を所有し、共有する製品集合だけをdeployment contractから読む。知識台帳は `rag/`（調査）と `docs/`（判断・計画）、Caveatのown DBはdotagents外でCaveat自身が管理する。
 - 文書は趣旨（憲章・正典）、統括レーンのプラン、役目を終えた文書の3種に分ける。完了した文書は `archive/` へ退避し、`docs/`直下には生きた文書だけを置く。

@@ -41,6 +41,11 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
 各ToDoの平文設計メモは[source-ledger](archive/lattice-source-ledger/canon-tier2-gates-20260802.md)にある
 （`lattice todo note`経路が下記欠陥で塞がっている間の一時迂回）。
 
+## 並行campaign
+
+- [Grok 親host 全対応](plan_grok-parent-host.md)（2026-08-16開始。工程正本は当該Markdown。Lattice未適用）。
+  Grok BuildをClaude / Codexと同格の工場親にする。Wave 0は正本のみ。実装はWave 1から。
+
 ## maintenance queue
 
 - **Lattice `todo note`がスタブrevisionでfail closed**（2026-08-02記録・所有repo=Lattice・非クリティカル）:
