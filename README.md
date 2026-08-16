@@ -105,7 +105,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | bin | `factory-reporter.mjs` | 明示opt-inされた工場reportを検証・outbox保存・BugHubへ冪等送信 |
 | bin | `factory-external-event.mjs` | Pi5等の外部監視結果をmain-serverの所有者限定stateへ固定ServerManager eventとしてappend-only記録し、BugHub受理後だけack |
 | bin | `verify-codex-agent-routing.sh` | Control配下の書込みWorkerのspawn後、role/model/effort/developer instructionsを検証し、親継承のsandbox実効値を観測表示 |
-| bin | `apply-codex-config.sh` | routing 2キー、dotagents callout hook 4イベント、PreToolUseのGit破壊操作ゲート、SessionStart advisory 1件、Lattice工程表のSessionStart / UserPromptSubmit entryを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
+| bin | `apply-codex-config.sh` / `apply-claude-config.sh` | Codex routing / hook と、Claudeの正本化・callout・advisory・Lattice Gantt・Git破壊操作hookを dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | データ | `~/.caveat/own`（dotagents 外） | 外部仕様の罠DB（caveat MCP が参照）。**v0.15+ で Caveat 自身が管理**——`~/.caveat/own` は独立 git repo で remote は private の `Caveat-Private`（全端末同期）。public 部分集合は `caveat publish` で `Caveat-Public` にミラー。dotagents は所有しない |
 | 自作コア11製品 | Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager／peertable（いずれもdotagents 外） | 罠知識、セッション継続、未使用ツール監査、工程graphとコード構造理解、ChatGPT接続、PTYと外部モデル枠、隔離Codex実行、macOS native開発面、親watchと監査、中央運用管理、対等マルチエージェント円卓を担う。AIShellはmacOS arm64専用、ObserverはmacOS専用。peertableはnpm配布のskill同梱製品で、0.3.6公開とwire v7 enroll済み。全4現役hostのcutoverも2026-08-10に完了済み |
 | 第三者管理製品 | MarkItDown | 自作コアではなく、公開CLIだけをblack-box管理する資料変換器。fork・内部patchは行わない |
@@ -230,6 +230,7 @@ config、hook、credential、scheduler、delivery receiptを共有しない。Wi
 ```bash
 ./install.sh --profile official
 ./bin/apply-codex-config.sh --dry-run
+./bin/apply-claude-config.sh --dry-run
 ```
 
 既定は公式 user skill 面 `$HOME/.agents/skills`。`--dry-run` は一切書き込まず、routing の必須2キー、
@@ -237,21 +238,21 @@ callout hook 4イベント、SessionStartの`orchestrate-advisory-hook` 1件、`
 
 ```bash
 ./bin/apply-codex-config.sh --apply
+./bin/apply-claude-config.sh --apply
 lattice hooks install --host claude
 lattice hooks install --host codex
 spotter install -y
 ./bin/verify-install.sh --profile official
 ```
 
-`--apply` は `~/Archives/` に backup を作り、途中失敗時は config / hooks をtransaction rollbackする。model / effort /
-permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを選ぶのは旧入口の検証時だけで、`--profile legacy`をinstall / verifyの両方へ付ける。
+両方の `--apply` は `~/Archives/` に backup を作り、途中失敗時は rollbackする。`apply-claude-config` は本書のjq断片が正とするdotagents hookだけを追加し、model / effort / permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを選ぶのは旧入口の検証時だけで、`--profile legacy`をinstall / verifyの両方へ付ける。
 
 `spotter install -y` はSpotterの正規project-scoped入口である。dotagentsの `.claude/settings.json` と `.spotter/`（どちらも端末ローカル・gitignore）を作り、user-level Codex hook 3本をcanonical化し、Claude/Codex別catalogをseedする。PATH上のThroughlineを絶対実行パスへ解決できる時はauditor contextが既定ONになる。Spotter自身のCLI以外でmarkerやhookを複製・手書きしない。
 
 `lattice hooks install --host claude|codex` はLattice 0.40.0+の製品管理入口である。sensor気づかせ導線はLattice自身に管理させ、Claude/Codex設定へ手挿ししない。Codex未導入端末では`--host codex`を省略する。
 
 - **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale実ファイル・反対skill面の同名重複・共有orchestrate契約の欠落・routing / hook契約不足に加え、対応hostで必要な工場管理製品CLI、Lattice製品管理hookの`wired`状態、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalogをFAIL行で名指しする。Oracle wrapperは旧wire互換・明示rollback用の検査として残す。`~/.local/bin`をPATHに通していれば以後は`verify-install --profile official`でも可
-- **hook の配線**: Claude側は[docs/03_settings-fragments.md](docs/03_settings-fragments.md)が正本であり、`settings.json`の正本化ゲートhook（「計画レーン案内 hook」）と呼びかけhook 4本（C1-C4）を全端末必須で配線する。Codex側のX1-X5は[docs/05_codex-fragments.md](docs/05_codex-fragments.md)に従い、`apply-codex-config`が4イベントを限定して冪等正規化する。両方ともtrust承認は別途必要。
+- **hook の配線**: Claude側は[docs/03_settings-fragments.md](docs/03_settings-fragments.md)が正本であり、`apply-claude-config`が`settings.json`の正本化gate・呼びかけ・advisory・Lattice Gantt・Git破壊操作hookを冪等追加する。Codex側のX1-X5は[docs/05_codex-fragments.md](docs/05_codex-fragments.md)に従い、`apply-codex-config`が4イベントを限定して冪等正規化する。両方ともtrust承認は別途必要。
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／SpotterのUserPromptSubmit・Stop eventが記録される／極小タスクを implementer に委譲して契約どおりの報告が返る
 - 新しい Codex セッションで（対話確認）: skill 一覧に `orchestrate` が出る／`spawn_agent` schema に `agent_type` がある／通常のnative audit・refuter・sorterは事前smokeなしで実行できる／Control配下の書込みWorkerだけは`agent_type=<role>`と`fork_turns="none"`でrouting smokeを起動し、`verify-codex-agent-routing <role> <agent-path>`がgreenになってからfollow-upする／Spotter 3 hookを対話Codex CLIの`/hooks`でreviewし、対象入口の新規sessionで`spotter.hook_event.v1`が記録される
 

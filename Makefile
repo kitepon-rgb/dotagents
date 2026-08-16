@@ -51,6 +51,7 @@ test-constitution: ## 共通憲法generatorの冪等性とdrift拒否
 	node --test tests/constitution/generation.test.mjs
 
 test-install: ## 隔離 HOME の install/profile/config apply 検証
+	bash tests/install/apply-claude-config.sh
 	bash tests/install/clean-home.sh
 	bash tests/install/wsl-remote-ssh.sh
 	bash tests/install/setup-wsl-factory.sh

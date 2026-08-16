@@ -300,6 +300,7 @@ run_setup() {
   backup_managed_config
   ensure_git_identity
   "$ROOT/bin/apply-codex-config.sh" --apply
+  "$ROOT/bin/apply-claude-config.sh" --apply
   "$ROOT/install.sh" --profile official
   ensure_managed_commands
   ensure_caveat_sync

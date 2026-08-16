@@ -85,7 +85,8 @@ apply-observer-hook-config --restore "$HOME/Archives/dotagents-observer-hook-con
 集合を検証してから二設定を原子的に復元する。途中失敗はrestore開始前状態へ戻し、元々absentだったconfigは
 削除する。manifest導入前の旧archiveや手製tarをrestoreへ流用しない。
 
-- **計画レーン案内 hook（全端末必須・下記）**: プラン承認直後に「計画文書の作法」を注入する。レーンの発動条件はグローバル正典「作業レーンと統制」に従う（本書へ条件を複製しない）。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）、配線だけを各端末の `~/.claude/settings.json` に手挿しする。初期設計は [archive/2026-07_plan-gate-hook.md](archive/2026-07_plan-gate-hook.md)、現行のレーン裁定はグローバルCLAUDE.md／AGENTS.mdを正とする。
+- **Claude hook の正規入口**: [`../bin/apply-claude-config.sh`](../bin/apply-claude-config.sh) が下記のClaude hook jq断片を `~/.claude/settings.json` へ冪等に追加する。既存entry・model・permissions・他ツールの設定は変更しない。断片は配線内容の正本として残す。
+- **計画レーン案内 hook（全端末必須・下記）**: プラン承認直後に「計画文書の作法」を注入する。レーンの発動条件はグローバル正典「作業レーンと統制」に従う（本書へ条件を複製しない）。ペイロードは同期される [`../bin/plan-gate-hook.sh`](../bin/plan-gate-hook.sh)（`./install.sh` で `~/.local/bin/plan-gate-hook` へ symlink）。初期設計は [archive/2026-07_plan-gate-hook.md](archive/2026-07_plan-gate-hook.md)、現行のレーン裁定はグローバルCLAUDE.md／AGENTS.mdを正とする。
 
 ### 計画レーン案内 hook の配線断片
 

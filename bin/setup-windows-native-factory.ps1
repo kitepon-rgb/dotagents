@@ -512,6 +512,7 @@ try {
   $install = Convert-ToGitBashPath (Join-Path $RepoRoot 'install.sh')
   $update = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\agents-update.sh')
   $applyCodex = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\apply-codex-config.sh')
+  $applyClaude = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\apply-claude-config.sh')
   $verify = Convert-ToGitBashPath (Join-Path $RepoRoot 'bin\verify-install.sh')
   $deliveryRunner = Join-Path $RepoRoot 'bin\factory-reporter-v7-schedule-runner.mjs'
   $ledgerHelper = Join-Path $RepoRoot 'bin\factory-toolchain-ledger.mjs'
@@ -537,6 +538,10 @@ try {
   # apply-codex-config.sh
   Invoke-Checked -File $GitBash -Arguments @('-lc', 'python3 "$1" --apply', 'dotagents-apply-codex', $applyCodex) -Label 'codex-config: apply-codex-config.sh'
   Normalize-WindowsCodexHooks
+  # verify-install は既存の Claude settings.json がある時だけ Claude hook を必須検査する。
+  if (Test-Path -LiteralPath (Join-Path $env:USERPROFILE '.claude\settings.json') -PathType Leaf) {
+    Invoke-Checked -File $GitBash -Arguments @('-lc', 'python3 "$1" --apply', 'dotagents-apply-claude', $applyClaude) -Label 'claude-config: apply-claude-config.sh'
+  }
   $previousHome = $env:HOME
   $previousCodexHome = $env:CODEX_HOME
   $env:HOME = $env:USERPROFILE
