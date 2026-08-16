@@ -140,7 +140,7 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 
 | 製品 | 内容 | 今の状態 |
 |---|---|---|
-| Throughline | Grok turnのcapture / restore / handoff | Wave 6の製品着手。CLI到達はsupported。hook captureはこれから |
+| Throughline | Grok turnのcapture / restore / handoff | hook capture実装着手（`grok:`正規化と`chat_history.jsonl`回収）。席上`throughline install`と新規session受入は未了 |
 | Observer | 工場コアから撤去 | 2026-08-16裁定。Grok familyは開かない。撤去は独立wave |
 | Spotter | 正式Grok host | コア維持。8/14棄却を撤回。Wave 6で正式host化する |
 
