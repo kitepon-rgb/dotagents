@@ -6,7 +6,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 HOME_FIXTURE="$(mktemp -d)"
 ABSENT_HOME="$(mktemp -d)"
 SYMLINK_HOME="$(mktemp -d)"
-trap 'rm -rf "$HOME_FIXTURE" "$ABSENT_HOME" "$SYMLINK_HOME"' EXIT
+RESOLVE_HOME="$(mktemp -d)"
+STUB_BIN="$(mktemp -d)"
+trap 'rm -rf "$HOME_FIXTURE" "$ABSENT_HOME" "$SYMLINK_HOME" "$RESOLVE_HOME" "$STUB_BIN"' EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
@@ -72,7 +74,9 @@ grep -Fq 'url = "https://example.invalid/mcp"' <<<"$applied" || fail '個人MCP 
 for name in aiterm caveat lattice codex-sidecar gpt_connector aishell; do
   grep -Fq "[mcp_servers.$name]" <<<"$applied" || fail "工場MCP $name を書かない"
 done
-grep -Fq 'command = "caveat"' <<<"$applied" || fail 'caveat command が契約と違う'
+if ! grep -Eq 'command = "(.*/)?caveat"' <<<"$applied"; then
+  fail 'caveat command が契約と違う'
+fi
 grep -Fq 'args = ["mcp-server"]' <<<"$applied" || fail 'caveat args が契約と違う'
 grep -Fq 'AISHELL_CAPABILITY_SET = "expanded-v1"' <<<"$applied" || fail 'aishell env が契約と違う'
 
@@ -92,5 +96,18 @@ if HOME="$SYMLINK_HOME" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply >/d
   fail 'symlink config.toml への apply を受理した'
 fi
 grep -Fq 'agents = true' "$SYMLINK_HOME/target/config.toml" || fail 'symlink 先を書き換えた'
+
+printf '%s\n' '#!/bin/sh' 'exit 0' >"$STUB_BIN/caveat"
+chmod +x "$STUB_BIN/caveat"
+mkdir -p "$RESOLVE_HOME/.grok"
+PATH="$STUB_BIN:/usr/bin:/bin" HOME="$RESOLVE_HOME" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply >/dev/null
+grep -Fq "command = \"$STUB_BIN/caveat\"" "$RESOLVE_HOME/.grok/config.toml" \
+  || fail '解決できた caveat を絶対パスで書かない'
+grep -Fq "PATH = \"$STUB_BIN:/usr/bin:/bin:/usr/sbin:/sbin\"" "$RESOLVE_HOME/.grok/config.toml" \
+  || fail '解決できた command の親を env.PATH に置かない'
+PATH="$STUB_BIN:/usr/bin:/bin" HOME="$RESOLVE_HOME" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply \
+  | grep -Fq '変更なし' || fail '絶対パス適用の2回目が冪等でない'
+PATH="/usr/bin:/bin" HOME="$RESOLVE_HOME" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply \
+  | grep -Fq '変更なし' || fail 'GUI PATH の apply が実行可能な絶対パスを名前へ戻した'
 
 echo 'apply-grok-config: OK'

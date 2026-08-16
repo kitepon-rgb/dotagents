@@ -8,6 +8,7 @@ import difflib
 import io
 import os
 import re
+import shutil
 import stat
 import tarfile
 import tempfile
@@ -84,13 +85,67 @@ def set_compat_claude_false(text: str, key: str) -> str:
     return "".join(lines)
 
 
-def render_mcp_section(name: str, spec: dict) -> str:
-    lines = [f"[mcp_servers.{name}]", f'command = "{spec["command"]}"']
+def realized_command(name: str) -> str:
+    found = shutil.which(name)
+    if not found:
+        return name
+    return str(Path(found))
+
+
+def existing_command(body: str) -> str | None:
+    match = re.search(r'^[ \t]*command[ \t]*=[ \t]*"([^"]+)"[ \t]*(?:#.*)?$', body, re.M)
+    if match is None:
+        return None
+    return match.group(1)
+
+
+def usable_absolute_command(command: str, name: str) -> bool:
+    path = Path(command)
+    return path.name == name and path.is_file() and os.access(path, os.X_OK)
+
+
+def command_to_write(spec: dict, existing_body: str | None = None) -> str:
+    name = spec["command"]
+    realized = realized_command(name)
+    if realized != name:
+        return realized
+    if existing_body:
+        current = existing_command(existing_body)
+        if current and usable_absolute_command(current, name):
+            return current
+    return name
+
+
+def command_satisfies_contract(body: str, spec: dict) -> bool:
+    current = existing_command(body)
+    if current is None:
+        return False
+    name = spec["command"]
+    if current == name:
+        return shutil.which(name) is None
+    return usable_absolute_command(current, name)
+
+
+def mcp_env(spec: dict, command: str) -> dict[str, str]:
+    env = dict(spec.get("env") or {})
+    path_dirs = ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]
+    command_path = Path(command)
+    if command_path.is_absolute():
+        bindir = str(command_path.parent)
+        if bindir not in path_dirs:
+            path_dirs.insert(0, bindir)
+    env["PATH"] = ":".join(path_dirs)
+    return env
+
+
+def render_mcp_section(name: str, spec: dict, existing_body: str | None = None) -> str:
+    command = command_to_write(spec, existing_body)
+    lines = [f"[mcp_servers.{name}]", f'command = "{command}"']
     args = spec.get("args") or ()
     if args:
         rendered = ", ".join(f'"{item}"' for item in args)
         lines.append(f"args = [{rendered}]")
-    env = spec.get("env") or {}
+    env = mcp_env(spec, command)
     if env:
         rendered = ", ".join(f'{key} = "{value}"' for key, value in env.items())
         lines.append(f"env = {{ {rendered} }}")
@@ -117,7 +172,7 @@ def find_table_section(text: str, header_re: re.Pattern[str]) -> tuple[int, int]
 
 
 def section_has_factory_contract(body: str, spec: dict) -> bool:
-    if not re.search(rf'^[ \t]*command[ \t]*=[ \t]*"{re.escape(spec["command"])}"[ \t]*(?:#.*)?$', body, re.M):
+    if not command_satisfies_contract(body, spec):
         return False
     if re.search(r"^[ \t]*enabled[ \t]*=[ \t]*false[ \t]*(?:#.*)?$", body, re.M):
         return False
@@ -126,7 +181,8 @@ def section_has_factory_contract(body: str, spec: dict) -> bool:
         needle = ", ".join(f'"{item}"' for item in args)
         if f"[{needle}]" not in body:
             return False
-    for key, value in (spec.get("env") or {}).items():
+    command = command_to_write(spec, body)
+    for key, value in mcp_env(spec, command).items():
         if key not in body or f'"{value}"' not in body:
             return False
     return True
@@ -137,17 +193,23 @@ def upsert_factory_mcp(text: str) -> str:
     for name, spec in FACTORY_SERVERS:
         header_re = re.compile(rf"^[ \t]*\[mcp_servers\.{re.escape(name)}\][ \t]*(?:#.*)?$")
         found = find_table_section(body, header_re)
-        canonical = render_mcp_section(name, spec)
         if found is None:
             prefix = "" if not body.strip() else "\n"
-            body = f"{body}{prefix}{canonical}"
+            body = f"{body}{prefix}{render_mcp_section(name, spec)}"
             continue
         start, end = found
         lines = body.splitlines(keepends=True)
-        existing = "".join(lines[start:end])
+        replace_end = end
+        while replace_end > start + 1:
+            stripped = lines[replace_end - 1].strip()
+            if stripped == "" or stripped.startswith("#"):
+                replace_end -= 1
+                continue
+            break
+        existing = "".join(lines[start:replace_end])
         if section_has_factory_contract(existing, spec):
             continue
-        body = "".join(lines[:start]) + canonical + "".join(lines[end:])
+        body = "".join(lines[:start]) + render_mcp_section(name, spec, existing) + "".join(lines[replace_end:])
     return normalize_toml(body)
 
 
