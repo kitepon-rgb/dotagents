@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Symlink dotagents entries into ~/.claude/{skills,commands} and a selected Codex skill surface.
+# Symlink dotagents entries into ~/.claude/{skills,commands}, a selected Codex skill surface, and ~/.grok/rules.
 # Idempotent: re-running overwrites existing symlinks but never removes unrelated files.
 set -euo pipefail
 
@@ -111,6 +111,15 @@ for f in "$HERE/codex/agents"/*.toml; do
   [ -e "$f" ] || continue
   link_one "$f" "$HOME/.codex/agents/$(basename "$f")"
 done
+
+# Grok（憲法とrunbookだけ。skill/hookは後続wave）
+mkdir -p "$HOME/.grok/rules"
+if [ -e "$HERE/grok/AGENTS.md" ]; then
+  link_one "$HERE/grok/AGENTS.md" "$HOME/.grok/rules/AGENTS.md"
+fi
+if [ -d "$HERE/shared/runbooks" ]; then
+  link_one "$HERE/shared/runbooks" "$HOME/.grok/runbooks"
+fi
 
 # caveat own entries — Caveat v0.15+ manages its own sync (dotagents no longer
 # owns the trap DB). The knowledge repo lives at ~/.caveat/own as a standalone

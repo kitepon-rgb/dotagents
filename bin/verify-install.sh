@@ -465,6 +465,8 @@ for f in "$REPO/claude/commands"/*.md; do [ -e "$f" ] && check "$HOME/.claude/co
 for f in "$REPO/claude/agents"/*.md;   do [ -e "$f" ] && check "$HOME/.claude/agents/$(basename "$f")" "$f"; done
 [ -f "$REPO/codex/AGENTS.md" ] && check "$HOME/.codex/AGENTS.md" "$REPO/codex/AGENTS.md"
 [ -d "$REPO/shared/runbooks" ] && check "$HOME/.codex/runbooks" "$REPO/shared/runbooks"
+[ -f "$REPO/grok/AGENTS.md" ] && check "$HOME/.grok/rules/AGENTS.md" "$REPO/grok/AGENTS.md"
+[ -d "$REPO/shared/runbooks" ] && check "$HOME/.grok/runbooks" "$REPO/shared/runbooks"
 for d in "$REPO/codex/skills"/*/; do
   [ -d "$d" ] || continue
   skill_name="$(basename "$d")"

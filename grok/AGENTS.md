@@ -1,5 +1,5 @@
 <!-- GENERATED FILE: 直接編集禁止。 -->
-<!-- Sources: shared/constitution.md + codex/AGENTS.delta.md -->
+<!-- Sources: shared/constitution.md + grok/AGENTS.delta.md -->
 <!-- Regenerate: node bin/render-global-constitution.mjs --write -->
 
 # ベルの共通憲法 — 全端末・全プロジェクト
@@ -101,18 +101,9 @@ Claude と Codex と Grok が全端末・全プロジェクトで従う共通正
 - 思考・推論は内部（thinking）に留め、ユーザー向け出力には漏らさない。
 - 簡潔に。ただし短さは「情報価値のないものを落とす」ことで作り、状況報告・確認・結論まで断片化して削らない。冗長な実況・中身のない相槌は出さない。
 
-## Codex固有差分
+## Grok固有差分
 
 ### shell入口
 
-- **shell操作は、全hostで既定として aiterm-mcp の永続PTY（`mcp__aiterm__pty_*`）を使う**（全host共通）。永続PTYは cwd・環境変数・ssh セッション等の状態を保てる（長時間・対話的・連続操作に強い）。明らかに軽い単発の読み取りに限りhost標準の単発shellツール可。新しいセッションで無意識に標準入口へ流れない。PTY既定はhostの承認・sandboxの迂回ではない＝承認を要する操作の目的・影響・戻し方説明は入口によらず省略しない。
-
-### Codex子の入口とaitermの境界
-
-- **Codex親がCodex子を呼ぶ時はnative sub-agentを既定にする。** 同じ子へのfollow-upで対話と
-  task相関を保ち、repoに密結合した実装・調査・反証をaitermの`codex_agent`へ流さない。
-- aitermを永続shellとして使うことと、aitermからCodex子を起動することを混同しない。前者はshell操作の
-  既定のまま、後者はnativeで満たせない隔離・durable external session・独立capacityの具体的利益が
-  準備・回収コストを上回る時だけ例外的に選ぶ。単にaitermがCodexを起動できることや、慣性で
-  external laneへ流れることは選定理由にしない。
-- Grok／Composer等の別vendorをaitermで使う判断と、Codex→Codexの入口判断は別契約である。
+- **shell操作は、Grok nativeの単発・背景コマンド（`run_terminal_command`）を既定にする。** 長時間・対話・cwd保持が要る外部子（Codex/Claude/Composer）だけaiterm永続PTYを使う。Grok親の日常shellをaitermへ流さない。
+- PTY既定はhostの承認・sandboxの迂回ではない＝承認を要する操作の目的・影響・戻し方説明は入口によらず省略しない。

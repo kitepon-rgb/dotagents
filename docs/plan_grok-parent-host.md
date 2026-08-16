@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 0をこの文書の追加で開始する。次の原子的作業はWave 1の設計固定（deltaへ移す共通憲法の範囲を行単位で確定）とgeneratorの3 host化。
+Wave 1のrepo側は着地。generatorは3 host、`grok/AGENTS.md`を隔離HOMEの`~/.grok/rules/AGENTS.md`へ配り、`apply-grok-config`は隔離HOMEでだけ`compat.claude.agents=false`を書く。実HOMEの`install.sh`と新規Grok session確認はHで未実施。次はオーナー承認後の実HOME適用。

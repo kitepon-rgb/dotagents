@@ -157,6 +157,8 @@ HOME="$OFFICIAL_HOME" "$ROOT/install.sh" --profile official
 [ -L "$OFFICIAL_HOME/.claude/runbooks" ] || fail 'Claude runbooks symlinkを生成しない'
 assert_link "$OFFICIAL_HOME/.claude/runbooks" "$ROOT/shared/runbooks"
 assert_link "$OFFICIAL_HOME/.codex/runbooks" "$ROOT/shared/runbooks"
+assert_link "$OFFICIAL_HOME/.grok/rules/AGENTS.md" "$ROOT/grok/AGENTS.md"
+assert_link "$OFFICIAL_HOME/.grok/runbooks" "$ROOT/shared/runbooks"
 rm "$OFFICIAL_HOME/.claude/runbooks"
 if runbook_missing_output="$(verify "$OFFICIAL_HOME" official 2>&1)"; then
   fail 'Claude runbooks欠落をverifyが見逃した'
@@ -559,6 +561,8 @@ seed_config "$LEGACY_HOME"
 HOME="$LEGACY_HOME" "$ROOT/install.sh" --profile=legacy
 assert_link "$LEGACY_HOME/.claude/runbooks" "$ROOT/shared/runbooks"
 assert_link "$LEGACY_HOME/.codex/runbooks" "$ROOT/shared/runbooks"
+assert_link "$LEGACY_HOME/.grok/rules/AGENTS.md" "$ROOT/grok/AGENTS.md"
+assert_link "$LEGACY_HOME/.grok/runbooks" "$ROOT/shared/runbooks"
 apply_config "$LEGACY_HOME" --apply
 verify "$LEGACY_HOME" legacy
 assert_link "$LEGACY_HOME/.codex/skills/orchestrate" "$ROOT/codex/skills/orchestrate"

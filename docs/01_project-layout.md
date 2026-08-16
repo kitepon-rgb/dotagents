@@ -84,6 +84,7 @@ src/  tests/  package.json（or pyproject 等）
 | Codex skill | `codex/skills/<name>/` | 既定: `$HOME/.agents/skills/<name>`／明示legacy: `~/.codex/skills/<name>` | `SKILL.md`を含むディレクトリ（`agents/openai.yaml`等を併設可）。同一端末・入口には一方だけ |
 | Codex rule | `codex/rules/<file>` | `~/.codex/rules/<file>` | 任意ファイル |
 | Codex グローバル規範 | 正本: `shared/constitution.md`＋`codex/AGENTS.delta.md`／生成物: `codex/AGENTS.md` | `~/.codex/AGENTS.md` | generatorで合成する単一Markdown |
+| Grok グローバル規範 | 正本: `shared/constitution.md`＋`grok/AGENTS.delta.md`／生成物: `grok/AGENTS.md` | `~/.grok/rules/AGENTS.md` | generatorで合成する単一Markdown |
 | Codex サブエージェント | `codex/agents/<name>.toml` | `~/.codex/agents/<name>.toml` | `name`/`description`/`developer_instructions`必須 |
 | 実行スクリプト | `bin/<name>.sh` / `bin/<name>.mjs` / `bin/<name>.ps1` | POSIXは`~/.local/bin/<name>`、Windows PowerShell入口はrepo内path | shebangまたはhost native shellに従う。POSIXの拡張子は配置時に外れる。`chmod +x`対象はPOSIX実行体 |
 

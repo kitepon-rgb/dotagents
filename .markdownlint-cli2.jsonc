@@ -25,6 +25,8 @@
     "claude/skills/**/*.md",
     "codex/AGENTS.md",
     "codex/skills/**/*.md",
+    "grok/AGENTS.md",
+    "grok/AGENTS.delta.md",
     "shared/**/*.md",
     "docs/**/*.md"
   ],

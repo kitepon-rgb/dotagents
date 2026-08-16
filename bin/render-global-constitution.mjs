@@ -7,6 +7,7 @@ import process from "node:process";
 const HOSTS = [
   { delta: "claude/CLAUDE.delta.md", output: "claude/CLAUDE.md" },
   { delta: "codex/AGENTS.delta.md", output: "codex/AGENTS.md" },
+  { delta: "grok/AGENTS.delta.md", output: "grok/AGENTS.md" },
 ];
 const COMMON = "shared/constitution.md";
 

@@ -16,7 +16,7 @@ dotagents/
 ├── docs/                … 00_overview.md（地図）・02_models.md（役割→モデル対応表）・01_project-layout.md・進行中プラン／archive/（役目を終えた文書）
 ├── rag/                 … 調査・研究の再利用棚（INDEX.md＋topic/raw/ 一次ソース）
 ├── shared/
-│   └── constitution.md  … Claude/Codex共通憲法の唯一の手編集正本
+│   └── constitution.md  … Claude/Codex/Grok共通憲法の唯一の手編集正本
 ├── claude/
 │   ├── CLAUDE.delta.md  … Claude固有差分の正本
 │   ├── CLAUDE.md        … 共通＋deltaの生成物（→ ~/.claude/CLAUDE.md）
@@ -29,6 +29,9 @@ dotagents/
 │   ├── agents/          … → ~/.codex/agents/<name>.toml
 │   ├── skills/          … → $HOME/.agents/skills/<name>（既定。legacy は明示指定）
 │   └── rules/           … → ~/.codex/rules/<file>
+├── grok/
+│   ├── AGENTS.delta.md  … Grok固有差分の正本
+│   └── AGENTS.md        … 共通＋deltaの生成物（→ ~/.grok/rules/AGENTS.md）
 └── bin/                 … → ~/.local/bin/<name>（.sh / .mjs は外れる。実行言語は shebang）
 ```
 
@@ -38,6 +41,7 @@ flowchart LR
     common["shared/constitution.md"]
     cdelta["claude/CLAUDE.delta.md"]
     xdelta["codex/AGENTS.delta.md"]
+    gdelta["grok/AGENTS.delta.md"]
     gcm["claude/CLAUDE.md (generated)"]
     cs["claude/skills/&lt;name&gt;/"]
     cc["claude/commands/&lt;name&gt;.md"]
@@ -46,6 +50,7 @@ flowchart LR
     xca["codex/agents/&lt;name&gt;.toml"]
     xs["codex/skills/&lt;name&gt;/"]
     xr["codex/rules/&lt;file&gt;"]
+    gam["grok/AGENTS.md (generated)"]
     bin["bin/&lt;name&gt;.sh"]
   end
   subgraph home["$HOME (各端末)"]
@@ -58,12 +63,15 @@ flowchart LR
     hxs["$HOME/.agents/skills/&lt;name&gt; (official)"]
     hxsl["~/.codex/skills/&lt;name&gt; (legacy)"]
     hxr["~/.codex/rules/&lt;file&gt;"]
+    hgam["~/.grok/rules/AGENTS.md"]
     hbin["~/.local/bin/&lt;name&gt;"]
   end
   common --> gcm
   cdelta --> gcm
   common --> xam
   xdelta --> xam
+  common --> gam
+  gdelta --> gam
   gcm -. "install.sh が symlink" .-> hgcm
   cs -. symlink .-> hcs
   cc -. symlink .-> hcc
@@ -73,6 +81,7 @@ flowchart LR
   xs -. "--profile official (既定)" .-> hxs
   xs -. "--profile legacy (明示時のみ)" .-> hxsl
   xr -. symlink .-> hxr
+  gam -. symlink .-> hgam
   bin -. "symlink (.sh は外れる)" .-> hbin
 ```
 
@@ -94,10 +103,12 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | Claude command | `auto-deploy-on-push` / `polish-github` | 各スキルの入口 |
 | Codex skill | `polish-github` | GitHub presentation 整備（正本は Claude 版・Codex 版は薄いポインタ＝一本化済み） |
 | Codex rule | `default.rules` | Codex 常時適用ルール |
-| 共通憲法 | `shared/constitution.md` | Claude／Codexへ生成する人格・応対・安全・調査・計画・git・報告の唯一の共通正本 |
+| 共通憲法 | `shared/constitution.md` | Claude／Codex／Grokへ生成する人格・応対・安全・調査・計画・git・報告の唯一の共通正本 |
 | Claudeグローバル規範 | `claude/CLAUDE.delta.md` → `claude/CLAUDE.md` | 共通憲法＋Claude固有deltaから合成する配布生成物 |
 | Codexグローバル規範 | `codex/AGENTS.delta.md` → `codex/AGENTS.md` | 共通憲法＋Codex固有deltaから合成する配布生成物。配置・配線の正典はdocs/02・docs/05 |
-| bin | `render-global-constitution.mjs` | 共通憲法＋host deltaから両runtime向け完全指示を冪等生成し、driftを検査 |
+| Grokグローバル規範 | `grok/AGENTS.delta.md` → `grok/AGENTS.md` | 共通憲法＋Grok固有deltaから合成する配布生成物。配置先は`~/.grok/rules/AGENTS.md` |
+| bin | `render-global-constitution.mjs` | 共通憲法＋host deltaから3 runtime向け完全指示を冪等生成し、driftを検査 |
+| bin | `apply-grok-config` | Grok `compat.claude.agents=false` を dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲のrole定義（役割→model×effortの正は docs/02_models.md） |
 | bin | `agents-update.sh` | deployment contractのhost別CLI／SDK集合を`@latest`へ更新し、post-update gateとreportを実行 |
 | bin | `setup-macos-factory.sh` / `setup-wsl-factory.sh` / `setup-windows-native-factory.ps1` | host別の工場一撃展開。共通配備契約を消費し、各OS固有の配線と全製品smokeを行う |
