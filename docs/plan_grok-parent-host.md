@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 3着手。同名MCPはtomlがclaudeJsonに勝つ（隔離実測）。個人MCPは残す。`compat.claude.mcps`は切らない。
+Wave 3着地（2026-08-16 H適用）。工場6は`~/.grok/config.toml`由来。`grok mcp doctor`で6つともhealthy。個人MCPとx-articleは残した。失敗したremote（relay等）はtypedのまま。次はWave 4（工場hook）。
