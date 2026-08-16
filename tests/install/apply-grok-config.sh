@@ -20,6 +20,8 @@ assert_link() {
 }
 assert_link "$HOME_FIXTURE/.grok/rules/AGENTS.md" "$ROOT/grok/AGENTS.md"
 assert_link "$HOME_FIXTURE/.grok/runbooks" "$ROOT/shared/runbooks"
+assert_link "$HOME_FIXTURE/.grok/skills/orchestrate" "$ROOT/grok/skills/orchestrate"
+assert_link "$HOME_FIXTURE/.grok/agents/refuter.md" "$ROOT/grok/agents/refuter.md"
 
 mkdir -p "$HOME_FIXTURE/.grok"
 cat >"$HOME_FIXTURE/.grok/config.toml" <<'EOF'

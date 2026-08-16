@@ -31,7 +31,9 @@ dotagents/
 │   └── rules/           … → ~/.codex/rules/<file>
 ├── grok/
 │   ├── AGENTS.delta.md  … Grok固有差分の正本
-│   └── AGENTS.md        … 共通＋deltaの生成物（→ ~/.grok/rules/AGENTS.md）
+│   ├── AGENTS.md        … 共通＋deltaの生成物（→ ~/.grok/rules/AGENTS.md）
+│   ├── skills/          … → ~/.grok/skills/<name>
+│   └── agents/          … → ~/.grok/agents/<name>.md
 └── bin/                 … → ~/.local/bin/<name>（.sh / .mjs は外れる。実行言語は shebang）
 ```
 
@@ -107,6 +109,8 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | Claudeグローバル規範 | `claude/CLAUDE.delta.md` → `claude/CLAUDE.md` | 共通憲法＋Claude固有deltaから合成する配布生成物 |
 | Codexグローバル規範 | `codex/AGENTS.delta.md` → `codex/AGENTS.md` | 共通憲法＋Codex固有deltaから合成する配布生成物。配置・配線の正典はdocs/02・docs/05 |
 | Grokグローバル規範 | `grok/AGENTS.delta.md` → `grok/AGENTS.md` | 共通憲法＋Grok固有deltaから合成する配布生成物。配置先は`~/.grok/rules/AGENTS.md` |
+| Grok skill | `orchestrate` / `auto-deploy-on-push` / `gpt-connector` / `polish-github` | 共通契約＋Grok appendix。`~/.grok/skills`が同名のCodex/Claude面に勝つ |
+| Grok agent | `implementer` / `refuter` | `~/.grok/agents`。bundled explore/planは置換えない |
 | bin | `render-global-constitution.mjs` | 共通憲法＋host deltaから3 runtime向け完全指示を冪等生成し、driftを検査 |
 | bin | `apply-grok-config` | Grok `compat.claude.agents=false` を dry-run / backup / 冪等適用する（`--apply` は端末承認後） |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲のrole定義（役割→model×effortの正は docs/02_models.md） |

@@ -89,7 +89,7 @@ Wave 1〜5がdotagentsで閉じる範囲。Wave 6は製品repoであり、本計
 ### Wave 2 — skill / command / agent
 
 **A:** `grok/skills`（orchestrate / auto-deploy-on-push / polish-github / gpt-connector。入口はGrok appendix、契約は`shared/orchestrate`）、`grok/agents`（implementer / refuter）。
-**F:** `~/.agents/skills`との同名shadowを実測してから`compat.claude.skills`を切る。
+**F:** `~/.agents/skills`との同名shadowを実測する。`~/.grok/skills`が同名に勝てば`compat.claude.skills`は切らない（peertable等のClaude専用skillを落とさない）。勝てない時だけ切断またはignoreを取る。
 
 受入:
 
@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 1は実HOMEまで着地（2026-08-16 H承認）。`~/.grok/rules/AGENTS.md`と`~/.grok/runbooks`をsymlinkし、`compat.claude.agents=false`を書いた。`grok inspect`はhome ruleとして`~/.grok/rules/AGENTS.md`を読み、`~/.claude/Claude.md`を`disabled`と報告する。このsessionは起動時のClaude吸入を抱えたままなので、確認は新規sessionでする。次はWave 2。
+Wave 2着手。隔離HOMEの`grok inspect`で`~/.grok/skills/<name>`が同名の`~/.agents/skills`と`~/.claude/skills`に勝つことを実測した。だから`compat.claude.skills`は切らない。次はskill/agent配布のinstallとinspectで工場4 skillのpathが`~/.grok/skills`であること。
