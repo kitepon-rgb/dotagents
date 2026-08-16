@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 2着手。隔離HOMEの`grok inspect`で`~/.grok/skills/<name>`が同名の`~/.agents/skills`と`~/.claude/skills`に勝つことを実測した。だから`compat.claude.skills`は切らない。次はskill/agent配布のinstallとinspectで工場4 skillのpathが`~/.grok/skills`であること。
+Wave 2着地（2026-08-16）。工場4 skillとimplementer/refuterを`~/.grok`へ配った。live inspectはorchestrate等が`~/.grok/skills`、imagineはbundled、peertableはClaude面のまま。`compat.claude.skills`は切っていない。次はWave 3（工場MCP）。
