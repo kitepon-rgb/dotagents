@@ -43,11 +43,12 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 2. **一波一所有面。** 憲法、skill、MCP、hookを同じcommitで全部切らない。切るのは、その面のGrok所有が`install`とfocused gateで証明された後だけ。
 3. **共通憲法は判断だけ。** host固有のツール入口（aiterm PTYのMCP名、Claude Workflow/Agent matcher、Grok native terminal）は各deltaへ移す。Claude/Codexの現行挙動はdeltaへ移すだけであり、黙って変えない。
 4. **個人MCPは移さない。** Gmail等はオーナーのClaude jsonに残してよい。`compat.claude.mcps`を工場MCPの所有のために全部は切らない。工場サーバはGrok tomlが正本で、同名がClaude jsonからも上がるならGrok側で工場名をdisableし二重起動しない。
-5. **製品host化は親host化と分けないで混ぜない。** Spotter正式Grok hostは8/14棄却を維持する。ThroughlineのGrok captureとObserverのGrok familyはWave 6の製品repo作業であり、本計画のdotagents完了を待たないが、Wave 1〜5の受入条件にもしない。
+5. **製品host化は親host化と分けないで混ぜない。** Spotter正式Grok hostは8/14棄却を維持する。ThroughlineのGrok対応はWave 6の製品repo作業である。ObserverのGrok familyは開かない。
 6. **Pluginsは非採用。** 個人git＋symlink配布とmarketplaceを二重化しない。
 7. **親のmodel×effortは触らない。** `apply-grok-config`は工場MCP、compatセル、工場hook entryだけを扱い、`[models]`とpermissionとloginを書き換えない。
 8. **工場の4席は全部本線。** Mac / Windows native / WSL2 / Linux（main-server）を工場親の対象から外さない。製品対応は順次実測で上げる。製品または上流が正規入口を持たない面（AIShellの非macOS、Observerの非macOS、ServerManager runtimeの非main-serverなど）だけを`unsupported` / `not_applicable`にする。Grok BuildのWindows nativeは上流にPowerShell `install.ps1`があるので、導入matrixの`unsupported`を維持しない。WSL2の席でWindows nativeを代替しない。
 9. **工程正本は本Markdown。** Lattice planはオーナー指示があるまで作らない。
+10. **2026-08-16 製品判定。** Observerを工場コアから撤去する（製品repoの廃棄・改名はこの裁定の範囲外。工場管理対象からの除外）。Spotterは評価試験中のためコアを維持する。ThroughlineのGrok対応は必ず行う。コア撤去はREADME「工場コア製品の変更管理」の削除手順に従う独立waveとし、ThroughlineのGrok実装と混ぜない。
 
 ### 面ごとの所有
 
@@ -139,9 +140,9 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 
 | 製品 | 内容 | 今の状態 |
 |---|---|---|
-| Throughline | Grok turnのcapture / restore / handoff | CLI到達はsupported。hook captureはしない |
-| Observer | Grok provider familyの伴走 | 同family専用。Grok面なし |
-| Spotter | 正式Grok host | 棄却維持。新しい監査要求が出るまで開かない |
+| Throughline | Grok turnのcapture / restore / handoff | Wave 6の製品着手。CLI到達はsupported。hook captureはこれから |
+| Observer | 工場コアから撤去 | 2026-08-16裁定。Grok familyは開かない。撤去は独立wave |
+| Spotter | 正式Grok host | コア維持。評価試験中。正式Grok hostは棄却維持 |
 
 ## 5. 非目標
 

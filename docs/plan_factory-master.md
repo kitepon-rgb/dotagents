@@ -44,7 +44,7 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
 ## 並行campaign
 
 - [Grok 親host 全対応](plan_grok-parent-host.md)（2026-08-16開始。工程正本は当該Markdown。Lattice未適用）。
-  Wave 0〜5着地。4席（Mac / Windows native / WSL2 / Linux）の新規session受入は2026-08-16に閉じた。製品未対応面は`unsupported`のまま残してよい。次はPhase監査（親と異なるprovider）。Wave 6は製品repo・別H。
+  Wave 0〜5着地。4席の新規session受入は2026-08-16に閉じた。Phase監査済み。2026-08-16裁定: Observerをコアから撤去、Spotterはコア維持、ThroughlineのGrok対応は必須。Wave 6はThroughlineのGrok対応。Observer撤去は独立wave。
 
 ## maintenance queue
 
