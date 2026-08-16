@@ -160,12 +160,21 @@ fi
 if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then
   expected_npm_packages=16
 fi
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*|Windows_NT)
+    # Windows native は aiterm-mcp 一時除外中（deployment-contract.mjs 注記参照）
+    expected_npm_packages=13
+    ;;
+esac
 node --input-type=module - <<'EOF' || fail 'OS/arch別npm package集合がdeployment contractと一致しない'
 import { npmPackagesForHost } from './lib/factory/deployment-contract.mjs';
 const base = ['@anthropic-ai/claude-code','@openai/codex','gpt-connector','@anthropic-ai/sdk','aiterm-mcp','caveat-cli','claude-spotter','codex-sidecar-cli','codex-sidecar-core','codex-sidecar-mcp','@quolu/lattice','peertable','pnpm','throughline'];
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+// Windows native は aiterm-mcp を一時除外中（native psmux 移行のローカル先行適用を
+// registry 版で上書きさせない・deployment-contract.mjs の注記参照）。
+const winBase = base.filter((name) => name !== 'aiterm-mcp');
 if (!same(npmPackagesForHost({ os: 'Linux', arch: 'x64' }), base)
- || !same(npmPackagesForHost({ os: 'Windows_NT', arch: 'x64' }), base)
+ || !same(npmPackagesForHost({ os: 'Windows_NT', arch: 'x64' }), winBase)
  || !same(npmPackagesForHost({ os: 'Darwin', arch: 'x64' }), [...base, '@quolu/observer'])
  || !same(npmPackagesForHost({ os: 'Darwin', arch: 'arm64' }), [...base, '@quolu/observer', '@quolu/aishell'])) process.exit(1);
 EOF
