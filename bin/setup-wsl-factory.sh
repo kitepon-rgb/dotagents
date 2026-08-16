@@ -144,7 +144,7 @@ backup_managed_config() {
   local -a paths=()
   local path
   for path in .gitconfig .gitignore_global .claude.json .claude/settings.json \
-    .codex/config.toml .codex/hooks.json; do
+    .codex/config.toml .codex/hooks.json .grok/config.toml; do
     [ ! -e "$HOME/$path" ] || paths+=("$path")
   done
   [ "${#paths[@]}" -gt 0 ] || return 0
@@ -234,6 +234,19 @@ ensure_caveat_sync() {
   fi
 }
 
+grok_is_logged_in() {
+  [ -n "${XAI_API_KEY:-}" ] && return 0
+  [ -s "$HOME/.grok/auth.json" ]
+}
+
+maybe_apply_grok_config() {
+  if ! grok_is_logged_in; then
+    echo "INFO: Grok未login。apply-grok-config をスキップする（toolchain optional）"
+    return 0
+  fi
+  "$ROOT/bin/apply-grok-config.sh" --apply
+}
+
 ensure_mcp() {
   ensure_claude_mcp aiterm aiterm-mcp
   ensure_claude_mcp caveat caveat mcp-server
@@ -301,6 +314,7 @@ run_setup() {
   ensure_git_identity
   "$ROOT/bin/apply-codex-config.sh" --apply
   "$ROOT/bin/apply-claude-config.sh" --apply
+  maybe_apply_grok_config
   "$ROOT/install.sh" --profile official
   ensure_managed_commands
   ensure_caveat_sync

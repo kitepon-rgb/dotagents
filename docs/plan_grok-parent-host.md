@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 4着地（2026-08-16 H適用）。`~/.grok/hooks/factory.json` 由来の工場hookが enabled 9件。Claude settings 由来は 22件とも `vendor=claude` `disabled`（Spotter / Throughline / Caveat を含む）。`externalCompat.claude.hooks.enabled=false`。このsessionは変更を引き継がない。次はWave 5（親matrix）。Wave 6は別H。
+Wave 5 F/A着地（2026-08-16）。host matrixにGrok親列を追加。セルはWave 1〜4実測だけ。GF07は書き換えずgreenへ丸めていない。READMEランブックに所有面とcompat切断を書いた。setup-macos/wslは未loginで`apply-grok-config`をスキップする。Windows nativeにGrok親は入れない。verify-installがGrok rules/runbooks/skills/agents/hooksと工場hook JSONを見る。focusedと`test-install`は隔離HOMEでgreen。`make ci`は`test-orchestrate`がシステム`python3` 3.9で`tomllib`不在（本変更外）。H（実HOME適用・login済み`--apply`・Mac/FOX WSL2の新規session受入）は未実施。Wave 6は別H。

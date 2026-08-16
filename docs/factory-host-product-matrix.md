@@ -1,6 +1,6 @@
 # 工場 host × product 期待matrix
 
-更新日: 2026-08-15
+更新日: 2026-08-16
 正本: dotagents
 対象: Mac、main-server、FOX WSL2、FOX Windows native
 
@@ -40,24 +40,28 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 
 製品導入とconnector有効化を混同しない。外部実行connectorの4段階（installed→execution-verified）とwriter制限は[docs/02_models.md](02_models.md)「入口と使い分け」が正典。
 
-| product | Claude親 | Codex親 |
-|---|---|---|
-| Caveat | MCP＋4 hooks required | native 3 hooks required（MCP不要） |
-| Throughline | hook/CLI required | hook/skill/CLI required |
-| Spotter | 対象projectで明示install required | 対象projectで明示install required |
-| MarkItDown | CLI required | CLI required |
-| gpt-connector | MCP `gpt_connector` required。専用Chrome非対応hostはconnectorだけunsupported | MCP `gpt_connector` required。timeout後は sessions 回収 |
-| aiterm-mcp | MCP required | Codex/Grok/Composer用MCP required。native枠外の外部実行に使う |
-| codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う |
-| Lattice | required。`lattice-mcp`のsensor 8 toolを配線。`codegraph_*`互換名はLattice提供者identityを返す | 同左。Windows nativeは親CLIを運用する端末だけMCP登録 |
-| AIShell | MCP `aishell` required（Apple Silicon / macOS 15+のみ）。`AISHELL_CAPABILITY_SET=expanded-v1`で登録し、工場監視はpath非露出の`AISHELL_TOOL_PROFILE=factory`を使う | 同左 |
-| Observer | macOSでStop hookとparent watchをversioned fragmentからH適用。同provider familyの伴走専用 | 同左。`run-observer-parent-watch`を正規入口とし、一般Worker・Control票へ混ぜない |
-| ServerManager | connector not_applicable | connector not_applicable |
-| peertable | team編成時（peertable setup）だけMCP `room` required。teardownで解除 | 同左 |
+Grok親列はWave 1〜4の実測だけを書く。`required`にする根拠は、その面のGrok所有が`install`または`grok mcp doctor`で証明された場合に限る。2026-08-14のGF07 12製品matrix（`supported` / `partial` を含む）は到達性の履歴であり、本列へ写してgreenへ丸めない。既存Grok sessionの見た目は受入に数えない。
+
+| product | Claude親 | Codex親 | Grok親 |
+|---|---|---|---|
+| Caveat | MCP＋4 hooks required | native 3 hooks required（MCP不要） | MCP required（Wave 3 `grok mcp doctor` healthy）。製品hook unsupported（Wave 4 / 8/14 no-op） |
+| Throughline | hook/CLI required | hook/skill/CLI required | unsupported（製品hookは起動しない。hook captureはWave 6） |
+| Spotter | 対象projectで明示install required | 対象projectで明示install required | unsupported（8/14正式host棄却。製品hookは起動しない） |
+| MarkItDown | CLI required | CLI required | not_applicable（Grok固有connector面なし） |
+| gpt-connector | MCP `gpt_connector` required。専用Chrome非対応hostはconnectorだけunsupported | MCP `gpt_connector` required。timeout後は sessions 回収 | MCP required（Wave 3 `grok mcp doctor` healthy） |
+| aiterm-mcp | MCP required | Codex/Grok/Composer用MCP required。native枠外の外部実行に使う | MCP required（Wave 3 `grok mcp doctor` healthy）。日常shellはGrok native |
+| codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う | MCP required（Wave 3 `grok mcp doctor` healthy）。隔離Codex実行用 |
+| Lattice | required。`lattice-mcp`のsensor 8 toolを配線。`codegraph_*`互換名はLattice提供者identityを返す | 同左。Windows nativeは親CLIを運用する端末だけMCP登録 | MCP required（Wave 3 `grok mcp doctor` healthy）。`lattice-gantt`はdotagents所有の案内。`lattice hooks install --host` のGrok hostは増やさない＝製品host hook unsupported |
+| AIShell | MCP `aishell` required（Apple Silicon / macOS 15+のみ）。`AISHELL_CAPABILITY_SET=expanded-v1`で登録し、工場監視はpath非露出の`AISHELL_TOOL_PROFILE=factory`を使う | 同左 | MCP required（Apple Silicon / macOS 15+のみ。Wave 3 `grok mcp doctor` healthy）。他hostはunsupported |
+| Observer | macOSでStop hookとparent watchをversioned fragmentからH適用。同provider familyの伴走専用 | 同左。`run-observer-parent-watch`を正規入口とし、一般Worker・Control票へ混ぜない | unsupported（同provider family専用。Grok面なし。Wave 6） |
+| ServerManager | connector not_applicable | connector not_applicable | connector not_applicable |
+| peertable | team編成時（peertable setup）だけMCP `room` required。teardownで解除 | 同左 | unsupported（Wave 2: roomはClaude面のまま。Grok所有のroom MCPなし） |
 
 独立Codegraphは全hostで退役済みであり、製品・connector期待matrixへ含めない。BugHubの既存履歴だけを
 `not_applicable`として保持する。Latticeの`codegraph_*` tool名はLattice所有の入力互換ABIであり、
 独立Codegraph MCP登録を意味しない。
+
+Grok親列はMacとFOX WSL2のGrok Build親だけが対象である。FOX Windows nativeのGrok Buildは製品導入matrixどおり`unsupported`のまま入れない。Grok親の憲法・skill・工場MCP・工場hookは`~/.grok`が所有し、`compat.claude.agents`と`compat.claude.hooks`は切る。`compat.claude.skills`と`compat.claude.mcps`は切らない。
 
 Spotterは全projectへ無条件activationしない。dotagentsなど工場管理対象として明示したprojectではrequired、未指定projectでは未導入をissueにしない。peertableも同様にteam編成（`peertable setup`）した対象projectだけがMCP `room`のrequired対象で、未編成projectでの未導入をissueにしない。FOX WSL2／FOX Windows nativeのclient稼働は2026-08-10のwire v7 cutoverで実測済み（installed/compatible）となり、宣言どおり`required`へ昇格した。委譲レーン・相談レーン・Oracleの位置付けは[docs/02_models.md](02_models.md)と[factory-product-contracts.md](factory-product-contracts.md)が正典（本matrixへ複製しない）。
 

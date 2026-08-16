@@ -49,6 +49,10 @@ cat >"$FIXTURE_ROOT/bin/apply-claude-config.sh" <<'EOF'
 #!/usr/bin/env bash
 printf 'apply-claude-config %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
 EOF
+cat >"$FIXTURE_ROOT/bin/apply-grok-config.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'apply-grok-config %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
 cat >"$FIXTURE_ROOT/bin/verify-install.sh" <<'EOF'
 #!/usr/bin/env bash
 printf 'verify-install %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
@@ -226,6 +230,7 @@ printf 'loaded\n' >"$LAUNCH_STATE"
 
 export HOME="$HOME_DIR"
 export PATH="$STUB_BIN:/usr/bin:/bin"
+unset XAI_API_KEY
 export DOTAGENTS_SETUP_MACOS_FORCE=1
 export DOTAGENTS_SETUP_MACOS_ARCH=arm64
 export DOTAGENTS_SETUP_TEST_CALLS="$CALLS"
@@ -255,6 +260,12 @@ assert value['StartCalendarInterval'] == {'Weekday': 1, 'Hour': 4, 'Minute': 0}
 PY
 grep -Fq 'apply-codex-config --apply' "$CALLS" || fail 'Codex設定を適用しない'
 grep -Fq 'apply-claude-config --apply' "$CALLS" || fail 'Claude設定を適用しない'
+if grep -Fq 'apply-grok-config' "$CALLS"; then
+  fail 'Grok未loginでapply-grok-configを実行した'
+fi
+if grep -Fq 'lattice hooks install --host grok' "$CALLS"; then
+  fail 'lattice hooks install --host grok を呼んだ'
+fi
 grep -Fq 'install --profile official' "$CALLS" || fail 'official profileを展開しない'
 grep -Fq 'lattice hooks install --host claude' "$CALLS" || fail 'Claude Lattice hookを配線しない'
 grep -Fq 'lattice hooks install --host codex' "$CALLS" || fail 'Codex Lattice hookを配線しない'

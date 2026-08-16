@@ -112,7 +112,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | Grok skill | `orchestrate` / `auto-deploy-on-push` / `gpt-connector` / `polish-github` | 共通契約＋Grok appendix。`~/.grok/skills`が同名のCodex/Claude面に勝つ |
 | Grok agent | `implementer` / `refuter` | `~/.grok/agents`。bundled explore/planは置換えない |
 | bin | `render-global-constitution.mjs` | 共通憲法＋host deltaから3 runtime向け完全指示を冪等生成し、driftを検査 |
-| bin | `apply-grok-config` | Grok の `compat.claude.agents=false` と工場MCP 6を dry-run / backup / 冪等適用する（`--apply` は端末承認後。正典はdocs/07） |
+| bin | `apply-grok-config` | Grok の `compat.claude.agents=false` / `hooks=false` と工場MCP 6を dry-run / backup / 冪等適用する（`--apply` は端末承認後。正典はdocs/07） |
 | Codex サブエージェント | `codex/agents/{implementer,refuter,sorter}.toml` | ネイティブ委譲のrole定義（役割→model×effortの正は docs/02_models.md） |
 | bin | `agents-update.sh` | deployment contractのhost別CLI／SDK集合を`@latest`へ更新し、post-update gateとreportを実行 |
 | bin | `setup-macos-factory.sh` / `setup-wsl-factory.sh` / `setup-windows-native-factory.ps1` | host別の工場一撃展開。共通配備契約を消費し、各OS固有の配線と全製品smokeを行う |
@@ -179,7 +179,7 @@ Codex全対応の工程状態はLattice storeが正本で、現役4 host・5入�
 - **WSL2 の場合**: WSL2 内の Claude/Codex を対象とする（Windows 側とは別環境）。`install.sh` は WSL の `$HOME` に symlink を張り、Windowsの既存 `~/.ssh/id_ed25519.pub` を WSLへ登録して、Windows `~/.ssh/config` にdotagents管理の `fox-wsl`（`localhost:2222`）を冪等生成する。同時にWSLの `~/.codex/hooks.json` をWindows Codex Desktopの `~/.codex/hooks.json` へ投影し、DesktopのWSL実行がWindows commandを `/bin/bash` へ渡す事故を防ぐ。Windows Codex DesktopではWindows側projectを流用せず、このSSH host上の `/home/kite/Developer/dotagents` を開く。cron の起動は下の「自動アップデート」節参照
 - **ランタイム**: node>=22＋corepack・docker・python3（`command -v node docker` で存在確認、`node --version` が v22+、`docker info` が通ること。**python3 だけは実行判定 `python3 -c "print(1)"` で確認**——Windows のストア偽エイリアスは存在チェックを通り、黙って exit 0 を返す〔罠DB `windows-python3-store-exit-0`〕）
 - **CLI（必須）**: 管理12製品はCaveat／Throughline／Spotter／Lattice／MarkItDown／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager／peertable。共通requiredは基礎8＋`peertable-client`、macOSではObserver、macOS 15+ Apple SiliconではAIShell、main-serverではServerManagerの公開readiness/revisionだけを検証する。他hostのServerManagerは`not_applicable`、AIShell/Observerは`unsupported`である。基盤toolchainのClaude Code・Codex CLIは別管理。独立CodegraphはPATHに存在してはならない。MarkItDownの正規更新面は`uv tool`。
-- **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する（委譲は当面 Codex 主で回る＝必須ではない）
+- **CLI（任意）**: Grok Build＝**要 `grok login`（H）**。未認証だと `grok agent` が使えず、`delegate grok` は明示エラーで停止する。一撃展開は未loginでも止まらない（toolchain optional）。login済みの工場MCP適用（`apply-grok-config --apply`）はH。Windows nativeにはGrok Buildを入れない
 - **MCP 用 CLI を先に入れる**（下の登録が参照する。`agents-update`が入れる各packageと同源）: `aiterm-mcp`・`caveat`・`codex-sidecar-mcp`・`gpt-connector-mcp`・`lattice-mcp`がPATHにあること。独立Codegraphは登録しない。Codex親もnative枠外の実行用にaitermとcodex-sidecarを登録する。登録・loginは端末configを変えるH操作。
 - **MCP（ユーザースコープ登録。上の CLI 導入後）**:
   ```bash
@@ -195,6 +195,7 @@ Codex全対応の工程状態はLattice storeが正本で、現役4 host・5入�
   codex mcp add lattice -- lattice-mcp
   codex mcp add aishell --env AISHELL_CAPABILITY_SET=expanded-v1 -- aishell-mcp
   ```
+  Grok親の工場MCP 6はClaude/Codexへ手挿しせず、`~/.grok/config.toml`が所有する。適用は`apply-grok-config`（login済み`--apply`はH）。個人MCPはClaude jsonに残してよい。`compat.claude.mcps`は切らない
 - **人間用の窓（任意だが標準）**: Obsidian（`brew install --cask obsidian`。無料・md 直読み。vault 設定 `.obsidian/` は端末ローカル＝gitignore 済み）
 - **home-server ssh**: `kite@192.168.1.2` 直IP（固定IP・エイリアスは作らない）
 
@@ -210,11 +211,12 @@ cd ~/Developer/dotagents
 `mkdir -p ~/Archives` してから:
 
 ```bash
-tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claude/CLAUDE.md .claude/skills .claude/agents .claude/commands .codex/AGENTS.md 2>/dev/null || true
-# グローバル CLAUDE.md / Codex AGENTS.md の実ファイルが残っていると正本化が静かに不成立になる
+tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claude/CLAUDE.md .claude/skills .claude/agents .claude/commands .codex/AGENTS.md .grok/rules/AGENTS.md 2>/dev/null || true
+# グローバル CLAUDE.md / Codex AGENTS.md / Grok rules の実ファイルが残っていると正本化が静かに不成立になる
 [ -f ~/.claude/CLAUDE.md ] && [ ! -L ~/.claude/CLAUDE.md ] && rm ~/.claude/CLAUDE.md
 # ~/.codex/AGENTS.md が実ファイルなら先に中身を確認——価値ある行を共通正本／Codex deltaへ振り分け、生成物を更新してから退避・削除する
 [ -f ~/.codex/AGENTS.md ] && [ ! -L ~/.codex/AGENTS.md ] && rm ~/.codex/AGENTS.md
+[ -f ~/.grok/rules/AGENTS.md ] && [ ! -L ~/.grok/rules/AGENTS.md ] && rm ~/.grok/rules/AGENTS.md
 ```
 
 **caveat の own は Caveat 自身が同期する**（v0.15+。dotagents は所有しない）: 新端末では `caveat sync --init --repo https://github.com/kitepon-rgb/Caveat-Private.git` で `~/.caveat/own` に Caveat-Private を clone → 以降 `caveat sync` で往復。既存端末に端末ローカルの罠が残っていたら、`caveat sync` の前に中身を `~/.caveat/own/entries/<category>/` へマージしてから同期する（同名衝突は中身を見て統合）。`verify-install` は own が Caveat-Private を remote に持つか確認する。
@@ -225,6 +227,8 @@ tar czf ~/Archives/claude-pre-dotagents-$(date +%Y%m%d).tar.gz -C "$HOME" .claud
 `lib/factory/deployment-contract.mjs`を消費し、既存のWindows native／WSL2固有配線を共有実装へ
 押し込まない。いずれも公式skill面、現役製品、MCP、Lattice／Spotter hook、定期更新、
 `verify-install`、fresh wire v7 reportとBugHub delivery receiptまでを一括検証する。
+Grok親の配布面（`~/.grok/rules` / `runbooks` / `skills` / `agents` / `hooks`）は`install.sh`がsymlinkする。
+工場MCPと`compat.claude.agents`/`hooks`切断はlogin済みなら`apply-grok-config`が書く。未loginではスキップし、一撃展開は止まらない。Windows native入口はGrok親を配線しない。
 
 実行前にfactory reporter runbook §1〜4に従い、そのhost専用のconfigとcredentialを配置して
 wire v7 reportingを有効にする。MCP login、GitHub認証、Docker稼働など「0. 前提」の外部状態は
@@ -246,30 +250,44 @@ config、hook、credential、scheduler、delivery receiptを共有しない。Wi
 ./install.sh --profile official
 ./bin/apply-codex-config.sh --dry-run
 ./bin/apply-claude-config.sh --dry-run
+./bin/apply-grok-config.sh --dry-run
 ```
 
 既定は公式 user skill 面 `$HOME/.agents/skills`。`--dry-run` は一切書き込まず、routing の必須2キー、
-callout hook 4イベント、SessionStartの`orchestrate-advisory-hook` 1件、`codex-lattice-gantt-hook`のSessionStart / UserPromptSubmit entryを各1件だけの差分を出す。対象端末への適用を承認した後だけ、次を実行する。
+callout hook 4イベント、SessionStartの`orchestrate-advisory-hook` 1件、`codex-lattice-gantt-hook`のSessionStart / UserPromptSubmit entryを各1件だけの差分を出す。Grok側は`compat.claude.agents=false` / `hooks=false` と工場MCP 6の差分だけを出す。対象端末への適用を承認した後だけ、次を実行する。
 
 ```bash
 ./bin/apply-codex-config.sh --apply
 ./bin/apply-claude-config.sh --apply
+./bin/apply-grok-config.sh --apply   # login済みだけ。未loginならスキップ（H）
 lattice hooks install --host claude
 lattice hooks install --host codex
 spotter install -y
 ./bin/verify-install.sh --profile official
 ```
 
-両方の `--apply` は `~/Archives/` に backup を作り、途中失敗時は rollbackする。`apply-claude-config` は本書のjq断片が正とするdotagents hookだけを追加し、model / effort / permissions / OAuth / trust / 他ツールのhookは変更しない。legacyを選ぶのは旧入口の検証時だけで、`--profile legacy`をinstall / verifyの両方へ付ける。
+両方の `--apply` は `~/Archives/` に backup を作り、途中失敗時は rollbackする。`apply-claude-config` は本書のjq断片が正とするdotagents hookだけを追加し、model / effort / permissions / OAuth / trust / 他ツールのhookは変更しない。`apply-grok-config` は `[models]` / permission / login と個人MCPを触らず、`compat.claude.skills` と `compat.claude.mcps` は切らない。legacyを選ぶのは旧入口の検証時だけで、`--profile legacy`をinstall / verifyの両方へ付ける。
+
+Grok親の所有面は次だけである。Claude面を吸うことを完成形にしない。
+
+| 面 | Grok所有 | Claude面 |
+|---|---|---|
+| 憲法 | `~/.grok/rules/AGENTS.md`（`grok/AGENTS.md`） | `compat.claude.agents=false` |
+| runbook | `~/.grok/runbooks` | 吸わない |
+| skill / agent | `~/.grok/skills` / `~/.grok/agents` | `compat.claude.skills`は切らない（Wave 2: `~/.grok/skills`が同名に勝つ） |
+| 工場MCP | `~/.grok/config.toml` | `compat.claude.mcps`は切らない。同名はtomlが勝つ |
+| 工場hook | `~/.grok/hooks/factory.json` | `compat.claude.hooks=false`。Spotter / Throughline / Caveat / Observerの製品hookはGrokで起動しない |
+| Lattice工程表 | `grok-lattice-gantt-hook`（dotagents所有の案内） | `lattice hooks install --host` にGrokを足さない |
 
 `spotter install -y` はSpotterの正規project-scoped入口である。dotagentsの `.claude/settings.json` と `.spotter/`（どちらも端末ローカル・gitignore）を作り、user-level Codex hook 3本をcanonical化し、Claude/Codex別catalogをseedする。PATH上のThroughlineを絶対実行パスへ解決できる時はauditor contextが既定ONになる。Spotter自身のCLI以外でmarkerやhookを複製・手書きしない。
 
-`lattice hooks install --host claude|codex` はLattice 0.40.0+の製品管理入口である。sensor気づかせ導線はLattice自身に管理させ、Claude/Codex設定へ手挿ししない。Codex未導入端末では`--host codex`を省略する。
+`lattice hooks install --host claude|codex` はLattice 0.40.0+の製品管理入口である。sensor気づかせ導線はLattice自身に管理させ、Claude/Codex設定へ手挿ししない。Codex未導入端末では`--host codex`を省略する。Grok hostは増やさない。
 
-- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale実ファイル・反対skill面の同名重複・共有orchestrate契約の欠落・routing / hook契約不足に加え、対応hostで必要な工場管理製品CLI、Lattice製品管理hookの`wired`状態、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、host別catalogをFAIL行で名指しする。Oracle wrapperは旧wire互換・明示rollback用の検査として残す。`~/.local/bin`をPATHに通していれば以後は`verify-install --profile official`でも可
-- **hook の配線**: Claude側は[docs/03_settings-fragments.md](docs/03_settings-fragments.md)が正本であり、`apply-claude-config`が`settings.json`の正本化gate・呼びかけ・advisory・Lattice Gantt・Git破壊操作hookを冪等追加する。Codex側のX1-X5は[docs/05_codex-fragments.md](docs/05_codex-fragments.md)に従い、`apply-codex-config`が4イベントを限定して冪等正規化する。両方ともtrust承認は別途必要。
+- **`./bin/verify-install.sh --profile official` が OK を返すこと（省略不可）**——stale実ファイル・反対skill面の同名重複・共有orchestrate契約の欠落・routing / hook契約不足に加え、対応hostで必要な工場管理製品CLI、Lattice製品管理hookの`wired`状態、Spotter marker v2、Throughline context、Claude 5 hook、Codex 3 hook、Grok面（`~/.grok/rules` / `runbooks` / `skills` / `agents` / `hooks`）と工場hook JSON、host別catalogをFAIL行で名指しする。Grok `config.toml` がある時だけ `compat.claude.agents` / `hooks` の切断を見る。未loginでtomlが無いことはFAILにしない。Oracle wrapperは旧wire互換・明示rollback用の検査として残す。`~/.local/bin`をPATHに通していれば以後は`verify-install --profile official`でも可
+- **hook の配線**: Claude側は[docs/03_settings-fragments.md](docs/03_settings-fragments.md)が正本であり、`apply-claude-config`が`settings.json`の正本化gate・呼びかけ・advisory・Lattice Gantt・Git破壊操作hookを冪等追加する。Codex側のX1-X5は[docs/05_codex-fragments.md](docs/05_codex-fragments.md)に従い、`apply-codex-config`が4イベントを限定して冪等正規化する。Grok側は[docs/07_grok-fragments.md](docs/07_grok-fragments.md)が正本で、`~/.grok/hooks/factory.json`が工場hookを所有する。両方ともtrust承認は別途必要。
 - 新しい Claude Code セッションで（対話確認）: グローバル CLAUDE.md がロードされる／`orchestrate` が skill 一覧に出る／`implementer`・`refuter` が agent 一覧に出る／pty（aiterm）と caveat が `/mcp` で connected／SpotterのUserPromptSubmit・Stop eventが記録される／極小タスクを implementer に委譲して契約どおりの報告が返る
 - 新しい Codex セッションで（対話確認）: skill 一覧に `orchestrate` が出る／`spawn_agent` schema に `agent_type` がある／通常のnative audit・refuter・sorterは事前smokeなしで実行できる／Control配下の書込みWorkerだけは`agent_type=<role>`と`fork_turns="none"`でrouting smokeを起動し、`verify-codex-agent-routing <role> <agent-path>`がgreenになってからfollow-upする／Spotter 3 hookを対話Codex CLIの`/hooks`でreviewし、対象入口の新規sessionで`spotter.hook_event.v1`が記録される
+- 新しい Grok セッションで（対話確認・H）: user rulesが`~/.grok/rules/AGENTS.md`だけから乗る（Claude delta固有条文が無い）／工場skillが`~/.grok/skills`から列挙される／工場MCP 6のhandshakeが`supported`かtyped失敗のまま残る／Claude `settings.json` hookが現れない。既存sessionの見た目は受入に数えない
 
 ### 4. その端末のメモリ整理
 

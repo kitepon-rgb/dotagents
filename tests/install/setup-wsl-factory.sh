@@ -47,6 +47,10 @@ cat >"$FIXTURE_ROOT/bin/apply-claude-config.sh" <<'EOF'
 #!/usr/bin/env bash
 printf 'apply-claude-config %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
 EOF
+cat >"$FIXTURE_ROOT/bin/apply-grok-config.sh" <<'EOF'
+#!/usr/bin/env bash
+printf 'apply-grok-config %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
 cat >"$FIXTURE_ROOT/bin/verify-install.sh" <<'EOF'
 #!/usr/bin/env bash
 printf 'verify-install %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
@@ -199,6 +203,7 @@ printf '%s\n' '{"reporting":{"enabled":true,"endpoint":"https://example.invalid/
 
 export HOME="$HOME_DIR"
 export PATH="$STUB_BIN:/usr/bin:/bin"
+unset XAI_API_KEY
 export DOTAGENTS_SETUP_WSL_FORCE=1
 export DOTAGENTS_SETUP_TEST_CALLS="$CALLS"
 export DOTAGENTS_SETUP_TEST_CRONTAB="$CRONTAB"
@@ -222,6 +227,12 @@ grep -Fq "0 2 * * * '$HOME_DIR/.local/bin/setup-wsl-factory' --scheduled-update"
   || fail '毎日2:00のscheduled updateを登録しない'
 grep -Fq 'apply-codex-config --apply' "$CALLS" || fail 'Codex設定を適用しない'
 grep -Fq 'apply-claude-config --apply' "$CALLS" || fail 'Claude設定を適用しない'
+if grep -Fq 'apply-grok-config' "$CALLS"; then
+  fail 'Grok未loginでapply-grok-configを実行した'
+fi
+if grep -Fq 'lattice hooks install --host grok' "$CALLS"; then
+  fail 'lattice hooks install --host grok を呼んだ'
+fi
 grep -Fq 'install --profile official' "$CALLS" || fail 'official profileを展開しない'
 grep -Fq 'lattice hooks install --host claude' "$CALLS" || fail 'Claude Lattice hookを配線しない'
 grep -Fq 'lattice hooks install --host codex' "$CALLS" || fail 'Codex Lattice hookを配線しない'

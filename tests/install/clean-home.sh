@@ -166,6 +166,41 @@ assert_link "$OFFICIAL_HOME/.grok/skills/polish-github" "$ROOT/grok/skills/polis
 assert_link "$OFFICIAL_HOME/.grok/agents/implementer.md" "$ROOT/grok/agents/implementer.md"
 assert_link "$OFFICIAL_HOME/.grok/agents/refuter.md" "$ROOT/grok/agents/refuter.md"
 assert_link "$OFFICIAL_HOME/.grok/hooks/factory.json" "$ROOT/grok/hooks/factory.json"
+rm "$OFFICIAL_HOME/.grok/runbooks"
+if grok_runbook_missing_output="$(verify "$OFFICIAL_HOME" official 2>&1)"; then
+  fail 'Grok runbooks欠落をverifyが見逃した'
+fi
+grep -Fq "FAIL: $OFFICIAL_HOME/.grok/runbooks 不在" <<<"$grok_runbook_missing_output" \
+  || fail 'Grok runbooks欠落のFAILが対象pathを名指ししない'
+HOME="$OFFICIAL_HOME" "$ROOT/install.sh" --profile official >/dev/null
+assert_link "$OFFICIAL_HOME/.grok/runbooks" "$ROOT/shared/runbooks"
+rm -f "$OFFICIAL_HOME/.grok/hooks/factory.json"
+printf '%s\n' '{"hooks":{}}' >"$OFFICIAL_HOME/.grok/hooks/factory.json"
+if grok_hooks_missing_output="$(verify "$OFFICIAL_HOME" official 2>&1)"; then
+  fail 'Grok 工場hook欠落をverifyが見逃した'
+fi
+grep -Fq 'FAIL: Grok 工場hook が欠落' <<<"$grok_hooks_missing_output" \
+  || fail 'Grok 工場hook欠落のFAILを出さない'
+rm -f "$OFFICIAL_HOME/.grok/hooks/factory.json"
+HOME="$OFFICIAL_HOME" "$ROOT/install.sh" --profile official >/dev/null
+assert_link "$OFFICIAL_HOME/.grok/hooks/factory.json" "$ROOT/grok/hooks/factory.json"
+mkdir -p "$OFFICIAL_HOME/.grok"
+cat >"$OFFICIAL_HOME/.grok/config.toml" <<'EOF'
+[compat.claude]
+agents = true
+hooks = true
+skills = true
+EOF
+if grok_compat_output="$(verify "$OFFICIAL_HOME" official 2>&1)"; then
+  fail 'Grok compat切断欠落をverifyが見逃した'
+fi
+grep -Fq 'compat.claude.agents が false でない' <<<"$grok_compat_output" \
+  || fail 'Grok compat.agents のFAILを出さない'
+rm -f "$OFFICIAL_HOME/.grok/config.toml"
+grok_absent_toml_output="$(verify "$OFFICIAL_HOME" official 2>&1 || true)"
+if grep -Fq 'compat.claude' <<<"$grok_absent_toml_output"; then
+  fail 'Grok config.toml 不在でcompat検査をFAILにした'
+fi
 rm "$OFFICIAL_HOME/.claude/runbooks"
 if runbook_missing_output="$(verify "$OFFICIAL_HOME" official 2>&1)"; then
   fail 'Claude runbooks欠落をverifyが見逃した'

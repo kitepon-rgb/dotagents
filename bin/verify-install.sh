@@ -457,6 +457,18 @@ elif [ -e "$REPO/claude/skills/orchestrate/references/delegation-contract.md" ];
   fail=1
 fi
 
+grok_orchestrate="$REPO/grok/skills/orchestrate/SKILL.md"
+if [ ! -r "$grok_orchestrate" ]; then
+  echo "FAIL: $grok_orchestrate を読めない"
+  fail=1
+elif ! grep -Fq '](../../../shared/orchestrate/contract.md)' "$grok_orchestrate"; then
+  echo "FAIL: $grok_orchestrate が共通契約を参照していない"
+  fail=1
+elif ! grep -Fq '](../../../shared/orchestrate/delegation-contract.md)' "$grok_orchestrate"; then
+  echo "FAIL: $grok_orchestrate が共有委譲契約を参照していない"
+  fail=1
+fi
+
 # install.sh の配布グループと対称に検証
 [ -f "$REPO/claude/CLAUDE.md" ] && check "$HOME/.claude/CLAUDE.md" "$REPO/claude/CLAUDE.md"
 [ -d "$REPO/shared/runbooks" ] && check "$HOME/.claude/runbooks" "$REPO/shared/runbooks"
@@ -476,6 +488,85 @@ done
 for f in "$REPO/grok/hooks"/*.json; do
   [ -e "$f" ] && check "$HOME/.grok/hooks/$(basename "$f")" "$f"
 done
+grok_factory_hooks="$HOME/.grok/hooks/factory.json"
+if [ -f "$grok_factory_hooks" ] || [ -L "$grok_factory_hooks" ]; then
+  if ! python3 - "$grok_factory_hooks" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    data = json.loads(path.read_text(encoding="utf-8"))
+except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+    print(f"FAIL: {path} の JSON パース失敗: {exc}")
+    raise SystemExit(1)
+
+required = (
+    ("PreToolUse", "grok-git-destroy-gate-hook"),
+    ("PreToolUse", "grok-delegation-gate-hook"),
+    ("SessionStart", "grok-todo-gate-hook session-start"),
+    ("SessionStart", "grok-lattice-gantt-hook session-start"),
+    ("SessionStart", "grok-orchestrate-advisory-hook"),
+    ("UserPromptSubmit", "grok-onset-gate-hook"),
+    ("UserPromptSubmit", "grok-lattice-gantt-hook user-prompt-submit"),
+    ("Stop", "grok-todo-gate-hook stop"),
+    ("PostToolUse", "grok-plan-gate-hook"),
+)
+missing = []
+for event, required_command in required:
+    commands = (
+        hook.get("command", "")
+        for entry in data.get("hooks", {}).get(event, [])
+        if isinstance(entry, dict)
+        for hook in entry.get("hooks", [])
+        if isinstance(hook, dict)
+    )
+    if not any(
+        isinstance(command, str) and required_command in command
+        for command in commands
+    ):
+        missing.append(f"{event}: {required_command}")
+if missing:
+    print("FAIL: Grok 工場hook が欠落: " + "、".join(missing))
+    raise SystemExit(1)
+PY
+  then
+    fail=1
+  fi
+fi
+grok_config="$HOME/.grok/config.toml"
+if [ -f "$grok_config" ]; then
+  if ! python3 - "$grok_config" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+header = re.compile(r"(?m)^[ \t]*\[compat\.claude\][ \t]*(?:#.*)?$")
+next_header = re.compile(r"(?m)^[ \t]*\[")
+match = header.search(text)
+if match is None:
+    print(f"FAIL: {sys.argv[1]} に [compat.claude] が無い")
+    raise SystemExit(1)
+end = len(text)
+for found in next_header.finditer(text, match.end()):
+    if not header.match(found.group(0)):
+        end = found.start()
+        break
+section = text[match.start():end]
+for key in ("agents", "hooks"):
+    if not re.search(rf"(?m)^[ \t]*{key}[ \t]*=[ \t]*false(?:[ \t]+#.*)?[ \t]*$", section):
+        print(f"FAIL: {sys.argv[1]} の compat.claude.{key} が false でない")
+        raise SystemExit(1)
+    if re.search(rf"(?m)^[ \t]*{key}[ \t]*=[ \t]*true(?:[ \t]+#.*)?[ \t]*$", section):
+        print(f"FAIL: {sys.argv[1]} の compat.claude.{key} が true のまま")
+        raise SystemExit(1)
+PY
+  then
+    fail=1
+  fi
+fi
 for d in "$REPO/codex/skills"/*/; do
   [ -d "$d" ] || continue
   skill_name="$(basename "$d")"

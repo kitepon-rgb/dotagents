@@ -48,55 +48,95 @@ printf '%s\n' dirty >"$REPO/source.txt"
 run grok-destroy-camel-deny "$PYTHON_EXE" "$ROOT/bin/grok-git-destroy-gate-hook.sh" <<EOF
 {"hookEventName":"pre_tool_use","sessionId":"g-destroy","cwd":"$HOOK_REPO","toolName":"run_terminal_command","toolInput":{"command":"git checkout -- source.txt","cwd":"$HOOK_REPO"}}
 EOF
-json && [[ "$RUN_OUT" == *'"decision": "deny"'* && "$RUN_OUT" == *'P12_UNCOMMITTED_DESTROY'* && "$RUN_OUT" != *permissionDecision* && "$RUN_OUT" != *session_id* ]] && pass grok-destroy-camel-deny || fail_case grok-destroy-camel-deny
+if json && [[ "$RUN_OUT" == *'"decision": "deny"'* && "$RUN_OUT" == *'P12_UNCOMMITTED_DESTROY'* && "$RUN_OUT" != *permissionDecision* && "$RUN_OUT" != *session_id* ]]; then
+  pass grok-destroy-camel-deny
+else
+  fail_case grok-destroy-camel-deny
+fi
 
 # Claude 形へ canonicalize しない: snake_case だけでは deny しない
 run grok-destroy-snake-noop "$PYTHON_EXE" "$ROOT/bin/grok-git-destroy-gate-hook.sh" <<EOF
 {"session_id":"g-snake","tool_name":"run_terminal_command","tool_input":{"command":"git checkout -- source.txt","cwd":"$HOOK_REPO"}}
 EOF
-[ "$RUN_BYTES" -eq 0 ] && pass grok-destroy-snake-noop || fail_case grok-destroy-snake-noop
+if [ "$RUN_BYTES" -eq 0 ]; then
+  pass grok-destroy-snake-noop
+else
+  fail_case grok-destroy-snake-noop
+fi
 
 # Claude frontend は Grok envelope を読まない（経路不変）
 run claude-destroy-grok-envelope "$PYTHON_EXE" "$ROOT/bin/git-destroy-gate-hook.sh" <<EOF
 {"hookEventName":"pre_tool_use","sessionId":"g-claude","cwd":"$HOOK_REPO","toolName":"run_terminal_command","toolInput":{"command":"git checkout -- source.txt","cwd":"$HOOK_REPO"}}
 EOF
-[ "$RUN_BYTES" -eq 0 ] && pass claude-destroy-grok-envelope || fail_case claude-destroy-grok-envelope
+if [ "$RUN_BYTES" -eq 0 ]; then
+  pass claude-destroy-grok-envelope
+else
+  fail_case claude-destroy-grok-envelope
+fi
 
 printf '%s\n' base >"$REPO/source.txt"
 run grok-destroy-clean "$PYTHON_EXE" "$ROOT/bin/grok-git-destroy-gate-hook.sh" <<EOF
 {"sessionId":"g-clean","cwd":"$HOOK_REPO","toolName":"run_terminal_command","toolInput":{"command":"git restore --worktree source.txt","cwd":"$HOOK_REPO"}}
 EOF
-[ "$RUN_BYTES" -eq 0 ] && pass grok-destroy-clean || fail_case grok-destroy-clean
+if [ "$RUN_BYTES" -eq 0 ]; then
+  pass grok-destroy-clean
+else
+  fail_case grok-destroy-clean
+fi
 
 # delegation deny on spawn_subagent camelCase
 run grok-delegation-model-deny "$PYTHON_EXE" "$ROOT/bin/grok-delegation-gate-hook.sh" <<<'{"sessionId":"g-del","toolName":"spawn_subagent","toolInput":{"effort":"high"}}'
-json && [[ "$RUN_OUT" == *'"decision": "deny"'* && "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* && "$RUN_OUT" != *permissionDecision* ]] && pass grok-delegation-model-deny || fail_case grok-delegation-model-deny
+if json && [[ "$RUN_OUT" == *'"decision": "deny"'* && "$RUN_OUT" == *'P10_MODEL_EFFORT_MISSING'* && "$RUN_OUT" != *permissionDecision* ]]; then
+  pass grok-delegation-model-deny
+else
+  fail_case grok-delegation-model-deny
+fi
 
 # snake_case では Grok frontend は動かない
 run grok-delegation-snake-noop "$PYTHON_EXE" "$ROOT/bin/grok-delegation-gate-hook.sh" <<<'{"session_id":"g-del-snake","tool_name":"spawn_subagent","tool_input":{"effort":"high"}}'
-[ "$RUN_BYTES" -eq 0 ] && pass grok-delegation-snake-noop || fail_case grok-delegation-snake-noop
+if [ "$RUN_BYTES" -eq 0 ]; then
+  pass grok-delegation-snake-noop
+else
+  fail_case grok-delegation-snake-noop
+fi
 
 # Stop: camelCase で exit 0、continuation を出さない
 run grok-todo-stop-no-continue "$PYTHON_EXE" "$ROOT/bin/grok-todo-gate-hook.sh" stop <<EOF
 {"hookEventName":"stop","sessionId":"g-stop","cwd":"$HOOK_REPO","stopHookActive":false,"reason":"end_turn"}
 EOF
-[[ "$RUN_OUT" != *'"decision": "block"'* && "$RUN_OUT" != *additionalContext* && "$RUN_STATUS" -eq 0 ]] && pass grok-todo-stop-no-continue || fail_case grok-todo-stop-no-continue
+if [[ "$RUN_OUT" != *'"decision": "block"'* && "$RUN_OUT" != *additionalContext* && "$RUN_STATUS" -eq 0 ]]; then
+  pass grok-todo-stop-no-continue
+else
+  fail_case grok-todo-stop-no-continue
+fi
 
 # session_id 欠落（sessionId だけ）でも exit 2 にしない
 run grok-onset-camel "$PYTHON_EXE" "$ROOT/bin/grok-onset-gate-hook.sh" <<<'{"sessionId":"g-onset","hookEventName":"user_prompt_submit"}'
-[ "$RUN_STATUS" -eq 0 ] && pass grok-onset-camel || fail_case grok-onset-camel
+if [ "$RUN_STATUS" -eq 0 ]; then
+  pass grok-onset-camel
+else
+  fail_case grok-onset-camel
+fi
 
 run grok-plan-camel /bin/bash "$ROOT/bin/grok-plan-gate-hook.sh" <<<'{"sessionId":"g-plan","toolName":"exit_plan_mode","toolInput":{}}'
-[ "$RUN_STATUS" -eq 0 ] && [ "$RUN_BYTES" -eq 0 ] && pass grok-plan-camel || fail_case grok-plan-camel
+if [ "$RUN_STATUS" -eq 0 ] && [ "$RUN_BYTES" -eq 0 ]; then
+  pass grok-plan-camel
+else
+  fail_case grok-plan-camel
+fi
 
 run grok-lattice-camel "$PYTHON_EXE" "$ROOT/bin/grok-lattice-gantt-hook.sh" session-start <<EOF
 {"sessionId":"g-lattice","cwd":"$HOOK_REPO","source":"startup"}
 EOF
-[ "$RUN_STATUS" -eq 0 ] && pass grok-lattice-camel || fail_case grok-lattice-camel
+if [ "$RUN_STATUS" -eq 0 ]; then
+  pass grok-lattice-camel
+else
+  fail_case grok-lattice-camel
+fi
 
 # 所有JSONは工場hookだけ。製品hook名を載せない。
 FACTORY="$ROOT/grok/hooks/factory.json"
-"$PYTHON_EXE" - "$FACTORY" <<'PY' && pass grok-factory-json-owned || fail_case grok-factory-json-owned
+if "$PYTHON_EXE" - "$FACTORY" <<'PY'
 import json, sys
 from pathlib import Path
 text = Path(sys.argv[1]).read_text(encoding="utf-8")
@@ -114,6 +154,11 @@ if not commands or any("grok-" not in command for command in commands):
 if any("git-destroy-gate-hook" in command and "grok-git-destroy-gate-hook" not in command for command in commands):
     raise SystemExit(1)
 PY
+then
+  pass grok-factory-json-owned
+else
+  fail_case grok-factory-json-owned
+fi
 
 if [ "$fail" -ne 0 ]; then exit 1; fi
 printf 'ALL PASS\n'
