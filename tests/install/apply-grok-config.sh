@@ -9,8 +9,9 @@ HOME_FIXTURE="$(mktemp -d)"
 ABSENT_HOME="$(mktemp -d)"
 SYMLINK_HOME="$(mktemp -d)"
 RESOLVE_HOME="$(mktemp -d)"
+SUBTABLE_HOME="$(mktemp -d)"
 STUB_BIN="$(mktemp -d)"
-trap 'rm -rf "$HOME_FIXTURE" "$ABSENT_HOME" "$SYMLINK_HOME" "$RESOLVE_HOME" "$STUB_BIN"' EXIT
+trap 'rm -rf "$HOME_FIXTURE" "$ABSENT_HOME" "$SYMLINK_HOME" "$RESOLVE_HOME" "$SUBTABLE_HOME" "$STUB_BIN"' EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
@@ -139,6 +140,31 @@ else
     | grep -Fq '変更なし' || fail '絶対パス適用の2回目が冪等でない'
   PATH="/usr/bin:/bin" HOME="$RESOLVE_HOME" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply \
     | grep -Fq '変更なし' || fail 'GUI PATH の apply が実行可能な絶対パスを名前へ戻した'
+fi
+
+mkdir -p "$SUBTABLE_HOME/.grok"
+cat >"$SUBTABLE_HOME/.grok/config.toml" <<'EOF'
+[mcp_servers.caveat]
+command = "caveat"
+args = ["mcp-server"]
+enabled = true
+
+[mcp_servers.caveat.env]
+PATH = "/usr/bin:/bin:/usr/sbin:/sbin"
+
+[mcp_servers.x-article]
+url = "https://example.invalid/mcp"
+enabled = true
+EOF
+HOME="$SUBTABLE_HOME" "$HOME_FIXTURE/.local/bin/apply-grok-config" --apply >/dev/null
+subtable_applied="$(cat "$SUBTABLE_HOME/.grok/config.toml")"
+if grep -Fq '[mcp_servers.caveat.env]' <<<"$subtable_applied"; then
+  fail '工場MCPの env 表を残して inline env と二重にする'
+fi
+grep -Fq '[mcp_servers.caveat]' <<<"$subtable_applied" || fail 'env 表の工場MCP本体を消した'
+grep -Fq 'url = "https://example.invalid/mcp"' <<<"$subtable_applied" || fail 'env 表の畳み込みで個人MCPを消した'
+if ! grep -Eq 'env = \{[^}]*PATH =' <<<"$subtable_applied"; then
+  fail 'env 表を畳んだあと inline env を書かない'
 fi
 
 echo 'apply-grok-config: OK'

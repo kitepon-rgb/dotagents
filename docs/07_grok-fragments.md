@@ -19,7 +19,7 @@
 | `gpt_connector` | `gpt-connector-mcp` | — |
 | `aishell` | `aishell-mcp` | `AISHELL_CAPABILITY_SET=expanded-v1` |
 
-既存の工場セクションは command / args / 必須env / `enabled` が契約どおりなら触らない。`enabled = false` や command の食い違いは工場契約へ戻す。`[mcp_servers.x-article]` など工場外のセクションは触らない。
+既存の工場セクションは command / args / 必須env / `enabled` が契約どおりなら触らない。`enabled = false` や command の食い違いは工場契約へ戻す。`[mcp_servers.<name>.env]` のような工場サーバのサブ表は inline `env` へ畳み、本体と二重に残さない。`[mcp_servers.x-article]` など工場外のセクションは触らない。
 
 command の論理名は上表どおり。適用時に `PATH` 上で解決できた command は絶対パスで書き、その親ディレクトリを `env.PATH` の先頭に置く。Grok Build Desktop の GUI PATH（`/usr/bin:/bin:/usr/sbin:/sbin`）では brew の名前解決も `#!/usr/bin/env node` もできない。未解決なら名前のまま残し、handshake は typed 失敗。既に実行可能な絶対パスがあり basename が論理名と一致し、`env.PATH` が契約どおりなら、適用器の PATH が空でも書き戻さない。
 

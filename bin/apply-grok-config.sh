@@ -218,22 +218,26 @@ def render_mcp_section(name: str, spec: dict, existing_body: str | None = None) 
     return "\n".join(lines) + "\n"
 
 
-def find_table_section(text: str, header_re: re.Pattern[str]) -> tuple[int, int] | None:
+def table_ranges(text: str, header_re: re.Pattern[str]) -> list[tuple[int, int]]:
     lines = text.splitlines(keepends=True)
-    start = None
-    for index, line in enumerate(lines):
-        if header_re.match(line.rstrip("\n")):
-            start = index
-            break
-    if start is None:
-        return None
-    end = len(lines)
     next_header = re.compile(r"^[ \t]*\[")
-    for index in range(start + 1, len(lines)):
-        if next_header.match(lines[index]):
-            end = index
-            break
-    return start, end
+    starts = [index for index, line in enumerate(lines) if header_re.match(line.rstrip("\n"))]
+    ranges: list[tuple[int, int]] = []
+    for start in starts:
+        end = len(lines)
+        for index in range(start + 1, len(lines)):
+            if next_header.match(lines[index]):
+                end = index
+                break
+        ranges.append((start, end))
+    return ranges
+
+
+def factory_server_ranges(text: str, name: str) -> list[tuple[int, int]]:
+    header_re = re.compile(
+        rf"^[ \t]*\[mcp_servers\.{re.escape(name)}(?:\.[^\]]+)?\][ \t]*(?:#.*)?$"
+    )
+    return table_ranges(text, header_re)
 
 
 def section_has_factory_contract(body: str, spec: dict) -> bool:
@@ -256,25 +260,19 @@ def section_has_factory_contract(body: str, spec: dict) -> bool:
 def upsert_factory_mcp(text: str) -> str:
     body = normalize_toml(text)
     for name, spec in FACTORY_SERVERS:
-        header_re = re.compile(rf"^[ \t]*\[mcp_servers\.{re.escape(name)}\][ \t]*(?:#.*)?$")
-        found = find_table_section(body, header_re)
-        if found is None:
+        ranges = factory_server_ranges(body, name)
+        if not ranges:
             prefix = "" if not body.strip() else "\n"
             body = f"{body}{prefix}{render_mcp_section(name, spec)}"
             continue
-        start, end = found
         lines = body.splitlines(keepends=True)
-        replace_end = end
-        while replace_end > start + 1:
-            stripped = lines[replace_end - 1].strip()
-            if stripped == "" or stripped.startswith("#"):
-                replace_end -= 1
-                continue
-            break
-        existing = "".join(lines[start:replace_end])
-        if section_has_factory_contract(existing, spec):
+        existing = "".join("".join(lines[start:end]) for start, end in ranges)
+        if len(ranges) == 1 and section_has_factory_contract(existing, spec):
             continue
-        body = "".join(lines[:start]) + render_mcp_section(name, spec, existing) + "".join(lines[replace_end:])
+        drop = {index for start, end in ranges for index in range(start, end)}
+        kept = [line for index, line in enumerate(lines) if index not in drop]
+        insert_at = ranges[0][0]
+        body = "".join(kept[:insert_at]) + render_mcp_section(name, spec, existing) + "".join(kept[insert_at:])
     return normalize_toml(body)
 
 

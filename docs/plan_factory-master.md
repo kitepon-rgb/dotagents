@@ -48,6 +48,8 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
 
 ## maintenance queue
 
+- **`test-observer-package`が diagnostics schema / version 不一致で落ちる**（2026-08-16記録・所有repo=Observer／dotagents試験・非クリティカル）:
+  Grok親Wave 5閉じで観測。`make ci`の必須targetではない。Grok戦役のcommitは当該testに触れていない。最小再現は`make test-observer-package`。
 - **Lattice `todo note`がスタブrevisionでfail closed**（2026-08-02記録・所有repo=Lattice・非クリティカル）:
   `factory-master`履歴中の`rev-c7e2409e…`（2026-07-20移行中断の残骸・`plan.json`欠落）でnote投影が
   `NOTE_PROJECTION_INVALID`になる。最小再現・迂回はcaveat
