@@ -1,6 +1,6 @@
 # 工場管理12製品＋基盤toolchain 3製品の有限契約台帳
 
-更新日: 2026-08-14。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
+更新日: 2026-08-16。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
 ## 共通境界
 
@@ -78,6 +78,7 @@
 - diagnostics/state正本: stdio MCP initialize後のread-only `diagnostics` tool（schema `aiterm-mcp.factory-diagnostics.v1`）。PTY一覧は件数だけ、vendor依存は実行可能性だけを返す。
 - 現adapter: stdio MCP initialize→`diagnostics`と、明示opt-inされた公開runtime error snapshot/ackを接続済み。tmux不能やschema driftは`unverified`、native `not_ready`は固定fingerprintのfailへ写像する。診断toolは次回製品releaseまで現行registry版0.12.1には未収録。
 - 禁止: PTY/agent起動をhealth扱い。native Windowsの`agent_done`非対応は`unsupported`。
+- **Windows native更新の一時除外（2026-08-16・オーナー裁定）**: aiterm-mcpのWindows基盤をWSL橋からnative psmuxへ移行中（`kitepon/aiterm-mcp` branch `feat/windows-native-psmux`。前提となるpsmux忠実度修正は上流PR [psmux/psmux#577](https://github.com/psmux/psmux/pull/577) 審査中）。windows-workstationにはnative版ローカルビルドをtarball経由の実体installでglobal先行適用しており、`npmPackagesForHost`（deployment contract・commit 42a91d4d）でwin32だけaiterm-mcpを更新集合から除外している。POSIX各hostの更新は不変。**戻し条件**: PR #577 merge→aiterm native版release→windows-workstationへregistry版global install後に、除外とcron-env契約テストのWindows期待値を戻す（戻し忘れはwindows-workstationのwatch-psmux-pr-577監視タスクが追跡）。この間、Windows nativeの`agent_done`はnative psmux版で解消済みであり、release後に本台帳の上記「`agent_done`非対応は`unsupported`」も更新する。
 
 ### `codex-sidecar`
 
