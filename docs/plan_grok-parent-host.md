@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 5 このMac H適用（2026-08-16）。`install.sh --profile official` 済み。`apply-grok-config --apply` は変更なし（agents/hooks=false、工場MCP 6は既載）。Grok面は本リポ向きsymlink。このsessionは受入に数えない。FOX WSL2と新規session受入は未実施。Wave 6は別H。
+Wave 5 このMac新規session受入（2026-08-16 このsession。HEAD=6c61271）。有効なglobal user ruleは`~/.grok/rules/AGENTS.md`だけ。`~/.claude/Claude.md`はvendor=claude disabled。Claude deltaのaiterm PTY既定は無く、人格（ベル）とGrok deltaは載る。工場skill 4は`~/.grok/skills`から列挙、bundled（imagine等）は残る。工場hookは`~/.grok/hooks` enabled 9件。Claude settings由来22件（Spotter / Throughline / Caveatを含む）はvendor=claude disabled（inspectには残る。発火しない）。工場MCP 6は`source.type=configToml`。このsession起動時handshakeは6とも`connection failed`（typed。toolsは列挙されない）。`grok mcp doctor --json`では6ともhandshake OK。FOX WSL2は未実施。Wave 6は別H。
