@@ -22,6 +22,6 @@ Desktop のレール「Update available」は上流 `phuryn/grok-build-vscode` �
 
 ## 差分の置き場
 
-Desktop: 既定リレー `wss://afk.kitepon.dev`、パッケージ済みでも `GROK_RELAY_URL` / `~/.grok/afk-relay.json`、公式 updater 遮断、appId/profile 分離、空 cwd の回復。
+Desktop: 既定リレー `wss://afk.kitepon.dev`、パッケージ済みでも `GROK_RELAY_URL` / `~/.grok/afk-relay.json`、公式 updater 遮断、appId/profile 分離、空 cwd の回復。リモートの PROJECTS `＋` は `$HOME` 配下のフォルダ一覧（ホーム自体は追加不可）。外す操作はデスクだけ。
 
 AFK: `RELAY_DEVICE_STORE` のファイル永続、`deploy/kitepon/`。`web/vendor` は手で持たず、必要なら上流手順の `npm run sync-ui`。

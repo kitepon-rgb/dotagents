@@ -12,7 +12,7 @@
 2. `bin/update-grok-community-overlay.sh` を実行する。衝突したら overlay コミットだけ直して続行する。
 3. 問題なければ `--push`。
 4. Desktop: `~/Developer/grok-build-vscode` で `npm run compile` と `npx electron-builder --mac dir --arm64 --publish never`。できた app を `/Applications/Grok Build Desktop (kitepon).app` へ。公式 app は触らない。
-5. AFK を上げるなら source を main-server `~/afkpilot` へ rsync（`--delete` の前は dry-run）し、`deploy/kitepon` で `docker compose up -d --build`。`.env` の `DEVICE_KEYS_PEPPER` を回さない。
+5. リモート UI を変えたら AFK 作業ディレクトリで `npm run sync-ui`。上げるなら source を main-server `~/afkpilot` へ rsync（`--delete` の前は dry-run）し、`deploy/kitepon` で `docker compose up -d --build`。`.env` の `DEVICE_KEYS_PEPPER` を回さない。
 6. LAN `http://192.168.1.2:18870/api/health` が 200、公開トップが Access のまま、kitepon Desktop のリンクが残ることを見る。
 
 ## やってはいけないこと
