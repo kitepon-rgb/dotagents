@@ -1,6 +1,6 @@
 # 工場管理11製品＋基盤toolchain 3製品の有限契約台帳
 
-更新日: 2026-08-16。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
+更新日: 2026-08-17。正本はdotagents。host期待状態は [factory-host-product-matrix.md](factory-host-product-matrix.md)、wire契約はServerManager `bughub/FACTORY_INTEGRATION.md`。
 
 ## 共通境界
 
@@ -70,6 +70,7 @@
 
 - `claude-code`、`codex-cli`、`grok-build`はコア製品ではないが、version・update結果・互換性を固定product IDで管理する。
 - Claude/Codexはnpm `@latest`、Grok Buildは正規self-updateを用いる。失敗を他製品の成功で隠さず、第三者本体のpatch・内部状態読解・認証変更・agent起動はしない。
+- Mac の自前 Desktop と main-server の自前 AFK Pilot は、公式 `grok-build` ID とは別の **Community overlay** である。新product ID・wire 集合・コア12目にはしない。所有と更新は[factory-grok-build-community-overlay.md](factory-grok-build-community-overlay.md)。
 - Oracleはv1互換・手動rollbackの履歴対象としてのみ残し、新規契約台帳・通常connector・更新対象には含めない。
 
 ### `aiterm-mcp`

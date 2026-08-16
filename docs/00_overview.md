@@ -33,6 +33,7 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | 文書 | 役割 |
 |---|---|
 | [factory-product-contracts.md](factory-product-contracts.md) | 管理11製品＋基盤toolchain 3製品の**有限契約台帳**。version入口・正規diagnostics・adapter・禁止事項 |
+| [factory-grok-build-community-overlay.md](factory-grok-build-community-overlay.md) | 公式 Grok Build CLI とは別の、自前 Desktop / AFK overlay。コア製品IDを増やさない |
 | [factory-host-product-matrix.md](factory-host-product-matrix.md) | host別の期待状態（required／optional／unsupported／not_applicable）と親別connector |
 | [factory-reporter-runbook.md](factory-reporter-runbook.md) | credential・設定・送信・rotation・**wire major別のserver-first cutoverとrollback**の運用手順 |
 | `wire-vN-design.md` | wire major各版の契約正本。現役は[v7](wire-v7-design.md)のみ（**2026-08-10に全4現役hostでcutover完了**）。[v6](wire-v6-design.md)・[v5](wire-v5-design.md)は履歴 |
