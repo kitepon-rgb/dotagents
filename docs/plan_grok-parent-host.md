@@ -140,7 +140,7 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 
 | 製品 | 内容 | 今の状態 |
 |---|---|---|
-| Throughline | Grok turnのcapture / restore / handoff | Grokは`transcriptPath`を無視して`chat_history.jsonl`を読む修正済み。`01a00b38`のlive L2は次Stopで再測。restore/handoff実機と他席は未了 |
+| Throughline | Grok turnのcapture / restore / handoff | Mac Desktop `01a00b38`は`grok:`行とL2 4往復が実在。capture受入は閉じた。restore/handoff実機と他席は未了 |
 | Observer | 工場コアから撤去 | 2026-08-16裁定。Grok familyは開かない。撤去は独立wave |
 | Spotter | 正式Grok host | コア維持。8/14棄却を撤回。Wave 6で正式host化する |
 
@@ -209,4 +209,4 @@ Wave 5 Linux / main-server新規session受入（2026-08-16 session `01a00a9c`、
 
 Wave 6 Throughline Grok hook capture 人の目（2026-08-17 session `01a00b2f-ef4a-76e1-9f20-ce7e8d0b0ca0`、このDesktop窓。前sessionの見た目は数えない）。Throughline origin/mainは`8ca1e5c`、dotagents origin/mainは`cdd8f5a`。`~/.grok/hooks/throughline.json`は存在し factory.json は未改変。このsessionの`updates.jsonl`に`global/throughline:session_start`と`user_prompt_submit`の発火があり、両方`exit code 127: sh: throughline: command not found`。`events.jsonl`にthroughline痕跡は無い。`~/.throughline/throughline.db`の`grok:`行は0件、このsession idのsessions/bodiesも無い。Grok側`chat_history.jsonl`にuser/assistantは存在するがThroughline L2ではない。Claude/Codexの既存sessionとsettingsは触っていない。npm未公開・restore/handoff実機・Spotter着手はしていない。成功条件（この新規sessionの`grok:`行とL2）は未達。次はinstallがCodex同様に絶対パスを書くことと、直したあとの新規session再受入。
 
-Wave 6 Throughline Grok hook capture 人の目（2026-08-17 session `01a00b38-87ea-7670-8f7d-a9fe937263c5`、このDesktop窓。前session `01a00b2f` の見た目は数えない）。Stopはsuccessだが`updates.jsonl`を読んでL2は0件だった。Grok hostはpayloadの`transcriptPath`を無視して`chat_history.jsonl`を読む修正を入れた。focused test 23件pass。live L2は次Stopで再測。restore/handoff実機と他席は未了。
+Wave 6 Throughline Grok hook capture 人の目（2026-08-17 session `01a00b38-87ea-7670-8f7d-a9fe937263c5`、このDesktop窓。前sessionの見た目は数えない）。Throughline origin/mainは`a964e0a`。`global/throughline`のsession_start / user_prompt_submit / stopはsuccess。最新stopの`backfill.log`は`chat_history.jsonl`で`groups:4` `inserted_turns:4`。DBに`grok:01a00b38-87ea-7670-8f7d-a9fe937263c5`行とL2 user/assistant 4往復（8行）がある。成功条件は達した。Claude/Codexは触っていない。npm未公開。restore/handoff実機と他席、Spotterは未了。
