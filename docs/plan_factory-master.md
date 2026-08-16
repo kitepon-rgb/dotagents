@@ -44,7 +44,7 @@ Tier 2機械境界wave（`fm-0687`〜`fm-0690`・2026-08-02起票・lane `canon-
 ## 並行campaign
 
 - [Grok 親host 全対応](plan_grok-parent-host.md)（2026-08-16開始。工程正本は当該Markdown。Lattice未適用）。
-  Grok BuildをClaude / Codexと同格の工場親にする。Wave 0は正本のみ。実装はWave 1から。
+  Wave 0〜4着地。Wave 5はMac新規session受入済み。残はFOX WSL2の新規session。Windows nativeのGrokは入れない。Wave 6は製品repo・別H。
 
 ## maintenance queue
 

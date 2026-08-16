@@ -40,7 +40,7 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 
 製品導入とconnector有効化を混同しない。外部実行connectorの4段階（installed→execution-verified）とwriter制限は[docs/02_models.md](02_models.md)「入口と使い分け」が正典。
 
-Grok親列はWave 1〜4の実測だけを書く。`required`にする根拠は、その面のGrok所有が`install`または`grok mcp doctor`で証明された場合に限る。2026-08-14のGF07 12製品matrix（`supported` / `partial` を含む）は到達性の履歴であり、本列へ写してgreenへ丸めない。既存Grok sessionの見た目は受入に数えない。
+Grok親列はWave 1〜5の実測を書く。Mac新規session（2026-08-16 `01a0091e`）で工場MCP 6は session 面 connected。FOX WSL2は実HOME適用済み、新規session受入は未実施。Windows nativeは対象外。`required`はGrok所有が`install`で証明された面。handshakeの人の目は新規sessionだけを数え、`grok mcp doctor`成功をsession成功に読み替えない。2026-08-14のGF07 12製品matrix（`supported` / `partial` を含む）は到達性の履歴であり、本列へ写してgreenへ丸めない。既存Grok sessionの見た目は受入に数えない。
 
 | product | Claude親 | Codex親 | Grok親 |
 |---|---|---|---|
