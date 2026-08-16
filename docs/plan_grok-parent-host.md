@@ -140,7 +140,7 @@ Wave 1〜5がdotagentsで閉じる範囲。MacとFOX WSL2とFOX Windows native�
 
 | 製品 | 内容 | 今の状態 |
 |---|---|---|
-| Throughline | Grok turnのcapture / restore / handoff | Mac capture/restoreは閉じた。live `/tl`はuser_query包装でバトン未書き。判定を直した。再`/tl`→`/new`の注入は未測。他席は未了 |
+| Throughline | Grok turnのcapture / restore / handoff | Mac capture/restoreは閉じた。GrokはUserPromptSubmit stdoutを無視するので、handoff注入を`chat_history.jsonl`へ書いた。live再`/tl`→新規sessionは未測。他席は未了 |
 | Observer | 工場コアから撤去 | 2026-08-16裁定。Grok familyは開かない。撤去は独立wave |
 | Spotter | 正式Grok host | コア維持。8/14棄却を撤回。Wave 6で正式host化する |
 
@@ -214,3 +214,5 @@ Wave 6 Throughline Grok hook capture 人の目（2026-08-17 session `01a00b38-87
 Wave 6 Throughline Grok restore 実機（2026-08-17 session `01a00b38`、このDesktop窓）。`throughline handoff-context --session grok:01a00b38-87ea-7670-8f7d-a9fe937263c5 --json` は status ready、context 8730字でこの会話の L2 を含む。実装追加なし。`/tl` バトンは未書き。auto path は `grok:` を前任から除外する。hook handoff（`/tl`→新規 session 注入）と他席、Spotter は未了。
 
 Wave 6 Throughline Grok `/tl` 判定修正（2026-08-17 session `01a00b38`）。live `/tl` は hook success だが baton 未書き。Grok は `<user_query>/tl</user_query>` で包む。判定を直した。再 `/tl` と `/new` 後の注入は未測。
+
+Wave 6 Throughline Grok handoff注入をchat_historyへ（2026-08-17）。`01a00ce5-0169`はbaton消費とstdout 8600字まで成功したがGrokはUserPromptSubmit stdoutを無視。注入を`chat_history.jsonl`の最新`<user_query>`直前へ`synthetic_reason=throughline_handoff`行として書く。Claude stdoutは維持。live再測は未了。
