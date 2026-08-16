@@ -182,4 +182,4 @@ Control RecordはWave 1の最初の実装Taskで`init`する。本Wave 0はdocs�
 
 ## 9. 現在地
 
-Wave 1のrepo側は着地。generatorは3 host、`grok/AGENTS.md`を隔離HOMEの`~/.grok/rules/AGENTS.md`へ配り、`apply-grok-config`は隔離HOMEでだけ`compat.claude.agents=false`を書く。実HOMEの`install.sh`と新規Grok session確認はHで未実施。次はオーナー承認後の実HOME適用。
+Wave 1は実HOMEまで着地（2026-08-16 H承認）。`~/.grok/rules/AGENTS.md`と`~/.grok/runbooks`をsymlinkし、`compat.claude.agents=false`を書いた。`grok inspect`はhome ruleとして`~/.grok/rules/AGENTS.md`を読み、`~/.claude/Claude.md`を`disabled`と報告する。このsessionは起動時のClaude吸入を抱えたままなので、確認は新規sessionでする。次はWave 2。
