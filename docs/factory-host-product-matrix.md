@@ -45,7 +45,7 @@ Grok親列はWave 1〜5の実測を書く。工場の4席（Mac / Windows native
 | product | Claude親 | Codex親 | Grok親 |
 |---|---|---|---|
 | Caveat | MCP＋4 hooks required | native 3 hooks required（MCP不要） | MCP required（Wave 5 4席 session）。製品hook unsupported（Wave 4 / 8/14 no-op） |
-| Throughline | hook/CLI required | hook/skill/CLI required | unsupported（製品hookは起動しない。hook captureはWave 6） |
+| Throughline | hook/CLI required | hook/skill/CLI required | hook/CLI required（Mac 実測: capture・handoff-context・Grok `/tl`→`grok-continue`。後継起動は macOS Terminal のみ。製品hookは `~/.grok/hooks/throughline.json`） |
 | Spotter | 対象projectで明示install required | 対象projectで明示install required | unsupported（8/14正式host棄却。製品hookは起動しない） |
 | MarkItDown | CLI required | CLI required | not_applicable（Grok固有connector面なし） |
 | gpt-connector | MCP `gpt_connector` required。専用Chrome非対応hostはconnectorだけunsupported | MCP `gpt_connector` required。timeout後は sessions 回収 | MCP required（Wave 5 4席 session） |

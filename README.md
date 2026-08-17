@@ -281,7 +281,7 @@ Grok親の所有面は次だけである。Claude面を吸うことを完成形�
 | runbook | `~/.grok/runbooks` | 吸わない |
 | skill / agent | `~/.grok/skills` / `~/.grok/agents` | `compat.claude.skills`は切らない（Wave 2: `~/.grok/skills`が同名に勝つ） |
 | 工場MCP | `~/.grok/config.toml` | `compat.claude.mcps`は切らない。同名はtomlが勝つ |
-| 工場hook | `~/.grok/hooks/factory.json` | `compat.claude.hooks=false`。Spotter / Throughline / Caveat / Observerの製品hookはGrokで起動しない |
+| 工場hook | `~/.grok/hooks/factory.json` | `compat.claude.hooks=false`。工場hookに製品hookは載せない。Throughline製品hookは `~/.grok/hooks/throughline.json`（`throughline install`）。Spotter / Caveat 製品hookはGrokで起動しない |
 | Lattice工程表 | `grok-lattice-gantt-hook`（dotagents所有の案内） | `lattice hooks install --host` にGrokを足さない |
 
 `spotter install -y` はSpotterの正規project-scoped入口である。dotagentsの `.claude/settings.json` と `.spotter/`（どちらも端末ローカル・gitignore）を作り、user-level Codex hook 3本をcanonical化し、Claude/Codex別catalogをseedする。PATH上のThroughlineを絶対実行パスへ解決できる時はauditor contextが既定ONになる。Spotter自身のCLI以外でmarkerやhookを複製・手書きしない。
