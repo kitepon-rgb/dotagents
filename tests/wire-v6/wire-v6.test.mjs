@@ -7,17 +7,18 @@ import test from 'node:test';
 
 import { validateReportV5, validateReportV6 } from '../../lib/factory/contract.mjs';
 import { V5_PRODUCT_IDS } from '../../lib/factory/v5.mjs';
-import { observerProduct, V6_PRODUCT_IDS } from '../../lib/factory/v6.mjs';
+import { V6_PRODUCT_IDS } from '../../lib/factory/v6.mjs';
 
-const EXPECTED = [...V5_PRODUCT_IDS, 'observer'];
+const EXPECTED = [...V5_PRODUCT_IDS];
 
-test('v6正典はObserverを自作コア、MarkItDownを第三者管理として管理対象へ固定する', async () => {
+test('v6正典はObserverをwire必須キーから外し、MarkItDownを第三者管理として固定する', async () => {
   const contracts = await readFile(resolve(import.meta.dirname, '../../docs/factory-product-contracts.md'), 'utf8');
   const matrix = await readFile(resolve(import.meta.dirname, '../../docs/factory-host-product-matrix.md'), 'utf8');
   assert.match(contracts, /^# 工場管理\d+製品＋基盤toolchain 3製品/mu);
   assert.match(contracts, /### `markitdown`[\s\S]*所有\/修正先: 第三者/u);
-  assert.match(contracts, /### `observer`[\s\S]*所有\/修正先: 自作 \/ `kitepon\/Observer`/u);
-  assert.match(matrix, /^\| Observer \| not_applicable（工場コア撤去/mu);
+  assert.match(contracts, /### `observer`[\s\S]*wire v6\/v7の製品キーから削除/u);
+  assert.doesNotMatch(matrix, /^\| Observer \|/mu);
+  assert.match(matrix, /Observerは[\s\S]*wire v6\/v7の必須キーからも削除/u);
   assert.doesNotMatch(contracts, /Observerは予約枠のまま未編入/u);
 });
 
@@ -73,18 +74,21 @@ function reportV6() {
   };
 }
 
-test('v6はv5順序を保持してObserverを14番目へ追加する', () => {
+test('v6はv5と同じ13製品でobserverキーを持たない', () => {
   assert.deepEqual(V6_PRODUCT_IDS, EXPECTED);
-  assert.equal(new Set(V6_PRODUCT_IDS).size, 14);
+  assert.equal(new Set(V6_PRODUCT_IDS).size, 13);
+  assert.equal(V6_PRODUCT_IDS.includes('observer'), false);
 });
 
-test('v6 validatorは固定14製品だけを受理し、v5を変更しない', () => {
+test('v6 validatorは固定13製品だけを受理し、v5を変更しない', () => {
   const report = reportV6();
   assert.doesNotThrow(() => validateReportV6(report));
-  assert.throws(
-    () => validateReportV6({ ...report, products: Object.fromEntries(V5_PRODUCT_IDS.map((id) => [id, product()])) }),
-    /固定14製品/,
-  );
+  assert.equal('observer' in report.products, false);
+  const withObserver = {
+    ...report,
+    products: { ...report.products, observer: product() },
+  };
+  assert.throws(() => validateReportV6(withObserver), /productsに未定義fieldがあります/);
   const v5 = {
     ...report,
     schema_version: '5.0',
@@ -92,25 +96,6 @@ test('v6 validatorは固定14製品だけを受理し、v5を変更しない', (
     products: Object.fromEntries(V5_PRODUCT_IDS.map((id) => [id, product('5.0')])),
   };
   assert.doesNotThrow(() => validateReportV5(v5));
-});
-
-test('撤去後Observer射影はv6 validatorを通る', async () => {
-  const report = reportV6();
-  report.products.observer = await observerProduct();
-  assert.doesNotThrow(() => validateReportV6(report));
-  report.products.observer.compatibility_status = 'not_applicable';
-  assert.throws(() => validateReportV6(report), /products\.observer\.compatibility_statusが不正です/);
-});
-
-test('Observer safe_contextは空allowlistのため拒否する', () => {
-  const report = reportV6();
-  report.products.observer.checks = [{
-    check_id: 'native_diagnostics',
-    status: 'unverified',
-    reason_code: 'native_schema_invalid',
-    safe_context: { watch_id: 'w_private' },
-  }];
-  assert.throws(() => validateReportV6(report), /safe_context/);
 });
 
 function run(script, args, env = {}) {
@@ -154,7 +139,6 @@ test('v6 reporterはv6 reportだけを受理し、v5とstateを共有しない',
     const v5 = reportV6();
     v5.schema_version = '5.0';
     v5.reporter.version = '5.0.0';
-    delete v5.products.observer;
     for (const productValue of Object.values(v5.products)) productValue.contract_version = '5.0';
     await writeFile(reportPath, JSON.stringify(v5));
     const rejected = await run(reporter, ['preview', '--report', reportPath, '--config', configPath], {

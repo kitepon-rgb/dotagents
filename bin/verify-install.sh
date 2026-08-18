@@ -157,7 +157,6 @@ verify_factory_core() {
       codex-sidecar) cli=codex-sidecar-mcp ;;
       peertable) cli=peertable-client ;;
       aishell) cli=aishell-mcp; aishell_supported=true ;;
-      observer) cli=observer ;;
       servermanager) continue ;;
       *) echo "FAIL: deployment contract product が未対応: $required_product"; fail=1; continue ;;
     esac

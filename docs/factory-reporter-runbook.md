@@ -101,7 +101,7 @@ v6へ復帰する時はconfigの`reporting.endpoint`を`/api/factory/v6/reports`
 
 ## 4b. 現役wire v7と完了済み段階cutover
 
-peertable編入に伴うwire v7（固定15製品）は、§4aと同じserver-first順序で2026-08-10に移行を完了した。契約は[wire v7設計](wire-v7-design.md)、承認記録は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)が正。
+peertable編入に伴うwire v7は、§4aと同じserver-first順序で2026-08-10に移行を完了した。現行必須集合は固定14製品（observerキーなし）。契約は[wire v7設計](wire-v7-design.md)、承認記録は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)が正。
 
 **現在のhost別状態（2026-08-10 完了）**: 全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）がv7へcutover済み。各hostにv6退避config（`*.bak-v6-<timestamp>`）とv6 state/outboxが残っており、rollbackは§4a同様に即応できる。
 
@@ -111,7 +111,7 @@ host別cutoverの順序（全4現役hostで実測済みの形）:
 2. host configを`factory-reporter.json.bak-v6-<timestamp>`へ退避する。
 3. `reporting.endpoint`を`/api/factory/v7/reports`へ変更する。
 4. `factory-reporter-scheduler install --wire-major v7 --dry-run --platform <OS>`でartifactを確認し、H承認後に`--apply`する。**v6 state/outbox（`~/.local/state/dotagents/factory-reporter-v6/`）は削除しない**——rollback即再開の前提になる。
-5. scan → enqueue → flushを1回手動実行し、BugHubのcurrent viewで対象hostの15製品が`contract_version 7.0`で反映されることを確認する。
+5. scan → enqueue → flushを1回手動実行し、BugHubのcurrent viewで対象hostの14製品が`contract_version 7.0`で反映されることを確認する。`products.observer`が無いことを確認する。
 
 v6へ戻す時は退避configを書き戻し、`--wire-major v6`で再installする（state/outboxが無傷なら即再開できる。v6経路のpayloadは`schema_version="6.0"`・endpoint `/api/factory/v6/reports`のまま変えない）。§4aと同じく、全hostを一括切替しない。
 
@@ -219,9 +219,9 @@ factory-reporter-scheduler install --dry-run --platform win32 --wire-major v7
 
 常設更新の正規入口はhost別一撃展開が所有する。
 
-- macOS: `setup-macos-factory.sh`がLaunchAgent `com.kite.agents-update`を毎週月曜04:00で登録し、初回実行中に全15製品とfresh v7 deliveryを検証する。
-- Linux: `setup-linux-factory.sh`が`setup-linux-factory --scheduled-update`を毎日02:00の専用cronへ登録する。server profile、ServerManager local readiness/revision、全15製品とfresh v7 deliveryを検証する。他hostの`factory_ingest`鮮度はBugHub集約監視が所有し、main-server展開を阻害しない。
-- WSL2: `setup-wsl-factory.sh`が`setup-wsl-factory --scheduled-update`を毎日02:00のcronへ登録する。scheduled runはbatch token、全15製品、同一tokenのdelivery receiptを検証する。
+- macOS: `setup-macos-factory.sh`がLaunchAgent `com.kite.agents-update`を毎週月曜04:00で登録し、初回実行中に全14製品とfresh v7 deliveryを検証する。
+- Linux: `setup-linux-factory.sh`が`setup-linux-factory --scheduled-update`を毎日02:00の専用cronへ登録する。server profile、ServerManager local readiness/revision、全14製品とfresh v7 deliveryを検証する。他hostの`factory_ingest`鮮度はBugHub集約監視が所有し、main-server展開を阻害しない。
+- WSL2: `setup-wsl-factory.sh`が`setup-wsl-factory --scheduled-update`を毎日02:00のcronへ登録する。scheduled runはbatch token、全14製品、同一tokenのdelivery receiptを検証する。
 - Windows native: `setup-windows-native-factory.ps1`が`agents-update-scheduler`を通じて`dotagents-agents-update`を毎日02:00に登録する。初回は登録した実Taskを起動してdelivery receiptまで確認する。WSL2側のcronで代用しない。
 
 Windows nativeの常設更新は`agents-update-scheduler`が所有する。`install|status|uninstall`はdry-run既定で、専用task `dotagents-agents-update`、現在SIDの`UserId`と`InteractiveToken`を組にしたUTF-16LE BOM XML、locale非依存の`Get-ScheduledTask`照会、Create後の読み戻し、runner preflight、DACL `Access`だけのowner-only ACLを使う。`--apply`とTask手動起動はH承認が必要である。scheduled runnerは実行ごとに新しいbatch tokenを発行して`agents-update`へ渡し、終了codeだけでなく、BugHub accepted後にv7 runnerが原子的に保存した同一report_id・同一tokenのdelivery receiptを確認する。runtime-error acknowledgement metadataはdelivery証拠に使わない。rollbackはtaskだけを`uninstall --apply`で外し、report/outboxを削除しない。

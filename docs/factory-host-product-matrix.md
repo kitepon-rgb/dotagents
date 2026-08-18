@@ -29,7 +29,6 @@ presenceと分離してその面だけを理由付き`unsupported`にする（gp
 | codex-sidecar | required | required | required | required | high |
 | Lattice | required | required | required | required | high |
 | AIShell | required（Apple Silicon / macOS 15+） | unsupported（macOS native API不在） | unsupported（同左） | unsupported（同左） | high（対応Macのみ） |
-| Observer | not_applicable（工場コア撤去・2026-08-16） | not_applicable | not_applicable | not_applicable | info |
 | ServerManager | not_applicable | required | not_applicable | not_applicable | high（main-serverのみ） |
 | peertable | required（client。実測済み） | required（server。`deploy/compose.yaml`でcompose常駐） | required（client。2026-08-10実測済み） | required（client。2026-08-10実測済み） | high |
 | Claude Code CLI | required | required | required | unsupported | high |
@@ -53,13 +52,13 @@ Grok親列はWave 1〜5の実測を書く。工場の4席（Mac / Windows native
 | codex-sidecar | MCP required | MCP required。隔離worktreeの外部実行に使う | MCP required（Wave 5 4席 session）。隔離Codex実行用 |
 | Lattice | required。`lattice-mcp`のsensor 8 toolを配線。`codegraph_*`互換名はLattice提供者identityを返す | 同左。Windows nativeは親CLIを運用する端末だけMCP登録 | MCP required（Wave 5 4席 session）。`lattice-gantt`はdotagents所有の案内。`lattice hooks install --host` のGrok hostは増やさない＝製品host hook unsupported |
 | AIShell | MCP `aishell` required（Apple Silicon / macOS 15+のみ）。`AISHELL_CAPABILITY_SET=expanded-v1`で登録し、工場監視はpath非露出の`AISHELL_TOOL_PROFILE=factory`を使う | 同左 | MCP required（Apple Silicon / macOS 15+のみ。Wave 5 Mac `01a0091e` connected）。他hostはunsupported（WSL2 / Windows / Linux は typed `spawn_failed`） |
-| Observer | not_applicable（工場コア撤去） | not_applicable | not_applicable |
 | ServerManager | connector not_applicable | connector not_applicable | connector not_applicable |
 | peertable | team編成時（peertable setup）だけMCP `room` required。teardownで解除 | 同左 | unsupported（Wave 2: roomはClaude面のまま。Grok所有のroom MCPなし） |
 
 独立Codegraphは全hostで退役済みであり、製品・connector期待matrixへ含めない。BugHubの既存履歴だけを
 `not_applicable`として保持する。Latticeの`codegraph_*` tool名はLattice所有の入力互換ABIであり、
-独立Codegraph MCP登録を意味しない。
+独立Codegraph MCP登録を意味しない。Observerは2026-08-16に工場コアから撤去し、2026-08-18に
+wire v6/v7の必須キーからも削除した。現役の製品・connector期待matrixと`products.observer`へ含めない。
 
 Grok親列は工場の4席が対象である。Grok Buildの導入は4席とも`optional`（未loginで一撃展開を止めない。loginと`apply-grok-config`はH）。4席の新規session受入は2026-08-16に閉じた。製品または上流が正規入口を持たない面だけを`unsupported`にする。Grok親の憲法・skill・工場MCP・工場hookは`~/.grok`が所有し、`compat.claude.agents`と`compat.claude.hooks`は切る。`compat.claude.skills`と`compat.claude.mcps`は切らない。
 
@@ -85,7 +84,7 @@ WSL2とWindows nativeは同一物理端末でも別hostとして扱い、設定�
 
 | host | 一撃展開 | 定期更新 | 実host受入 |
 |---|---|---|---|
-| Mac | `setup-macos-factory.sh` | LaunchAgent `com.kite.agents-update`、毎週月曜04:00 | `verify-install`、15製品、fresh v7 delivery |
-| main-server | `setup-linux-factory.sh` | cron `# dotagents-agents-update-linux`、毎日02:00 | `server` profile、ServerManager local readiness/revision、15製品、fresh v7 delivery |
-| FOX WSL2 | `setup-wsl-factory.sh` | cron `# dotagents-agents-update-wsl`、毎日02:00 | batch token、15製品、fresh v7 delivery |
-| FOX Windows native | `setup-windows-native-factory.ps1` | Task `dotagents-agents-update`、毎日02:00 | 実Task smoke、終了code、15製品、fresh v7 delivery |
+| Mac | `setup-macos-factory.sh` | LaunchAgent `com.kite.agents-update`、毎週月曜04:00 | `verify-install`、14製品、fresh v7 delivery |
+| main-server | `setup-linux-factory.sh` | cron `# dotagents-agents-update-linux`、毎日02:00 | `server` profile、ServerManager local readiness/revision、14製品、fresh v7 delivery |
+| FOX WSL2 | `setup-wsl-factory.sh` | cron `# dotagents-agents-update-wsl`、毎日02:00 | batch token、14製品、fresh v7 delivery |
+| FOX Windows native | `setup-windows-native-factory.ps1` | Task `dotagents-agents-update`、毎日02:00 | 実Task smoke、終了code、14製品、fresh v7 delivery |
