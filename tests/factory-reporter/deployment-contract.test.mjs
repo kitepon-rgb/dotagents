@@ -3,7 +3,7 @@ import test from 'node:test';
 import { CURRENT_WIRE_PRODUCT_IDS, MANAGED_PRODUCT_IDS, hostProjection, postUpdateFailures } from '../../lib/factory/deployment-contract.mjs';
 import { V7_PRODUCT_IDS } from '../../lib/factory/v7.mjs';
 
-test('deployment contractは管理11製品とv7 wire 15 IDを固定する', () => {
+test('deployment contractは管理11製品とv7 wire 14 IDを固定する', () => {
   assert.deepEqual(MANAGED_PRODUCT_IDS, [
     'caveat', 'throughline', 'spotter', 'lattice', 'markitdown', 'gpt-connector',
     'aiterm-mcp', 'codex-sidecar', 'aishell', 'servermanager', 'peertable',

@@ -6,7 +6,8 @@
 **決定:** [ADR 0127](adr/0127-wire-v7-peertable-enrollment.md)
 **契約:** [s1合意（決定45、peertable repo `docs/plan.md`）](https://github.com/kitepon-rgb/peertable)
 
-> **現在状態（2026-08-10 cutover完了）:** client・serverとも実装・deploy済み、`FACTORY_V7_INGEST_ENABLED=true`。
+> **現在状態（2026-08-18）:** 必須キーから`observer`を削除し、現行v7は固定14製品（v5の13＋`peertable`）。
+> 編入時の15キー集合は履歴。client・serverとも実装・deploy済み、`FACTORY_V7_INGEST_ENABLED=true`。
 > **全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）がwire v7で報告中**。
 > 各hostで実送信・gate success・BugHub matrixのcontract_version 7.0を実測済み。
 > [wire v6](wire-v6-design.md)はhost別rollback先として維持する（v6 state/outboxと退避configは各hostに保存済み）。
@@ -22,9 +23,9 @@
 契約破壊になる（Observer編入時にwire v5へ足さずwire v6を起こした理由と同型）。よってpeertableは
 新しいwire v7へ編入し、v6は履歴として凍結する。
 
-## 2. 固定15製品
+## 2. 固定14製品
 
-`products`のキーは次の順序・集合に固定する。
+`products`のキーは次の順序・集合に固定する。`observer`は工場コア撤去後に必須キーからも外し、余剰キーとして拒否する。
 
 1. `caveat`
 2. `throughline`
@@ -39,10 +40,9 @@
 11. `codex-cli`
 12. `grok-build`
 13. `aishell`
-14. `observer`
-15. `peertable`
+14. `peertable`
 
-clientとserverはこの15キーの完全一致を検証する。欠落、余剰、別名、重複を拒否し、
+clientとserverはこの14キーの完全一致を検証する。欠落、余剰、別名、重複を拒否し、
 製品集合をoptional keyやserver側だけのexpectationで拡張しない。
 
 ## 3. transportとversion
@@ -50,7 +50,7 @@ clientとserverはこの15キーの完全一致を検証する。欠落、余剰
 - schema: `factory.report.v7`
 - `schema_version`: `7.0`
 - endpoint（設計。本waveでは有効化しない）: `POST /api/factory/v7/reports`
-- report: 各hostの固定15製品を毎回完全報告する
+- report: 各hostの固定14製品を毎回完全報告する
 - identity、late-report ordering、current/history保存はv6までの契約を継承する
 - v6 endpointとschemaはrollback期間中、変更せず並存させる
 
@@ -155,7 +155,7 @@ v6 reporterはpeertableを報告しない。
 
 ## 10. 受入条件
 
-1. client / contract / tests / privacy fixtureが固定15製品の同一集合を使う。
+1. client / contract / tests / privacy fixtureが固定14製品の同一集合を使う。`observer`キーを要求しない。
 2. v7は欠落・未知・余剰product keyを拒否する（clientの`validateReportV7`）。
 3. `peertable-client diagnostics --json`の実測JSONからprojectionが`compatible` / `incompatible` / `unverified`を
    正しく導出する（ready / not_ready / schema不正 / CLI不在の4経路）。

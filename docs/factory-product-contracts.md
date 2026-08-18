@@ -4,10 +4,10 @@
 
 ## 共通境界
 
-- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Observerは2026-08-16に工場コアから撤去し、現役の製品・依存・配線へ含めない。peertableはpeertable-onboarding campaignで編入し、H承認4件（npm 0.3.6公開・ServerManager wire v7 enroll・公開後smoke・正典の製品数更新）を2026-08-10に実行済み。wire v7 cutoverは2026-08-10に全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）で完了し、各hostの実送信とBugHub matrix反映を実測済み（経緯は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)）。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。
+- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Observerは2026-08-16に工場コアから撤去し、2026-08-18にwire必須キーからも外した。現役の製品・依存・配線・`products.observer`へ含めない。peertableはpeertable-onboarding campaignで編入し、H承認4件（npm 0.3.6公開・ServerManager wire v7 enroll・公開後smoke・正典の製品数更新）を2026-08-10に実行済み。wire v7 cutoverは2026-08-10に全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）で完了し、各hostの実送信とBugHub matrix反映を実測済み（経緯は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)）。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。
 - 現役契約はLattice `docs/01_integration-package.md`と本台帳・[factory-host-product-matrix.md](factory-host-product-matrix.md)が正、導入経緯は[docs/archive/plan_lattice-factory-integration.md](archive/plan_lattice-factory-integration.md)と[docs/archive/plan_observer-core-integration.md](archive/plan_observer-core-integration.md)が正。
-- dotagents所有の導入・更新後gate・verify-install用の機械可読な単一契約は`lib/factory/deployment-contract.mjs`である。managed 11 IDとcurrent wire v7の15 IDを分け、v2-v6の履歴集合を変更しない。host projectionはmatrixの`required`／`unsupported`／`not_applicable`だけを返し、profile/OS/arch/macOS majorの未知値・不整合をfail-closedにする。ServerManagerはserver profileの公開readiness/revision検証に限定する。
-- 初回導入と再適用はMacの`setup-macos-factory.sh`、Linuxの`setup-linux-factory.sh`、WSL2の`setup-wsl-factory.sh`、Windows nativeの`setup-windows-native-factory.ps1`が所有する。4入口はdeployment contractの製品集合だけを共有し、OS固有のLaunchAgent／cron／Task Scheduler、config、hook、credential、delivery receiptを混同しない。各入口は定期更新を冪等登録し、`verify-install`、固定15製品のfresh wire v7 report、BugHub delivery receiptまでを受け入れる。
+- dotagents所有の導入・更新後gate・verify-install用の機械可読な単一契約は`lib/factory/deployment-contract.mjs`である。managed 11 IDとcurrent wire v7の14 IDを分け、v2-v5の履歴集合を変更しない。v6/v7の現行必須集合から`observer`は削除する。host projectionはmatrixの`required`／`unsupported`／`not_applicable`だけを返し、profile/OS/arch/macOS majorの未知値・不整合をfail-closedにする。ServerManagerはserver profileの公開readiness/revision検証に限定する。
+- 初回導入と再適用はMacの`setup-macos-factory.sh`、Linuxの`setup-linux-factory.sh`、WSL2の`setup-wsl-factory.sh`、Windows nativeの`setup-windows-native-factory.ps1`が所有する。4入口はdeployment contractの製品集合だけを共有し、OS固有のLaunchAgent／cron／Task Scheduler、config、hook、credential、delivery receiptを混同しない。各入口は定期更新を冪等登録し、`verify-install`、固定14製品のfresh wire v7 report、BugHub delivery receiptまでを受け入れる。
 - コア製品の修理・機能追加はcommit/pushで止めず、version bump→publish→対象端末へのglobal install→公開後smoke→公開証跡記録までを同一waveで完遂する。release gateは「publish対象は既定ブランチの祖先だけ」を機械gateとして実装したものだけを合格とし、AIShellの`scripts/verify-release-commit.mjs`＋`prepublishOnly`をreference実装とする。gate未実装の製品は、次にrelease作業を行うwaveで同時に導入する。
 - 工場の再現欠陥の重大度分類（P0/P1即時修理の閾値）とmaintenance wave処理は[shared/orchestrate/contract.md](../shared/orchestrate/contract.md)「Phase maintenance」が正で、本台帳へ複製しない。dotagents固有の境界: 原因と修理所有者が第三者製品または基盤toolchain本体である欠陥はdotagentsのToDo、maintenance queue、H承認待ちへ登録せず完全に範囲外とし、dotagents所有adapter・設定生成・互換projectionの欠陥は範囲内とする（外部製品名が入力に現れるだけで範囲外へ逃がさない）。権限外変更、コア製品publish、本番deploy、credential/login、意図的障害試験は理由と必要条件を記録しH承認待ちとしてcarry overする。
 - 各製品のhost/connector期待状態は本台帳へ複製せず、[factory-host-product-matrix.md](factory-host-product-matrix.md)の親別connector matrixだけが持つ。
@@ -109,16 +109,16 @@
 
 ### `observer`
 
-- 所有/修正先: 自作 / `kitepon/Observer`。2026-08-16に工場コアから撤去。製品repoは残す。
-- 現adapter: 全host `not_applicable`。CLI探索も更新も一撃展開もしない。wire v6/v7の製品キーは履歴互換のため残し、presenceは`not_applicable`だけを出す。
+- 所有/修正先: 自作 / `kitepon/Observer`。2026-08-16に工場コアから撤去。2026-08-18にwire v6/v7の製品キーから削除。製品repoは残す。
+- 現adapter: なし。factory-scan v6/v7は`products.observer`を出さない。`validateReportV6`/`validateReportV7`はobserverキーを要求せず、余剰キーとして拒否する。CLI探索も更新も一撃展開もしない。
 - update/rollback: `@quolu/observer`を工場更新集合に含めない。
-- 禁止: 工場管理対象へ戻すこと、欠落を`missing`/`high`へすること、ServerManagerから内部stateを修復すること。履歴の物理削除。
+- 禁止: 工場管理対象・一撃展開・wire必須キーへ戻すこと。欠落を`missing`/`high`へすること。ServerManagerから内部stateを修復すること。履歴の物理削除。
 
 ### `peertable`
 
 - 所有/修正先: 自作 / `kitepon/peertable`。version入口: `peertable-client diagnostics --json`の`product.version`（`package.json`と`room/client.mjs`の`MCP_VERSION`一致を`version_consistency` checkが検証。別途`--version`は無い）。
 - diagnostics/state正本: `peertable-client diagnostics --json`（schema `peertable.native_factory_diagnostics.v1`。決定45契約）。`version_consistency`・`bin_integrity`・`node_runtime`・`skill_bundle`・`room_reachability`をread-onlyで返す。room DB・member state・message本文は解釈しない。`room_reachability`は`PEERTABLE_URL`未設定時`not_applicable`（npm単体利用の平常状態）、設定時は到達fetchの`pass`/`fail`。overallは`ready`（全pass/not_applicable）/`not_ready`（fail含む）/`unverified`（判定不能含む）。
 - 現adapter: `lib/factory/v7.mjs`の`projectPeertableFactory`/`peertableProduct`がnative JSONをexact allowlistで検証し、`ready`をpass/compatible、`not_ready`を固定fingerprintのfail/incompatible、schema不正・CLI不在をunverified/missingへ射影する。`room_reachability`はLAN room到達性と製品健全性を結合させないため、scan時は常に`PEERTABLE_URL=''`で空へ倒す（不可侵原則：ServerManager server profileパターンの踏襲）。runtime errorは製品側に未実装のため契約対象外。
-- wire: v6固定14製品へpeertableを加えた`V7_PRODUCT_IDS`固定15製品（`lib/factory/v7.mjs`・[wire v7設計](wire-v7-design.md)・[ADR 0127](adr/0127-wire-v7-peertable-enrollment.md)）。ServerManager/BugHubのv7 ingestはserver-firstでdeploy・`FACTORY_V7_INGEST_ENABLED=true`済みで、2026-08-10に全4現役hostのcutoverが完了した。v6はhost別rollback先として維持する。
+- wire: v6の13製品（v5集合。observerなし）へpeertableを加えた`V7_PRODUCT_IDS`固定14製品（`lib/factory/v7.mjs`・[wire v7設計](wire-v7-design.md)・[ADR 0127](adr/0127-wire-v7-peertable-enrollment.md)）。ServerManager/BugHubのv7 ingestはserver-firstでdeploy・`FACTORY_V7_INGEST_ENABLED=true`済みで、2026-08-10に全4現役hostのcutoverが完了した。v6はhost別rollback先として維持する。
 - release gate: `scripts/verify-release-commit.mjs`（aishell reference実装からの移植）を`prepublishOnly`へ連結済み。publish対象は既定ブランチ祖先のcleanなcommitだけに限定する。
 - 表現/禁止: room server URL・投稿token・room DB・message本文をreportへ転記しない。room DBの直接query、adapterによるmember state推測を禁止。`skill/`はpeertable repoが所有しnpm同梱で配る——dotagentsの`claude/skills/`や`install.sh`へ複製しない。

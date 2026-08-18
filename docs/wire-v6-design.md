@@ -1,9 +1,10 @@
 # wire v6 設計正本 — Observerの固定集合編入
 
-> **現在状態（2026-08-10 更新）:** wire v6は[wire v7](wire-v7-design.md)へ引き継がれ、全4現役hostの
+> **現在状態（2026-08-18 更新）:** wire v6は[wire v7](wire-v7-design.md)へ引き継がれ、全4現役hostの
 > v7 cutoverが完了した。**v6は現役入口ではなくhost別rollback先**として維持する（endpoint・schema・
-> 各hostのv6 state/outboxは削除しない）。Observer編入と4 host cutoverが完了し固定14製品が全hostで
-> 現役だったのは2026-07-26〜2026-08-10。以下のv5記述はv6へ移行する設計時点のpredecessor契約として保持する。
+> 各hostのv6 state/outboxは削除しない）。現行v6 scan/validatorの必須集合はv5と同じ13製品で、
+> `observer`キーは出さない。Observer編入後の固定14製品が全hostで現役だったのは2026-07-26〜2026-08-10。
+> 以下のv5記述はv6へ移行する設計時点のpredecessor契約として保持する。
 
 **状態:** Active（[Observerコア編入記録](archive/plan_observer-core-integration.md)の設計成果物）
 **工程正本:** Lattice plan `observer-core-integration`  
@@ -23,9 +24,11 @@ wire v3にはObserver用の予約設計があったが、実装・cutover・運�
 歴史上の未使用versionを後から有効化すると、既存証拠と「v3を受理した」という意味が
 食い違う。したがってObserverは新しいwire v6へ編入し、v3は履歴として凍結する。
 
-## 2. 固定14製品
+## 2. 現行必須集合は13製品
 
-`products`のキーは次の順序・集合に固定する。
+現行v6 scan/validatorの必須キーはv5と同じ13製品である。編入時の14番目`observer`は後続裁定で削除し、余剰キーとして拒否する。
+
+編入時点の履歴集合は次のとおり（現行契約ではない）。
 
 1. `caveat`
 2. `throughline`

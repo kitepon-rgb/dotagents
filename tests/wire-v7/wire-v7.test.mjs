@@ -16,7 +16,8 @@ const EXPECTED = [...V6_PRODUCT_IDS, 'peertable'];
 
 test('v7はv6順序を保持してpeertableを15番目へ追加する', () => {
   assert.deepEqual(V7_PRODUCT_IDS, EXPECTED);
-  assert.equal(new Set(V7_PRODUCT_IDS).size, 15);
+  assert.equal(new Set(V7_PRODUCT_IDS).size, 14);
+  assert.equal(V7_PRODUCT_IDS.includes('observer'), false);
 });
 
 const product = (contractVersion = '7.0') => ({
@@ -43,12 +44,12 @@ function reportV7() {
   };
 }
 
-test('v7 validatorは固定15製品だけを受理し、v6を変更しない', () => {
+test('v7 validatorは固定14製品だけを受理し、v6を変更しない', () => {
   const report = reportV7();
   assert.doesNotThrow(() => validateReportV7(report));
   assert.throws(
     () => validateReportV7({ ...report, products: Object.fromEntries(V6_PRODUCT_IDS.map((id) => [id, product()])) }),
-    /固定15製品/,
+    /固定14製品/,
   );
 
   const v6 = {
@@ -64,6 +65,12 @@ test('v7 validatorは固定15製品だけを受理し、v6を変更しない', (
     products: { ...v6.products, peertable: product('6.0') },
   };
   assert.throws(() => validateReportV6(v6WithPeertable), /未定義field/u, 'v6はpeertableキーを拒否し続ける');
+});
+
+test('v7 validatorはobserverキーを余剰として拒否する', () => {
+  const report = reportV7();
+  report.products.observer = product('7.0');
+  assert.throws(() => validateReportV7(report), /productsに未定義fieldがあります/);
 });
 
 test('peertable safe_contextは空allowlistのため拒否する', () => {

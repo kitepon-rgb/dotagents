@@ -331,7 +331,7 @@ function Invoke-FreshDelivery([string]$Runner, [string]$LedgerHelper, [string]$P
   $smokeOutput | ForEach-Object { Write-Host $_ }
   if ($smokeCode -ne 0) { throw "All-product smoke failed with exit $smokeCode" }
   $smoke = ($smokeOutput | Select-Object -Last 1) | ConvertFrom-Json
-  if ($smoke.schema -ne 'dotagents.windows-native-product-smoke.v1' -or $smoke.status -ne 'passed' -or $smoke.checked_products -ne 15) {
+  if ($smoke.schema -ne 'dotagents.windows-native-product-smoke.v1' -or $smoke.status -ne 'passed' -or $smoke.checked_products -ne 14) {
     throw 'All-product smoke receipt is invalid'
   }
   return [pscustomobject]@{ delivery_acknowledged = $true; report = 'v7'; product_smoke = $smoke }

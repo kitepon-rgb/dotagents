@@ -79,7 +79,7 @@ const fs = require('fs');
 const [output, reportId] = process.argv.slice(2);
 const required = [
   'caveat', 'throughline', 'spotter', 'lattice', 'markitdown', 'gpt-connector',
-  'aiterm-mcp', 'codex-sidecar', 'aishell', 'observer', 'peertable',
+  'aiterm-mcp', 'codex-sidecar', 'aishell', 'peertable',
   'claude-code', 'codex-cli',
 ];
 const products = Object.fromEntries(required.map((id) => [id, {

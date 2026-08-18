@@ -60,7 +60,7 @@ test('Windows native一撃setupは工場展開・配線・fresh BugHub受理・�
   assert.match(source, /Set-ToolchainPostGateSuccess.*--post-gate', 'success'/su);
   assert.match(source, /@\(Compare-Object -ReferenceObject \(\$expected \| Sort-Object\) -DifferenceObject \$actual\)\.Count -ne 0/u);
   assert.match(source, /lib\\factory\\windows-native-product-smoke\.mjs/u);
-  assert.match(source, /checked_products -ne 15/u);
+  assert.match(source, /checked_products -ne 14/u);
   assert.match(source, /run-\$RunId\.log.*Start-Transcript.*Set-OwnerOnlyAcl \$TranscriptPath.*Stop-Transcript/su);
   assert.match(source, /function Set-OwnerOnlyAcl.*DirectorySecurity.*FileSecurity.*SetOwner\(\$sid\).*SetAccessRuleProtection/su);
   assert.match(source, /THROUGHLINE_CODEX_THREAD_ID.*CODEX_THREAD_ID/su);
@@ -97,7 +97,7 @@ function passingProduct(checkIds) {
   return { presence_status: 'installed', installed_version: '1.0.0', compatibility_status: 'compatible', checks: checkIds.map((check_id) => ({ check_id, status: 'pass' })) };
 }
 
-test('Windows native全製品smokeはwire v7の15 ID・製品別実動作・構造的非対応を全件検証する', () => {
+test('Windows native全製品smokeはwire v7の14 ID・製品別実動作・構造的非対応を全件検証する', () => {
   const report = {
     schema_version: '7.0', host_profile: 'windows-native', platform: { os: 'windows', arch: process.arch },
     products: Object.fromEntries(CURRENT_WIRE_PRODUCT_IDS.map((id) => [id, passingProduct(['native_diagnostics'])])),
@@ -115,11 +115,13 @@ test('Windows native全製品smokeはwire v7の15 ID・製品別実動作・構�
   report.products['codex-cli'] = passingProduct(['installed_version', 'config_parser', 'native_routing', 'required_hooks', 'last_update']);
   report.products['grok-build'] = passingProduct(['stable_update', 'last_update']);
   report.products.aishell = { presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [{ check_id: 'native_diagnostics', status: 'unsupported', reason_code: 'platform_unsupported' }] };
-  report.products.observer = { presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [{ check_id: 'platform', status: 'unsupported', reason_code: 'platform_unsupported' }] };
   report.products.servermanager = { presence_status: 'not_applicable', checks: [] };
 
   const receipt = assertWindowsNativeProductSmoke(report, process.arch);
-  assert.equal(receipt.checked_products, 15);
+  assert.equal(receipt.checked_products, 14);
+  const leftover = structuredClone(report);
+  leftover.products.observer = { presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [] };
+  assert.throws(() => assertWindowsNativeProductSmoke(leftover, process.arch), /observer/u);
   assert.equal(receipt.status, 'passed');
   const broken = structuredClone(report); broken.products.markitdown.checks[0].status = 'fail';
   assert.throws(() => assertWindowsNativeProductSmoke(broken, process.arch), /markitdown/u);

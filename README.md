@@ -308,9 +308,9 @@ Grok親の所有面は次だけである。Claude面を吸うことを完成形�
 | host | 登録される入口 | 読み戻し・受入 |
 |---|---|---|
 | macOS | LaunchAgent `com.kite.agents-update` → `~/.local/bin/agents-update` | plist構文、登録状態、初回一撃展開中のfresh v7 delivery |
-| Linux | cron `# dotagents-agents-update-linux` → `setup-linux-factory --scheduled-update` | `server` profile、完全一致行、15製品、fresh delivery receipt |
-| WSL2 | cron `# dotagents-agents-update-wsl` → `setup-wsl-factory --scheduled-update` | 完全一致行、batch token、全15製品、fresh delivery receipt |
-| Windows native | Task `dotagents-agents-update` → `setup-windows-native-factory.ps1 -ScheduledRun` | SID／02:00／action、実Task起動、終了code、全15製品、fresh delivery receipt |
+| Linux | cron `# dotagents-agents-update-linux` → `setup-linux-factory --scheduled-update` | `server` profile、完全一致行、14製品、fresh delivery receipt |
+| WSL2 | cron `# dotagents-agents-update-wsl` → `setup-wsl-factory --scheduled-update` | 完全一致行、batch token、全14製品、fresh delivery receipt |
+| Windows native | Task `dotagents-agents-update` → `setup-windows-native-factory.ps1 -ScheduledRun` | SID／02:00／action、実Task起動、終了code、全14製品、fresh delivery receipt |
 
 旧自動更新を手動で調査する場合だけ、次を使う。一撃展開は自管理entryを冪等に置換し、既知の旧
 `agents-update`／`update-npm-globals` entryを整理する。

@@ -107,7 +107,7 @@ if (report.schema_version !== '7.0' || facts.profile !== 'mac' || facts.os !== '
 const actualIds = Object.keys(report.products ?? {}).sort();
 const expectedIds = [...CURRENT_WIRE_PRODUCT_IDS].sort();
 if (actualIds.length !== expectedIds.length || actualIds.some((id, index) => id !== expectedIds[index])) {
-  throw new Error('factory reportが固定15製品をすべて含まない');
+  throw new Error('factory reportが固定14製品をすべて含まない');
 }
 const projection = hostProjection(facts);
 const failures = postUpdateFailures(report, facts, { postUpdate: false });
