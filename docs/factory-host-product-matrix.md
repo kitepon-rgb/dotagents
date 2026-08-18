@@ -53,7 +53,7 @@ Grok親列はWave 1〜5の実測を書く。工場の4席（Mac / Windows native
 | Lattice | required。`lattice-mcp`のsensor 8 toolを配線。`codegraph_*`互換名はLattice提供者identityを返す | 同左。Windows nativeは親CLIを運用する端末だけMCP登録 | MCP required（Wave 5 4席 session）。`lattice-gantt`はdotagents所有の案内。`lattice hooks install --host` のGrok hostは増やさない＝製品host hook unsupported |
 | AIShell | MCP `aishell` required（Apple Silicon / macOS 15+のみ）。`AISHELL_CAPABILITY_SET=expanded-v1`で登録し、工場監視はpath非露出の`AISHELL_TOOL_PROFILE=factory`を使う | 同左 | MCP required（Apple Silicon / macOS 15+のみ。Wave 5 Mac `01a0091e` connected）。他hostはunsupported（WSL2 / Windows / Linux は typed `spawn_failed`） |
 | ServerManager | connector not_applicable | connector not_applicable | connector not_applicable |
-| peertable | team編成時（peertable setup）だけMCP `room` required。teardownで解除 | 同左 | unsupported（Wave 2: roomはClaude面のまま。Grok所有のroom MCPなし） |
+| peertable | team編成時（peertable setup）だけMCP `room` required。teardownで解除 | 同左 | 円卓は Windows native で利用可（2026-08-16 席対応修理後）。Grok親は room MCP を持たない（親は peertable skill の HTTP API で着卓）。room MCP は setup した席（Claude／Codex）だけ。Wave 2「roomはClaude面のまま」は失効 |
 
 独立Codegraphは全hostで退役済みであり、製品・connector期待matrixへ含めない。BugHubの既存履歴だけを
 `not_applicable`として保持する。Latticeの`codegraph_*` tool名はLattice所有の入力互換ABIであり、
