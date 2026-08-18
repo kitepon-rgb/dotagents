@@ -202,7 +202,7 @@ fetch(url).then(async (response) => {
   if ! command -v uv >/dev/null 2>&1; then
     echo "FAIL: uv 不在（MarkItDownの正規 tool 所有面を検証・更新できない）"
     fail=1
-  elif uv tool list 2>/dev/null | grep -Eq '^markitdown([[:space:]]|$)'; then
+  elif uv tool list --color never 2>/dev/null | grep -Eq '^markitdown([[:space:]]|$)'; then
     echo "OK  MarkItDown ownership: uv tool"
   else
     echo "FAIL: MarkItDown が uv tool 管理にない（uv tool install markitdown を実行）"
@@ -676,8 +676,41 @@ if [ ! -f "$claude_settings" ]; then
 elif ! python3 - "$claude_settings" <<'PY'
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
+
+def hook_script(command: str, home: Path):
+    try:
+        parts = shlex.split(command, posix=os.name != "nt")
+    except ValueError:
+        return None
+    if os.name == "nt":
+        parts = [
+            part[1:-1]
+            if len(part) >= 2 and part[0] == part[-1] and part[0] in {"'", '"'}
+            else part
+            for part in parts
+        ]
+    interpreters = {
+        "python.exe", "python3.exe", "python", "python3",
+        "sh.exe", "bash.exe", "sh", "bash", "cmd.exe",
+    }
+    while parts:
+        first = Path(parts[0]).name.lower()
+        if first in interpreters:
+            parts = parts[1:]
+            continue
+        if parts[0] in {"/usr/bin/env", "env"} and len(parts) > 1:
+            parts = parts[2:]
+            continue
+        break
+    if not parts:
+        return None
+    script = parts[0]
+    if script.startswith("~/"):
+        script = str(home) + script[1:]
+    return Path(script).expanduser().resolve(strict=False), tuple(parts[1:])
 
 path = Path(sys.argv[1])
 try:
@@ -725,10 +758,10 @@ for entry in data.get("hooks", {}).get("SessionStart", []):
         if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
             continue
         command = hook["command"]
-        normalized = Path(str(home) + command[1:] if command.startswith("~/") else command).expanduser().resolve(strict=False)
+        parsed = hook_script(command, home)
         if "orchestrate-advisory-hook" in command:
             relevant.append(hook)
-        if normalized == advisory:
+        if parsed is not None and parsed[0] == advisory and parsed[1] == ():
             canonical.append(hook)
 expected = {"type": "command", "command": None, "timeout": 5}
 if len(relevant) != 1 or len(canonical) != 1 or set(canonical[0]) != {"type", "command", "timeout"} or canonical[0].get("type") != expected["type"] or canonical[0].get("timeout") != expected["timeout"]:
@@ -745,14 +778,10 @@ for entry in data.get("hooks", {}).get("SessionStart", []):
         if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
             continue
         command = hook["command"]
+        parsed = hook_script(command, home)
         if "lattice-gantt-hook" in command:
             relevant.append(hook)
-        try:
-            executable, subcommand = command.rsplit(maxsplit=1)
-        except ValueError:
-            continue
-        normalized = Path(str(home) + executable[1:] if executable.startswith("~/") else executable).expanduser().resolve(strict=False)
-        if normalized == lattice and subcommand == "session-start":
+        if parsed is not None and parsed[0] == lattice and parsed[1] == ("session-start",):
             canonical.append(hook)
 if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 6}:
     print("FAIL: Claude SessionStart の lattice-gantt-hook session-start は canonical command / type=command / timeout=6 の1件である必要がある")
@@ -766,14 +795,10 @@ for entry in data.get("hooks", {}).get("UserPromptSubmit", []):
         if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
             continue
         command = hook["command"]
+        parsed = hook_script(command, home)
         if "lattice-gantt-hook" in command:
             relevant.append(hook)
-        try:
-            executable, subcommand = command.rsplit(maxsplit=1)
-        except ValueError:
-            continue
-        normalized = Path(str(home) + executable[1:] if executable.startswith("~/") else executable).expanduser().resolve(strict=False)
-        if normalized == lattice and subcommand == "user-prompt-submit":
+        if parsed is not None and parsed[0] == lattice and parsed[1] == ("user-prompt-submit",):
             canonical.append(hook)
 if len(relevant) != 1 or len(canonical) != 1 or canonical[0] != {"type": "command", "command": canonical[0]["command"], "timeout": 5}:
     print("FAIL: Claude UserPromptSubmit の lattice-gantt-hook user-prompt-submit は canonical command / type=command / timeout=5 の1件である必要がある")
@@ -786,9 +811,8 @@ for entry in data.get("hooks", {}).get("PreToolUse", []):
     for hook in entry.get("hooks", []):
         if not isinstance(hook, dict) or not isinstance(hook.get("command"), str):
             continue
-        command = hook["command"]
-        normalized = Path(str(home) + command[1:] if command.startswith("~/") else command).expanduser().resolve(strict=False)
-        if normalized == gate:
+        parsed = hook_script(hook["command"], home)
+        if parsed is not None and parsed[0] == gate and parsed[1] == ():
             matches.append(hook)
 if len(matches) != 1 or set(matches[0]) != {"type", "command", "timeout"} or matches[0].get("type") != "command" or matches[0].get("timeout") != 5:
     print("FAIL: Claude PreToolUse の git-destroy-gate-hook は matcher=Bash / canonical command / timeout=5 の1件である必要がある")
