@@ -115,7 +115,7 @@ test('Windows native全製品smokeはwire v7の15 ID・製品別実動作・構�
   report.products['codex-cli'] = passingProduct(['installed_version', 'config_parser', 'native_routing', 'required_hooks', 'last_update']);
   report.products['grok-build'] = passingProduct(['stable_update', 'last_update']);
   report.products.aishell = { presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [{ check_id: 'native_diagnostics', status: 'unsupported', reason_code: 'platform_unsupported' }] };
-  report.products.observer = { presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [{ check_id: 'platform', status: 'unsupported', reason_code: 'platform_unsupported' }] };
+  report.products.observer = { presence_status: 'not_applicable', compatibility_status: 'unsupported', checks: [{ check_id: 'factory_core', status: 'unsupported', reason_code: 'retired_from_factory_core' }] };
   report.products.servermanager = { presence_status: 'not_applicable', checks: [] };
 
   const receipt = assertWindowsNativeProductSmoke(report, process.arch);

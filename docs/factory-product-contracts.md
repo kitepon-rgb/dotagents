@@ -110,7 +110,7 @@
 ### `observer`
 
 - 所有/修正先: 自作 / `kitepon/Observer`。2026-08-16に工場コアから撤去。製品repoは残す。
-- 現adapter: 全host `not_applicable`。CLI探索も更新も一撃展開もしない。wire v6/v7の製品キーは履歴互換のため残し、presenceは`not_applicable`だけを出す。
+- 現adapter: 全host `presence_status=not_applicable` / `compatibility_status=unsupported`（check `factory_core=unsupported:retired_from_factory_core`）。CLI探索も更新も一撃展開もしない。wire v6/v7の製品キーは履歴互換のため残す。`compatibility_status`へ`not_applicable`を流用しない。
 - update/rollback: `@quolu/observer`を工場更新集合に含めない。
 - 禁止: 工場管理対象へ戻すこと、欠落を`missing`/`high`へすること、ServerManagerから内部stateを修復すること。履歴の物理削除。
 

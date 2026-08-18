@@ -7,7 +7,7 @@ import test from 'node:test';
 
 import { validateReportV5, validateReportV6 } from '../../lib/factory/contract.mjs';
 import { V5_PRODUCT_IDS } from '../../lib/factory/v5.mjs';
-import { V6_PRODUCT_IDS } from '../../lib/factory/v6.mjs';
+import { observerProduct, V6_PRODUCT_IDS } from '../../lib/factory/v6.mjs';
 
 const EXPECTED = [...V5_PRODUCT_IDS, 'observer'];
 
@@ -92,6 +92,14 @@ test('v6 validatorは固定14製品だけを受理し、v5を変更しない', (
     products: Object.fromEntries(V5_PRODUCT_IDS.map((id) => [id, product('5.0')])),
   };
   assert.doesNotThrow(() => validateReportV5(v5));
+});
+
+test('撤去後Observer射影はv6 validatorを通る', async () => {
+  const report = reportV6();
+  report.products.observer = await observerProduct();
+  assert.doesNotThrow(() => validateReportV6(report));
+  report.products.observer.compatibility_status = 'not_applicable';
+  assert.throws(() => validateReportV6(report), /products\.observer\.compatibility_statusが不正です/);
 });
 
 test('Observer safe_contextは空allowlistのため拒否する', () => {
