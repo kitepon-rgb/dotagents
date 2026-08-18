@@ -212,13 +212,17 @@ else
   exit 0
 fi
 EOF
-for command_name in npm uv throughline markitdown gpt-connector aiterm-mcp codex-sidecar-mcp \
+for command_name in npm uv markitdown gpt-connector aiterm-mcp codex-sidecar-mcp \
   peertable-client aishell-mcp; do
   cat >"$STUB_BIN/$command_name" <<'EOF'
 #!/usr/bin/env bash
 exit 0
 EOF
 done
+cat >"$STUB_BIN/throughline" <<'EOF'
+#!/usr/bin/env bash
+printf 'throughline %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
+EOF
 chmod +x "$STUB_BIN/"*
 
 mkdir -p "$HOME_DIR/.config/dotagents" "$HOME_DIR/Library/LaunchAgents"
@@ -267,6 +271,9 @@ if grep -Fq 'lattice hooks install --host grok' "$CALLS"; then
   fail 'lattice hooks install --host grok を呼んだ'
 fi
 grep -Fq 'install --profile official' "$CALLS" || fail 'official profileを展開しない'
+grep -Fq 'caveat init' "$CALLS" || fail 'Caveat Claude initを導入しない'
+grep -Fq 'throughline install' "$CALLS" || fail 'Throughline製品管理hookを導入しない'
+grep -Fq 'caveat codex-hook install' "$CALLS" || fail 'Caveat Codex hookを導入しない'
 grep -Fq 'lattice hooks install --host claude' "$CALLS" || fail 'Claude Lattice hookを配線しない'
 grep -Fq 'lattice hooks install --host codex' "$CALLS" || fail 'Codex Lattice hookを配線しない'
 grep -Fq 'spotter install -y' "$CALLS" || fail 'Spotterを配線しない'

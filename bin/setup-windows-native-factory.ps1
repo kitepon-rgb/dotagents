@@ -564,8 +564,9 @@ try {
   $env:HOME = $env:USERPROFILE
   $env:CODEX_HOME = Join-Path $env:USERPROFILE '.codex'
   try {
+    Invoke-Checked -File 'caveat' -Arguments @('init') -Label 'native-product-wiring: caveat init'
     Invoke-Checked -File 'throughline' -Arguments @('install') -Label 'native-product-wiring: throughline'
-    Invoke-Checked -File 'caveat' -Arguments @('codex-hook', 'install') -Label 'native-product-wiring: caveat'
+    Invoke-Checked -File 'caveat' -Arguments @('codex-hook', 'install') -Label 'native-product-wiring: caveat codex-hook'
   } finally {
     $env:HOME = $previousHome
     $env:CODEX_HOME = $previousCodexHome

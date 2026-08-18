@@ -251,6 +251,7 @@ if grep -Fq 'lattice hooks install --host grok' "$CALLS"; then
   fail 'lattice hooks install --host grok を呼んだ'
 fi
 grep -Fq 'install --profile official' "$CALLS" || fail 'official profileを展開しない'
+grep -Fq 'caveat init' "$CALLS" || fail 'Caveat Claude initを導入しない'
 grep -Fq 'throughline install' "$CALLS" || fail 'Throughline製品管理hookを導入しない'
 grep -Fq 'caveat codex-hook install' "$CALLS" || fail 'Caveat Codex hookを導入しない'
 grep -Fq 'lattice hooks install --host claude' "$CALLS" || fail 'Claude Lattice hookを配線しない'

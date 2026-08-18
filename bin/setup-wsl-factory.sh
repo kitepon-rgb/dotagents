@@ -344,6 +344,8 @@ run_setup() {
   maybe_apply_grok_config
   "$ROOT/install.sh" --profile official
   ensure_managed_commands
+  # Caveat Claude は init（MCP＋4 hooks）。Codex は native hook。Grok は MCP のみ（apply-grok-config）。
+  caveat init
   ensure_caveat_sync
   throughline install
   caveat codex-hook install

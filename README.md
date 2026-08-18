@@ -265,6 +265,9 @@ callout hook 4イベント、SessionStartの`orchestrate-advisory-hook` 1件、`
 ./bin/apply-codex-config.sh --apply
 ./bin/apply-claude-config.sh --apply
 ./bin/apply-grok-config.sh --apply   # login済みだけ。未loginならスキップ（H）
+caveat init
+throughline install
+caveat codex-hook install
 lattice hooks install --host claude
 lattice hooks install --host codex
 spotter install -y
