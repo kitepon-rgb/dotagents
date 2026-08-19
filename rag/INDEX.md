@@ -16,6 +16,7 @@
 - [models/claude-5-family.md](models/claude-5-family.md) — Claude Fable 5 / Opus 5 / Sonnet 5 / Haiku 4.5: 現行価格・effort。Sonnet 5の$2/$10恒久化、Opus 5のscope creep外部観測とtask別effort benchmarkを分離（2026-08-14・確度はclaim別）
 - [models/benchmark-snapshot-20260811.md](models/benchmark-snapshot-20260811.md) — Artificial Analysis v4.1.1 と SWE-bench Pro の現行 snapshot。task 型・effort・harness・tokenを併記し、総合点を「幅広い思考力」へ一般化しない（2026-08-11）
 - [models/xai-grok46.md](models/xai-grok46.md) — Grok 4.6: 公式価格・effort、vendor/独立benchmark、Xの統括・監査・実装の成功/失敗報告、Spotter修理後のclean再評価、Composer catalog不在（2026-08-14・確度はclaim別）
+- [models/role-placement-experiment-20260819.md](models/role-placement-experiment-20260819.md) — 役割配置実験: 948行・変異10件でのfinder 3席、claims14件の反証3席、Luna medium/max比較。各セルn=1で一般化禁止（2026-08-19）
 - [models/xai-grok45-composer25.md](models/xai-grok45-composer25.md) — Grok 4.5 / Composer 2.5の旧世代snapshot。現行配置はxai-grok46.mdを正とする
 - [tools/chatgpt-chat-quota-mcp-survey.md](tools/chatgpt-chat-quota-mcp-survey.md) — ChatGPT Chat枠×MCP の実勢: 公式経路なし・ヘッドレスは Cloudflare 壁（独立2ソース）・oracle 最成熟で乗り換え先なし・Web2API 再訪条件・oracle 0.15.2 実装読解＋導入実測の罠3件（undici EINVAL 即死／hideWindow 送信破壊／Google SSO ブロック）（2026-07-11・確度は claim 別）
 - [tools/gpt-connector-macos-window-launch.md](tools/gpt-connector-macos-window-launch.md) — macOSの固定offscreen座標が複数displayでclampされる罠と、窓なしcold起動→background最小化target→正規PID unhide、Window ServerのPID/layer 0検査、`Page.bringToFront`復帰で画面上窓0・実Chat成功を満たす契約（2026-07-14・実機再現）
