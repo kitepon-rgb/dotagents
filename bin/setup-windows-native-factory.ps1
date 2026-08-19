@@ -482,11 +482,6 @@ function Wait-ScheduledSmoke([string]$PriorRunId) {
 }
 
 if (-not (Test-Path -LiteralPath $GitBash -PathType Leaf)) { throw "Git Bash is missing: $GitBash" }
-# agents-update は `npm prefix -g` を PATH 先頭にする。scan も同じ CLI を見る。
-$npmGlobalPrefix = (& npm prefix -g 2>$null)
-if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($npmGlobalPrefix)) {
-  $env:PATH = "$($npmGlobalPrefix.Trim());$env:PATH"
-}
 foreach ($command in @('git', 'node', 'npm', 'python', 'uv')) {
   if (-not (Get-Command $command -ErrorAction SilentlyContinue)) { throw "Required command is missing: $command" }
 }

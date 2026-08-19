@@ -35,7 +35,6 @@ test('Windows native一撃setupは工場展開・配線・fresh BugHub受理・�
   }
   assert.match(source, /factory-reporter-scheduler\.mjs.*uninstall.*--apply/su);
   assert.doesNotMatch(source, /Start-Process.*-Verb RunAs/su);
-  assert.match(source, /npm prefix -g/u);
   assert.doesNotMatch(source, /WindowsBuiltInRole\]::Administrator/u);
   assert.match(source, /Stop-ScheduledTask.*factory-reporter-scheduler\.mjs.*uninstall.*Remove-LegacyCron.*install\.sh/su);
   assert.match(source, /function Normalize-WindowsReporterConfig.*UTF-8 without BOM.*factory-reporter-config.*\.bak.*UTF8Encoding.*\$false.*still has a UTF-8 BOM/su);
