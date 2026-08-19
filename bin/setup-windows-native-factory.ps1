@@ -75,9 +75,9 @@ function Invoke-Checked {
   try {
     if ($ClosedStdin) {
       # caveat init は TTY だと公開ミラー確認で止まる。工場は stdin を閉じる。
-      $null | & $File @Arguments 2>&1 | ForEach-Object { Write-Host $_ }
+      $null | & $File @Arguments | ForEach-Object { Write-Host $_ }
     } else {
-      & $File @Arguments 2>&1 | ForEach-Object { Write-Host $_ }
+      & $File @Arguments | ForEach-Object { Write-Host $_ }
     }
     $code = $LASTEXITCODE
   } finally {
