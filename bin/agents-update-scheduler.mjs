@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import { assertFixtureSidUsage } from '../lib/factory/agents-update-scheduler-contract.mjs';
-import { windowsOwnerOnlyAclScript, windowsTaskExists, writeWindowsTaskXml } from '../lib/factory/windows-scheduler.mjs';
+import { windowsDailyFactoryTaskMatches, windowsOwnerOnlyAclScript, windowsTaskExists, writeWindowsTaskXml } from '../lib/factory/windows-scheduler.mjs';
 
 const TASK_NAME = 'dotagents-agents-update';
 function emit(value) { process.stdout.write(`${JSON.stringify(value)}\n`); }
@@ -21,7 +21,21 @@ function applyAcl(path) { const result = spawnSync('powershell.exe', ['-NoProfil
 async function main() { const request = parse(process.argv.slice(2)); assertFixtureSidUsage({ ...request, os: platform() }); if (!request.dryRun && platform() !== 'win32') throw new Error('--applyはWindows nativeだけで実行できます'); const location = paths(); if (request.command === 'status') { if (request.dryRun) return emit({ ok: true, command: 'status', dry_run: true, task_name: TASK_NAME, artifact: location.artifact }); return emit({ ok: true, command: 'status', installed: windowsTaskExists(TASK_NAME), task_name: TASK_NAME, artifact: location.artifact }); }
   if (request.command === 'uninstall') { if (request.dryRun) return emit({ ok: true, command: 'uninstall', dry_run: true, task_name: TASK_NAME, artifact: location.artifact, rollback: 'agents-update-scheduler uninstall --apply' }); }
   const spec = request.command === 'install' ? artifact(location, request.dryRun ? (platform() === 'win32' ? currentSid() : (() => { if (!request.sid) throw new Error('非Windowsのinstall --dry-runは--sidが必要です'); return request.sid; })()) : currentSid()) : null;
-  if (request.command === 'install' && !request.dryRun) { if (!existsSync(location.runner)) throw new Error('scheduled runnerが未配布です。./install.sh を実行してください'); await mkdir(dirname(location.artifact), { recursive: true, mode: 0o700 }); applyAcl(location.control); await writeWindowsTaskXml(location.artifact, spec.content); const result = spawnSync('schtasks.exe', ['/Create', '/TN', TASK_NAME, '/XML', location.artifact, '/F'], { encoding: 'utf8' }); if (result.status !== 0) throw new Error('Windows Task Scheduler登録に失敗しました'); if (!windowsTaskExists(TASK_NAME)) throw new Error('Windows Task Scheduler登録後の読み戻しに失敗しました'); }
+  if (request.command === 'install' && !request.dryRun) {
+    if (!existsSync(location.runner)) throw new Error('scheduled runnerが未配布です。./install.sh を実行してください');
+    await mkdir(dirname(location.artifact), { recursive: true, mode: 0o700 });
+    applyAcl(location.control);
+    await writeWindowsTaskXml(location.artifact, spec.content);
+    if (windowsTaskExists(TASK_NAME) && windowsDailyFactoryTaskMatches(TASK_NAME, location.runner)) {
+      return emit({ ok: true, command: request.command, dry_run: false, already_installed: true, task_name: TASK_NAME, artifact: location.artifact, artifact_content: spec.content, commands: [['schtasks.exe', '/Create', '/TN', TASK_NAME, '/XML', location.artifact, '/F']], rollback: 'agents-update-scheduler uninstall --apply' });
+    }
+    const result = spawnSync('schtasks.exe', ['/Create', '/TN', TASK_NAME, '/XML', location.artifact, '/F'], { encoding: 'utf8' });
+    if (result.status !== 0) {
+      const leftover = windowsTaskExists(TASK_NAME) ? '。既存タスクが契約と不一致で、昇格作成の残骸だとユーザー空間からは上書きできません。タスク スケジューラから dotagents-agents-update を削除して再実行してください' : '';
+      throw new Error(`Windows Task Scheduler登録に失敗しました (status ${result.status})${leftover}`);
+    }
+    if (!windowsTaskExists(TASK_NAME)) throw new Error('Windows Task Scheduler登録後の読み戻しに失敗しました');
+  }
   if (request.command === 'uninstall' && !request.dryRun) { if (windowsTaskExists(TASK_NAME)) { const result = spawnSync('schtasks.exe', ['/Delete', '/TN', TASK_NAME, '/F'], { encoding: 'utf8' }); if (result.status !== 0) throw new Error('Windows Task Scheduler解除に失敗しました'); } await rm(location.artifact, { force: true }); }
   emit({ ok: true, command: request.command, dry_run: request.dryRun, task_name: TASK_NAME, artifact: location.artifact, artifact_content: request.command === 'install' ? spec.content : undefined, commands: request.command === 'install' ? [['schtasks.exe', '/Create', '/TN', TASK_NAME, '/XML', location.artifact, '/F']] : [['schtasks.exe', '/Delete', '/TN', TASK_NAME, '/F']], rollback: 'agents-update-scheduler uninstall --apply' }); }
 main().catch((error) => fail(error.message));
