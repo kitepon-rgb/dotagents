@@ -61,6 +61,16 @@ missing = [
 ]
 assert not missing, missing
 PY
+python3 - <<'PY'
+def win_quote(token: str) -> str:
+    if token.startswith('"') and token.endswith('"') and len(token) >= 2:
+        return token
+    return '"' + token.replace('"', '\\"') + '"'
+assert win_quote(r'C:\Users\kite_\AppData\Local\Programs\Python\Python312\python3.exe') == r'"C:\Users\kite_\AppData\Local\Programs\Python\Python312\python3.exe"'
+assert win_quote(r'C:\Users\kite_\.local\bin\todo-gate-hook') == r'"C:\Users\kite_\.local\bin\todo-gate-hook"'
+assert win_quote('session-start') == '"session-start"'
+print('win_quote quotes backslash paths')
+PY
 
 second="$(HOME="$HOME_FIXTURE" "$HOME_FIXTURE/.local/bin/apply-claude-config" --apply)"
 grep -Fq '変更なし' <<<"$second" || fail '2回目のapplyをno-opにしない'

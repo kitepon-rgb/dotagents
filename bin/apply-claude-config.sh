@@ -84,9 +84,11 @@ def command_path(command: object, home: Path) -> tuple[Path, tuple[str, ...]] | 
 
 
 def win_quote(token: str) -> str:
-    if any(ch in token for ch in (' ', '\t', '"')):
-        return '"' + token.replace('"', '\\"') + '"'
-    return token
+    # Claude Code は hook を Git Bash の `bash -c` で回す。未引用の `\` は全部消える
+    # （C:\Users\kite_ → C:Userskite_）。空白が無くても Windows path は引用する。
+    if token.startswith('"') and token.endswith('"') and len(token) >= 2:
+        return token
+    return '"' + token.replace('"', '\\"') + '"'
 
 
 def is_wsl_bash(path: str) -> bool:

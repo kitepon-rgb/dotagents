@@ -36,6 +36,14 @@ test('Claude hook command は Windows の interpreter + 絶対 path を受理す
     ),
     true,
   );
+  assert.equal(
+    canonicalClaudeHookCommand(
+      `"C:\\Users\\kite_\\AppData\\Local\\Programs\\Python\\Python312\\python3.exe" "${hook('delegation-gate-hook')}"`,
+      home,
+      '~/.local/bin/delegation-gate-hook',
+    ),
+    true,
+  );
 });
 
 test('Claude hook command は別 script・引数ずれ・prefix を拒否する', () => {

@@ -277,9 +277,10 @@ def upsert_factory_mcp(text: str) -> str:
 
 
 def win_quote(token: str) -> str:
-    if any(ch in token for ch in (' ', '\t', '"')):
-        return '"' + token.replace('"', '\\"') + '"'
-    return token
+    # Git Bash / 未引用の `\` 消失を避ける。空白が無くても Windows path は引用する。
+    if token.startswith('"') and token.endswith('"') and len(token) >= 2:
+        return token
+    return '"' + token.replace('"', '\\"') + '"'
 
 
 def is_wsl_bash(path: str) -> bool:
