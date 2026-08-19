@@ -243,7 +243,7 @@ wire v7 reportingを有効にする。MCP login、GitHub認証、Docker稼働な
 | macOS | `./bin/setup-macos-factory.sh` | LaunchAgent、毎週月曜04:00 |
 | Linux | `./bin/setup-linux-factory.sh` | cron、毎日02:00。native Linuxの`server` profile専用 |
 | WSL2 | `./bin/setup-wsl-factory.sh` | cron、毎日02:00。`systemd`と非対話`sudo`が必要 |
-| Windows native | `powershell -ExecutionPolicy Bypass -File .\bin\setup-windows-native-factory.ps1` | Task Scheduler、毎日02:00。初回はUAC昇格 |
+| Windows native | `powershell -ExecutionPolicy Bypass -File .\bin\setup-windows-native-factory.ps1` | Task Scheduler、毎日02:00。ユーザー権限。UAC は出さない |
 
 macOSではAIShell（Apple Silicon／macOS 15+）も配備する。WSL2とWindows nativeは別hostであり、
 config、hook、credential、scheduler、delivery receiptを共有しない。Windows Codex DesktopからWSL2を使う時は、

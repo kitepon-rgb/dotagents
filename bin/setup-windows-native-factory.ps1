@@ -38,22 +38,6 @@ if ($PlanOnly) {
   exit 0
 }
 
-$currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$currentPrincipal = [Security.Principal.WindowsPrincipal]::new($currentIdentity)
-if (-not $ScheduledRun -and -not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-  Write-Host '[windows-native-factory] elevation: requesting Windows administrator consent'
-  $elevated = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList @(
-    '-NoLogo',
-    '-NoProfile',
-    '-NonInteractive',
-    '-ExecutionPolicy',
-    'Bypass',
-    '-File',
-    ('"' + $PSCommandPath + '"')
-  )
-  exit $elevated.ExitCode
-}
-
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $GitBash = Join-Path $env:ProgramFiles 'Git\bin\bash.exe'
 $ConfigPath = Join-Path $env:LOCALAPPDATA 'dotagents\factory-reporter\config.json'
