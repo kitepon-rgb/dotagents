@@ -13,7 +13,7 @@
 - **ultra の事実**: ultra = 最大推論（max 相当）＋ proactive な自動マルチエージェント委譲 ON。使用量急増の公式警告（CLI 0.144.0 以降・並列スレッド数閾値。閾値の具体値はローカル裏取り不能＝確度: 中、前セッション由来）。
 - **Codex CLI 0.147.0 の実効カタログ（`codex debug models`・2026-08-11 実測）**: `gpt-5.6-sol` の `default_reasoning_level` は **low**、`gpt-5.6-terra` と `gpt-5.6-luna` は **medium**。Sol/Terra は low〜ultra、Luna は low〜max を列挙する。
 - **OpenAI公式指針**: `medium`を均衡の出発点、`low`を遅延優先、`high`/`xhigh`を実測で品質向上が出る仕事、`max`を最難関の品質優先用途とする。最高値を一般既定にせず、代表タスクの成功率・総token・遅延・費用で比較する（[Model guidance](https://developers.openai.com/api/docs/guides/latest-model)）。
-- 推奨値の提示（適用はオーナー判断）: 親に一律のpresetは置かない。用途別の子配置は[決定表](02_models.md)を使う。proactive 自動委譲を意図せず踏みたくない場合は ultra を避ける。
+- 推奨値の提示（適用はオーナー判断）: 親に一律のpresetは置かない。用途別の子配置は[順位表](02_models.md)を使う。proactive 自動委譲を意図せず踏みたくない場合は ultra を避ける。
 
 ## 2. 再ピン問題
 

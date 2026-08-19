@@ -26,13 +26,13 @@ Claude appendixは、Claude固有入口から得たstatusをControlへ投影す�
 |---|---|---|---|
 | L0 統括 | 裁定・契約クリティカル（認可/tx/公開API互換/依存方向/本番操作）・履歴修復・コミット・最終責任 | 本人 | セッション主モデル |
 | L1 監査・検証 | 発見→重複統合→**指摘ごとの反証**→網羅性Critic（盲点→第2ラウンド） | Workflow（`references/workflow-templates.md`） | 反証は親と同値のaliasを明示×high。finderはsonnet×low |
-| L2 設計 | 2〜4視点の並列設計（実行順序/配置/取捨 等）→**割れは統括が根拠で裁定**（多数決禁止） | Agent (Plan) | 親と同値のaliasを明示×決定表のeffort |
+| L2 設計 | 2〜4視点の並列設計（実行順序/配置/取捨 等）→**割れは統括が根拠で裁定**（多数決禁止） | Agent (Plan) | 親と同値のaliasを明示×順位表のeffort |
 | L3 実装 | 統括レーンで委譲利益が明確な仕様固定物量 | codex-sidecar の `codex_work` と Agent/Workflow `model: sonnet` は対等候補（機械的なら haiku） | 選定基準は 02_models.md |
 | L4 外部CLI | 完全固定仕様の機械的一括・第三者視点レビュー | 非対話＝codex-sidecar の `codex_review`/`codex_work`/`codex_generate` 等／対話＝aiterm の `codex_agent`・`grok_agent`・`composer_agent` | レート非依存の並列枠（02_models.md） |
 
 **レート予算**: 外部枠（Codex/Grok）とClaude内`sonnet`は対等候補とし、物量・隔離・quota残・準備コストで選ぶ（配置の既定と effort ゲートは docs/02_models.md）。
 **並列dispatchの既定はLattice**: 独立に見えるTODOが2つ以上あれば並列化を一度検討し（無意識の直列流れ禁止）、**同一repoへ書込みするworkerを2つ以上同時に走らせるなら**`lattice plan compile`→`run start`経由を既定にする（別repo並列・read-only並列は対象外）。交差判定を親の自前判断でやらない。直列化規則の正本は[合成契約](../../../shared/orchestrate/composition.md)「同一repo writerの直列化」、委譲側の帰結は[委譲契約](../../../shared/orchestrate/delegation-contract.md)「並列化の検討とLattice既定」。
-**継承の罠（最上位張り付き防止）**: Agent/Workflow の model 省略は親モデル継承＝親が最上位だと全子が最上位に張り付く。全役割で `model` と `effort` を決定表どおり毎回明示する——親と同値の指定は可、省略は不可（正本は[委譲契約](../../../shared/orchestrate/delegation-contract.md)最低安全契約）。
+**継承の罠（最上位張り付き防止）**: Agent/Workflow の model 省略は親モデル継承＝親が最上位だと全子が最上位に張り付く。全役割で `model` と `effort` を順位表どおり毎回明示する——親と同値の指定は可、省略は不可（正本は[委譲契約](../../../shared/orchestrate/delegation-contract.md)最低安全契約）。
 
 ## 協業ループ（Claude⇄外部AI・aiterm PTY で回す）
 
@@ -52,7 +52,7 @@ Claude appendixは、Claude固有入口から得たstatusをControlへ投影す�
 
 - **検証2票制は契約クリティカルだけ**: 認可・tx・公開API互換・依存方向・本番操作級の指摘・判断に限り独立2票（existence＝事実か／value＝直す価値があるか）。その他は統括自身の確認で採用/棄却する。
 - **裁定は棄却側へ倒す**: 確信が持てない指摘・提案は棄却する（もっともらしいだけの大改造を通さない。迷ったら殺す）。
-- **契約クリティカルは自己実装前に refuter を1回通す**: 認可・tx・公開API互換・依存方向・本番操作は、着手前に「この設計は安全か」を refuter に殺させてから。**統括が最上位ティアでない時、この refuter と設計裁定の諮問は最上位ティアをスポットで明示して呼ぶ**（既定は継承＝統括自身のティアなので、明示しないと同じ当たり外れを二度引く。ティア解決・呼ぶ場面・常用禁止は 02_models.md「最上位のスポット呼び」が正本）。
+- **契約クリティカルは自己実装前に refuter を1回通す**: 認可・tx・公開API互換・依存方向・本番操作は、着手前に「この設計は安全か」を refuter に殺させてから。**統括が最上位ティアでない時、この refuter と設計裁定の諮問は最上位ティアをスポットで明示して呼ぶ**（既定は継承＝統括自身のティアなので、明示しないと同じ当たり外れを二度引く。ティア解決・呼ぶ場面・常用禁止は 02_models.md 順位表「相談」行のFable 5×highスポットが正本）。
 - **エスカレーション裁量**: 委譲物に納得しなければ上位（Opus → 最上位ティア）へ引き上げてよい。安さは品質の人質ではない。
 - **配置は統括レーンの4関節で宣言**: F/A/Hと同時に（ティア, effort, 入口）を1行宣言する。通常レーンは分類・配置宣言を要しない。02_models.mdの既定から上振れする方を要正当化し、配置に迷ったら安い方・採用に迷ったら棄却する。
 

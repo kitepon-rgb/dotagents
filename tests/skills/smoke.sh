@@ -102,17 +102,17 @@ contains "$ROOT/shared/orchestrate/contract.md" '統括レーンへ入った後�
 contains "$ROOT/shared/orchestrate/contract.md" '対象projectの`docs/`にあるcampaign計画正本を最初に確認し、実行TODOの正本はtyped discovery（憲法「計画文書の作法」）で決める。'
 contains "$ROOT/shared/orchestrate/control-record.md" 'docs計画正本（実行TODOの正本はtyped discoveryで解決）'
 contains "$ROOT/claude/skills/orchestrate/SKILL.md" '反証は親と同値のaliasを明示×high。finderはsonnet×low'
-contains "$ROOT/claude/skills/orchestrate/SKILL.md" '親と同値のaliasを明示×決定表のeffort'
+contains "$ROOT/claude/skills/orchestrate/SKILL.md" '親と同値のaliasを明示×順位表のeffort'
 contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "model:'sonnet', effort:'low'"
 contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "model:'sonnet', effort:'medium'"
-contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "const PARENT_ALIAS = 'opus'; // copy時に親と同値のfloating aliasへ変更（docs/02_models.md「反証・検証」行）"
+contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" "const PARENT_ALIAS = 'opus'; // copy時に親と同値のfloating aliasへ変更（docs/02_models.md 順位表「反証」行）"
 assert_order "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" \
   "phase('Verify')" \
   "model:PARENT_ALIAS, effort:'high'" \
   "phase('Critic')" \
   "model:PARENT_ALIAS, effort:'high'"
 # shellcheck disable=SC2016 # backticks are literal Markdown from the workflow contract.
-contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" '`fable×high`の使用は、親が最上位未満かつ契約クリティカルのPhase gateで1回だけ（02_models「最上位のスポット呼び」）。雛形の既定にしない。'
+contains "$ROOT/claude/skills/orchestrate/references/workflow-templates.md" '`fable×high`の使用は、親が最上位未満かつ契約クリティカルのPhase gateで1回だけ（02_models 順位表「相談」行のFable 5×highスポット）。雛形の既定にしない。'
 [ ! -e "$ROOT/claude/skills/orchestrate/references/delegation-contract.md" ] || fail 'Claude 固有の旧 delegation-contract.md が残っている'
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'agent_type=<role>'
 contains "$ROOT/codex/skills/orchestrate/SKILL.md" 'fork_turns="none"'

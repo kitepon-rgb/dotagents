@@ -10,7 +10,7 @@ description: 統括レーン（①計画に中断が組込済み②受入が多�
 ## Grok appendix
 
 - **円卓の入口は peertable room だけ**（`peertable` skill。Windows native も 2026-08-16 修理後に利用可）。campaign またはオーナーが円卓を指定した実装物量は、`spawn_subagent` へ流さない。Grok 親は room MCP を持たないので HTTP API で着卓し、席は `launch-seat.sh` で立てる。
-- host 内の子は`spawn_subagent`を使う。工場roleは`implementer`と`refuter`。円卓の代替ではない。modelは親継承を避け、docs/02_models.mdのGrok列を毎回明示する。
+- host 内の子は`spawn_subagent`を使う。工場roleは`implementer`と`refuter`。円卓の代替ではない。modelは親継承を避け、docs/02_models.md 順位表の当該役割のGrok配置（model×effort）を毎回明示する。
 - 日常shellはGrok nativeの`run_terminal_command`。aiterm永続PTYは外部子（Claude/Codex/Composer）を張る時だけ使い、Grok親の日常shellへ流さない。
 - MCPは`search_tool`でschemaを取ってから`use_tool`する。Claudeの`mcp__*`名前やCodexの`spawn_agent`を正入口にしない。
 - `gpt_connector`は親直轄のconsultation専用。Worker・実装・shellの担当にしない。timeout後は同じslugをsessionsで回収する。

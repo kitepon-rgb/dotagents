@@ -11,7 +11,7 @@ dotagents の文書群の全体地図。docs/ 直下は**生きた文書だけ**
 | [../PLAN.md](../PLAN.md) | **憲章（聖典 v4）**。趣旨・原則1〜10・文書の作法・定常運用・残件 |
 | [plan_factory-master.md](plan_factory-master.md) | **進行中作業の唯一の親TODO**。現在地・並行レーン・合流条件・全端末展開順 |
 | [01_project-layout.md](01_project-layout.md) | 全プロジェクト共通のフォルダ構成標準 |
-| [02_models.md](02_models.md) | 役割→現行モデル対応の唯一の参照点 |
+| [02_models.md](02_models.md) | 役割→モデル×effort順位表（唯一の参照点） |
 | [03_settings-fragments.md](03_settings-fragments.md) | .claude/settings.json の生成手順・断片 |
 | [04_ci.md](04_ci.md) | lint / CI ゲート（`make ci`＝CI同一、`make lint`＝静的部分ゲート）の正典 |
 | [05_codex-fragments.md](05_codex-fragments.md) | Codex 端末設定の断片カタログ（MultiAgent V2 role routing 必須断片・実効値ゲート・親既定はオーナー領分） |

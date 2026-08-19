@@ -13,7 +13,7 @@ dotagents/
 ├── AGENTS.md            … 全 AI 共通のプロジェクト正典＋AI オンボーディング入口
 ├── CLAUDE.md            … Claude 用の薄いラッパ（@AGENTS.md ＋ ベル固有）
 ├── install.sh           … symlink 配置（冪等・実ファイルは SKIP・失敗は停止）
-├── docs/                … 00_overview.md（地図）・02_models.md（役割→モデル対応表）・01_project-layout.md・進行中プラン／archive/（役目を終えた文書）
+├── docs/                … 00_overview.md（地図）・02_models.md（役割→モデル×effort順位表）・01_project-layout.md・進行中プラン／archive/（役目を終えた文書）
 ├── rag/                 … 調査・研究の再利用棚（INDEX.md＋topic/raw/ 一次ソース）
 ├── shared/
 │   └── constitution.md  … Claude/Codex/Grok共通憲法の唯一の手編集正本
@@ -100,7 +100,7 @@ Codex skill は同一端末・同一入口で **official / legacy の一方だ�
 | 共有契約 | `shared/orchestrate/{contract,delegation-contract}.md` | 両skillのuse-not-use、Control lifecycle、製品中立のDelegation Packet／Worker Reportの唯一の正本 |
 | Claude skill | `auto-deploy-on-push` | push 契機の SSH + docker compose 自動デプロイ構築 |
 | Codex skill | `auto-deploy-on-push` | read-only調査とH承認を先行するpush起点デプロイ構築 |
-| Claude agent | `implementer` | 委譲契約焼き込み済みの実装者（安価枠。対応表は docs/02_models.md） |
+| Claude agent | `implementer` | 委譲契約焼き込み済みの実装者（安価枠。順位表は docs/02_models.md） |
 | Claude agent | `refuter` | 敵対的検証者（読み取り専用） |
 | Claude command | `auto-deploy-on-push` / `polish-github` | 各スキルの入口 |
 | Codex skill | `polish-github` | GitHub presentation 整備（正本は Claude 版・Codex 版は薄いポインタ＝一本化済み） |

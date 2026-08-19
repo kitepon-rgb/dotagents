@@ -8,9 +8,9 @@ CI（`tests/orchestrate/recipes-conformance.test.mjs`）で強制される——
 先に変え、両面を同一commitで更新する**。
 
 コピーして DIMENSIONS/CTX/TARGETS/検証観点をタスクに合わせて書き換える。`agent()` の
-`model`・`effort` は docs/02_models.md の決定表どおり明示する（検証・反証系も親と同値のaliasを明示し、省略は不可）。
+`model`・`effort` は docs/02_models.md の順位表どおり明示する（検証・反証系も親と同値のaliasを明示し、省略は不可）。
 省略で親任せにしない——親が最上位のとき全子が張り付く。
-`fable×high`の使用は、親が最上位未満かつ契約クリティカルのPhase gateで1回だけ（02_models「最上位のスポット呼び」）。雛形の既定にしない。
+`fable×high`の使用は、親が最上位未満かつ契約クリティカルのPhase gateで1回だけ（02_models 順位表「相談」行のFable 5×highスポット）。雛形の既定にしない。
 
 型の使用はレーンを問わない（ADR 0061 技法と儀式の分離）。統括レーン専用なのはControl儀式だけで、
 Controlが選択されている場合だけterminal resultをstrict Worker Reportへ投影する。
@@ -27,7 +27,7 @@ export const meta = {
   description: '<対象>の多視点監査＋敵対的検証',
   phases: [{ title: 'Find' }, { title: 'Dedup' }, { title: 'Verify' }, { title: 'Critic' }],
 }
-const PARENT_ALIAS = 'opus'; // copy時に親と同値のfloating aliasへ変更（docs/02_models.md「反証・検証」行）
+const PARENT_ALIAS = 'opus'; // copy時に親と同値のfloating aliasへ変更（docs/02_models.md 順位表「反証」行）
 const CTX = `<リポジトリ・規約・「誤検知を避けるための前提」（意図的な設計を指摘させない）・
 読み取り専用の明言・「evidence に file:line 必須・推測禁止・確度の高いものだけ最大N件」>`
 // schema正本: shared/orchestrate/recipes/adversarial-audit.v1.json（CI一致gateあり）

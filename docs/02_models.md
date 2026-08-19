@@ -70,8 +70,9 @@ Anthropic（Claude Code本体・Agent/Workflow）／OpenAI Codex（Codex CLI・c
 
 ## 入口と使い分け
 
+- **Codex親の三入口を分ける**: ① native subagent＝repo密結合、② external execution＝codex-sidecar/aiterm、③ consultation＝gpt-connector。Grok/ComposerはAitermの別vendor入口であり、Codex→Codexの入口判断とは別契約。
 - Aitermの`codex_agent`/`grok_agent`/`claude_agent`はmodelとeffortを毎回明示する。live catalog不在・effort非対応は明示エラーにし、別modelへfallbackしない。
-- **委譲の安全・回収・受入契約は[委譲契約](../shared/orchestrate/delegation-contract.md)が正本**。Aitermの運用型は[aiterm-dispatch](../shared/orchestrate/aiterm-dispatch.md)を正とする。
+- **委譲の安全・回収・受入契約は[委譲契約](../shared/orchestrate/delegation-contract.md)が正本**。Aitermの運用型は[aiterm-dispatch](../shared/orchestrate/aiterm-dispatch.md)を正とする。external writerはinstalled→registered→verified→execution-verifiedの最終段だけに置く。
 - codex-sidecarはmodel/effortを毎回明示するか`.codex-sidecar.yml` defaultsへ置く。現行schemaはlow〜xhighでmaxを渡せない。
 - **役割と配置関係の機械可読な対応**は`lib/orchestrate/placement-policy.mjs` v1が固定する。自動ConsultationはAnthropic/OpenAIだけだが、これは現行配線のclosed enumであり、xAIの能力評価ではない。
 
