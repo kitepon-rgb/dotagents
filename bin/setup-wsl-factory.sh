@@ -345,7 +345,8 @@ run_setup() {
   "$ROOT/install.sh" --profile official
   ensure_managed_commands
   # Caveat Claude は init（MCP＋4 hooks）。Codex は native hook。Grok は MCP のみ（apply-grok-config）。
-  caveat init
+  # init は TTY だと公開ミラー確認で止まるので stdin を閉じる。
+  caveat init </dev/null
   ensure_caveat_sync
   throughline install
   caveat codex-hook install

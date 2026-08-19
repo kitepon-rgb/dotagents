@@ -252,6 +252,7 @@ if grep -Fq 'lattice hooks install --host grok' "$CALLS"; then
 fi
 grep -Fq 'install --profile official' "$CALLS" || fail 'official profileを展開しない'
 grep -Fq 'caveat init' "$CALLS" || fail 'Caveat Claude initを導入しない'
+grep -Fq 'caveat init </dev/null' "$ROOT/bin/setup-wsl-factory.sh" || fail 'caveat init を非対話にしない'
 grep -Fq 'throughline install' "$CALLS" || fail 'Throughline製品管理hookを導入しない'
 grep -Fq 'caveat codex-hook install' "$CALLS" || fail 'Caveat Codex hookを導入しない'
 grep -Fq 'lattice hooks install --host claude' "$CALLS" || fail 'Claude Lattice hookを配線しない'

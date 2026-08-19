@@ -48,6 +48,8 @@ test('Windows native一撃setupは工場展開・配線・fresh BugHub受理・�
   assert.match(source, /failureMarkers.*FAIL: .*latticeFailures.*FAIL: Lattice.*latticeHosts.*Sort-Object -Unique/su);
   assert.match(source, /function Normalize-WindowsCodexHooks.*codex-callout-hook.*orchestrate-advisory-hook.*codex-lattice-gantt-hook/su);
   assert.match(source, /CODEX_HOME.*native-product-wiring: caveat/su);
+  assert.match(source, /\$null \| & \$File @Arguments/u);
+  assert.match(source, /caveat' -Arguments @\('init'\) -ClosedStdin/u);
   assert.match(source, /legacy undefined HOME/su);
   assert.match(source, /function Test-External.*Get-Command.*ErrorActionPreference = 'Continue'.*return \$code -eq 0/su);
   assert.match(source, /function Invoke-Checked.*& \$File @Arguments \| ForEach-Object \{ Write-Host \$_ \}.*\$LASTEXITCODE/su);

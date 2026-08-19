@@ -83,12 +83,18 @@ function Invoke-Checked {
     [Parameter(Mandatory = $true)][string]$File,
     [string[]]$Arguments = @(),
     [Parameter(Mandatory = $true)][string]$Label,
-    [string]$WorkingDirectory = $RepoRoot
+    [string]$WorkingDirectory = $RepoRoot,
+    [switch]$ClosedStdin
   )
   Write-Step $Label
   Push-Location -LiteralPath $WorkingDirectory
   try {
-    & $File @Arguments | ForEach-Object { Write-Host $_ }
+    if ($ClosedStdin) {
+      # caveat init は TTY だと公開ミラー確認で止まる。工場は stdin を閉じる。
+      $null | & $File @Arguments | ForEach-Object { Write-Host $_ }
+    } else {
+      & $File @Arguments | ForEach-Object { Write-Host $_ }
+    }
     $code = $LASTEXITCODE
   } finally {
     Pop-Location
@@ -564,7 +570,7 @@ try {
   $env:HOME = $env:USERPROFILE
   $env:CODEX_HOME = Join-Path $env:USERPROFILE '.codex'
   try {
-    Invoke-Checked -File 'caveat' -Arguments @('init') -Label 'native-product-wiring: caveat init'
+    Invoke-Checked -File 'caveat' -Arguments @('init') -ClosedStdin -Label 'native-product-wiring: caveat init'
     Invoke-Checked -File 'throughline' -Arguments @('install') -Label 'native-product-wiring: throughline'
     Invoke-Checked -File 'caveat' -Arguments @('codex-hook', 'install') -Label 'native-product-wiring: caveat codex-hook'
   } finally {
