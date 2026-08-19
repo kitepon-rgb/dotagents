@@ -520,10 +520,17 @@ for f in "$REPO/grok/hooks"/*.json; do
 done
 grok_factory_hooks="$HOME/.grok/hooks/factory.json"
 if [ -f "$grok_factory_hooks" ] || [ -L "$grok_factory_hooks" ]; then
-  if ! python3 - "$grok_factory_hooks" <<'PY'
+  if ! python3 - "$grok_factory_hooks" "$REPO/lib/hook-command.py" <<'PY'
+import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
+
+spec = importlib.util.spec_from_file_location("hook_command", sys.argv[2])
+hook_command = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(hook_command)
+command_matches = hook_command.command_matches
 
 path = Path(sys.argv[1])
 try:
@@ -532,6 +539,7 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
     print(f"FAIL: {path} の JSON パース失敗: {exc}")
     raise SystemExit(1)
 
+home = Path(os.environ.get("HOME", str(Path.home()))).expanduser().resolve()
 required = (
     ("PreToolUse", "grok-git-destroy-gate-hook"),
     ("PreToolUse", "grok-delegation-gate-hook"),
@@ -553,7 +561,7 @@ for event, required_command in required:
         if isinstance(hook, dict)
     )
     if not any(
-        isinstance(command, str) and required_command in command
+        isinstance(command, str) and command_matches(command, required_command, home)
         for command in commands
     ):
         missing.append(f"{event}: {required_command}")
@@ -673,44 +681,18 @@ fi
 claude_settings="$HOME/.claude/settings.json"
 if [ ! -f "$claude_settings" ]; then
   echo "WARN ${claude_settings} 不在（Claude Code 未セットアップ端末）" >&2
-elif ! python3 - "$claude_settings" <<'PY'
+elif ! python3 - "$claude_settings" "$REPO/lib/hook-command.py" <<'PY'
+import importlib.util
 import json
 import os
-import shlex
 import sys
 from pathlib import Path
 
-def hook_script(command: str, home: Path):
-    try:
-        parts = shlex.split(command, posix=os.name != "nt")
-    except ValueError:
-        return None
-    if os.name == "nt":
-        parts = [
-            part[1:-1]
-            if len(part) >= 2 and part[0] == part[-1] and part[0] in {"'", '"'}
-            else part
-            for part in parts
-        ]
-    interpreters = {
-        "python.exe", "python3.exe", "python", "python3",
-        "sh.exe", "bash.exe", "sh", "bash", "cmd.exe",
-    }
-    while parts:
-        first = Path(parts[0]).name.lower()
-        if first in interpreters:
-            parts = parts[1:]
-            continue
-        if parts[0] in {"/usr/bin/env", "env"} and len(parts) > 1:
-            parts = parts[2:]
-            continue
-        break
-    if not parts:
-        return None
-    script = parts[0]
-    if script.startswith("~/"):
-        script = str(home) + script[1:]
-    return Path(script).expanduser().resolve(strict=False), tuple(parts[1:])
+spec = importlib.util.spec_from_file_location("hook_command", sys.argv[2])
+hook_command = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(hook_command)
+hook_script = hook_command.hook_script
+command_matches = hook_command.command_matches
 
 path = Path(sys.argv[1])
 try:
@@ -720,6 +702,7 @@ except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
     print(f"FAIL: {path} の JSON パース失敗: {exc}")
     raise SystemExit(1)
 
+home = Path(os.environ.get("HOME", str(Path.home()))).expanduser().resolve()
 required = (
     ("PreToolUse", "delegation-gate-hook"),
     ("PreToolUse", "git-destroy-gate-hook"),
@@ -738,7 +721,7 @@ for event, required_command in required:
         if isinstance(hook, dict)
     )
     if not any(
-        isinstance(command, str) and required_command in command
+        isinstance(command, str) and command_matches(command, required_command, home)
         for command in commands
     ):
         missing.append(f"{event}: {required_command}")
@@ -747,7 +730,6 @@ if missing:
     print("FAIL: Claude Code 必須 hook が欠落: " + "、".join(missing))
     raise SystemExit(1)
 
-home = Path(os.environ["HOME"]).expanduser().resolve()
 advisory = (home / ".local/bin/orchestrate-advisory-hook").resolve(strict=False)
 relevant = []
 canonical = []
