@@ -38,6 +38,12 @@ mkdir -p "$HOME/.local/bin"
 ln -sfn "$DOTAGENTS_SETUP_TEST_ROOT/bin/setup-macos-factory.sh" "$HOME/.local/bin/setup-macos-factory"
 ln -sfn "$DOTAGENTS_SETUP_TEST_ROOT/bin/agents-update.sh" "$HOME/.local/bin/agents-update"
 ln -sfn "$DOTAGENTS_SETUP_TEST_ROOT/bin/factory-reporter-v7-schedule-runner" "$HOME/.local/bin/factory-reporter-v7-schedule-runner"
+# uv tool 面だけ ~/.local/bin に置く。親 PATH に無い状態を再現する。
+cat >"$HOME/.local/bin/markitdown" <<'MARKITDOWN'
+#!/usr/bin/env bash
+exit 0
+MARKITDOWN
+chmod +x "$HOME/.local/bin/markitdown"
 EOF
 cat >"$FIXTURE_ROOT/bin/apply-codex-config.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -212,7 +218,7 @@ else
   exit 0
 fi
 EOF
-for command_name in npm uv markitdown gpt-connector aiterm-mcp codex-sidecar-mcp \
+for command_name in npm uv gpt-connector aiterm-mcp codex-sidecar-mcp \
   peertable-client aishell-mcp; do
   cat >"$STUB_BIN/$command_name" <<'EOF'
 #!/usr/bin/env bash
@@ -240,6 +246,9 @@ export DOTAGENTS_SETUP_MACOS_ARCH=arm64
 export DOTAGENTS_SETUP_TEST_CALLS="$CALLS"
 export DOTAGENTS_SETUP_TEST_LAUNCH_STATE="$LAUNCH_STATE"
 export DOTAGENTS_SETUP_TEST_ROOT="$FIXTURE_ROOT"
+
+grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$SOURCE" \
+  || fail 'setupが ~/.local/bin を PATH 先頭へ置かない'
 
 "$FIXTURE_ROOT/bin/setup-macos-factory.sh"
 "$FIXTURE_ROOT/bin/setup-macos-factory.sh"

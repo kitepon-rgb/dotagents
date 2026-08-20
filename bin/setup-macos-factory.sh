@@ -378,6 +378,9 @@ PY
 
 run_setup() {
   is_macos || die 'このスクリプトはmacOS専用'
+  # 親AI sessionは ~/.local/bin を持たないことがある。uv tool（markitdown）と
+  # install.sh の配布面はここへ置くので、入口自身が PATH を完結させる。
+  export PATH="$HOME/.local/bin:$PATH"
   local command_name
   for command_name in git gh node npm docker python3 claude codex uv plutil launchctl sw_vers; do
     need "$command_name"

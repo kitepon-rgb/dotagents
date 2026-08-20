@@ -38,6 +38,8 @@ case "$profile" in official|legacy) ;; *) echo "FAIL: 不正な profile: $profil
 SELF="${BASH_SOURCE[0]}"
 while [ -L "$SELF" ]; do SELF="$(readlink "$SELF")"; done
 REPO="$(cd "$(dirname "$SELF")/.." && pwd)"
+# 親AI sessionは ~/.local/bin を持たないことがある。uv tool と install 配布面はここ。
+export PATH="$HOME/.local/bin:$PATH"
 if [ "$profile" = official ]; then
   codex_skills_dir="$HOME/.agents/skills"
   other_codex_skills_dir="$HOME/.codex/skills"

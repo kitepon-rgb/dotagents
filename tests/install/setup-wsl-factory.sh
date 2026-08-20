@@ -44,6 +44,12 @@ set -euo pipefail
 printf 'install %s\n' "$*" >>"$DOTAGENTS_SETUP_TEST_CALLS"
 mkdir -p "$HOME/.local/bin"
 ln -sfn "$DOTAGENTS_SETUP_TEST_ROOT/bin/$SETUP_COMMAND.sh" "$HOME/.local/bin/$SETUP_COMMAND"
+# uv tool 面だけ ~/.local/bin に置く。親 PATH に無い状態を再現する。
+cat >"$HOME/.local/bin/markitdown" <<'MARKITDOWN'
+#!/usr/bin/env bash
+exit 0
+MARKITDOWN
+chmod +x "$HOME/.local/bin/markitdown"
 EOF
 cat >"$FIXTURE_ROOT/bin/apply-codex-config.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -193,7 +199,7 @@ else
   exit 0
 fi
 EOF
-for command_name in npm uv markitdown gpt-connector aiterm-mcp codex-sidecar-mcp peertable-client; do
+for command_name in npm uv gpt-connector aiterm-mcp codex-sidecar-mcp peertable-client; do
   cat >"$STUB_BIN/$command_name" <<'EOF'
 #!/usr/bin/env bash
 exit 0
@@ -215,6 +221,9 @@ printf '{"host":{"id":"fixture","profile":"%s"},"reporting":{"enabled":true,"end
   printf '%s\n' "0 4 * * 1 '$HOME_DIR/.local/bin/agents-update' # legacy-dotagents-update"
   printf '%s\n' "30 3 * * * '$HOME_DIR/.local/bin/update-npm-globals.sh'"
 } >"$CRONTAB"
+
+grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$ROOT/bin/setup-wsl-factory.sh" \
+  || fail 'setupが ~/.local/bin を PATH 先頭へ置かない'
 
 export HOME="$HOME_DIR"
 export PATH="$STUB_BIN:/usr/bin:/bin"
