@@ -149,14 +149,14 @@ fi
 deploy="$ROOT/codex/skills/auto-deploy-on-push/SKILL.md"
 assert_order "$deploy" \
   '読み取り専用で' \
-  '目的、影響範囲、失敗時の rollback を説明し、H 承認を得る' \
-  '承認後も対象範囲を狭く保ち' \
+  '目的、影響範囲、失敗時の rollback を説明する' \
+  '説明のあと対象範囲を狭く保ち' \
   '変更後は静的検証'
 # shellcheck disable=SC2016 # backticks are literal Markdown from the skill contract.
-contains "$deploy" '承認前に鍵生成、`authorized_keys` 変更、Secrets 登録、workflow 書き込み、push、workflow 実行をしてはならない'
+contains "$deploy" '説明せずに鍵生成、`authorized_keys` 変更、Secrets 登録、workflow 書き込み、push、workflow 実行をしてはならない'
 contains "$deploy" '秘密値は表示・収集・保存しない'
 contains "$deploy" '秘密をログ・文書・commit に含めない'
-contains "$deploy" '実本番操作は明示承認されたものだけ実行する'
+contains "$deploy" '承認待ちにしない'
 contains "$deploy" '../../../claude/skills/auto-deploy-on-push/SKILL.md'
 
 polish="$ROOT/codex/skills/polish-github/SKILL.md"
