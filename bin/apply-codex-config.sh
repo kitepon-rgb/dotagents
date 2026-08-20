@@ -203,6 +203,14 @@ def is_script_command(
             if (parts[script_index + 1:] == list(arguments)
                     and resolved_command_path(parts[script_index], home) == hook_path.resolve(strict=False)):
                 return True
+    # interpreter が違っても同一 hook script なら同一 entry。
+    # 死んだ Python313 path が残ると PreToolUse が毎回 code 1 になる。
+    hook_resolved = hook_path.resolve(strict=False)
+    for index, part in enumerate(parts):
+        if resolved_command_path(part, home) != hook_resolved:
+            continue
+        if parts[index + 1:] == list(arguments):
+            return True
     return False
 
 

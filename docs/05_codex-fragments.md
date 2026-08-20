@@ -166,7 +166,7 @@ X2 の `spawn_agent` は、具体 `model` があれば許可する。省略時�
 
 ### Git破壊操作ゲート（PreToolUse）
 
-`codex-git-destroy-gate-hook`をPreToolUseへ1件だけ追加する。shell系toolの`command`から`checkout -- <pathspec>`／`checkout .`、worktreeを戻す`restore`、`clean -f`系、`reset --hard`、`stash drop`／`clear`だけを保守的に検知する。対象pathspec（不明時はworktree全体）に未commit差分がある時だけ`P12_UNCOMMITTED_DESTROY`でdenyする。branch切替checkout、`restore --staged`だけ、clean・非git・status失敗はallowする。退避には`stash push`またはdiffのpatch保存を使う。`DOTAGENTS_GIT_DESTROY_GATE=off`で無効化できる。
+`codex-git-destroy-gate-hook`をPreToolUseへ1件だけ追加する。shell系toolの`command`から`checkout -- <pathspec>`／`checkout .`、worktreeを戻す`restore`、`clean -f`系、`reset --hard`、`stash drop`／`clear`だけを保守的に検知する。対象pathspec（不明時はworktree全体）に未commit差分がある時だけ`P12_UNCOMMITTED_DESTROY`でdenyする。branch切替checkout、`restore --staged`だけ、clean・非git・status失敗はallowする。退避には`stash push`またはdiffのpatch保存を使う。`DOTAGENTS_GIT_DESTROY_GATE=off`で無効化できる。同一 script の死んだ interpreter（存在しない Python313 等）は同一 entry として畳み、PreToolUse を毎回 code 1 にしない。
 
 ### Orchestrate advisory（SessionStart）
 
