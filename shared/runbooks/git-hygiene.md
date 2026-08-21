@@ -4,6 +4,11 @@
 
 rsync dry-run・grep単独禁止・repo終活安全判定・sync-sweepの詳細を扱う。
 
+## コミットとrepo所有の作法
+
+- **複数行のコミットメッセージは `-F <file>` で渡す**。PTY へのインライン複数行 `-m` は引用崩れする。
+- **自作repositoryのownerは公開段階で分ける**。プロトタイプ段階は個人account `quolu` に置き、オーナーが正式リリースと扱う時点で `kitepon` Organizationへ移管する。正式リリース後の正規repositoryは `kitepon/<repository>` とする。
+
 ## 削除・移行前の安全確認
 
 - **`rsync --delete` の前に必ず `-n -v` の dry-run** で「削除一覧」と「秘密混入」を確認する。**gitignore 済みファイルは git status に出ない＝消失に気づけない**。
