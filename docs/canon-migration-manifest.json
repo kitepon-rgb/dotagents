@@ -107,7 +107,7 @@
       "l0_pointer_phrase": "docs/factory-product-contracts.md",
       "source_text": "- 工場の現役管理対象は計11製品。自作コア10製品（Caveat／Throughline／Spotter／Lattice／gpt-connector／aiterm-mcp／codex-sidecar／AIShell／Observer／ServerManager）と、公開CLIだけをblack-box管理する第三者製品MarkItDownである。端末能力を担う10製品のうちAIShellはmacOS arm64専用、ObserverはmacOS専用であり、非対応hostでは構造的な`unsupported`として扱う。LatticeはCodegraphを完全吸収した正式後継であり、独立Codegraphはretired／not_applicableの履歴だけを保持して現役製品・依存・配線に含めない。Claude Code CLI／Codex CLI／Grok Buildは別区分の基盤toolchainとして管理し、Oracleはv1互換・rollback専用とする。現役契約はLattice `docs/01_integration-package.md`と本repoの製品契約台帳・host matrix、導入経緯は[完了plan](docs/archive/plan_lattice-factory-integration.md)および[Observer編入plan](docs/archive/plan_observer-core-integration.md)が正。",
       "source_ref": "AGENTS.md@36b699b",
-      "receiver_text": "- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Observerは2026-08-16に工場コアから撤去し、現役の製品・依存・配線へ含めない。peertableはpeertable-onboarding campaignで編入し、H承認4件（npm 0.3.6公開・ServerManager wire v7 enroll・公開後smoke・正典の製品数更新）を2026-08-10に実行済み。wire v7 cutoverは2026-08-10に全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）で完了し、各hostの実送信とBugHub matrix反映を実測済み（経緯は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)）。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。"
+      "receiver_text": "- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Observerは2026-08-16に工場コアから撤去し、2026-08-18にwire必須キーからも外した。現役の製品・依存・配線・`products.observer`へ含めない。peertableはpeertable-onboarding campaignで編入し、H承認4件（npm 0.3.6公開・ServerManager wire v7 enroll・公開後smoke・正典の製品数更新）を2026-08-10に実行済み。wire v7 cutoverは2026-08-10に全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）で完了し、各hostの実送信とBugHub matrix反映を実測済み（経緯は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)）。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。"
     },
     {
       "receiver_path": "docs/factory-product-contracts.md",
@@ -134,7 +134,7 @@
       "l0_pointer_phrase": "docs/02_models.md",
       "source_text": "- **Codex外部エージェント限界突破**: native Codexの同時枠上限（親を含む）を工場全体の上限にしない。Codex親は`codex-sidecar`とaitermのCodex/Grok/Composerを外部実行レーンとして積極利用し、入れ子Codexを起動してよい。`gpt_connector`は相談レーンであり実装workerではない。委譲の安全・回収・受入契約は[委譲契約](shared/orchestrate/delegation-contract.md)、レーンとexecution-verified資格は[docs/02_models.md](docs/02_models.md)、Codex配線は[docs/05_codex-fragments.md](docs/05_codex-fragments.md)を正とする。",
       "source_ref": "AGENTS.md@36b699b",
-      "receiver_text": "- **委譲の安全・回収・受入契約は[委譲契約](../shared/orchestrate/delegation-contract.md)が正本**。external writerはinstalled→registered→verified→execution-verifiedの最終段だけに置き、Aitermの運用型は[aiterm-dispatch](../shared/orchestrate/aiterm-dispatch.md)を正とする。"
+      "receiver_text": "- **委譲の安全・回収・受入契約は[委譲契約](../shared/orchestrate/delegation-contract.md)が正本**。Aitermの運用型は[aiterm-dispatch](../shared/orchestrate/aiterm-dispatch.md)を正とする。external writerはinstalled→registered→verified→execution-verifiedの最終段だけに置く。"
     },
     {
       "receiver_path": "README.md",
@@ -224,7 +224,7 @@
       "l0_pointer_phrase": "docs/factory-product-contracts.md",
       "source_text": "- **工場管理対象11製品**: 自作コア10製品＝Caveat（罠知識）・Throughline（セッション継続）・Spotter（未使用ツール監査）・Lattice（工程graphとコード構造理解）・gpt-connector（ChatGPT接続）・aiterm-mcp（PTYと外部モデル枠）・codex-sidecar（Claude親からのCodex実行）・AIShell（macOS native開発面）・Observer（親watchと監査）・ServerManager（中央運用管理）。MarkItDownは自作コアではなく、公開CLIだけを使う第三者管理製品。LatticeはCodegraphを完全吸収した正式後継で、独立Codegraphはretired／not_applicableの履歴だけを保持する。Claude Code CLI・Codex CLI・Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用。BugHubはServerManager内部コンポーネント（[Lattice編入記録](docs/archive/plan_lattice-factory-integration.md)・[Observer編入記録](docs/archive/plan_observer-core-integration.md)）。",
       "source_ref": "PLAN.md@36b699b",
-      "receiver_text": "- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Observerは2026-08-16に工場コアから撤去し、現役の製品・依存・配線へ含めない。peertableはpeertable-onboarding campaignで編入し、H承認4件（npm 0.3.6公開・ServerManager wire v7 enroll・公開後smoke・正典の製品数更新）を2026-08-10に実行済み。wire v7 cutoverは2026-08-10に全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）で完了し、各hostの実送信とBugHub matrix反映を実測済み（経緯は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)）。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。"
+      "receiver_text": "- 現役管理対象は自作コア10製品（Caveat、Throughline、Spotter、Lattice、gpt-connector、aiterm-mcp、codex-sidecar、AIShell、ServerManager、peertable）と、公開CLIだけをblack-box管理する第三者製品MarkItDownの計11製品である。AIShellはmacOS arm64専用で、非対応hostは構造的`unsupported`とする。LatticeはCodegraphの正式後継であり独立Codegraphを現役の製品・依存・配線へ含めない。Observerは2026-08-16に工場コアから撤去し、2026-08-18にwire必須キーからも外した。現役の製品・依存・配線・`products.observer`へ含めない。peertableはpeertable-onboarding campaignで編入し、H承認4件（npm 0.3.6公開・ServerManager wire v7 enroll・公開後smoke・正典の製品数更新）を2026-08-10に実行済み。wire v7 cutoverは2026-08-10に全4現役host（mac-kite・main-server・fox-wsl・windows-workstation）で完了し、各hostの実送信とBugHub matrix反映を実測済み（経緯は[H承認記録](evidence/2026-08-10-peertable-wire-v7-H-approval.md)）。Claude Code CLI、Codex CLI、Grok Buildは基盤toolchain、Oracleはv1互換・rollback専用である。"
     },
     {
       "receiver_path": "docs/02_models.md",
@@ -237,21 +237,21 @@
     },
     {
       "receiver_path": "docs/02_models.md",
-      "receiver_phrase": "決定表",
+      "receiver_phrase": "成果を作ったモデルと別ベンダーから選ぶ",
       "l0_path": "PLAN.md",
       "l0_pointer_phrase": "docs/02_models.md",
       "source_text": "8. **重い検証構造（多視点Find→Dedup→指摘ごとの反証→Critic）は統括レーンの契約クリティカルだけ**（頻度と範囲は`shared/orchestrate/contract.md`「監査の頻度」が正）。Phase完了時の検証は原則クロスprovider（Claude親→Codex、Codex親→Claude）。もっともらしい指摘・提案ほど反証にかけ、確信できないものは棄却する。",
       "source_ref": "PLAN.md@36b699b",
-      "receiver_text": "- **Phase検証はcross-provider**: 契約クリティカルな完了は、成果providerと異なるproviderが実物を1回検証し、統括が採否を裁定する。Grok 4.6はこの反証役の現役候補である。"
+      "receiver_text": "1. **反証の1位は、成果を作ったモデルと別ベンダーから選ぶ。**"
     },
     {
       "receiver_path": "docs/02_models.md",
-      "receiver_phrase": "決定表",
+      "receiver_phrase": "具体名への解決はこの表だけが担う",
       "l0_path": "PLAN.md",
       "l0_pointer_phrase": "docs/02_models.md",
       "source_text": "9. **モデルはバージョン固定禁止**: latest 型で指定する。役割→現行最強の対応表 **docs/02_models.md** を唯一の参照点にし、各所にモデル名を書き散らさない。役割の骨格: 統括=現行最強推論／実装=安価高速枠／反証=強推論枠／外部併走=レート非依存の他社枠。",
       "source_ref": "PLAN.md@36b699b",
-      "receiver_text": "方針: skill・agents・委譲契約・スクリプトは**役割名**でモデルを指し、具体名への解決はこの表だけが担う。世代交代時は**この1枚＋公認例外2種を更新して push すれば全端末が追従**する。更新トリガーはオーナーの宣言（PLAN 原則6）。"
+      "receiver_text": "方針: skill・agents・委譲契約・スクリプトは**役割名**でモデルを指し、具体名への解決はこの表だけが担う。本書は役割を先に定義し、役割ごとに適したモデル×effortを1位〜3位で与える。ベンダー別レーンの表構造は撤廃した（オーナー裁定 2026-08-19）。世代交代時は**この1枚＋公認例外2種を更新して push すれば全端末が追従**する。更新トリガーはオーナーの宣言（PLAN 原則6）。"
     },
     {
       "receiver_path": "docs/02_models.md",
@@ -395,7 +395,7 @@
       "l0_pointer_phrase": "docs/02_models.md",
       "source_text": "役割と配置関係の機械可読な対応は`lib/orchestrate/placement-policy.mjs`\n（`dotagents.placement-policy.v1`）が固定し、fixtureがadapter catalogのconsultation laneおよび\nControl schema v26のconnector enumとの整合を検証する。",
       "source_ref": "shared/orchestrate/contract.md@0b54f64",
-      "receiver_text": "- **役割と配置関係の機械可読な対応**は`lib/orchestrate/placement-policy.mjs` v1が固定する。自動ConsultationはAnthropic/OpenAIだけだが、これは現行配線のclosed enumであり、xAIの能力評価ではない。xAIはAitermの明示laneで使う。"
+      "receiver_text": "- **役割と配置関係の機械可読な対応**は`lib/orchestrate/placement-policy.mjs` v1が固定する。自動ConsultationはAnthropic/OpenAIだけだが、これは現行配線のclosed enumであり、xAIの能力評価ではない。"
     },
     {
       "receiver_path": "shared/orchestrate/composition.md",
@@ -449,7 +449,7 @@
       "l0_pointer_phrase": "共通憲法",
       "source_text": "**本正典を適用するのは統括レーンだけ**（ADR 0061）: ①計画に中断が組み込まれている②受入が多段に連鎖する③複数repoの書込みを調整する④裁定の検証可能な証跡が必要、のいずれかが**着手時点の事実として確定**している戦役（campaign）。判定材料は着手時点で確定している作業の構造だけ。重装備（Packet/Report・Control記録）が要るのはwriter委譲・受入裁定・Phase gate・H操作の4関節だけで、campaign単位のdocs計画正本は統括レーン共通の前提であり、F/A/H宣言・Control Record・ADR・独立監査・receipt/evidence文書もこの4関節だけのもの。それ以外（直接処理・read-only呼び出し・queueで束ねた小粒消化）は通常レーンと同じ軽さで進め、証跡はgate evidenceとdocsに残す。技法（fan-out・重複統合・反証・網羅性Critic）はどのレーンでも使え、統括レーン専用はControl儀式（Elastic Control lifecycle、Packet/Report、受入・回収契約）だけ。対象projectの`docs/`にあるcampaign計画正本を最初に確認し、実行TODOの正本はtyped discovery（憲法「計画文書の作法」）で決める。",
       "source_ref": "shared/orchestrate/contract.md@0b54f64",
-      "receiver_text": "- **統括レーンになるのは次の4つのどれかが着手時点の事実として確定している作業だけ**（ADR 0061）: ①計画に中断が組み込まれている（承認待ち・外部完了待ち・波間停止）②受入が多段に連鎖する③複数repoの書込みを調整する④裁定の検証可能な証跡が必要。該当したら`shared/orchestrate/contract.md`と`orchestrate`正典に従う。それ以外はすべて通常レーンで、予定外に途切れた時はhandoff（planへ現在地1行＋バトン）で閉じて通常レーンのまま終える。"
+      "receiver_text": "- **統括レーンになるのは次の4つのどれかが着手時点の事実として確定している作業だけ**（ADR 0061）: ①計画に中断が組み込まれている（人が機械を動かさないと取れない観測・外部完了待ち・波間停止。Phase Exit 宣言を承認待ちとして組込むのは禁止）②受入が多段に連鎖する③複数repoの書込みを調整する④裁定の検証可能な証跡が必要。該当したら`shared/orchestrate/contract.md`と`orchestrate`正典に従う。それ以外はすべて通常レーンで、予定外に途切れた時はhandoff（planへ現在地1行＋バトン）で閉じて通常レーンのまま終える。"
     },
     {
       "receiver_path": "shared/constitution.md",
