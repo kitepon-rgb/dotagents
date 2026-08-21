@@ -222,6 +222,7 @@ printf '{"host":{"id":"fixture","profile":"%s"},"reporting":{"enabled":true,"end
   printf '%s\n' "30 3 * * * '$HOME_DIR/.local/bin/update-npm-globals.sh'"
 } >"$CRONTAB"
 
+# shellcheck disable=SC2016 # setup側へ literal `$HOME` が書かれていることを検査する＝展開させない。
 grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$ROOT/bin/setup-wsl-factory.sh" \
   || fail 'setupが ~/.local/bin を PATH 先頭へ置かない'
 

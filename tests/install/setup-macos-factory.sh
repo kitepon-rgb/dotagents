@@ -247,6 +247,7 @@ export DOTAGENTS_SETUP_TEST_CALLS="$CALLS"
 export DOTAGENTS_SETUP_TEST_LAUNCH_STATE="$LAUNCH_STATE"
 export DOTAGENTS_SETUP_TEST_ROOT="$FIXTURE_ROOT"
 
+# shellcheck disable=SC2016 # setup側へ literal `$HOME` が書かれていることを検査する＝展開させない。
 grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' "$SOURCE" \
   || fail 'setupが ~/.local/bin を PATH 先頭へ置かない'
 

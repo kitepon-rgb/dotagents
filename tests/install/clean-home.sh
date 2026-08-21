@@ -108,6 +108,7 @@ cat >"$SUPPORTED_MAC_HOST_BIN/sw_vers" <<'EOF'
 printf '15.1.0\n'
 EOF
 chmod +x "$SUPPORTED_MAC_HOST_BIN/uname" "$SUPPORTED_MAC_HOST_BIN/sw_vers"
+# shellcheck disable=SC2043 # 欠落CLIの検査対象は列挙であり、現在1件でも増減する。
 for missing_cli in peertable-client; do
   if PATH="$SUPPORTED_MAC_HOST_BIN:$FACTORY_TEST_BIN:$LATTICE_TEST_BIN:$PATH" HOME="$OFFICIAL_HOME" DOTAGENTS_FACTORY_CORE_TEST=1 DOTAGENTS_FACTORY_PROJECT_ROOT="$FACTORY_PROJECT" DOTAGENTS_FACTORY_MISSING_CLI="$missing_cli" LATTICE_HOOKS_TEST_MODE=wired "$ROOT/bin/verify-install.sh" --profile official >"$OFFICIAL_HOME/$missing_cli.out" 2>&1; then
     fail "$missing_cli 欠落をverify-installが通した"
